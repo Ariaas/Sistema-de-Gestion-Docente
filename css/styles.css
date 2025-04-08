@@ -1,0 +1,131 @@
+/* Asegura que el footer esté abajo */
+html, body {
+    height: 100%; /* Asegura que el HTML y el body ocupen toda la altura */
+    margin: 0; /* Elimina márgenes */
+    display: flex;
+    flex-direction: column; /* Organiza el contenido en columna */
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f2f6fc;
+    height: 100vh; /* Asegura que el body ocupe toda la altura de la ventana */
+    display: flex; /* Flexbox para alinear el sidebar y el contenido */
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%; /* Asegura que el sidebar ocupe toda la altura */
+    width: 200px;
+    padding-top: 20px;
+    background-color: #343a40; /* Cambia el color de fondo */
+    color: white; /* Color del texto */
+    transition: width 0.3s;
+    display: flex;
+    flex-direction: column; /* Asegura que los enlaces estén en columna */
+}
+
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 20px;
+    color: white; /* Color del texto de los enlaces */
+    text-decoration: none;
+    background-color: transparent; /* Fondo transparente por defecto */
+}
+
+.sidebar .description {
+    font-size: 14px;
+}
+
+.sidebar .nav-link:hover {
+    background-color: #495057; /* Color de fondo al pasar el mouse */
+}
+
+.main-content {
+    flex-grow: 1; /* Ocupa el espacio restante */
+    margin-left: 200px; /* Ajusta el margen para que no se superponga con el sidebar */
+    padding: 20px;
+    height: 100vh; /* Asegura que el contenido también ocupe toda la altura */
+    overflow-y: auto; /* Permite el desplazamiento si el contenido es largo */
+    flex: 1; /* Hace que el contenido principal ocupe el espacio restante */
+}
+
+/* Estilos para las tarjetas */
+.card {
+    border: 1px solid #ddd; /* Borde ligero */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+    transition: transform 0.2s, box-shadow 0.2s; /* Transición para hover */
+    background-color: #ffffff; /* Fondo blanco */
+}
+
+.card:hover {
+    transform: translateY(-5px); /* Eleva la tarjeta al pasar el mouse */
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2); /* Sombra más intensa */
+}
+
+.card-title {
+    font-size: 1.25rem; /* Tamaño del título */
+    font-weight: bold; /* Negrita */
+    color: #343a40; /* Color del texto */
+}
+
+.card-text {
+    font-size: 0.95rem; /* Tamaño del texto */
+    color: #6c757d; /* Color gris */
+}
+
+.card-body {
+    padding: 20px; /* Espaciado interno */
+}
+
+.row-cols-1 .col {
+    margin-bottom: 20px; /* Espaciado entre tarjetas en pantallas pequeñas */
+}
+
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 20px; /* Espaciado adicional en pantallas pequeñas */
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 60px;
+    }
+
+    .sidebar .description {
+        display: none;
+    }
+
+    .sidebar .nav-link {
+        justify-content: center;
+    }
+
+    .main-content {
+        margin-left: 60px;
+    }
+}
+
+.custom-footer {
+    width: 100%; /* Asegura que el footer ocupe todo el ancho */
+    background-color: #343a40; /* Fondo oscuro */
+    color: white; /* Texto blanco */
+    text-align: center; /* Centra el texto */
+    padding: 10px 0; /* Espaciado interno */
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+    position: relative; /* Cambiar a fixed si quieres que siempre esté visible */
+    bottom: 0;
+    font-size: 0.9rem; /* Tamaño del texto */
+    
+}
+
+.custom-footer p,
+.custom-footer small {
+    margin: 0; /* Elimina márgenes */
+}
