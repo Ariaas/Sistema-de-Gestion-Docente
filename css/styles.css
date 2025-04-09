@@ -1,3 +1,4 @@
+
 /* Asegura que el footer esté abajo */
 html, body {
     height: 100%; /* Asegura que el HTML y el body ocupen toda la altura */
@@ -14,15 +15,23 @@ body {
     display: flex; /* Flexbox para alinear el sidebar y el contenido */
 }
 
+h1{
+    font-size: 2rem; /* Tamaño del título */
+    margin-bottom: 20px; /* Espaciado inferior */
+    text-align: center; /* Centra el texto */
+    color: #343a40; /* Color del texto */
+    font-weight: bold; /* Negrita */
+}
+
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra ligera */
     height: 100%; /* Asegura que el sidebar ocupe toda la altura */
     width: 200px;
     padding-top: 20px;
-    background-color: #343a40; /* Cambia el color de fondo */
-    color: white; /* Color del texto */
+    background-color: #ffffff; /* Cambia el color de fondo */
     transition: width 0.3s;
     display: flex;
     flex-direction: column; /* Asegura que los enlaces estén en columna */
@@ -33,17 +42,18 @@ body {
     align-items: center;
     gap: 20px;
     padding: 10px 20px;
-    color: white; /* Color del texto de los enlaces */
+    font-size: 25px; /* Tamaño del texto */
+    color: #343a40; /* Color del texto de los enlaces */
     text-decoration: none;
     background-color: transparent; /* Fondo transparente por defecto */
 }
 
 .sidebar .description {
-    font-size: 14px;
+    font-size: 17px;
 }
 
 .sidebar .nav-link:hover {
-    background-color: #495057; /* Color de fondo al pasar el mouse */
+    background-color: #f2f6fc; /* Color de fondo al pasar el mouse */
 }
 
 .main-content {
@@ -61,7 +71,6 @@ body {
     border-radius: 8px; /* Bordes redondeados */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
     transition: transform 0.2s, box-shadow 0.2s; /* Transición para hover */
-    background-color: #ffffff; /* Fondo blanco */
 }
 
 .card:hover {
@@ -72,12 +81,12 @@ body {
 .card-title {
     font-size: 1.25rem; /* Tamaño del título */
     font-weight: bold; /* Negrita */
-    color: #343a40; /* Color del texto */
+    color: var(--text); /* Color del texto */
 }
 
 .card-text {
     font-size: 0.95rem; /* Tamaño del texto */
-    color: #6c757d; /* Color gris */
+    color: var(--text); /* Color gris para el texto */
 }
 
 .card-body {
@@ -114,7 +123,6 @@ body {
 
 .custom-footer {
     width: 100%; /* Asegura que el footer ocupe todo el ancho */
-    background-color: #343a40; /* Fondo oscuro */
     color: white; /* Texto blanco */
     text-align: center; /* Centra el texto */
     padding: 10px 0; /* Espaciado interno */
@@ -128,4 +136,60 @@ body {
 .custom-footer p,
 .custom-footer small {
     margin: 0; /* Elimina márgenes */
+}
+
+/* Estilos generales para las cartas */
+.custom-card {
+    border-radius: 12px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+    transition: transform 0.3s, box-shadow 0.3s; /* Transición suave */
+    color: white; /* Texto blanco */
+}
+
+.custom-card:hover {
+    transform: translateY(-10px); /* Eleva la tarjeta al pasar el mouse */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra más intensa */
+}
+
+.card-icon {
+    font-size: 3rem; /* Tamaño grande para el icono */
+    margin-bottom: 15px; /* Espaciado debajo del icono */
+}
+
+/* Colores personalizados para cada carta */
+.card-docentes {
+    background-color: #007bff; /* Azul */
+    color: #ffff; /* Texto blanco para contraste */
+}
+
+.card-secciones {
+    background-color: #28a745; /* Verde */
+    color: #ffffff;
+}
+
+.card-alumnos {
+    background-color: #ddb12c; /* Amarillo */
+    color: #ffffff;
+}
+
+.card-materias {
+    background-color: #17a2b8; /* Cian */
+    color: #ffffff;
+}
+
+.card-horarios {
+    background-color: #6f42c1; /* Morado */
+    color: #ffffff;
+}
+
+.card-trayecto {
+    background-color: #dc3545; /* Rojo */
+    color: #ffffff;
+}
+
+table {
+    width: 100%; /* Asegura que la tabla ocupe todo el ancho */
+    border-collapse: collapse; /* Elimina espacios entre celdas */
+    margin-top: 20px; /* Espaciado superior */
+
 }
