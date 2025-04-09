@@ -13,7 +13,7 @@
                 <div class="col">
                     <div class="card h-100 text-center custom-card card-docentes">
                         <div class="card-body">
-                            <i class="bi bi-person-circle card-icon"></i>
+                        <img src="bootstrap/icons/person-circle.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
                             <h5 class="card-title">Docentes</h5>
                             <p class="card-text">Gestión de información de los docentes.</p>
                         </div>
@@ -22,7 +22,7 @@
                 <div class="col">
                     <div class="card h-100 text-center custom-card card-secciones">
                         <div class="card-body">
-                            <i class="bi bi-building card-icon"></i>
+                        <img src="bootstrap/icons/building.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
                             <h5 class="card-title">Secciones</h5>
                             <p class="card-text">Administración de las secciones académicas.</p>
                         </div>
@@ -31,7 +31,7 @@
                 <div class="col">
                     <div class="card h-100 text-center custom-card card-alumnos">
                         <div class="card-body">
-                            <i class="bi bi-people card-icon"></i>
+                            <img src="bootstrap/icons/people.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
                             <h5 class="card-title">Alumnos</h5>
                             <p class="card-text">Control de datos de los estudiantes.</p>
                         </div>
@@ -40,7 +40,7 @@
                 <div class="col">
                     <div class="card h-100 text-center custom-card card-materias">
                         <div class="card-body">
-                            <i class="bi bi-journal-text card-icon"></i>
+                        <img src="bootstrap/icons/journal-text.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
                             <h5 class="card-title">Materias</h5>
                             <p class="card-text">Gestión de las materias impartidas.</p>
                         </div>
@@ -49,7 +49,8 @@
                 <div class="col">
                     <div class="card h-100 text-center custom-card card-horarios">
                         <div class="card-body">
-                            <i class="bi bi-calendar3 card-icon"></i>
+                        <img src="bootstrap/icons/calendar3.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                            
                             <h5 class="card-title">Horarios</h5>
                             <p class="card-text">Organización de horarios académicos.</p>
                         </div>
@@ -58,7 +59,8 @@
                 <div class="col">
                     <div class="card h-100 text-center custom-card card-trayecto">
                         <div class="card-body">
-                            <i class="bi bi-map card-icon"></i>
+                           
+                            <img src="bootstrap/icons/map.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
                             <h5 class="card-title">Trayecto</h5>
                             <p class="card-text">Planificación de trayectos académicos.</p>
                         </div>
