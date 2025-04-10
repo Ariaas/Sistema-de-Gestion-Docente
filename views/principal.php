@@ -11,13 +11,15 @@
         <div class="container mt-4">
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 <div class="col">
-                    <div class="card h-100 text-center custom-card card-docentes">
-                        <div class="card-body">
-                        <img src="bootstrap/icons/person-circle.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                            <h5 class="card-title">Docentes</h5>
-                            <p class="card-text">Gestión de información de los docentes.</p>
+                    <a class="a-cards" href="?pagina=docente">
+                        <div class="card h-100 text-center custom-card card-docentes">
+                            <div class="card-body">
+                                <i class="bi bi-person-circle card-icon"></i>
+                                <h5 class="card-title">Docentes</h5>
+                                <p class="card-text">Gestión de información de los docentes.</p>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col">
                     <div class="card h-100 text-center custom-card card-secciones">

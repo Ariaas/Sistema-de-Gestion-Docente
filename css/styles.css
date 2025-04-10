@@ -93,6 +93,10 @@ h1{
     padding: 20px; /* Espaciado interno */
 }
 
+.a-cards{
+    text-decoration: none;
+}
+
 .row-cols-1 .col {
     margin-bottom: 20px; /* Espaciado entre tarjetas en pantallas pequeñas */
 }
