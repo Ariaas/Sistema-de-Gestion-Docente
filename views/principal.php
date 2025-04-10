@@ -14,7 +14,7 @@
                     <a class="a-cards" href="?pagina=docente">
                         <div class="card h-100 text-center custom-card card-docentes">
                             <div class="card-body">
-                                <i class="bi bi-person-circle card-icon"></i>
+                            <img src="bootstrap/icons/person-circle.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
                                 <h5 class="card-title">Docentes</h5>
                                 <p class="card-text">Gestión de información de los docentes.</p>
                             </div>
