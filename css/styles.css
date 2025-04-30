@@ -187,6 +187,11 @@ h1{
     color: #ffffff;
 }
 
+.card-uc {
+    background-color: #ddb12c; /* Rojo */
+    color: #ffffff;
+}
+
 table {
     width: 100%; /* Asegura que la tabla ocupe todo el ancho */
     border-collapse: collapse; /* Elimina espacios entre celdas */

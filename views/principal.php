@@ -29,20 +29,11 @@
                     </div>
                 </div>
                 <div class="col">
-                    <div class="card h-100 text-center custom-card card-alumnos">
-                        <div class="card-body">
-                            <i class="bi bi-people card-icon"></i>
-                            <h5 class="card-title">Alumnos</h5>
-                            <p class="card-text">Control de datos de los estudiantes.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100 text-center custom-card card-materias">
+                    <div class="card h-100 text-center custom-card card-uc">
                         <div class="card-body">
                             <i class="bi bi-journal-text card-icon"></i>
-                            <h5 class="card-title">Materias</h5>
-                            <p class="card-text">Gestión de las materias impartidas.</p>
+                            <h5 class="card-title">Unidades Curriculares</h5>
+                            <p class="card-text">Gestión de las Unidades Curriculares impartidas.</p>
                         </div>
                     </div>
                 </div>

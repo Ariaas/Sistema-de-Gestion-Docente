@@ -21,7 +21,7 @@
                     <i class="bi bi-book"></i>
                 </span>
                 <span class="description">
-                    Materias
+                    Unidades Curriculares
                 </span>
             </a>
             <a href="#" class="nav-link">
@@ -48,6 +48,13 @@
                     Configuración
                 </span>
             </a>
-            
+            <a href="?pagina=espacios" class="nav-link">
+                <span class="icon">
+                    <i class="bi bi-building"></i>
+                </span>
+                <span class="description">
+                    Espacios
+                </span>
+            </a>
         </nav>
     </div>
