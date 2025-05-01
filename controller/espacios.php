@@ -12,7 +12,7 @@ if (is_file("views/" . $pagina . ".php")) {
         $e = new Espacio();
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
-            echo json_encode($p->consultar());
+            echo json_encode($e->Listar());
         } elseif ($accion == 'eliminar') {
             $e->setCodigo($_POST['codigoEspacio']);
             //echo  json_encode($e->eliminar());

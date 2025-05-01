@@ -17,11 +17,10 @@
     <?php require_once("public/components/head.php"); ?>
 
     <title>Espacios</title>
-
 </head>
 
-
 <body>
+
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content">
         <section class="d-flex flex-column align-items-md-center" style="margin-top: 110px;">
@@ -66,19 +65,16 @@
                         </button>
                     </div>
                     <div class="modal-body">
-
                         <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
                         <form method="post" id="f" autocomplete="off">
                             <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
                             <div class="container">
                                 <div class="row mb-3">
-
                                     <div class="col-md-3">
                                         <label for="codigoEspacio">Codigo</label>
                                         <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio">
                                         <span id="scodigoEspacio"></span>
                                     </div>
-
                                     <div class="col-md-2">
                                         <label for="tipoEspacio">Tipo</label>
                                         <select class="form-select" name="tipoEspacio" id="tipoEspacio">
@@ -87,7 +83,6 @@
                                         </select>
                                         <span id="stipoEspacio"></span>
                                     </div>
-
                                 </div>
                             </div>
                             <div class="row mt-3 d-flex justify-content-center align-items-md-center">
@@ -96,12 +91,12 @@
                                 </div>
                             </div>
                         </form>
-
                     </div>
                 </div>
             </div>
         </div>
         <!-- Fin del Modal -->
+
     </main>
     <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>

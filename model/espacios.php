@@ -80,13 +80,13 @@ class Espacio extends Connection {
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT * FROM tbl_espacio");
-            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt = $co->query("SELECT esp_codigo, esp_tipo FROM tbl_espacio");
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $r['resultado'] = 'consultar';
+            $r['mensaje'] = $data;
         } catch (Exception $e) {
-            $r = [
-                'resultado' => 'error',
-                'mensaje' => $e->getMessage()
-            ];
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
         }
         $co = null;
         return $r;

@@ -4,7 +4,6 @@ function Listar() {
   enviaAjax(datos);
 }
 
-
 function destruyeDT() {
   // se destruye el datatablet
   if ($.fn.DataTable.isDataTable("#tablaespacio")) {
@@ -13,7 +12,14 @@ function destruyeDT() {
 }
 function crearDT() {
   if (!$.fn.DataTable.isDataTable("#tablaespacio")) {
-    var table = $("#tablaespacio").DataTable({
+    $("#tablaespacio").DataTable({
+      ////
+      // data: [
+      //   ["001", "Aula", "Acciones"],
+      //   ["002", "Laboratorio", "Acciones"],
+      // ],
+      // columns: [{ title: "Codigo" }, { title: "Tipo" }, { title: "Acciones" }],
+      ////
       paging: true,
       lengthChange: true,
       searching: true,
@@ -22,15 +28,15 @@ function crearDT() {
       autoWidth: false,
       responsive: true,
       language: {
-        lengthMenu: "Mostrar _MENU_",
-        zeroRecords: "No se encontraron proveedores",
-        info: "Página _PAGE_ de _PAGES_",
-        infoEmpty: "No hay proveedores registrados",
+        lengthMenu: "Mostrar _MENU_ registros",
+        zeroRecords: "No se encontraron resultados",
+        info: "Mostrando _PAGE_ de _PAGES_",
+        infoEmpty: "No hay registros disponibles",
         infoFiltered: "(filtrado de _MAX_ registros totales)",
-        search: "Buscar",
+        search: "Buscar:",
         paginate: {
-          first: "Primera",
-          last: "Última",
+          first: "Primero",
+          last: "Último",
           next: "Siguiente",
           previous: "Anterior",
         },
@@ -66,73 +72,71 @@ function crearDT() {
 }
 
 $(document).ready(function () {
-//   consultar();
+  Listar();
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
-//   $("#tipoEspacio").on("keypress", function (e) {
-//     validarkeypress(/^[A-Za-z0-9-\b]*$/, e);
-//   });
+  //   $("#tipoEspacio").on("keypress", function (e) {
+  //     validarkeypress(/^[A-Za-z0-9-\b]*$/, e);
+  //   });
 
-//   $("#tipoEspacio").on("keyup", function () {
-//     validarkeyup(
-//       /^[A-Za-z0-9]{8,9}$/,
-//       $(this),
-//       $("#srifProveedor"),
-//       "El formato permite de 8 a 9 carácteres"
-//     );
-//     if ($("#tipoEspacio").val().length <= 9) {
-//       var datos = new FormData();
-//       datos.append("accion", "buscar");
-//       datos.append("tipoEspacio", $(this).val());
-//       enviaAjax(datos, "buscar");
-//     }
-//   });
+  //   $("#tipoEspacio").on("keyup", function () {
+  //     validarkeyup(
+  //       /^[A-Za-z0-9]{8,9}$/,
+  //       $(this),
+  //       $("#srifProveedor"),
+  //       "El formato permite de 8 a 9 carácteres"
+  //     );
+  //     if ($("#tipoEspacio").val().length <= 9) {
+  //       var datos = new FormData();
+  //       datos.append("accion", "buscar");
+  //       datos.append("tipoEspacio", $(this).val());
+  //       enviaAjax(datos, "buscar");
+  //     }
+  //   });
 
-//   $("#nombreProveedor").on("keypress", function (e) {
-//     validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
-//   });
+  //   $("#nombreProveedor").on("keypress", function (e) {
+  //     validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+  //   });
 
-//   $("#nombreProveedor").on("keyup", function () {
-//     validarkeyup(
-//       /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
-//       $(this),
-//       $("#snombreProveedor"),
-//       "Este formato no debe estar vacío / permite un máximo 30 carácteres"
-//     );
-//   });
+  //   $("#nombreProveedor").on("keyup", function () {
+  //     validarkeyup(
+  //       /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+  //       $(this),
+  //       $("#snombreProveedor"),
+  //       "Este formato no debe estar vacío / permite un máximo 30 carácteres"
+  //     );
+  //   });
 
-//   $("#correoProveedor").on("keypress", function (e) {
-//     validarkeypress(/^[A-Za-z0-9@_.\b\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
-//   });
+  //   $("#correoProveedor").on("keypress", function (e) {
+  //     validarkeypress(/^[A-Za-z0-9@_.\b\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+  //   });
 
-//   $("#correoProveedor").on("keyup", function () {
-//     validarkeyup(
-//       /^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC-]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,
-//       $(this),
-//       $("#scorreoProveedor"),
-//       "El formato sólo permite un correo válido!"
-//     );
-//   });
+  //   $("#correoProveedor").on("keyup", function () {
+  //     validarkeyup(
+  //       /^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC-]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,
+  //       $(this),
+  //       $("#scorreoProveedor"),
+  //       "El formato sólo permite un correo válido!"
+  //     );
+  //   });
 
-//   $("#telefonoProveedor").on("keypress", function (e) {
-//     validarkeypress(/^[0-9-\b]*$/, e);
-//   });
+  //   $("#telefonoProveedor").on("keypress", function (e) {
+  //     validarkeypress(/^[0-9-\b]*$/, e);
+  //   });
 
-//   $("#telefonoProveedor").on("keyup", function () {
-//     validarkeyup(
-//       /^[0-9]{10,11}$/,
-//       $(this),
-//       $("#stelefonoProveedor"),
-//       "El formato sólo permite un número válido"
-//     );
-//   });
-
+  //   $("#telefonoProveedor").on("keyup", function () {
+  //     validarkeyup(
+  //       /^[0-9]{10,11}$/,
+  //       $(this),
+  //       $("#stelefonoProveedor"),
+  //       "El formato sólo permite un número válido"
+  //     );
+  //   });
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
-    
     if ($(this).text() == "REGISTRAR") {
       if (validarenvio()) {
         var datos = new FormData();
@@ -204,29 +208,15 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
   });
+
+  
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-
-   return true;
+  return true;
 }
-
-//Función para mostrar mensajes
-
-function muestraMensaje(icono, tiempo, titulo, mensaje) {
-  Swal.fire({
-    icon: icono,
-    timer: tiempo,
-    title: titulo,
-    html: mensaje,
-    showConfirmButton: true,
-    confirmButtonText: "Aceptar",
-  });
-}
-
-
 
 //funcion para pasar de la lista a el formulario
 // function pone(pos, accion) {
@@ -264,37 +254,34 @@ function enviaAjax(datos) {
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
-        if (lee.resultado == "consulta") {
-          destruyeDT();
-
-          // Limpiar la tabla
+        ////
+        if (lee.resultado === "consultar") {
+          // Populate table with data
           $("#resultadoconsulta").empty();
-
-          // Llenar la tabla con los datos
-          if (lee.espacios && lee.espacios.length > 0) {
-            var html = "";
-            $.each(lee.espacios, function (index, espacio) {
-              html += "<tr>";
-              html += "<td>" + espacio.esp_codigo + "</td>";
-              html += "<td>" + espacio.esp_tipo + "</td>";
-              html +=
-                "<td><button class='btn btn-warning btn-sm' onclick='pone(this,0)'><i class='fas fa-edit'></i></button> ";
-              html +=
-                "<button class='btn btn-danger btn-sm' onclick='pone(this,1)'><i class='fas fa-trash'></i></button></td>";
-              html += "</tr>";
-            });
-            $("#resultadoconsulta").html(html);
-          }
-
+          $.each(lee.mensaje, function (index, item) {
+            $("#resultadoconsulta").append(`
+              <tr>
+                <td>${item.esp_codigo}</td>
+                <td>${item.esp_tipo}</td>
+                <td>
+                  <button class="btn btn-warning btn-sm modificar" data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Eliminar</button>
+                </td>
+              </tr>
+            `);
+          });
+          destruyeDT();
           crearDT();
-        } else if (lee.resultado == "registrar") {
+        }
+        ////////
+        else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
             "Registro Incluido!<br/>Se registró el espacio correctamente!"
           ) {
             $("#modal1").modal("hide");
-            // consultar();
+            Listar();
           }
         }
         // else if (lee.resultado == "modificar") {
@@ -304,7 +291,7 @@ function enviaAjax(datos) {
         //     "Registro Modificado!<br/> Se modificó el proveedor correctamente"
         //   ) {
         //     $("#modal1").modal("hide");
-        //     consultar();
+        //     Listar();
         //   }
         // }
         // else if (lee.resultado == "encontro") {
@@ -319,7 +306,7 @@ function enviaAjax(datos) {
         //     "Registro Eliminado! <br/> Se eliminó el proveedor correctamente"
         //   ) {
         //     $("#modal1").modal("hide");
-        //     consultar();
+        //     Listar();
         //   }
         // }
         else if (lee.resultado == "error") {
@@ -344,4 +331,15 @@ function enviaAjax(datos) {
 function limpia() {
   $("#tipoEspacio").val("");
   $("#codigoEspacio").val("");
+}
+
+function muestraMensaje(icono, tiempo, titulo, mensaje) {
+  Swal.fire({
+    icon: icono,
+    timer: tiempo,
+    title: titulo,
+    html: mensaje,
+    showConfirmButton: true,
+    confirmButtonText: "Aceptar",
+  });
 }
