@@ -66,14 +66,14 @@ h1{
 }
 
 /* Estilos para las tarjetas */
-.card {
+.card-tabla {
     border: 1px solid #ddd; /* Borde ligero */
-    border-radius: 8px; /* Bordes redondeados */
+    border-radius: 10px; /* Bordes redondeados */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
     transition: transform 0.2s, box-shadow 0.2s; /* Transición para hover */
 }
 
-.card:hover {
+.card-tabla:hover {
     transform: translateY(-5px); /* Eleva la tarjeta al pasar el mouse */
     box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2); /* Sombra más intensa */
 }

@@ -1,7 +1,7 @@
 <?php
 require_once('config/config.php');
 
-class Conexion extends PDO
+class Connection extends PDO
 {
     private $conex;
 
@@ -17,7 +17,7 @@ class Conexion extends PDO
         }
     }
 
-    protected function Conecta()
+    protected function Con()
     {
         return $this->conex;
     }

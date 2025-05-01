@@ -2,7 +2,7 @@
     <nav class="nav flex-column">
         <a href="?pagina=principal" class="nav-link">
             <span class="icon">
-                <img src="bootstrap/icons/house.svg"></img>
+                <img src="public/assets/icons/house.svg"></img>
             </span>
             <span class="description">
                 Inicio
@@ -10,7 +10,7 @@
         </a>
         <a href="?pagina=docente" class="nav-link">
             <span class="icon">
-                <img src="bootstrap/icons/person.svg"></img>
+                <img src="public/assets/icons/person.svg"></img>
             </span>
             <span class="description">
                 Docentes
@@ -18,15 +18,15 @@
         </a>
         <a href="#" class="nav-link">
             <span class="icon">
-                <img src="bootstrap/icons/book.svg"></img>
+                <img src="public/assets/icons/book.svg"></img>
             </span>
             <span class="description">
-                Materias
+                Unidades Curriculares
             </span>
         </a>
         <a href="#" class="nav-link">
             <span class="icon">
-                <img src="bootstrap/icons/calendar.svg"></img>
+                <img src="public/assets/icons/calendar.svg"></img>
             </span>
             <span class="description">
                 Horarios
@@ -34,15 +34,24 @@
         </a>
         <a href="#" class="nav-link">
             <span class="icon">
-                <img src="bootstrap/icons/book.svg"></img>
+                <img src="public/assets/icons/book.svg"></img>
             </span>
             <span class="description">
                 Trayecto
             </span>
         </a>
+        <a href="?pagina=espacios" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/book.svg"></img>
+            </span>
+            <span class="description">
+                Espacios
+            </span>
+        </a>
+        
         <a href="#" class="nav-link">
             <span class="icon">
-                <img src="bootstrap/icons/gear.svg"></img>
+                <img src="public/assets/icons/gear.svg"></img>
             </span>
             <span class="description">
                 Configuración

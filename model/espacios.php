@@ -1,3 +1,117 @@
 <?php
-require_once('model/conexion.php');
+require_once('model/dbconnection.php');
 
+class Espacio extends Connection {
+
+    private $codigoEspacio;
+    private $tipoEspacio;
+
+
+    //Construct
+    public function __construct($codigoEspacio = null, $tipoEspacio = null)
+    {
+        parent::__construct();
+
+        $this->codigoEspacio = $codigoEspacio;
+        $this->tipoEspacio = $tipoEspacio;
+    }
+
+    //Getters 
+    public function getCodigo() {
+        return $this->codigoEspacio;
+    }
+    public function getTipo() {
+        return $this->tipoEspacio;
+    }
+    //Setters
+    public function setCodigo($codigoEspacio) {
+        $this->codigoEspacio = $codigoEspacio;
+    }
+    public function setTipo($tipoEspacio) {
+        $this->tipoEspacio = $tipoEspacio;
+    }
+
+    //Methods
+    function Registrar()
+    {
+        $r = array();
+
+        if (!$this->existe($this->codigoEspacio)) {
+
+            $co = $this->Con();
+            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            try {
+
+                $stmt = $co->prepare("INSERT INTO tbl_espacio (
+                    esp_codigo,
+                    esp_tipo
+                ) VALUES (
+                    :codigoEspacio,
+                    :tipoEspacio
+                )");
+
+                $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+                $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
+
+                $stmt->execute();
+
+                $r['resultado'] = 'registrar';
+                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
+            } catch (Exception $e) {
+
+                $r['resultado'] = 'error';
+                $r['mensaje'] = $e->getMessage();
+            }
+
+            // 6. Cerrar la conexión
+            $co = null;
+        } else {
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'ERROR! <br/> El espacio colocado ya existe!';
+        }
+
+        return $r;
+    }
+
+    public function Listar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->query("SELECT * FROM tbl_espacio");
+            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $r = [
+                'resultado' => 'error',
+                'mensaje' => $e->getMessage()
+            ];
+        }
+        $co = null;
+        return $r;
+    }
+
+    public function Existe($codigoEspacio)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+
+            $stmt = $co->prepare("SELECT * FROM tbl_espacio WHERE esp_codigo=:codigoEspacio");
+            $stmt->execute(['codigoEspacio' => $codigoEspacio]);
+            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
+            if ($fila) {
+                $r['resultado'] = 'existe';
+                $r['mensaje'] = 'El espacio ya existe!';
+            }
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] =  $e->getMessage();
+        }
+        // Se cierra la conexion
+        $co = null;
+        return $r;
+    }
+}
