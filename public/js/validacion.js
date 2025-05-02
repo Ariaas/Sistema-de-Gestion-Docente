@@ -33,3 +33,7 @@ function muestraMensaje(icono, tiempo, titulo, mensaje) {
     confirmButtonText: "Aceptar",
   });
 }  
+
+
+
+

@@ -15,7 +15,7 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($e->Listar());
         } elseif ($accion == 'eliminar') {
             $e->setCodigo($_POST['codigoEspacio']);
-            //echo  json_encode($e->eliminar());
+            echo  json_encode($e->eliminar());
         } elseif ($accion == 'buscar') {
             $e->setCodigo(isset($_POST['codigoEspacio']) ? $_POST['codigoEspacio'] : null);
             //echo  json_encode($e->buscar());
@@ -25,7 +25,7 @@ if (is_file("views/" . $pagina . ".php")) {
             if ($accion == 'registrar') {
                 echo  json_encode($e->Registrar());
             } elseif ($accion == 'modificar') {
-               // echo  json_encode($e->modificar());
+                echo  json_encode($e->modificar());
             }
         }
         exit;

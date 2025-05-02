@@ -1,6 +1,4 @@
 <?php
-
-
 // Verificar si el usuario ha iniciado sesión
 // if (!isset($_SESSION['name'])) {
 //     // Redirigir al usuario a la página de inicio de sesión
@@ -8,7 +6,6 @@
 //     exit();
 // }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -70,14 +67,15 @@
                             <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
                             <div class="container">
                                 <div class="row mb-3">
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <label for="codigoEspacio">Codigo</label>
                                         <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio">
                                         <span id="scodigoEspacio"></span>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-6">
                                         <label for="tipoEspacio">Tipo</label>
                                         <select class="form-select" name="tipoEspacio" id="tipoEspacio">
+                                            <option value='disabled'disabled selected>Seleccione un tipo</option>
                                             <option value="Aula">Aula</option>
                                             <option value="Laboratorio">Laboratorio</option>
                                         </select>
@@ -108,6 +106,7 @@
 
     <!-- Scripts -->
     <script type="text/javascript" src="public/js/espacios.js"></script>
+    <script type="text/javascript" src="public/js/validacion.js"></script>
     <!-- Scripts -->
 </body>
 

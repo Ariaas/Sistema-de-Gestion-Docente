@@ -10,6 +10,7 @@ function destruyeDT() {
     $("#tablaespacio").DataTable().destroy();
   }
 }
+
 function crearDT() {
   if (!$.fn.DataTable.isDataTable("#tablaespacio")) {
     $("#tablaespacio").DataTable({
@@ -174,7 +175,7 @@ $(document).ready(function () {
       } else {
         // Mostrar confirmación usando SweetAlert
         Swal.fire({
-          title: "¿Está seguro de eliminar este proveedor?",
+          title: "¿Está seguro de eliminar este espacio?",
           text: "Esta acción no se puede deshacer.",
           icon: "warning",
           showCancelButton: true,
@@ -187,7 +188,7 @@ $(document).ready(function () {
             // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("tipoEspacio", $("#tipoEspacio").val());
+            datos.append("codigoEspacio", $("#codigoEspacio").val());
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -202,6 +203,7 @@ $(document).ready(function () {
       }
     }
   });
+
 
   $("#registrar").on("click", function () {
     limpia();
@@ -218,26 +220,26 @@ function validarenvio() {
   return true;
 }
 
-//funcion para pasar de la lista a el formulario
-// function pone(pos, accion) {
-//   linea = $(pos).closest("tr");
+// funcion para pasar de la lista a el formulario
+function pone(pos, accion) {
+  linea = $(pos).closest("tr");
 
-//   if (accion == 0) {
-//     $("#proceso").text("MODIFICAR");
-//     $("#tipoEspacio").prop("disabled", true);
-//     $("#codigoEspacio").prop("disabled", true);
-//   } else {
-//     $("#proceso").text("ELIMINAR");
-//     $(
-//       "#tipoEspacio, #codigoEspacio"
-//     ).prop("disabled", true);
-//   }
+  if (accion == 0) {
+    $("#proceso").text("MODIFICAR");
+    $("#tipoEspacio").prop("disabled", false);
+    $("#codigoEspacio").prop("disabled", false);
+  } else {
+    $("#proceso").text("ELIMINAR");
+    $(
+      "#tipoEspacio, #codigoEspacio"
+    ).prop("disabled", false);
+  }
 
-//   $("#tipoEspacio").val($(linea).find("td:eq(1)").text());
-//   $("#codigoEspacio").val($(linea).find("td:eq(2)").text());
+  $("#tipoEspacio").val($(linea).find("td:eq(1)").text());
+  $("#codigoEspacio").val($(linea).find("td:eq(0)").text());
 
-//   $("#modal1").modal("show");
-// }
+  $("#modal1").modal("show");
+}
 
 //funcion que envia y recibe datos por AJAX
 function enviaAjax(datos) {
@@ -254,9 +256,8 @@ function enviaAjax(datos) {
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
-        ////
         if (lee.resultado === "consultar") {
-          // Populate table with data
+          destruyeDT();
           $("#resultadoconsulta").empty();
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
@@ -264,13 +265,12 @@ function enviaAjax(datos) {
                 <td>${item.esp_codigo}</td>
                 <td>${item.esp_tipo}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Eliminar</button>
                 </td>
               </tr>
             `);
           });
-          destruyeDT();
           crearDT();
         }
         ////////
@@ -284,31 +284,31 @@ function enviaAjax(datos) {
             Listar();
           }
         }
-        // else if (lee.resultado == "modificar") {
-        //   muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
-        //   if (
-        //     lee.mensaje ==
-        //     "Registro Modificado!<br/> Se modificó el proveedor correctamente"
-        //   ) {
-        //     $("#modal1").modal("hide");
-        //     Listar();
-        //   }
-        // }
+        else if (lee.resultado == "modificar") {
+          muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
+          if (
+            lee.mensaje ==
+            "Registro Modificado!<br/>Se modificó el espacio correctamente!"
+          ) {
+            $("#modal1").modal("hide");
+            Listar();
+          }
+        }
         // else if (lee.resultado == "encontro") {
-        //   if (lee.mensaje == "El rif ya existe!") {
+        //   if (lee.mensaje == "El espacio ya existe!") {
         //     alert(lee.mensaje);
         //   }
         // }
-        // else if (lee.resultado == "eliminar") {
-        //   muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
-        //   if (
-        //     lee.mensaje ==
-        //     "Registro Eliminado! <br/> Se eliminó el proveedor correctamente"
-        //   ) {
-        //     $("#modal1").modal("hide");
-        //     Listar();
-        //   }
-        // }
+        else if (lee.resultado == "eliminar") {
+          muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
+          if (
+            lee.mensaje ==
+            "Registro Eliminado!<br/>Se eliminó el espacio correctamente!"
+          ) {
+            $("#modal1").modal("hide");
+            Listar();
+          }
+        }
         else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
@@ -333,13 +333,4 @@ function limpia() {
   $("#codigoEspacio").val("");
 }
 
-function muestraMensaje(icono, tiempo, titulo, mensaje) {
-  Swal.fire({
-    icon: icono,
-    timer: tiempo,
-    title: titulo,
-    html: mensaje,
-    showConfirmButton: true,
-    confirmButtonText: "Aceptar",
-  });
-}
+

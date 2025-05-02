@@ -32,6 +32,9 @@ class Espacio extends Connection {
     }
 
     //Methods
+
+    /// Registrar
+
     function Registrar()
     {
         $r = array();
@@ -45,10 +48,12 @@ class Espacio extends Connection {
 
                 $stmt = $co->prepare("INSERT INTO tbl_espacio (
                     esp_codigo,
-                    esp_tipo
+                    esp_tipo,
+                    esp_estado
                 ) VALUES (
                     :codigoEspacio,
-                    :tipoEspacio
+                    :tipoEspacio,
+                    1
                 )");
 
                 $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
@@ -74,13 +79,65 @@ class Espacio extends Connection {
         return $r;
     }
 
+    /// Actualizar
+
+    function Modificar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        if ($this->existe($this->codigoEspacio)) {
+            try {
+                $co->query("UPDATE tbl_espacio
+                SET esp_tipo = '$this->tipoEspacio'
+                WHERE esp_codigo = '$this->codigoEspacio'");
+                $r['resultado'] = 'modificar';
+                $r['mensaje'] =  'Registro Modificado!<br/>Se modificó el espacio correctamente!';
+            } catch (Exception $e) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] =  $e->getMessage();
+            }
+        } else {
+            $r['resultado'] = 'modificar';
+            $r['mensaje'] =  'ERROR! <br/> El CÓDIGO colocado NO existe!';
+        }
+        return $r;
+    }
+
+    /// Eliminar
+
+    function Eliminar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        if ($this->existe($this->codigoEspacio)) {
+            try {
+                $co->query("UPDATE tbl_espacio
+                SET esp_estado = 0
+                WHERE esp_codigo = '$this->codigoEspacio'");
+                $r['resultado'] = 'eliminar';
+                $r['mensaje'] =  'Registro Eliminado!<br/>Se eliminó el espacio correctamente!';
+            } catch (Exception $e) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] =  $e->getMessage();
+            }
+        } else {
+            $r['resultado'] = 'eliminar';
+            $r['mensaje'] =  'ERROR! <br/> El CÓDIGO colocado NO existe!';
+        }
+        return $r;
+    }
+
+    /// Listar
+
     public function Listar()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT esp_codigo, esp_tipo FROM tbl_espacio");
+            $stmt = $co->query("SELECT esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -91,6 +148,8 @@ class Espacio extends Connection {
         $co = null;
         return $r;
     }
+
+    /// Consultar exitencia
 
     public function Existe($codigoEspacio)
     {
@@ -105,7 +164,7 @@ class Espacio extends Connection {
             if ($fila) {
                 $r['resultado'] = 'existe';
                 $r['mensaje'] = 'El espacio ya existe!';
-            }
+            } 
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] =  $e->getMessage();
