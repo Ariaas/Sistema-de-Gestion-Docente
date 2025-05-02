@@ -1,7 +1,8 @@
 <?php
 require_once('model/dbconnection.php');
 
-class Espacio extends Connection {
+class Espacio extends Connection
+{
 
     private $codigoEspacio;
     private $tipoEspacio;
@@ -17,17 +18,21 @@ class Espacio extends Connection {
     }
 
     //Getters 
-    public function getCodigo() {
+    public function getCodigo()
+    {
         return $this->codigoEspacio;
     }
-    public function getTipo() {
+    public function getTipo()
+    {
         return $this->tipoEspacio;
     }
     //Setters
-    public function setCodigo($codigoEspacio) {
+    public function setCodigo($codigoEspacio)
+    {
         $this->codigoEspacio = $codigoEspacio;
     }
-    public function setTipo($tipoEspacio) {
+    public function setTipo($tipoEspacio)
+    {
         $this->tipoEspacio = $tipoEspacio;
     }
 
@@ -157,14 +162,13 @@ class Espacio extends Connection {
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-
             $stmt = $co->prepare("SELECT * FROM tbl_espacio WHERE esp_codigo=:codigoEspacio");
-            $stmt->execute(['codigoEspacio' => $codigoEspacio]);
+            $stmt->execute(['codigoEspacio' => $this->codigoEspacio]);
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
                 $r['mensaje'] = 'El espacio ya existe!';
-            } 
+            }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] =  $e->getMessage();

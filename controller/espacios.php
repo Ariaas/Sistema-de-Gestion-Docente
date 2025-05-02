@@ -16,9 +16,10 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'eliminar') {
             $e->setCodigo($_POST['codigoEspacio']);
             echo  json_encode($e->eliminar());
-        } elseif ($accion == 'buscar') {
-            $e->setCodigo(isset($_POST['codigoEspacio']) ? $_POST['codigoEspacio'] : null);
-            //echo  json_encode($e->buscar());
+        } elseif ($accion == 'existe') {
+            $e->setCodigo($_POST['codigoEspacio']);
+            $resultado = $e->Existe($_POST['codigoEspacio']);
+            echo json_encode($resultado);
         } else {
             $e->setCodigo($_POST['codigoEspacio']);
             $e->setTipo($_POST['tipoEspacio']);
