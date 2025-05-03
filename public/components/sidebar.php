@@ -32,7 +32,7 @@
                 Horarios
             </span>
         </a>
-        <a href="#" class="nav-link">
+        <a href="?pagina=trayecto" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/book.svg"></img>
             </span>
@@ -48,7 +48,7 @@
                 Espacios
             </span>
         </a>
-        
+
         <a href="#" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/gear.svg"></img>
@@ -57,6 +57,6 @@
                 Configuración
             </span>
         </a>
-        
+
     </nav>
 </div>

@@ -1,39 +1,39 @@
 <?php
 require_once('model/dbconnection.php');
 
-class Espacio extends Connection
+class Trayecto extends Connection
 {
 
-    private $codigoEspacio;
-    private $tipoEspacio;
+    private $trayectoNumero;
+    private $trayectoAnio;
 
 
     //Construct
-    public function __construct($codigoEspacio = null, $tipoEspacio = null)
+    public function __construct($trayectoNumero = null, $trayectoAnio = null)
     {
         parent::__construct();
 
-        $this->codigoEspacio = $codigoEspacio;
-        $this->tipoEspacio = $tipoEspacio;
+        $this->trayectoNumero = $trayectoNumero;
+        $this->trayectoAnio = $trayectoAnio;
     }
 
     //Getters 
-    public function getCodigo()
+    public function getNumero()
     {
-        return $this->codigoEspacio;
+        return $this->trayectoNumero;
     }
-    public function getTipo()
+    public function getAnio()
     {
-        return $this->tipoEspacio;
+        return $this->trayectoAnio;
     }
     //Setters
-    public function setCodigo($codigoEspacio)
+    public function setNumero($trayectoNumero)
     {
-        $this->codigoEspacio = $codigoEspacio;
+        $this->trayectoNumero = $trayectoNumero;
     }
-    public function setTipo($tipoEspacio)
+    public function setAnio($trayectoAnio)
     {
-        $this->tipoEspacio = $tipoEspacio;
+        $this->trayectoAnio = $trayectoAnio;
     }
 
     //Methods
@@ -44,30 +44,29 @@ class Espacio extends Connection
     {
         $r = array();
 
-        if (!$this->existe($this->codigoEspacio)) {
-
+        if (!$this->existe($this->trayectoNumero, $this->trayectoAnio)) {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             try {
 
-                $stmt = $co->prepare("INSERT INTO tbl_espacio (
-                    esp_codigo,
-                    esp_tipo,
-                    esp_estado
+                $stmt = $co->prepare("INSERT INTO tbl_trayecto (
+                    tra_numero,
+                    tra_anio,
+                    tra_estado
                 ) VALUES (
-                    :codigoEspacio,
-                    :tipoEspacio,
+                    :trayectoNumero,
+                    :trayectoAnio,
                     1
                 )");
 
-                $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
-                $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
 
                 $stmt->execute();
 
                 $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
+                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el trayecto correctamente!';
             } catch (Exception $e) {
 
                 $r['resultado'] = 'error';
@@ -78,7 +77,7 @@ class Espacio extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El espacio colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> El trayecto colocado ya existe!';
         }
 
         return $r;
@@ -91,19 +90,19 @@ class Espacio extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->existe($this->codigoEspacio)) {
+        if ($this->existe($this->trayectoNumero, $this->trayectoAnio)) {
             try {
-                $stmt = $co->prepare("UPDATE tbl_espacio
-                SET esp_tipo = :tipoEspacio
-                WHERE esp_codigo = :codigoEspacio");
+                $stmt = $co->prepare("UPDATE tbl_trayecto
+                SET tra_anio = :trayectoAnio
+                WHERE tra_numero = :trayectoNumero");
 
-                $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-                $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
 
                 $stmt->execute();
 
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el espacio correctamente!';
+                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el trayecto correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -122,18 +121,17 @@ class Espacio extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->existe($this->codigoEspacio)) {
+        if ($this->Existe($this->trayectoNumero, $this->trayectoAnio)) {
             try {
-                $stmt = $co->prepare("UPDATE tbl_espacio
-                SET esp_estado = 0
-                WHERE esp_codigo = :codigoEspacio");
-
-                $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
-
+                $stmt = $co->prepare("UPDATE tbl_trayecto
+                SET tra_estado = 0
+                WHERE tra_numero = :trayectoNumero");
+                $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el espacio correctamente!';
+                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el trayecto correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -153,7 +151,7 @@ class Espacio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1");
+            $stmt = $co->query("SELECT tra_numero, tra_anio FROM tbl_trayecto WHERE tra_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -167,20 +165,23 @@ class Espacio extends Connection
 
     /// Consultar exitencia
 
-    public function Existe($codigoEspacio)
+
+    public function Existe($trayectoNumero, $trayectoAnio)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_espacio WHERE esp_codigo=:codigoEspacio AND esp_estado = 1");
-            $stmt->bindParam(':codigoEspacio', $codigoEspacio, PDO::PARAM_STR);
+            $stmt = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_numero=:trayectoNumero AND tra_anio=:trayectoAnio AND tra_estado = 1");
+
+            $stmt->bindParam(':trayectoNumero', $trayectoNumero, PDO::PARAM_STR);
+            $stmt->bindParam(':trayectoAnio', $trayectoAnio, PDO::PARAM_STR);
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
                 $r['mensaje'] = 'El espacio ya existe!';
-            } 
+            }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
