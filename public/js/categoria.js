@@ -6,14 +6,14 @@ function Listar() {
 
 function destruyeDT() {
   // se destruye el datatablet
-  if ($.fn.DataTable.isDataTable("#tablaeje")) {
-    $("#tablaeje").DataTable().destroy();
+  if ($.fn.DataTable.isDataTable("#tablacategoria")) {
+    $("#tablacategoria").DataTable().destroy();
   }
 }
 
 function crearDT() {
-  if (!$.fn.DataTable.isDataTable("#tablaeje")) {
-    $("#tablaeje").DataTable({
+  if (!$.fn.DataTable.isDataTable("#tablacategoria")) {
+    $("#tablacategoria").DataTable({
       ////
       // data: [
       //   ["001", "Aula", "Acciones"],
@@ -77,17 +77,17 @@ $(document).ready(function () {
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
-    $("#ejeNombre").on("keypress",function(e){
+    $("#categoriaNombre").on("keypress",function(e){
     validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
 	});
 
-	$("#ejeNombre").on("keyup",function(){
+	$("#categoriaNombre").on("keyup",function(){
 		validarkeyup(/^[A-Za-z0-9]{5,30}$/,$(this),
-		$("#sejeNombre"),"El formato permite de 5 a 30 carácteres");
-		if ($("#ejeNombre").val().length >= 5) {
+		$("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres");
+		if ($("#categoriaNombre").val().length >= 5) {
 			var datos = new FormData();
 			datos.append('accion', 'existe');
-			datos.append('ejeNombre', $(this).val());
+			datos.append('categoriaNombre', $(this).val());
 			enviaAjax(datos, 'existe');
 		}
 	});
@@ -99,7 +99,7 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
-        datos.append("ejeNombre", $("#ejeNombre").val());
+        datos.append("categoriaNombre", $("#categoriaNombre").val());
 
         enviaAjax(datos);
       }
@@ -107,8 +107,8 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
-        datos.append("ejeNombre", $("#ejeNombre").val());
-        datos.append("ejeId", $("#ejeId").val());
+        datos.append("categoriaNombre", $("#categoriaNombre").val());
+        datos.append("categoriaId", $("#categoriaId").val());
 
         enviaAjax(datos);
       }
@@ -117,8 +117,8 @@ $(document).ready(function () {
       if (
         validarkeyup(
           /^[[A-Za-z0-9,\#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
-          $("#ejeNombre"),
-          $("#sejeNombre"),
+          $("#categoriaNombre"),
+          $("#scategoriaNombre"),
           "Formato incorrecto"
         ) == 0
       ) {
@@ -126,7 +126,7 @@ $(document).ready(function () {
           "error",
           4000,
           "ERROR!",
-          "Seleccionó la categoria incorrecto <br/> por favor verifique nuevamente"
+          "Seleccionó eje incorrecto <br/> por favor verifique nuevamente"
         );
       } else {
         // Mostrar confirmación usando SweetAlert
@@ -144,7 +144,7 @@ $(document).ready(function () {
             // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("ejeId", $("#ejeId").val());
+            datos.append("categoriaId", $("#categoriaId").val());
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -182,17 +182,17 @@ function pone(pos, accion) {
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#ejeId").prop("disabled", false);
-    $("#ejeNombre").prop("disabled", false);
+    $("#categoriaId").prop("disabled", false);
+    $("#categoriaNombre").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
     $(
-      "#ejeId, #ejeNombre"
+      "#categoriaId, #categoriaNombre"
     ).prop("disabled", false);
   }
 
-  $("#ejeId").val($(linea).find("td:eq(0)").text());
-  $("#ejeNombre").val($(linea).find("td:eq(1)").text());
+  $("#categoriaId").val($(linea).find("td:eq(0)").text());
+  $("#categoriaNombre").val($(linea).find("td:eq(1)").text());
 
   $("#modal1").modal("show");
 }
@@ -218,11 +218,11 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
               <tr>
-                <td style="display: none;">${item.eje_id}</td>
-                <td>${item.eje_nombre}</td>
+                <td style="display: none;">${item.cat_id}</td>
+                <td>${item.cat_nombre}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}">Eliminar</button>
                 </td>
               </tr>
             `);
@@ -234,7 +234,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el CATEGORIA correctamente!"
+            "Registro Incluido!<br/>Se registró el EJE correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -244,13 +244,13 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el CATEGORIA correctamente!"
+            "Registro Modificado!<br/>Se modificó el EJE correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
           }
         }else if (lee.resultado == "existe") {		
-          if (lee.mensaje == 'El CATEGORIA ya existe!') {
+          if (lee.mensaje == 'El EJE ya existe!') {
             muestraMensaje('info', 4000,'Atención!', lee.mensaje);
           }	
         }
@@ -258,7 +258,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el CATEGORIA correctamente!"
+            "Registro Eliminado!<br/>Se eliminó el EJE correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -284,8 +284,8 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  $("#ejeId").val("");
-  $("#ejeNombre").val("");
+  $("#categoriaId").val("");
+  $("#categoriaNombre").val("");
 }
 
 

@@ -67,5 +67,14 @@
             </span>
         </a>
 
+        <a href="?pagina=categoria" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/gear.svg"></img>
+            </span>
+            <span class="description">
+                Categoria
+            </span>
+        </a>
+
     </nav>
 </div>

@@ -4,36 +4,36 @@ require_once('model/dbconnection.php');
 class Eje extends Connection
 {
 
-    private $ejeNombre;
-    private $ejeId;
+    private $categoriaNombre;
+    private $categoriaId;
 
 
     //Construct
-    public function __construct($ejeNombre = null, $ejeId = null)
+    public function __construct($categoriaNombre = null, $categoriaId = null)
     {
         parent::__construct();
 
-        $this->ejeNombre = $ejeNombre;
-        $this->ejeId = $ejeId;
+        $this->categoriaNombre = $categoriaNombre;
+        $this->categoriaId = $categoriaId;
     }
 
     //Getters 
     public function getEje()
     {
-        return $this->ejeNombre;
+        return $this->categoriaNombre;
     }
     public function getId()
     {
-        return $this->ejeId;
+        return $this->categoriaId;
     }
     //Setters
-    public function setEje($ejeNombre)
+    public function setEje($categoriaNombre)
     {
-        $this->ejeNombre = $ejeNombre;
+        $this->categoriaNombre = $categoriaNombre;
     }
-    public function setId($ejeId)
+    public function setId($categoriaId)
     {
-        $this->ejeId = $ejeId;
+        $this->categoriaId = $categoriaId;
     }
 
     //Methods
@@ -44,22 +44,22 @@ class Eje extends Connection
     {
         $r = array();
 
-        if (!$this->Existe($this->ejeNombre)) {
+        if (!$this->Existe($this->categoriaNombre)) {
 
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             try {
 
-                $stmt = $co->prepare("INSERT INTO tbl_eje (
-                    eje_nombre,
-                    eje_estado
+                $stmt = $co->prepare("INSERT INTO tbl_categoria (
+                    cat_nombre,
+                    cat_estado
                 ) VALUES (
-                    :ejeNombre,
+                    :categoriaNombre,
                     1
                 )");
 
-                $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
+                $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
 
                 $stmt->execute();
 
@@ -88,15 +88,15 @@ class Eje extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->ExisteId($this->ejeId)) {
-            if (!$this->existe($this->ejeNombre)) {
+        if ($this->ExisteId($this->categoriaId)) {
+            if (!$this->existe($this->categoriaNombre)) {
                 try {
-                    $stmt = $co->prepare("UPDATE tbl_eje
-                    SET eje_nombre = :ejeNombre 
-                    WHERE eje_id = :ejeId");
+                    $stmt = $co->prepare("UPDATE tbl_categoria
+                    SET cat_nombre = :categoriaNombre 
+                    WHERE cat_id = :categoriaId");
 
-                    $stmt->bindParam(':ejeId', $this->ejeId, PDO::PARAM_INT);
-                    $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
+                    $stmt->bindParam(':categoriaId', $this->categoriaId, PDO::PARAM_INT);
+                    $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
 
                     $stmt->execute();
 
@@ -124,13 +124,13 @@ class Eje extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->ExisteId($this->ejeId)) {
+        if ($this->ExisteId($this->categoriaId)) {
             try {
-                $stmt = $co->prepare("UPDATE tbl_eje
-                SET eje_estado = 0
-                WHERE eje_id = :ejeId");
+                $stmt = $co->prepare("UPDATE tbl_categoria
+                SET cat_estado = 0
+                WHERE cat_id = :categoriaId");
 
-                $stmt->bindParam(':ejeId', $this->ejeId, PDO::PARAM_STR);
+                $stmt->bindParam(':categoriaId', $this->categoriaId, PDO::PARAM_STR);
 
                 $stmt->execute();
 
@@ -155,7 +155,7 @@ class Eje extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT eje_nombre, eje_id FROM tbl_eje WHERE eje_estado = 1");
+            $stmt = $co->query("SELECT cat_nombre, cat_id FROM tbl_categoria WHERE cat_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -169,14 +169,14 @@ class Eje extends Connection
 
     /// Consultar exitencia
 
-    public function ExisteId($ejeId)
+    public function ExisteId($categoriaId)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_eje WHERE eje_id=:ejeId AND eje_estado = 1");
-            $stmt->bindParam(':ejeId', $ejeId, PDO::PARAM_STR);
+            $stmt = $co->prepare("SELECT * FROM tbl_categoria WHERE cat_id=:categoriaId AND cat_estado = 1");
+            $stmt->bindParam(':categoriaId', $categoriaId, PDO::PARAM_STR);
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
@@ -192,14 +192,14 @@ class Eje extends Connection
         return $r;
     }
 
-    public function Existe($ejeNombre)
+    public function Existe($categoriaNombre)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_eje WHERE eje_nombre=:ejeNombre AND eje_estado = 1");
-            $stmt->bindParam(':ejeNombre', $ejeNombre, PDO::PARAM_STR);
+            $stmt = $co->prepare("SELECT * FROM tbl_categoria WHERE cat_nombre=:categoriaNombre AND cat_estado = 1");
+            $stmt->bindParam(':categoriaNombre', $categoriaNombre, PDO::PARAM_STR);
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {

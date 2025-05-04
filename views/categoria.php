@@ -13,7 +13,7 @@
 <head>
     <?php require_once("public/components/head.php"); ?>
 
-    <title>Ejes</title>
+    <title>Categoria</title>
 </head>
 
 <body>
@@ -37,11 +37,11 @@
                 </div>
                 <div class="container text-md-center">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="tablaeje">
+                        <table class="table table-striped table-hover" id="tablacategoria">
                             <thead>
                                 <tr>
                                     <th style="display: none;">ID</th>
-                                    <th>Eje</th>
+                                    <th>Categoria</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -57,7 +57,7 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Formulario de Ejes</h5>
+                        <h5 class="modal-title">Formulario de Categoria</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                         </button>
                     </div>
@@ -68,14 +68,14 @@
                             <div class="container">
                                 <div class="row mb-3">
                                     <div style="display: none;" class="col-md-6">
-                                        <label for="ejeId">ID</label>
-                                        <input class="form-control" type="text" id="ejeId" name="ejeId">
-                                        <span id="sejeId"></span>
+                                        <label for="categoriaId">ID</label>
+                                        <input class="form-control" type="text" id="categoriaId" name="categoriaId">
+                                        <span id="scategoriaId"></span>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="ejeNombre">Eje</label>
-                                        <input class="form-control" type="text" id="ejeNombre" name="ejeNombre">
-                                        <span id="sejeNombre"></span>
+                                        <label for="categoriaNombre">Categoria</label>
+                                        <input class="form-control" type="text" id="categoriaNombre" name="categoriaNombre">
+                                        <span id="scategoriaNombre"></span>
                                     </div>
                                 </div>
                             </div>
@@ -101,7 +101,7 @@
     <!-- fin de container -->
 
     <!-- Scripts -->
-    <script type="text/javascript" src="public/js/eje.js"></script>
+    <script type="text/javascript" src="public/js/categoria.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
     <!-- Scripts -->
 </body>
