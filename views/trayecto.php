@@ -40,6 +40,7 @@
                         <table class="table table-striped table-hover" id="tablatrayecto">
                             <thead>
                                 <tr>
+                                    <th style="display: none;">ID</th>
                                     <th>Número</th>
                                     <th>Año</th>
                                     <th>Acciones</th>
@@ -67,12 +68,17 @@
                             <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
                             <div class="container">
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4" style="display: none;">
+                                        <label for=" trayectoId">id</label>
+                                        <input class="form-control" type="text" id="trayectoId" name="trayectoId" min="1">
+                                        <span id="strayectoNumero"></span>
+                                    </div>
+                                    <div class="col-md-4">
                                         <label for="trayectoNumero">Numero</label>
                                         <input class="form-control" type="text" id="trayectoNumero" name="trayectoNumero" min="1">
                                         <span id="strayectoNumero"></span>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label for="trayectoAnio">Año</label>
                                         <select class="form-select" name="trayectoAnio" id="trayectoAnio">
                                             <option value="" disabled>Seleccione un Año</option>

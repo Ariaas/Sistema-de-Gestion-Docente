@@ -14,13 +14,6 @@ function destruyeDT() {
 function crearDT() {
   if (!$.fn.DataTable.isDataTable("#tablatrayecto")) {
     $("#tablatrayecto").DataTable({
-      ////
-      // data: [
-      //   ["001", "Aula", "Acciones"],
-      //   ["002", "Laboratorio", "Acciones"],
-      // ],
-      // columns: [{ title: "Codigo" }, { title: "Tipo" }, { title: "Acciones" }],
-      ////
       paging: true,
       lengthChange: true,
       searching: true,
@@ -122,32 +115,14 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
+        datos.append("trayectoId", $("#trayectoId").val());
         datos.append("trayectoNumero", $("#trayectoNumero").val());
         datos.append("trayectoAnio", $("#trayectoAnio").val());
 
         enviaAjax(datos);
       }
     }
-    if ($(this).text() == "ELIMINAR") {
-      if (
-        $("#trayectoNumero").on("keyup", function () {
-        const valor = $(this).val();
-        validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser mayor a 0");
-        
-        if (valor <= 0) {
-            $("#strayectoNumero").text("El número debe ser mayor a 0");
-        } else {
-            $("#strayectoNumero").text("");
-        }
-        })
-      ) {
-        muestraMensaje(
-          "error",
-          4000,
-          "ERROR!",
-          "Seleccionó un codigo incorrecto <br/> por favor verifique nuevamente"
-        );
-      } else {
+    if ($(this).text() == "ELIMINAR") {  
         // Mostrar confirmación usando SweetAlert
         Swal.fire({
           title: "¿Está seguro de eliminar este espacio?",
@@ -163,7 +138,7 @@ $(document).ready(function () {
             // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("trayectoNumero", $("#trayectoNumero").val());
+            datos.append("trayectoId", $("#trayectoId").val());
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -175,7 +150,6 @@ $(document).ready(function () {
             $("#modal1").modal("hide");
           }
         });
-      }
     }
   });
 
@@ -209,9 +183,9 @@ function pone(pos, accion) {
       "#trayectoAnio, #trayectoNumero"
     ).prop("disabled", false);
   }
-
-  $("#trayectoAnio").val($(linea).find("td:eq(1)").text());
-  $("#trayectoNumero").val($(linea).find("td:eq(0)").text());
+  $("#trayectoId").val($(linea).find("td:eq(0)").text());
+  $("#trayectoAnio").val($(linea).find("td:eq(2)").text());
+  $("#trayectoNumero").val($(linea).find("td:eq(1)").text());
 
   $("#modal1").modal("show");
 }
@@ -237,11 +211,12 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
               <tr>
+                <td style="display: none;">${item.tra_id}</td>
                 <td>${item.tra_numero}</td>
                 <td>${item.tra_anio}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.tra_numero}" data-tipo="${item.tra_anio}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.tra_numero}" data-tipo="${item.tra_anio}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.tra_id}" data-numero="${item.tra_numero}" data-anio="${item.tra_anio}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.tra_id}" data-numero="${item.tra_numero}" data-anio="${item.tra_anio}">Eliminar</button>
                 </td>
               </tr>
             `);
@@ -274,9 +249,6 @@ function enviaAjax(datos) {
             muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
           }
         }
-        else if (lee.resultado == "no_existe") {
-          console.log("El trayecto no existe, se puede registrar");
-        }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
@@ -307,6 +279,7 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
+  $("#trayectoId").val("");
   $("#trayectoNumero").val("");
 }
 

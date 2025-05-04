@@ -6,15 +6,17 @@ class Trayecto extends Connection
 
     private $trayectoNumero;
     private $trayectoAnio;
+    private $trayectoId;
 
 
     //Construct
-    public function __construct($trayectoNumero = null, $trayectoAnio = null)
+    public function __construct($trayectoNumero = null, $trayectoAnio = null, $trayectoId = null)
     {
         parent::__construct();
 
         $this->trayectoNumero = $trayectoNumero;
         $this->trayectoAnio = $trayectoAnio;
+        $this->trayectoId = $trayectoId;
     }
 
     //Getters 
@@ -26,6 +28,10 @@ class Trayecto extends Connection
     {
         return $this->trayectoAnio;
     }
+    public function getId()
+    {
+        return $this->trayectoId;
+    }
     //Setters
     public function setNumero($trayectoNumero)
     {
@@ -34,6 +40,10 @@ class Trayecto extends Connection
     public function setAnio($trayectoAnio)
     {
         $this->trayectoAnio = $trayectoAnio;
+    }
+    public function setId($trayectoId)
+    {
+        $this->trayectoId = $trayectoId;
     }
 
     //Methods
@@ -90,26 +100,32 @@ class Trayecto extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->existe($this->trayectoNumero, $this->trayectoAnio)) {
-            try {
-                $stmt = $co->prepare("UPDATE tbl_trayecto
-                SET tra_anio = :trayectoAnio
-                WHERE tra_numero = :trayectoNumero");
+        if ($this->ExisteTrayecto($this->trayectoId)) {
+            if (!$this->existe($this->trayectoNumero, $this->trayectoAnio)) {
+                try {
+                    $stmt = $co->prepare("UPDATE tbl_trayecto
+                    SET tra_anio = :trayectoAnio, tra_numero = :trayectoNumero
+                    WHERE tra_id = :trayectoId");
 
-                $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
-                $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
+                    $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
+                    $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
+                    $stmt->bindParam(':trayectoId', $this->trayectoId, PDO::PARAM_INT);
 
-                $stmt->execute();
+                    $stmt->execute();
 
+                    $r['resultado'] = 'modificar';
+                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el trayecto correctamente!';
+                } catch (Exception $e) {
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = $e->getMessage();
+                }
+            } else {
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el trayecto correctamente!';
-            } catch (Exception $e) {
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
+                $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado YA existe!';
             }
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El CÓDIGO colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado NO existe!';
         }
         return $r;
     }
@@ -121,13 +137,12 @@ class Trayecto extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->Existe($this->trayectoNumero, $this->trayectoAnio)) {
+        if ($this->ExisteTrayecto($this->trayectoId)) {
             try {
                 $stmt = $co->prepare("UPDATE tbl_trayecto
                 SET tra_estado = 0
-                WHERE tra_numero = :trayectoNumero");
-                $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
-                $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
+                WHERE tra_id = :trayectoId");
+                $stmt->bindParam(':trayectoId', $this->trayectoId, PDO::PARAM_STR);
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
@@ -138,7 +153,7 @@ class Trayecto extends Connection
             }
         } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El CÓDIGO colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado NO existe!';
         }
         return $r;
     }
@@ -151,7 +166,7 @@ class Trayecto extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT tra_numero, tra_anio FROM tbl_trayecto WHERE tra_estado = 1");
+            $stmt = $co->query("SELECT tra_numero, tra_anio, tra_id FROM tbl_trayecto WHERE tra_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -164,7 +179,6 @@ class Trayecto extends Connection
     }
 
     /// Consultar exitencia
-
 
     public function Existe($trayectoNumero, $trayectoAnio)
     {
@@ -180,7 +194,31 @@ class Trayecto extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El espacio ya existe!';
+                $r['mensaje'] = ' El TRAYECTO colocado YA existe!';
+            }
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        // Se cierra la conexión
+        $co = null;
+        return $r;
+    }
+
+    public function ExisteTrayecto($trayectoId)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_id=:trayectoId AND tra_estado = 1");
+
+            $stmt->bindParam(':trayectoId', $trayectoId, PDO::PARAM_STR);
+            $stmt->execute();
+            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
+            if ($fila) {
+                $r['resultado'] = 'existe';
+                $r['mensaje'] = ' El TRAYECTO colocado YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';

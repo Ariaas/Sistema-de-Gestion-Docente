@@ -14,8 +14,7 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($t->Listar());
         } elseif ($accion == 'eliminar') {
-            $t->setNumero($_POST['trayectoNumero']);
-            $t->setAnio($_POST['trayectoAnio']);
+            $t->setId($_POST['trayectoId']);
             echo  json_encode($t->Eliminar());
         } elseif ($accion == 'existe') {
             $t->setNumero($_POST['trayectoNumero']);
@@ -25,9 +24,11 @@ if (is_file("views/" . $pagina . ".php")) {
         } else {
             $t->setNumero($_POST['trayectoNumero']);
             $t->setAnio($_POST['trayectoAnio']);
+          
             if ($accion == 'registrar') {
                 echo  json_encode($t->Registrar());
             } elseif ($accion == 'modificar') {
+                $t->setId($_POST['trayectoId']);
                 echo  json_encode($t->modificar());
             }
         }
