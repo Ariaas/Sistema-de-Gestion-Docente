@@ -58,5 +58,14 @@
             </span>
         </a>
 
+        <a href="?pagina=eje" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/gear.svg"></img>
+            </span>
+            <span class="description">
+                Eje
+            </span>
+        </a>
+
     </nav>
 </div>
