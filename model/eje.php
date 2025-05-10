@@ -142,7 +142,7 @@ class Eje extends Connection
             }
         } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El CÓDIGO colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El EJE colocado NO existe!';
         }
         return $r;
     }
