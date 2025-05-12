@@ -2,18 +2,37 @@ function Listar() {
   var datos = new FormData();
   datos.append("accion", "consultar");
   enviaAjax(datos);
+  
+  var datosUnion = new FormData();
+  datosUnion.append("accion", "consultarUnion");
+  enviaAjax(datosUnion);
 }
 
-function destruyeDT() {
-  // se destruye el datatablet
-  if ($.fn.DataTable.isDataTable("#tablatrayecto")) {
-    $("#tablatrayecto").DataTable().destroy();
+function Cambiar(){
+  document.getElementById('toggleTables').addEventListener('click', function() {
+  const tablaseccion = document.getElementById('tablaseccionContainer');
+  const tablaunion = document.getElementById('tablaunionContainer');
+
+  if (tablaseccion.style.display === 'none') {
+    tablaseccion.style.display = 'block';
+    tablaunion.style.display = 'none';
+    } else {
+      tablaseccion.style.display = 'none';
+      tablaunion.style.display = 'block';
+    }
+  });
+}
+
+function destruyeDT(selector) {
+  // Se destruye el datatable
+  if ($.fn.DataTable.isDataTable(selector)) {
+    $(selector).DataTable().destroy();
   }
 }
 
-function crearDT() {
-  if (!$.fn.DataTable.isDataTable("#tablatrayecto")) {
-    $("#tablatrayecto").DataTable({
+function crearDT(selector) {
+  if (!$.fn.DataTable.isDataTable(selector)) {
+    $(selector).DataTable({
       paging: true,
       lengthChange: true,
       searching: true,
@@ -67,6 +86,13 @@ function crearDT() {
 
 $(document).ready(function () {
   Listar();
+  Cambiar();
+  
+  destruyeDT("#tablaseccion");
+  crearDT("#tablaseccion");
+
+  destruyeDT("#tablaunion");
+  crearDT("#tablaunion");
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
@@ -106,8 +132,9 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
-        datos.append("trayectoNumero", $("#trayectoNumero").val());
-        datos.append("trayectoAnio", $("#trayectoAnio").val());
+        datos.append("codigoSeccion", $("#codigoSeccion").val());
+        datos.append("cantidadSeccion", $("#cantidadSeccion").val());
+        datos.append("trayectoSeccion", $("#trayectoSeccion").val());
 
         enviaAjax(datos);
       }
@@ -115,9 +142,9 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
-        datos.append("trayectoId", $("#trayectoId").val());
-        datos.append("trayectoNumero", $("#trayectoNumero").val());
-        datos.append("trayectoAnio", $("#trayectoAnio").val());
+        datos.append("codigoSeccion", $("#codigoSeccion").val());
+        datos.append("cantidadSeccion", $("#cantidadSeccion").val());
+        datos.append("trayectoSeccion", $("#trayectoSeccion").val());
 
         enviaAjax(datos);
       }
@@ -205,42 +232,42 @@ function enviaAjax(datos) {
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
-        if (lee.resultado === "consultarTabla1") {
-          destruyeDT();
+        if (lee.resultado === "consultar") {
+          destruyeDT("#tablaseccion");
           $("#resultadoconsulta1").empty();
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta1").append(`
               <tr>
-                <td style="display: none;">${item.id}</td>
-                <td>${item.codigo}</td>
-                <td>${item.cantidad}</td>
+                <td style="display: none;">${item.sec_id}</td>
+                <td>${item.sec_codigo}</td>
+                <td style="display: none;">${item.tra_id}</td>
+                <td>${item.tra_numero} - ${item.tra_anio}</td>
+                <td>${item.sec_cantidad}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
                 </td>
               </tr>
             `);
           });
-          crearDT();
-        } else if (lee.resultado === "consultarTabla2") {
-          destruyeDT();
+          crearDT("#tablaseccion");
+        } else if (lee.resultado === "consultarUnion") {
+          destruyeDT("#tablaunion");
           $("#resultadoconsulta2").empty();
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta2").append(`
               <tr>
-                <td style="display: none;">${item.id}</td>
-                <td>${item.nombre}</td>
+                <td style="display: none;">${item.gro_id}</td>
                 <td>${item.secciones}</td>
+                <td>${item.trayecto}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar">Eliminar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.gro_id}">Separar</button>
                 </td>
               </tr>
             `);
           });
-          crearDT();
+          crearDT("#tablaunion");
         }
-        // Otros casos existentes
         else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
@@ -292,8 +319,7 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  $("#trayectoId").val("");
-  $("#trayectoNumero").val("");
+  
 }
 
 

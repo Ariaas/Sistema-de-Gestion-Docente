@@ -13,7 +13,7 @@
 <head>
     <?php require_once("public/components/head.php"); ?>
 
-    <title>Ejes</title>
+    <title>Secciones</title>
 </head>
 
 <body>
@@ -22,7 +22,7 @@
     <main class="main-content">
         <section class="d-flex flex-column align-items-md-center" style="margin-top: 110px;">
             <center>
-                <h2 class="text-primary text-md-center">Gestionar Ejes</h2>
+                <h2 class="text-primary text-md-center">Gestionar Secciones</h2>
             </center>
             <br>
             <div class="container">
@@ -40,15 +40,16 @@
             </div>
             <br>
 
-            <div class="container card shadow mb-4" id="tabla1Container"> <!-- Primera tabla -->
+            <div class="container card shadow mb-4" id="tablaseccionContainer"> <!-- Primera tabla -->
                 <br>
                 <div class="container text-md-center">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="tabla1">
+                        <table class="table table-striped table-hover" id="tablaseccion">
                             <thead>
                                 <tr>
                                     <th style="display: none;">ID</th>
                                     <th>Código</th>
+                                    <th style="display: none;">ID Trayecto</th>
                                     <th>Trayecto</th>
                                     <th>Cantidad</th>
                                     <th>Acciones</th>
@@ -60,16 +61,16 @@
                 </div>
             </div>
 
-            <div class="container card shadow mb-4" id="tabla2Container" style="display: none;"> <!-- Segunda tabla -->
+            <div class="container card shadow mb-4" id="tablaunionContainer" style="display: none;"> <!-- Segunda tabla -->
                 <br>
                 <div class="container text-md-center">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="tabla2">
+                        <table class="table table-striped table-hover" id="tablaunion">
                             <thead>
                                 <tr>
                                     <th style="display: none;">ID</th>
-                                    <th>Nombre</th>
                                     <th>Secciones</th>
+                                    <th>Trayecto</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -78,21 +79,6 @@
                     </div>
                 </div>
             </div>
-
-            <script>
-                document.getElementById('toggleTables').addEventListener('click', function() {
-                    const tabla1 = document.getElementById('tabla1Container');
-                    const tabla2 = document.getElementById('tabla2Container');
-
-                    if (tabla1.style.display === 'none') {
-                        tabla1.style.display = 'block';
-                        tabla2.style.display = 'none';
-                    } else {
-                        tabla1.style.display = 'none';
-                        tabla2.style.display = 'block';
-                    }
-                });
-            </script>
         </section>
 
         <!-- Modal -->
@@ -100,35 +86,28 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Formulario de Ejes</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                        </button>
+                        <h5 class="modal-title">Formulario de Sección</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
                         <form method="post" id="f" autocomplete="off">
-                            <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
+                            <input type="hidden" name="accion" id="accion" value="registrar">
                             <div class="container">
                                 <div class="row mb-3">
-                                    <div style="display: none;" class="col-md-6">
-                                        <label for="secId">ID</label>
-                                        <input class="form-control" type="text" id="secId" name="secId">
-                                        <span id="sejeId"></span>
-                                    </div>
                                     <div class="col-md-6">
-                                        <label for="secCodigo">Codigo</label>
-                                        <input class="form-control" type="text" id="secCodigo" name="secCodigo">
+                                        <label for="secCodigo">Código</label>
+                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required>
                                         <span id="ssecCodigo"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="secCantidad">Cantidad</label>
-                                        <input class="form-control" type="text" id="secCantidad" name="secCantidad">
+                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
                                         <span id="ssecCantidad"></span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="trayecto" class="form-label">Trayecto</label>
-                                    <select class="form-select" name="trayecto" id="trayecto">
+                                    <select class="form-select" name="trayectoSeccion" id="trayectoSeccion" required>
                                         <option value="" disabled selected>Seleccione un trayecto</option>
                                         <?php
                                         if (!empty($trayectos)) {
@@ -145,7 +124,7 @@
                             </div>
                             <div class="row mt-3 d-flex justify-content-center align-items-md-center">
                                 <div class="col-md-2">
-                                    <button type="button" class="btn btn-dark" id="proceso"></button>
+                                    <button type="button" class="btn btn-dark" id="proceso">Registrar</button>
                                 </div>
                             </div>
                         </form>
@@ -165,7 +144,7 @@
     <!-- fin de container -->
 
     <!-- Scripts -->
-    <script type="text/javascript" src="public/js/eje.js"></script>
+    <script type="text/javascript" src="public/js/seccion.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
     <!-- Scripts -->
 </body>

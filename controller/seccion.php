@@ -8,36 +8,30 @@ require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
-        
-        $e = new Seccion();
+
+        $s = new Seccion();
 
         $accion = $_POST['accion'];
 
         if ($accion == 'consultar') {
-            // Listar todas las secciones
-            echo json_encode($e->Listar());
+            echo json_encode($s->Listar());
+        } elseif ($accion == 'consultarUnion') {
+            echo json_encode($s->Listar());
         } elseif ($accion == 'eliminar') {
-            // Eliminar una sección
-            $e->setCodigoSeccion($_POST['codigoSeccion']);
-            //echo json_encode($e->Eliminar());
+            $s->setCodigoSeccion($_POST['codigoSeccion']);
         } elseif ($accion == 'existe') {
-            // Verificar si una sección ya existe
-            $resultado = $e->Existe($_POST['codigoSeccion'], $_POST['trayectoNumero'], $_POST['trayectoAnio']);
+            $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['trayectoNumero'], $_POST['trayectoAnio']);
             echo json_encode($resultado);
         } elseif ($accion == 'registrar') {
-            // Registrar una nueva sección
-            $e->setCodigoSeccion($_POST['codigoSeccion']);
-            $e->setCantidadSeccion($_POST['cantidadSeccion']);
-            $e->setTrayectoSeccion($_POST['trayectoSeccion']);
-            echo json_encode($e->Registrar());
+            $s->setCodigoSeccion($_POST['codigoSeccion']);
+            $s->setCantidadSeccion($_POST['cantidadSeccion']);
+            $s->setTrayectoSeccion($_POST['trayectoSeccion']);
+            echo json_encode($s->Registrar());
         } elseif ($accion == 'modificar') {
-            // Modificar una sección existente
-            $e->setCodigoSeccion($_POST['codigoSeccion']);
-            $e->setCantidadSeccion($_POST['cantidadSeccion']);
-            $e->setTrayectoSeccion($_POST['trayectoSeccion']);
-            //echo json_encode($e->Modificar());
+            $s->setCodigoSeccion($_POST['codigoSeccion']);
+            $s->setCantidadSeccion($_POST['cantidadSeccion']);
+            $s->setTrayectoSeccion($_POST['trayectoSeccion']);
         }
-
         exit;
     }
 

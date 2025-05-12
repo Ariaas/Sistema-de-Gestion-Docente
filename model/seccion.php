@@ -85,46 +85,91 @@ class Seccion extends Connection
     {
         $r = array();
 
-        // Verificar si ya existe una sección con el mismo código y trayecto
-        if (!$this->Existe($this->codigoSeccion, $this->trayectoNumero, $this->trayectoAnio)) {
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // Sin validación de existencia
+        // if (!$this->Existe($this->codigoSeccion, $this->trayectoNumero, $this->trayectoAnio)) {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            try {
-                $stmt = $co->prepare("INSERT INTO tbl_seccion (
-                    tra_id,
-                    sec_codigo,
-                    sec_cantidad,
-                    sec_estado
-                ) VALUES (
-                    :trayectoSeccion,
-                    :codigoSeccion,
-                    :cantidadSeccion,
-                    1
-                )");
+        try {
+            $stmt = $co->prepare("INSERT INTO tbl_seccion (
+            tra_id,
+            sec_codigo,
+            sec_cantidad,
+            sec_estado
+        ) VALUES (
+            :trayectoSeccion,
+            :codigoSeccion,
+            :cantidadSeccion,
+            1
+        )");
 
-                $stmt->bindParam(':trayectoSeccion', $this->trayectoSeccion, PDO::PARAM_INT);
-                $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
-                $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
+            $stmt->bindParam(':trayectoSeccion', $this->trayectoSeccion, PDO::PARAM_INT);
+            $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
+            $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
 
-                $stmt->execute();
+            $stmt->execute();
 
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró la sección correctamente!';
-            } catch (Exception $e) {
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-
-            // Cerrar la conexión
-            $co = null;
-        } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> La sección con el código especificado ya existe!';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró la sección correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
         }
+
+        // Cerrar la conexión
+        $co = null;
+        // } else {
+        //     $r['resultado'] = 'registrar';
+        //     $r['mensaje'] = 'ERROR! <br/> La sección con el código especificado ya existe!';
+        // }
 
         return $r;
     }
+
+    // function Registrar()
+    // {
+    //     $r = array();
+
+    //     // Verificar si ya existe una sección con el mismo código y trayecto
+    //     if (!$this->Existe($this->codigoSeccion, $this->trayectoNumero, $this->trayectoAnio)) {
+    //         $co = $this->Con();
+    //         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    //         try {
+    //             $stmt = $co->prepare("INSERT INTO tbl_seccion (
+    //                 tra_id,
+    //                 sec_codigo,
+    //                 sec_cantidad,
+    //                 sec_estado
+    //             ) VALUES (
+    //                 :trayectoSeccion,
+    //                 :codigoSeccion,
+    //                 :cantidadSeccion,
+    //                 1
+    //             )");
+
+    //             $stmt->bindParam(':trayectoSeccion', $this->trayectoSeccion, PDO::PARAM_INT);
+    //             $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
+    //             $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
+
+    //             $stmt->execute();
+
+    //             $r['resultado'] = 'registrar';
+    //             $r['mensaje'] = 'Registro Incluido!<br/>Se registró la sección correctamente!';
+    //         } catch (Exception $e) {
+    //             $r['resultado'] = 'error';
+    //             $r['mensaje'] = $e->getMessage();
+    //         }
+
+    //         // Cerrar la conexión
+    //         $co = null;
+    //     } else {
+    //         $r['resultado'] = 'registrar';
+    //         $r['mensaje'] = 'ERROR! <br/> La sección con el código especificado ya existe!';
+    //     }
+
+    //     return $r;
+    // }
 
     /// Actualizar
 
@@ -197,9 +242,12 @@ class Seccion extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = ['resultado' => null, 'mensaje' => null];
+
         try {
-            $stmt = $co->query("SELECT 
+            $accion = $_POST['accion'] ?? '';
+            if ($accion === 'consultar') {
+                $stmt = $co->query("SELECT 
                 s.sec_codigo, 
                 s.sec_cantidad, 
                 t.tra_numero, 
@@ -207,14 +255,30 @@ class Seccion extends Connection
             FROM tbl_seccion s
             INNER JOIN tbl_trayecto t ON s.tra_id = t.tra_id
             WHERE s.sec_estado = 1");
+            } elseif ($accion === 'consultarUnion') {
+                $sql = "SELECT 
+                        g.gro_id,
+                        GROUP_CONCAT(s.sec_codigo SEPARATOR '; ') AS secciones,
+                        CONCAT(t.tra_numero, ' - ', t.tra_anio)       AS trayecto
+                    FROM tbl_grupo g
+                    JOIN seccion_grupo sg ON g.gro_id = sg.gro_id
+                    JOIN tbl_seccion   s  ON sg.sec_id = s.sec_id
+                    JOIN tbl_trayecto  t  ON s.tra_id = t.tra_id
+                    WHERE g.grupo_estado = 1
+                    GROUP BY g.gro_id";
+                $stmt = $co->query($sql);
+            } else {
+                throw new Exception("Acción inválida: $accion");
+            }
 
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $r['resultado'] = 'consultar';
-            $r['mensaje'] = $data;
+            $r['resultado'] = $accion;
+            $r['mensaje']   = $data;
         } catch (Exception $e) {
             $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            $r['mensaje']   = $e->getMessage();
         }
+
         $co = null;
         return $r;
     }
