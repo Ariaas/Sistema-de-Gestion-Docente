@@ -1,4 +1,4 @@
-<div class="sidebar">
+div class="sidebar">
     <nav class="nav flex-column">
         <a href="?pagina=principal" class="nav-link">
             <span class="icon">
