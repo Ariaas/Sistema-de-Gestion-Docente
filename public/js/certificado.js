@@ -6,21 +6,14 @@ function Listar() {
 
 function destruyeDT() {
   // se destruye el datatablet
-  if ($.fn.DataTable.isDataTable("#tablaespacio")) {
-    $("#tablaespacio").DataTable().destroy();
+  if ($.fn.DataTable.isDataTable("#tablacertificado")) {
+    $("#tablacertificado").DataTable().destroy();
   }
 }
 
 function crearDT() {
-  if (!$.fn.DataTable.isDataTable("#tablaespacio")) {
-    $("#tablaespacio").DataTable({
-      ////
-      // data: [
-      //   ["001", "Aula", "Acciones"],
-      //   ["002", "Laboratorio", "Acciones"],
-      // ],
-      // columns: [{ title: "Codigo" }, { title: "Tipo" }, { title: "Acciones" }],
-      ////
+  if (!$.fn.DataTable.isDataTable("#tablacertificado")) {
+    $("#tablacertificado").DataTable({
       paging: true,
       lengthChange: true,
       searching: true,
@@ -73,36 +66,17 @@ function crearDT() {
 }
 
 $(document).ready(function () {
-  Listar();
-
-  //////////////////////////////VALIDACIONES/////////////////////////////////////
-
-    $("#codigoEspacio").on("keypress",function(e){
-    validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
-	});
-
-	$("#codigoEspacio").on("keyup",function(){
-		validarkeyup(/^[A-Za-z0-9]{2,3}$/,$(this),
-		$("#scodigoEspacio"),"El formato permite de 2 a 3 carácteres");
-		if ($("#codigoEspacio").val().length <= 3) {
-			var datos = new FormData();
-			datos.append('accion', 'existe');
-			datos.append('codigoEspacio', $(this).val());
-			enviaAjax(datos, 'existe');
-		}
-	});
-
-    $("#tipoEspacio").on("keypress", function (e) {
-      validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
-    });
-
-    $("#tipoEspacio").on("keyup", function () {
-      validarkeyup(
-        /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
-        $(this),
-        $("#stipoEspacio"),
-        "Este formato no debe estar vacío / permite un máximo 30 carácteres"
-      );
+  Listar(); 
+    $("#certificadonombre").on("keyup", function () {
+    const valor = $(this).val();
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres");
+  
+        var datos = new FormData();
+        datos.append('accion', 'existe');
+        datos.append("certificadonombre", $("#certificadonombre").val());
+        datos.append("trayecto", $("#trayecto").val());
+        enviaAjax(datos);
+   
     });
 
   //////////////////////////////BOTONES/////////////////////////////////////
@@ -112,8 +86,8 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
-        datos.append("codigoEspacio", $("#codigoEspacio").val());
-        datos.append("tipoEspacio", $("#tipoEspacio").val());
+        datos.append("certificadonombre", $("#certificadonombre").val());
+        datos.append("trayecto", $("#trayecto").val());
 
         enviaAjax(datos);
       }
@@ -121,28 +95,13 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
-        datos.append("codigoEspacio", $("#codigoEspacio").val());
-        datos.append("tipoEspacio", $("#tipoEspacio").val());
-
+        datos.append("certificadoid", $("#certificadoid").val());
+        datos.append("certificadonombre", $("#certificadonombre").val());
+        datos.append("trayecto", $("#trayecto").val());
         enviaAjax(datos);
       }
     }
-    if ($(this).text() == "ELIMINAR") {
-      if (
-        validarkeyup(
-          /^[[A-Za-z0-9,\#\b\s\u00f1\u00d1\u00E0-\u00FC-]{2,6}$/,
-          $("#codigoEspacio"),
-          $("#scodigoEspacio"),
-          "Formato de codigo incorrecto"
-        ) == 0
-      ) {
-        muestraMensaje(
-          "error",
-          4000,
-          "ERROR!",
-          "Seleccionó un codigo incorrecto <br/> por favor verifique nuevamente"
-        );
-      } else {
+    if ($(this).text() == "ELIMINAR") {  
         // Mostrar confirmación usando SweetAlert
         Swal.fire({
           title: "¿Está seguro de eliminar este espacio?",
@@ -158,19 +117,13 @@ $(document).ready(function () {
             // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("codigoEspacio", $("#codigoEspacio").val());
+              datos.append("certificadoid", $("#certificadoid").val());
             enviaAjax(datos);
           } else {
-            muestraMensaje(
-              "error",
-              2000,
-              "INFORMACIÓN",
-              "La eliminación ha sido cancelada."
-            );
+            muestraMensaje("error",2000,"INFORMACIÓN","La eliminación ha sido cancelada.");
             $("#modal1").modal("hide");
           }
         });
-      }
     }
   });
 
@@ -187,26 +140,38 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-  return true;
-}
+  let trayecto = $("#trayecto").val();
+  
+   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío, ni contener más de 30 carácteres");
+          return false;
+  } else if (trayecto === null || trayecto === "0") {
+        muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un trayecto!"); 
+          return false;
 
+}
+    return true;
+}
 // funcion para pasar de la lista a el formulario
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#tipoEspacio").prop("disabled", false);
-    $("#codigoEspacio").prop("disabled", false);
+    $("#certificadonombre").prop("disabled", false);
+    $("#trayecto").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $(
-      "#tipoEspacio, #codigoEspacio"
-    ).prop("disabled", false);
+    $("#certificadonombre, #trayecto").prop("disabled", false);
   }
 
-  $("#tipoEspacio").val($(linea).find("td:eq(1)").text());
-  $("#codigoEspacio").val($(linea).find("td:eq(0)").text());
+
+
+  $("#certificadoid").val($(linea).find("td:eq(0)").text());
+  $("#certificadonombre").val($(linea).find("td:eq(1)").text());
+    let tra_id = $(linea).find("td:eq(2)").attr("data-traid");
+  $("#trayecto").val(tra_id);
+  
 
   $("#modal1").modal("show");
 }
@@ -232,11 +197,12 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
               <tr>
-                <td>${item.esp_codigo}</td>
-                <td>${item.esp_tipo}</td>
+                <td style="display: none;">${item.cert_id}</td>
+                <td>${item.cert_nombre}</td>
+                <td data-traid="${item.tra_id}">${item.tra_numero }-${item.tra_anio}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Eliminar</button>
                 </td>
               </tr>
             `);
@@ -246,37 +212,30 @@ function enviaAjax(datos) {
         ////////
         else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
-          if (
-            lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el espacio correctamente!"
-          ) {
+      if ( lee.mensaje =='Registro Incluido!<br/> Se registró el certificado correctamente!' ) {
             $("#modal1").modal("hide");
+            limpia();
             Listar();
           }
         }
         else if (lee.resultado == "modificar") {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
-          if (
-            lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el espacio correctamente!"
-          ) {
+          if (lee.mensaje =="Registro Modificado!<br/>Se modificó el certificado correctamente!") {
             $("#modal1").modal("hide");
             Listar();
           }
-        }else if (lee.resultado == "existe") {		
-          if (lee.mensaje == 'El espacio ya existe!') {
-            muestraMensaje('info', 4000,'Atención!', lee.mensaje);
-          }	
+        }
+        else if (lee.resultado == "existe") {
+          if ($("#proceso").text() == "REGISTRAR") {
+            muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
+          }
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
-          if (
-            lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el espacio correctamente!"
-          ) {
+     //  if ( lee.mensaje =="Registro Eliminado!<br/>Se eliminó el certificado correctamente!!") {
             $("#modal1").modal("hide");
             Listar();
-          }
+       //  }
         }
         else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
@@ -298,6 +257,7 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  $("#tipoEspacio").val("");
-  $("#codigoEspacio").val("");
+  $("#certificadonombre").val("");
+  $("#trayecto").val("");
+  
 }
