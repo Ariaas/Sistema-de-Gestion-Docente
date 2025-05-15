@@ -126,6 +126,46 @@ $(document).ready(function () {
     });
 
   //////////////////////////////BOTONES/////////////////////////////////////
+  
+  $("#unir").on("click", function () {
+  const seccionesSeleccionadas = [];
+  $("input[type=checkbox]:checked").each(function () {
+      seccionesSeleccionadas.push($(this).val());
+  });
+
+  if (seccionesSeleccionadas.length === 0) {
+      Swal.fire("Atención", "Debe seleccionar al menos una sección para unir.", "warning");
+      return;
+  }
+  var datos = new FormData();
+  datos.append("accion", "unir");
+  datos.append("secciones", JSON.stringify(seccionesSeleccionadas));
+
+  enviaAjax(datos);
+  });
+
+  $(document).on("click", "#tablaunion .eliminar", function () {
+    const grupoId = $(this).data("id");
+
+    Swal.fire({
+      title: "¿Está seguro de separar este grupo?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, separar",
+      cancelButtonText: "Cancelar",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        var datos = new FormData();
+        datos.append("accion", "separar");
+        datos.append("grupoId", grupoId);
+
+        enviaAjax(datos);
+      }
+    });
+  });
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
@@ -180,7 +220,7 @@ $(document).ready(function () {
     }
   });
 
-
+  
   $("#registrar").on("click", function () {
     limpia();
     $("#proceso").text("REGISTRAR");
@@ -244,6 +284,7 @@ function enviaAjax(datos) {
                 <td>${item.tra_numero} - ${item.tra_anio}</td>
                 <td>${item.sec_cantidad}</td>
                 <td>
+                  <input type="checkbox" id="seccionId" value="${item.sec_id}">
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
                 </td>
@@ -261,14 +302,24 @@ function enviaAjax(datos) {
                 <td>${item.secciones}</td>
                 <td>${item.trayecto}</td>
                 <td>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.gro_id}">Separar</button>
+                  <button class="btn btn-danger btn-sm eliminar" data-id="${item.gro_id}">Separar</button>
                 </td>
               </tr>
             `);
           });
           crearDT("#tablaunion");
-        }
-        else if (lee.resultado == "registrar") {
+          ///
+        } else if (lee.resultado === "unir") {
+          muestraMensaje("info", 4000, "UNIR", lee.mensaje);
+          if (lee.mensaje === "Secciones unidas correctamente al grupo.") {
+            Listar(); 
+          }
+        } else if (lee.resultado === "separar") {
+          muestraMensaje("info", 4000, "SEPARAR", lee.mensaje);
+          if (lee.mensaje === "Secciones separadas!<br/>Se separaron las secciones correctamente!") {
+            Listar(); 
+          }
+        } else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==

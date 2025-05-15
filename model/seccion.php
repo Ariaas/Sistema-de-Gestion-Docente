@@ -10,10 +10,10 @@ class Seccion extends Connection
     private $trayectoNumero;
     private $idSeccion;
     private $trayectoSeccion;
-
+    private $grupoId;
 
     //Construct
-    public function __construct($codigoSeccion = null, $cantidadSeccion = null, $idSeccion = null, $trayectoNumero = null, $trayectoAnio = null, $trayectoSeccion = null)
+    public function __construct($codigoSeccion = null, $cantidadSeccion = null, $idSeccion = null, $trayectoNumero = null, $trayectoAnio = null, $trayectoSeccion = null, $grupoId = null)
     {
         parent::__construct();
 
@@ -23,6 +23,7 @@ class Seccion extends Connection
         $this->trayectoNumero = $trayectoNumero;
         $this->trayectoAnio = $trayectoAnio;
         $this->trayectoSeccion = $trayectoSeccion;
+        $this->grupoId = $grupoId;
     }
 
     // Getters
@@ -51,6 +52,11 @@ class Seccion extends Connection
         return $this->trayectoSeccion;
     }
 
+    public function getGrupoId()
+    {
+        return $this->grupoId;
+    }
+
     // Setters
     public function setCodigoSeccion($codigoSeccion)
     {
@@ -75,6 +81,11 @@ class Seccion extends Connection
     public function setTrayectoSeccion($trayectoSeccion)
     {
         $this->trayectoSeccion = $trayectoSeccion;
+    }
+
+    public function setGrupoId($grupoId)
+    {
+        $this->grupoId = $grupoId;
     }
 
     //Methods
@@ -247,7 +258,8 @@ class Seccion extends Connection
         try {
             $accion = $_POST['accion'] ?? '';
             if ($accion === 'consultar') {
-                $stmt = $co->query("SELECT 
+                $stmt = $co->query("SELECT
+                s.sec_id, 
                 s.sec_codigo, 
                 s.sec_cantidad, 
                 t.tra_numero, 
@@ -355,6 +367,74 @@ class Seccion extends Connection
             $r = [];
         }
         $co = null;
+        return $r;
+    }
+
+    function Unir($seccionesJson)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = ['resultado' => null, 'mensaje' => null];
+
+        try {
+            $co->beginTransaction();
+
+            $seccionesArray = json_decode($seccionesJson, true);
+
+            $stmtGrupo = $co->prepare("
+            INSERT INTO tbl_grupo (grupo_estado) 
+            VALUES (1)
+        ");
+            $stmtGrupo->execute();
+            $grupoId = $co->lastInsertId();
+
+            $stmtLink = $co->prepare("
+            INSERT INTO seccion_grupo (gro_id, sec_id) 
+            VALUES (:grupoId, :seccionId)
+        ");
+            $stmtLink->bindParam(':grupoId', $grupoId, PDO::PARAM_INT);
+
+            foreach ($seccionesArray as $seccionId) {
+                $stmtLink->bindValue(':seccionId', (int)$seccionId, PDO::PARAM_INT);
+                $stmtLink->execute();
+            }
+            $co->commit();
+
+            $r['resultado'] = 'unir';
+            $r['mensaje']   = 'Secciones unidas correctamente al grupo.';
+        } catch (Exception $e) {
+            $co->rollBack();
+            $r['resultado'] = 'error';
+            $r['mensaje']   = $e->getMessage();
+        } finally {
+            $co = null;
+        }
+
+        return $r;
+    }
+
+    function Separar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = ['resultado' => null, 'mensaje' => null];
+
+        try {
+            $stmt = $co->prepare("UPDATE tbl_grupo
+            SET grupo_estado = 0
+            WHERE gro_id = :grupoId");
+            $stmt->bindParam(':grupoId', $this->grupoId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $r['resultado'] = 'separar';
+            $r['mensaje'] = 'Secciones separadas!<br/>Se separaron las secciones correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
+        }
+
         return $r;
     }
 }

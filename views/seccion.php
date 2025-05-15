@@ -119,7 +119,7 @@
                                         }
                                         ?>
                                     </select>
-                                    <span id="strayecto" class="error"></span>
+                                    <span id="strayecto"></span>
                                 </div>
                             </div>
                             <div class="row mt-3 d-flex justify-content-center align-items-md-center">

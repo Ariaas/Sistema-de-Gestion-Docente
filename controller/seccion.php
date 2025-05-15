@@ -31,6 +31,13 @@ if (is_file("views/" . $pagina . ".php")) {
             $s->setCodigoSeccion($_POST['codigoSeccion']);
             $s->setCantidadSeccion($_POST['cantidadSeccion']);
             $s->setTrayectoSeccion($_POST['trayectoSeccion']);
+        } elseif ($accion == 'unir') {
+            echo json_encode($s->Unir($_POST['secciones'], true));
+        } elseif ($accion == 'separar') {
+            $s->setGrupoId($_POST['grupoId']);
+            echo json_encode($s->Separar());
+        } else {
+            echo "Acción no válida";
         }
         exit;
     }
