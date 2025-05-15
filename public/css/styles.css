@@ -1,4 +1,3 @@
-
 /* Asegura que el footer esté abajo */
 html, body {
     height: 100%; /* Asegura que el HTML y el body ocupen toda la altura */
@@ -200,5 +199,27 @@ table {
     width: 100%; /* Asegura que la tabla ocupe todo el ancho */
     border-collapse: collapse; /* Elimina espacios entre celdas */
     margin-top: 20px; /* Espaciado superior */
+}
 
+/* --- Estilos para la vista de login --- */
+.login-body-bg {
+    background: #f5f7fa;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    padding: 2rem 2rem 1.5rem 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    background: #fff;
+}
+.login-title {
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #343a40;
 }
