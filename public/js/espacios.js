@@ -301,5 +301,3 @@ function limpia() {
   $("#tipoEspacio").val("");
   $("#codigoEspacio").val("");
 }
-
-
