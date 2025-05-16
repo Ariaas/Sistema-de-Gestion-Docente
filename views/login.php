@@ -6,13 +6,14 @@
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Iniciar Sesión</title>
+    <link rel="stylesheet" href="public/css/styles.css">
     <style>   
     </style>
 </head>
 <body class="login-body-bg">
     <div class="login-card">
         <h2 class="login-title">Iniciar Sesión</h2>
-        <form method="get" autocomplete="off">
+        <form method="post" autocomplete="off">
             <div class="mb-3">
                 <label for="usuario" class="form-label">Usuario</label>
                 <input type="text" class="form-control" id="usuario" name="usuario" required autofocus>

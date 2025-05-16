@@ -1,53 +1,50 @@
+<?php
+// Verificar si el usuario ha iniciado sesión
+// if (!isset($_SESSION['name'])) {
+//     // Redirigir al usuario a la página de inicio de sesión
+//     header('Location: .');
+//     exit();
+// }
+?>
+
 <!DOCTYPE html>
 <html lang="ES">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docente</title>
     <?php require_once("public/components/head.php"); ?>
+    <title>Docente</title>
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
+
     <?php require_once("public/components/sidebar.php"); ?>
-    
-    <main class="main-content">
-        <section class="d-flex flex-column align-items-md-center" style="margin-top: 110px;">
-            <center>
-                <h2 class="text-primary text-md-center">Gestionar Docente</h2>
-            </center>
-            <br>
-            <div class="container">
-                <div class="text-md-left">
-                    <button class="btn btn-success" id="incluir">Registrar Docente</button>
-                </div>
+    <main class="main-content flex-shrink-0">
+        <section class="d-flex flex-column align-items-center justify-content-center py-4">
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+                <button class="btn btn-success px-4" id="incluir">Registrar Docente</button>
             </div>
-            <br>
-            <div class="container card shadow mb-4">
-                <br>
-                <div class="container text-md-center">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="tabladocente">
-                            <thead>
-                                <tr>
-                                    <th>Prefijo</th>
-                                    <th>Cédula</th>
-                                    <th>Nombre</th>
-                                    <th>Apellido</th>
-                                    <th>Correo</th>
-                                    <th>Categoría</th>
-                                    <th>Dedicación</th>
-                                    <th>Condición</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultadoconsulta"></tbody>
-                        </table>
-                    </div>
+            <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+                <div class="table-responsive" style="overflow-x: hidden;">
+                    <table class="table table-striped table-hover w-100" id="tabladocente">
+                        <thead>
+                            <tr>
+                                <th>Prefijo</th>
+                                <th>Cédula</th>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>Correo</th>
+                                <th>Categoría</th>
+                                <th>Dedicación</th>
+                                <th>Condición</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultadoconsulta"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
-
         <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
@@ -130,7 +127,7 @@
                                             <option value="Ordinario">Ordinario</option>
                                             <option value="Desordinario">Desordinario</option>
                                         </select>
-                                         <span id="scondicion"></span>>
+                                         <span id="scondicion"></span>
                                     </div>
                                 </div>
                             </div>
@@ -146,13 +143,14 @@
         </div>
         <!-- Fin del Modal -->
     </main>
-
     <!-- Footer -->
-    <?php require_once("public/components/footer.php"); ?>
-    
+    <?php
+    require_once("public/components/footer.php");
+    ?>
     <!-- Scripts -->
-    <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="public/js/docente.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
+    <!-- Scripts -->
 </body>
+
 </html>
