@@ -79,7 +79,7 @@
                             <input type="hidden" name="accion" id="accion" value="registrar">
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div class="col-md-6">
+                                    <div style="display: none;" class="col-md-6">
                                         <label for="seccionId" class="form-label">ID</label>
                                         <input class="form-control" type="text" id="seccionId" name="seccionId" required>
                                         <span id="ssecId"></span>

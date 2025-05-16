@@ -78,7 +78,7 @@ class Espacio extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El espacio colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado YA existe!';
         }
 
         return $r;
@@ -110,7 +110,7 @@ class Espacio extends Connection
             }
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El CÓDIGO colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El ESPACIO colocado NO existe!';
         }
         return $r;
     }
@@ -140,7 +140,7 @@ class Espacio extends Connection
             }
         } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El CÓDIGO colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El ESPACIO colocado NO existe!';
         }
         return $r;
     }
@@ -179,7 +179,7 @@ class Espacio extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El espacio ya existe!';
+                $r['mensaje'] = 'El TRAYECTO colocado YA existe!';
             } 
         } catch (Exception $e) {
             $r['resultado'] = 'error';

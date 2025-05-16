@@ -170,7 +170,7 @@ Class Certificado extends Connection{
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = ' El titulo colocado YA existe!';
+                $r['mensaje'] = ' El certificado colocado YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';

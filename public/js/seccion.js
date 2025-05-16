@@ -96,34 +96,34 @@ $(document).ready(function () {
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
-  $("#trayectoNumero").on("keyup", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser mayor a 0");
+  // $("#trayectoNumero").on("keyup", function () {
+  //   const valor = $(this).val();
+  //   validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser mayor a 0");
     
-    if ($(this).val().length > 0 && $("#trayectoAnio").val().length > 0) {
-        var datos = new FormData();
-        datos.append('accion', 'existe');
-        datos.append('trayectoNumero', $(this).val());
-        datos.append('trayectoAnio', $("#trayectoAnio").val());
-        enviaAjax(datos);
-    }
+  //   if ($(this).val().length > 0 && $("#trayectoAnio").val().length > 0) {
+  //       var datos = new FormData();
+  //       datos.append('accion', 'existe');
+  //       datos.append('trayectoNumero', $(this).val());
+  //       datos.append('trayectoAnio', $("#trayectoAnio").val());
+  //       enviaAjax(datos);
+  //   }
 
-    if (valor <= 0) {
-        $("#strayectoNumero").text("El número debe ser mayor a 0");
-    } else {
-        $("#strayectoNumero").text("");
-    }
-    });
+  //   if (valor <= 0) {
+  //       $("#strayectoNumero").text("El número debe ser mayor a 0");
+  //   } else {
+  //       $("#strayectoNumero").text("");
+  //   }
+  //   });
 
-    $("#trayectoAnio").on("keyup", function () {
-        if ($(this).val().length > 0 && $("#trayectoNumero").val().length > 0) {
-            var datos = new FormData();
-            datos.append('accion', 'existe');
-            datos.append('trayectoNumero', $("#trayectoNumero").val());
-            datos.append('trayectoAnio', $(this).val());
-            enviaAjax(datos);
-        }
-    });
+  //   $("#trayectoAnio").on("keyup", function () {
+  //       if ($(this).val().length > 0 && $("#trayectoNumero").val().length > 0) {
+  //           var datos = new FormData();
+  //           datos.append('accion', 'existe');
+  //           datos.append('trayectoNumero', $("#trayectoNumero").val());
+  //           datos.append('trayectoAnio', $(this).val());
+  //           enviaAjax(datos);
+  //       }
+  //   });
 
   //////////////////////////////BOTONES/////////////////////////////////////
   
@@ -133,8 +133,8 @@ $(document).ready(function () {
       seccionesSeleccionadas.push($(this).val());
   });
 
-  if (seccionesSeleccionadas.length === 0) {
-      Swal.fire("Atención", "Debe seleccionar al menos una sección para unir.", "warning");
+  if (seccionesSeleccionadas.length <= 1) {
+      Swal.fire("Atención", "Debe seleccionar al menos DOS secciones para unir.", "warning");
       return;
   }
   var datos = new FormData();
@@ -334,7 +334,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el trayecto correctamente!"
+            "Registro Incluido!<br/>Se registró la sección correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();

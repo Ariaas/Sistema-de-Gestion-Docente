@@ -21,7 +21,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $s->setseccionId($_POST['seccionId']);
             echo json_encode($s->Eliminar());
         } elseif ($accion == 'existe') {
-            $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['trayectoNumero'], $_POST['trayectoAnio']);
+            $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['trayectoSeccion']);
             echo json_encode($resultado);
         } elseif ($accion == 'registrar') {
             $s->setCodigoSeccion($_POST['codigoSeccion']);
