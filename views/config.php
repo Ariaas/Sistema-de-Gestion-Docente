@@ -66,7 +66,7 @@
                     </a>
                 </div>
                 <div class="col">
-                    <a class="a-cards" href="?pagina=rnota">
+                    <a class="a-cards" href="?pagina=archivo">
                         <div class="card h-100 text-center custom-card card-trayecto">
                             <div class="card-body">
                                 <img src="public/assets/icons/map.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
