@@ -205,7 +205,7 @@ $(document).ready(function () {
             // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("trayectoId", $("#trayectoId").val());
+            datos.append("seccionId", $("#seccionId").val());
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -242,18 +242,30 @@ function pone(pos, accion) {
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#trayectoAnio").prop("disabled", false);
-    $("#trayectoNumero").prop("disabled", false);
+    $("#codigoSeccion").prop("disabled", false);
+    $("#cantidadSeccion").prop("disabled", false);
+    $("#trayectoSeccion").prop("disabled", false);
+
   } else {
     $("#proceso").text("ELIMINAR");
     $(
-      "#trayectoAnio, #trayectoNumero"
+      "#seccionId, #codigoSeccion, #cantidadSeccion, #trayectoSeccion"
     ).prop("disabled", false);
   }
-  $("#trayectoId").val($(linea).find("td:eq(0)").text());
-  $("#trayectoAnio").val($(linea).find("td:eq(2)").text());
-  $("#trayectoNumero").val($(linea).find("td:eq(1)").text());
-
+  
+  // La primera columna (td:eq(0)) contiene el ID de la sección y está oculta
+  $("#seccionId").val($(linea).find("td:eq(0)").text());
+  $("#codigoSeccion").val($(linea).find("td:eq(1)").text());
+  
+  let tra_text = $(linea).find("td:eq(2)").text();
+  let tra_id = tra_text.split(" - ")[0]; 
+  $("#trayectoSeccion").val(tra_id);
+  
+  $("#cantidadSeccion").val($(linea).find("td:eq(3)").text());
+  
+  console.log("Sección ID:", $(linea).find("td:eq(0)").text());
+  console.log("Trayecto ID:", tra_id);
+  
   $("#modal1").modal("show");
 }
 
@@ -280,13 +292,12 @@ function enviaAjax(datos) {
               <tr>
                 <td style="display: none;">${item.sec_id}</td>
                 <td>${item.sec_codigo}</td>
-                <td style="display: none;">${item.tra_id}</td>
-                <td>${item.tra_numero} - ${item.tra_anio}</td>
+                <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.tra_anio}</td>
                 <td>${item.sec_cantidad}</td>
                 <td>
-                  <input type="checkbox" id="seccionId" value="${item.sec_id}">
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
+                  <input type="checkbox" id="idSeccion" value="${item.sec_id}">
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
                 </td>
               </tr>
             `);
@@ -345,7 +356,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el trayecto correctamente!"
+            "Registro Eliminado!<br/>Se eliminó la sección correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -370,7 +381,10 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  
+  $("#seccionId").val("");
+  $("#codigoSeccion").val("");
+  $("#cantidadSeccion").val("");
+  $("#trayectoSeccion").val("");
 }
 
 

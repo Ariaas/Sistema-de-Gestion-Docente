@@ -18,7 +18,8 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'consultarUnion') {
             echo json_encode($s->Listar());
         } elseif ($accion == 'eliminar') {
-            $s->setCodigoSeccion($_POST['codigoSeccion']);
+            $s->setseccionId($_POST['seccionId']);
+            echo json_encode($s->Eliminar());
         } elseif ($accion == 'existe') {
             $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['trayectoNumero'], $_POST['trayectoAnio']);
             echo json_encode($resultado);
