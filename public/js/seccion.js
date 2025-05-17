@@ -84,6 +84,18 @@ function crearDT(selector) {
   }
 }
 
+function validarExiste() {
+  const codigo = $("#codigoSeccion").val();
+  const trayecto = $("#trayectoSeccion").val();
+  if (codigo && trayecto) {
+    var datos = new FormData();
+    datos.append('accion', 'existe');
+    datos.append('codigoSeccion', codigo);
+    datos.append('trayectoSeccion', trayecto);
+    enviaAjax(datos);
+  }
+}
+
 $(document).ready(function () {
   Listar();
   Cambiar();
@@ -95,35 +107,19 @@ $(document).ready(function () {
   crearDT("#tablaunion");
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
-
-  // $("#trayectoNumero").on("keyup", function () {
-  //   const valor = $(this).val();
-  //   validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser mayor a 0");
-    
-  //   if ($(this).val().length > 0 && $("#trayectoAnio").val().length > 0) {
-  //       var datos = new FormData();
-  //       datos.append('accion', 'existe');
-  //       datos.append('trayectoNumero', $(this).val());
-  //       datos.append('trayectoAnio', $("#trayectoAnio").val());
-  //       enviaAjax(datos);
-  //   }
-
-  //   if (valor <= 0) {
-  //       $("#strayectoNumero").text("El número debe ser mayor a 0");
-  //   } else {
-  //       $("#strayectoNumero").text("");
-  //   }
-  //   });
-
-  //   $("#trayectoAnio").on("keyup", function () {
-  //       if ($(this).val().length > 0 && $("#trayectoNumero").val().length > 0) {
-  //           var datos = new FormData();
-  //           datos.append('accion', 'existe');
-  //           datos.append('trayectoNumero', $("#trayectoNumero").val());
-  //           datos.append('trayectoAnio', $(this).val());
-  //           enviaAjax(datos);
-  //       }
-  //   });
+  
+  $("#codigoSeccion").on("keypress", function(e){
+    validarkeypress(/^[0-9][0-9]*$/, e);
+  });
+  
+  $("#codigoSeccion").on("keyup", function () {
+    validarkeyup(/^[0-9][0-9]{3}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener 4 dígitos");
+    validarExiste();
+  });
+  
+  $("#trayectoSeccion").on("keyup change", function () {
+    validarExiste();
+  });
 
   //////////////////////////////BOTONES/////////////////////////////////////
   
@@ -182,6 +178,7 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
+        datos.append("seccionId", $("#seccionId").val());
         datos.append("codigoSeccion", $("#codigoSeccion").val());
         datos.append("cantidadSeccion", $("#cantidadSeccion").val());
         datos.append("trayectoSeccion", $("#trayectoSeccion").val());
@@ -233,6 +230,18 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+
+  var trayectoSeleccionado = $("#trayectoSeccion").val();
+
+    if (trayectoSeleccionado === null || trayectoSeleccionado === "0") {
+        muestraMensaje(
+            "error",
+            4000,
+            "ERROR!",
+            "Por favor, seleccione un trayecto! <br/> Recuerde que debe tener alguno registrado!"
+        );
+        return false;
+    }
   return true;
 }
 
@@ -253,7 +262,6 @@ function pone(pos, accion) {
     ).prop("disabled", false);
   }
   
-  // La primera columna (td:eq(0)) contiene el ID de la sección y está oculta
   $("#seccionId").val($(linea).find("td:eq(0)").text());
   $("#codigoSeccion").val($(linea).find("td:eq(1)").text());
   
@@ -322,7 +330,7 @@ function enviaAjax(datos) {
           ///
         } else if (lee.resultado === "unir") {
           muestraMensaje("info", 4000, "UNIR", lee.mensaje);
-          if (lee.mensaje === "Secciones unidas correctamente al grupo.") {
+          if (lee.mensaje === "Secciones unidas!<br/>Se unieron las secciones correctamente!") {
             Listar(); 
           }
         } else if (lee.resultado === "separar") {
@@ -343,7 +351,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el trayecto correctamente!"
+            "Registro Modificado!<br/>Se modificó la sección correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();

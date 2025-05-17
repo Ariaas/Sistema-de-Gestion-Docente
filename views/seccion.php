@@ -82,17 +82,16 @@
                                     <div style="display: none;" class="col-md-6">
                                         <label for="seccionId" class="form-label">ID</label>
                                         <input class="form-control" type="text" id="seccionId" name="seccionId" required>
-                                        <span id="ssecId"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="codigoSeccion" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required>
-                                        <span id="ssecCodigo"></span>
+                                        <span id="scodigoSeccion"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad</label>
                                         <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
-                                        <span id="ssecCantidad"></span>
+                                        <span id="scantidadSeccion"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3">

@@ -147,40 +147,41 @@ class Seccion extends Connection
 
     /// Actualizar
 
-    // function Modificar()
-    // {
-    //     $co = $this->Con();
-    //     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    //     $r = array();
-    //     if ($this->ExisteTrayecto($this->trayectoId)) {
-    //         if (!$this->existe($this->trayectoNumero, $this->trayectoAnio)) {
-    //             try {
-    //                 $stmt = $co->prepare("UPDATE tbl_trayecto
-    //                 SET tra_anio = :trayectoAnio, tra_numero = :trayectoNumero
-    //                 WHERE tra_id = :trayectoId");
+    function Modificar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        if ($this->ExisteSeccion($this->seccionId)) {
+            if (!$this->existe($this->codigoSeccion, $this->trayectoSeccion)) {
+                try {
+                    $stmt = $co->prepare("UPDATE tbl_seccion
+                    SET sec_codigo = :codigoSeccion , sec_cantidad = :cantidadSeccion, tra_id = :trayectoId
+                    WHERE sec_id = :seccionId");
 
-    //                 $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
-    //                 $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
-    //                 $stmt->bindParam(':trayectoId', $this->trayectoId, PDO::PARAM_INT);
+                    $stmt->bindParam(':seccionId', $this->seccionId, PDO::PARAM_STR);
+                    $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
+                    $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
+                    $stmt->bindParam(':trayectoId', $this->trayectoSeccion, PDO::PARAM_INT);
 
-    //                 $stmt->execute();
+                    $stmt->execute();
 
-    //                 $r['resultado'] = 'modificar';
-    //                 $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el trayecto correctamente!';
-    //             } catch (Exception $e) {
-    //                 $r['resultado'] = 'error';
-    //                 $r['mensaje'] = $e->getMessage();
-    //             }
-    //         } else {
-    //             $r['resultado'] = 'modificar';
-    //             $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado YA existe!';
-    //         }
-    //     } else {
-    //         $r['resultado'] = 'modificar';
-    //         $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado NO existe!';
-    //     }
-    //     return $r;
-    // }
+                    $r['resultado'] = 'modificar';
+                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó la sección correctamente!';
+                } catch (Exception $e) {
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = $e->getMessage();
+                }
+            } else {
+                $r['resultado'] = 'modificar';
+                $r['mensaje'] = 'ERROR! <br/> La SECCIÓN colocado YA existe!';
+            }
+        } else {
+            $r['resultado'] = 'modificar';
+            $r['mensaje'] = 'ERROR! <br/> La SECCIÓN colocado NO existe!';
+        }
+        return $r;
+    }
 
     // /// Eliminar
 
@@ -284,7 +285,7 @@ class Seccion extends Connection
 
             if ($count > 0) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'La SECCIÓN colocado YA existe!';
+                $r['mensaje'] = 'La SECCIÓN colocada YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
@@ -346,12 +347,25 @@ class Seccion extends Connection
 
             $seccionesArray = json_decode($secciones, true);
 
+            $in = implode(',', array_map('intval', $seccionesArray));
+            $stmtTrayecto = $co->query("
+                SELECT tra_id 
+                FROM tbl_seccion 
+                WHERE sec_id IN ($in) AND sec_estado = 1
+                GROUP BY tra_id
+            ");
+            $trayectos = $stmtTrayecto->fetchAll(PDO::FETCH_COLUMN);
+
+            if (count($trayectos) !== 1) {
+                throw new Exception("Las secciones seleccionadas NO pertenecen al mismo trayecto.");
+            }
+
             $stmtCheck = $co->prepare("
-            SELECT COUNT(*) AS cnt
-            FROM seccion_grupo sg
-            INNER JOIN tbl_grupo g ON sg.gro_id = g.gro_id
-            WHERE sg.sec_id = :seccionId AND g.grupo_estado = 1
-        ");
+                SELECT COUNT(*) AS cnt
+                FROM seccion_grupo sg
+                INNER JOIN tbl_grupo g ON sg.gro_id = g.gro_id
+                WHERE sg.sec_id = :seccionId AND g.grupo_estado = 1
+            ");
 
             foreach ($seccionesArray as $seccionId) {
                 $stmtCheck->bindValue(':seccionId', (int)$seccionId, PDO::PARAM_INT);
@@ -364,16 +378,16 @@ class Seccion extends Connection
             }
 
             $stmtGrupo = $co->prepare("
-            INSERT INTO tbl_grupo (grupo_estado) 
-            VALUES (1)
-        ");
+                INSERT INTO tbl_grupo (grupo_estado) 
+                VALUES (1)
+            ");
             $stmtGrupo->execute();
             $grupoId = $co->lastInsertId();
 
             $stmtLink = $co->prepare("
-            INSERT INTO seccion_grupo (gro_id, sec_id) 
-            VALUES (:grupoId, :seccionId)
-        ");
+                INSERT INTO seccion_grupo (gro_id, sec_id) 
+                VALUES (:grupoId, :seccionId)
+            ");
             $stmtLink->bindParam(':grupoId', $grupoId, PDO::PARAM_INT);
 
             foreach ($seccionesArray as $seccionId) {
