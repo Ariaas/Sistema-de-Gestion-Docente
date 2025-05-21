@@ -3,59 +3,52 @@ require_once('model/dbconnection.php');
 
 class Archivo extends Connection
 {
-    private $uploadDir = __DIR__ . '/../uploads/';
+    private $uploadDir = __DIR__ . '/../archivos_subidos/';
 
     public function __construct()
     {
         parent::__construct();
-        // Crear carpeta si no existe
         if (!file_exists($this->uploadDir)) {
             mkdir($this->uploadDir, 0777, true);
         }
     }
 
-    // Método principal para guardar (local + BD)
-    public function guardarArchivo($file)
+    public function guardarArchivo($archivo, $docente = '', $ucurricular = '', $fecha = '')
     {
-        // 1. Validaciones (igual que antes)
-        $allowedTypes = ['pdf', 'doc', 'docx', 'txt'];
-        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-        if (!in_array($extension, $allowedTypes)) {
-            return ['resultado' => 'error', 'mensaje' => 'Solo se permiten PDF, DOC, DOCX o TXT'];
+        $carpetaDestino = 'archivos_subidos/';
+        if (!file_exists($carpetaDestino)) {
+            mkdir($carpetaDestino, 0777, true);
         }
 
-        if ($file['size'] > 5242880) { // 5MB
-            return ['resultado' => 'error', 'mensaje' => 'El archivo excede 5MB'];
-        }
+        // Sanitizar nombres
+        $docente = preg_replace('/[^a-zA-Z0-9\s]/', '', $docente); // Permite espacios
+        $ucurricular = preg_replace('/[^a-zA-Z0-9\s]/', '', $ucurricular); 
+        $fecha = $fecha ?: date('Y-m-d');
 
-        // 2. Usar nombre original SANITIZADO
-        $nombreOriginal = basename($file['name']); // Elimina posibles rutas maliciosas
-        $filePath = $this->uploadDir . $nombreOriginal;
+        // Crear nombre personalizado
+        $docente = str_replace(' ', '_', $docente);
+        $ucurricular = str_replace(' ', '_', $ucurricular);
 
-        // 3. Verificar si el archivo ya existe
-        if (file_exists($filePath)) {
+        $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
+        $nombreArchivo = "{$docente}_{$ucurricular}_{$fecha}.{$extension}";
+        $rutaFinal = $carpetaDestino . $nombreArchivo;
+
+        if (move_uploaded_file($archivo['tmp_name'], $rutaFinal)) {
             return [
-                'resultado' => 'error',
-                'mensaje' => 'Ya existe un archivo con este nombre. Renómbralo antes de subirlo.'
+                'success' => true,
+                'mensaje' => "Archivo guardado como: {$nombreArchivo}",
+                'nombre_archivo' => $nombreArchivo
+            ];
+        } else {
+            return [
+                'success' => false,
+                'mensaje' => 'Error al guardar el archivo'
             ];
         }
-
-        // 4. Mover el archivo
-        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
-            return ['resultado' => 'error', 'mensaje' => 'Error al guardar el archivo'];
-        }
-
-        return [
-            'resultado' => 'guardar',
-            'mensaje' => 'Archivo guardado correctamente',
-            'nombre_guardado' => $nombreOriginal // Nombre original sin cambios
-        ];
     }
 
 
 
-    // Método para listar archivos (desde carpeta local)
     public function listarArchivosLocales()
     {
         $archivos = [];
@@ -87,4 +80,30 @@ class Archivo extends Connection
             return ['resultado' => 'error', 'mensaje' => 'Archivo no encontrado'];
         }
     }
+
+
+
+    public function obtenerdocente()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT doc_id,doc_nombre FROM tbl_docente");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
+
+    
+
+    public function obtenerunidadcurricular()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT uc_id,uc_nombre FROM tbl_uc");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
+
+    
 }

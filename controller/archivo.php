@@ -7,6 +7,7 @@ if (!is_file("model/" . $pagina . ".php")) {
 require_once("model/" . $pagina . ".php");
 
 if (is_file("views/" . $pagina . ".php")) {
+
     if (!empty($_POST)) {
         $archivo = new Archivo();
         $accion = $_POST['accion'] ?? '';
@@ -14,14 +15,24 @@ if (is_file("views/" . $pagina . ".php")) {
         switch ($accion) {
             case 'subir':
                 if (isset($_FILES['archivo'])) {
-                    echo json_encode($archivo->guardarArchivo($_FILES['archivo']));
+                 
+                    $docente = $_POST['docente'] ?? '';       
+                    $ucurricular = $_POST['ucurricular'] ?? ''; 
+                    $fecha = $_POST['fecha'] ?? date('Y-m-d');
+
+                    echo json_encode($archivo->guardarArchivo(
+                        $_FILES['archivo'],
+                        $docente,
+                        $ucurricular,
+                        $fecha
+                    ));
                 }
                 break;
 
             case 'listar':
                 echo json_encode([
                     'resultado' => 'listar',
-                    'datos' => $archivo->listarArchivosLocales() // Usa el método local
+                    'datos' => $archivo->listarArchivosLocales()
                 ]);
                 break;
 
@@ -33,6 +44,10 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         exit;
     }
+    $obj2 = new Archivo();
+
+    $docentes = $obj2->obtenerdocente();
+    $unidadcurriculares = $obj2->obtenerunidadcurricular();
 
 
     require_once("views/" . $pagina . ".php");

@@ -69,7 +69,7 @@ $(document).ready(function () {
   Listar(); 
     $("#usuarionombre").on("keyup", function () {
     const valor = $(this).val();
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#usuarionombre"),$("#susuarionombre"),"No debe contener más de 30 caracteres");
+    validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#usuarionombre"),$("#susuarionombre"),"Este formato permite de 4 a 15 carácteres");
   
         var datos = new FormData();
         datos.append('accion', 'existeusuario');
@@ -80,7 +80,7 @@ $(document).ready(function () {
 
     $("#correo").on("keyup", function () {
     const valor = $(this).val();
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#usuarionombre"),$("#susuarionombre"),"No debe contener más de 30 caracteres");
+    validarkeyup(/^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC-]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,$("#correo"),$("#scorreo"),"El formato sólo permite un correo válido!");
   
         var datos = new FormData();
         datos.append('accion', 'existecorreo');
@@ -91,7 +91,7 @@ $(document).ready(function () {
 
     $("#contraseña").on("keyup", function () {
     const valor = $(this).val();
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#usuarionombre"),$("#susuarionombre"),"No debe contener más de 30 caracteres");
+    validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#contraseña"),$("#scontraseña"),"Solo letras y numeros entre 4 y 15 caracteres");
 
     });
   //////////////////////////////BOTONES/////////////////////////////////////
@@ -112,6 +112,7 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
+        datos.append("usuarioid", $("#usuarioid").val());
         datos.append("usuarionombre", $("#usuarionombre").val());
         datos.append("correo", $("#correo").val());
         datos.append("contraseña", $("#contraseña").val());
@@ -158,16 +159,22 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+
   let trayecto = $("#rol").val();
   
-   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#usuarionombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío, ni contener más de 30 carácteres");
+   if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#usuarionombre"),$("#susuarionombre"),"Este formato permite de 4 a 15 carácteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El usuario debe coincidir con el formato <br/>" + 
+			"se permiten de 4 a 15 carácteres");
           return false;
-  } else if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío, ni contener más de 30 carácteres");
+  } else if (validarkeyup( /^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC-]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,$("#correo"),$("#scorreo"),"El formato sólo permite un correo válido!") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El correo del usuario <br/> No debe estar vacío, ni contener más de 30 carácteres");
           return false;
-  } else if (trayecto === null || trayecto === "0") {
-        muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un trayecto!"); 
+  }
+  else if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#contraseña"),$("#scontraseña"),"Solo letras y numeros entre 4 y 15 caracteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","La contraseña debe tener mínimo 4 dígitos y máximo 15");
+          return false;}
+  else if (trayecto === null || trayecto === "0") {
+        muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un rol!"); 
           return false;
 
 }
@@ -188,15 +195,13 @@ function pone(pos, accion) {
     $("#usuarionombre, #correo, #contraseña, #rol ").prop("disabled", false);
   }
 
-
-
-  $("#usuarionombre").val($(linea).find("td:eq(0)").text());
-  $("#contraseña").val($(linea).find("td:eq(1)").text());
-  $("#correo").val($(linea).find("td:eq(1)").text());
- 
+  $("#usuarioid").val($(linea).find("td:eq(0)").text());
+  $("#usuarionombre").val($(linea).find("td:eq(1)").text());
+  //$("#contraseña").val($(linea).find("td:eq(2)").text());
+  $("#correo").val($(linea).find("td:eq(3)").text());
+  $("#rol").val($(linea).find("td:eq(4)").text());
   
-  let rol = $(linea).find("td:eq(2)").attr("data-traid");
-  $("#rol").val(rol);
+ 
   
 
   $("#modal1").modal("show");
@@ -223,12 +228,15 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
               <tr>
-                <td style="display: none;">${item.cert_id}</td>
-                <td>${item.cert_nombre}</td>
-                <td data-traid="${item.tra_id}">${item.tra_numero }-${item.tra_anio}</td>
+                <td style="display: none;">${item.usu_id}</td>
+                <td>${item.usu_nombre}</td>
+                <td style="display: none; ">${item.usu_contraseña}</td>
+                <td>${item.usu_correo}</td>
+                <td >${item.usu_rol}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.usu_id}"  data-nombre="${item.usu_nombre}  data-contraseña="${item.usu_contraseña} data-correo="${item.usu_correo} data-rol="${item.usu_rol}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.usu_id}"  data-nombre="${item.usu_nombre} data-contraseña="${item.usu_contraseña} data-correo="${item.usu_correo} data-rol="${item.usu_rol}
+                  ">Eliminar</button>
                 </td>
               </tr>
             `);
@@ -238,7 +246,7 @@ function enviaAjax(datos) {
         ////////
         else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
-      if ( lee.mensaje =='Registro Incluido!<br/> Se registró el certificado correctamente!' ) {
+      if ( lee.mensaje =='Registro Incluido!<br/> Se registró el usuario correctamente!' ) {
             $("#modal1").modal("hide");
             limpia();
             Listar();
@@ -246,19 +254,24 @@ function enviaAjax(datos) {
         }
         else if (lee.resultado == "modificar") {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
-          if (lee.mensaje =="Registro Modificado!<br/>Se modificó el certificado correctamente!") {
+          if (lee.mensaje =="Registro Modificado!<br/>Se modificó el usuario correctamente!") {
             $("#modal1").modal("hide");
             Listar();
           }
         }
-        else if (lee.resultado == "existe") {
+        else if (lee.resultado == "existeusuario") {
+          if ($("#proceso").text() == "REGISTRAR") {
+            muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
+          }
+        }
+        else if (lee.resultado == "existecorreo") {
           if ($("#proceso").text() == "REGISTRAR") {
             muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
           }
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
-     //  if ( lee.mensaje =="Registro Eliminado!<br/>Se eliminó el certificado correctamente!!") {
+     //  if ( lee.mensaje =="Registro Eliminado!<br/>Se eliminó el usuario correctamente!!") {
             $("#modal1").modal("hide");
             Listar();
        //  }
@@ -283,7 +296,10 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  $("#certificadonombre").val("");
-  $("#trayecto").val("");
+  $("#usuarioid").val("");
+  $("#usuarionombre").val("");
+  $("#contraseña").val("");
+  $("#correo").val("");
+  $("#rol").val("");
   
 }

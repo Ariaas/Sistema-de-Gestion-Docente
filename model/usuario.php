@@ -75,47 +75,59 @@ Class Usuario extends Connection{
     public function Registrar(){
         $r = array();
 
-     if (!$this->Existe()) {
+         if (!$this->Existeusuario()) {
+               if (!$this->Existecorreo()) {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             try {
+                $contraseña_encrip = password_hash($this->contraseñaUsuario,PASSWORD_BCRYPT);
 
-                $stmt = $co->prepare("INSERT INTO tbl_titulo( tit_prefijo, tit_nombre, tit_estado) 
-                VALUES (:prefijotitulo, :nombretitulo, 1)");
+                $stmt = $co->prepare("INSERT INTO tbl_usuario( usu_nombre, usu_contrasena, usu_correo, usu_estado, usu_rol) 
+                VALUES (:nombreusuario, :contrasenausuario, :correousuario, 1, :rolusuario)");
 
-                $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
-                $stmt->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
-                        
+                $stmt->bindParam(':nombreusuario', $this->nombreUsuario, PDO::PARAM_STR);
+                $stmt->bindParam(':contrasenausuario',$contraseña_encrip, PDO::PARAM_STR);
+                $stmt->bindParam(':correousuario', $this->correoUsuario, PDO::PARAM_STR);
+                $stmt->bindParam(':rolusuario', $this->rolUsuario, PDO::PARAM_STR);
+            
                 $stmt->execute();
 
                 $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/> Se registró el título correctamente!';
+                $r['mensaje'] = 'Registro Incluido!<br/> Se registró el usuario correctamente!';
             } catch (Exception $e) {
 
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // 6. Cerrar la conexión
             $co = null;
-        
-        } else {
+             } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El titulo colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> El correo colocado ya existe!';
         
             }
-        return $r;
+        } else {
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'ERROR! <br/> El usuario colocado ya existe!';
+        
+            }
+             return $r;
  
   
         }
-    public function Consultar()
-    {
+
+
+    public function Consultar(){
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT * FROM tbl_titulo where tit_estado = 1");
+            $stmt = $co->query("SELECT * FROM tbl_usuario where usu_estado = 1");
+
+
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
         } catch (Exception $e) {
@@ -132,29 +144,39 @@ Class Usuario extends Connection{
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
       
-         if (!$this->Existe()){
+        if (!$this->Existeusuario()) {
+               if (!$this->Existecorreo()) {
                 try {
-                    $stmt = $co->prepare("UPDATE tbl_titulo
-                    SET tit_prefijo = :prefijotitulo, tit_nombre = :nombretitulo
-                    WHERE tit_id = :tituloid");
 
-                    $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo,PDO::PARAM_STR);
-                    $stmt->bindParam(':nombretitulo', $this->nombreTitulo,PDO::PARAM_STR );
-                    $stmt->bindParam(':tituloid', $this->tituloId,PDO::PARAM_INT);
+                    $contraseña_encrip = password_hash($this->contraseñaUsuario,PASSWORD_BCRYPT);
+                    $stmt = $co->prepare("UPDATE tbl_usuario
+                    SET  usu_nombre = :nombreusuario, usu_contrasena = :contrasenausuario, usu_correo = :correousuario, usu_rol= :rolusuario
+                    WHERE usu_id = :usuarioid");
+                    $stmt->bindParam(':usuarioid', $this->usuarioId, PDO::PARAM_INT);
+                    $stmt->bindParam(':nombreusuario', $this->nombreUsuario, PDO::PARAM_STR);
+                    $stmt->bindParam(':contrasenausuario',$contraseña_encrip, PDO::PARAM_STR);
+                    $stmt->bindParam(':correousuario', $this->correoUsuario, PDO::PARAM_STR);
+                    $stmt->bindParam(':rolusuario', $this->rolUsuario, PDO::PARAM_STR);
+            
 
                     $stmt->execute();
 
                     $r['resultado'] = 'modificar';
-                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el titulo correctamente!';
+                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el usuario correctamente!';
                 } catch (Exception $e) {
                     $r['resultado'] = 'error';
                     $r['mensaje'] = $e->getMessage();
                 }
-            } else {
+
+                    } else {
+                     $r['resultado'] = 'modificar';
+                     $r['mensaje'] = 'ERROR! <br/> El correo colocado YA existe!';
+                 }
+                } else {
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'ERROR! <br/> El titulo colocado YA existe!';
-         }
-       
+                $r['mensaje'] = 'ERROR! <br/> El usuario colocado YA existe!';
+                }
+
         return $r;
     }
 
@@ -164,42 +186,70 @@ Class Usuario extends Connection{
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if (!$this->Existe()){ 
+           if (!$this->Existeusuario()) {
+               if (!$this->Existecorreo()) {
             try {
-                $stmt = $co->prepare("UPDATE tbl_titulo
-                SET tit_estado = 0 WHERE tit_id = :tituloid");
-                 $stmt->bindParam(':tituloid', $this->tituloId,PDO::PARAM_INT);
+                $stmt = $co->prepare("UPDATE tbl_usuario
+                SET usu_estado = 0 WHERE usu_id = :usuarioid");
+                $stmt->bindParam(':usuarioid', $this->usuarioId, PDO::PARAM_INT);
 
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el titulo correctamente!';
+                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el usuario correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
             }
-        }else {
+            }else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El titulo colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El usuario colocado NO existe!';
+        }
+        }else {
+             $r['resultado'] = 'eliminar';
+            $r['mensaje'] = 'ERROR! <br/> El usuario colocado NO existe!';
         }
         return $r;
  
     }
 
-    public function Existe(){
+    public function Existeusuario(){
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_titulo WHERE tit_prefijo=:prefijotitulo AND tit_nombre=:nombretitulo AND tit_estado = 1");
+            $stmt = $co->prepare("SELECT * FROM tbl_usuario WHERE usu_nombre=:nombreusuario AND usu_estado = 1");
 
-            $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo,PDO::PARAM_STR);
-            $stmt->bindParam(':nombretitulo', $this->nombreTitulo,PDO::PARAM_STR);
+            $stmt->bindParam(':nombreusuario', $this->nombreUsuario, PDO::PARAM_STR);
+           
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
-                $r['resultado'] = 'existe';
-                $r['mensaje'] = ' El titulo colocado YA existe!';
+                $r['resultado'] = 'existeusuario';
+                $r['mensaje'] = ' El usuario colocado YA existe!';
+            }
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        // Se cierra la conexión
+        $co = null;
+        return $r;
+    }
+
+    public function Existecorreo(){
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->prepare("SELECT * FROM tbl_usuario WHERE usu_correo=:correousuario AND usu_estado = 1");
+
+          $stmt->bindParam(':correousuario', $this->correoUsuario, PDO::PARAM_STR);
+            $stmt->execute();
+            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
+            if ($fila) {
+                $r['resultado'] = 'existecorreo';
+                $r['mensaje'] = ' El correo colocado YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
