@@ -8,7 +8,7 @@ if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
 
-        $usu = new Titulo();
+        $usu = new Usuario();
         $accion = $_POST['accion'];
 
         if ($accion == 'consultar') {
@@ -16,27 +16,38 @@ if (is_file("views/" . $pagina . ".php")) {
         
         
         } else if ($accion == 'registrar') {
-            $usu->set_prefijo($_POST['tituloprefijo']);// pila con estos setters
-            $usu->set_nombreTitulo($_POST['titulonombre']);
+            $usu->set_nombreUsuario($_POST['usuarionombre']);// pila con estos setters
+            $usu->set_contraseñaUsuario($_POST['contraseña']);
+            $usu->set_correoUsuario($_POST['correo']);// pila con estos setters
+            $usu->set_rolUsuario($_POST['rol']);
             echo  json_encode($usu->Registrar());
             
         
         
-        }else if ($accion == 'existe') {
+        }else if ($accion == 'existeusuario') {
 
-            $usu->set_prefijo($_POST['tituloprefijo']);// pila con estos setters
-            $usu->set_nombreTitulo($_POST['titulonombre']);
-            echo json_encode($usu->Existe());
+            $usu->set_nombreUsuario($_POST['usuarionombre']);// pila con estos setters
+           
+            echo json_encode($usu->Existeusuario());
+
+        } else if ($accion == 'existecorreo') {
+
+           $usu->set_correoUsuario($_POST['correo']);
+            echo json_encode($usu->Existecorreo());
 
         } else if($accion == 'modificar'){
-            $usu->set_tituloId($_POST['tituloid']);
-            $usu->set_prefijo($_POST['tituloprefijo']);// pila con estos setters
-            $usu->set_nombreTitulo($_POST['titulonombre']);
+            $usu->set_usuarioId($_POST['usuarioid']);
+            $usu->set_nombreUsuario($_POST['usuarionombre']);// pila con estos setters
+            $usu->set_contraseñaUsuario($_POST['contraseña']);
+            $usu->set_correoUsuario($_POST['correo']);// pila con estos setters
+            $usu->set_rolUsuario($_POST['rol']);
+            // pila con estos setters
+            
 
             echo  json_encode($usu->Modificar());
         }elseif ($accion == 'eliminar') {
 
-           $usu->set_tituloId($_POST['tituloid']);
+            $usu->set_usuarioId($_POST['usuarioid']);
             echo  json_encode($usu->Eliminar());
             }
         exit;
