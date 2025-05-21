@@ -28,6 +28,7 @@ function crearDT() {
       info: true,
       autoWidth: false,
       responsive: true,
+      scrollX: true,
       language: {
         lengthMenu: "Mostrar _MENU_ registros",
         zeroRecords: "No se encontraron resultados",
@@ -301,5 +302,3 @@ function limpia() {
   $("#tipoEspacio").val("");
   $("#codigoEspacio").val("");
 }
-
-

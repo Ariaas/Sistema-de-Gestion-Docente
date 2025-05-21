@@ -8,81 +8,71 @@
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ES">
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-
-    <title>Categoria</title>
+    <title>Gestión de Categorías</title>
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
-    <main class="main-content">
-        <section class="d-flex flex-column align-items-md-center" style="margin-top: 110px;">
-            <center>
-                <h2 class="text-primary text-md-center">Gestionar Ejes</h2>
-            </center>
-            <br>
-            <div class="container">
-                <div class="text-md-left">
-                    <button class="btn btn-success" id="registrar">Registrar</button>
+    <main class="main-content flex-shrink-0">
+        <section class="d-flex flex-column align-items-center justify-content-center py-4">
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestión de Categorías</h2>
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+                <button class="btn btn-success px-4" id="registrar">
+                    <i class="fas fa-plus me-2"></i>Registrar Categoría
+                </button>
+            </div>
+            <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+                <div class="table-responsive" style="overflow-x: hidden;">
+                    <table class="table table-striped table-hover w-100" id="tablacategoria">
+                        <thead>
+                            <tr>
+                                <th style="display: none;">ID</th>
+                                <th>Categoría</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultadoconsulta"></tbody>
+                    </table>
                 </div>
             </div>
-            <br>
-            <div class="container card shadow mb-4 "> <!-- todo el contenido ira dentro de esta etiqueta-->
-                <br>
-                <div class="container">
-                </div>
-                <div class="container text-md-center">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="tablacategoria">
-                            <thead>
-                                <tr>
-                                    <th style="display: none;">ID</th>
-                                    <th>Categoria</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultadoconsulta"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div> <!-- fin de container -->
         </section>
-
         <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Formulario de Categoria</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                        </button>
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Formulario de Categoría</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
-                        <form method="post" id="f" autocomplete="off">
-                            <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
+                        <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="text" class="form-control" name="accion" id="accion" style="display: none;">
                             <div class="container">
                                 <div class="row mb-3">
                                     <div style="display: none;" class="col-md-6">
                                         <label for="categoriaId">ID</label>
                                         <input class="form-control" type="text" id="categoriaId" name="categoriaId">
-                                        <span id="scategoriaId"></span>
+                                        <div class="invalid-feedback" id="scategoriaId"></div>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="categoriaNombre">Categoria</label>
-                                        <input class="form-control" type="text" id="categoriaNombre" name="categoriaNombre">
-                                        <span id="scategoriaNombre"></span>
+                                        <label for="categoriaNombre" class="form-label">Categoría</label>
+                                        <input class="form-control" type="text" id="categoriaNombre" name="categoriaNombre" required>
+                                        <div class="invalid-feedback" id="scategoriaNombre"></div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row mt-3 d-flex justify-content-center align-items-md-center">
-                                <div class="col-md-2">
-                                    <button type="button" class="btn btn-dark" id="proceso"></button>
-                                </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-primary me-2" id="proceso">
+                                    <i class="fas fa-save me-2"></i>Guardar
+                                </button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -90,20 +80,15 @@
             </div>
         </div>
         <!-- Fin del Modal -->
-
     </main>
     <!-- Footer -->
-    <?php require_once("public/components/footer.php"); ?>
-    <?php //require_once("public/components/body.php"); 
+    <?php
+    require_once("public/components/footer.php");
     ?>
-    <!-- Footer -->
-    </div>
-    <!-- fin de container -->
-
     <!-- Scripts -->
     <script type="text/javascript" src="public/js/categoria.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
+    <!-- Font Awesome para iconos -->
 </body>
 
 </html>

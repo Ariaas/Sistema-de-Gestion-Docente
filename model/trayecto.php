@@ -87,7 +87,7 @@ class Trayecto extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El trayecto colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado YA existe!';
         }
 
         return $r;
@@ -226,6 +226,16 @@ class Trayecto extends Connection
         }
         // Se cierra la conexión
         $co = null;
+        return $r;
+    }
+
+    public function obtenerTrayectos()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_estado = 1");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
         return $r;
     }
 }

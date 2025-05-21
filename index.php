@@ -1,6 +1,6 @@
 <?php
 
-$pagina = 'principal';  //pagina por defecto
+$pagina = 'login';  //pagina por defecto
 
 if (!empty($_GET['pagina'])) {
     $pagina = $_GET['pagina'];

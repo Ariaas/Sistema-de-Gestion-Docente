@@ -13,22 +13,17 @@
 <head>
     <?php require_once("public/components/head.php"); ?>
 
-    <title>titulos</title>
+    <title>Usuarios</title>
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
-    <main class="main-content">
-        <section class="d-flex flex-column align-items-md-center" style="margin-top: 110px;">
-            <center>
-                <h2 class="text-primary text-md-center">Gestionar Usuario</h2>
-            </center>
-            <br>
-            <div class="container">
-                <div class="text-md-left">
-                    <button class="btn btn-success" id="registrar">Registrar</button>
-                </div>
+    <main class="main-content flex-shrink-0">
+        <section class="d-flex flex-column align-items-center justify-content-center py-4">
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Usuarios</h2>
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+                <button class="btn btn-success px-4" id="registrar">Registrar</button>
             </div>
             <br>
             <div class="container card shadow mb-4 "> <!-- todo el contenido ira dentro de esta etiqueta-->
@@ -42,7 +37,7 @@
                                 <tr>
                                     <th style="display: none;">ID</th>
                                     <th>Nombre</th>
-                                    <th style="display: none;">Contraseña</th>
+                                    <th>Contraseña</th>
                                     <th>Correo</th>
                                     <th>Rol</th>
                                     <th>Acciones</th>
@@ -60,37 +55,36 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Formulario de Usuarios</h5>
+                        <h5 class="modal-title">Formulario de usuarios</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form method="post" id="f" autocomplete="off">
-                            <input autocomplete="off" type="text" class="form-control" name="accion" id="accion" style="display: none;">
-                            <div class="container">
-                                <div class="row mb-3">
-
+                        <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="hidden" name="accion" id="accion">
+                            <div class="mb-4">
+                                <div class="row g-3">
                                     <div class="col-md-4" style="display: none;">
-                                        <label for="usuarioid">id</label>
-                                        <input class="form-control" type="text" id="usuarioid" name="usuarioid" min="1">
+                                        <label for="usuarioid">ID</label>
+                                        <input class="form-control" type="text" id="usuarioid" name="usuarioid">
                                         <span id="susuarioid"></span>
                                     </div>
-
                                     <div class="col-md-4">
-                                        <label for="usuarionombre">Nombre</label>
-                                        <input class="form-control" type="text" id="usuarionombre" name="usuarionombre" >
+                                        <label for="usuarionombre" class="form-label">Nombre</label>
+                                        <input class="form-control" type="text" id="usuarionombre" name="usuarionombre" required>
                                         <span id="susuarionombre"></span>
                                     </div>
 
-                                    <div class="col-md-4" >
+                                    <div class="col-md-4">
                                         <label for="contraseña">Contraseña</label>
-                                        <input class="form-control" type="text" id="contraseña" name="contraseña" >
+                                        <input class="form-control" type="password" id="contraseña" name="contraseña" >
                                         <span id="scontraseña"></span>
                                     </div>
-
+                                </div>
+                                <div class="row mt-3 g-3">
                                     <div class="col-md-4">
-                                        <label for="correo">Correo</label>
-                                        <input class="form-control" type="text" id="correo" name="correo" >
+                                        <label for="correo" class="form-label">Correo</label>
+                                        <input class="form-control" type="email" id="correo" name="correo" required>
                                         <span id="scorreo"></span>
                                     </div>
                                     
@@ -98,16 +92,16 @@
                                         <label for="rol">Rol</label>
                                         <select class="form-select" name="rol" id="rol">
                                             <option value="" disabled selected >Seleccione un rol</option>
-                                            <option value="usuario" >Usuario</option>
-                                            <option value="administrador" >administrador</option>
+                                            <option value="1" >Usuario</option>
+                                            <option value="2" >Administrador</option>
                                         </select>
+                                        <span id="srol"></span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row mt-3 d-flex justify-content-center align-items-md-center">
-                                <div class="col-md-2">
-                                    <button type="button" class="btn btn-dark" id="proceso"></button>
-                                </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
                     </div>
@@ -115,16 +109,9 @@
             </div>
         </div>
         <!-- Fin del Modal -->
-
     </main>
     <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>
-    <?php //require_once("public/components/body.php"); 
-    ?>
-    <!-- Footer -->
-    </div>
-    <!-- fin de container -->
-
     <!-- Scripts -->
     <script type="text/javascript" src="public/js/usuario.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>

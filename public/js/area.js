@@ -5,15 +5,14 @@ function Listar() {
 }
 
 function destruyeDT() {
-  // se destruye el datatablet
-  if ($.fn.DataTable.isDataTable("#tablatitulo")) {
-    $("#tablatitulo").DataTable().destroy();
+  if ($.fn.DataTable.isDataTable("#tablaArea")) {
+    $("#tablaArea").DataTable().destroy();
   }
 }
 
 function crearDT() {
-  if (!$.fn.DataTable.isDataTable("#tablatitulo")) {
-    $("#tablatitulo").DataTable({
+  if (!$.fn.DataTable.isDataTable("#tablaArea")) {
+    $("#tablaArea").DataTable({
       paging: true,
       lengthChange: true,
       searching: true,
@@ -21,7 +20,6 @@ function crearDT() {
       info: true,
       autoWidth: false,
       responsive: true,
-      scrollX: true,
       language: {
         lengthMenu: "Mostrar _MENU_ registros",
         zeroRecords: "No se encontraron resultados",
@@ -37,7 +35,7 @@ function crearDT() {
         },
       },
       autoWidth: false,
-      order: [[1, "asc"]],
+      order: [[0, "asc"]],
       dom:
         "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
@@ -67,18 +65,28 @@ function crearDT() {
 }
 
 $(document).ready(function () {
-  Listar(); 
-    $("#titulonombre").on("keyup", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"No debe contener más de 30 caracteres");
-  
-        var datos = new FormData();
-        datos.append('accion', 'existe');
-        datos.append("tituloprefijo", $("#tituloprefijo").val());
-        datos.append("titulonombre", $("#titulonombre").val());
-        enviaAjax(datos);
-   
-    });
+  Listar();
+
+  //////////////////////////////VALIDACIONES/////////////////////////////////////
+
+  $("#areaNombre").on("keypress", function (e) {
+    validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+  });
+
+  $("#areaNombre").on("keyup", function () {
+    validarkeyup(
+      /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+      $(this),
+      $("#sareaNombre"),
+      "El nombre debe tener entre 4 y 30 caracteres"
+    );
+    if ($("#areaNombre").val().length >= 4) {
+      var datos = new FormData();
+      datos.append('accion', 'existe');
+      datos.append('areaNombre', $(this).val());
+      enviaAjax(datos, 'existe');
+    }
+  });
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
@@ -87,8 +95,7 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
-        datos.append("tituloprefijo", $("#tituloprefijo").val());
-        datos.append("titulonombre", $("#titulonombre").val());
+        datos.append("areaNombre", $("#areaNombre").val());
 
         enviaAjax(datos);
       }
@@ -96,17 +103,29 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
-        datos.append("tituloid", $("#tituloid").val());
-        datos.append("tituloprefijo", $("#tituloprefijo").val());
-        datos.append("titulonombre", $("#titulonombre").val());
-
+        datos.append("areaNombre", $("#areaNombre").val());
+        datos.append("areaId", $("#areaId").val());
         enviaAjax(datos);
       }
     }
-    if ($(this).text() == "ELIMINAR") {  
-        // Mostrar confirmación usando SweetAlert
+    if ($(this).text() == "ELIMINAR") {
+      if (
+        validarkeyup(
+          /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+          $("#areanNombre"),
+          $("#sareaNombre"),
+          "Formato de nombre incorrecto"
+        ) == 0
+      ) {
+        muestraMensaje(
+          "error",
+          4000,
+          "ERROR!",
+          "Seleccionó un nombre incorrecto <br/> por favor verifique nuevamente"
+        );
+      } else {
         Swal.fire({
-          title: "¿Está seguro de eliminar este espacio?",
+          title: "¿Está seguro de eliminar esta área?",
           text: "Esta acción no se puede deshacer.",
           icon: "warning",
           showCancelButton: true,
@@ -116,64 +135,60 @@ $(document).ready(function () {
           cancelButtonText: "Cancelar",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("tituloid", $("#tituloid").val());
+            datos.append("areaNombre", $("#areaNombre").val());
             enviaAjax(datos);
           } else {
-            muestraMensaje("error",2000,"INFORMACIÓN","La eliminación ha sido cancelada.");
+            muestraMensaje(
+              "error",
+              2000,
+              "INFORMACIÓN",
+              "La eliminación ha sido cancelada."
+            );
             $("#modal1").modal("hide");
           }
         });
+      }
     }
   });
-
 
   $("#registrar").on("click", function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
   });
-
-  
 });
 
-//////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
-
 function validarenvio() {
-   let prefijo = $("#tituloprefijo").val();
-  if (prefijo === null || prefijo === "0") {
-        muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un prefijo!"); 
-          return false;
-  } else if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"No debe contener más de 30 caracteres") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del titulo <br/> No debe estar vacío, ni contener más de 30 carácteres");
-          return false;
-  }
-  return true;
+  return validarkeyup(
+    /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+    $("#areaNombre"),
+    $("#sareaNombre"),
+    "El nombre debe tener entre 4 y 30 caracteres"
+  ) == 1;
 }
 
-// funcion para pasar de la lista a el formulario
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#tituloprefijo").prop("disabled", false);
-    $("#titulonombre").prop("disabled", false);
+    $("#areaId").prop("disabled", true);
+    $("#areaNombre").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#tituloprefijo, #titulonombre").prop("disabled", false);
+    $("#areaId, #areaNombre").prop("disabled", true);
   }
-  $("#tituloid").val($(linea).find("td:eq(0)").text());
-  $("#titulonombre").val($(linea).find("td:eq(2)").text());
-  $("#tituloprefijo").val($(linea).find("td:eq(1)").text());
- 
+
+  // Corregir aquí - el ID está en la primera columna (oculta)
+  $("#areaId").val($(linea).find("td:eq(0)").text());
+  // El nombre está en la segunda columna (visible)
+  $("#areaNombre").val($(linea).find("td:eq(1)").text());
 
   $("#modal1").modal("show");
 }
 
-//funcion que envia y recibe datos por AJAX
 function enviaAjax(datos) {
   $.ajax({
     async: true,
@@ -184,9 +199,10 @@ function enviaAjax(datos) {
     processData: false,
     cache: false,
     beforeSend: function () {},
-    timeout: 10000, //tiempo maximo de espera por la respuesta del servidor
+    timeout: 10000,
     success: function (respuesta) {
       try {
+        console.log(respuesta)
         var lee = JSON.parse(respuesta);
         if (lee.resultado === "consultar") {
           destruyeDT();
@@ -194,51 +210,56 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
               <tr>
-                <td style="display: none;">${item.tit_id}</td>
-                <td>${item.tit_prefijo}</td>
-                <td>${item.tit_nombre}</td>
+                <td style="display: none;">${item.area_id}</td>
+                <td>${item.area_nombre}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.tit_id}" data-prefijo="${item.tit_prefijo}" data-nombre="${item.tit_nombre}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.tit_id}" data-prefijo="${item.tit_prefijo}" data-nombre="${item.tit_nombre}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
                 </td>
               </tr>
             `);
           });
           crearDT();
         }
-        ////////
         else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
-      if ( lee.mensaje =='Registro Incluido!<br/> Se registró el título correctamente!' ) {
+          if (
+            lee.mensaje ==
+            "Registro Incluido!<br/>Se registró el área correctamente!"
+          ) {
             $("#modal1").modal("hide");
-            limpia();
             Listar();
           }
         }
         else if (lee.resultado == "modificar") {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
-          if (lee.mensaje =="Registro Modificado!<br/>Se modificó el titulo correctamente!") {
+          if (
+            lee.mensaje ==
+            "Registro Modificado!<br/>Se modificó el área correctamente!"
+          ) {
             $("#modal1").modal("hide");
             Listar();
           }
-        }
-        else if (lee.resultado == "existe") {
-          if ($("#proceso").text() == "REGISTRAR") {
-            muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
-          }
+        }else if (lee.resultado == "existe") {		
+          if (lee.mensaje == 'El área ya existe!') {
+            muestraMensaje('info', 4000,'Atención!', lee.mensaje);
+          }	
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
-        if (  lee.mensaje =="Registro Eliminado!<br/>Se eliminó el titulo correctamente!") {
+          if (
+            lee.mensaje ==
+            "Registro Eliminado!<br/>Se eliminó el área correctamente!"
+          ) {
             $("#modal1").modal("hide");
             Listar();
-         }
+          }
         }
         else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
       } catch (e) {
-        console.error("Error en análisis JSON:", e); // Registrar el error para depuración
+        console.error("Error en análisis JSON:", e);
         alert("Error en JSON " + e.name + ": " + e.message);
       }
     },
@@ -254,8 +275,7 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  $("#tituloprefijo").val("");
-  $("#titulonombre").val("");
+     $("#areaId").val("");
+  $("#areaNombre").val("");
+   $("#areaNombre").prop('disabled', false);
 }
-
-

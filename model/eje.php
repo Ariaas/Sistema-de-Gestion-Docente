@@ -75,7 +75,7 @@ class Eje extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El EJE colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> El EJE colocado YA existe!';
         }
 
         return $r;
@@ -142,7 +142,7 @@ class Eje extends Connection
             }
         } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El CÓDIGO colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El EJE colocado NO existe!';
         }
         return $r;
     }
@@ -181,7 +181,7 @@ class Eje extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El EJE ya existe!';
+                $r['mensaje'] = 'El EJE colocado YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
@@ -204,7 +204,7 @@ class Eje extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El EJE ya existe!';
+                $r['mensaje'] = 'El EJE colocado YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';

@@ -8,73 +8,93 @@
                 Inicio
             </span>
         </a>
+        <a href="?pagina=usuario" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/person.svg"></img>
+            </span>
+            <span class="description">
+                Gestionar Usuario
+            </span>
+        </a>
         <a href="?pagina=docente" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/person.svg"></img>
             </span>
             <span class="description">
-                Docentes
-            </span>
-        </a>
-        <a href="#" class="nav-link">
-            <span class="icon">
-                <img src="public/assets/icons/book.svg"></img>
-            </span>
-            <span class="description">
-                Unidades Curriculares
-            </span>
-        </a>
-        <a href="#" class="nav-link">
-            <span class="icon">
-                <img src="public/assets/icons/calendar.svg"></img>
-            </span>
-            <span class="description">
-                Horarios
-            </span>
-        </a>
-        <a href="?pagina=trayecto" class="nav-link">
-            <span class="icon">
-                <img src="public/assets/icons/book.svg"></img>
-            </span>
-            <span class="description">
-                Trayecto
+                Gestionar Docente
             </span>
         </a>
         <a href="?pagina=espacios" class="nav-link">
             <span class="icon">
+                <img src="public/assets/icons/book-svgrepo-com.svg"></img>
+            </span>
+            <span class="description">
+                Gestionar Espacio
+            </span>
+        </a>
+        <a href="?pagina=seccion" class="nav-link">
+            <span class="icon">
                 <img src="public/assets/icons/book.svg"></img>
             </span>
             <span class="description">
-                Espacios
+                Gestionar Sección
             </span>
         </a>
-
-        <a href="#" class="nav-link">
+        <a href="?pagina=trayecto" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/calendar.svg"></img>
+            </span>
+            <span class="description">
+                Gestionar Trayecto
+            </span>
+        </a>
+        <a href="?pagina=uc" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/book.svg"></img>
+            </span>
+            <span class="description">
+                Gestionar Unidad Curricular
+            </span>
+        </a>
+        <a href="?pagina=horariodocente" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/book.svg"></img>
+            </span>
+            <span class="description">
+                Gestionar Horario Docente
+            </span>
+        </a>
+        <a href="?pagina=mallacurricular" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/gear.svg"></img>
             </span>
             <span class="description">
-                Configuración
+                Gestionar Malla Curricular
             </span>
         </a>
-
-        <a href="?pagina=eje" class="nav-link">
+        <a href="?pagina=config" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/gear.svg"></img>
             </span>
             <span class="description">
-                Eje
+                Administrar Configuración
             </span>
         </a>
-
-        <a href="?pagina=categoria" class="nav-link">
+        <a href="?pagina=reportes" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/gear.svg"></img>
             </span>
             <span class="description">
-                Categoria
+                Generar Reportes
             </span>
         </a>
-
+        <a href="?pagina=login" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/gear.svg"></img>
+            </span>
+            <span class="description">
+                Cerrar Sesión
+            </span>
+        </a>
     </nav>
 </div>

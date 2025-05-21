@@ -1,4 +1,3 @@
-
 /* Asegura que el footer esté abajo */
 html, body {
     height: 100%; /* Asegura que el HTML y el body ocupen toda la altura */
@@ -35,6 +34,36 @@ h1{
     transition: width 0.3s;
     display: flex;
     flex-direction: column; /* Asegura que los enlaces estén en columna */
+    z-index: 1050; /* Higher than the footer */
+    overflow-y: auto; /* Permite el desplazamiento vertical */
+    max-height: 100vh; /* Limita la altura al 100% de la ventana */
+    overflow-x: hidden; /* Evita el desplazamiento horizontal */
+}
+
+/* Estilo personalizado para el scroll del sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 8px; /* Ancho del scroll */
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: #cccccc; /* Color del scroll */
+    border-radius: 4px; /* Bordes redondeados */
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: #aaaaaa; /* Color al pasar el mouse */
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background-color: #f2f2f2; /* Color del fondo del scroll */
+}
+
+/* Ajuste de tamaño para los íconos de la barra lateral */
+.sidebar .icon img {
+    width: 24px; /* Tamaño estándar para íconos */
+    height: 24px;
+    object-fit: contain; /* Asegura que la imagen no se deforme */
+    margin-right: 10px; /* Espaciado entre el ícono y el texto */
 }
 
 .sidebar .nav-link {
@@ -148,6 +177,8 @@ h1{
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra ligera */
     transition: transform 0.3s, box-shadow 0.3s; /* Transición suave */
     color: white; /* Texto blanco */
+    background-color: #007bff; /* Azul uniforme */
+    color: #ffffff; /* Texto blanco para contraste */
 }
 
 .custom-card:hover {
@@ -160,6 +191,16 @@ h1{
     margin-bottom: 15px; /* Espaciado debajo del icono */
 }
 
+/* Cambiar los íconos de las tarjetas a color blanco */
+.card-icon {
+    filter: brightness(0) invert(1); /* Convierte los íconos de las tarjetas a blanco */
+}
+
+/* Mantener los íconos del sidebar en negro */
+.sidebar .icon img {
+    filter: none; /* Sin filtro para mantener el color original */
+}
+
 /* Colores personalizados para cada carta */
 .card-docentes {
     background-color: #007bff; /* Azul */
@@ -167,32 +208,32 @@ h1{
 }
 
 .card-secciones {
-    background-color: #28a745; /* Verde */
+    background-color: #007bff; /* Verde */
     color: #ffffff;
 }
 
 .card-alumnos {
-    background-color: #ddb12c; /* Amarillo */
+    background-color: #007bff; /* Amarillo */
     color: #ffffff;
 }
 
 .card-materias {
-    background-color: #17a2b8; /* Cian */
+    background-color: #007bff; /* Cian */
     color: #ffffff;
 }
 
 .card-horarios {
-    background-color: #6f42c1; /* Morado */
+    background-color: #007bff; /* Morado */
     color: #ffffff;
 }
 
 .card-trayecto {
-    background-color: #dc3545; /* Rojo */
+    background-color: #007bff; /* Rojo */
     color: #ffffff;
 }
 
 .card-uc {
-    background-color: #ddb12c; /* Rojo */
+    background-color: #007bff; /* Rojo */
     color: #ffffff;
 }
 
@@ -200,5 +241,310 @@ table {
     width: 100%; /* Asegura que la tabla ocupe todo el ancho */
     border-collapse: collapse; /* Elimina espacios entre celdas */
     margin-top: 20px; /* Espaciado superior */
+}
 
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* DataTable visual minimalista, elegante y responsiva */
+.datatable-ui {
+  background: #fafdff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px 0 rgba(13,110,253,0.07);
+  padding: 1.5rem 1.5rem 2.5rem 1.5rem;
+  margin: 0 auto 2rem auto;
+  max-width: 100%;
+  border: 1.5px solid #e3eafc;
+}
+.datatable-ui .table-responsive {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+.datatable-ui table {
+  width: 100%;
+  min-width: 0;
+  table-layout: auto;
+  font-size: 1.07rem;
+  background: transparent;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.datatable-ui th {
+  background: #eaf2ff;
+  color: #000000;
+  font-weight: 700;
+  border-bottom: 2px solid #d0e2ff;
+  text-align: center;
+  padding: 16px 8px;
+  letter-spacing: 0.5px;
+  font-size: 1.08rem;
+}
+.datatable-ui td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 13px 8px;
+  border-bottom: 1px solid #f0f4fa;
+  background: #fff;
+  font-size: 1.04rem;
+}
+.datatable-ui tr:last-child td {
+  border-bottom: none;
+}
+.datatable-ui tbody tr {
+  transition: background 0.18s;
+}
+.datatable-ui tbody tr:hover {
+  background: #f3f8ff;
+}
+.datatable-ui .btn {
+  font-size: 0.97rem;
+  padding: 0.35rem 1.1rem;
+  border-radius: 1.5rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px 0 rgba(13,110,253,0.04);
+  border: none;
+  transition: background 0.18s, color 0.18s;
+}
+.datatable-ui .btn-warning {
+  background: #ffe066;
+  color: #856404;
+}
+.datatable-ui .btn-warning:hover {
+  background: #fff3cd;
+  color: #856404;
+}
+.datatable-ui .btn-danger {
+  background: #ff6f6f;
+  color: #fff;
+}
+.datatable-ui .btn-danger:hover {
+  background: #ffb3b3;
+  color: #fff;
+}
+
+/* Controles de DataTable (Mostrar y Buscar) más bonitos */
+.datatable-ui .dataTables_length label,
+.datatable-ui .dataTables_filter label {
+  font-weight: 500;
+  color: #000000;
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+.datatable-ui .dataTables_length select {
+  border-radius: 6px;
+  border: 1.5px solid #b6d4fe;
+  padding: 2px 8px;
+  font-size: 1rem;
+  background: #fafdff;
+  color: #000000;
+  margin-left: 0.3rem;
+}
+.datatable-ui .dataTables_filter input[type="search"] {
+  border-radius: 6px;
+  border: 1.5px solid #b6d4fe;
+  padding: 2px 8px;
+  font-size: 1rem;
+  background: #fafdff;
+  color: #0d6efd;
+  margin-left: 0.3rem;
+}
+
+/* Info de DataTable (Mostrando X de Y) bonito y centrado */
+.datatable-ui .dataTables_info {
+  color: #6c757d;
+  font-size: 0.98rem;
+  font-weight: 500;
+  background: #fafdff;
+  border-radius: 8px;
+  margin: 1.2rem auto 0 auto;
+  padding: 0.3rem 1rem;
+  text-align: center;
+  display: block;
+  width: fit-content;
+  box-shadow: 0 1px 4px 0 rgba(13,110,253,0.04);
+}
+
+/* Paginación DataTable reutilizable y responsiva */
+.datatable-ui .dataTables_paginate,
+.dataTables_paginate {
+  width: 100%;
+  display: flex;
+  justify-content: center !important;
+  align-items: center;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  text-align: center;
+  gap: 0.25rem;
+}
+.datatable-ui .paginate_button,
+.dataTables_paginate .paginate_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px;
+}
+.datatable-ui .paginate_button a,
+.dataTables_paginate .paginate_button a,
+.datatable-ui .paginate_button,
+.dataTables_paginate .paginate_button {
+  border-radius: 8px;
+  color: #0d6efd !important;
+  background: #f4faff !important;
+  border: 1.5px solid #b6d4fe !important;
+  padding: 7px 16px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  transition: background 0.18s, color 0.18s;
+  text-decoration: none !important;
+  min-width: 38px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 1px 4px 0 rgba(13,110,253,0.04);
+}
+.datatable-ui .paginate_button.current,
+.dataTables_paginate .paginate_button.current,
+.datatable-ui .paginate_button.current a,
+.dataTables_paginate .paginate_button.current a {
+  background: #0d6efd !important;
+  color: #fff !important;
+  border-color: #0d6efd !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px 0 rgba(13,110,253,0.08);
+}
+.datatable-ui .paginate_button:hover,
+.dataTables_paginate .paginate_button:hover,
+.datatable-ui .paginate_button a:hover,
+.dataTables_paginate .paginate_button a:hover {
+  background: #e3eefd !important;
+  color: #0d6efd !important;
+  border-color: #0d6efd !important;
+}
+.datatable-ui .paginate_button.disabled,
+.dataTables_paginate .paginate_button.disabled,
+.datatable-ui .paginate_button.disabled a,
+.dataTables_paginate .paginate_button.disabled a {
+  color: #b6d4fe !important;
+  background: #f4faff !important;
+  border-color: #b6d4fe !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+/* Responsive para tablas y paginación */
+@media (max-width: 900px) {
+  .datatable-ui {
+    padding: 0.5rem 0.5rem 1.5rem 0.5rem;
+  }
+  .datatable-ui th, .datatable-ui td {
+    padding: 8px 2px;
+    font-size: 0.98rem;
+  }
+}
+@media (max-width: 600px) {
+  .datatable-ui {
+    padding: 0.2rem 0.1rem 1rem 0.1rem;
+    border-radius: 6px;
+  }
+  .datatable-ui th, .datatable-ui td {
+    padding: 6px 1px;
+    font-size: 0.93rem;
+  }
+  .datatable-ui .dataTables_paginate, .dataTables_paginate {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .datatable-ui .dataTables_info {
+    font-size: 0.93rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+
+/* =====================
+   LOGIN PAGE STYLES
+   ===================== */
+.login-body-bg {
+    min-height: 100vh;
+    background: #f3f7fc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    background: #fff;
+    padding: 2.5rem 2rem 2rem 2rem;
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+    max-width: 370px;
+    width: 100%;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #222;
+    text-align: center;
+}
+
+.login-card .form-label {
+    font-weight: 500;
+    color: #333;
+}
+
+.login-card .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #cfd8dc;
+    margin-bottom: 1.2rem;
+    font-size: 1rem;
+    padding: 0.7rem 1rem;
+    background: #f8fafc;
+    transition: border-color 0.2s;
+}
+
+.login-card .form-control:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 2px #1976d220;
+    background: #fff;
+}
+
+.login-card .btn-primary {
+    background: #1976d2;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 0.7rem 0;
+    margin-top: 0.5rem;
+    transition: background 0.2s;
+}
+
+.login-card .btn-primary:hover {
+    background: #125ea7;
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+        max-width: 98vw;
+    }
+    .login-title {
+        font-size: 1.3rem;
+    }
+}
+
+footer {
+  background-color: #f8f9fa;
+  text-align: center;
+  padding: 10px 0;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  z-index: 10; /* Lower than the sidebar */
 }

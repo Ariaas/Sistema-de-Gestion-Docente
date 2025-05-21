@@ -1,116 +1,156 @@
+<?php
+// Verificar si el usuario ha iniciado sesión
+// if (!isset($_SESSION['name'])) {
+//     // Redirigir al usuario a la página de inicio de sesión
+//     header('Location: .');
+//     exit();
+// }
+?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ES">
+
 <head>
-    <?php require_once("components/head.php"); ?>
+    <?php require_once("public/components/head.php"); ?>
     <title>Docente</title>
 </head>
-<body>
-    <?php require_once("components/sidebar.php"); ?>
-    <main class="main-content">
-        <h1>Docente</h1>
-        <!-- Button trigger modal -->
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                <h8>Registrar Docente</h8>
-            </button>
 
-            <!-- Modal -->
-            <div class="modal fade" id="exampleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="exampleModalLabelLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+<body class="d-flex flex-column min-vh-100">
+
+    <?php require_once("public/components/sidebar.php"); ?>
+    <main class="main-content flex-shrink-0">
+        <section class="d-flex flex-column align-items-center justify-content-center py-4">
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+                <button class="btn btn-success px-4" id="incluir">Registrar Docente</button>
+            </div>
+            <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+                <div class="table-responsive" style="overflow-x: hidden;">
+                    <table class="table table-striped table-hover w-100" id="tabladocente">
+                        <thead>
+                            <tr>
+                                <th>Prefijo</th>
+                                <th>Cédula</th>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>Correo</th>
+                                <th>Categoría</th>
+                                <th>Dedicación</th>
+                                <th>Condición</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultadoconsulta"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <!-- Modal -->
+        <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Registrar Docente</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Formulario de docente -->
-                    <form>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="nombre" class="form-label">Nombre</label>
-                                <input type="text" class="form-control" id="nombre" placeholder="Ingrese el nombre" required>
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Formulario de Docente</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="text" class="form-control" name="accion" id="accion" style="display: none;">
+                            
+                            <div class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-2">
+                                        <label for="prefijoCedula" class="form-label">Prefijo</label>
+                                        <select class="form-select" name="prefijoCedula" id="prefijoCedula" required>
+                                            <option value="" disabled selected>Seleccione</option>
+                                            <option value="V">V</option>
+                                            <option value="E">E</option>
+                                        </select>
+                                        <span id="sprefijoCedula"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="cedulaDocente" class="form-label">Cédula</label>
+                                        <input class="form-control" type="text" id="cedulaDocente" name="cedulaDocente" required>
+                                        <span id="scedulaDocente"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3 g-3">
+                                    <div class="col-md-6">
+                                        <label for="nombreDocente" class="form-label">Nombre</label>
+                                        <input class="form-control" type="text" id="nombreDocente" name="nombreDocente" required>
+                                       <span id="snombreDocente"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="apellidoDocente" class="form-label">Apellido</label>
+                                        <input class="form-control" type="text" id="apellidoDocente" name="apellidoDocente" required>
+                                         <span id="sapellidoDocente"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-md-8">
+                                        <label for="correoDocente" class="form-label">Correo Electrónico</label>
+                                        <input class="form-control" type="email" id="correoDocente" name="correoDocente" required>
+                                         <span id="scorreoDocente"></span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="apellido" class="form-label">Apellido</label>
-                                <input type="text" class="form-control" id="apellido" placeholder="Ingrese el apellido" required>
+                            
+                            <div class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label for="categoria" class="form-label">Categoría</label>
+                                        <select class="form-select" name="categoria" id="categoria" required>
+                                            <option value="" disabled selected>Seleccione una categoría</option>
+                                            <?php
+                                            foreach ($categorias as $categoria) {
+                                                echo "<option value='" . $categoria['cat_id'] . "'>" . $categoria['cat_nombre'] . "</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                        <span id="scategoria" class="error"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="dedicacion" class="form-label">Dedicación</label>
+                                        <select class="form-select" name="dedicacion" id="dedicacion" required>
+                                            <option value="" disabled selected>Seleccione una dedicación</option>
+                                            <option value="Dedicacion exclusiva">Dedicación exclusiva</option>
+                                            <option value="Dedicacion">Dedicación</option>
+                                        </select>
+                                              <span id="sdedicacion"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="condicion" class="form-label">Condición</label>
+                                        <select class="form-select" name="condicion" id="condicion" required>
+                                            <option value="" disabled selected>Seleccione una condición</option>
+                                            <option value="Ordinario">Ordinario</option>
+                                            <option value="Desordinario">Desordinario</option>
+                                        </select>
+                                         <span id="scondicion"></span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row g-3 mt-3">
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" placeholder="ejemplo@correo.com" required>
+                            
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
-                            <div class="col-md-6">
-                                <label for="telefono" class="form-label">Teléfono</label>
-                                <input type="tel" class="form-control" id="telefono" placeholder="Ingrese el teléfono" required>
-                            </div>
-                        </div>
-                        <div class="row g-3 mt-3">
-                            <div class="col-md-6">
-                                <label for="direccion" class="form-label">Dirección</label>
-                                <input type="text" class="form-control" id="direccion" placeholder="Ingrese la dirección" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-                                <input type="date" class="form-control" id="fecha_nacimiento" required>
-                            </div>
-                        </div>
-                        <div class="row g-3 mt-3">
-                            <div class="col-md-6">
-                                <label for="especialidad" class="form-label">Especialidad</label>
-                                <select class="form-control" id="especialidad" required>
-                                    <option value="" disabled selected>Seleccione una especialidad</option>
-                                    <option value="matematicas">Matemáticas</option>
-                                    <option value="fisica">Física</option>
-                                    <option value="quimica">Química</option>
-                                    <option value="biologia">Biología</option>
-                                    <option value="informatica">Informática</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="documento_identidad" class="form-label">Documento de Identidad</label>
-                                <input type="text" class="form-control" id="documento_identidad" placeholder="Ingrese el documento de identidad" required>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">Registrar</button>
-                </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-            </div>
-            <!-- DATATABLE -->
-            <table id="tabla-docentes" class="table table-striped table-hover table-bordered" style="width:100% ;margin: 20px auto;">
-                <caption>Lista de Docentes</caption>
-                <thead class="table-primary">
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Correo</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Juan</td>
-                        <td>Pérez</td>
-                        <td>juan.perez@example.com</td>
-                        <td><button class="btn btn-primary btn-sm">Editar</button></td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>María</td>
-                        <td>Gómez</td>
-                        <td>maria.gomez@example.com</td>
-                        <td><button class="btn btn-primary btn-sm">Editar</button></td>
-                    </tr>
-                </tbody>
-            </table>
+        </div>
+        <!-- Fin del Modal -->
     </main>
-    <script src="js/docente.js"></script>
-    <?php require_once("components/footer.php"); ?>
+    <!-- Footer -->
+    <?php
+    require_once("public/components/footer.php");
+    ?>
+    <!-- Scripts -->
+    <script type="text/javascript" src="public/js/docente.js"></script>
+    <script type="text/javascript" src="public/js/validacion.js"></script>
+    <!-- Scripts -->
 </body>
+
 </html>
