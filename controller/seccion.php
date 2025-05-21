@@ -5,11 +5,13 @@ if (!is_file("model/" . $pagina . ".php")) {
     exit;
 }
 require_once("model/" . $pagina . ".php");
+
+$s = new Seccion();
+$trayectos = $s->obtenerTrayectos();
+
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
-
-        $s = new Seccion();
 
         $accion = $_POST['accion'];
 
@@ -44,11 +46,7 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         exit;
     }
-
-    require_once("model/trayecto.php");
-    $t = new Trayecto();
-    $trayectos = $t->obtenerTrayectos();
-
+    
     require_once("views/" . $pagina . ".php");
 } else {
     echo "Página en construcción";
