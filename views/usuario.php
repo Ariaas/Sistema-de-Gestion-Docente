@@ -42,7 +42,7 @@
                                 <tr>
                                     <th style="display: none;">ID</th>
                                     <th>Nombre</th>
-                                    <th style="display: none;">Contraseña</th>
+                                    <th>Contraseña</th>
                                     <th>Correo</th>
                                     <th>Rol</th>
                                     <th>Acciones</th>
@@ -60,7 +60,7 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Formulario de Usuarios</h5>
+                        <h5 class="modal-title">Formulario de usuarios</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                         </button>
                     </div>
@@ -82,9 +82,9 @@
                                         <span id="susuarionombre"></span>
                                     </div>
 
-                                    <div class="col-md-4" >
+                                    <div class="col-md-4">
                                         <label for="contraseña">Contraseña</label>
-                                        <input class="form-control" type="text" id="contraseña" name="contraseña" >
+                                        <input class="form-control" type="password" id="contraseña" name="contraseña" >
                                         <span id="scontraseña"></span>
                                     </div>
 
@@ -98,8 +98,8 @@
                                         <label for="rol">Rol</label>
                                         <select class="form-select" name="rol" id="rol">
                                             <option value="" disabled selected >Seleccione un rol</option>
-                                            <option value="usuario" >Usuario</option>
-                                            <option value="administrador" >administrador</option>
+                                            <option value="1" >Usuario</option>
+                                            <option value="2" >Administrador</option>
                                         </select>
                                     </div>
                                 </div>

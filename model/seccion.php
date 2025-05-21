@@ -8,18 +8,18 @@ class Seccion extends Connection
     private $cantidadSeccion;
     private $trayectoAnio;
     private $trayectoNumero;
-    private $idSeccion;
+    private $seccionId;
     private $trayectoSeccion;
     private $grupoId;
 
     //Construct
-    public function __construct($codigoSeccion = null, $cantidadSeccion = null, $idSeccion = null, $trayectoNumero = null, $trayectoAnio = null, $trayectoSeccion = null, $grupoId = null)
+    public function __construct($codigoSeccion = null, $cantidadSeccion = null, $seccionId = null, $trayectoNumero = null, $trayectoAnio = null, $trayectoSeccion = null, $grupoId = null)
     {
         parent::__construct();
 
         $this->codigoSeccion = $codigoSeccion;
         $this->cantidadSeccion = $cantidadSeccion;
-        $this->idSeccion = $idSeccion;
+        $this->seccionId = $seccionId;
         $this->trayectoNumero = $trayectoNumero;
         $this->trayectoAnio = $trayectoAnio;
         $this->trayectoSeccion = $trayectoSeccion;
@@ -57,6 +57,11 @@ class Seccion extends Connection
         return $this->grupoId;
     }
 
+    public function getseccionId()
+    {
+        return $this->seccionId;
+    }
+
     // Setters
     public function setCodigoSeccion($codigoSeccion)
     {
@@ -88,6 +93,11 @@ class Seccion extends Connection
         $this->grupoId = $grupoId;
     }
 
+    public function setseccionId($seccionId)
+    {
+        $this->seccionId = $seccionId;
+    }
+
     //Methods
 
     /// Registrar
@@ -96,13 +106,12 @@ class Seccion extends Connection
     {
         $r = array();
 
-        // Sin validación de existencia
-        // if (!$this->Existe($this->codigoSeccion, $this->trayectoNumero, $this->trayectoAnio)) {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        if (!$this->Existe($this->codigoSeccion, $this->trayectoSeccion)) {
+            $co = $this->Con();
+            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        try {
-            $stmt = $co->prepare("INSERT INTO tbl_seccion (
+            try {
+                $stmt = $co->prepare("INSERT INTO tbl_seccion (
             tra_id,
             sec_codigo,
             sec_cantidad,
@@ -113,139 +122,94 @@ class Seccion extends Connection
             :cantidadSeccion,
             1
         )");
+                $stmt->bindParam(':trayectoSeccion', $this->trayectoSeccion, PDO::PARAM_INT);
+                $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
+                $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
 
-            $stmt->bindParam(':trayectoSeccion', $this->trayectoSeccion, PDO::PARAM_INT);
-            $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
-            $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
+                $stmt->execute();
 
-            $stmt->execute();
+                $r['resultado'] = 'registrar';
+                $r['mensaje'] = 'Registro Incluido!<br/>Se registró la sección correctamente!';
+            } catch (Exception $e) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = $e->getMessage();
+            }
 
+            // Cerrar la conexión
+            $co = null;
+        } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>Se registró la sección correctamente!';
-        } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            $r['mensaje'] = 'ERROR! <br/> La SECCIÓN colocado YA existe!';
         }
-
-        // Cerrar la conexión
-        $co = null;
-        // } else {
-        //     $r['resultado'] = 'registrar';
-        //     $r['mensaje'] = 'ERROR! <br/> La sección con el código especificado ya existe!';
-        // }
 
         return $r;
     }
 
-    // function Registrar()
-    // {
-    //     $r = array();
-
-    //     // Verificar si ya existe una sección con el mismo código y trayecto
-    //     if (!$this->Existe($this->codigoSeccion, $this->trayectoNumero, $this->trayectoAnio)) {
-    //         $co = $this->Con();
-    //         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    //         try {
-    //             $stmt = $co->prepare("INSERT INTO tbl_seccion (
-    //                 tra_id,
-    //                 sec_codigo,
-    //                 sec_cantidad,
-    //                 sec_estado
-    //             ) VALUES (
-    //                 :trayectoSeccion,
-    //                 :codigoSeccion,
-    //                 :cantidadSeccion,
-    //                 1
-    //             )");
-
-    //             $stmt->bindParam(':trayectoSeccion', $this->trayectoSeccion, PDO::PARAM_INT);
-    //             $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
-    //             $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
-
-    //             $stmt->execute();
-
-    //             $r['resultado'] = 'registrar';
-    //             $r['mensaje'] = 'Registro Incluido!<br/>Se registró la sección correctamente!';
-    //         } catch (Exception $e) {
-    //             $r['resultado'] = 'error';
-    //             $r['mensaje'] = $e->getMessage();
-    //         }
-
-    //         // Cerrar la conexión
-    //         $co = null;
-    //     } else {
-    //         $r['resultado'] = 'registrar';
-    //         $r['mensaje'] = 'ERROR! <br/> La sección con el código especificado ya existe!';
-    //     }
-
-    //     return $r;
-    // }
-
     /// Actualizar
 
-    // function Modificar()
-    // {
-    //     $co = $this->Con();
-    //     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    //     $r = array();
-    //     if ($this->ExisteTrayecto($this->trayectoId)) {
-    //         if (!$this->existe($this->trayectoNumero, $this->trayectoAnio)) {
-    //             try {
-    //                 $stmt = $co->prepare("UPDATE tbl_trayecto
-    //                 SET tra_anio = :trayectoAnio, tra_numero = :trayectoNumero
-    //                 WHERE tra_id = :trayectoId");
+    function Modificar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        if ($this->ExisteSeccion($this->seccionId)) {
+            if (!$this->existe($this->codigoSeccion, $this->trayectoSeccion)) {
+                try {
+                    $stmt = $co->prepare("UPDATE tbl_seccion
+                    SET sec_codigo = :codigoSeccion , sec_cantidad = :cantidadSeccion, tra_id = :trayectoId
+                    WHERE sec_id = :seccionId");
 
-    //                 $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
-    //                 $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
-    //                 $stmt->bindParam(':trayectoId', $this->trayectoId, PDO::PARAM_INT);
+                    $stmt->bindParam(':seccionId', $this->seccionId, PDO::PARAM_STR);
+                    $stmt->bindParam(':codigoSeccion', $this->codigoSeccion, PDO::PARAM_STR);
+                    $stmt->bindParam(':cantidadSeccion', $this->cantidadSeccion, PDO::PARAM_INT);
+                    $stmt->bindParam(':trayectoId', $this->trayectoSeccion, PDO::PARAM_INT);
 
-    //                 $stmt->execute();
+                    $stmt->execute();
 
-    //                 $r['resultado'] = 'modificar';
-    //                 $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el trayecto correctamente!';
-    //             } catch (Exception $e) {
-    //                 $r['resultado'] = 'error';
-    //                 $r['mensaje'] = $e->getMessage();
-    //             }
-    //         } else {
-    //             $r['resultado'] = 'modificar';
-    //             $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado YA existe!';
-    //         }
-    //     } else {
-    //         $r['resultado'] = 'modificar';
-    //         $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado NO existe!';
-    //     }
-    //     return $r;
-    // }
+                    $r['resultado'] = 'modificar';
+                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó la sección correctamente!';
+                } catch (Exception $e) {
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = $e->getMessage();
+                }
+            } else {
+                $r['resultado'] = 'modificar';
+                $r['mensaje'] = 'ERROR! <br/> La SECCIÓN colocado YA existe!';
+            }
+        } else {
+            $r['resultado'] = 'modificar';
+            $r['mensaje'] = 'ERROR! <br/> La SECCIÓN colocado NO existe!';
+        }
+        return $r;
+    }
 
     // /// Eliminar
 
-    // function Eliminar()
-    // {
-    //     $co = $this->Con();
-    //     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    //     $r = array();
-    //     if ($this->ExisteTrayecto($this->trayectoId)) {
-    //         try {
-    //             $stmt = $co->prepare("UPDATE tbl_trayecto
-    //             SET tra_estado = 0
-    //             WHERE tra_id = :trayectoId");
-    //             $stmt->bindParam(':trayectoId', $this->trayectoId, PDO::PARAM_STR);
-    //             $stmt->execute();
+    function Eliminar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        if ($this->ExisteSeccion($this->seccionId)) {
+            try {
+                $stmt = $co->prepare("UPDATE tbl_seccion
+                SET sec_estado = 0
+                WHERE sec_id = :seccionId");
+                $stmt->bindParam(':seccionId', $this->seccionId, PDO::PARAM_STR);
+                $stmt->execute();
 
-    //             $r['resultado'] = 'eliminar';
-    //             $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el trayecto correctamente!';
-    //         } catch (Exception $e) {
-    //             $r['resultado'] = 'error';
-    //             $r['mensaje'] = $e->getMessage();
-    //         }
-    //     } else {
-    //         $r['resultado'] = 'eliminar';
-    //         $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado NO existe!';
-    //     }
-    //     return $r;
-    // }
+                $r['resultado'] = 'eliminar';
+                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó la sección correctamente!';
+            } catch (Exception $e) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = $e->getMessage();
+            }
+        } else {
+            $r['resultado'] = 'eliminar';
+            $r['mensaje'] = 'ERROR! <br/> La SECCIÓN colocada NO existe!';
+        }
+        return $r;
+    }
 
     /// Listar
 
@@ -297,63 +261,64 @@ class Seccion extends Connection
 
     /// Consultar exitencia
 
-    public function Existe($codigoSeccion, $trayectoNumero, $trayectoAnio)
+    public function Existe($codigoSeccion, $trayectoSeccion)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * 
+            $stmt = $co->prepare("
+            SELECT COUNT(*) AS cnt
             FROM tbl_seccion s
             INNER JOIN tbl_trayecto t ON s.tra_id = t.tra_id
             WHERE s.sec_codigo = :codigoSeccion 
-            AND t.tra_numero = :trayectoNumero 
-            AND t.tra_anio = :trayectoAnio 
-            AND s.sec_estado = 1 
-            AND t.tra_estado = 1");
+              AND t.tra_id = :trayectoSeccion 
+              AND s.sec_estado = 1 
+              AND t.tra_estado = 1
+        ");
 
             $stmt->bindParam(':codigoSeccion', $codigoSeccion, PDO::PARAM_STR);
-            $stmt->bindParam(':trayectoNumero', $trayectoNumero, PDO::PARAM_STR);
-            $stmt->bindParam(':trayectoAnio', $trayectoAnio, PDO::PARAM_STR);
+            $stmt->bindParam(':trayectoSeccion', $trayectoSeccion, PDO::PARAM_INT);
             $stmt->execute();
 
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            $count = (int) $stmt->fetchColumn();
+
+            if ($count > 0) {
+                $r['resultado'] = 'existe';
+                $r['mensaje'] = 'La SECCIÓN colocada YA existe!';
+            }
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null; // Cerrar la conexión
+        }
+        return $r;
+    }
+
+    public function ExisteSeccion($seccionId)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->prepare("SELECT * FROM tbl_seccion WHERE sec_id=:seccionId AND sec_estado = 1");
+
+            $stmt->bindParam(':seccionId', $seccionId, PDO::PARAM_STR);
+            $stmt->execute();
+            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'La sección con el código especificado ya existe para el trayecto y año indicados.';
+                $r['mensaje'] = 'La SECCIÓN colocado YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Cerrar la conexión
+        // Se cierra la conexión
         $co = null;
         return $r;
     }
-
-    // public function ExisteTrayecto($trayectoId)
-    // {
-    //     $co = $this->Con();
-    //     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    //     $r = array();
-    //     try {
-    //         $stmt = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_id=:trayectoId AND tra_estado = 1");
-
-    //         $stmt->bindParam(':trayectoId', $trayectoId, PDO::PARAM_STR);
-    //         $stmt->execute();
-    //         $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
-    //         if ($fila) {
-    //             $r['resultado'] = 'existe';
-    //             $r['mensaje'] = ' El TRAYECTO colocado YA existe!';
-    //         }
-    //     } catch (Exception $e) {
-    //         $r['resultado'] = 'error';
-    //         $r['mensaje'] = $e->getMessage();
-    //     }
-    //     // Se cierra la conexión
-    //     $co = null;
-    //     return $r;
-    // }
 
     function obtenerTrayectos()
     {
@@ -370,7 +335,8 @@ class Seccion extends Connection
         return $r;
     }
 
-    function Unir($seccionesJson)
+
+    function Unir($secciones)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -379,29 +345,60 @@ class Seccion extends Connection
         try {
             $co->beginTransaction();
 
-            $seccionesArray = json_decode($seccionesJson, true);
+            $seccionesArray = json_decode($secciones, true);
+
+            $in = implode(',', array_map('intval', $seccionesArray));
+            $stmtTrayecto = $co->query("
+                SELECT tra_id 
+                FROM tbl_seccion 
+                WHERE sec_id IN ($in) AND sec_estado = 1
+                GROUP BY tra_id
+            ");
+            $trayectos = $stmtTrayecto->fetchAll(PDO::FETCH_COLUMN);
+
+            if (count($trayectos) !== 1) {
+                throw new Exception("Las secciones seleccionadas NO pertenecen al mismo trayecto.");
+            }
+
+            $stmtCheck = $co->prepare("
+                SELECT COUNT(*) AS cnt
+                FROM seccion_grupo sg
+                INNER JOIN tbl_grupo g ON sg.gro_id = g.gro_id
+                WHERE sg.sec_id = :seccionId AND g.grupo_estado = 1
+            ");
+
+            foreach ($seccionesArray as $seccionId) {
+                $stmtCheck->bindValue(':seccionId', (int)$seccionId, PDO::PARAM_INT);
+                $stmtCheck->execute();
+                $count = (int)$stmtCheck->fetchColumn();
+
+                if ($count > 0) {
+                    throw new Exception("Al menos UNA de las SECCIONES <br/> YA pertenece a un grupo activo.");
+                }
+            }
 
             $stmtGrupo = $co->prepare("
-            INSERT INTO tbl_grupo (grupo_estado) 
-            VALUES (1)
-        ");
+                INSERT INTO tbl_grupo (grupo_estado) 
+                VALUES (1)
+            ");
             $stmtGrupo->execute();
             $grupoId = $co->lastInsertId();
 
             $stmtLink = $co->prepare("
-            INSERT INTO seccion_grupo (gro_id, sec_id) 
-            VALUES (:grupoId, :seccionId)
-        ");
+                INSERT INTO seccion_grupo (gro_id, sec_id) 
+                VALUES (:grupoId, :seccionId)
+            ");
             $stmtLink->bindParam(':grupoId', $grupoId, PDO::PARAM_INT);
 
             foreach ($seccionesArray as $seccionId) {
                 $stmtLink->bindValue(':seccionId', (int)$seccionId, PDO::PARAM_INT);
                 $stmtLink->execute();
             }
+
             $co->commit();
 
             $r['resultado'] = 'unir';
-            $r['mensaje']   = 'Secciones unidas correctamente al grupo.';
+            $r['mensaje']   = 'Secciones unidas!<br/>Se unieron las secciones correctamente!';
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';

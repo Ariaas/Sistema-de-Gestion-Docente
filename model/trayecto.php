@@ -87,7 +87,7 @@ class Trayecto extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El trayecto colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado YA existe!';
         }
 
         return $r;

@@ -84,6 +84,18 @@ function crearDT(selector) {
   }
 }
 
+function validarExiste() {
+  const codigo = $("#codigoSeccion").val();
+  const trayecto = $("#trayectoSeccion").val();
+  if (codigo && trayecto) {
+    var datos = new FormData();
+    datos.append('accion', 'existe');
+    datos.append('codigoSeccion', codigo);
+    datos.append('trayectoSeccion', trayecto);
+    enviaAjax(datos);
+  }
+}
+
 $(document).ready(function () {
   Listar();
   Cambiar();
@@ -95,35 +107,19 @@ $(document).ready(function () {
   crearDT("#tablaunion");
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
-
-  $("#trayectoNumero").on("keyup", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser mayor a 0");
-    
-    if ($(this).val().length > 0 && $("#trayectoAnio").val().length > 0) {
-        var datos = new FormData();
-        datos.append('accion', 'existe');
-        datos.append('trayectoNumero', $(this).val());
-        datos.append('trayectoAnio', $("#trayectoAnio").val());
-        enviaAjax(datos);
-    }
-
-    if (valor <= 0) {
-        $("#strayectoNumero").text("El número debe ser mayor a 0");
-    } else {
-        $("#strayectoNumero").text("");
-    }
-    });
-
-    $("#trayectoAnio").on("keyup", function () {
-        if ($(this).val().length > 0 && $("#trayectoNumero").val().length > 0) {
-            var datos = new FormData();
-            datos.append('accion', 'existe');
-            datos.append('trayectoNumero', $("#trayectoNumero").val());
-            datos.append('trayectoAnio', $(this).val());
-            enviaAjax(datos);
-        }
-    });
+  
+  $("#codigoSeccion").on("keypress", function(e){
+    validarkeypress(/^[0-9][0-9]*$/, e);
+  });
+  
+  $("#codigoSeccion").on("keyup", function () {
+    validarkeyup(/^[0-9][0-9]{3}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener 4 dígitos");
+    validarExiste();
+  });
+  
+  $("#trayectoSeccion").on("keyup change", function () {
+    validarExiste();
+  });
 
   //////////////////////////////BOTONES/////////////////////////////////////
   
@@ -133,8 +129,8 @@ $(document).ready(function () {
       seccionesSeleccionadas.push($(this).val());
   });
 
-  if (seccionesSeleccionadas.length === 0) {
-      Swal.fire("Atención", "Debe seleccionar al menos una sección para unir.", "warning");
+  if (seccionesSeleccionadas.length <= 1) {
+      Swal.fire("Atención", "Debe seleccionar al menos DOS secciones para unir.", "warning");
       return;
   }
   var datos = new FormData();
@@ -182,6 +178,7 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
+        datos.append("seccionId", $("#seccionId").val());
         datos.append("codigoSeccion", $("#codigoSeccion").val());
         datos.append("cantidadSeccion", $("#cantidadSeccion").val());
         datos.append("trayectoSeccion", $("#trayectoSeccion").val());
@@ -205,7 +202,7 @@ $(document).ready(function () {
             // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("trayectoId", $("#trayectoId").val());
+            datos.append("seccionId", $("#seccionId").val());
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -233,6 +230,18 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+
+  var trayectoSeleccionado = $("#trayectoSeccion").val();
+
+    if (trayectoSeleccionado === null || trayectoSeleccionado === "0") {
+        muestraMensaje(
+            "error",
+            4000,
+            "ERROR!",
+            "Por favor, seleccione un trayecto! <br/> Recuerde que debe tener alguno registrado!"
+        );
+        return false;
+    }
   return true;
 }
 
@@ -242,18 +251,29 @@ function pone(pos, accion) {
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#trayectoAnio").prop("disabled", false);
-    $("#trayectoNumero").prop("disabled", false);
+    $("#codigoSeccion").prop("disabled", false);
+    $("#cantidadSeccion").prop("disabled", false);
+    $("#trayectoSeccion").prop("disabled", false);
+
   } else {
     $("#proceso").text("ELIMINAR");
     $(
-      "#trayectoAnio, #trayectoNumero"
+      "#seccionId, #codigoSeccion, #cantidadSeccion, #trayectoSeccion"
     ).prop("disabled", false);
   }
-  $("#trayectoId").val($(linea).find("td:eq(0)").text());
-  $("#trayectoAnio").val($(linea).find("td:eq(2)").text());
-  $("#trayectoNumero").val($(linea).find("td:eq(1)").text());
-
+  
+  $("#seccionId").val($(linea).find("td:eq(0)").text());
+  $("#codigoSeccion").val($(linea).find("td:eq(1)").text());
+  
+  let tra_text = $(linea).find("td:eq(2)").text();
+  let tra_id = tra_text.split(" - ")[0]; 
+  $("#trayectoSeccion").val(tra_id);
+  
+  $("#cantidadSeccion").val($(linea).find("td:eq(3)").text());
+  
+  console.log("Sección ID:", $(linea).find("td:eq(0)").text());
+  console.log("Trayecto ID:", tra_id);
+  
   $("#modal1").modal("show");
 }
 
@@ -280,13 +300,12 @@ function enviaAjax(datos) {
               <tr>
                 <td style="display: none;">${item.sec_id}</td>
                 <td>${item.sec_codigo}</td>
-                <td style="display: none;">${item.tra_id}</td>
-                <td>${item.tra_numero} - ${item.tra_anio}</td>
+                <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.tra_anio}</td>
                 <td>${item.sec_cantidad}</td>
                 <td>
-                  <input type="checkbox" id="seccionId" value="${item.sec_id}">
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-tra="${item.tra_id}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
+                  <input type="checkbox" id="idSeccion" value="${item.sec_id}">
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
                 </td>
               </tr>
             `);
@@ -311,7 +330,7 @@ function enviaAjax(datos) {
           ///
         } else if (lee.resultado === "unir") {
           muestraMensaje("info", 4000, "UNIR", lee.mensaje);
-          if (lee.mensaje === "Secciones unidas correctamente al grupo.") {
+          if (lee.mensaje === "Secciones unidas!<br/>Se unieron las secciones correctamente!") {
             Listar(); 
           }
         } else if (lee.resultado === "separar") {
@@ -323,7 +342,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el trayecto correctamente!"
+            "Registro Incluido!<br/>Se registró la sección correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -332,7 +351,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el trayecto correctamente!"
+            "Registro Modificado!<br/>Se modificó la sección correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -345,7 +364,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el trayecto correctamente!"
+            "Registro Eliminado!<br/>Se eliminó la sección correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -370,7 +389,10 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  
+  $("#seccionId").val("");
+  $("#codigoSeccion").val("");
+  $("#cantidadSeccion").val("");
+  $("#trayectoSeccion").val("");
 }
 
 

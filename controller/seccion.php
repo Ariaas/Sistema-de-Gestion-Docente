@@ -18,9 +18,10 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'consultarUnion') {
             echo json_encode($s->Listar());
         } elseif ($accion == 'eliminar') {
-            $s->setCodigoSeccion($_POST['codigoSeccion']);
+            $s->setseccionId($_POST['seccionId']);
+            echo json_encode($s->Eliminar());
         } elseif ($accion == 'existe') {
-            $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['trayectoNumero'], $_POST['trayectoAnio']);
+            $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['trayectoSeccion']);
             echo json_encode($resultado);
         } elseif ($accion == 'registrar') {
             $s->setCodigoSeccion($_POST['codigoSeccion']);
@@ -28,9 +29,11 @@ if (is_file("views/" . $pagina . ".php")) {
             $s->setTrayectoSeccion($_POST['trayectoSeccion']);
             echo json_encode($s->Registrar());
         } elseif ($accion == 'modificar') {
+            $s->setseccionId($_POST['seccionId']);
             $s->setCodigoSeccion($_POST['codigoSeccion']);
             $s->setCantidadSeccion($_POST['cantidadSeccion']);
             $s->setTrayectoSeccion($_POST['trayectoSeccion']);
+            echo json_encode($s->Modificar());
         } elseif ($accion == 'unir') {
             echo json_encode($s->Unir($_POST['secciones'], true));
         } elseif ($accion == 'separar') {

@@ -22,7 +22,7 @@
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Secciones</h2>
-            
+
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar</button>
                 <button class="btn btn-success px-4" id="unir">Unir</button>
@@ -39,7 +39,6 @@
                             <tr>
                                 <th style="display: none;">ID</th>
                                 <th>Código</th>
-                                <th style="display: none;">ID Trayecto</th>
                                 <th>Trayecto</th>
                                 <th>Cantidad</th>
                                 <th>Acciones</th>
@@ -80,15 +79,19 @@
                             <input type="hidden" name="accion" id="accion" value="registrar">
                             <div class="mb-4">
                                 <div class="row g-3">
+                                    <div style="display: none;" class="col-md-6">
+                                        <label for="seccionId" class="form-label">ID</label>
+                                        <input class="form-control" type="text" id="seccionId" name="seccionId" required>
+                                    </div>
                                     <div class="col-md-6">
                                         <label for="codigoSeccion" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required>
-                                        <span id="ssecCodigo"></span>
+                                        <span id="scodigoSeccion"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad</label>
                                         <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
-                                        <span id="ssecCantidad"></span>
+                                        <span id="scantidadSeccion"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3">
