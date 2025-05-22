@@ -76,22 +76,26 @@ function crearDT() {
 $(document).ready(function () {
   Listar();
 
-  //////////////////////////////VALIDACIONES/////////////////////////////////////
-
-    $("#categoriaNombre").on("keypress",function(e){
+ $("#categoriaNombre").on("keypress",function(e){
     validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
 	});
 
-	$("#categoriaNombre").on("keyup keydown",function(){
-		validarkeyup(/^[A-Za-z0-9]{5,30}$/,$(this),
-		$("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres");
-		if ($("#categoriaNombre").val().length >= 5) {
+
+	$("#categoriaNombre").on("keydown keyup ",function(){
+  
+    validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$("#categoriaNombre"),
+		$("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres. Ej:Instructor");
+
+			if ($("#categoriaNombre").val().length >= 5) {
 			var datos = new FormData();
 			datos.append('accion', 'existe');
 			datos.append('categoriaNombre', $(this).val());
 			enviaAjax(datos, 'existe');
 		}
+		
 	});
+
+
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
@@ -166,6 +170,7 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#scategoriaNombre").show();
   });
 
   
@@ -174,6 +179,12 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+
+  if (validarkeyup( /^[A-Za-z0-9]{5,30}$/,$("#categoriaNombre"),
+  $("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres. Ej:Instructor") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El nombre de la Categoría <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
+          return false;
+  }
   return true;
 }
 
@@ -191,7 +202,7 @@ function pone(pos, accion) {
       "#categoriaId, #categoriaNombre"
     ).prop("disabled", false);
   }
-
+  $("#scategoriaNombre").hide();
   $("#categoriaId").val($(linea).find("td:eq(0)").text());
   $("#categoriaNombre").val($(linea).find("td:eq(1)").text());
 

@@ -62,6 +62,7 @@
 
 
                                     <div class="col-md-4">
+                                        
                                         <label for="certificadonombre">Nombre</label>
                                         <input class="form-control" type="text" id="certificadonombre" name="certificadonombre" placeholder="Nombre del certificado" required>
                                         <span id="scertificadonombre"></span>

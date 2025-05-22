@@ -82,9 +82,9 @@ $(document).ready(function () {
     validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
 	});
 
-	$("#ejeNombre").on("keyup",function(){
-		validarkeyup(/^[A-Za-z0-9]{5,30}$/,$(this),
-		$("#sejeNombre"),"El formato permite de 5 a 30 carácteres");
+	$("#ejeNombre").on("keydown keyup",function(){
+		validarkeyup(/^[A-Za-z0-9]{5,30}$/,$("#ejeNombre"),
+		$("#sejeNombre"),"El formato permite de 5 a 30 carácteres, Ej:Epistemológico");
 		if ($("#ejeNombre").val().length >= 5) {
 			var datos = new FormData();
 			datos.append('accion', 'existe');
@@ -166,6 +166,7 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#sejeNombre").show();
   });
 
   
@@ -174,6 +175,10 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+    if (validarkeyup( /^[A-Za-z0-9\s]{5,30}$/,$("#ejeNombre"),$("#sejeNombre"),"El formato permite de 5 a 30 carácteres, Ej:Epistemológico") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El nombre del Eje <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
+          return false;
+        }
   return true;
 }
 
@@ -191,7 +196,7 @@ function pone(pos, accion) {
       "#ejeId, #ejeNombre"
     ).prop("disabled", false);
   }
-
+  $("#sejeNombre").hide();
   $("#ejeId").val($(linea).find("td:eq(0)").text());
   $("#ejeNombre").val($(linea).find("td:eq(1)").text());
 
@@ -235,7 +240,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el CATEGORIA correctamente!"
+            "Registro Incluido!<br/>Se registró el EJE correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -245,13 +250,13 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el CATEGORIA correctamente!"
+            "Registro Modificado!<br/>Se modificó el EJE correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
           }
         }else if (lee.resultado == "existe") {		
-          if (lee.mensaje == 'El CATEGORIA ya existe!') {
+          if (lee.mensaje == 'El EJE colocado YA existe!') {
             muestraMensaje('info', 4000,'Atención!', lee.mensaje);
           }	
         }
@@ -259,7 +264,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el CATEGORIA correctamente!"
+            "Registro Eliminado!<br/>Se eliminó el EJE correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();

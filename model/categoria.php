@@ -181,7 +181,7 @@ class Categoria extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El Categoría ya existe!';
+                $r['mensaje'] = 'El Categoria ya existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
@@ -204,7 +204,7 @@ class Categoria extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El Categoría ya existe!';
+                $r['mensaje'] = 'El Categoria ya existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';

@@ -69,8 +69,7 @@ function crearDT() {
 $(document).ready(function () {
   Listar(); 
     $("#certificadonombre").on("keydown keyup", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"Ingrese un nombre válido (5-30 caracteres). Ej:Certificado trayecto 1"); // revisar el ejemplo
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"El formato permite de 5 a 30 carácteres. Ej:Certificado trayecto 1"); // revisar el ejemplo
   
         var datos = new FormData();
         datos.append('accion', 'existe');
@@ -144,8 +143,8 @@ $(document).ready(function () {
 function validarenvio() {
   let trayecto = $("#trayecto").val();
   
-   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"Ingrese un nombre válido (5-30 caracteres). Ej:Certificado trayecto 1") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío y contener entre 5 a 30 carácteres");
+   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"El formato permite de 5 a 30 carácteres. Ej:Certificado trayecto 1") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
           return false;
   } else if (trayecto === null || trayecto === "0") {
         muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un trayecto!"); 

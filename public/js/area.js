@@ -73,7 +73,7 @@ $(document).ready(function () {
     validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
   });
 
-  $("#areaNombre").on("keyup", function () {
+  $("#areaNombre").on("keyup keydown", function () {
     validarkeyup(
       /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
       $(this),
@@ -157,6 +157,7 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#sareaNombre").show();
   });
 });
 
@@ -186,6 +187,7 @@ function pone(pos, accion) {
   // El nombre está en la segunda columna (visible)
   $("#areaNombre").val($(linea).find("td:eq(1)").text());
 
+  $("#sareaNombre").hide();
   $("#modal1").modal("show");
 }
 

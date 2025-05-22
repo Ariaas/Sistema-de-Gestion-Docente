@@ -68,9 +68,9 @@ function crearDT() {
 
 $(document).ready(function () {
   Listar(); 
-    $("#titulonombre").on("keyup", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"No debe contener más de 30 caracteres");
+    $("#titulonombre").on("keydown keyup", function () {
+  
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"El formato permite de 5 a 30 carácteres, Ej:En sistemas");
   
         var datos = new FormData();
         datos.append('accion', 'existe');
@@ -146,8 +146,8 @@ function validarenvio() {
   if (prefijo === null || prefijo === "0") {
         muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un prefijo!"); 
           return false;
-  } else if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"No debe contener más de 30 caracteres") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del titulo <br/> No debe estar vacío, ni contener más de 30 carácteres");
+  } else if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"El formato permite de 5 a 30 carácteres, Ej:En sistemas") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El nombre del titulo <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
           return false;
   }
   return true;

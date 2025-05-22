@@ -71,7 +71,7 @@ $(document).ready(function () {
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
-  $("#trayectoNumero").on("keyup", function () {
+  $("#trayectoNumero").on(" keydown keyup", function () {
     const valor = $(this).val();
     validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser mayor a 0");
     
@@ -90,7 +90,7 @@ $(document).ready(function () {
     }
     });
 
-    $("#trayectoAnio").on("keyup", function () {
+    $("#trayectoAnio").on("keydown keyup", function () {
         if ($(this).val().length > 0 && $("#trayectoNumero").val().length > 0) {
             var datos = new FormData();
             datos.append('accion', 'existe');
@@ -158,6 +158,8 @@ $(document).ready(function () {
   $("#registrar").on("click", function () {
     limpia();
     $("#proceso").text("REGISTRAR");
+    $("#strayectoNumero").show();
+    $("#strayectoAnio").show();
     $("#modal1").modal("show");
   });
 
@@ -188,6 +190,8 @@ function pone(pos, accion) {
   $("#trayectoAnio").val($(linea).find("td:eq(2)").text());
   $("#trayectoNumero").val($(linea).find("td:eq(1)").text());
 
+  $("#strayectoNumero").hide();
+  $("#strayectoAnio").hide();
   $("#modal1").modal("show");
 }
 

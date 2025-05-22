@@ -62,7 +62,8 @@
                                     <div class="col-md-6">
                                         <label for="categoriaNombre" class="form-label">Categoría</label>
                                         <input class="form-control" type="text" id="categoriaNombre" name="categoriaNombre" required>
-                                        <div class="invalid-feedback" id="scategoriaNombre"></div>
+                                        <span id="scategoriaNombre"></span>
+                                      
                                     </div>
                                 </div>
                             </div>

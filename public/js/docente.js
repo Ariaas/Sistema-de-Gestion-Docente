@@ -74,7 +74,7 @@ $(document).ready(function () {
     validarkeypress(/^[0-9-\b]*$/, e);
   });
 
-  $("#cedulaDocente").on("keyup", function () {
+  $("#cedulaDocente").on("keyup keydown", function () {
     validarkeyup(
       /^[0-9]{7,8}$/,
       $(this),
@@ -93,7 +93,7 @@ $(document).ready(function () {
     validarkeypress(/^[A-Za-z\u00f1\u00d1\b\s]*$/, e);
   });
 
-  $("#nombreDocente").on("keyup", function () {
+  $("#nombreDocente").on("keyup keydown", function () {
     validarkeyup(
       /^[A-Za-z\u00f1\u00d1\s]{1,30}$/,
       $(this),
@@ -106,7 +106,7 @@ $(document).ready(function () {
     validarkeypress(/^[A-Za-z\u00f1\u00d1\b\s]*$/, e);
   });
 
-  $("#apellidoDocente").on("keyup", function () {
+  $("#apellidoDocente").on("keyup keydown", function () {
     validarkeyup(
       /^[A-Za-z\u00f1\u00d1\s]{1,30}$/,
       $(this),
@@ -119,7 +119,7 @@ $(document).ready(function () {
     validarkeypress(/^[A-Za-z0-9@_.\b\u00f1\u00d1\u00E0-\u00FC.!@#$%^&*()-_=+[\]{};:'",<>/?\\|~`]*$/, e);
   });
 
-  $("#correoDocente").on("keyup", function () {
+  $("#correoDocente").on("keyup keydown", function () {
     validarkeyup(
       /^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC.!@#$%^&*()-_=+[\]{};:'",<>/?\\|~`]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,
       $(this),
@@ -194,6 +194,10 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#scedulaDocente").show();
+    $("#snombreDocente").show();
+    $("#sapellidoDocente").show();
+    $("#scorreoDocente").show();
   });
 });
 
@@ -357,6 +361,10 @@ function pone(pos, accion) {
   var condicion = $(linea).find("td:eq(8)").text().trim();
   $("#condicion").val(condicion);
   
+  $("#scedulaDocente").hide();
+  $("#snombreDocente").hide();
+  $("#sapellidoDocente").hide();
+  $("#scorreoDocente").hide();
   $("#modal1").modal("show");
 }
 

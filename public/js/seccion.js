@@ -108,11 +108,11 @@ $(document).ready(function () {
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
   
-  $("#codigoSeccion").on("keypress", function(e){
+  $("#codigoSeccion").on(" keypress", function(e){
     validarkeypress(/^[0-9][0-9]*$/, e);
   });
   
-  $("#codigoSeccion").on("keyup", function () {
+  $("#codigoSeccion").on(" keydown keyup", function () {
     validarkeyup(/^[0-9][0-9]{3}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener 4 dígitos");
     validarExiste();
   });
@@ -222,6 +222,8 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#scodigoSeccion").show();
+    $("#scantidadSeccion").show();
   });
 
   
@@ -274,6 +276,8 @@ function pone(pos, accion) {
   console.log("Sección ID:", $(linea).find("td:eq(0)").text());
   console.log("Trayecto ID:", tra_id);
   
+  $("#scodigoSeccion").hide();
+  $("#scantidadSeccion").hide();
   $("#modal1").modal("show");
 }
 

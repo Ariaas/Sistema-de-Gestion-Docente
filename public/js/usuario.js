@@ -68,7 +68,7 @@ function crearDT() {
 
 $(document).ready(function () {
   Listar(); 
-    $("#usuarionombre").on("keyup", function () {
+    $("#usuarionombre").on("keyup keydown", function () {
     const valor = $(this).val();
     validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#usuarionombre"),$("#susuarionombre"),"Este formato permite de 4 a 15 carácteres");
   
@@ -79,7 +79,7 @@ $(document).ready(function () {
    
     });
 
-    $("#correo").on("keyup", function () {
+    $("#correo").on("keyup keydown", function () {
     const valor = $(this).val();
     validarkeyup(/^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC-]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,$("#correo"),$("#scorreo"),"El formato sólo permite un correo válido!");
   
@@ -90,7 +90,7 @@ $(document).ready(function () {
    
     });
 
-    $("#contraseña").on("keyup", function () {
+    $("#contraseña").on("keyup keydown", function () {
     const valor = $(this).val();
     validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#contraseña"),$("#scontraseña"),"Solo letras y numeros entre 4 y 15 caracteres");
 
@@ -152,6 +152,10 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("susuarionombre").show();
+    $("#scontraseña").show();
+    $("#scorreo").show();
+    $("#scontaseña").show();
   });
 
   
@@ -202,8 +206,9 @@ function pone(pos, accion) {
   $("#correo").val($(linea).find("td:eq(3)").text());
   $("#rol").val($(linea).find("td:eq(4)").text());
   
- 
-  
+  $("#susuarionombre").hide();
+  $("#scontraseña").hide();
+  $("#scorreo").hide();
 
   $("#modal1").modal("show");
 }

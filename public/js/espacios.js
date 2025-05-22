@@ -82,7 +82,7 @@ $(document).ready(function () {
     validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
 	});
 
-	$("#codigoEspacio").on("keyup",function(){
+	$("#codigoEspacio").on("keyup keydown",function(){
 		validarkeyup(/^[A-Za-z0-9]{2,3}$/,$(this),
 		$("#scodigoEspacio"),"El formato permite de 2 a 3 carácteres");
 		if ($("#codigoEspacio").val().length <= 3) {
@@ -97,7 +97,7 @@ $(document).ready(function () {
       validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
     });
 
-    $("#tipoEspacio").on("keyup", function () {
+    $("#tipoEspacio").on("keyup keydown", function () {
       validarkeyup(
         /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
         $(this),
@@ -180,9 +180,11 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#scodigoEspacio").show();
   });
 
   
+
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
@@ -210,6 +212,7 @@ function pone(pos, accion) {
   $("#codigoEspacio").val($(linea).find("td:eq(0)").text());
 
   $("#modal1").modal("show");
+  $("#scodigoEspacio").hide();
 }
 
 //funcion que envia y recibe datos por AJAX
