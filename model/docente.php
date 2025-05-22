@@ -271,49 +271,29 @@ class Docente extends Connection
     return $r;
 }
     // Existe
-    public function Existe($doc_cedula)
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+ public function Existe($doc_cedula) {
+    $co = $this->Con();
+    $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $r = array();
+    
+    try {
+        $stmt = $co->prepare("SELECT * FROM tbl_docente WHERE doc_cedula = :doc_cedula AND doc_estado = 1");
+        $stmt->execute([':doc_cedula' => $doc_cedula]);
+        $fila = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        try {
-            $stmt = $co->prepare("SELECT * FROM tbl_docente WHERE doc_cedula = :doc_cedula AND doc_estado = 1");
-            $stmt->execute([':doc_cedula' => $doc_cedula]);
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($fila) {
+            $r['resultado'] = 'Existe';
+            $r['mensaje'] = 'La cédula del docente ya existe!';
             
-            if ($fila) {
-                $r['resultado'] = 'existe';
-                $r['mensaje'] = 'La cédula del docente ya existe!';
-                return true;
-            }
-        } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
-        }
-        $co = null;
-        return false;
+        } 
+    } catch (Exception $e) {
+        $r['resultado'] = 'error';
+        $r['mensaje'] = $e->getMessage();
     }
-
-    // Obtener categorías (método adicional específico de Docente)
-    public function ObtenerCategorias()
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
-        
-        try {
-            $stmt = $co->prepare("SELECT cat_id, cat_nombre FROM tbl_categoria WHERE cat_estado = 1");
-            $stmt->execute();
-            $r['resultado'] = 'consultar';
-            $r['mensaje'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
-        }
-        $co = null;
-        return $r;
-    }
+    
+    return $r;
+}
+   
 
      public function listacategoria()
     {
@@ -325,6 +305,14 @@ class Docente extends Connection
         return $r;
     }
 
-    
+      public function listatitulo()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT * FROM tbl_titulo");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
     
 }

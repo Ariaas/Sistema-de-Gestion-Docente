@@ -2,7 +2,7 @@
     <nav class="nav flex-column">
         <a href="?pagina=principal" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/house.svg"></img>
+                <img src="public/assets/icons/house-solid.svg"></img>
             </span>
             <span class="description">
                 Inicio
@@ -18,7 +18,7 @@
         </a>
         <a href="?pagina=docente" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/person.svg"></img>
+                <img src="public/assets/icons/user-graduate-solid.svg"></img>
             </span>
             <span class="description">
                 Gestionar Docente
@@ -26,7 +26,7 @@
         </a>
         <a href="?pagina=espacios" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/book-svgrepo-com.svg"></img>
+                <img src="public/assets/icons/building-solid.svg"></img>
             </span>
             <span class="description">
                 Gestionar Espacio
@@ -34,7 +34,7 @@
         </a>
         <a href="?pagina=seccion" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/book.svg"></img>
+                <img src="public/assets/icons/book-solid.svg"></img>
             </span>
             <span class="description">
                 Gestionar Sección
@@ -42,7 +42,7 @@
         </a>
         <a href="?pagina=trayecto" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/calendar.svg"></img>
+                <img src="public/assets/icons/map-solid.svg"></img>
             </span>
             <span class="description">
                 Gestionar Trayecto
@@ -50,7 +50,7 @@
         </a>
         <a href="?pagina=uc" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/book.svg"></img>
+                <img src="public/assets/icons/book-open-solid.svg"></img>
             </span>
             <span class="description">
                 Gestionar Unidad Curricular
@@ -58,7 +58,7 @@
         </a>
         <a href="?pagina=horariodocente" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/book.svg"></img>
+                <img src="public/assets/icons/calendar-solid.svg"></img>
             </span>
             <span class="description">
                 Gestionar Horario Docente
@@ -66,7 +66,7 @@
         </a>
         <a href="?pagina=mallacurricular" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/gear.svg"></img>
+                <img src="public/assets/icons/screwdriver-wrench-solid.svg"></img>
             </span>
             <span class="description">
                 Gestionar Malla Curricular
@@ -74,7 +74,7 @@
         </a>
         <a href="?pagina=config" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/gear.svg"></img>
+                <img src="public/assets/icons/gear-solid.svg"></img>
             </span>
             <span class="description">
                 Administrar Configuración
@@ -82,7 +82,7 @@
         </a>
         <a href="?pagina=reportes" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/gear.svg"></img>
+                <img src="public/assets/icons/chart-bar-solid.svg"></img>
             </span>
             <span class="description">
                 Generar Reportes
@@ -90,7 +90,7 @@
         </a>
         <a href="?pagina=login" class="nav-link">
             <span class="icon">
-                <img src="public/assets/icons/gear.svg"></img>
+                <img src="public/assets/icons/exit-solid.svg"></img>
             </span>
             <span class="description">
                 Cerrar Sesión

@@ -5,14 +5,14 @@ function Listar() {
 }
 
 function destruyeDT() {
-  if ($.fn.DataTable.isDataTable("#tablaArea")) {
-    $("#tablaArea").DataTable().destroy();
+  if ($.fn.DataTable.isDataTable("#tablaarea")) {
+    $("#tablaarea").DataTable().destroy();
   }
 }
 
 function crearDT() {
-  if (!$.fn.DataTable.isDataTable("#tablaArea")) {
-    $("#tablaArea").DataTable({
+  if (!$.fn.DataTable.isDataTable("#tablaarea")) {
+    $("#tablaarea").DataTable({
       paging: true,
       lengthChange: true,
       searching: true,
@@ -259,7 +259,7 @@ function enviaAjax(datos) {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
       } catch (e) {
-        console.error("Error en análisis JSON:", e);
+        console.log("Error en análisis JSON:", e);
         alert("Error en JSON " + e.name + ": " + e.message);
       }
     },

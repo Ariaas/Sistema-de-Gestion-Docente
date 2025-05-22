@@ -79,11 +79,11 @@ $(document).ready(function () {
       /^[0-9]{7,8}$/,
       $(this),
       $("#scedulaDocente"),
-      "El formato debe ser un número de cedula válido"
+      "El formato debe ser un número de cédula válido"
     );
     if ($("#cedulaDocente").val().length <= 10) {
       var datos = new FormData();
-      datos.append('accion', 'existe');
+      datos.append('accion', 'Existe');
       datos.append('cedulaDocente', $(this).val());
       enviaAjax(datos);
     }
@@ -235,6 +235,18 @@ function validarenvio() {
     
     return false;
   }
+   var tituloSeleccionada = $("#titulo").val();
+
+   if (tituloSeleccionada === null || tituloSeleccionada === "0") {
+    muestraMensaje(
+      "error",
+      4000,
+      "ERROR!",
+      "Por favor, seleccione un tutilo! <br/> Recuerde que debe tener alguna registrada!"
+    );
+    
+    return false;
+  }
    else if (
     validarkeyup(
       /^[0-9]{7,8}$/,
@@ -247,7 +259,7 @@ function validarenvio() {
       "error",
       4000,
       "ERROR!",
-      "La cedula del docente debe coincidir con el formato <br/>" +
+      "La cédula del docente debe coincidir con el formato <br/>" +
         "V-12345678"
     );
     return false;
@@ -296,7 +308,7 @@ function validarenvio() {
       "El correo del docente <br/> No debe estar vacío, ni contener más de 30 carácteres"
     );
     return false;
-  }
+  } 
   return true;
 }
 
@@ -328,16 +340,21 @@ function pone(pos, accion) {
       return $(this).text() == nombrecategoria;
   }).prop('selected', true).change();
   
+  var nombretitulo = $(linea).find("td:eq(6)").text();
+  $('#titulo option').filter(function() {
+      return $(this).text() == nombretitulo;
+  }).prop('selected', true).change();
+
   // Cargar dedicación (columna 6)
    
-  var dedicacion = $(linea).find("td:eq(6)").text();
+  var dedicacion = $(linea).find("td:eq(7)").text();
   $('#dedicacion option').filter(function() {
       return $(this).text() == dedicacion;
   }).prop('selected', true).change();
   
   
   // Cargar condición (columna 7)
-  var condicion = $(linea).find("td:eq(7)").text().trim();
+  var condicion = $(linea).find("td:eq(8)").text().trim();
   $("#condicion").val(condicion);
   
   $("#modal1").modal("show");
@@ -357,7 +374,7 @@ function enviaAjax(datos) {
     timeout: 10000,
     success: function (respuesta) {
       try {
-        console.log(respuesta)
+       console.log(respuesta)
         var lee = JSON.parse(respuesta);
         if (lee.resultado == "consultar") {
           destruyeDT();
@@ -371,6 +388,7 @@ function enviaAjax(datos) {
                 <td>${item.doc_apellido}</td>
                 <td>${item.doc_correo}</td>
                 <td>${item.cat_nombre}</td>
+                 <td>${item.tit_nombre}</td>
                 <td>${item.doc_dedicacion}</td>
                 <td>${item.doc_condicion}</td>
                 <td>
@@ -402,11 +420,12 @@ function enviaAjax(datos) {
             $("#modal1").modal("hide");
             Listar();
           }
-        } else if (lee.resultado == "existe") {
-          if (lee.mensaje == 'La cédula del docente ya existe!') {
+        } else if (lee.resultado == "Existe") {
+             //console.log(respuesta)
+          if (lee.mensaje == 'La cédula del docente ya existe!') 
             muestraMensaje('info', 4000, 'Atención', lee.mensaje);
-          }
-        } else if (lee.resultado == "error") {
+          
+        }  else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
       } catch (e) {
@@ -433,5 +452,6 @@ function limpia() {
   $("#dedicacion").val("");
    $("#condicion").val("");
   $("#categoria").val("");
-  $("#cedulaDocente, #prefijoCedula, #nombreDocente, #apellidoDocente, #correoDocente, #categoria, #condicion, #dedicacion").prop('disabled', false);
+    $("#titulo").val("");
+  $("#cedulaDocente, #prefijoCedula, #nombreDocente, #apellidoDocente, #correoDocente, #categoria, #titulo, #condicion, #dedicacion").prop('disabled', false);
 }
