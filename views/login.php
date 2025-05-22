@@ -12,6 +12,9 @@
 </head>
 <body class="login-body-bg">
     <div class="login-card">
+        <div class="d-flex justify-content-center">
+            <img src="public/assets/img/logo.png" alt="Logo" style="width: 100px; height: auto;">        
+        </div>
         <h2 class="login-title">Iniciar Sesión</h2>
         <form method="post" autocomplete="off">
             <div class="mb-3">

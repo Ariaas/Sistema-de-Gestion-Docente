@@ -41,7 +41,7 @@
             </div>
         </section>
         <!-- Modal -->
-       <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
+        <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
@@ -50,29 +50,36 @@
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                            <input type="hidden" name="accion" id="accion">
-                            
+                            <input type="hidden" name="accion" id="accion" value="modificar"> <!-- Ejemplo de acción -->
+
                             <div class="mb-4">
                                 <div class="row g-3">
+                                    <!-- Campo Código -->
                                     <div class="col-md-6">
-                                        <label for="codigoEspacio" class="form-label">Codigo</label>
-                                        <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio" required>
-                                        <span id="scodigoEspacio" class="form-text"></span>
+                                        <div class="form-floating">
+                                            <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio" placeholder="Código" value="ESP001" required>
+                                            <label for="codigoEspacio">Código</label>
+                                        </div>
+                                        <span id="scodigoEspacio" class="form-text">Ejemplo: ESP001</span>
                                     </div>
+
+                                    <!-- Campo Tipo -->
                                     <div class="col-md-6">
-                                        <label for="tipoEspacio" class="form-label">Tipo</label>
-                                        <select class="form-select" name="tipoEspacio" id="tipoEspacio" required>
-                                            <option value='disabled' disabled selected>Seleccione un tipo</option>
-                                            <option value="Aula">Aula</option>
-                                            <option value="Laboratorio">Laboratorio</option>
-                                        </select>
-                                        <span id="stipoEspacio" class="form-text"></span>
+                                        <div class="form-floating">
+                                            <select class="form-select" name="tipoEspacio" id="tipoEspacio" required>
+                                                <option value="" disabled>Seleccione un tipo</option>
+                                                <option value="Aula" selected>Aula</option> <!-- Ejemplo seleccionado -->
+                                                <option value="Laboratorio">Laboratorio</option>
+                                            </select>
+                                            <label for="tipoEspacio">Tipo</label>
+                                        </div>
+                                        <span id="stipoEspacio" class="form-text">Ejemplo: Aula</span>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="modal-footer justify-content-center">
-                                <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
+                                <button type="button" class="btn btn-primary me-2" id="proceso"></button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
