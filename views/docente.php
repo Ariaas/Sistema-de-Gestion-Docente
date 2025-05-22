@@ -35,6 +35,7 @@
                                 <th>Apellido</th>
                                 <th>Correo</th>
                                 <th>Categoría</th>
+                                <th>Titulo</th>
                                 <th>Dedicación</th>
                                 <th>Condición</th>
                                 <th>Acciones</th>
@@ -70,7 +71,8 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label for="cedulaDocente" class="form-label">Cédula</label>
-                                        <input class="form-control" type="text" id="cedulaDocente" name="cedulaDocente" required>
+                                        <input class="form-control" type="text" id="cedulaDocente" name="cedulaDocente" 
+                                         placeholder="Ej: 12345678 (solo números)" required>
                                         <span id="scedulaDocente"></span>
                                     </div>
                                 </div>
@@ -78,12 +80,14 @@
                                 <div class="row mt-3 g-3">
                                     <div class="col-md-6">
                                         <label for="nombreDocente" class="form-label">Nombre</label>
-                                        <input class="form-control" type="text" id="nombreDocente" name="nombreDocente" required>
+                                        <input class="form-control" type="text" id="nombreDocente" name="nombreDocente" 
+                                         placeholder="Ej: María José" required>
                                        <span id="snombreDocente"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="apellidoDocente" class="form-label">Apellido</label>
-                                        <input class="form-control" type="text" id="apellidoDocente" name="apellidoDocente" required>
+                                         <input class="form-control" type="text" id="apellidoDocente" name="apellidoDocente" 
+                                           placeholder="Ej: González Pérez" required>
                                          <span id="sapellidoDocente"></span>
                                     </div>
                                 </div>
@@ -91,7 +95,8 @@
                                 <div class="row mt-3">
                                     <div class="col-md-8">
                                         <label for="correoDocente" class="form-label">Correo Electrónico</label>
-                                        <input class="form-control" type="email" id="correoDocente" name="correoDocente" required>
+                                        <input class="form-control" type="email" id="correoDocente" name="correoDocente" 
+                                         placeholder="Ej: docente@universidad.edu.ve" required>
                                          <span id="scorreoDocente"></span>
                                     </div>
                                 </div>
@@ -112,11 +117,23 @@
                                         <span id="scategoria" class="error"></span>
                                     </div>
                                     <div class="col-md-4">
+                                        <label for="titulo" class="form-label">Titulo</label>
+                                        <select class="form-select" name="titulo" id="titulo" required>
+                                            <option value="" disabled selected>Seleccione una Titulo</option>
+                                            <?php
+                                            foreach ($titulos as $titulo) {
+                                                echo "<option value='" . $titulo['tit_id'] . "'>" . $titulo['tit_nombre'] . "</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                        <span id="scategoria" class="error"></span>
+                                    </div>
+                                    <div class="col-md-4">
                                         <label for="dedicacion" class="form-label">Dedicación</label>
                                         <select class="form-select" name="dedicacion" id="dedicacion" required>
                                             <option value="" disabled selected>Seleccione una dedicación</option>
-                                            <option value="Dedicacion exclusiva">Dedicación exclusiva</option>
-                                            <option value="Dedicacion">Dedicación</option>
+                                            <option value="exclusiva">Exclusiva</option>
+                                            <option value="Medio tiempo">Medio tiempo</option>
                                         </select>
                                               <span id="sdedicacion"></span>
                                     </div>

@@ -30,6 +30,7 @@
                     <table class="table table-striped table-hover w-100" id="tablaarea">
                         <thead>
                             <tr>
+                                <th  style="display: none;">ID</th>
                                 <th>Área</th>
                                 <th>Acciones</th>
                             </tr>
@@ -61,7 +62,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label for="areaNombre" class="form-label">Nombre del Área</label>
-                                        <input class="form-control" type="text" id="areaNombre" name="areaNombre" required>
+                                        <input class="form-control" type="text" id="areaNombre" name="areaNombre" placeholder="Ej: " required>
                                         <span id="sareaNombre" class="form-text text-danger"></span>
                                     </div>
                                 </div>

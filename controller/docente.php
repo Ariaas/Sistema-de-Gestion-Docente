@@ -17,7 +17,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setCedula($_POST['cedulaDocente']);
             $resultado = $p->Eliminar();
             echo json_encode($resultado);
-        } elseif ($accion == 'existe') {
+        } elseif ($accion == 'Existe') {
             $resultado = $p->Existe($_POST['cedulaDocente']);
             echo json_encode($resultado);
         } else {
@@ -40,9 +40,10 @@ if (is_file("views/" . $pagina . ".php")) {
         exit;
     }
 
- require_once("model/categoria.php");
-    $c = new Docente();
-    $categorias = $c->listacategoria();
+
+    $p = new Docente();
+    $categorias = $p->listacategoria();
+     $titulos = $p->listatitulo();
 
     require_once("views/" . $pagina . ".php");
 } else {
