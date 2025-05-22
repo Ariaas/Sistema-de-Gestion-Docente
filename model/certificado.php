@@ -180,5 +180,14 @@ Class Certificado extends Connection{
         $co = null;
         return $r;
     }
+
+    public function obtenerTrayectos(){
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_estado = 1");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
 }
 ?> 

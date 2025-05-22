@@ -1,7 +1,7 @@
 <?php
 require_once('model/dbconnection.php');
 
-class Eje extends Connection
+class Categoria extends Connection
 {
 
     private $categoriaNombre;
@@ -18,7 +18,7 @@ class Eje extends Connection
     }
 
     //Getters 
-    public function getEje()
+    public function getCategoria()
     {
         return $this->categoriaNombre;
     }
@@ -27,7 +27,7 @@ class Eje extends Connection
         return $this->categoriaId;
     }
     //Setters
-    public function setEje($categoriaNombre)
+    public function setCategoria($categoriaNombre)
     {
         $this->categoriaNombre = $categoriaNombre;
     }
@@ -64,7 +64,7 @@ class Eje extends Connection
                 $stmt->execute();
 
                 $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el EJE correctamente!';
+                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el Categoría correctamente!';
             } catch (Exception $e) {
 
                 $r['resultado'] = 'error';
@@ -75,7 +75,7 @@ class Eje extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El EJE colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> El Categoría colocado ya existe!';
         }
 
         return $r;
@@ -101,18 +101,18 @@ class Eje extends Connection
                     $stmt->execute();
 
                     $r['resultado'] = 'modificar';
-                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el EJE correctamente!';
+                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el Categoría correctamente!';
                 } catch (Exception $e) {
                     $r['resultado'] = 'error';
                     $r['mensaje'] = $e->getMessage();
                 }
             } else {
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'ERROR! <br/> El EJE colocado YA existe!';
+                $r['mensaje'] = 'ERROR! <br/> El Categoría colocado YA existe!';
             }
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El EJE colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> El Categoría colocado NO existe!';
         }
         return $r;
     }
@@ -135,7 +135,7 @@ class Eje extends Connection
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el EJE correctamente!';
+                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el Categoría correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -181,7 +181,7 @@ class Eje extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El EJE ya existe!';
+                $r['mensaje'] = 'El Categoría ya existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
@@ -204,7 +204,7 @@ class Eje extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El EJE ya existe!';
+                $r['mensaje'] = 'El Categoría ya existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';

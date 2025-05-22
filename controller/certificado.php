@@ -4,12 +4,12 @@ if (!is_file("model/" . $pagina . ".php")) {
     exit;
 }
 require_once("model/" . $pagina . ".php");
-require_once("model/trayecto.php");
+
    
 if (is_file("views/" . $pagina . ".php")) {
 
+        
     if (!empty($_POST)) {
-
         $obj2 = new Certificado();
         $accion = $_POST['accion'];
 
@@ -43,10 +43,8 @@ if (is_file("views/" . $pagina . ".php")) {
             }
         exit;
     }
-
-
-    $t = new Trayecto();
-    $trayectos = $t->obtenerTrayectos();
+    $cer = new Certificado();
+    $trayectos = $cer->obtenerTrayectos();
     require_once("views/" . $pagina . ".php");
 } else {
     echo "pagina en construccion";

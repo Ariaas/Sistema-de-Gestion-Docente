@@ -230,7 +230,7 @@ function enviaAjax(datos) {
               <tr>
                 <td style="display: none;">${item.usu_id}</td>
                 <td>${item.usu_nombre}</td>
-                <td style="display: none; ">${item.usu_contraseña}</td>
+
                 <td>${item.usu_correo}</td>
                 <td >${item.usu_rol}</td>
                 <td>

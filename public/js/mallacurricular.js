@@ -6,14 +6,14 @@ function Listar() {
 
 function destruyeDT() {
   // se destruye el datatablet
-  if ($.fn.DataTable.isDataTable("#tablacertificado")) {
-    $("#tablacertificado").DataTable().destroy();
+  if ($.fn.DataTable.isDataTable("#tablamalla")) {
+    $("#tablamalla").DataTable().destroy();
   }
 }
 
 function crearDT() {
-  if (!$.fn.DataTable.isDataTable("#tablacertificado")) {
-    $("#tablacertificado").DataTable({
+  if (!$.fn.DataTable.isDataTable("#tablamalla")) {
+    $("#tablamalla").DataTable({
       paging: true,
       lengthChange: true,
       searching: true,
@@ -68,9 +68,9 @@ function crearDT() {
 
 $(document).ready(function () {
   Listar(); 
-    $("#certificadonombre").on("keydown keyup", function () {
+  /*  $("#certificadonombre").on("keyup", function () {
     const valor = $(this).val();
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"Ingrese un nombre válido (5-30 caracteres). Ej:Certificado trayecto 1"); // revisar el ejemplo
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres");
   
         var datos = new FormData();
         datos.append('accion', 'existe');
@@ -78,29 +78,38 @@ $(document).ready(function () {
         datos.append("trayecto", $("#trayecto").val());
         enviaAjax(datos);
    
-    });
+    });*/
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
-      if (validarenvio()) {
+    //  if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
-        datos.append("certificadonombre", $("#certificadonombre").val());
-        datos.append("trayecto", $("#trayecto").val());
-        
+        datos.append("mal_codigo", $("#mal_codigo").val());
+        datos.append("mal_nombre", $("#mal_nombre").val());
+        datos.append("mal_Anio", $("#mal_Anio").val());
+        datos.append("mal_cohorte", $("#mal_cohorte").val());
+        datos.append("mal_descripcion", $("#mal_descripcion").val());
+        console.table(datos);
+
         enviaAjax(datos);
-      }
+        
+        
+    //  }
     } else if ($(this).text() == "MODIFICAR") {
-      if (validarenvio()) {
+     // if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
-        datos.append("certificadoid", $("#certificadoid").val());
-        datos.append("certificadonombre", $("#certificadonombre").val());
-        datos.append("trayecto", $("#trayecto").val());
+        datos.append("mal_id", $("#mal_id").val());
+        datos.append("mal_codigo", $("#mal_codigo").val());
+        datos.append("mal_nombre", $("#mal_nombre").val());
+        datos.append("mal_Anio", $("#mal_Anio").val());
+        datos.append("mal_cohorte", $("#mal_cohorte").val());
+        datos.append("mal_descripcion", $("#mal_descripcion").val());
         enviaAjax(datos);
-      }
+     // }
     }
     if ($(this).text() == "ELIMINAR") {  
         // Mostrar confirmación usando SweetAlert
@@ -118,7 +127,7 @@ $(document).ready(function () {
             // Si se confirma, proceder con la eliminación
             var datos = new FormData();
             datos.append("accion", "eliminar");
-              datos.append("certificadoid", $("#certificadoid").val());
+            datos.append("mal_id", $("#mal_id").val());
             enviaAjax(datos);
           } else {
             muestraMensaje("error",2000,"INFORMACIÓN","La eliminación ha sido cancelada.");
@@ -133,7 +142,6 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
-    $("#scertificadonombre").show();
   });
 
   
@@ -144,8 +152,8 @@ $(document).ready(function () {
 function validarenvio() {
   let trayecto = $("#trayecto").val();
   
-   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"Ingrese un nombre válido (5-30 caracteres). Ej:Certificado trayecto 1") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío y contener entre 5 a 30 carácteres");
+   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío, ni contener más de 30 carácteres");
           return false;
   } else if (trayecto === null || trayecto === "0") {
         muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un trayecto!"); 
@@ -157,24 +165,28 @@ function validarenvio() {
 // funcion para pasar de la lista a el formulario
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
- 
+
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#certificadonombre").prop("disabled", false);
-    $("#trayecto").prop("disabled", false);
+    $("#mal_codigo").prop("disabled", false);
+    $("#mal_nombre").prop("disabled", false);
+    $("#mal_Anio").prop("disabled", false);
+    $("#mal_cohorte").prop("disabled", false);
+    $("#mal_descripcion").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-  
-    $("#certificadonombre, #trayecto").prop("disabled", false);
+    $("#mal_id, #mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", false);
   }
 
-  
-  $("#scertificadonombre").hide();
-  $("#certificadoid").val($(linea).find("td:eq(0)").text());
-  $("#certificadonombre").val($(linea).find("td:eq(1)").text());
-    let tra_id = $(linea).find("td:eq(2)").attr("data-traid");
-  $("#trayecto").val(tra_id);
-  
+
+
+  $("#mal_id").val($(linea).find("td:eq(0)").text());
+  $("#mal_codigo").val($(linea).find("td:eq(1)").text());
+  $("#mal_nombre").val($(linea).find("td:eq(2)").text());
+  $("#mal_Anio").val($(linea).find("td:eq(3)").text());
+  $("#mal_cohorte").val($(linea).find("td:eq(4)").text());
+  $("#mal_descripcion").val($(linea).find("td:eq(5)").text());
+   
 
   $("#modal1").modal("show");
 }
@@ -200,12 +212,15 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
               <tr>
-                <td style="display: none;">${item.cert_id}</td>
-                <td>${item.cert_nombre}</td>
-                <td data-traid="${item.tra_id}">${item.tra_numero }-${item.tra_anio}</td>
+                <td style="display: none;">${item.mal_id}</td>
+                <td>${item.mal_codigo}</td>
+                <td>${item.mal_nombre}</td>
+                <td>${item.mal_anio}</td>
+                <td>${item.mal_cohorte}</td>
+                <td>${item.mal_descripcion}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'">Eliminar</button>
                 </td>
               </tr>
             `);
@@ -215,19 +230,19 @@ function enviaAjax(datos) {
         ////////
         else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
-      if ( lee.mensaje =='Registro Incluido!<br/> Se registró el certificado correctamente!' ) {
+          if (lee.mensaje =='Registro Incluido!<br/> Se registró la malla curricular correctamente!' ) {
             $("#modal1").modal("hide");
             limpia();
             Listar();
           }
         }
         else if (lee.resultado == "modificar") {
-          muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
-          if (lee.mensaje =="Registro Modificado!<br/>Se modificó el certificado correctamente!") {
+            muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
+            if (lee.mensaje =="Registro Modificado!<br/>Se modificó la malla curricular correctamente!") {
             $("#modal1").modal("hide");
             Listar();
           }
-        }
+        } 
         else if (lee.resultado == "existe") {
           if ($("#proceso").text() == "REGISTRAR") {
             muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
@@ -235,10 +250,10 @@ function enviaAjax(datos) {
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
-     //  if ( lee.mensaje =="Registro Eliminado!<br/>Se eliminó el certificado correctamente!!") {
+          if (lee.mensaje =="Registro Eliminado!<br/>Se eliminó la malla curricular correctamente!!") {
             $("#modal1").modal("hide");
             Listar();
-       //  }
+         }
         }
         else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
@@ -260,7 +275,10 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  $("#certificadonombre").val("");
-  $("#trayecto").val("");
-  
+  $("#mal_codigo").val("");
+  $("#mal_nombre").val("");
+  $("#mal_Anio").val("");
+  $("#mal_cohorte").val("");
+  $("#mal_descripcion").val("");
+   
 }

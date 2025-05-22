@@ -33,7 +33,7 @@
                             <tr>
                                 <th style="display: none;">ID</th>
                                 <th>Nombre</th>
-                                <th>Contraseña</th>
+                            
                                 <th>Correo</th>
                                 <th>Rol</th>
                                 <th>Acciones</th>

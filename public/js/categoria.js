@@ -82,7 +82,7 @@ $(document).ready(function () {
     validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
 	});
 
-	$("#categoriaNombre").on("keyup",function(){
+	$("#categoriaNombre").on("keyup keydown",function(){
 		validarkeyup(/^[A-Za-z0-9]{5,30}$/,$(this),
 		$("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres");
 		if ($("#categoriaNombre").val().length >= 5) {
@@ -127,7 +127,7 @@ $(document).ready(function () {
           "error",
           4000,
           "ERROR!",
-          "Seleccionó eje incorrecto <br/> por favor verifique nuevamente"
+          "Seleccionó categoría incorrecta <br/> por favor verifique nuevamente"
         );
       } else {
         // Mostrar confirmación usando SweetAlert
@@ -235,7 +235,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el EJE correctamente!"
+            "Registro Incluido!<br/>Se registró el Categoría correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -245,13 +245,13 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el EJE correctamente!"
+            "Registro Modificado!<br/>Se modificó el Categoría correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
           }
         }else if (lee.resultado == "existe") {		
-          if (lee.mensaje == 'El EJE ya existe!') {
+          if (lee.mensaje == 'El Categoría ya existe!') {
             muestraMensaje('info', 4000,'Atención!', lee.mensaje);
           }	
         }
@@ -259,7 +259,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el EJE correctamente!"
+            "Registro Eliminado!<br/>Se eliminó el Categoría correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
