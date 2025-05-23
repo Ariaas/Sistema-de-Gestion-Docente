@@ -181,7 +181,7 @@
                                         <label for="periodoUC" class="form-label">Periodo</label>
                                         <select class="form-select" name="periodoUC" id="periodoUC">
                                             <option value="" disabled selected>Seleccione una opción</option>
-                                            <option value="0">Anual</option>
+                                            <option value="anual">Anual</option>
                                             <option value="1">Fase 1</option>
                                             <option value="2">Fase 2</option>
                                         </select>

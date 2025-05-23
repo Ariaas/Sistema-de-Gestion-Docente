@@ -304,14 +304,13 @@ function Listar() {
     let area_id = $(linea).find("td:eq(8)").data("area");
     $("#areaUC").val(area_id);
 
-
     $("#creditosUC").val($(linea).find("td:eq(9)").text());
-    $("#periodoUC").val($(linea).find("td:eq(12)").text());
-    $("#electivaUC").val($(linea).find("td:eq(12)").text());
+    $("#periodoUC").val($(linea).find("td:eq(11)").data("periodo"));
+    $("#electivaUC").val($(linea).find("td:eq(12)").data("electiva"));
     $("#academicaUC").val($(linea).find("td:eq(10)").text());
     
-    
-    console.log("Sección ID:", $(linea).find("td:eq(12)").text());
+  
+    console.log("Sección ID:", $(linea).find("td:eq(13)").text());
 
     
     $("#modal1").modal("show");
@@ -337,39 +336,7 @@ function Listar() {
             $("#resultadoconsulta1").empty();
             $.each(lee.mensaje, function (index, item) {
               // Conversión de periodo
-              let periodoTexto = "";
-              switch (item.uc_periodo) {
-                case 0:
-                case "0":
-                  periodoTexto = "Anual";
-                  break;
-                case 1:
-                case "1":
-                  periodoTexto = "Fase 1";
-                  break;
-                case 2:
-                case "2":
-                  periodoTexto = "Fase 2";
-                  break;
-                default:
-                  periodoTexto = "";
-              }
-  
-              // Conversión de electiva
-              let electivaTexto = "";
-              switch (item.uc_electiva) {
-                case 0:
-                case "0":
-                  electivaTexto = "No Electiva";
-                  break;
-                case 1:
-                case "1":
-                  electivaTexto = "Electiva";
-                  break;
-                default:
-                  electivaTexto = "";
-              }
-  
+              
               $("#resultadoconsulta1").append(`
                 <tr>
                   <td style="display: none;">${item.uc_id}</td>
@@ -383,8 +350,8 @@ function Listar() {
                   <td data-area="${item.area_id}">${item.area_nombre}</td>
                   <td>${item.uc_creditos}</td>
                   <td>${item.uc_hora_academica}</td>
-                  <td>${periodoTexto}</td>
-                  <td>${electivaTexto}</td>
+                  <td data-periodo="${item.uc_periodo}">${item.uc_periodo === "anual" ? "Anual" : item.uc_periodo === "1" ? "Fase 1" : item.uc_periodo === "2" ? "Fase 2" : item.uc_periodo}</td>
+                  <td data-electiva="${item.uc_electiva}">${item.uc_electiva == "1" ? "Electiva" : "No Electiva"}</td>
                   <td>
                     <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.uc_id}" data-codigo="${item.uc_codigo}">Modificar</button>
                     <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.uc_id}" data-codigo="${item.uc_codigo}">Eliminar</button>
@@ -425,7 +392,7 @@ function Listar() {
             muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
             if (
               lee.mensaje ==
-              "Registro Incluido!<br/>Se registró la sección correctamente!"
+              "Registro Incluido!<br/>Se registró la unidad de curricular correctamente!"
             ) {
               $("#modal1").modal("hide");
               Listar();
@@ -434,7 +401,7 @@ function Listar() {
             muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
             if (
               lee.mensaje ==
-              "Registro Modificado!<br/>Se modificó la sección correctamente!"
+              "Registro Modificado!<br/>Se modificó la unidad curricular correctamente!"
             ) {
               $("#modal1").modal("hide");
               Listar();
@@ -447,7 +414,7 @@ function Listar() {
             muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
             if (
               lee.mensaje ==
-              "Registro Eliminado!<br/>Se eliminó la sección correctamente!"
+              "Registro Eliminado!<br/>Se eliminó la unidad curricular correctamente!"
             ) {
               $("#modal1").modal("hide");
               Listar();
