@@ -239,7 +239,7 @@ class UC extends Connection
         $r = array();
         if ($this->ExisteId($this->idUC)) {
             try {
-                    $stmt = $co->prepare("UPDATE tbl_uc
+                $stmt = $co->prepare("UPDATE tbl_uc
                     SET uc_codigo = :codigoUC , 
                     uc_nombre = :nombreUC,
                     uc_hora_independiente = :independienteUC,
@@ -253,28 +253,27 @@ class UC extends Connection
                     area_id = :areaId
                     WHERE uc_id = :idUC");
 
-                    $stmt->bindParam(':idUC', $this->idUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':independienteUC', $this->independienteUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':asistidaUC', $this->asistidaUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':academicaUC', $this->academicaUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':trayectoId', $this->trayectoUC, PDO::PARAM_STR);
-                    $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':idUC', $this->idUC, PDO::PARAM_STR);
+                $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
+                $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
+                $stmt->bindParam(':independienteUC', $this->independienteUC, PDO::PARAM_STR);
+                $stmt->bindParam(':asistidaUC', $this->asistidaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':academicaUC', $this->academicaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
+                $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
+                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoId', $this->trayectoUC, PDO::PARAM_STR);
+                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_STR);
 
-                    $stmt->execute();
+                $stmt->execute();
 
-                    $r['resultado'] = 'modificar';
-                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó la unidad curricular correctamente!';
-                } catch (Exception $e) {
-                    $r['resultado'] = 'error';
-                    $r['mensaje'] = $e->getMessage();
-                }
-            
+                $r['resultado'] = 'modificar';
+                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó la unidad curricular correctamente!';
+            } catch (Exception $e) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = $e->getMessage();
+            }
         } else {
             $r['resultado'] = 'modificar';
             $r['mensaje'] = 'ERROR! <br/> La unidad curricular colocado NO existe!';
@@ -344,7 +343,18 @@ class UC extends Connection
             INNER JOIN tbl_area ar ON uc.area_id = ar.area_id
             INNER JOIN tbl_trayecto tr ON uc.tra_id = tr.tra_id
             WHERE uc.uc_estado = 1");
-            
+            } elseif ($accion === 'consultarAsignacion') {
+                $sql = "SELECT 
+                uc.uc_id,
+                uc.uc_codigo,
+                uc.uc_nombre,
+                GROUP_CONCAT(CONCAT(d.doc_nombre, ' ', d.doc_apellido) SEPARATOR '<br>') AS docentes
+                FROM tbl_uc uc
+                LEFT JOIN uc_docente ud ON uc.uc_id = ud.uc_id AND ud.uc_doc_estado = 1
+                LEFT JOIN tbl_docente d ON ud.doc_id = d.doc_id AND d.doc_estado = 1
+                WHERE uc.uc_estado = 1
+                GROUP BY uc.uc_id, uc.uc_codigo, uc.uc_nombre";
+                $stmt = $co->query($sql);
             } else {
                 throw new Exception("Acción inválida: $accion");
             }
@@ -456,93 +466,90 @@ class UC extends Connection
         return $r;
     }
 
+    function obtenerDocente()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->query("SELECT doc_id, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1");
+            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $r = [];
+        }
+        $co = null;
+        return $r;
+    }
+
     // Asignar
 
-    // function Unir($secciones)
+    function Asignar($docentes, $ucs)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = ['resultado' => null, 'mensaje' => null];
+
+        try {
+            $co->beginTransaction();
+
+            $docentesArray = json_decode($docentes, true);
+            $ucsArray = json_decode($ucs, true);
+
+            if (empty($docentesArray) || empty($ucsArray)) {
+                throw new Exception("Debe seleccionar al menos un docente y una unidad curricular.");
+            }
+
+            $stmtCheck = $co->prepare("
+            SELECT COUNT(*) FROM uc_docente 
+            WHERE doc_id = :docenteId AND uc_id = :ucId AND uc_doc_estado = 1
+             ");
+
+            $stmtInsert = $co->prepare("
+            INSERT INTO uc_docente (doc_id, uc_id, uc_doc_estado) VALUES (:docenteId, :ucId, 1)
+            ");
+
+            foreach ($docentesArray as $docenteId) {
+                foreach ($ucsArray as $ucId) {
+                    $stmtCheck->execute([
+                        ':docenteId' => (int)$docenteId,
+                        ':ucId' => (int)$ucId
+                    ]);
+                    $exists = $stmtCheck->fetchColumn();
+                    if ($exists) {
+                        throw new Exception("Ya hay un docente asignado a esta unidad curricular.");
+                    }
+                    $stmtInsert->execute([
+                        ':docenteId' => (int)$docenteId,
+                        ':ucId' => (int)$ucId
+                    ]);
+                }
+            }
+
+            $co->commit();
+            $r['resultado'] = 'asignar';
+            $r['mensaje'] = 'Docentes asignados correctamente a las unidades curriculares!';
+        } catch (Exception $e) {
+            $co->rollBack();
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
+        }
+
+        return $r;
+    }
+
+    // function Quitar()
     // {
     //     $co = $this->Con();
     //     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     //     $r = ['resultado' => null, 'mensaje' => null];
 
     //     try {
-    //         $co->beginTransaction();
+    //         $stmt = $co->prepare("UPDATE uc_docente
 
-    //         $seccionesArray = json_decode($secciones, true);
-
-    //         $in = implode(',', array_map('intval', $seccionesArray));
-    //         $stmtTrayecto = $co->query("
-    //             SELECT tra_id 
-    //             FROM tbl_seccion 
-    //             WHERE sec_id IN ($in) AND sec_estado = 1
-    //             GROUP BY tra_id
-    //         ");
-    //         $trayectos = $stmtTrayecto->fetchAll(PDO::FETCH_COLUMN);
-
-    //         if (count($trayectos) !== 1) {
-    //             throw new Exception("Las secciones seleccionadas NO pertenecen al mismo trayecto.");
-    //         }
-
-    //         $stmtCheck = $co->prepare("
-    //             SELECT COUNT(*) AS cnt
-    //             FROM seccion_grupo sg
-    //             INNER JOIN tbl_grupo g ON sg.gro_id = g.gro_id
-    //             WHERE sg.sec_id = :seccionId AND g.grupo_estado = 1
-    //         ");
-
-    //         foreach ($seccionesArray as $seccionId) {
-    //             $stmtCheck->bindValue(':seccionId', (int)$seccionId, PDO::PARAM_INT);
-    //             $stmtCheck->execute();
-    //             $count = (int)$stmtCheck->fetchColumn();
-
-    //             if ($count > 0) {
-    //                 throw new Exception("Al menos UNA de las SECCIONES <br/> YA pertenece a un grupo activo.");
-    //             }
-    //         }
-
-    //         $stmtGrupo = $co->prepare("
-    //             INSERT INTO tbl_grupo (grupo_estado) 
-    //             VALUES (1)
-    //         ");
-    //         $stmtGrupo->execute();
-    //         $grupoId = $co->lastInsertId();
-
-    //         $stmtLink = $co->prepare("
-    //             INSERT INTO seccion_grupo (gro_id, sec_id) 
-    //             VALUES (:grupoId, :seccionId)
-    //         ");
-    //         $stmtLink->bindParam(':grupoId', $grupoId, PDO::PARAM_INT);
-
-    //         foreach ($seccionesArray as $seccionId) {
-    //             $stmtLink->bindValue(':seccionId', (int)$seccionId, PDO::PARAM_INT);
-    //             $stmtLink->execute();
-    //         }
-
-    //         $co->commit();
-
-    //         $r['resultado'] = 'unir';
-    //         $r['mensaje']   = 'Secciones unidas!<br/>Se unieron las secciones correctamente!';
-    //     } catch (Exception $e) {
-    //         $co->rollBack();
-    //         $r['resultado'] = 'error';
-    //         $r['mensaje']   = $e->getMessage();
-    //     } finally {
-    //         $co = null;
-    //     }
-
-    //     return $r;
-    // }
-
-    // function Separar()
-    // {
-    //     $co = $this->Con();
-    //     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    //     $r = ['resultado' => null, 'mensaje' => null];
-
-    //     try {
-    //         $stmt = $co->prepare("UPDATE tbl_grupo
-    //         SET grupo_estado = 0
-    //         WHERE gro_id = :grupoId");
-    //         $stmt->bindParam(':grupoId', $this->grupoId, PDO::PARAM_INT);
+    //         )");
+            
     //         $stmt->execute();
 
     //         $r['resultado'] = 'separar';

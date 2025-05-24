@@ -10,6 +10,7 @@ $u = new UC();
 $trayectos = $u->obtenerTrayecto();
 $ejes = $u->obtenerEje();
 $areas = $u->obtenerArea();
+$docentes = $u->obtenerDocente();
 
 if (is_file("views/" . $pagina . ".php")) {
 
@@ -18,8 +19,11 @@ if (is_file("views/" . $pagina . ".php")) {
        
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
-            
             echo json_encode($u->Listar());
+        } elseif ($accion == 'consultarAsignacion') {
+            echo json_encode($u->Listar());
+        } elseif ($accion == 'asignar') {
+            echo  json_encode($u->Asignar($_POST['docentes'], $_POST['ucs']));
         } elseif ($accion == 'eliminar') {
             $u->setidUC($_POST['idUC']);
             echo  json_encode($u->Eliminar());

@@ -57,21 +57,22 @@
                 </div>
             </div>
 
-            <!-- <div class="datatable-ui w-100" id="tablaunionContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem; display: none;">
+            <div class="datatable-ui w-100" id="tablaunionContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem; display: none;">
                 <div class="table-responsive" style="overflow-x: hidden;">
                     <table class="table table-striped table-hover w-100" id="tablaunion">
                         <thead>
                             <tr>
                                 <th style="display: none;">ID</th>
-                                <th>Docente</th>
+                                <th>Código</th>
                                 <th>Unidad Curricular</th>
+                                <th>Docente</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="resultadoconsulta2"></tbody>
                     </table>
                 </div>
-            </div> -->
+            </div>
         </section>
 
         <!-- Modal -->
@@ -210,7 +211,56 @@
             </div>
         </div>
         <!-- Fin del Modal -->
-
+        <div class="modal fade" tabindex="-1" role="dialog" id="modal2">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Asignar</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="hidden" name="accion" id="accion" value="registrar">
+                            <div class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label for="docenteUC" class="form-label">Docente</label>
+                                        <select class="form-select" name="docenteUC" id="docenteUC" required>
+                                            <option value="" disabled selected>Seleccione un docente</option>
+                                            <?php
+                                            if (!empty($docentes)) {
+                                                foreach ($docentes as $docente) {
+                                                    echo "<option value='" . $docente['doc_id'] . "'>" . $docente['doc_nombre'] . " " . $docente['doc_apellido'] . "</option>";
+                                                }
+                                            } else {
+                                                echo "<option value='' disabled>No hay docentes disponibles</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                        <span id="sdocente"></span>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-12">
+                                        <button type="button" class="btn btn-success" id="agregarDocente">Agregar al carrito</button>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-12">
+                                        <label class="form-label">Docentes seleccionados:</label>
+                                        <ul id="carritoDocentes" class="list-group"></ul>
+                                    </div>
+                                </div>
+                                <div class="modal-footer justify-content-center">
+                                    <button type="button" class="btn btn-primary me-2" id="asignarDocentes">Asignar</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>
@@ -218,6 +268,7 @@
     <script type="text/javascript" src="public/js/uc.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
     <!-- Scripts -->
+
 </body>
 
 </html>

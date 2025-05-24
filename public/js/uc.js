@@ -3,25 +3,25 @@ function Listar() {
     datos.append("accion", "consultar");
     enviaAjax(datos);
     
-    // var datosUnion = new FormData();
-    // datosUnion.append("accion", "consultarUnion");
-    // enviaAjax(datosUnion);
+    var datosUnion = new FormData();
+    datosUnion.append("accion", "consultarAsignacion");
+    enviaAjax(datosUnion);
   }
   
-//   function Cambiar(){
-//     document.getElementById('toggleTables').addEventListener('click', function() {
-//     const tablauc = document.getElementById('tablaucContainer');
-//     const tablaunion = document.getElementById('tablaunionContainer');
+  function Cambiar(){
+    document.getElementById('toggleTables').addEventListener('click', function() {
+    const tablauc = document.getElementById('tablaucContainer');
+    const tablaunion = document.getElementById('tablaunionContainer');
   
-//     if (tablauc.style.display === 'none') {
-//       tablauc.style.display = 'block';
-//       tablaunion.style.display = 'none';
-//       } else {
-//         tablauc.style.display = 'none';
-//         tablaunion.style.display = 'block';
-//       }
-//     });
-//   }
+    if (tablauc.style.display === 'none') {
+      tablauc.style.display = 'block';
+      tablaunion.style.display = 'none';
+      } else {
+        tablauc.style.display = 'none';
+        tablaunion.style.display = 'block';
+      }
+    });
+  }
   
   function destruyeDT(selector) {
     // Se destruye el datatable
@@ -99,13 +99,13 @@ function Listar() {
   
   $(document).ready(function () {
     Listar();
-    // Cambiar();
+    Cambiar();
     
     destruyeDT("#tablauc");
     crearDT("#tablauc");
   
-    // destruyeDT("#tablaunion");
-    // crearDT("#tablaunion");
+    destruyeDT("#tablaunion");
+    crearDT("#tablaunion");
   
     //////////////////////////////VALIDACIONES/////////////////////////////////////
     
@@ -124,22 +124,11 @@ function Listar() {
   
     //////////////////////////////BOTONES/////////////////////////////////////
     
-    // $("#unir").on("click", function () {
-    // const seccionesSeleccionadas = [];
-    // $("input[type=checkbox]:checked").each(function () {
-    //     seccionesSeleccionadas.push($(this).val());
-    // });
+    $(document).on("click", ".asignar-uc", function () {
+      $("#modal2").modal("show");
+    });
   
-    // if (seccionesSeleccionadas.length <= 1) {
-    //     Swal.fire("Atención", "Debe seleccionar al menos DOS secciones para unir.", "warning");
-    //     return;
-    // }
-    // var datos = new FormData();
-    // datos.append("accion", "unir");
-    // datos.append("secciones", JSON.stringify(seccionesSeleccionadas));
-  
-    // enviaAjax(datos);
-    // });
+   
   
     // $(document).on("click", "#tablaunion .eliminar", function () {
     //   const grupoId = $(this).data("id");
@@ -204,7 +193,6 @@ function Listar() {
         }
       }
       if ($(this).text() == "ELIMINAR") {  
-          // Mostrar confirmación usando SweetAlert
           Swal.fire({
             title: "¿Está seguro de eliminar esta unidad curricular?",
             text: "Esta acción no se puede deshacer.",
@@ -216,7 +204,6 @@ function Listar() {
             cancelButtonText: "Cancelar",
           }).then((result) => {
             if (result.isConfirmed) {
-              // Si se confirma, proceder con la eliminación
               var datos = new FormData();
               datos.append("accion", "eliminar");
               datos.append("idUC", $("#idUC").val());
@@ -335,7 +322,6 @@ function Listar() {
             destruyeDT("#tablauc");
             $("#resultadoconsulta1").empty();
             $.each(lee.mensaje, function (index, item) {
-              // Conversión de periodo
               
               $("#resultadoconsulta1").append(`
                 <tr>
@@ -353,6 +339,7 @@ function Listar() {
                   <td data-periodo="${item.uc_periodo}">${item.uc_periodo === "anual" ? "Anual" : item.uc_periodo === "1" ? "Fase 1" : item.uc_periodo === "2" ? "Fase 2" : item.uc_periodo}</td>
                   <td data-electiva="${item.uc_electiva}">${item.uc_electiva == "1" ? "Electiva" : "No Electiva"}</td>
                   <td>
+                    <button class="btn btn-warning btn-sm asignar-uc" data-id="${item.uc_id}">Asignar</button>
                     <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.uc_id}" data-codigo="${item.uc_codigo}">Modificar</button>
                     <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.uc_id}" data-codigo="${item.uc_codigo}">Eliminar</button>
                   </td>
@@ -360,27 +347,29 @@ function Listar() {
               `);
             });
             crearDT("#tablauc");
-        //   } 
-        //   else if (lee.resultado === "consultarUnion") {
-        //     destruyeDT("#tablaunion");
-        //     $("#resultadoconsulta2").empty();
-        //     $.each(lee.mensaje, function (index, item) {
-        //       $("#resultadoconsulta2").append(`
-        //         <tr>
-        //           <td style="display: none;">${item.gro_id}</td>
-        //           <td>${item.secciones}</td>
-        //           <td>${item.trayecto}</td>
-        //           <td>
-        //             <button class="btn btn-danger btn-sm eliminar" data-id="${item.gro_id}">Separar</button>
-        //           </td>
-        //         </tr>
-        //       `);
-        //     });
-        //     crearDT("#tablaunion");
-            ///
-          } else if (lee.resultado === "unir") {
-            muestraMensaje("info", 4000, "UNIR", lee.mensaje);
-            if (lee.mensaje === "Secciones unidas!<br/>Se unieron las secciones correctamente!") {
+          } 
+          else if (lee.resultado === "consultarAsignacion") {
+            destruyeDT("#tablaunion");
+            $("#resultadoconsulta2").empty();
+            $.each(lee.mensaje, function (index, item) {
+              $("#resultadoconsulta2").append(`
+                <tr>
+                  <td style="display: none;">${item.uc_id}</td>
+                  <td>${item.uc_codigo}</td>
+                  <td>${item.uc_nombre}</td>
+                  <td>${item.docentes ? item.docentes : ''}</td>
+                  <td>
+                    <button class="btn btn-danger btn-sm eliminar" data-id="${item.doc_id}">Separar</button>
+                  </td>
+                </tr>
+              `);
+            });
+            crearDT("#tablaunion");
+            
+          } else if (lee.resultado === "asignar") {
+            muestraMensaje("info", 4000, "ASIGNAR", lee.mensaje);
+            if (lee.mensaje === "Docentes asignados correctamente a las unidades curriculares!") {
+              $("#modal2").modal("hide");
               Listar(); 
             }
           } else if (lee.resultado === "separar") {
@@ -444,5 +433,75 @@ function Listar() {
     $("#cantidadSeccion").val("");
     $("#trayectoSeccion").val("");
   }
+
+let carritoDocentes = [];
+let ucSeleccionada = null;
+
+function actualizarCarritoDocentes() {
+    const ul = document.getElementById("carritoDocentes");
+    if (!ul) return;
+    ul.innerHTML = "";
+    carritoDocentes.forEach((doc, idx) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        li.innerHTML = `
+            ${doc.nombre}
+            <button type="button" class="btn btn-danger btn-sm quitar-docente" data-idx="${idx}">Quitar</button>
+        `;
+        ul.appendChild(li);
+    });
+}
+
+$(document).on("click", "#agregarDocente", function () {
+    const select = document.getElementById("docenteUC");
+    const docenteId = select.value;
+    const docenteNombre = select.options[select.selectedIndex]?.text;
+
+    if (!docenteId) {
+        alert("Seleccione un docente válido.");
+        return;
+    }
+
+    if (carritoDocentes.some(doc => doc.id === docenteId)) {
+        alert("Este docente ya está seleccionado.");
+        return;
+    }
+
+    carritoDocentes.push({
+        id: docenteId,
+        nombre: docenteNombre
+    });
+    actualizarCarritoDocentes();
+});
+
+$(document).on("click", ".quitar-docente", function () {
+    const idx = $(this).data("idx");
+    carritoDocentes.splice(idx, 1);
+    actualizarCarritoDocentes();
+});
+
+$(document).on("click", ".asignar-uc", function () {
+    carritoDocentes = [];
+    actualizarCarritoDocentes();
+    ucSeleccionada = $(this).data("id");
+});
+
+$(document).on("click", "#asignarDocentes", function () {
+    if (carritoDocentes.length === 0) {
+        alert("Seleccione al menos un docente!");
+        return;
+    }
+    if (!ucSeleccionada) {
+        alert("No se ha seleccionado una unidad curricular.");
+        return;
+    }
+
+    var datos = new FormData();
+    datos.append("accion", "asignar");
+    datos.append("docentes", JSON.stringify(carritoDocentes.map(d => d.id)));
+    datos.append("ucs", JSON.stringify([ucSeleccionada]));
+    
+    enviaAjax(datos);
+});
 
 
