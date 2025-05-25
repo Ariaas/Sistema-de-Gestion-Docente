@@ -65,14 +65,15 @@
                                 <th style="display: none;">ID</th>
                                 <th>Código</th>
                                 <th>Unidad Curricular</th>
-                                <th>Docente</th>
-                                <th>Acciones</th>
+                                <th>Docentes</th>
                             </tr>
                         </thead>
                         <tbody id="resultadoconsulta2"></tbody>
                     </table>
                 </div>
             </div>
+
+
         </section>
 
         <!-- Modal -->
@@ -242,7 +243,7 @@
                                 </div>
                                 <div class="row g-3 mt-3">
                                     <div class="col-md-12">
-                                        <button type="button" class="btn btn-success" id="agregarDocente">Agregar al carrito</button>
+                                        <button type="button" class="btn btn-success" id="agregarDocente">Agregar</button>
                                     </div>
                                 </div>
                                 <div class="row g-3 mt-3">
@@ -261,6 +262,37 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" tabindex="-1" role="dialog" id="modal3">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Asignar</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="datatable-ui w-100" id="tabladocenteContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem; display: none;">
+                            <div class="table-responsive" style="overflow-x: hidden;">
+                                <table class="table table-striped table-hover w-100" id="tabladocente">
+                                    <thead>
+                                        <tr>
+                                            <th style="display: none;">ID docente</th>
+                                            <th style="display: none;">ID uc</th>
+                                            <th>Docente</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resultadoconsulta3"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Ver Docentes -->
+
     </main>
     <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>

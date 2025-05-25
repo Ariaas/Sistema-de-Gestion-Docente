@@ -344,16 +344,21 @@ class UC extends Connection
             INNER JOIN tbl_trayecto tr ON uc.tra_id = tr.tra_id
             WHERE uc.uc_estado = 1");
             } elseif ($accion === 'consultarAsignacion') {
+                $uc_id = $_POST['uc_id'] ?? null;
                 $sql = "SELECT 
-                uc.uc_id,
-                uc.uc_codigo,
-                uc.uc_nombre,
-                GROUP_CONCAT(CONCAT(d.doc_nombre, ' ', d.doc_apellido) SEPARATOR '<br>') AS docentes
+                    uc.uc_id,
+                    uc.uc_codigo,
+                    uc.uc_nombre,
+                    d.doc_id,
+                    d.doc_nombre,
+                    d.doc_apellido
                 FROM tbl_uc uc
                 LEFT JOIN uc_docente ud ON uc.uc_id = ud.uc_id AND ud.uc_doc_estado = 1
                 LEFT JOIN tbl_docente d ON ud.doc_id = d.doc_id AND d.doc_estado = 1
-                WHERE uc.uc_estado = 1
-                GROUP BY uc.uc_id, uc.uc_codigo, uc.uc_nombre";
+                WHERE uc.uc_estado = 1";
+                if ($uc_id) {
+                    $sql .= " AND uc.uc_id = " . intval($uc_id);
+                }
                 $stmt = $co->query($sql);
             } else {
                 throw new Exception("Acción inválida: $accion");
@@ -539,28 +544,29 @@ class UC extends Connection
         return $r;
     }
 
-    // function Quitar()
-    // {
-    //     $co = $this->Con();
-    //     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    //     $r = ['resultado' => null, 'mensaje' => null];
+    public function Quitar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = ['resultado' => null, 'mensaje' => null];
 
-    //     try {
-    //         $stmt = $co->prepare("UPDATE uc_docente
+        try {
+            $uc_id = $_POST['uc_id'];
+            $doc_id = $_POST['doc_id'];
+            $stmt = $co->prepare("UPDATE uc_docente SET uc_doc_estado = 0 WHERE uc_id = :uc_id AND doc_id = :doc_id AND uc_doc_estado = 1");
+            $stmt->bindParam(':uc_id', $uc_id, PDO::PARAM_INT);
+            $stmt->bindParam(':doc_id', $doc_id, PDO::PARAM_INT);
+            $stmt->execute();
 
-    //         )");
-            
-    //         $stmt->execute();
+            $r['resultado'] = 'quitar';
+            $r['mensaje'] = 'El docente ahora está fuera de esta unidad curricular.';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
+        }
 
-    //         $r['resultado'] = 'separar';
-    //         $r['mensaje'] = 'Secciones separadas!<br/>Se separaron las secciones correctamente!';
-    //     } catch (Exception $e) {
-    //         $r['resultado'] = 'error';
-    //         $r['mensaje'] = $e->getMessage();
-    //     } finally {
-    //         $co = null;
-    //     }
-
-    //     return $r;
-    // }
+        return $r;
+    }
 }

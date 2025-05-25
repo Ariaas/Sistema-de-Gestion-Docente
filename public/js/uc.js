@@ -106,6 +106,9 @@ function Listar() {
   
     destruyeDT("#tablaunion");
     crearDT("#tablaunion");
+
+    destruyeDT("#tabladocente");
+    crearDT("#tabladocente");
   
     //////////////////////////////VALIDACIONES/////////////////////////////////////
     
@@ -127,32 +130,7 @@ function Listar() {
     $(document).on("click", ".asignar-uc", function () {
       $("#modal2").modal("show");
     });
-  
-   
-  
-    // $(document).on("click", "#tablaunion .eliminar", function () {
-    //   const grupoId = $(this).data("id");
-  
-    //   Swal.fire({
-    //     title: "¿Está seguro de separar este grupo?",
-    //     text: "Esta acción no se puede deshacer.",
-    //     icon: "warning",
-    //     showCancelButton: true,
-    //     confirmButtonColor: "#3085d6",
-    //     cancelButtonColor: "#d33",
-    //     confirmButtonText: "Sí, separar",
-    //     cancelButtonText: "Cancelar",
-    //   }).then((result) => {
-    //     if (result.isConfirmed) {
-    //       var datos = new FormData();
-    //       datos.append("accion", "separar");
-    //       datos.append("grupoId", grupoId);
-  
-    //       enviaAjax(datos);
-    //     }
-    //   });
-    // });
-  
+
     $("#proceso").on("click", function () {
       if ($(this).text() == "REGISTRAR") {
         if (validarenvio()) {
@@ -347,35 +325,72 @@ function Listar() {
               `);
             });
             crearDT("#tablauc");
-          } 
-          else if (lee.resultado === "consultarAsignacion") {
-            destruyeDT("#tablaunion");
-            $("#resultadoconsulta2").empty();
-            $.each(lee.mensaje, function (index, item) {
-              $("#resultadoconsulta2").append(`
-                <tr>
-                  <td style="display: none;">${item.uc_id}</td>
-                  <td>${item.uc_codigo}</td>
-                  <td>${item.uc_nombre}</td>
-                  <td>${item.docentes ? item.docentes : ''}</td>
-                  <td>
-                    <button class="btn btn-danger btn-sm eliminar" data-id="${item.doc_id}">Separar</button>
-                  </td>
-                </tr>
-              `);
-            });
-            crearDT("#tablaunion");
-            
+          } else if (lee.resultado === "consultarAsignacion") {
+            destruyeDT("#tabladocente");
+            if (datos.has && datos.has("uc_id")) {
+                $("#resultadoconsulta3").empty();
+                if (lee.mensaje.length > 0) {
+                    let hayDocentes = false;
+                    $.each(lee.mensaje, function (index2, item2) {
+                        if (item2.doc_id) { 
+                            hayDocentes = true;
+                            $("#resultadoconsulta3").append(`
+                                <tr>
+                                <td style="display: none;">${item2.uc_id}</td>
+                                <td style="display: none;">${item2.doc_id}</td>
+                                <td>${item2.doc_nombre ? item2.doc_nombre + ' ' + item2.doc_apellido : ''}</td>
+                                <td>
+                                    <button class="btn btn-warning btn-sm quitar-docente-uc" data-ucid="${item2.uc_id}" data-docid="${item2.doc_id}">Quitar</button>
+                                </td>
+                                </tr>
+                            `);
+                        }
+                    });
+                }             
+                crearDT("#tabladocente");
+            } else if (!datos.has || !datos.has("uc_id")) {
+                destruyeDT("#tablaunion");
+                $("#resultadoconsulta2").empty();
+                const ucMap = {};
+                lee.mensaje.forEach(item => {
+                    if (!ucMap[item.uc_id]) {
+                        ucMap[item.uc_id] = item;
+                    }
+                });
+                Object.values(ucMap).forEach(item => {
+                    $("#resultadoconsulta2").append(`
+                        <tr>
+                            <td style="display: none;">${item.uc_id}</td>
+                            <td>${item.uc_codigo}</td>
+                            <td>${item.uc_nombre}</td>
+                            <td>
+                                <button 
+                                class="btn btn-primary btn-sm ver-docentes" 
+                                data-uc="${item.uc_nombre}">
+                                Ver docentes
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+                $("#resultadoconsulta3").empty();
+                crearDT("#tablaunion");
+                crearDT("#tabladocente");
+            }
           } else if (lee.resultado === "asignar") {
             muestraMensaje("info", 4000, "ASIGNAR", lee.mensaje);
             if (lee.mensaje === "Docentes asignados correctamente a las unidades curriculares!") {
               $("#modal2").modal("hide");
               Listar(); 
             }
-          } else if (lee.resultado === "separar") {
-            muestraMensaje("info", 4000, "SEPARAR", lee.mensaje);
-            if (lee.mensaje === "Secciones separadas!<br/>Se separaron las secciones correctamente!") {
-              Listar(); 
+          } else if (lee.resultado === "quitar") {
+            muestraMensaje("info", 4000, "QUITAR", lee.mensaje);
+            if (lee.mensaje === "El docente ahora está fuera de esta unidad curricular.") {
+                if (datos.has && datos.has("uc_id")) {
+                    solicitarDocentesPorUC(datos.get("uc_id"));
+                } else {
+                    Listar();
+                }
             }
           } else if (lee.resultado == "registrar") {
             muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
@@ -412,7 +427,7 @@ function Listar() {
             muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
           }
         } catch (e) {
-          console.error("Error en análisis JSON:", e); // Registrar el error para depuración
+          console.error("Error en análisis JSON:", e); 
           alert("Error en JSON " + e.name + ": " + e.message);
         }
       },
@@ -504,4 +519,40 @@ $(document).on("click", "#asignarDocentes", function () {
     enviaAjax(datos);
 });
 
+$(document).on("click", ".ver-docentes", function () {
+  const uc_id = $(this).closest("tr").find("td:eq(0)").text();
+  $("#tabladocenteContainer").show();
+  $("#modal3").modal("show");
+  solicitarDocentesPorUC(uc_id);
+});
+
+function solicitarDocentesPorUC(uc_id) {
+  var datos = new FormData();
+  datos.append("accion", "consultarAsignacion");
+  datos.append("uc_id", uc_id);
+  enviaAjax(datos, "mostrarDocentesDeUC");
+}
+
+$(document).on("click", ".quitar-docente-uc", function () {
+  const docId = $(this).data("docid");
+  const ucId = $(this).data("ucid");
+  Swal.fire({
+      title: "¿Está seguro de quitar este docente?",
+      text: "Esta acción puede revertirse asignando de nuevo.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, quitar",
+      cancelButtonText: "Cancelar",
+  }).then((result) => {
+      if (result.isConfirmed) {
+          var datos = new FormData();
+          datos.append("accion", "quitar");
+          datos.append("doc_id", docId);
+          datos.append("uc_id", ucId);
+          enviaAjax(datos);
+      }
+  });
+});
 

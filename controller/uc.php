@@ -24,7 +24,9 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($u->Listar());
         } elseif ($accion == 'asignar') {
             echo  json_encode($u->Asignar($_POST['docentes'], $_POST['ucs']));
-        } elseif ($accion == 'eliminar') {
+        } elseif ($accion == 'quitar') {
+            echo json_encode($u->Quitar());
+        }elseif ($accion == 'eliminar') {
             $u->setidUC($_POST['idUC']);
             echo  json_encode($u->Eliminar());
         } elseif ($accion == 'existe') {
