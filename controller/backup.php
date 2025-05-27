@@ -8,33 +8,39 @@ require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
 
 
-if (!empty($_POST)) {
-    $objMantenimiento = new Mantenimiento();
-    $accion = $_POST['accion'];
+    if (!empty($_POST)) {
+        $objMantenimiento = new Mantenimiento();
+        $accion = $_POST['accion'];
 
-    switch ($accion) {
-        case 'guardar_respaldo':
-            
-            echo json_encode($objMantenimiento->GuardarRespaldo());
-            break;
-        case 'restaurar_sistema':
-            
-            if (isset($_POST['archivo_sql'])) { 
-                echo json_encode($objMantenimiento->RestaurarSistema($_POST['archivo_sql']));
-            } else {
-                echo json_encode(["status" => "error", "message" => "Falta el nombre del archivo ZIP para restaurar."]);
-            }
-            break;
-        case 'obtener_respaldos':
-            
-            echo json_encode($objMantenimiento->ObtenerRespaldos());
-            break;
-        default:
-            echo json_encode(["status" => "error", "message" => "Acción no válida."]);
-            break;
+        $usu_id = 1;
+        $bitacora = new Bitacora();
+
+        switch ($accion) {
+            case 'guardar_respaldo':
+
+                echo json_encode($objMantenimiento->GuardarRespaldo());
+                $bitacora->registrarAccion($usu_id, 'Guardar Respaldo', 'Respaldo');
+
+                break;
+            case 'restaurar_sistema':
+
+                if (isset($_POST['archivo_sql'])) {
+                    echo json_encode($objMantenimiento->RestaurarSistema($_POST['archivo_sql']));
+                    $bitacora->registrarAccion($usu_id, 'Restaurar Sistema', 'Respaldo');
+                } else {
+                    echo json_encode(["status" => "error", "message" => "Falta el nombre del archivo ZIP para restaurar."]);
+                }
+                break;
+            case 'obtener_respaldos':
+
+                echo json_encode($objMantenimiento->ObtenerRespaldos());
+                break;
+            default:
+                echo json_encode(["status" => "error", "message" => "Acción no válida."]);
+                break;
+        }
+        exit;
     }
-    exit;
-}
 
     require_once("views/" . $pagina . ".php");
 } else {

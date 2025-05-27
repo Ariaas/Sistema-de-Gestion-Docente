@@ -16,7 +16,9 @@ if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
 
-       
+        $usu_id = 1;
+        $bitacora = new Bitacora();
+
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
             echo json_encode($u->Listar());
@@ -24,11 +26,17 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($u->Listar());
         } elseif ($accion == 'asignar') {
             echo  json_encode($u->Asignar($_POST['docentes'], $_POST['ucs']));
+
+            $bitacora->registrarAccion($usu_id, 'Asignar', 'Unidad Curricular');
         } elseif ($accion == 'quitar') {
             echo json_encode($u->Quitar());
-        }elseif ($accion == 'eliminar') {
+
+            $bitacora->registrarAccion($usu_id, 'Quitar', 'Unidad Curricular');
+        } elseif ($accion == 'eliminar') {
             $u->setidUC($_POST['idUC']);
             echo  json_encode($u->Eliminar());
+
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'Unidad C urricular');
         } elseif ($accion == 'existe') {
             $u->setcodigoUC($_POST['codigoUC']);
             $resultado = $u->Existe($_POST['codigoUC']);
@@ -48,9 +56,13 @@ if (is_file("views/" . $pagina . ".php")) {
 
             if ($accion == 'registrar') {
                 echo  json_encode($u->Registrar());
+
+                $bitacora->registrarAccion($usu_id, 'registrar', 'Unidad Curricular');
             } elseif ($accion == 'modificar') {
                 $u->setidUC($_POST['idUC']);
                 echo  json_encode($u->modificar());
+
+                $bitacora->registrarAccion($usu_id, 'modificar', 'Unidad Curricular');
             }
         }
         exit;

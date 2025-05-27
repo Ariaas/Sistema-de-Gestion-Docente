@@ -11,17 +11,22 @@ if (is_file("views/" . $pagina . ".php")) {
         $p = new Docente();
         $accion = $_POST['accion'];
 
+        $usu_id = 1;
+        $bitacora = new Bitacora();
+
         if ($accion == 'consultar') {
             echo json_encode($p->Listar());
         } elseif ($accion == 'eliminar') {
             $p->setCedula($_POST['cedulaDocente']);
             $resultado = $p->Eliminar();
             echo json_encode($resultado);
+
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
+
         } elseif ($accion == 'Existe') {
             $resultado = $p->Existe($_POST['cedulaDocente']);
             echo json_encode($resultado);
         } else {
-            // Asignación de todos los campos recibidos del formulario
             $p->setCategoriaId($_POST['categoria']);
             $p->setPrefijo($_POST['prefijoCedula']);
             $p->setCedula($_POST['cedulaDocente']);
@@ -33,8 +38,11 @@ if (is_file("views/" . $pagina . ".php")) {
             
             if ($accion == 'incluir') {
                 echo json_encode($p->Registrar());
+
+                $bitacora->registrarAccion($usu_id, 'registrar', 'docente');
             } elseif ($accion == 'modificar') {
                 echo json_encode($p->Modificar());
+                $bitacora->registrarAccion($usu_id, 'modificar', 'docente');
             }
         }  
         exit;
