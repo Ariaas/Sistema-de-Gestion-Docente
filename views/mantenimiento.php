@@ -39,7 +39,7 @@
                     </a>
                 </div>
                 <div class="col">
-                    <a class="a-cards" href="?pagina=respaldo">
+                    <a class="a-cards" href="?pagina=backup">
                         <div class="card h-100 text-center custom-card">
                             <div class="card-body">
                                 <img src="public/assets/icons/device-hdd-fill.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Building Icon">
