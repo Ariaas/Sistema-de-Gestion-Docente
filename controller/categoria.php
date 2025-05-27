@@ -12,6 +12,7 @@ if (is_file("views/" . $pagina . ".php")) {
         $c = new Categoria();
         $accion = $_POST['accion'];
 
+        require_once("model/bitacora.php");
         $usu_id = 1;
         $bitacora = new Bitacora();
         

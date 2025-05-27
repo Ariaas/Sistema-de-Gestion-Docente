@@ -8,8 +8,9 @@ if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
 
-        $obj1 = new Titulo();
-        $accion = $_POST['accion'];
+        $require_once("model/bitacora.php");
+        $usu_id = 1;
+        $bitacora = new Bitacora();
 
         $usu_id = 1;
         $bitacora = new Bitacora();

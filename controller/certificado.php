@@ -13,6 +13,7 @@ if (is_file("views/" . $pagina . ".php")) {
         $obj2 = new Certificado();
         $accion = $_POST['accion'];
 
+        require_once("model/bitacora.php");
         $usu_id = 1;
         $bitacora = new Bitacora();
 

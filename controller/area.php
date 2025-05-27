@@ -11,6 +11,7 @@ if (is_file("views/" . $pagina . ".php")) {
         $o = new Area();
         $accion = $_POST['accion'] ?? '';
 
+        require_once("model/bitacora.php");
         $usu_id = 1;
         $bitacora = new Bitacora();
         
