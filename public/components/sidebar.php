@@ -72,6 +72,14 @@
                 Gestionar Malla Curricular
             </span>
         </a>
+        <a href="?pagina=horariodocente" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/screwdriver-wrench-solid.svg"></img>
+            </span>
+            <span class="description">
+                Gestionar Horario Docente
+            </span>
+        </a>
         <a href="?pagina=config" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/gear-solid.svg"></img>

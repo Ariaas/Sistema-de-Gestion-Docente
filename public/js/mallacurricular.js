@@ -79,7 +79,17 @@ $(document).ready(function () {
         enviaAjax(datos);
    
     });*/
-
+$("#certificadonombre").on("key down keyup", function () {
+    const valor = $(this).val();
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres");
+  
+        var datos = new FormData();
+        datos.append('accion', 'existe');
+        datos.append("certificadonombre", $("#certificadonombre").val());
+        datos.append("trayecto", $("#trayecto").val());
+        enviaAjax(datos);
+   
+    });
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
