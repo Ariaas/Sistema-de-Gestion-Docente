@@ -161,9 +161,9 @@ $(document).ready(function () {
     $("#strayectoNumero").show();
     $("#strayectoAnio").show();
     $("#modal1").modal("show");
+    $("#trayectoAnio, #trayectoNumero").prop("disabled", false);
   });
 
-  
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
@@ -182,9 +182,7 @@ function pone(pos, accion) {
     $("#trayectoNumero").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $(
-      "#trayectoAnio, #trayectoNumero"
-    ).prop("disabled", false);
+    $("#trayectoAnio, #trayectoNumero").prop("disabled", true);
   }
   $("#trayectoId").val($(linea).find("td:eq(0)").text());
   $("#trayectoAnio").val($(linea).find("td:eq(2)").text());

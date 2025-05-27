@@ -83,8 +83,8 @@ $(document).ready(function () {
 	});
 
 	$("#codigoEspacio").on("keyup keydown",function(){
-		validarkeyup(/^[A-Za-z0-9]{2,3}$/,$(this),
-		$("#scodigoEspacio"),"El formato permite de 2 a 3 carácteres");
+		validarkeyup(/^[A-Za-z0-9]{2,5}$/,$(this),
+		$("#scodigoEspacio"),"El formato permite de 2 a 5 carácteres");
 		if ($("#codigoEspacio").val().length <= 3) {
 			var datos = new FormData();
 			datos.append('accion', 'existe');
@@ -181,6 +181,9 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#scodigoEspacio").show();
+       $(
+      "#tipoEspacio, #codigoEspacio"
+    ).prop("disabled", false);
   });
 
   
@@ -190,6 +193,21 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+    var tipoEspacio = $("#tipoEspacio").val();
+
+    if (validarkeyup( /^[A-Za-z0-9\s-]{2,5}$/,$("#codigoEspacio"),$("#scodigoEspacio"),"El formato permite de 2 a 5 caracteres, incluyendo guiones. Ej: H-12") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El código del espacio <br/> No debe estar vacío y debe contener entre 2 a 5 carácteres");
+          return false;
+        }
+    else if ( tipoEspacio === null || tipoEspacio === "0") {
+    muestraMensaje(
+      "error",
+      4000,
+      "ERROR!",
+      "Por favor, seleccione un tipo de espacio!"
+    );
+    return false;
+  }
   return true;
 }
 
@@ -205,7 +223,7 @@ function pone(pos, accion) {
     $("#proceso").text("ELIMINAR");
     $(
       "#tipoEspacio, #codigoEspacio"
-    ).prop("disabled", false);
+    ).prop("disabled", true);
   }
 
   $("#tipoEspacio").val($(linea).find("td:eq(1)").text());

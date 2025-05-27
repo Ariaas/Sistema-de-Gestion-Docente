@@ -171,6 +171,9 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#scategoriaNombre").show();
+        $(
+      "#categoriaId, #categoriaNombre"
+    ).prop("disabled", false);
   });
 
   
@@ -200,7 +203,7 @@ function pone(pos, accion) {
     $("#proceso").text("ELIMINAR");
     $(
       "#categoriaId, #categoriaNombre"
-    ).prop("disabled", false);
+    ).prop("disabled", true);
   }
   $("#scategoriaNombre").hide();
   $("#categoriaId").val($(linea).find("td:eq(0)").text());

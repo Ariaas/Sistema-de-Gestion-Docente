@@ -60,7 +60,7 @@
                                         <input class="form-control" type="text" id="tituloid" name="tituloid">
                                         <span id="stituloid"></span>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="tituloprefijo" class="form-label">Tipo (prefijo)</label>
                                         <select class="form-select" name="tituloprefijo" id="tituloprefijo" required>
                                             <option value="" disabled selected>Seleccione un tipo (prefijo)</option>
@@ -70,7 +70,7 @@
                                         </select>
                                         <span id="stituloprefijo"></span>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="titulonombre" class="form-label">Nombre</label>
                                         <input class="form-control" type="text" id="titulonombre" name="titulonombre" required>
                                         <span id="stitulonombre"></span>

@@ -167,6 +167,7 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#sejeNombre").show();
+    $("#ejeNombre").prop("disabled", false);
   });
 
   
@@ -194,7 +195,7 @@ function pone(pos, accion) {
     $("#proceso").text("ELIMINAR");
     $(
       "#ejeId, #ejeNombre"
-    ).prop("disabled", false);
+    ).prop("disabled", true);
   }
   $("#sejeNombre").hide();
   $("#ejeId").val($(linea).find("td:eq(0)").text());

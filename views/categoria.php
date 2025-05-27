@@ -54,26 +54,21 @@
                             <input type="text" class="form-control" name="accion" id="accion" style="display: none;">
                             <div class="container">
                                 <div class="row mb-3">
-                                    <div style="display: none;" class="col-md-6">
+                                    <div class="col-md-6" style="display: none;">
                                         <label for="categoriaId">ID</label>
                                         <input class="form-control" type="text" id="categoriaId" name="categoriaId">
                                         <div class="invalid-feedback" id="scategoriaId"></div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12">
                                         <label for="categoriaNombre" class="form-label">Categoría</label>
                                         <input class="form-control" type="text" id="categoriaNombre" name="categoriaNombre" required>
                                         <span id="scategoriaNombre"></span>
-                                      
                                     </div>
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center">
-                                <button type="button" class="btn btn-primary me-2" id="proceso">
-                                    <i class="fas fa-save me-2"></i>Guardar
-                                </button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    <i class="fas fa-times me-2"></i>Cancelar
-                                </button>
+                                <button type="button" class="btn btn-primary me-2" id="proceso"></button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
                     </div>

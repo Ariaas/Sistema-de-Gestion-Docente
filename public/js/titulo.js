@@ -134,6 +134,7 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#tituloprefijo, #titulonombre").prop("disabled", false);
   });
 
   
@@ -163,7 +164,7 @@ function pone(pos, accion) {
     $("#titulonombre").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#tituloprefijo, #titulonombre").prop("disabled", false);
+    $("#tituloprefijo, #titulonombre").prop("disabled", true);
   }
   $("#tituloid").val($(linea).find("td:eq(0)").text());
   $("#titulonombre").val($(linea).find("td:eq(2)").text());
