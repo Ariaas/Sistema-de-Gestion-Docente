@@ -7,14 +7,14 @@ require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
+        $obj1 = new Titulo();
+        $accion = $_POST['accion'];
 
-        $require_once("model/bitacora.php");
+        require_once("model/bitacora.php");
         $usu_id = 1;
         $bitacora = new Bitacora();
 
-        $usu_id = 1;
-        $bitacora = new Bitacora();
-
+     
         if ($accion == 'consultar') {
             echo json_encode($obj1->Consultar());
         

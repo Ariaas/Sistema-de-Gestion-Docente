@@ -187,6 +187,7 @@ function enviaAjax(datos) {
     timeout: 10000, //tiempo maximo de espera por la respuesta del servidor
     success: function (respuesta) {
       try {
+        console.log(respuesta);
         var lee = JSON.parse(respuesta);
         if (lee.resultado === "consultar") {
           destruyeDT();

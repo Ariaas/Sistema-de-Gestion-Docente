@@ -48,7 +48,7 @@
                 Gestionar Unidad Curricular
             </span>
         </a>
-        <a href="?pagina=horariodocente" class="nav-link">
+        <a href="?pagina=horario" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/calendar-solid.svg"></img>
             </span>
