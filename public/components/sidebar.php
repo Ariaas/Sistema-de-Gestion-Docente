@@ -8,14 +8,6 @@
                 Inicio
             </span>
         </a>
-        <a href="?pagina=usuario" class="nav-link">
-            <span class="icon">
-                <img src="public/assets/icons/person.svg"></img>
-            </span>
-            <span class="description">
-                Gestionar Usuario
-            </span>
-        </a>
         <a href="?pagina=docente" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/user-graduate-solid.svg"></img>
@@ -78,6 +70,14 @@
             </span>
             <span class="description">
                 Administrar Configuración
+            </span>
+        </a>
+        <a href="?pagina=mantenimiento" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/gear-solid.svg"></img>
+            </span>
+            <span class="description">
+                Administrar Mantenimiento
             </span>
         </a>
         <a href="?pagina=reportes" class="nav-link">
