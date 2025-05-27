@@ -12,6 +12,7 @@ if (is_file("views/" . $pagina . ".php")) {
         $obj4 = new Malla();
         $accion = $_POST['accion'];
 
+        require_once("model/bitacora.php");
         $usu_id = 1;
         $bitacora = new Bitacora();
 

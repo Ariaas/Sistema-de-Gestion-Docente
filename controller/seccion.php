@@ -13,6 +13,7 @@ if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
 
+        require_once("model/bitacora.php");
         $usu_id = 1;
         $bitacora = new Bitacora();
 

@@ -7,14 +7,13 @@ if (!is_file("model/" . $pagina . ".php")) {
 require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
 
-    require_once("model/bitacora.php");
-
     if (!empty($_POST)) {
 
         $e = new Espacio();
         $accion = $_POST['accion'];
 
-        $usu_id = 1; 
+        require_once("model/bitacora.php");
+        $usu_id = 1;
         $bitacora = new Bitacora();
 
         if ($accion == 'consultar') {
