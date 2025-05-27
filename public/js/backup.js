@@ -18,7 +18,7 @@ $(document).ready(function() {
 
     function cargarRespaldosDisponibles() {
         $.ajax({
-            url: '?pagina=mantenimiento', 
+            url: '?pagina=backup', 
             type: 'POST',
             data: {
                 accion: 'obtener_respaldos' 
@@ -58,7 +58,7 @@ $(document).ready(function() {
     $('#guardarRespaldo').on('click', function() {
         muestraMensaje('info', 0, 'Generando Respaldo', 'Por favor espere, esto puede tardar unos segundos o minutos...');
         $.ajax({
-            url: '?pagina=mantenimiento',
+            url: '?pagina=backup',
             type: 'POST',
             data: {
                 accion: 'guardar_respaldo' 
@@ -109,7 +109,7 @@ $(document).ready(function() {
             if (result.isConfirmed) {
                 muestraMensaje('info', 0, 'Restaurando Sistema', 'Por favor espere, esto puede tardar varios minutos...');
                 $.ajax({
-                    url: '?pagina=mantenimiento',
+                    url: '?pagina=backup',
                     type: 'POST',
                     data: {
                         accion: 'restaurar_sistema',
