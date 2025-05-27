@@ -55,17 +55,20 @@
                             <input type="hidden" name="accion" id="accion">
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div class="col-md-4" style="display: none;">
+                                    <div class="col-md-6" style="display: none;">
                                         <label for="trayectoId">ID</label>
                                         <input class="form-control" type="text" id="trayectoId" name="trayectoId">
                                         <span id="strayectoId"></span>
                                     </div>
-                                    <div class="col-md-4">
+                                    <!-- Campo Número -->
+                                    <div class="col-md-6">
                                         <label for="trayectoNumero" class="form-label">Número</label>
                                         <input class="form-control" type="text" id="trayectoNumero" name="trayectoNumero" required>
                                         <span id="strayectoNumero"></span>
                                     </div>
-                                    <div class="col-md-4">
+
+                                    <!-- Campo Año -->
+                                    <div class="col-md-6">
                                         <label for="trayectoAnio" class="form-label">Año</label>
                                         <select class="form-select" name="trayectoAnio" id="trayectoAnio" required>
                                             <option value="" disabled selected>Seleccione un Año</option>

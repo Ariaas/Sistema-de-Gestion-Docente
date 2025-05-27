@@ -156,6 +156,7 @@ $(document).ready(function () {
     $("#scontraseña").show();
     $("#scorreo").show();
     $("#scontaseña").show();
+    $("#usuarionombre, #correo, #contraseña, #rol").prop("disabled", false);
   });
 
   
@@ -165,20 +166,17 @@ $(document).ready(function () {
 
 function validarenvio() {
 
-  let trayecto = $("#rol").val();
+  let rol = $("#rol").val();
   
    if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#usuarionombre"),$("#susuarionombre"),"Este formato permite de 4 a 15 carácteres") == 0) {
         muestraMensaje("error",4000,"ERROR!","El usuario debe coincidir con el formato <br/>" + 
 			"se permiten de 4 a 15 carácteres");
           return false;
-  } else if (validarkeyup( /^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC-]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,$("#correo"),$("#scorreo"),"El formato sólo permite un correo válido!") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El correo del usuario <br/> No debe estar vacío, ni contener más de 30 carácteres");
-          return false;
-  }
-  else if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#contraseña"),$("#scontraseña"),"Solo letras y numeros entre 4 y 15 caracteres") == 0) {
-        muestraMensaje("error",4000,"ERROR!","La contraseña debe tener mínimo 4 dígitos y máximo 15");
-          return false;}
-  else if (trayecto === null || trayecto === "0") {
+  } else if (validarkeyup(/^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC.-]{3,30}@([A-Za-z0-9-]+\.){1,3}[A-Za-z]{2,3}$/, $("#correo"), $("#scorreo"), "El formato sólo permite un correo válido!") == 0) {
+    muestraMensaje("error", 4000, "ERROR!", "El correo del usuario <br/> No debe estar vacío, ni contener más de 30 carácteres");
+    return false;
+}
+  else if (rol === null || rol === "0") {
         muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un rol!"); 
           return false;
 
@@ -193,19 +191,18 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#usuarionombre").prop("disabled", false);
     $("#correo").prop("disabled", false);
-     $("#contraseña").prop("disabled", false);
+    $("#contraseña").prop("disabled", false);
     $("#rol").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#usuarionombre, #correo, #contraseña, #rol ").prop("disabled", false);
+    $("#usuarionombre, #correo, #contraseña, #rol").prop("disabled", true);
   }
 
   $("#usuarioid").val($(linea).find("td:eq(0)").text());
   $("#usuarionombre").val($(linea).find("td:eq(1)").text());
-  //$("#contraseña").val($(linea).find("td:eq(2)").text());
-  $("#correo").val($(linea).find("td:eq(3)").text());
-  $("#rol").val($(linea).find("td:eq(4)").text());
-  
+  $("#correo").val($(linea).find("td:eq(2)").text());
+  $("#rol").val($(linea).find("td:eq(3)").text()); // Corregido para obtener el rol correctamente
+
   $("#susuarionombre").hide();
   $("#scontraseña").hide();
   $("#scorreo").hide();

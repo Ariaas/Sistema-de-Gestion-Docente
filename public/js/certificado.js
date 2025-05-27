@@ -76,7 +76,6 @@ $(document).ready(function () {
         datos.append("certificadonombre", $("#certificadonombre").val());
         datos.append("trayecto", $("#trayecto").val());
         enviaAjax(datos);
-   
     });
 
   //////////////////////////////BOTONES/////////////////////////////////////
@@ -133,6 +132,7 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#scertificadonombre").show();
+    $("#certificadoid, #certificadonombre, #trayecto").prop("disabled", false);
   });
 
   
@@ -143,7 +143,7 @@ $(document).ready(function () {
 function validarenvio() {
   let trayecto = $("#trayecto").val();
   
-   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"El formato permite de 5 a 30 carácteres. Ej:Certificado trayecto 1") == 0) {
+   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"El formato permite de 5 a 30 carácteres. Ej:Certificado trayecto 1") == 0) {
         muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
           return false;
   } else if (trayecto === null || trayecto === "0") {
@@ -164,7 +164,7 @@ function pone(pos, accion) {
   } else {
     $("#proceso").text("ELIMINAR");
   
-    $("#certificadonombre, #trayecto").prop("disabled", false);
+    $("#certificadonombre, #trayecto").prop("disabled", true);
   }
 
   

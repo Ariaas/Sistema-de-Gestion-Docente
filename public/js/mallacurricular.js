@@ -94,7 +94,7 @@ $("#certificadonombre").on("key down keyup", function () {
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
-    //  if (validarenvio()) {
+     if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
         datos.append("mal_codigo", $("#mal_codigo").val());
@@ -107,9 +107,9 @@ $("#certificadonombre").on("key down keyup", function () {
         enviaAjax(datos);
         
         
-    //  }
+     }
     } else if ($(this).text() == "MODIFICAR") {
-     // if (validarenvio()) {
+     if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
         datos.append("mal_id", $("#mal_id").val());
@@ -119,7 +119,7 @@ $("#certificadonombre").on("key down keyup", function () {
         datos.append("mal_cohorte", $("#mal_cohorte").val());
         datos.append("mal_descripcion", $("#mal_descripcion").val());
         enviaAjax(datos);
-     // }
+     }
     }
     if ($(this).text() == "ELIMINAR") {  
         // Mostrar confirmación usando SweetAlert
@@ -151,6 +151,8 @@ $("#certificadonombre").on("key down keyup", function () {
   $("#registrar").on("click", function () {
     limpia();
     $("#proceso").text("REGISTRAR");
+    // Habilitar todos los inputs al abrir el modal para registrar
+    $("#mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", false);
     $("#modal1").modal("show");
   });
 
@@ -160,16 +162,25 @@ $("#certificadonombre").on("key down keyup", function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-  let trayecto = $("#trayecto").val();
-  
-   if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"No debe contener más de 30 caracteres") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del certificado <br/> No debe estar vacío, ni contener más de 30 carácteres");
-          return false;
-  } else if (trayecto === null || trayecto === "0") {
-        muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un trayecto!"); 
-          return false;
+    let anio = $("#mal_Anio").val();
 
-}
+    if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/,$("#mal_codigo"),$("#smal_codigo"),"El formato permite de 2 a 10 caracteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El código de la malla <br/> No debe estar vacío y debe contener entre 2 a 10 caracteres");
+        return false;
+    } else if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$("#mal_nombre"),$("#smal_nombre"),"El nombre debe contener entre 5 y 50 caracteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El nombre de la malla <br/> No debe estar vacío y debe contener entre 5 y 50 caracteres");
+        return false;
+    } else if (anio === null || anio === "0") {
+        muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un año!");
+        return false;
+    } else if (validarkeyup(/^[A-Za-z0-9\s-]{1,20}$/,$("#mal_cohorte"),$("#smal_cohorte"),"El formato permite de 2 a 20 caracteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","El cohorte <br/> No debe estar vacío y debe contener entre 2 y 20 caracteres");
+        return false;
+    } else if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/,$("#mal_descripcion"),$("#smal_descripcion"),"La descripción debe contener entre 10 y 100 caracteres") == 0) {
+        muestraMensaje("error",4000,"ERROR!","La descripción <br/> No debe estar vacía y debe contener entre 5 y 100 caracteres");
+        return false;
+    }
+
     return true;
 }
 // funcion para pasar de la lista a el formulario
@@ -185,7 +196,7 @@ function pone(pos, accion) {
     $("#mal_descripcion").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#mal_id, #mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", false);
+    $("#mal_id, #mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", true);
   }
 
 

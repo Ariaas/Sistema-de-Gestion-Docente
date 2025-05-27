@@ -61,27 +61,26 @@
                                     </div>
 
 
-                                    <div class="col-md-4">
-                                        
+                                    <div class="col-md-6">
                                         <label for="certificadonombre">Nombre</label>
                                         <input class="form-control" type="text" id="certificadonombre" name="certificadonombre" placeholder="Nombre del certificado" required>
                                         <span id="scertificadonombre"></span>
                                     </div>
                                     
-                                    <div class="col-md-4">
-                                        <label for="trayecto" >Trayecto</label>
-                                    <select class="form-select" name="trayecto" id="trayecto" >
-                                        <option value="" disabled selected>Seleccione un trayecto</option>
-                                        <?php
-                                        if (!empty($trayectos)) {
-                                            foreach ($trayectos as $trayecto) {
-                                                echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['tra_anio'] . "</option>";
+                                    <div class="col-md-6">
+                                        <label for="trayecto">Trayecto</label>
+                                        <select class="form-select" name="trayecto" id="trayecto">
+                                            <option value="" disabled selected>Seleccione un trayecto</option>
+                                            <?php
+                                            if (!empty($trayectos)) {
+                                                foreach ($trayectos as $trayecto) {
+                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['tra_anio'] . "</option>";
+                                                }
+                                            } else {
+                                                echo "<option value='' disabled>No hay trayectos disponibles</option>";
                                             }
-                                        } else {
-                                            echo "<option value='' disabled>No hay trayectos disponibles</option>";
-                                        }
-                                        ?>
-                                    </select>
+                                            ?>
+                                        </select>
                                     </div>                                    
                                 </div>
                             </div>

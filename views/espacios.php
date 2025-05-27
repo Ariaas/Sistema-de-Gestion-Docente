@@ -50,30 +50,26 @@
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                            <input type="hidden" name="accion" id="accion" value="modificar"> <!-- Ejemplo de acción -->
+                            <input type="hidden" name="accion" id="accion" value="modificar">
 
-                            <div class="mb-4">
-                                <div class="row g-3">
+                            <div class="container">
+                                <div class="row mb-3">
                                     <!-- Campo Código -->
                                     <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio" placeholder="Código" value="ESP001" required>
-                                            <label for="codigoEspacio">Código</label>
-                                        </div>
-                                        <span id="scodigoEspacio" class="form-text">Ejemplo: ESP001</span>
+                                        <label for="codigoEspacio" class="form-label">Código</label>
+                                        <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio" placeholder="Ejemplo: H-12" required>
+                                        <span id="scodigoEspacio" class="form-text"></span>
                                     </div>
 
                                     <!-- Campo Tipo -->
                                     <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <select class="form-select" name="tipoEspacio" id="tipoEspacio" required>
-                                                <option value="" disabled>Seleccione un tipo</option>
-                                                <option value="Aula" selected>Aula</option> <!-- Ejemplo seleccionado -->
-                                                <option value="Laboratorio">Laboratorio</option>
-                                            </select>
-                                            <label for="tipoEspacio">Tipo</label>
-                                        </div>
-                                        <span id="stipoEspacio" class="form-text">Ejemplo: Aula</span>
+                                        <label for="tipoEspacio" class="form-label">Tipo</label>
+                                        <select class="form-select" name="tipoEspacio" id="tipoEspacio" required>
+                                            <option value="" disabled>Seleccione un tipo</option>
+                                            <option value="Aula" selected>Aula</option>
+                                            <option value="Laboratorio">Laboratorio</option>
+                                        </select>
+                                        <span id="stipoEspacio" class="form-text"></span>
                                     </div>
                                 </div>
                             </div>

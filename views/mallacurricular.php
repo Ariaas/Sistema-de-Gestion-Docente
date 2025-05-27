@@ -56,27 +56,29 @@
                             <input type="text" class="form-control" name="accion" id="accion" style="display: none;">
                             <div class="container">
                                 <div class="row mb-3">
-
-                                  
                                     <div class="col-md-4" style="display: none;">
                                         <label for="mal_id"></label>
                                         <input class="form-control" type="text" id="mal_id" name="mal_id" min="1">
                                         <span id="smalla"></span>
                                     </div>
 
-                                    <div class="col-md-4">
-                                        <label for="mal_codigo">Código</label>
-                                        <input class="form-control" type="text" id="mal_codigo" name="mal_codigo" >
-                                        <span id="smalcodigo"></span>
+                                    <!-- Campo Código -->
+                                    <div class="col-md-6">
+                                        <label for="mal_codigo" class="form-label">Código</label>
+                                        <input class="form-control" type="text" id="mal_codigo" name="mal_codigo" placeholder="Ejemplo: 1123" required>
+                                        <span id="smalcodigo" class="form-text"></span>
                                     </div>
 
-
-                                    <div class="col-md-4">
-                                        <label for="mal_nombre">Nombre</label>
-                                        <input class="form-control" type="text" id="mal_nombre" name="mal_nombre" >
-                                        <span id="smalnombre"></span>
+                                    <!-- Campo Nombre -->
+                                    <div class="col-md-6">
+                                        <label for="mal_nombre" class="form-label">Nombre</label>
+                                        <input class="form-control" type="text" id="mal_nombre" name="mal_nombre" placeholder="Ejemplo: Malla 2022" required>
+                                        <span id="smalnombre" class="form-text"></span>
                                     </div>
+                                </div>
 
+                                <div class="row mb-3">
+                                    <!-- Campo Año -->
                                     <div class="col-md-4">
                                         <label for="mal_Anio" class="form-label">Año</label>
                                         <select class="form-select" name="mal_Anio" id="mal_Anio" required>
@@ -89,20 +91,22 @@
                                                 <option value="<?= $year ?>" <?= $selected ?>><?= $year ?></option>
                                             <?php endfor; ?>
                                         </select>
-                                        <span id="smalanio"></span>
+                                        <span id="smalanio" class="form-text"></span>
                                     </div>
 
+                                    <!-- Campo Cohorte -->
                                     <div class="col-md-4">
-                                        <label for="mal_cohorte">Cohorte</label>
-                                        <input class="form-control" type="text" id="mal_cohorte" name="mal_cohorte" >
-                                        <span id="smalcohorte"></span>
+                                        <label for="mal_cohorte" class="form-label">Cohorte</label>
+                                        <input class="form-control" type="text" id="mal_cohorte" name="mal_cohorte" placeholder="Ejemplo: 3" required>
+                                        <span id="smalcohorte" class="form-text"></span>
                                     </div>
 
+                                    <!-- Campo Descripción -->
                                     <div class="col-md-4">
-                                        <label for="mal_descripcion">Descripcion</label>
-                                        <input class="form-control" type="text" id="mal_descripcion" name="mal_descripcion" >
-                                        <span id="smaldescripcion"></span>
-                                    </div>                                  
+                                        <label for="mal_descripcion" class="form-label">Descripción</label>
+                                        <input class="form-control" type="text" id="mal_descripcion" name="mal_descripcion" placeholder="Descripción breve" required>
+                                        <span id="smaldescripcion" class="form-text"></span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="row mt-3 d-flex justify-content-center align-items-md-center">
