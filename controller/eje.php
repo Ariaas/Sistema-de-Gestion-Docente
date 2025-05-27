@@ -9,6 +9,9 @@ if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
 
+        $usu_id = 1;
+        $bitacora = new Bitacora();
+
         $e = new Eje();
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
@@ -16,6 +19,9 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'eliminar') {
             $e->setId($_POST['ejeId']);
             echo  json_encode($e->Eliminar());
+
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'eje');
+
         } elseif ($accion == 'existe') {
             $e->setEje($_POST['ejeNombre']);
             $resultado = $e->Existe($_POST['ejeNombre']);
@@ -25,9 +31,14 @@ if (is_file("views/" . $pagina . ".php")) {
             
             if ($accion == 'registrar') {
                 echo  json_encode($e->Registrar());
+
+                $bitacora->registrarAccion($usu_id, 'registrar', 'eje');
+
             } elseif ($accion == 'modificar') {
                 $e->setId($_POST['ejeId']);
                 echo  json_encode($e->modificar());
+
+                $bitacora->registrarAccion($usu_id, 'modificar', 'eje');
             }
         }
         exit;

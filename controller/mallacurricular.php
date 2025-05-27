@@ -12,6 +12,9 @@ if (is_file("views/" . $pagina . ".php")) {
         $obj4 = new Malla();
         $accion = $_POST['accion'];
 
+        $usu_id = 1;
+        $bitacora = new Bitacora();
+
         if ($accion == 'consultar') {
             echo json_encode($obj4->Consultar());
         
@@ -24,9 +27,8 @@ if (is_file("views/" . $pagina . ".php")) {
             $obj4->setMalDescripcion($_POST['mal_descripcion']);
    
             echo  json_encode($obj4->Registrar());
-            
-        
-        
+
+            $bitacora->registrarAccion($usu_id, 'registrar', 'malla curricular');
         }else if ($accion == 'existe') {
 
              $obj4->setMalCodigo($_POST['mal_codigo']);
@@ -42,11 +44,14 @@ if (is_file("views/" . $pagina . ".php")) {
             $obj4->setMalDescripcion($_POST['mal_descripcion']);// pila con estos setters
 
             echo  json_encode($obj4->Modificar());
+
+            $bitacora->registrarAccion($usu_id, 'modificar', 'malla curricular');
         }elseif ($accion == 'eliminar') {
 
             $obj4->setMalId($_POST['mal_id']);
             echo  json_encode($obj4->Eliminar());
-            }
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'malla curricular');
+        }
         exit;
     }
 

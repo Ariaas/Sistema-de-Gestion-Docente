@@ -9,6 +9,9 @@ if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
 
+        $usu_id = 1;
+        $bitacora = new Bitacora();
+
         $t = new Trayecto();
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
@@ -16,6 +19,9 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'eliminar') {
             $t->setId($_POST['trayectoId']);
             echo  json_encode($t->Eliminar());
+
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'trayecto');
+
         } elseif ($accion == 'existe') {
             $t->setNumero($_POST['trayectoNumero']);
             $t->setAnio($_POST['trayectoAnio']);
@@ -27,9 +33,14 @@ if (is_file("views/" . $pagina . ".php")) {
           
             if ($accion == 'registrar') {
                 echo  json_encode($t->Registrar());
+
+                $bitacora->registrarAccion($usu_id, 'registrar', 'trayecto');
+
             } elseif ($accion == 'modificar') {
                 $t->setId($_POST['trayectoId']);
                 echo  json_encode($t->modificar());
+
+                $bitacora->registrarAccion($usu_id, 'modificar', 'trayecto');
             }
         }
         exit;

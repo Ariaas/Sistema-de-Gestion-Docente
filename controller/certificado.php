@@ -13,6 +13,9 @@ if (is_file("views/" . $pagina . ".php")) {
         $obj2 = new Certificado();
         $accion = $_POST['accion'];
 
+        $usu_id = 1;
+        $bitacora = new Bitacora();
+
         if ($accion == 'consultar') {
             echo json_encode($obj2->Consultar());
         
@@ -21,9 +24,8 @@ if (is_file("views/" . $pagina . ".php")) {
             $obj2->set_nombreCertificado($_POST['certificadonombre']);// pila con estos setters
             $obj2->set_trayecto($_POST['trayecto']);
             echo  json_encode($obj2->Registrar());
-            
-        
-        
+
+            $bitacora->registrarAccion($usu_id, 'registrar', 'certificado');
         }else if ($accion == 'existe') {
 
             $obj2->set_nombreCertificado($_POST['certificadonombre']);// pila con estos setters
@@ -36,11 +38,15 @@ if (is_file("views/" . $pagina . ".php")) {
             $obj2->set_trayecto($_POST['trayecto']);
 
             echo  json_encode($obj2->Modificar());
+
+            $bitacora->registrarAccion($usu_id, 'modificar', 'certificado');
         }elseif ($accion == 'eliminar') {
 
            $obj2->set_certificadoId($_POST['certificadoid']);
             echo  json_encode($obj2->Eliminar());
-            }
+
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'certificado');
+        }
         exit;
     }
     $cer = new Certificado();
