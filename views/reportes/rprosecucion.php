@@ -86,9 +86,7 @@ if (isset($datosProsecucion) && !isset($datosProsecucion['error'])) {
             }
 
            
-            .seccion-promovida {
-                
-            }
+          
 
             .col-trayecto {
                 width: 10%;

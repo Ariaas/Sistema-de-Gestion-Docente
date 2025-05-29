@@ -32,7 +32,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
         <div class="container mt-4">
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 <div class="col">
-                    <a class="a-cards" href="?pagina=docente">
+                    <a class="a-cards" href="?pagina=#">
                         <div class="card h-100 text-center custom-card">
                             <div class="card-body">
                                 <img src="public/assets/icons/user-graduate-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
@@ -52,7 +52,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                     </a>
                 </div>
                 <div class="col">
-                    <a class="a-cards" href="?pagina=seccion">
+                    <a class="a-cards" href="?pagina=raulario">
                         <div class="card h-100 text-center custom-card">
                             <div class="card-body">
                                 <img src="public/assets/icons/book-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Book Icon">

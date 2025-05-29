@@ -88,7 +88,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </div>
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=raulasAsignadas">
+                    <a class="a-cards" href="?pagina=raulaAsignada">
                         <div class="card h-100 text-center custom-card">
                             <div class="card-body">
                                 <img src="public/assets/icons/map-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Calendar Icon">
