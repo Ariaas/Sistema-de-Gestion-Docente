@@ -1,4 +1,5 @@
 <?php
+
 if (!is_file("model/" . $pagina . ".php")) {
     echo "Falta el modelo";
     exit;

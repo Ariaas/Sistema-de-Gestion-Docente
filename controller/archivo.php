@@ -1,4 +1,8 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!is_file("model/" . $pagina . ".php")) {
     echo "Falta definir la clase " . $pagina;
     exit;
@@ -11,6 +15,15 @@ if (is_file("views/" . $pagina . ".php")) {
     if (!empty($_POST)) {
         $archivo = new Archivo();
         $accion = $_POST['accion'] ?? '';
+
+        require_once("model/bitacora.php");
+        $usu_id = isset($_SESSION['usu_id']) ? $_SESSION['usu_id'] : null;
+
+        if ($usu_id === null) {
+            echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado.']);
+            exit;
+        }
+        $bitacora = new Bitacora();
 
         switch ($accion) {
             case 'subir':
@@ -26,6 +39,7 @@ if (is_file("views/" . $pagina . ".php")) {
                         $ucurricular,
                         $fecha
                     ));
+                    $bitacora->registrarAccion($usu_id, 'subió un archivo', 'archivo');
                 }
                 break;
 

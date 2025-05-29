@@ -29,7 +29,11 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
         <div class="d-flex justify-content-center">
             <h1 class="text-center text-primary fw-bold my-4">Sistema de Gestión Docente</h1>
         </div>
-
+        <?php if (isset($_SESSION['name'])): ?>
+            <div class="d-flex justify-content-center">
+                <h3 class="text-center text-secondary my-3">¡Bienvenid@, <?php echo htmlspecialchars($_SESSION['name']); ?>!</h3>
+            </div>
+        <?php endif; ?>
         <div class="container mt-4">
             <div class="row row-cols-1 row-cols-md-3 g-4">
 
@@ -124,21 +128,21 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                     </div>
                 <?php endif; ?>
 
-                    <div class="col">
-                        <a class="a-cards" href="?pagina=config">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/gear-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Gear Icon">
-                                    <h5 class="card-title">Administrar Configuración</h5>
-                                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=config">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/gear-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Gear Icon">
+                                <h5 class="card-title">Administrar Configuración</h5>
                             </div>
-                        </a>
-                    </div>
+                        </div>
+                    </a>
+                </div>
 
                 <?php if (
                     !empty($permisos['Bitacora']) ||
                     !empty($permisos['Usuarios']) ||
-                    !empty($permisos['Respaldo']) 
+                    !empty($permisos['Respaldo'])
                 ): ?>
                     <div class="col">
                         <a class="a-cards" href="?pagina=mantenimiento">
