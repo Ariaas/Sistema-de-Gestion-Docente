@@ -71,7 +71,6 @@ Class Titulo extends Connection{
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // 6. Cerrar la conexión
             $co = null;
         
         } else {
@@ -180,10 +179,9 @@ Class Titulo extends Connection{
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }
 }
 
-?> 
+?>

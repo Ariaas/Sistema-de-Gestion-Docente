@@ -127,7 +127,14 @@ $(document).ready(function () {
       "El formato sólo permite un correo válido!"
     );
   });
-
+$("input[name='titulos[]']").change(function() {
+    var titulosSeleccionados = $("input[name='titulos[]']:checked").length;
+    if (titulosSeleccionados === 0) {
+      $("#stitulos").text("Debe seleccionar al menos un título").addClass("text-danger");
+    } else {
+      $("#stitulos").text("").removeClass("text-danger");
+    }
+  });
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
@@ -204,6 +211,7 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+  
   var categoriaSeleccionada = $("#categoria").val();
 
   if (categoriaSeleccionada === null || categoriaSeleccionada === "0") {
@@ -251,6 +259,18 @@ function validarenvio() {
     
     return false;
   }
+ 
+  var titulosSeleccionados = $("input[name='titulos[]']:checked").length;
+  if (titulosSeleccionados === 0) {
+    muestraMensaje(
+      "error",
+      4000,
+      "ERROR!",
+      "Por favor, seleccione al menos un título!"
+    );
+    $("#stitulos").text("Debe seleccionar al menos un título").addClass("text-danger");
+    return false;
+  } 
    else if (
     validarkeyup(
       /^[0-9]{7,8}$/,
@@ -320,44 +340,53 @@ function pone(pos, accion) {
   linea = $(pos).closest("tr");
 
   if (accion == 0) {
-      // Para modificar: Habilitar los campos y permitir edición
+    
       $("#proceso").text("MODIFICAR");
       $("#prefijoCedula").prop('disabled', true);
       $("#cedulaDocente").prop('disabled', true);
-      $("#nombreDocente, #apellidoDocente, #correoDocente, #categoria, #dedicacion, #condicion").prop('disabled', false);
+      $("#nombreDocente, #apellidoDocente, #correoDocente, #categoria, #dedicacion, #condicion, input[name='titulos[]']").prop('disabled', false);
   } else {
-      // Para eliminar: Desactivar los campos para evitar edición
+      
       $("#proceso").text("ELIMINAR");
-      $("#cedulaDocente, #prefijoCedula, #nombreDocente, #apellidoDocente, #correoDocente, #categoria, #dedicacion, #condicion").prop('disabled', true);
+      $("#cedulaDocente, #prefijoCedula, #nombreDocente, #apellidoDocente, #correoDocente, #categoria, #dedicacion, #condicion, input[name='titulos[]']").prop('disabled', true);
   }
 
-  // Cargar los datos de la fila seleccionada
+  
   $("#prefijoCedula").val($(linea).find("td:eq(0)").text());
   $("#cedulaDocente").val($(linea).find("td:eq(1)").text());
   $("#nombreDocente").val($(linea).find("td:eq(2)").text());
   $("#apellidoDocente").val($(linea).find("td:eq(3)").text());
   $("#correoDocente").val($(linea).find("td:eq(4)").text());
   
-  // Cargar categoría (columna 5)
+ 
   var nombrecategoria = $(linea).find("td:eq(5)").text();
   $('#categoria option').filter(function() {
       return $(this).text() == nombrecategoria;
   }).prop('selected', true).change();
   
-  var nombretitulo = $(linea).find("td:eq(6)").text();
-  $('#titulo option').filter(function() {
-      return $(this).text() == nombretitulo;
-  }).prop('selected', true).change();
+  
+  var titulosIds = $(linea).attr('data-titulos-ids');
+  
 
-  // Cargar dedicación (columna 6)
-   
+  $("input[name='titulos[]']").prop('checked', false);
+  
+ 
+  if (titulosIds) {
+      var idsArray = titulosIds.split(',');
+      idsArray.forEach(function(tit_id) {
+          if (tit_id) { 
+              $("#titulo_" + tit_id).prop('checked', true);
+          }
+      });
+  }
+
+ 
   var dedicacion = $(linea).find("td:eq(7)").text();
   $('#dedicacion option').filter(function() {
       return $(this).text() == dedicacion;
   }).prop('selected', true).change();
   
-  
-  // Cargar condición (columna 7)
+ 
   var condicion = $(linea).find("td:eq(8)").text().trim();
   $("#condicion").val(condicion);
   
@@ -382,32 +411,34 @@ function enviaAjax(datos) {
     timeout: 10000,
     success: function (respuesta) {
       try {
-       console.log(respuesta)
-        var lee = JSON.parse(respuesta);
-        if (lee.resultado == "consultar") {
-          destruyeDT();
-          $("#resultadoconsulta").empty();
-          $.each(lee.mensaje, function (index, item) {
-            $("#resultadoconsulta").append(`
-              <tr>
-                <td>${item.doc_prefijo}</td>
-                <td>${item.doc_cedula}</td>
-                <td>${item.doc_nombre}</td>
-                <td>${item.doc_apellido}</td>
-                <td>${item.doc_correo}</td>
-                <td>${item.cat_nombre}</td>
-                 <td>${item.tit_nombre}</td>
-                <td>${item.doc_dedicacion}</td>
-                <td>${item.doc_condicion}</td>
-                <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
-                </td>
-              </tr>
-            `);
-          });
-          crearDT();
-        }    else if (lee.resultado == "registrar") {
+     
+          var lee = JSON.parse(respuesta);
+             if (lee.resultado == "consultar") {
+                    destruyeDT();
+                    $("#resultadoconsulta").empty();
+                    
+                    $.each(lee.mensaje, function(index, item) {
+                        $("#resultadoconsulta").append(`
+                            <tr data-titulos-ids="${item.titulos_ids || ''}">
+                                <td>${item.doc_prefijo}</td>
+                                <td>${item.doc_cedula}</td>
+                                <td>${item.doc_nombre}</td>
+                                <td>${item.doc_apellido}</td>
+                                <td>${item.doc_correo}</td>
+                                <td>${item.cat_nombre}</td>
+                                <td>${item.titulos || 'Sin títulos'}</td>
+                                <td>${item.doc_dedicacion}</td>
+                                <td>${item.doc_condicion}</td>
+                                <td>
+                                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
+                                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    
+                    crearDT();
+                } else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
@@ -429,7 +460,7 @@ function enviaAjax(datos) {
             Listar();
           }
         } else if (lee.resultado == "Existe") {
-             //console.log(respuesta)
+             
           if (lee.mensaje == 'La cédula del docente ya existe!') 
             muestraMensaje('info', 4000, 'Atención', lee.mensaje);
           
@@ -458,8 +489,12 @@ function limpia() {
   $("#apellidoDocente").val("");
   $("#correoDocente").val("");
   $("#dedicacion").val("");
-   $("#condicion").val("");
+  $("#condicion").val("");
   $("#categoria").val("");
-    $("#titulo").val("");
-  $("#cedulaDocente, #prefijoCedula, #nombreDocente, #apellidoDocente, #correoDocente, #categoria, #titulo, #condicion, #dedicacion").prop('disabled', false);
+ 
+  $("input[name='titulos[]']").prop('checked', false);
+ 
+  $("#stitulos").text("").removeClass("text-danger");
+
+  $("#cedulaDocente, #prefijoCedula, #nombreDocente, #apellidoDocente, #correoDocente, #categoria, input[name='titulos[]'], #condicion, #dedicacion").prop('disabled', false);
 }

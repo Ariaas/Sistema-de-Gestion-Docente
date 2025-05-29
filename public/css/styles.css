@@ -514,3 +514,14 @@ footer {
     width: 100% !important;
     table-layout: auto !important;
 }
+.horario-detalle {
+    display: none;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+        }
+      
+.form-group-horario-individual {
+    display: none;
+        }

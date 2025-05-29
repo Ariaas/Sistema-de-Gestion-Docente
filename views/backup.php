@@ -13,7 +13,6 @@ if (!isset($_SESSION['name'])) {
     <title>Gestionar Mantenimiento del Sistema</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* Estilos básicos para los elementos si no usas cards */
         .mantenimiento-container {
             max-width: 600px;
             margin: 50px auto;
@@ -23,7 +22,6 @@ if (!isset($_SESSION['name'])) {
             background-color: #f9f9f9;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             text-align: center;
-            /* Centrar el contenido */
         }
 
         .mantenimiento-section {
@@ -32,7 +30,6 @@ if (!isset($_SESSION['name'])) {
 
         .mantenimiento-section h3 {
             color: #007bff;
-            /* Color primario de Bootstrap */
             margin-bottom: 15px;
         }
 
@@ -49,7 +46,6 @@ if (!isset($_SESSION['name'])) {
             border: 1px solid #ced4da;
             border-radius: 4px;
             box-sizing: border-box;
-            /* Asegura que el padding no aumente el ancho */
             margin-bottom: 15px;
         }
 
@@ -60,7 +56,6 @@ if (!isset($_SESSION['name'])) {
             cursor: pointer;
             font-size: 16px;
             margin: 5px;
-            /* Espacio entre botones */
         }
 
         .btn-success {

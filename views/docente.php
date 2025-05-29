@@ -33,7 +33,7 @@ if (!isset($_SESSION['name'])) {
                                 <th>Apellido</th>
                                 <th>Correo</th>
                                 <th>Categoría</th>
-                                <th>Titulo</th>
+                                <th>Títulos</th>
                                 <th>Dedicación</th>
                                 <th>Condición</th>
                                 <th>Acciones</th>
@@ -61,7 +61,6 @@ if (!isset($_SESSION['name'])) {
                                     <div class="col-md-2">
                                         <label for="prefijoCedula" class="form-label">Prefijo</label>
                                         <select class="form-select" name="prefijoCedula" id="prefijoCedula" required>
-                                            <option value="" disabled selected>Seleccione</option>
                                             <option value="V">V</option>
                                             <option value="E">E</option>
                                         </select>
@@ -114,24 +113,13 @@ if (!isset($_SESSION['name'])) {
                                         </select>
                                         <span id="scategoria" class="error"></span>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="titulo" class="form-label">Titulo</label>
-                                        <select class="form-select" name="titulo" id="titulo" required>
-                                            <option value="" disabled selected>Seleccione una Titulo</option>
-                                            <?php
-                                            foreach ($titulos as $titulo) {
-                                                echo "<option value='" . $titulo['tit_id'] . "'>" . $titulo['tit_nombre'] . "</option>";
-                                            }
-                                            ?>
-                                        </select>
-                                        <span id="scategoria" class="error"></span>
-                                    </div>
-                                    <div class="col-md-4">
+                                     <div class="col-md-4">
                                         <label for="dedicacion" class="form-label">Dedicación</label>
                                         <select class="form-select" name="dedicacion" id="dedicacion" required>
                                             <option value="" disabled selected>Seleccione una dedicación</option>
                                             <option value="exclusiva">Exclusiva</option>
                                             <option value="Medio tiempo">Medio tiempo</option>
+                                             <option value="Tiempo completo">Tiempo completo</option>
                                         </select>
                                         <span id="sdedicacion"></span>
                                     </div>
@@ -140,10 +128,27 @@ if (!isset($_SESSION['name'])) {
                                         <select class="form-select" name="condicion" id="condicion" required>
                                             <option value="" disabled selected>Seleccione una condición</option>
                                             <option value="Ordinario">Ordinario</option>
-                                            <option value="Desordinario">Desordinario</option>
+                                            <option value="contratado">contratado</option>
                                         </select>
                                         <span id="scondicion"></span>
                                     </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Títulos <span class="text-danger">*</span></label>
+                                    <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                        <?php foreach ($titulos as $titulo): ?>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="titulos[]" 
+                                                id="titulo_<?= $titulo['tit_id'] ?>" value="<?= $titulo['tit_id'] ?>">
+                                            <label class="form-check-label" for="titulo_<?= $titulo['tit_id'] ?>">
+                                                <?= $titulo['tit_nombre'] ?>
+                                            </label>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <span id="stitulos" class="text-danger"></span>
+                                </div>
+                                    
+                                  
                                 </div>
                             </div>
 

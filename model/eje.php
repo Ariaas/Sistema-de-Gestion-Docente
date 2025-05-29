@@ -8,7 +8,6 @@ class Eje extends Connection
     private $ejeId;
 
 
-    //Construct
     public function __construct($ejeNombre = null, $ejeId = null)
     {
         parent::__construct();
@@ -17,7 +16,6 @@ class Eje extends Connection
         $this->ejeId = $ejeId;
     }
 
-    //Getters 
     public function getEje()
     {
         return $this->ejeNombre;
@@ -26,7 +24,6 @@ class Eje extends Connection
     {
         return $this->ejeId;
     }
-    //Setters
     public function setEje($ejeNombre)
     {
         $this->ejeNombre = $ejeNombre;
@@ -35,10 +32,6 @@ class Eje extends Connection
     {
         $this->ejeId = $ejeId;
     }
-
-    //Methods
-
-    /// Registrar
 
     function Registrar()
     {
@@ -71,7 +64,6 @@ class Eje extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // 6. Cerrar la conexión
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
@@ -80,8 +72,6 @@ class Eje extends Connection
 
         return $r;
     }
-
-    /// Actualizar
 
     function Modificar()
     {
@@ -117,8 +107,6 @@ class Eje extends Connection
         return $r;
     }
 
-    /// Eliminar
-
     function Eliminar()
     {
         $co = $this->Con();
@@ -147,8 +135,6 @@ class Eje extends Connection
         return $r;
     }
 
-    /// Listar
-
     public function Listar()
     {
         $co = $this->Con();
@@ -166,8 +152,6 @@ class Eje extends Connection
         $co = null;
         return $r;
     }
-
-    /// Consultar exitencia
 
     public function ExisteId($ejeId)
     {
@@ -187,7 +171,6 @@ class Eje extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }
@@ -210,7 +193,6 @@ class Eje extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }

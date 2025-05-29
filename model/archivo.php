@@ -20,12 +20,10 @@ class Archivo extends Connection
             mkdir($carpetaDestino, 0777, true);
         }
 
-        // Sanitizar nombres
-        $docente = preg_replace('/[^a-zA-Z0-9\s]/', '', $docente); // Permite espacios
+        $docente = preg_replace('/[^a-zA-Z0-9\s]/', '', $docente);
         $ucurricular = preg_replace('/[^a-zA-Z0-9\s]/', '', $ucurricular); 
         $fecha = $fecha ?: date('Y-m-d');
 
-        // Crear nombre personalizado
         $docente = str_replace(' ', '_', $docente);
         $ucurricular = str_replace(' ', '_', $ucurricular);
 
@@ -47,8 +45,6 @@ class Archivo extends Connection
         }
     }
 
-
-
     public function listarArchivosLocales()
     {
         $archivos = [];
@@ -65,7 +61,6 @@ class Archivo extends Connection
         return $archivos;
     }
 
-    // Método para eliminar archivo (local)
     public function eliminarArchivo($nombreArchivo)
     {
         $ruta = $this->uploadDir . $nombreArchivo;
@@ -81,8 +76,6 @@ class Archivo extends Connection
         }
     }
 
-
-
     public function obtenerdocente()
     {
         $co = $this->Con();
@@ -93,8 +86,6 @@ class Archivo extends Connection
         return $r;
     }
 
-    
-
     public function obtenerunidadcurricular()
     {
         $co = $this->Con();
@@ -104,6 +95,4 @@ class Archivo extends Connection
         $r = $p->fetchAll(PDO::FETCH_ASSOC);
         return $r;
     }
-
-    
 }

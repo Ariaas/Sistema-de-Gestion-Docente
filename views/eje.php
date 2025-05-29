@@ -37,7 +37,6 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </section>
-        <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -69,16 +68,12 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-        <!-- Fin del Modal -->
     </main>
-    <!-- Footer -->
     <?php
     require_once("public/components/footer.php");
     ?>
-    <!-- Scripts -->
     <script type="text/javascript" src="public/js/eje.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
 </body>
 
 </html>

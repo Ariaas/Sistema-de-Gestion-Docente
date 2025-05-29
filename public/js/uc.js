@@ -85,18 +85,6 @@ function Listar() {
     }
   }
   
-//   function validarExiste() {
-//     const codigo = $("#codigoSeccion").val();
-//     const trayecto = $("#trayectoSeccion").val();
-//     if (codigo && trayecto) {
-//       var datos = new FormData();
-//       datos.append('accion', 'existe');
-//       datos.append('codigoSeccion', codigo);
-//       datos.append('trayectoSeccion', trayecto);
-//       enviaAjax(datos);
-//     }
-//   }
-  
   $(document).ready(function () {
     Listar();
     Cambiar();
@@ -109,23 +97,7 @@ function Listar() {
 
     destruyeDT("#tabladocente");
     crearDT("#tabladocente");
-  
-    //////////////////////////////VALIDACIONES/////////////////////////////////////
-    
-    // $("#codigoSeccion").on("keypress", function(e){
-    //   validarkeypress(/^[0-9][0-9]*$/, e);
-    // });
-    
-    // $("#codigoSeccion").on("keyup", function () {
-    //   validarkeyup(/^[0-9][0-9]{3}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener 4 dígitos");
-    //   validarExiste();
-    // });
-    
-    // $("#trayectoSeccion").on("keyup change", function () {
-    //   validarExiste();
-    // });
-  
-    //////////////////////////////BOTONES/////////////////////////////////////
+
     
     $(document).on("click", ".asignar-uc", function () {
       $("#modal2").modal("show");
@@ -203,54 +175,84 @@ function Listar() {
     $("#registrar").on("click", function () {
       limpia();
       $("#proceso").text("REGISTRAR");
+      $("#idUC, #codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC").prop("disabled", false);
       $("#modal1").modal("show");
     });
-  
+        $(
+        "#idUC, #codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC"
+      ).prop("disabled", false);
     
   });
   
-  //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
   
   function validarenvio() {
-  
-    // var trayectoSeleccionado = $("#trayectoSeccion").val();
-  
-    //   if (trayectoSeleccionado === null || trayectoSeleccionado === "0") {
-    //       muestraMensaje(
-    //           "error",
-    //           4000,
-    //           "ERROR!",
-    //           "Por favor, seleccione un trayecto! <br/> Recuerde que debe tener alguno registrado!"
-    //       );
-    //       return false;
-    //   }
+    if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "El código de la unidad curricular es obligatorio.");
+      $("#codigoUC").focus();
+      return false;
+    }
+    if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "El nombre de la unidad curricular es obligatorio.");
+      $("#nombreUC").focus();
+      return false;
+    }
+    if ($("#creditosUC").val() == "" || $("#creditosUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Las unidades de crédito son obligatorias.");
+      $("#creditosUC").focus();
+      return false;
+    }
+    if ($("#independienteUC").val() == "" || $("#independienteUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Las horas independientes son obligatorias.");
+      $("#independienteUC").focus();
+      return false;
+    }
+    if ($("#asistidaUC").val() == "" || $("#asistidaUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Las horas asistidas son obligatorias.");
+      $("#asistidaUC").focus();
+      return false;
+    }
+    if ($("#academicaUC").val() == "" || $("#academicaUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Las horas académicas son obligatorias.");
+      $("#academicaUC").focus();
+      return false;
+    }
+    if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
+      $("#trayectoUC").focus();
+      return false;
+    }
+    if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un eje.");
+      $("#ejeUC").focus();
+      return false;
+    }
+    if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un área.");
+      $("#areaUC").focus();
+      return false;
+    }
+    if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un periodo.");
+      $("#periodoUC").focus();
+      return false;
+    }
+    if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
+      muestraMensaje("error", 4000, "Atención!", "Debe seleccionar si es electiva o no.");
+      $("#electivaUC").focus();
+      return false;
+    }
     return true;
   }
   
-  // funcion para pasar de la lista a el formulario
   function pone(pos, accion) {
     linea = $(pos).closest("tr");
   
     if (accion == 0) {
       $("#proceso").text("MODIFICAR");
-      $("#idUC").prop("disabled", false);
-      $("#codigoUC").prop("disabled", false);
-      $("#nombreUC").prop("disabled", false);
-      $("#independicenteUC").prop("disabled", false);
-      $("#asistidaUC").prop("disabled", false);
-      $("#trayectoUC").prop("disabled", false);
-      $("#ejeUC").prop("disabled", false);
-      $("#areaUC").prop("disabled", false);
-      $("#creditosUC").prop("disabled", false);
-      $("#periodoUC").prop("disabled", false);
-      $("#electivaUC").prop("disabled", false);
-      $("#academicaUC").prop("disabled", false);
-  
+      $("#idUC, #codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC").prop("disabled", false);
     } else {
       $("#proceso").text("ELIMINAR");
-      $(
-        "#idUC, #codigoUC, #nombreUC, #independicenteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC"
-      ).prop("disabled", false);
+      $("#idUC, #codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC").prop("disabled", true);
     }
     
     $("#idUC").val($(linea).find("td:eq(0)").text());
@@ -281,7 +283,7 @@ function Listar() {
     $("#modal1").modal("show");
   }
   
-  //funcion que envia y recibe datos por AJAX
+
   function enviaAjax(datos) {
     $.ajax({
       async: true,
@@ -292,7 +294,7 @@ function Listar() {
       processData: false,
       cache: false,
       beforeSend: function () {},
-      timeout: 10000, //tiempo maximo de espera por la respuesta del servidor
+      timeout: 10000, 
       success: function (respuesta) {
         try {
           var lee = JSON.parse(respuesta);
@@ -443,11 +445,21 @@ function Listar() {
   }
   
   function limpia() {
-    $("#seccionId").val("");
-    $("#codigoSeccion").val("");
-    $("#cantidadSeccion").val("");
-    $("#trayectoSeccion").val("");
+    // Limpia los campos del formulario
+    $("#idUC").val("");
+    $("#codigoUC").val("");
+    $("#nombreUC").val("");
+    $("#creditosUC").val("");
+    $("#independienteUC").val("");
+    $("#asistidaUC").val("");
+    $("#academicaUC").val("");
+    $("#trayectoUC").val(""); 
+    $("#ejeUC").val("");      
+    $("#areaUC").val("");     
+    $("#periodoUC").val("");  
+    $("#electivaUC").val(""); 
   }
+
 
 let carritoDocentes = [];
 let ucSeleccionada = null;
@@ -473,12 +485,20 @@ $(document).on("click", "#agregarDocente", function () {
     const docenteNombre = select.options[select.selectedIndex]?.text;
 
     if (!docenteId) {
-        alert("Seleccione un docente válido.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'Seleccione un docente válido.'
+        });
         return;
     }
 
     if (carritoDocentes.some(doc => doc.id === docenteId)) {
-        alert("Este docente ya está seleccionado.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'Este docente ya está seleccionado.'
+        });
         return;
     }
 
@@ -503,11 +523,19 @@ $(document).on("click", ".asignar-uc", function () {
 
 $(document).on("click", "#asignarDocentes", function () {
     if (carritoDocentes.length === 0) {
-        alert("Seleccione al menos un docente!");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'Seleccione al menos un docente!'
+        });
         return;
     }
     if (!ucSeleccionada) {
-        alert("No se ha seleccionado una unidad curricular.");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'No se ha seleccionado una unidad curricular.'
+        });
         return;
     }
 
@@ -515,8 +543,12 @@ $(document).on("click", "#asignarDocentes", function () {
     datos.append("accion", "asignar");
     datos.append("docentes", JSON.stringify(carritoDocentes.map(d => d.id)));
     datos.append("ucs", JSON.stringify([ucSeleccionada]));
-    
     enviaAjax(datos);
+    // Limpiar select y lista de docentes después de asignar
+    $("#docenteUC").val("");
+    $("#carritoDocentes").empty();
+    carritoDocentes = [];
+    actualizarCarritoDocentes();
 });
 
 $(document).on("click", ".ver-docentes", function () {
@@ -555,4 +587,3 @@ $(document).on("click", ".quitar-docente-uc", function () {
       }
   });
 });
-

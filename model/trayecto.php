@@ -48,8 +48,6 @@ class Trayecto extends Connection
 
     //Methods
 
-    /// Registrar
-
     function Registrar()
     {
         $r = array();
@@ -83,7 +81,6 @@ class Trayecto extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // 6. Cerrar la conexión
             $co = null;
         } else {
             $r['resultado'] = 'registrar';

@@ -35,8 +35,12 @@ if (is_file("views/" . $pagina . ".php")) {
 
         } elseif ($accion == 'Existe') {
             $resultado = $p->Existe($_POST['cedulaDocente']);
-            echo json_encode($resultado);
-        } else {
+            echo json_encode(['existe' => $resultado]);
+        }  elseif ($accion == 'obtenerTitulosDocente') {
+    $p->setCedula($_POST['cedulaDocente']);
+    $titulos = $p->obtenerTitulosDocente($p->obtenerIdPorCedula($_POST['cedulaDocente']));
+    echo json_encode(['resultado' => 'success', 'titulos' => $titulos]);
+            } else {
             $p->setCategoriaId($_POST['categoria']);
             $p->setPrefijo($_POST['prefijoCedula']);
             $p->setCedula($_POST['cedulaDocente']);
@@ -45,6 +49,12 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setCorreo($_POST['correoDocente']);
             $p->setDedicacion($_POST['dedicacion']);
             $p->setCondicion($_POST['condicion']);
+            
+            if (isset($_POST['titulos']) && is_array($_POST['titulos'])) {
+                $p->setTitulos($_POST['titulos']);
+            } else {
+                $p->setTitulos(array());
+            }
             
             if ($accion == 'incluir') {
                 echo json_encode($p->Registrar());
@@ -58,10 +68,9 @@ if (is_file("views/" . $pagina . ".php")) {
         exit;
     }
 
-
     $p = new Docente();
     $categorias = $p->listacategoria();
-     $titulos = $p->listatitulo();
+    $titulos = $p->listatitulo();
 
     require_once("views/" . $pagina . ".php");
 } else {

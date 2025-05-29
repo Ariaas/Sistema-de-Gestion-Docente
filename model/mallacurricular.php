@@ -22,7 +22,6 @@ class Malla extends Connection {
         $this->mal_estado = $mal_estado;
     }
 
-    // Getters y Setters (sin cambios)
     public function getMalId() { return $this->mal_id; }
     public function getMalCodigo() { return $this->mal_codigo; }
     public function getMalNombre() { return $this->mal_nombre; }
@@ -321,7 +320,6 @@ class Malla extends Connection {
         return $r;
     }
 
-    // --- Nuevos Métodos para Listar Asignaciones ---
     public function ListarAsignacionesUC() {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

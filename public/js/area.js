@@ -182,9 +182,9 @@ function pone(pos, accion) {
     $("#areaId, #areaNombre").prop("disabled", true);
   }
 
-  // Corregir aquí - el ID está en la primera columna (oculta)
+ 
   $("#areaId").val($(linea).find("td:eq(0)").text());
-  // El nombre está en la segunda columna (visible)
+  
   $("#areaNombre").val($(linea).find("td:eq(1)").text());
 
   $("#sareaNombre").hide();

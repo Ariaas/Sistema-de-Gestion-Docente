@@ -22,7 +22,6 @@ if (!isset($_SESSION['name'])) {
 
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar</button>
-                <button class="btn btn-success px-4" id="unir">Unir</button>
             </div>
 
             <div class="w-100 text-center mb-3" style="max-width: 1100px;">
@@ -74,12 +73,11 @@ if (!isset($_SESSION['name'])) {
 
         </section>
 
-        <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Formulario de Sección</h5>
+                        <h5 class="modal-title">Formulario de Unidad Curricular</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -93,34 +91,34 @@ if (!isset($_SESSION['name'])) {
                                     </div>
                                     <div class="col-md-4">
                                         <label for="codigoUC" class="form-label">Código</label>
-                                        <input class="form-control" type="text" id="codigoUC" name="codigoUC" required>
+                                        <input class="form-control" type="text" id="codigoUC" name="codigoUC" required placeholder="Ej: MAT101">
                                         <span id="scodigoUC"></span>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="nombreUC" class="form-label">Nombre</label>
-                                        <input class="form-control" type="text" id="nombreUC" name="nombreUC" required>
+                                        <input class="form-control" type="text" id="nombreUC" name="nombreUC" required placeholder="Ej: Matemáticas Básicas">
                                         <span id="snombreUC"></span>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="creditosUC" class="form-label">Unidades de Crédito</label>
-                                        <input class="form-control" type="number" id="creditosUC" name="creditosUC" required>
+                                        <input class="form-control" type="number" id="creditosUC" name="creditosUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 4">
                                         <span id="screditosUC"></span>
                                     </div>
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label for="independienteUC" class="form-label">Horas Independientes</label>
-                                        <input class="form-control" type="text" id="independienteUC" name="independienteUC" required>
+                                        <input class="form-control" type="number" id="independienteUC" name="independienteUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 32">
                                         <span id="sindependienteUC"></span>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="asistidaUC" class="form-label">Horas Asistidas</label>
-                                        <input class="form-control" type="text" id="asistidaUC" name="asistidaUC" required>
+                                        <input class="form-control" type="number" id="asistidaUC" name="asistidaUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 48">
                                         <span id="sasistidaUC"></span>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="academicaUC" class="form-label">Horas Académicas</label>
-                                        <input class="form-control" type="number" id="academicaUC" name="academicaUC" required>
+                                        <input class="form-control" type="number" id="academicaUC" name="academicaUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 80">
                                         <span id="sacademicaUC"></span>
                                     </div>
                                 </div>
@@ -209,7 +207,6 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-        <!-- Fin del Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal2">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -251,7 +248,7 @@ if (!isset($_SESSION['name'])) {
                                     </div>
                                 </div>
                                 <div class="modal-footer justify-content-center">
-                                    <button type="button" class="btn btn-primary me-2" id="asignarDocentes">Asignar</button>
+                                    <button type="button" class="btn btn-primary me-2" id="asignarDocentes">ASIGNAR</button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                                 </div>
                             </div>
@@ -289,15 +286,10 @@ if (!isset($_SESSION['name'])) {
             </div>
         </div>
 
-        <!-- Modal Ver Docentes -->
-
     </main>
-    <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>
-    <!-- Scripts -->
     <script type="text/javascript" src="public/js/uc.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
 
 </body>
 

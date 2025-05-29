@@ -17,7 +17,6 @@ class UC extends Connection
     private $periodoUC;
     private $electivaUC;
 
-    //Construct
     public function __construct($idUC = null, $codigoUC = null, $independienteUC = null, $creditosUC = null, $nombreUC = null, $asistidaUC = null, $academicaUC = null, $trayectoUC = null, $ejeUC = null, $areaUC = null, $periodoUC = null, $electivaUC = null)
     {
         parent::__construct();
@@ -36,7 +35,6 @@ class UC extends Connection
         $this->electivaUC = $electivaUC;
     }
 
-    // Getters
     public function getidUC()
     {
         return $this->idUC;
@@ -96,8 +94,6 @@ class UC extends Connection
     {
         return $this->electivaUC;
     }
-
-    // Setters
 
     public function setidUC($idUC)
     {
@@ -159,10 +155,6 @@ class UC extends Connection
         $this->electivaUC = $electivaUC;
     }
 
-    //Methods
-
-    /// Registrar
-
     function Registrar()
     {
         $r = array();
@@ -220,7 +212,6 @@ class UC extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // Cerrar la conexión
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
@@ -229,8 +220,6 @@ class UC extends Connection
 
         return $r;
     }
-
-    /// Actualizar
 
     function Modificar()
     {
@@ -281,8 +270,6 @@ class UC extends Connection
         return $r;
     }
 
-    /// Eliminar
-
     function Eliminar()
     {
         $co = $this->Con();
@@ -308,8 +295,6 @@ class UC extends Connection
         }
         return $r;
     }
-
-    // /// Listar
 
     public function Listar()
     {
@@ -376,8 +361,6 @@ class UC extends Connection
         return $r;
     }
 
-    /// Consultar exitencia
-
     public function Existe($codigoUC)
     {
         $co = $this->Con();
@@ -396,7 +379,6 @@ class UC extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }
@@ -419,12 +401,9 @@ class UC extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }
-
-    /// Obtener selects 
 
     function obtenerTrayecto()
     {
@@ -485,8 +464,6 @@ class UC extends Connection
         $co = null;
         return $r;
     }
-
-    // Asignar
 
     function Asignar($docentes, $ucs)
     {

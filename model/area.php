@@ -13,7 +13,6 @@ class Area extends Connection
         $this->areaId = $areaId;
     }
 
-    // Getters
     public function getArea()
     {
         return $this->areaNombre;
@@ -23,7 +22,6 @@ class Area extends Connection
         return $this->areaId;
     }
 
-    // Setters
     public function setArea($areaNombre)
     {
         $this->areaNombre = $areaNombre;
@@ -33,7 +31,6 @@ class Area extends Connection
         $this->areaId = $areaId;
     }
 
-    // Methods
     function Registrar()
     {
         $r = array();

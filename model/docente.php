@@ -12,15 +12,16 @@ class Docente extends Connection
     private $doc_correo;
     private $doc_dedicacion;
     private $doc_condicion;
+    private $titulos = array();
 
-    // Constructor modificado para igualar estructura
     public function __construct(
         $doc_cedula = null, 
         $doc_nombre = null, 
         $doc_apellido = null, 
         $doc_correo = null, 
         $doc_prefijo = null, 
-        $cat_id = null
+        $cat_id = null,
+        $titulos = array()
     ) {
         parent::__construct();
         
@@ -30,6 +31,7 @@ class Docente extends Connection
         $this->doc_correo = $doc_correo;
         $this->doc_prefijo = $doc_prefijo;
         $this->cat_id = $cat_id;
+        $this->titulos = $titulos;
     }
 
     //////////////////////////GETTERS//////////////////////////
@@ -69,6 +71,10 @@ class Docente extends Connection
         return $this->doc_condicion;
     }
 
+    public function getTitulos() {
+        return $this->titulos;
+    }
+
     //////////////////////////SETTERS//////////////////////////
     public function setDocId($doc_id) {
         $this->doc_id = $doc_id;
@@ -106,9 +112,12 @@ class Docente extends Connection
         $this->doc_condicion = $doc_condicion;
     }
 
+    public function setTitulos($titulos) {
+        $this->titulos = $titulos;
+    }
+
     //////////////////////////METODOS//////////////////////////
 
-    // Registrar (equivalente a incluir)
     public function Registrar()
     {
         $r = array();
@@ -118,42 +127,60 @@ class Docente extends Connection
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             
             try {
-            $stmt = $co->prepare("INSERT INTO tbl_docente(
-                cat_id,
-                doc_prefijo,
-                doc_cedula,
-                doc_nombre,
-                doc_apellido,
-                doc_correo,
-                doc_dedicacion,
-                doc_condicion,
-                doc_estado
-            ) VALUES (
-                :cat_id,
-                :doc_prefijo,
-                :doc_cedula,
-                :doc_nombre,
-                :doc_apellido,
-                :doc_correo,
-                :doc_dedicacion,
-                :doc_condicion,
-                1  -- Estado activo por defecto
-            )");
-            
-            // Solo una ejecución con todos los parámetros
-            $stmt->execute([
-                ':cat_id' => $this->cat_id,
-                ':doc_prefijo' => $this->doc_prefijo,
-                ':doc_cedula' => $this->doc_cedula,
-                ':doc_nombre' => $this->doc_nombre,
-                ':doc_apellido' => $this->doc_apellido,
-                ':doc_correo' => $this->doc_correo,
-                ':doc_dedicacion' => $this->doc_dedicacion,
-                ':doc_condicion' => $this->doc_condicion
-            ]);
+                $co->beginTransaction();
+                
+                $stmt = $co->prepare("INSERT INTO tbl_docente(
+                    cat_id,
+                    doc_prefijo,
+                    doc_cedula,
+                    doc_nombre,
+                    doc_apellido,
+                    doc_correo,
+                    doc_dedicacion,
+                    doc_condicion,
+                    doc_estado
+                ) VALUES (
+                    :cat_id,
+                    :doc_prefijo,
+                    :doc_cedula,
+                    :doc_nombre,
+                    :doc_apellido,
+                    :doc_correo,
+                    :doc_dedicacion,
+                    :doc_condicion,
+                    1
+                )");
+                
+                $stmt->execute([
+                    ':cat_id' => $this->cat_id,
+                    ':doc_prefijo' => $this->doc_prefijo,
+                    ':doc_cedula' => $this->doc_cedula,
+                    ':doc_nombre' => $this->doc_nombre,
+                    ':doc_apellido' => $this->doc_apellido,
+                    ':doc_correo' => $this->doc_correo,
+                    ':doc_dedicacion' => $this->doc_dedicacion,
+                    ':doc_condicion' => $this->doc_condicion
+                ]);
+                
+                $doc_id = $co->lastInsertId();
+                
+                if (!empty($this->titulos)) {
+                    $stmt_titulos = $co->prepare("INSERT INTO titulo_docente (doc_id, tit_id) VALUES (:doc_id, :tit_id)");
+                    
+                    foreach ($this->titulos as $tit_id) {
+                        $stmt_titulos->execute([
+                            ':doc_id' => $doc_id,
+                            ':tit_id' => $tit_id
+                        ]);
+                    }
+                }
+                
+                $co->commit();
+                
                 $r['resultado'] = 'registrar';
                 $r['mensaje'] = 'Registro Incluido!<br/> Se registró el docente correctamente';
             } catch (Exception $e) {
+                $co->rollBack();
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
             }
@@ -165,50 +192,70 @@ class Docente extends Connection
         return $r;
     }
 
-    // Modificar
-   public function Modificar()
-{
-    $co = $this->Con();
-    $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $r = array();
-    
-    if ($this->existe($this->doc_cedula)) {
-        try {
-            $stmt = $co->prepare("UPDATE tbl_docente 
-                SET doc_nombre = :doc_nombre,
-                    doc_apellido = :doc_apellido,
-                    doc_correo = :doc_correo,
-                    cat_id = :cat_id,
-                    doc_prefijo = :doc_prefijo,
-                    doc_dedicacion = :doc_dedicacion,
-                    doc_condicion = :doc_condicion
-                WHERE doc_cedula = :doc_cedula");
-            
-            $stmt->execute([
-                ':doc_nombre' => $this->doc_nombre,
-                ':doc_apellido' => $this->doc_apellido,
-                ':doc_correo' => $this->doc_correo,
-                ':cat_id' => $this->cat_id,
-                ':doc_prefijo' => $this->doc_prefijo,
-                ':doc_dedicacion' => $this->doc_dedicacion,
-                ':doc_condicion' => $this->doc_condicion,
-                ':doc_cedula' => $this->doc_cedula
-            ]);
-            
+    public function Modificar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        
+        if ($this->existe($this->doc_cedula)) {
+            try {
+                $co->beginTransaction();
+                
+                $stmt = $co->prepare("UPDATE tbl_docente 
+                    SET doc_nombre = :doc_nombre,
+                        doc_apellido = :doc_apellido,
+                        doc_correo = :doc_correo,
+                        cat_id = :cat_id,
+                        doc_prefijo = :doc_prefijo,
+                        doc_dedicacion = :doc_dedicacion,
+                        doc_condicion = :doc_condicion
+                    WHERE doc_cedula = :doc_cedula");
+                
+                $stmt->execute([
+                    ':doc_nombre' => $this->doc_nombre,
+                    ':doc_apellido' => $this->doc_apellido,
+                    ':doc_correo' => $this->doc_correo,
+                    ':cat_id' => $this->cat_id,
+                    ':doc_prefijo' => $this->doc_prefijo,
+                    ':doc_dedicacion' => $this->doc_dedicacion,
+                    ':doc_condicion' => $this->doc_condicion,
+                    ':doc_cedula' => $this->doc_cedula
+                ]);
+                
+                $doc_id = $this->obtenerIdPorCedula($this->doc_cedula);
+                
+                $stmt_eliminar = $co->prepare("DELETE FROM titulo_docente WHERE doc_id = :doc_id");
+                $stmt_eliminar->execute([':doc_id' => $doc_id]);
+                
+                if (!empty($this->titulos)) {
+                    $stmt_titulos = $co->prepare("INSERT INTO titulo_docente (doc_id, tit_id) VALUES (:doc_id, :tit_id)");
+                    
+                    foreach ($this->titulos as $tit_id) {
+                        $stmt_titulos->execute([
+                            ':doc_id' => $doc_id,
+                            ':tit_id' => $tit_id
+                        ]);
+                    }
+                }
+                
+                $co->commit();
+                
+                $r['resultado'] = 'modificar';
+                $r['mensaje'] = 'Registro Modificado!<br/> Se modificó el docente correctamente';
+            } catch (Exception $e) {
+                $co->rollBack();
+                $r['resultado'] = 'error';
+                $r['mensaje'] = $e->getMessage();
+            }
+            $co = null;
+        } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'Registro Modificado!<br/> Se modificó el docente correctamente';
-        } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            $r['mensaje'] = 'ERROR! <br/> El DOCENTE con esta cédula NO existe!';
         }
-        $co = null;
-    } else {
-        $r['resultado'] = 'modificar';
-        $r['mensaje'] = 'ERROR! <br/> El DOCENTE con esta cédula NO existe!';
+        return $r;
     }
-    return $r;
-}
-    // Eliminar
+
     public function Eliminar()
     {
         $co = $this->Con();
@@ -236,8 +283,7 @@ class Docente extends Connection
         return $r;
     }
 
-    // Listar
-  public function Listar()
+    public function Listar()
 {
     $co = $this->Con();
     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -257,12 +303,26 @@ class Docente extends Connection
             FROM tbl_docente d
             JOIN tbl_categoria c ON d.cat_id = c.cat_id
             WHERE c.cat_estado = 1
-            AND d.doc_estado = 1");  // Filtro por docentes activos
+            AND d.doc_estado = 1");
         $stmt->execute();
-        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $docentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($docentes as &$docente) {
+            $stmtTitulos = $co->prepare("SELECT 
+                GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') AS titulos,
+                GROUP_CONCAT(t.tit_id SEPARATOR ',') AS titulos_ids
+                FROM titulo_docente td
+                JOIN tbl_titulo t ON td.tit_id = t.tit_id
+                WHERE td.doc_id = :doc_id AND t.tit_estado = 1");
+            $stmtTitulos->execute([':doc_id' => $docente['doc_id']]);
+            $titulosData = $stmtTitulos->fetch(PDO::FETCH_ASSOC);
+            
+            $docente['titulos'] = $titulosData['titulos'] ?? 'Sin títulos';
+            $docente['titulos_ids'] = $titulosData['titulos_ids'] ?? '';
+        }
         
         $r['resultado'] = 'consultar';
-        $r['mensaje'] = $resultados;
+        $r['mensaje'] = $docentes;
     } catch (Exception $e) {
         $r['resultado'] = 'error';
         $r['mensaje'] = $e->getMessage();
@@ -270,49 +330,64 @@ class Docente extends Connection
     $co = null;
     return $r;
 }
-    // Existe
- public function Existe($doc_cedula) {
+    public function Existe($doc_cedula) {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        try {
+            $stmt = $co->prepare("SELECT * FROM tbl_docente WHERE doc_cedula = :doc_cedula AND doc_estado = 1");
+            $stmt->execute([':doc_cedula' => $doc_cedula]);
+            return $stmt->rowCount() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+    
+    public function obtenerTitulosDocente($doc_id) {
     $co = $this->Con();
     $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $r = array();
     
     try {
-        $stmt = $co->prepare("SELECT * FROM tbl_docente WHERE doc_cedula = :doc_cedula AND doc_estado = 1");
-        $stmt->execute([':doc_cedula' => $doc_cedula]);
-        $fila = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        if ($fila) {
-            $r['resultado'] = 'Existe';
-            $r['mensaje'] = 'La cédula del docente ya existe!';
-            
-        } 
+        $stmt = $co->prepare("SELECT tit_id FROM titulo_docente WHERE doc_id = :doc_id");
+        $stmt->execute([':doc_id' => $doc_id]);
+        $resultados = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+        return $resultados;
     } catch (Exception $e) {
-        $r['resultado'] = 'error';
-        $r['mensaje'] = $e->getMessage();
+        return array();
     }
-    
-    return $r;
 }
-   
 
-     public function listacategoria()
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $p = $co->prepare("SELECT * FROM tbl_categoria");
-        $p->execute();
-        $r = $p->fetchAll(PDO::FETCH_ASSOC);
-        return $r;
-    }
-
-      public function listatitulo()
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $p = $co->prepare("SELECT * FROM tbl_titulo");
-        $p->execute();
-        $r = $p->fetchAll(PDO::FETCH_ASSOC);
-        return $r;
-    }
+public function obtenerIdPorCedula($doc_cedula) {
+    $co = $this->Con();
+    $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
+    try {
+        $stmt = $co->prepare("SELECT doc_id FROM tbl_docente WHERE doc_cedula = :doc_cedula");
+        $stmt->execute([':doc_cedula' => $doc_cedula]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $resultado['doc_id'];
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+    public function listacategoria()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT * FROM tbl_categoria WHERE cat_estado = 1");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
+
+    public function listatitulo()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT * FROM tbl_titulo WHERE tit_estado = 1");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
 }

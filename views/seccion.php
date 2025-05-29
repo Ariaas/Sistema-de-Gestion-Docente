@@ -120,7 +120,6 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-        <!-- Fin del Modal -->
 
         <div class="modal fade" tabindex="-1" role="dialog" id="modalPromocion">
             <div class="modal-dialog modal-lg" role="document">
@@ -147,12 +146,9 @@ if (!isset($_SESSION['name'])) {
         </div>
 
     </main>
-    <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>
-    <!-- Scripts -->
     <script type="text/javascript" src="public/js/seccion.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
 </body>
 
 </html>

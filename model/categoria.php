@@ -8,7 +8,6 @@ class Categoria extends Connection
     private $categoriaId;
 
 
-    //Construct
     public function __construct($categoriaNombre = null, $categoriaId = null)
     {
         parent::__construct();
@@ -17,7 +16,7 @@ class Categoria extends Connection
         $this->categoriaId = $categoriaId;
     }
 
-    //Getters 
+
     public function getCategoria()
     {
         return $this->categoriaNombre;
@@ -26,7 +25,6 @@ class Categoria extends Connection
     {
         return $this->categoriaId;
     }
-    //Setters
     public function setCategoria($categoriaNombre)
     {
         $this->categoriaNombre = $categoriaNombre;
@@ -36,9 +34,6 @@ class Categoria extends Connection
         $this->categoriaId = $categoriaId;
     }
 
-    //Methods
-
-    /// Registrar
 
     function Registrar()
     {
@@ -71,7 +66,6 @@ class Categoria extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // 6. Cerrar la conexión
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
@@ -81,7 +75,6 @@ class Categoria extends Connection
         return $r;
     }
 
-    /// Actualizar
 
     function Modificar()
     {
@@ -117,7 +110,6 @@ class Categoria extends Connection
         return $r;
     }
 
-    /// Eliminar
 
     function Eliminar()
     {
@@ -147,7 +139,6 @@ class Categoria extends Connection
         return $r;
     }
 
-    /// Listar
 
     public function Listar()
     {
@@ -167,7 +158,6 @@ class Categoria extends Connection
         return $r;
     }
 
-    /// Consultar exitencia
 
     public function ExisteId($categoriaId)
     {
@@ -187,7 +177,6 @@ class Categoria extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }
@@ -210,7 +199,6 @@ class Categoria extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }

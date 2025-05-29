@@ -16,7 +16,14 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 Inicio
             </span>
         </a>
-
+        <a href="?pagina=usuario" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/person.svg"></img>
+            </span>
+            <span class="description">
+                Gestionar Usuario
+            </span>
+        </a>
         <?php if (!empty($permisos['Docentes'])): ?>
             <a href="?pagina=docente" class="nav-link">
                 <span class="icon">
@@ -27,7 +34,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
         <?php if (!empty($permisos['Espacios'])): ?>
             <a href="?pagina=espacios" class="nav-link">
                 <span class="icon">
@@ -38,7 +44,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
         <?php if (!empty($permisos['Seccion'])): ?>
             <a href="?pagina=seccion" class="nav-link">
                 <span class="icon">
@@ -49,7 +54,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
         <?php if (!empty($permisos['Trayecto'])): ?>
             <a href="?pagina=trayecto" class="nav-link">
                 <span class="icon">
@@ -60,7 +64,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
         <?php if (!empty($permisos['Unidad Curricular'])): ?>
             <a href="?pagina=uc" class="nav-link">
                 <span class="icon">
@@ -71,9 +74,16 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
-        <?php if (!empty($permisos['Horario Docente'])): ?>
+        <?php if (!empty($permisos['Horario'])): ?>
             <a href="?pagina=horario" class="nav-link">
+                <span class="icon">
+                    <img src="public/assets/icons/calendar-solid.svg"></img>
+                </span>
+                <span class="description">
+                    Gestionar Horario
+                </span>
+            </a>
+            <a href="?pagina=horariodocente" class="nav-link">
                 <span class="icon">
                     <img src="public/assets/icons/calendar-solid.svg"></img>
                 </span>
@@ -82,7 +92,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
         <?php if (!empty($permisos['Malla Curricular'])): ?>
             <a href="?pagina=mallacurricular" class="nav-link">
                 <span class="icon">
@@ -93,27 +102,14 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
-        <?php if (!empty($permisos['Horario Docente'])): ?>
-            <a href="?pagina=horariodocente" class="nav-link">
-                <span class="icon">
-                    <img src="public/assets/icons/screwdriver-wrench-solid.svg"></img>
-                </span>
-                <span class="description">
-                    Gestionar Horario Docente
-                </span>
-            </a>
-        <?php endif; ?>
-
-            <a href="?pagina=config" class="nav-link">
-                <span class="icon">
-                    <img src="public/assets/icons/gear-solid.svg"></img>
-                </span>
-                <span class="description">
-                    Administrar Configuración
-                </span>
-            </a>
-
+        <a href="?pagina=config" class="nav-link">
+            <span class="icon">
+                <img src="public/assets/icons/gear-solid.svg"></img>
+            </span>
+            <span class="description">
+                Administrar Configuración
+            </span>
+        </a>
         <?php if (
             !empty($permisos['Bitacora']) ||
             !empty($permisos['Usuarios']) ||
@@ -128,7 +124,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
         <?php if (!empty($permisos['Reportes'])): ?>
             <a href="?pagina=reportes" class="nav-link">
                 <span class="icon">
@@ -139,7 +134,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 </span>
             </a>
         <?php endif; ?>
-
         <a href="?pagina=fin" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/exit-solid.svg"></img>

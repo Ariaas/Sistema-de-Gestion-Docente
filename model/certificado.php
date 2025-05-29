@@ -190,4 +190,4 @@ Class Certificado extends Connection{
         return $r;
     }
 }
-?> 
+?>

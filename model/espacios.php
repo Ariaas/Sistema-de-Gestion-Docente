@@ -38,8 +38,6 @@ class Espacio extends Connection
 
     //Methods
 
-    /// Registrar
-
     function Registrar()
     {
         $r = array();
@@ -74,7 +72,6 @@ class Espacio extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // 6. Cerrar la conexión
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
@@ -83,8 +80,6 @@ class Espacio extends Connection
 
         return $r;
     }
-
-    /// Actualizar
 
     function Modificar()
     {
@@ -115,8 +110,6 @@ class Espacio extends Connection
         return $r;
     }
 
-    /// Eliminar
-
     function Eliminar()
     {
         $co = $this->Con();
@@ -145,8 +138,6 @@ class Espacio extends Connection
         return $r;
     }
 
-    /// Listar
-
     public function Listar()
     {
         $co = $this->Con();
@@ -164,8 +155,6 @@ class Espacio extends Connection
         $co = null;
         return $r;
     }
-
-    /// Consultar exitencia
 
     public function Existe($codigoEspacio)
     {
@@ -185,7 +174,6 @@ class Espacio extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }

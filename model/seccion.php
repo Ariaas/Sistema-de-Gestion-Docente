@@ -99,8 +99,6 @@ class Seccion extends Connection
 
     //Methods
 
-    /// Registrar
-
     function Registrar()
     {
         $r = array();
@@ -134,7 +132,6 @@ class Seccion extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // Cerrar la conexión
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
@@ -143,8 +140,6 @@ class Seccion extends Connection
 
         return $r;
     }
-
-    /// Actualizar
 
     function Modificar()
     {
@@ -210,8 +205,6 @@ class Seccion extends Connection
         return $r;
     }
 
-    /// Listar
-
     public function Listar()
     {
         $co = $this->Con();
@@ -257,8 +250,6 @@ class Seccion extends Connection
         $co = null;
         return $r;
     }
-
-    /// Consultar exitencia
 
     public function Existe($codigoSeccion, $trayectoSeccion)
     {

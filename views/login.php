@@ -1,6 +1,3 @@
-<?php
-// Vista de Login - Solo la vista, siguiendo la estructura del proyecto
-?>
 <!DOCTYPE html>
 <html lang="es">
 
