@@ -1,10 +1,8 @@
 <?php
-// Verificar si el usuario ha iniciado sesión
-// if (!isset($_SESSION['name'])) {
-//     // Redirigir al usuario a la página de inicio de sesión
-//     header('Location: .');
-//     exit();
-// }
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -41,7 +39,7 @@
                     </table>
                 </div>
             </div>
-          
+
         </section>
         <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">

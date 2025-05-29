@@ -1,10 +1,8 @@
 <?php
-// Verificar si el usuario ha iniciado sesión
-// if (!isset($_SESSION['name'])) {
-//     // Redirigir al usuario a la página de inicio de sesión
-//     header('Location: .');
-//     exit();
-// }
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -51,7 +49,7 @@
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
                             <input type="hidden" name="accion" id="accion">
                             <input type="hidden" id="ejeId" name="ejeId">
-                            
+
                             <div class="mb-4">
                                 <div class="row g-3">
                                     <div class="col-md-12">
@@ -61,7 +59,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>

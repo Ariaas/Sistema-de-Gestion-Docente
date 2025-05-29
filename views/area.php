@@ -1,10 +1,8 @@
 <?php
-// Verificar si el usuario ha iniciado sesión
-// if (!isset($_SESSION['name'])) {
-//     // Redirigir al usuario a la página de inicio de sesión
-//     header('Location: .');
-//     exit();
-// }
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -18,7 +16,7 @@
 <body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
-    
+
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Áreas</h2>
@@ -30,7 +28,7 @@
                     <table class="table table-striped table-hover w-100" id="tablaarea">
                         <thead>
                             <tr>
-                                <th  style="display: none;">ID</th>
+                                <th style="display: none;">ID</th>
                                 <th>Área</th>
                                 <th>Acciones</th>
                             </tr>
@@ -80,8 +78,9 @@
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
-    
+
     <script src="public/js/area.js"></script>
     <script src="public/js/validacion.js"></script>
 </body>
+
 </html>

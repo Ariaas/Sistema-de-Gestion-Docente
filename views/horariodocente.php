@@ -1,12 +1,9 @@
 <?php
-// Verificar si el usuario ha iniciado sesión
-// if (!isset($_SESSION['name'])) {
-//     // Redirigir al usuario a la página de inicio de sesión
-//     header('Location: .');
-//     exit();
-// }
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
 ?>
-
 <!DOCTYPE html>
 <html lang="ES">
 
@@ -66,34 +63,34 @@
 
 
                                     <div class="col-md-4">
-                                        
+
                                         <label for="certificadonombre">Nombre</label>
                                         <input class="form-control" type="text" id="certificadonombre" name="certificadonombre" placeholder="Nombre del certificado" required>
                                         <span id="scertificadonombre"></span>
                                     </div>
-                                    
+
                                     <div class="col-md-4">
-                                        <label for="trayecto" >Trayecto</label>
-                                    <select class="form-select" name="trayecto" id="trayecto" >
-                                        <option value="" disabled selected>Seleccione un trayecto</option>
-                                        <?php
-                                        if (!empty($trayectos)) {
-                                            foreach ($trayectos as $trayecto) {
-                                                echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['tra_anio'] . "</option>";
+                                        <label for="trayecto">Trayecto</label>
+                                        <select class="form-select" name="trayecto" id="trayecto">
+                                            <option value="" disabled selected>Seleccione un trayecto</option>
+                                            <?php
+                                            if (!empty($trayectos)) {
+                                                foreach ($trayectos as $trayecto) {
+                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['tra_anio'] . "</option>";
+                                                }
+                                            } else {
+                                                echo "<option value='' disabled>No hay trayectos disponibles</option>";
                                             }
-                                        } else {
-                                            echo "<option value='' disabled>No hay trayectos disponibles</option>";
-                                        }
-                                        ?>
-                                    </select>
-                                    </div>                                    
+                                            ?>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             <div class="row mt-3 d-flex justify-content-center align-items-md-center">
-                            <div class="modal-footer justify-content-center">
-                                <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                            </div>
+                                <div class="modal-footer justify-content-center">
+                                    <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                                </div>
                             </div>
                         </form>
                     </div>

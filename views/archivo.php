@@ -1,3 +1,10 @@
+<?php
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 

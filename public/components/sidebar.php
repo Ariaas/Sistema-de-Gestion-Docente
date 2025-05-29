@@ -140,7 +140,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
             </a>
         <?php endif; ?>
 
-        <a href="?pagina=login" class="nav-link">
+        <a href="?pagina=fin" class="nav-link">
             <span class="icon">
                 <img src="public/assets/icons/exit-solid.svg"></img>
             </span>

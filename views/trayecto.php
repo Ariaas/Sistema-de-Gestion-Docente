@@ -1,12 +1,9 @@
 <?php
-// Verificar si el usuario ha iniciado sesión
-// if (!isset($_SESSION['name'])) {
-//     // Redirigir al usuario a la página de inicio de sesión
-//     header('Location: .');
-//     exit();
-// }
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 

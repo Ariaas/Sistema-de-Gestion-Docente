@@ -8,6 +8,11 @@ if (!isset($_SESSION['name'])) {
     exit();
 }
 
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
+
 $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
 ?>
 <!DOCTYPE html>

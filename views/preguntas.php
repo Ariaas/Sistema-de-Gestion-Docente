@@ -1,10 +1,8 @@
 <?php
-// Verificar si el usuario ha iniciado sesión (descomentar si es necesario)
-// if (!isset($_SESSION['name'])) {
-//     // Redirigir al usuario a la página de inicio de sesión
-//     header('Location: .');
-//     exit();
-// }
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -15,19 +13,27 @@
     <title>Preguntas Frecuentes (FAQ)</title>
     <style>
         .accordion-button:not(.collapsed) {
-            color: #0c63e4; /* Color de texto del botón de acordeón cuando está activo */
-            background-color: #e7f1ff; /* Color de fondo del botón de acordeón cuando está activo */
+            color: #0c63e4;
+            /* Color de texto del botón de acordeón cuando está activo */
+            background-color: #e7f1ff;
+            /* Color de fondo del botón de acordeón cuando está activo */
         }
+
         .accordion-button:focus {
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25); /* Sombra al enfocar */
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+            /* Sombra al enfocar */
         }
+
         .faq-category h4 {
             margin-top: 2rem;
             margin-bottom: 1rem;
-            color: #343a40; /* Un color un poco más oscuro para los títulos de categoría */
-            border-bottom: 2px solid #0d6efd; /* Línea azul debajo del título de categoría */
+            color: #343a40;
+            /* Un color un poco más oscuro para los títulos de categoría */
+            border-bottom: 2px solid #0d6efd;
+            /* Línea azul debajo del título de categoría */
             padding-bottom: 0.5rem;
         }
+
         .accordion-body strong {
             color: #212529;
         }
@@ -41,7 +47,7 @@
     <main class="main-content flex-shrink-0">
         <section class="container py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Preguntas Frecuentes (FAQ)</h2>
-            
+
             <div class="row justify-content-center">
                 <div class="col-md-10 col-lg-9">
 
@@ -152,11 +158,11 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="faq-category">
                         <h4>Módulo: Certificados</h4>
                         <div class="accordion" id="faqAccordionCertificados">
-                             <div class="accordion-item">
+                            <div class="accordion-item">
                                 <h2 class="accordion-header" id="headingCertificados1">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCertificados1" aria-expanded="false" aria-controls="collapseCertificados1">
                                         ¿Qué información se requiere para un nuevo certificado?
@@ -228,7 +234,7 @@
                                     </div>
                                 </div>
                             </div>
-                             <div class="accordion-item">
+                            <div class="accordion-item">
                                 <h2 class="accordion-header" id="headingHorario3">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHorario3" aria-expanded="false" aria-controls="collapseHorario3">
                                         ¿Qué pasa si intento registrar un horario para una Sección y Fase que ya tiene uno activo?
@@ -236,7 +242,7 @@
                                 </h2>
                                 <div id="collapseHorario3" class="accordion-collapse collapse" aria-labelledby="headingHorario3" data-bs-parent="#faqAccordionHorario">
                                     <div class="accordion-body">
-                                         El sistema te alertará indicando que ya existe un horario para esa combinación. No podrás crear un duplicado. Deberás modificar el horario existente o elegir una Sección/Fase diferente.
+                                        El sistema te alertará indicando que ya existe un horario para esa combinación. No podrás crear un duplicado. Deberás modificar el horario existente o elegir una Sección/Fase diferente.
                                     </div>
                                 </div>
                             </div>
@@ -306,7 +312,7 @@
                                     </div>
                                 </div>
                             </div>
-                             <div class="accordion-item">
+                            <div class="accordion-item">
                                 <h2 class="accordion-header" id="headingBackup5">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBackup5" aria-expanded="false" aria-controls="collapseBackup5">
                                         ¿Dónde se guardan los respaldos y cómo aparecen en la lista para restaurar?
@@ -328,5 +334,6 @@
 
     <?php require_once("public/components/footer.php"); ?>
 
-    </body>
+</body>
+
 </html>
