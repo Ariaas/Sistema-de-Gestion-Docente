@@ -57,6 +57,29 @@ if (is_file("views/" . $pagina . ".php")) {
             $s->setGrupoId($_POST['grupoId']);
             echo json_encode($s->Separar());
             $bitacora->registrarAccion($usu_id, 'separar', 'seccion');
+
+
+        } elseif ($accion == 'obtenerSeccionesDestino') {
+            $seccionesOrigenJSON = $_POST['seccionesOrigen'] ?? '[]';
+            $seccionesOrigenIds = json_decode($seccionesOrigenJSON, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                 echo json_encode(['resultado' => 'error', 'mensaje' => 'Error en los datos de secciones .']);
+                 exit;
+            }
+            echo json_encode($s->ObtenerSeccionesDestinoElegibles($seccionesOrigenIds));
+        } elseif ($accion == 'promocionar') {
+            $seccionesOrigenJSON = $_POST['seccionesOrigen'] ?? '[]';
+            $seccionesOrigenIds = json_decode($seccionesOrigenJSON, true);
+            $seccionDestinoId = $_POST['seccionDestinoId'] ?? null;
+
+            if (json_last_error() !== JSON_ERROR_NONE || empty($seccionesOrigenIds) || $seccionDestinoId === null) {
+                echo json_encode(['resultado' => 'error', 'mensaje' => 'Datos incompletos.']);
+                exit;
+            }
+            echo json_encode($s->PromocionarSecciones($seccionesOrigenIds, $seccionDestinoId));
+            $bitacora->registrarAccion($usu_id, 'promocionar', 'seccion');
+
+
         } else {
             echo "Acción no válida";
         }

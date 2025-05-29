@@ -25,7 +25,8 @@
 
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar</button>
-                <button class="btn btn-success px-4" id="unir">Unir</button>
+                <button class="btn btn-warning px-4" id="unir">Unir</button>
+                <button class="btn btn-info px-4" id="promocionarBtn">Promover</button>
             </div>
 
             <div class="w-100 text-center mb-3" style="max-width: 1100px;">
@@ -66,7 +67,6 @@
             </div>
         </section>
 
-        <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -123,6 +123,30 @@
             </div>
         </div>
         <!-- Fin del Modal -->
+
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalPromocion">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">Promover Secciones</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="seccionesOrigenNombres">Secciones a promover: </p>
+                        <div class="mb-3">
+                            <label for="seccionDestinoPromocion" class="form-label">Seleccione la Sección Destino:</label>
+                            <select class="form-select" id="seccionDestinoPromocion" name="seccionDestinoPromocion">
+                                <option value="" disabled selected>Cargando secciones destino...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-info me-2" id="confirmarPromocion">Confirmar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </main>
     <!-- Footer -->

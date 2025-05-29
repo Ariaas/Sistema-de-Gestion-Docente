@@ -12,7 +12,6 @@ class Seccion extends Connection
     private $trayectoSeccion;
     private $grupoId;
 
-    //Construct
     public function __construct($codigoSeccion = null, $cantidadSeccion = null, $seccionId = null, $trayectoNumero = null, $trayectoAnio = null, $trayectoSeccion = null, $grupoId = null)
     {
         parent::__construct();
@@ -291,7 +290,7 @@ class Seccion extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         } finally {
-            $co = null; // Cerrar la conexión
+            $co = null;
         }
         return $r;
     }
@@ -315,7 +314,6 @@ class Seccion extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }
@@ -341,24 +339,35 @@ class Seccion extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = ['resultado' => null, 'mensaje' => null];
+        $maxCapacidad = 45;
 
         try {
             $co->beginTransaction();
 
             $seccionesArray = json_decode($secciones, true);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($seccionesArray) || empty($seccionesArray)) {
+                throw new Exception("Datos de secciones para unir inválidos.");
+            }
 
             $in = implode(',', array_map('intval', $seccionesArray));
-            $stmtTrayecto = $co->query("
-                SELECT tra_id 
+
+            $stmtInfoSecciones = $co->query("
+                SELECT tra_id, SUM(sec_cantidad) as total_cantidad, COUNT(DISTINCT tra_id) as count_trayectos
                 FROM tbl_seccion 
                 WHERE sec_id IN ($in) AND sec_estado = 1
-                GROUP BY tra_id
             ");
-            $trayectos = $stmtTrayecto->fetchAll(PDO::FETCH_COLUMN);
+            $info = $stmtInfoSecciones->fetch(PDO::FETCH_ASSOC);
 
-            if (count($trayectos) !== 1) {
+            if (!$info || $info['count_trayectos'] === null) {
+                throw new Exception("Una o más secciones seleccionadas no son válidas o están inactivas.");
+            }
+            if ($info['count_trayectos'] > 1) {
                 throw new Exception("Las secciones seleccionadas NO pertenecen al mismo trayecto.");
             }
+            if ((int)$info['total_cantidad'] > $maxCapacidad) {
+                throw new Exception("La suma de estudiantes (" . $info['total_cantidad'] . ") de las secciones a unir excede la capacidad máxima de " . $maxCapacidad . ".");
+            }
+
 
             $stmtCheck = $co->prepare("
                 SELECT COUNT(*) AS cnt
@@ -432,6 +441,223 @@ class Seccion extends Connection
             $co = null;
         }
 
+        return $r;
+    }
+
+    public function ObtenerSeccionesDestinoElegibles($seccionesOrigenIds)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = ['resultado' => 'obtenerSeccionesDestino', 'mensaje' => []];
+
+        if (empty($seccionesOrigenIds)) {
+            $r['mensaje'] = [];
+            $co = null;
+            return $r;
+        }
+
+        try {
+            $placeholdersOrigen = implode(',', array_fill(0, count($seccionesOrigenIds), '?'));
+
+            $sqlCheckTrayectosOrigen = "
+                SELECT s.sec_id, t.tra_id, t.tra_numero, t.tra_anio
+                FROM tbl_seccion s
+                JOIN tbl_trayecto t ON s.tra_id = t.tra_id
+                WHERE s.sec_id IN ($placeholdersOrigen) AND s.sec_estado = 1
+            ";
+            $stmtCheckTrayectosOrigen = $co->prepare($sqlCheckTrayectosOrigen);
+            $stmtCheckTrayectosOrigen->execute($seccionesOrigenIds);
+            $seccionesOrigenInfo = $stmtCheckTrayectosOrigen->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($seccionesOrigenInfo) || count($seccionesOrigenInfo) != count(array_unique($seccionesOrigenIds))) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Una o más secciones de origen no son válidas o no se encontraron.';
+                $co = null;
+                return $r;
+            }
+
+            $trayectoComunInfo = null;
+            foreach ($seccionesOrigenInfo as $i => $info) {
+                if ($i == 0) {
+                    $trayectoComunInfo = ['tra_id' => $info['tra_id'], 'tra_numero' => (int)$info['tra_numero'], 'tra_anio' => (int)$info['tra_anio']];
+                } elseif ($info['tra_id'] != $trayectoComunInfo['tra_id']) {
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = "Las secciones seleccionadas NO pertenecen al mismo trayecto.";
+                    $co = null;
+                    return $r;
+                }
+            }
+
+            $traAnioOrigen = $trayectoComunInfo['tra_anio'];
+            $traNumeroOrigen = $trayectoComunInfo['tra_numero'];
+
+            $sqlDestino = "
+                SELECT s.sec_id, s.sec_codigo, t.tra_numero, t.tra_anio
+                FROM tbl_seccion s
+                JOIN tbl_trayecto t ON s.tra_id = t.tra_id
+                WHERE s.sec_estado = 1 
+                  AND (
+                      (t.tra_anio = ? AND t.tra_numero > ?) OR /* Mismo año, trayecto superior */
+                      (t.tra_anio > ?) /* Año superior */
+                  )
+                  AND s.sec_id NOT IN ($placeholdersOrigen) /* No incluir las secciones origen como destino */
+                ORDER BY t.tra_anio ASC, t.tra_numero ASC, s.sec_codigo ASC
+            ";
+
+            $stmtDestino = $co->prepare($sqlDestino);
+            $paramsForDestino = array_merge([$traAnioOrigen, $traNumeroOrigen, $traAnioOrigen], $seccionesOrigenIds);
+            $stmtDestino->execute($paramsForDestino);
+
+            $seccionesDestino = $stmtDestino->fetchAll(PDO::FETCH_ASSOC);
+            $r['mensaje'] = $seccionesDestino;
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = "Error al obtener secciones destino: " . $e->getMessage();
+        } finally {
+            if ($co) {
+                $co = null;
+            }
+        }
+        return $r;
+    }
+
+    public function PromocionarSecciones($seccionesOrigenIdsOriginal, $seccionDestinoId)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = ['resultado' => 'promocionar', 'mensaje' => ''];
+        $maxCapacidad = 45;
+
+        $seccionesOrigenIds = array_values(array_diff($seccionesOrigenIdsOriginal, [$seccionDestinoId]));
+
+        try {
+            $co->beginTransaction();
+
+            $stmtCheckDestino = $co->prepare("
+                SELECT s.sec_id, s.tra_id, s.sec_cantidad, t.tra_numero, t.tra_anio 
+                FROM tbl_seccion s
+                JOIN tbl_trayecto t ON s.tra_id = t.tra_id
+                WHERE s.sec_id = :sec_id AND s.sec_estado = 1
+            ");
+            $stmtCheckDestino->bindParam(':sec_id', $seccionDestinoId, PDO::PARAM_INT);
+            $stmtCheckDestino->execute();
+            $destino = $stmtCheckDestino->fetch(PDO::FETCH_ASSOC);
+
+            if (!$destino) {
+                $co->rollBack();
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La sección no es válida.';
+                if ($co) {
+                    $co = null;
+                }
+                return $r;
+            }
+            $cantidadOriginalDestino = (int)$destino['sec_cantidad'];
+            $traAnioDestino = (int)$destino['tra_anio'];
+            $traNumeroDestino = (int)$destino['tra_numero'];
+
+            $placeholdersOrigen = implode(',', array_fill(0, count($seccionesOrigenIds), '?'));
+            $sqlInfoOrigen = "
+                SELECT s.sec_id, s.tra_id, s.sec_cantidad, t.tra_numero, t.tra_anio
+                FROM tbl_seccion s
+                JOIN tbl_trayecto t ON s.tra_id = t.tra_id
+                WHERE s.sec_id IN ($placeholdersOrigen) AND s.sec_estado = 1
+            ";
+            $stmtInfoOrigen = $co->prepare($sqlInfoOrigen);
+            $stmtInfoOrigen->execute($seccionesOrigenIds);
+            $seccionesOrigenDetalles = $stmtInfoOrigen->fetchAll(PDO::FETCH_ASSOC);
+
+            
+
+            $trayectoOrigenComun = null;
+            $sumaCantidadOrigen = 0;
+            foreach ($seccionesOrigenDetalles as $i => $origen) {
+                if ($i == 0) {
+                    $trayectoOrigenComun = ['tra_id' => $origen['tra_id'], 'tra_numero' => (int)$origen['tra_numero'], 'tra_anio' => (int)$origen['tra_anio']];
+                } elseif ($origen['tra_id'] != $trayectoOrigenComun['tra_id']) {
+                    $co->rollBack();
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = 'Todas las secciones deben pertenecer al mismo trayecto.';
+                    if ($co) {
+                        $co = null;
+                    }
+                    return $r;
+                }
+                $sumaCantidadOrigen += (int)$origen['sec_cantidad'];
+            }
+
+            if (!(($traAnioDestino > $trayectoOrigenComun['tra_anio']) ||
+                ($traAnioDestino == $trayectoOrigenComun['tra_anio'] && $traNumeroDestino > $trayectoOrigenComun['tra_numero']))) {
+                $co->rollBack();
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La sección debe pertenecer a un trayecto superior.';
+                if ($co) {
+                    $co = null;
+                }
+                return $r;
+            }
+
+            $nuevaCantidadDestino = $cantidadOriginalDestino + $sumaCantidadOrigen;
+            if ($nuevaCantidadDestino > $maxCapacidad) {
+                $co->rollBack();
+                $r['resultado'] = 'error';
+                $r['mensaje'] = "La capacidad de la sección destino se excede del máximo (Actual: $cantidadOriginalDestino, Nueva: $nuevaCantidadDestino, Máx: $maxCapacidad).";
+                if ($co) {
+                    $co = null;
+                }
+                return $r;
+            }
+
+            $stmtUpdateDestinoCantidad = $co->prepare("UPDATE tbl_seccion SET sec_cantidad = :cantidad WHERE sec_id = :sec_id");
+            $stmtUpdateDestinoCantidad->bindParam(':cantidad', $nuevaCantidadDestino, PDO::PARAM_INT);
+            $stmtUpdateDestinoCantidad->bindParam(':sec_id', $seccionDestinoId, PDO::PARAM_INT);
+            $stmtUpdateDestinoCantidad->execute();
+
+            $stmtGrupoCheck = $co->prepare("
+                SELECT sg.gro_id 
+                FROM seccion_grupo sg
+                JOIN tbl_grupo g ON sg.gro_id = g.gro_id
+                WHERE sg.sec_id = :sec_id AND g.grupo_estado = 1
+            ");
+            $stmtSepararGrupo = $co->prepare("UPDATE tbl_grupo SET grupo_estado = 0 WHERE gro_id = :gro_id");
+            $stmtDesactivarSeccionOrigen = $co->prepare("UPDATE tbl_seccion SET sec_estado = 0 WHERE sec_id = :sec_id");
+            $stmtInsertPromocion = $co->prepare("
+                INSERT INTO tbl_promocion (sec_id_origen, sec_id_promocion) 
+                VALUES (:sec_id_origen, :sec_id_promocion)
+            ");
+            $stmtInsertPromocion->bindParam(':sec_id_promocion', $seccionDestinoId, PDO::PARAM_INT);
+
+            $countPromocionadas = 0;
+            foreach ($seccionesOrigenIds as $origenId) {
+                $stmtGrupoCheck->bindParam(':sec_id', $origenId, PDO::PARAM_INT);
+                $stmtGrupoCheck->execute();
+                $grupo = $stmtGrupoCheck->fetch(PDO::FETCH_ASSOC);
+                if ($grupo) {
+                    $stmtSepararGrupo->bindParam(':gro_id', $grupo['gro_id'], PDO::PARAM_INT);
+                    $stmtSepararGrupo->execute();
+                }
+
+                $stmtDesactivarSeccionOrigen->bindParam(':sec_id', $origenId, PDO::PARAM_INT);
+                $stmtDesactivarSeccionOrigen->execute();
+
+                $stmtInsertPromocion->bindParam(':sec_id_origen', $origenId, PDO::PARAM_INT);
+                $stmtInsertPromocion->execute();
+                $countPromocionadas++;
+            }
+
+            $co->commit();
+            $r['mensaje'] = "¡Secciones promovidas correctamente!<br/> Cantidad de la sección: " . $nuevaCantidadDestino;
+        } catch (Exception $e) {
+            if ($co->inTransaction()) {
+                $co->rollBack();
+            }
+            $r['resultado'] = 'error';
+            $r['mensaje'] = "Error: " . $e->getMessage();
+        } finally {
+            if ($co) {
+                $co = null;
+            }
+        }
         return $r;
     }
 }

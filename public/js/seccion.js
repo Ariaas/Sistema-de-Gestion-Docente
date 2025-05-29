@@ -140,6 +140,9 @@ $(document).ready(function () {
   enviaAjax(datos);
   });
 
+  
+
+
   $(document).on("click", "#tablaunion .eliminar", function () {
     const grupoId = $(this).data("id");
 
@@ -373,12 +376,39 @@ function enviaAjax(datos) {
             $("#modal1").modal("hide");
             Listar();
           }
+        } else if (lee.resultado === "promocionar") {
+          muestraMensaje("info", 4000, "PROMOCIÓN", lee.mensaje);
+          Listar();
+        } else if (lee.resultado === "obtenerSeccionesDestino") { 
+          const selectDestino = $("#seccionDestinoPromocion");
+          selectDestino.empty(); 
+          selectDestino.append('<option value="" disabled selected>Seleccione una sección</option>');
+          if (lee.mensaje && lee.mensaje.length > 0) {
+            $.each(lee.mensaje, function (index, item) {
+              selectDestino.append(`<option value="${item.sec_id}">${item.sec_codigo} (Trayecto: ${item.tra_numero} - ${item.tra_anio})</option>`);
+            });
+          } else {
+            selectDestino.append('<option value="" disabled>No hay secciones elegibles</option>');
+          }
+          
+          const seccionesSeleccionadas = $("#modalPromocion").data("seccionesOrigen"); 
+          if (seccionesSeleccionadas && seccionesSeleccionadas.length > 0) {
+            const nombresSeccionesOrigen = [];
+            seccionesSeleccionadas.forEach(idSeccion => {
+                const fila = $(`#tablaseccion input[type=checkbox][value="${idSeccion}"]`).closest('tr');
+                const codigo = fila.find('td:eq(1)').text();
+                nombresSeccionesOrigen.push(codigo);
+            });
+            $("#seccionesOrigenNombres").text("Secciones a promover: " + nombresSeccionesOrigen.join(', '));
+          }
+
+          $("#modalPromocion").modal("show");
         } else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
       } catch (e) {
-        console.error("Error en análisis JSON:", e); // Registrar el error para depuración
-        alert("Error en JSON " + e.name + ": " + e.message);
+        console.error("Error en análisis JSON:", e, respuesta); 
+        alert("Error en JSON " + e.name + ": " + e.message + "\nRespuesta: " + respuesta);
       }
     },
     error: function (request, status, err) {
@@ -399,4 +429,40 @@ function limpia() {
   $("#trayectoSeccion").val("");
 }
 
+$("#promocionarBtn").on("click", function () {
+  const seccionesSeleccionadas = [];
+  $("#tablaseccion input[type=checkbox]:checked").each(function () {
+    seccionesSeleccionadas.push($(this).val());
+  });
 
+  if (seccionesSeleccionadas.length === 0) {
+    Swal.fire("Atención", "Debe seleccionar al menos UNA sección.", "warning");
+    return;
+  }
+
+  $("#modalPromocion").data("seccionesOrigen", seccionesSeleccionadas);
+
+  var datos = new FormData();
+  datos.append("accion", "obtenerSeccionesDestino");
+  datos.append("seccionesOrigen", JSON.stringify(seccionesSeleccionadas)); 
+  
+  enviaAjax(datos); 
+});
+
+$("#confirmarPromocion").on("click", function () {
+  const seccionesOrigen = $("#modalPromocion").data("seccionesOrigen");
+  const seccionDestinoId = $("#seccionDestinoPromocion").val();
+
+  if (!seccionDestinoId) {
+    Swal.fire("Atención", "Debe seleccionar una sección.", "warning");
+    return;
+  }
+
+  var datos = new FormData();
+  datos.append("accion", "promocionar");
+  datos.append("seccionesOrigen", JSON.stringify(seccionesOrigen));
+  datos.append("seccionDestinoId", seccionDestinoId);
+
+  enviaAjax(datos); 
+  $("#modalPromocion").modal("hide");
+});
