@@ -104,7 +104,7 @@ class Usuario extends Connection_bitacora
                 $stmt->execute();
 
                 if ($this->superUsuario == 1) {
-                    $todosLosPermisos = range(1, 16);
+                    $todosLosPermisos = range(1, 18);
                     $this->asignarPermisos($co->lastInsertId(), $todosLosPermisos);
                 }
 

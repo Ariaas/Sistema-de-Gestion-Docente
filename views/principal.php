@@ -123,14 +123,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                     </div>
                 <?php endif; ?>
 
-                <?php if (
-                    !empty($permisos['Certificados']) ||
-                    !empty($permisos['Area']) ||
-                    !empty($permisos['Categorias']) ||
-                    !empty($permisos['Eje']) ||
-                    !empty($permisos['Titulo']) ||
-                    !empty($permisos['Archivos'])
-                ): ?>
                     <div class="col">
                         <a class="a-cards" href="?pagina=config">
                             <div class="card h-100 text-center custom-card">
@@ -141,7 +133,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                             </div>
                         </a>
                     </div>
-                <?php endif; ?>
 
                 <?php if (
                     !empty($permisos['Bitacora']) ||

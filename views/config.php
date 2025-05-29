@@ -108,6 +108,18 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                         </a>
                     </div>
                 <?php endif; ?>
+
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=preguntas">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                    <h5 class="card-title">Preguntas Frecuentes</h5>
+                                    <p class="card-text"></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
             </div>
         </div>
     </main>

@@ -105,14 +105,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
             </a>
         <?php endif; ?>
 
-        <?php if (
-            !empty($permisos['Certificados']) ||
-            !empty($permisos['Area']) ||
-            !empty($permisos['Categorias']) ||
-            !empty($permisos['Eje']) ||
-            !empty($permisos['Titulo']) ||
-            !empty($permisos['Archivos'])
-        ): ?>
             <a href="?pagina=config" class="nav-link">
                 <span class="icon">
                     <img src="public/assets/icons/gear-solid.svg"></img>
@@ -121,7 +113,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                     Administrar Configuración
                 </span>
             </a>
-        <?php endif; ?>
 
         <?php if (
             !empty($permisos['Bitacora']) ||
