@@ -1,6 +1,6 @@
 <?php
 
-$pagina = 'login';  //pagina por defecto
+$pagina = 'login';  
 
 if (!empty($_GET['pagina'])) {
     $pagina = $_GET['pagina'];
@@ -18,13 +18,7 @@ if (is_file("model/verifica.php")) {
 }
 
 if (is_file('controller/' . $pagina . ".php")) {
-    require_once  "controller/" . $pagina . ".php";   //si la pagina existe, cargamos el archivo correspondiente
-} 
-// else if (is_file('controller/auxiliar/' . $pagina . ".php")) {
-//     require_once  "controller/auxiliar/" . $pagina . ".php";   //si la pagina existe, cargamos el archivo correspondiente
-// } else if (is_file('controller/reportes/' . $pagina . ".php")) {
-//     require_once  "controller/reportes/" . $pagina . ".php";   //si la pagina existe, cargamos el archivo correspondiente
-// } 
-else {                                          //sino, mostramos un error de que no se encuentra la pagina solicitada
+    require_once  "controller/" . $pagina . ".php";   
+} else {                                         
     echo 'PÁGINA EN CONSTRUCCIÓN';
 }

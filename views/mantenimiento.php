@@ -1,3 +1,15 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
+    exit();
+}
+
+$permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,38 +29,45 @@
         </div>
         <div class="container mt-4">
             <div class="row row-cols-1 row-cols-md-3 g-4">
-                <div class="col">
-                    <a class="a-cards" href="?pagina=usuario">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/person.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                <h5 class="card-title">Gestionar Usuario</h5>
+                <?php if (!empty($permisos['Usuarios'])): ?>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=usuario">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/person.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Usuario</h5>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col">
-                    <a class="a-cards" href="?pagina=bitacora">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/clock-fill.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                <h5 class="card-title">Gestionar Bitacora</h5>
-                                <p class="card-text"></p>
+                        </a>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($permisos['Bitacora'])): ?>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=bitacora">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/clock-fill.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Bitacora</h5>
+                                    <p class="card-text"></p>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </div>
-                <div class="col">
-                    <a class="a-cards" href="?pagina=backup">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/device-hdd-fill.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Building Icon">
-                                <h5 class="card-title">Gestionar Respaldo</h5>
-                                <p class="card-text"></p>
+                        </a>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($permisos['Respaldo'])): 
+                ?>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=backup">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/device-hdd-fill.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Building Icon">
+                                    <h5 class="card-title">Gestionar Respaldo</h5>
+                                    <p class="card-text"></p>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
+                <?php endif; ?>
 
             </div>
         </div>
