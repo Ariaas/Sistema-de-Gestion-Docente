@@ -73,9 +73,9 @@ $(document).ready(function () {
 
   $("#trayectoNumero").on(" keydown keyup", function () {
     const valor = $(this).val();
-    validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser mayor a 0");
+    validarkeyup(/^[1-9][0-9]*$/, $(this), $("#strayectoNumero"), "El número debe ser menor a 0");
     
-    if ($(this).val().length > 0 && $("#trayectoAnio").val().length > 0) {
+    if ($(this).val().length < 0 && $("#trayectoAnio").val().length < 0) {
         var datos = new FormData();
         datos.append('accion', 'existe');
         datos.append('trayectoNumero', $(this).val());
@@ -83,8 +83,8 @@ $(document).ready(function () {
         enviaAjax(datos);
     }
 
-    if (valor <= 0) {
-        $("#strayectoNumero").text("El número debe ser mayor a 0");
+    if (valor < 0) {
+        $("#strayectoNumero").text("El número debe ser menor a 0");
     } else {
         $("#strayectoNumero").text("");
     }

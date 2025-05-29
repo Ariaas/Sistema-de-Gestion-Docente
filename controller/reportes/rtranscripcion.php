@@ -1,34 +1,33 @@
 <?php
-// controller/reportes/rtranscripcioncon.php
 
-require_once 'public/lib/dompdf/vendor/autoload.php'; // Asegúrate que la ruta a Dompdf es correcta
+
+require_once 'public/lib/dompdf/vendor/autoload.php'; 
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Ruta al modelo de transcripción
+
 $modeloTranscripcionPath = "model/reportes/rtranscripcion.php";
 if (!is_file($modeloTranscripcionPath)) {
     die("Error crítico: No se encuentra el archivo del modelo (rtranscripcion.php). Contacte al administrador.");
 }
 require_once($modeloTranscripcionPath);
 
-// Ruta a la vista del formulario de transcripción
+
 $vistaFormularioTranscripcion = "views/reportes/rtranscripcion.php";
 if (!is_file($vistaFormularioTranscripcion)) {
     die("Error crítico: No se encuentra el archivo de la vista del formulario (rtranscripcion.php). Contacte al administrador.");
 }
-$oReporteAsignacion = new Transcripcion(); // Using the class from rtranscripcionaaa.php
+$oReporteAsignacion = new Transcripcion(); 
 $anios = $oReporteAsignacion->obtenerAnios();
 $fases = $oReporteAsignacion->obtenerFases();
 
-if (isset($_POST['generar_transcripcion'])) { // Button name from the form
+if (isset($_POST['generar_transcripcion'])) { 
     $selectedAnio = isset($_POST['anio']) ? $_POST['anio'] : '';
-    $selectedFase = isset($_POST['fase']) ? $_POST['fase'] : ''; // Can be empty for "Todas las Fases"
+    $selectedFase = isset($_POST['fase']) ? $_POST['fase'] : ''; 
 
     if (empty($selectedAnio)) {
-        // Server-side validation fallback, though JS should catch it.
-        // Consider a more user-friendly error display than die().
+       
         die("Error: El Año es un filtro requerido. Por favor, regrese y seleccione un año.");
     }
 
@@ -51,7 +50,7 @@ if (isset($_POST['generar_transcripcion'])) { // Button name from the form
             $groupedData[$teacherKey]['assignments'][] = [
                 'NombreUnidadCurricular' => $row['NombreUnidadCurricular'],
                 'NombreSeccion' => $row['NombreSeccion'],
-                'FaseHorario' => $row['FaseHorario'] // Crucial: Store FaseHorario for each assignment
+                'FaseHorario' => $row['FaseHorario'] 
             ];
         }
     }

@@ -1,7 +1,7 @@
 <?php
 require_once('model/dbconnection.php');
 
-class Reporthorariodocente extends Connection // Nombre de clase cambiado
+class Reporthorariodocente extends Connection 
 {
     private $docente_id;
 
@@ -23,7 +23,7 @@ class Reporthorariodocente extends Connection // Nombre de clase cambiado
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error en Reporthorariodocente::getDocentes: " . $e->getMessage()); // Nombre de clase cambiado
+            error_log("Error en Reporthorariodocente::getDocentes: " . $e->getMessage()); 
             return false;
         }
     }
@@ -39,7 +39,7 @@ class Reporthorariodocente extends Connection // Nombre de clase cambiado
             $result = $p->fetch(PDO::FETCH_ASSOC);
             return $result ? $result['NombreCompleto'] : null;
         } catch (PDOException $e) {
-            error_log("Error en Reporthorariodocente::getDocenteNameById: " . $e->getMessage()); // Nombre de clase cambiado
+            error_log("Error en Reporthorariodocente::getDocenteNameById: " . $e->getMessage());
             return null;
         }
     }
@@ -67,7 +67,7 @@ class Reporthorariodocente extends Connection // Nombre de clase cambiado
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error en Reporthorariodocente::getDistinctTimeSlotsForDocente: " . $e->getMessage()); // Nombre de clase cambiado
+            error_log("Error en Reporthorariodocente::getDistinctTimeSlotsForDocente: " . $e->getMessage()); 
             return [];
         }
     }
@@ -103,6 +103,7 @@ class Reporthorariodocente extends Connection // Nombre de clase cambiado
                         tbl_seccion s ON sh.sec_id = s.sec_id
                     WHERE
                         ud.doc_id = :docente_id_param
+                        AND ud.uc_doc_estado  = '1'
                     ORDER BY
                         uh.hor_inicio ASC, uh.hor_dia ASC, u.uc_codigo ASC, s.sec_codigo ASC, e.esp_codigo ASC";
 

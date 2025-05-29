@@ -1,18 +1,17 @@
 <?php
-// controller/reportes/rdefinitivoemitcon.php
 
-require_once 'public/lib/dompdf/vendor/autoload.php'; // Adjust path
 
+require_once 'public/lib/dompdf/vendor/autoload.php'; 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-$modeloPath = "model/reportes/rdefinitivo.php"; // Adjust path
+$modeloPath = "model/reportes/rdefinitivo.php"; 
 if (!is_file($modeloPath)) {
     die("Error: No se encuentra el archivo del modelo ($modeloPath).");
 }
 require_once($modeloPath);
 
-$vistaPath = "views/reportes/rdefinitivo.php"; // Adjust path
+$vistaPath = "views/reportes/rdefinitivo.php"; 
 if (!is_file($vistaPath)) {
     die("Error: No se encuentra el archivo de la vista ($vistaPath).");
 }
@@ -23,15 +22,15 @@ $listaFases = $oDefinitivo->obtenerFases();
 
 if (isset($_POST['generar_definitivo_emit'])) {
     $selectedAnio = isset($_POST['anio_def']) ? $_POST['anio_def'] : '';
-    $selectedFase = isset($_POST['fase_def']) ? $_POST['fase_def'] : ''; // Puede estar vacío
+    $selectedFase = isset($_POST['fase_def']) ? $_POST['fase_def'] : ''; 
 
     if (empty($selectedAnio)) {
-        // Esto debería ser manejado por la validación del form, pero como fallback:
+      
         die("Error: El año es un filtro requerido. Por favor, regrese y seleccione un año.");
     }
 
     $oDefinitivo->set_anio($selectedAnio);
-    $oDefinitivo->set_fase($selectedFase); // Pasamos la fase (vacía o con valor)
+    $oDefinitivo->set_fase($selectedFase); 
 
     $datosReporte = $oDefinitivo->obtenerDatosDefinitivoEmit();
 
@@ -49,20 +48,20 @@ if (isset($_POST['generar_definitivo_emit'])) {
             $groupedData[$teacherKey]['assignments'][] = [
                 'NombreUnidadCurricular' => $row['NombreUnidadCurricular'],
                 'NombreSeccion' => $row['NombreSeccion'],
-                'FaseHorario' => $row['FaseHorario'] // Importante para el modo "Todas las Fases"
+                'FaseHorario' => $row['FaseHorario'] 
             ];
         }
     }
 
     $reportMainTitle = "ORGANIZACIÓN DOCENTE " . htmlspecialchars($selectedAnio);
     $reportSubTitle = "PNF en Informática";
-    $faseHeaderDisplay = ""; // Para el encabezado especial de fase única
+    $faseHeaderDisplay = ""; 
     $isAllPhasesMode = empty($selectedFase);
 
     if (!$isAllPhasesMode) {
         $faseHeaderDisplay = "FASE " . htmlspecialchars($selectedFase);
     } else {
-        $reportSubTitle .= " - TODAS LAS FASES"; // O ajustar el título principal
+        $reportSubTitle .= " - TODAS LAS FASES"; 
     }
 
     $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
@@ -94,7 +93,7 @@ if (isset($_POST['generar_definitivo_emit'])) {
     $html .= '<div class="report-sub-title">' . $reportSubTitle . '</div>';
 
     $html .= '<table><thead>';
-    if (!$isAllPhasesMode) { // Estilo helli.PNG para fase única
+    if (!$isAllPhasesMode) {
         $html .= '<tr>';
         $html .= '<th rowspan="2" class="col-docente">DOCENTE</th>';
         $html .= '<th rowspan="2" class="col-cedula">CÉDULA</th>';
@@ -104,7 +103,7 @@ if (isset($_POST['generar_definitivo_emit'])) {
         $html .= '<th class="col-uc">UNIDAD CURRICULAR</th>';
         $html .= '<th class="col-seccion">SECCIÓN</th>';
         $html .= '</tr>';
-    } else { // Estilo para todas las fases (con columna Fase)
+    } else { 
         $html .= '<tr>';
         $html .= '<th class="col-docente">DOCENTE</th>';
         $html .= '<th class="col-cedula">CÉDULA</th>';

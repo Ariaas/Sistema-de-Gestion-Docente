@@ -1,5 +1,5 @@
 <?php
-// controller/reportes/ruccon.php
+
 
 require_once 'public/lib/dompdf/vendor/autoload.php';
 
@@ -7,10 +7,10 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 
 
-if (!is_file("model/reportes/rcargaAcademica.php")) { // Cambiado a rucmodel.php si ese es el nombre de tu archivo de modelo
+if (!is_file("model/reportes/rcargaAcademica.php")) { 
     die("Error crítico: No se encuentra el archivo del modelo (rucmodel.php). Contacte al administrador.");
 }
-require_once("model/reportes/rcargaAcademica.php"); // Cambiado a rucmodel.php
+require_once("model/reportes/rcargaAcademica.php"); 
 
 $vistaFormularioUc = "views/reportes/rcargaAcademica.php";
 if (!is_file($vistaFormularioUc)) {
@@ -41,18 +41,18 @@ if (isset($_POST['generar_uc'])) {
         }
     }
 
-    // --- Pre-procesamiento de datos para rowspan ---
+   
     $groupedData = [];
     if ($unidades && count($unidades) > 0) {
         foreach ($unidades as $uc) {
             $trayectoNum = $uc['Número de Trayecto'];
             $seccionCod = $uc['Código de Sección'];
-            // Guardar la fila completa para tener todos los datos necesarios
+          
             $groupedData[$trayectoNum][$seccionCod][] = $uc;
         }
     }
 
-    // --- INICIO DE GENERACIÓN DE HTML PARA EL PDF ---
+   
     $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
     $html .= '<title>' . htmlspecialchars($reportTitle) . '</title>';
     $html .= '<style>
@@ -132,8 +132,7 @@ if (isset($_POST['generar_uc'])) {
     $options->set('isHtml5ParserEnabled', true);
     $options->set('isRemoteEnabled', true);
     $options->set('defaultFont', 'Arial');
-    // Habilitar `isPhpEnabled` podría ser necesario si el HTML contiene scripts PHP, pero aquí no es el caso.
-    // $options->set('isPhpEnabled', true); // Usualmente no se necesita para HTML generado
+   
 
     $dompdf = new Dompdf($options);
     $dompdf->loadHtml($html);

@@ -1,12 +1,12 @@
 <?php
-// controller/reportes/rhordocentecon.php
+
 
 require_once 'public/lib/dompdf/vendor/autoload.php'; 
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Rutas y nombres de clase actualizados
+
 $modeloPath = "model/reportes/rhordocente.php"; 
 if (!is_file($modeloPath)) {
     die("Error: No se encuentra el archivo del modelo ($modeloPath).");
@@ -18,18 +18,17 @@ if (!is_file($vistaPath)) {
     die("Error: No se encuentra el archivo de la vista ($vistaPath).");
 }
 
-$oHorarioDocente = new Reporthorariodocente(); // Nombre de clase actualizado
+$oHorarioDocente = new Reporthorariodocente(); 
 $listaDocentes = $oHorarioDocente->getDocentes();
 
-// Renombrar función helper para evitar conflictos si se incluyen múltiples controladores
+
 function format_time_short_rhd($time_str) { 
     if (empty($time_str) || strlen($time_str) < 5) return '';
-    return substr($time_str, 0, 5); // HH:MM
+    return substr($time_str, 0, 5);
 }
 
-// Nombre del botón de submit actualizado
 if (isset($_POST['generar_rhd_report'])) { 
-    // Nombre del campo select actualizado
+    
     $selectedDocenteId = isset($_POST['docente_rhd_name']) ? $_POST['docente_rhd_name'] : ''; 
 
     if (empty($selectedDocenteId)) {
@@ -175,7 +174,7 @@ if (isset($_POST['generar_rhd_report'])) {
     $dompdf->render();
     if (ob_get_length()) ob_end_clean();
     $safeDocenteName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $docenteNombreCompleto);
-    $outputFileName = "HorarioDocente_" . $safeDocenteName . ".pdf"; // Nombre de archivo actualizado
+    $outputFileName = "HorarioDocente_" . $safeDocenteName . ".pdf"; 
     $dompdf->stream($outputFileName, array("Attachment" => false));
     exit;
 

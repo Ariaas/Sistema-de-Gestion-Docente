@@ -1,15 +1,12 @@
 <?php
-// views/reportes/rtranscripcion.php
-// El manejo de sesión (comentado) es importante, pero puede hacerse globalmente.
-// if (session_status() == PHP_SESSION_NONE) { session_start(); }
-// if (!isset($_SESSION['name'])) { header('Location: index.php?pagina=login'); exit(); }
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <?php require_once("public/components/head.php"); // Incluye tus metas, viewport, y CSS globales ?>
+    <?php require_once("public/components/head.php");  ?>
     <title>Reporte de Asignación de Secciones</title> 
     <style>
         .form-label {
@@ -20,13 +17,13 @@
 </head>
 
 <body>
-    <?php require_once("public/components/sidebar.php"); // Tu menú lateral ?>
+    <?php require_once("public/components/sidebar.php");  ?>
 
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
         <div class="container" style="width: 85%; max-width: 900px;">
             <section class="py-3">
                 <div class="text-center mb-4">
-                    {/* Updated title to match report content */}
+                    
                     <h2 class="text-primary">Reporte de Asignación de Secciones</h2>
                 </div>
 
@@ -82,7 +79,7 @@
         </div>
     </main>
 
-    <?php require_once("public/components/footer.php"); // Tu pie de página ?>
+    <?php require_once("public/components/footer.php");  ?>
 
     <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="public/js/rtranscripcion.js"></script>

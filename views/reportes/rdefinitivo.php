@@ -1,11 +1,10 @@
 <?php
-// views/reportes/rdefinitivoemit.php
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <?php require_once("public/components/head.php"); // Global head components ?>
+    <?php require_once("public/components/head.php");  ?>
     <title>Reporte Definitivo EMIT por Fase y Año</title>
     <style>
         .form-label { font-weight: 500; }
@@ -13,7 +12,7 @@
     </style>
     </head>
 <body>
-    <?php require_once("public/components/sidebar.php"); // Sidebar component ?>
+    <?php require_once("public/components/sidebar.php");  ?>
 
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
         <div class="container" style="width: 85%; max-width: 900px;">
@@ -72,7 +71,7 @@
         </div>
     </main>
 
-    <?php require_once("public/components/footer.php"); // Footer component ?>
+    <?php require_once("public/components/footer.php");  ?>
 
     <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="public/js/rdefinitivo.js"></script>

@@ -1,12 +1,12 @@
 <?php
-// controller/reportes/ruccon.php (asumiendo este es el nombre de tu archivo controlador)
+
 
 require_once 'public/lib/dompdf/vendor/autoload.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Corregir el nombre y la ruta al archivo del modelo
+
 if (!is_file("model/reportes/ruc.php")) {
     die("Error crítico: No se encuentra el archivo del modelo (rucm.php). Contacte al administrador.");
 }
@@ -17,20 +17,20 @@ if (!is_file($vistaFormularioUc)) {
     die("Error crítico: No se encuentra el archivo de la vista del formulario (ruc.php). Contacte al administrador.");
 }
 
-$oUc = new Ruc(); // Instancia del modelo
-$trayectos = $oUc->obtenerTrayectos(); // Para el desplegable de Trayectos
-$unidadesc = $oUc->obtenerUc();       // Para el desplegable de Unidades Curriculares
+$oUc = new Ruc(); 
+$trayectos = $oUc->obtenerTrayectos(); 
+$unidadesc = $oUc->obtenerUc();       
 
-// Procesar la generación del PDF
+
 if (isset($_POST['generar_uc'])) {
     $oUc->set_trayecto(isset($_POST['trayecto']) ? $_POST['trayecto'] : '');
-    // 'ucurricular' es el name del select en tu ruc.php, que envía el uc_id
+    
     $oUc->set_nombreUnidad(isset($_POST['ucurricular']) ? $_POST['ucurricular'] : '');
 
     $unidadesOriginal = $oUc->obtenerUnidadesCurriculares();
 
-    // Determinar el título principal del reporte
-    $reportTitle = "Unidad Curricular"; // Título por defecto
+   
+    $reportTitle = "Unidad Curricular"; 
     $nombreTrayectoFiltrado = null;
     if (!empty($_POST['trayecto'])) {
         foreach ($trayectos as $t) {
@@ -43,7 +43,7 @@ if (isset($_POST['generar_uc'])) {
             $reportTitle = "TRAYECTO " . mb_strtoupper($nombreTrayectoFiltrado);
         }
     }
-    // Añadir nombre de UC al título si se filtra por una específica
+    
     if (!empty($_POST['ucurricular']) && $unidadesc) {
         $nombreUcFiltrada = "";
         foreach ($unidadesc as $ucSelect) {
@@ -58,7 +58,7 @@ if (isset($_POST['generar_uc'])) {
     }
 
 
-    // --- Pre-procesamiento de datos para rowspan según el formato de UNIDAD.jpg ---
+    
     $ucGroupedData = [];
     if ($unidadesOriginal && count($unidadesOriginal) > 0) {
         foreach ($unidadesOriginal as $row) {
@@ -69,7 +69,7 @@ if (isset($_POST['generar_uc'])) {
         }
     }
 
-    // --- INICIO DE GENERACIÓN DE HTML PARA EL PDF ---
+  
     $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
     $html .= '<title>' . htmlspecialchars($reportTitle) . '</title>';
     $html .= '<style>

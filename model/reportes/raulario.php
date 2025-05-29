@@ -87,7 +87,7 @@ class AularioReport extends Connection
                     LEFT JOIN
                         tbl_docente d ON ud.doc_id = d.doc_id
                     WHERE
-                        h_link.esp_id = :espacio_id_param
+                        h_link.esp_id = :espacio_id_param AND ud.uc_doc_estado  = '1'
                     ORDER BY
                         uh.hor_inicio ASC, u.uc_codigo ASC, s.sec_codigo ASC";
 

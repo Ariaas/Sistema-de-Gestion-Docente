@@ -1,15 +1,13 @@
 <?php
-// views/reportes/ruc.php
-// El manejo de sesión (comentado) es importante, pero puede hacerse globalmente.
-// if (session_status() == PHP_SESSION_NONE) { session_start(); }
-// if (!isset($_SESSION['name'])) { header('Location: index.php?pagina=login'); exit(); }
+// 
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <?php require_once("public/components/head.php"); // Incluye tus metas, viewport, y CSS globales 
+    <?php require_once("public/components/head.php"); 
     ?>
     <title>Reportes Unidades Curriculares por Sección</title>
     <style>
@@ -22,7 +20,7 @@
 </head>
 
 <body>
-    <?php require_once("public/components/sidebar.php"); // Tu menú lateral 
+    <?php require_once("public/components/sidebar.php"); 
     ?>
 
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
@@ -41,7 +39,7 @@
                                 <select class="form-select form-select-sm" name="trayecto" id="trayecto">
                                     <option value="">-- Todos los Trayectos --</option>
                                     <?php
-                                    if (!empty($trayectos)) { // $trayectos viene del controlador
+                                    if (!empty($trayectos)) { 
                                         foreach ($trayectos as $itemTrayecto) {
                                             echo "<option value='" . htmlspecialchars($itemTrayecto['tra_id']) . "'>" . htmlspecialchars($itemTrayecto['tra_numero']) . "</option>";
                                         }
@@ -56,10 +54,10 @@
                                 <select class="form-select form-select-sm" name="seccion" id="seccion">
                                     <option value="">Seleccione una seccion</option>
                                     <?php
-                                    // $secciones será pasada desde el controlador
+                                   
                                     if (!empty($secciones)) {
                                         foreach ($secciones as $itemSeccion) {
-                                            // Asumimos que obtenerSecciones() devuelve 'sec_id' y 'sec_codigo'
+                                           
                                             echo "<option value='" . htmlspecialchars($itemSeccion['sec_id']) . "'>" . htmlspecialchars($itemSeccion['sec_codigo']) . "</option>";
                                         }
                                     } else {
@@ -86,11 +84,11 @@
         </div>
     </main>
 
-    <?php require_once("public/components/footer.php"); // Tu pie de página 
+    <?php require_once("public/components/footer.php"); 
     ?>
 
     <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="public/js/rcargaAcademica.js"></script> {/* Asegúrate que este archivo JS exista */}
+    <script type="text/javascript" src="public/js/rcargaAcademica.js"></script>
 </body>
 
 </html>

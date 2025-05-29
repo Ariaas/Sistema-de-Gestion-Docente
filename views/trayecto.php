@@ -60,7 +60,14 @@ if (!isset($_SESSION['name'])) {
                                     <!-- Campo Número -->
                                     <div class="col-md-6">
                                         <label for="trayectoNumero" class="form-label">Número</label>
-                                        <input class="form-control" type="text" id="trayectoNumero" name="trayectoNumero" required>
+                                        <select class="form-select" name="trayectoNumero" id="trayectoNumero">
+                                            <option value="" disabled selected>Seleccione un Número</option>
+                                            <option value="0">Trayecto Inicial</option>
+                                            <option value="1">Trayecto 1</option>
+                                            <option value="2">Trayecto 2</option>
+                                            <option value="3">Trayecto 3</option>
+                                            <option value="4">Trayecto 4</option>
+                                        </select>
                                         <span id="strayectoNumero"></span>
                                     </div>
 

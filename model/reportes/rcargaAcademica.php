@@ -1,7 +1,6 @@
 <?php
-// model/reportes/rucmodel.php
 
-require_once('model/dbconnection.php'); // Asegúrate que esta ruta y el archivo sean correctos.
+require_once('model/dbconnection.php'); 
 
 class Carga extends Connection
 {
@@ -40,7 +39,7 @@ class Carga extends Connection
 
             $conditions = [];
             $params = [];
-
+            $conditions[] = "ud.uc_doc_estado  = '1'";
             if (!empty($this->trayecto)) {
                 $conditions[] = "u.tra_id = :trayecto_id";
                 $params[':trayecto_id'] = $this->trayecto;
@@ -55,7 +54,7 @@ class Carga extends Connection
                 $sqlBase .= " WHERE " . implode(" AND ", $conditions);
             }
 
-            // Ordenación crucial para la agrupación con rowspan
+           
             $sqlBase .= " ORDER BY t.tra_numero, s.sec_codigo, u.uc_nombre";
 
             $resultado = $co->prepare($sqlBase);

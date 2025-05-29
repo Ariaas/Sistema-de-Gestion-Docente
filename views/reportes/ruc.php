@@ -1,19 +1,19 @@
 <?php
-// views/reportes/ruc.php
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <?php require_once("public/components/head.php"); // Asegúrate que esta ruta exista y sea correcta 
+    <?php require_once("public/components/head.php"); 
     ?>
     <title>Reportes Unidades Curriculares</title>
 
 </head>
 
 <body>
-    <?php require_once("public/components/sidebar.php"); // Asegúrate que esta ruta exista y sea correcta 
+    <?php require_once("public/components/sidebar.php"); 
     ?>
 
     <main class="main-content flex-shrink-0" style="padding-top: 20px;">
@@ -49,7 +49,7 @@
                                     <?php
                                     
                                     if (!empty($unidadesc)) {
-                                        foreach ($unidadesc as $unidadc) { // Variable de bucle renombrada
+                                        foreach ($unidadesc as $unidadc) { 
                                             echo "<option value='" . htmlspecialchars($unidadc['uc_id']) . "'>" . htmlspecialchars($unidadc['uc_nombre']) . "</option>";
                                         }
                                     } else {
@@ -74,7 +74,7 @@
         </div>
     </main>
 
-    <?php require_once("public/components/footer.php"); // Asegúrate que esta ruta exista y sea correcta 
+    <?php require_once("public/components/footer.php");
     ?>
 
     <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>

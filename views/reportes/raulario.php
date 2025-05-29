@@ -1,11 +1,10 @@
 <?php
-// views/reportes/raularioreport.php
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <?php require_once("public/components/head.php"); // Global head components ?>
+    <?php require_once("public/components/head.php");  ?>
     <title>Reporte de Aulario (Horario por Aula)</title>
     <style>
         .form-label { font-weight: 500; }
@@ -30,7 +29,7 @@
                                 <select class="form-select form-select-sm" name="espacio_aul" id="espacio_aul" required>
                                     <option value="">-- Seleccione un Aula --</option>
                                     <?php
-                                    if (!empty($listaEspacios)) { // $listaEspacios from controller
+                                    if (!empty($listaEspacios)) { 
                                         foreach ($listaEspacios as $espacio) {
                                             echo "<option value='" . htmlspecialchars($espacio['esp_id']) . "'>"
                                                . htmlspecialchars($espacio['esp_codigo']) . " (" . htmlspecialchars($espacio['esp_tipo']) . ")"

@@ -26,9 +26,9 @@ class DefinitivoEmit extends Connection
     {
         $co = $this->con();
         try {
-            // Año es mandatorio para este reporte
+           
             if (empty($this->anio)) {
-                 return []; // No hay año, no hay reporte específico
+                 return []; 
             }
 
             $sqlBase = "SELECT
@@ -37,7 +37,7 @@ class DefinitivoEmit extends Connection
                             d.doc_cedula AS `CedulaDocente`,
                             u.uc_nombre AS `NombreUnidadCurricular`,
                             s.sec_codigo AS `NombreSeccion`,
-                            h.hor_fase AS `FaseHorario` -- Necesario para mostrar en columna o para el header
+                            h.hor_fase AS `FaseHorario` 
                         FROM
                             tbl_docente d
                         INNER JOIN
@@ -54,7 +54,7 @@ class DefinitivoEmit extends Connection
                             seccion_horario sh ON h.hor_id = sh.hor_id
                         INNER JOIN
                             tbl_seccion s ON sh.sec_id = s.sec_id
-                        WHERE 1=1";
+                        WHERE 1=1 AND ud.uc_doc_estado  = '1'";
 
             $params = [];
 
@@ -63,14 +63,12 @@ class DefinitivoEmit extends Connection
                 $params[':anio_val'] = $this->anio;
             }
 
-            // Si se especifica una fase, se filtra por ella.
-            // Si no, se obtienen todas las fases (no se añade condición de fase).
             if (!empty($this->fase)) {
                 $sqlBase .= " AND h.hor_fase = :fase_val";
                 $params[':fase_val'] = $this->fase;
             }
 
-            // Ordenar por docente, luego por fase (si se muestran varias), luego UC y sección.
+            
             $sqlBase .= " ORDER BY `NombreCompletoDocente`, h.hor_fase, u.uc_nombre, s.sec_codigo";
 
             $resultado = $co->prepare($sqlBase);
