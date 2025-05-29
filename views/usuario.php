@@ -41,20 +41,7 @@
                     </table>
                 </div>
             </div>
-            <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
-                <div class="table-responsive" style="overflow-x: hidden;">
-                    <table class="table table-striped table-hover w-100" id="tablausuario">
-                        <thead>
-                            <tr>
-                                <th style="display: none;">ID Permiso</th>
-                                <th>Permiso</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultadoconsulta"></tbody>
-                    </table>
-                </div>
-            </div>
+          
         </section>
         <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
