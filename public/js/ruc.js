@@ -3,14 +3,14 @@
 document.addEventListener('DOMContentLoaded', function () {
     const generarBtnUc = document.getElementById("generar_uc");
     const trayectoSelect = document.getElementById("trayecto");
-    const ucurricularSelect = document.getElementById("ucurricular"); // ID del select de UC
+    const ucurricularSelect = document.getElementById("ucurricular"); 
 
     function limpiaFormularioUnidadCurricular() {
         if (trayectoSelect) {
-            trayectoSelect.value = ""; // Resetea a la opción por defecto
+            trayectoSelect.value = ""; 
         }
-        if (ucurricularSelect) { // Limpiar el desplegable de Unidad Curricular
-            ucurricularSelect.value = ""; // Resetea a la opción por defecto
+        if (ucurricularSelect) { 
+            ucurricularSelect.value = ""; 
         }
     }
 

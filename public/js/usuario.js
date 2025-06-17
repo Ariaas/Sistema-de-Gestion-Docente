@@ -17,7 +17,7 @@ function validarExiste() {
 }
 
 function destruyeDT() {
-  // se destruye el datatablet
+  
   if ($.fn.DataTable.isDataTable("#tablausuario")) {
     $("#tablausuario").DataTable().destroy();
   }
@@ -100,7 +100,7 @@ $(document).ready(function () {
     validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#contrasenia"),$("#scontrasenia"),"Solo letras y numeros entre 4 y 15 caracteres");
 
     });
-  //////////////////////////////BOTONES/////////////////////////////////////
+ 
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
@@ -124,7 +124,7 @@ $(document).ready(function () {
       }
     }
     if ($(this).text() == "ELIMINAR") {  
-        // Mostrar confirmación usando SweetAlert
+       
         Swal.fire({
           title: "¿Está seguro de eliminar este espacio?",
           text: "Esta acción no se puede deshacer.",
@@ -136,7 +136,7 @@ $(document).ready(function () {
           cancelButtonText: "Cancelar",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Si se confirma, proceder con la eliminación
+            
             var datos = new FormData();
             datos.append("accion", "eliminar");
             datos.append("usuarioId", $("#usuarioId").val()); 
@@ -164,7 +164,7 @@ $(document).ready(function () {
 
 function validarenvio() {
 
-  // let rol = $("#rol").val();
+ 
   
    if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#usuarionombre"),$("#susuarionombre"),"Este formato permite de 4 a 15 carácteres") == 0) {
         muestraMensaje("error",4000,"ERROR!","El usuario debe coincidir con el formato <br/>" + 
@@ -174,14 +174,10 @@ function validarenvio() {
     muestraMensaje("error", 4000, "ERROR!", "El correo del usuario <br/> No debe estar vacío, ni contener más de 30 carácteres");
     return false;
 }
-//   else if (rol === null || rol === "0") {
-//         muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un rol!"); 
-//           return false;
 
-// }
     return true;
 }
-// funcion para pasar de la lista a el formulario
+
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
 

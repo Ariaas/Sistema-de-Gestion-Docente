@@ -1,4 +1,4 @@
-// public/js/raularioreport.js
+
 
 document.addEventListener('DOMContentLoaded', function () {
     const generarBtn = document.getElementById("generar_aulario_btn");
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (generarBtn) {
         generarBtn.addEventListener("click", function(event) {
             if (espacioSelect && espacioSelect.value === "") {
-                event.preventDefault(); // Stop form submission
+                event.preventDefault(); 
                 Swal.fire({
                     icon: 'warning',
                     title: 'Campo Requerido',

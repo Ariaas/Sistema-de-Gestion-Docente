@@ -1,4 +1,4 @@
-//Función para validar por Keypress
+
 function validarkeypress(er, e) {
     key = e.keyCode;
 
@@ -11,7 +11,7 @@ function validarkeypress(er, e) {
     }
 }
 
-  //Función para validar por keyup
+
 function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
     a = er.test(etiqueta.val());
     if (a) {

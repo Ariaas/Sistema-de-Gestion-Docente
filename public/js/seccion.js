@@ -24,7 +24,7 @@ function Cambiar(){
 }
 
 function destruyeDT(selector) {
-  // Se destruye el datatable
+  
   if ($.fn.DataTable.isDataTable(selector)) {
     $(selector).DataTable().destroy();
   }
@@ -190,7 +190,7 @@ $(document).ready(function () {
       }
     }
     if ($(this).text() == "ELIMINAR") {  
-        // Mostrar confirmación usando SweetAlert
+        
         Swal.fire({
           title: "¿Está seguro de eliminar este espacio?",
           text: "Esta acción no se puede deshacer.",
@@ -202,7 +202,7 @@ $(document).ready(function () {
           cancelButtonText: "Cancelar",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Si se confirma, proceder con la eliminación
+            
             var datos = new FormData();
             datos.append("accion", "eliminar");
             datos.append("seccionId", $("#seccionId").val());
@@ -250,7 +250,7 @@ function validarenvio() {
   return true;
 }
 
-// funcion para pasar de la lista a el formulario
+
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
 
@@ -284,7 +284,7 @@ function pone(pos, accion) {
   $("#modal1").modal("show");
 }
 
-//funcion que envia y recibe datos por AJAX
+
 function enviaAjax(datos) {
   $.ajax({
     async: true,
@@ -295,7 +295,7 @@ function enviaAjax(datos) {
     processData: false,
     cache: false,
     beforeSend: function () {},
-    timeout: 10000, //tiempo maximo de espera por la respuesta del servidor
+    timeout: 10000, 
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);

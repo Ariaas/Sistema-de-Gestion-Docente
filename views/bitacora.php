@@ -39,12 +39,12 @@ if (!isset($_SESSION['name'])) {
 
 
     </main>
-    <!-- Footer -->
+   
     <?php require_once("public/components/footer.php"); ?>
-    <!-- Scripts -->
+    
     <script type="text/javascript" src="public/js/bitacora.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
+    
 </body>
 
 </html>

@@ -1,5 +1,5 @@
 <?php
-// views/reportes/rhordocenteview.php
+
 ?>
 <!DOCTYPE html>
 <html lang="es">

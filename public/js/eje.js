@@ -5,7 +5,7 @@ function Listar() {
 }
 
 function destruyeDT() {
-  // se destruye el datatablet
+ 
   if ($.fn.DataTable.isDataTable("#tablaeje")) {
     $("#tablaeje").DataTable().destroy();
   }
@@ -14,13 +14,7 @@ function destruyeDT() {
 function crearDT() {
   if (!$.fn.DataTable.isDataTable("#tablaeje")) {
     $("#tablaeje").DataTable({
-      ////
-      // data: [
-      //   ["001", "Aula", "Acciones"],
-      //   ["002", "Laboratorio", "Acciones"],
-      // ],
-      // columns: [{ title: "Codigo" }, { title: "Tipo" }, { title: "Acciones" }],
-      ////
+
       paging: true,
       lengthChange: true,
       searching: true,
@@ -130,7 +124,7 @@ $(document).ready(function () {
           "Seleccionó la categoria incorrecto <br/> por favor verifique nuevamente"
         );
       } else {
-        // Mostrar confirmación usando SweetAlert
+        
         Swal.fire({
           title: "¿Está seguro de eliminar este espacio?",
           text: "Esta acción no se puede deshacer.",
@@ -142,7 +136,7 @@ $(document).ready(function () {
           cancelButtonText: "Cancelar",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Si se confirma, proceder con la eliminación
+            
             var datos = new FormData();
             datos.append("accion", "eliminar");
             datos.append("ejeId", $("#ejeId").val());
@@ -183,7 +177,7 @@ function validarenvio() {
   return true;
 }
 
-// funcion para pasar de la lista a el formulario
+
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
 
@@ -204,7 +198,7 @@ function pone(pos, accion) {
   $("#modal1").modal("show");
 }
 
-//funcion que envia y recibe datos por AJAX
+
 function enviaAjax(datos) {
   $.ajax({
     async: true,
@@ -215,7 +209,7 @@ function enviaAjax(datos) {
     processData: false,
     cache: false,
     beforeSend: function () {},
-    timeout: 10000, //tiempo maximo de espera por la respuesta del servidor
+    timeout: 10000, 
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
@@ -275,7 +269,7 @@ function enviaAjax(datos) {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
       } catch (e) {
-        console.error("Error en análisis JSON:", e); // Registrar el error para depuración
+        console.error("Error en análisis JSON:", e); 
         alert("Error en JSON " + e.name + ": " + e.message);
       }
     },

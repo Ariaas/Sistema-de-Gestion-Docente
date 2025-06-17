@@ -1,26 +1,26 @@
 <?php
-// controller/reportes/rasignacionaulascon.php
 
-require_once 'public/lib/dompdf/vendor/autoload.php'; // Ajusta la ruta
+
+require_once 'public/lib/dompdf/vendor/autoload.php'; 
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-$modeloPath = "model/reportes/raulaAsignada.php"; // Ajusta la ruta
+$modeloPath = "model/reportes/raulaAsignada.php"; 
 if (!is_file($modeloPath)) {
     die("Error: No se encuentra el archivo del modelo ($modeloPath).");
 }
 require_once($modeloPath);
 
-$vistaPath = "views/reportes/raulaAsignada.php"; // Ajusta la ruta
+$vistaPath = "views/reportes/raulaAsignada.php"; 
 if (!is_file($vistaPath)) {
     die("Error: No se encuentra el archivo de la vista ($vistaPath).");
 }
 
-// Helper function para formatear hora (si la necesitas diferente a HH:MM:SS)
+
 function format_time_asign_aula($time_str) {
     if (empty($time_str) || strlen($time_str) < 5) return '';
-    return substr($time_str, 0, 5); // HH:MM
+    return substr($time_str, 0, 5); 
 }
 
 if (isset($_POST['generar_asignacion_aulas_report'])) {
@@ -48,7 +48,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     $html .= '<div class="report-main-title">' . htmlspecialchars($reportTitle) . '</div>';
 
     if ($aulasData && count($aulasData) > 0) {
-        // Definir el orden de los días para la presentación
+        
         $ordenDias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
         foreach ($aulasData as $aula) {
@@ -56,7 +56,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
             $html .= '<div class="aula-title">Aula: ' . htmlspecialchars($aula['esp_codigo']) . ' (Tipo: ' . htmlspecialchars($aula['esp_tipo']) . ')</div>';
             
             $tieneAsignacionesEstaAula = false;
-            // Iterar en el orden definido de días
+            
             foreach ($ordenDias as $diaNombre) {
                 if (isset($aula['horarios_por_dia'][$diaNombre]) && !empty($aula['horarios_por_dia'][$diaNombre])) {
                     $tieneAsignacionesEstaAula = true;
@@ -73,13 +73,13 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
                 $html .= '<p class="no-asignaciones">Esta aula no tiene asignaciones programadas.</p>';
             }
             $html .= '</div>';
-            // $html .= '<hr class="aula-separator">'; // Separador opcional
+           
         }
     } else {
         $html .= '<p style="text-align:center;">No se encontraron datos de asignación de aulas.</p>';
     }
     
-    // $html .= '<div class="footer">Generado el: ' . date('d/m/Y H:i:s') . '</div>'; // Pie de página opcional
+    
     $html .= '</body></html>';
 
     $html = mb_convert_encoding($html, 'UTF-8', 'UTF-8');
@@ -89,7 +89,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     $options->set('defaultFont', 'Arial');
     $dompdf = new Dompdf($options);
     $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait'); // Portrait es adecuado para una lista
+    $dompdf->setPaper('A4', 'portrait'); 
     $dompdf->render();
 
     if (ob_get_length()) ob_end_clean();
@@ -98,7 +98,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     exit;
 
 } else {
-    // Cargar la vista del formulario (que solo tiene el botón de generar)
+  
     require_once($vistaPath);
 }
 ?>

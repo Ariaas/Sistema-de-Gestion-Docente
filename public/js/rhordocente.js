@@ -1,7 +1,7 @@
-// public/js/rhordocente.js
+
 
 document.addEventListener('DOMContentLoaded', function () {
-    // IDs actualizados para coincidir con la vista
+
     const generarBtn = document.getElementById("generar_rhd_btn");
     const docenteSelect = document.getElementById("docente_rhd_id");
 

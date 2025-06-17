@@ -14,23 +14,23 @@ if (!isset($_SESSION['name'])) {
     <style>
         .accordion-button:not(.collapsed) {
             color: #0c63e4;
-            /* Color de texto del botón de acordeón cuando está activo */
+            
             background-color: #e7f1ff;
-            /* Color de fondo del botón de acordeón cuando está activo */
+            
         }
 
         .accordion-button:focus {
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
-            /* Sombra al enfocar */
+            
         }
 
         .faq-category h4 {
             margin-top: 2rem;
             margin-bottom: 1rem;
             color: #343a40;
-            /* Un color un poco más oscuro para los títulos de categoría */
+            
             border-bottom: 2px solid #0d6efd;
-            /* Línea azul debajo del título de categoría */
+            
             padding-bottom: 0.5rem;
         }
 

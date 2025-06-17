@@ -24,7 +24,7 @@ function Listar() {
   }
   
   function destruyeDT(selector) {
-    // Se destruye el datatable
+    
     if ($.fn.DataTable.isDataTable(selector)) {
       $(selector).DataTable().destroy();
     }
@@ -544,7 +544,7 @@ $(document).on("click", "#asignarDocentes", function () {
     datos.append("docentes", JSON.stringify(carritoDocentes.map(d => d.id)));
     datos.append("ucs", JSON.stringify([ucSeleccionada]));
     enviaAjax(datos);
-    // Limpiar select y lista de docentes después de asignar
+    
     $("#docenteUC").val("");
     $("#carritoDocentes").empty();
     carritoDocentes = [];

@@ -67,7 +67,7 @@ function crearDT() {
           data: null,
           orderable: false,
           render: function (data, type, row, meta) {
-            // MODIFICACIÓN AQUÍ: Aplicar estilo de píldora y espaciado
+            
             return `<button type="button" class="btn btn-info btn-sm rounded-pill me-1 ver-horario-docente"
                             data-fase="${row.hdo_lapso || ''}" data-anio="${row.tra_anio || ''}"
                             onclick='poneVerHorario(this)'>Ver Horario</button>

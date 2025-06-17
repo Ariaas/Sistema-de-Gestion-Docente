@@ -40,7 +40,7 @@ if (!isset($_SESSION['name'])) {
             </div>
         </section>
 
-        <!-- Modal -->
+       
         <div class="modal fade" tabindex="-1" role="dialog" id="modalArchivo">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">

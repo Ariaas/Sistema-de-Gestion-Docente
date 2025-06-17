@@ -1,19 +1,5 @@
 <?php
-// El manejo de sesión y permisos debería estar aquí o en un archivo incluido
-// if (session_status() === PHP_SESSION_NONE) {
-//     session_start();
-// }
-// if (!isset($_SESSION['name'])) {
-    // header('Location: .'); // Redirigir si no hay sesión
-    // exit();
-// }
-// $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
-// if (!in_array('reporte_prosecucion', $permisos)) {
-//    echo "No tiene permiso para acceder a este módulo.";
-//    exit;
-// }
 
-// Si $datosProsecucion está seteado, significa que estamos generando el HTML para el PDF
 if (isset($datosProsecucion) && !isset($datosProsecucion['error'])) {
 ?>
     <!DOCTYPE html>
@@ -174,9 +160,9 @@ if (isset($datosProsecucion) && !isset($datosProsecucion['error'])) {
     </html>
 
 <?php
-    // Fin del bloque de generación de PDF
+
 } else {
-    // Mostrar el formulario para seleccionar filtros
+    
 ?>
     <!DOCTYPE html>
     <html lang="es">
@@ -230,5 +216,5 @@ if (isset($datosProsecucion) && !isset($datosProsecucion['error'])) {
 
     </html>
 <?php
-} // Fin del else (mostrar formulario)
+} 
 ?>

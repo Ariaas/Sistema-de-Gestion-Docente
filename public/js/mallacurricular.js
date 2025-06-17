@@ -2,7 +2,7 @@ let mallaSeleccionadaId = null;
 let carritoUCsParaMalla = [];
 let carritoCertificadosParaMalla = [];
 
-// Contenedores de las tablas
+
 const tablaPrincipalContainer = $("#tablaMallaPrincipalContainer");
 const tablaMallaUCContainer = $("#tablaMallaUCContainer");
 const tablaMallaCertContainer = $("#tablaMallaCertContainer");
@@ -94,7 +94,7 @@ $(document).ready(function () {
     tablaMallaUCContainer.hide();
     tablaMallaCertContainer.hide();
     if ($.fn.DataTable.isDataTable("#tablamalla")) {
-        // Es bueno ajustar la tabla principal también si su visibilidad pudo haber cambiado o si se modifica el DOM.
+        
         setTimeout(function() {
              $("#tablamalla").DataTable().columns.adjust().responsive.recalc();
         }, 50);
@@ -386,9 +386,9 @@ function enviaAjax(datos, origen = "") {
             }
             crearDT("#tablaMallaUC");
             if ($.fn.DataTable.isDataTable("#tablaMallaUC")) {
-                setTimeout(function() { // <--- Cambio aquí
+                setTimeout(function() { 
                     $("#tablaMallaUC").DataTable().columns.adjust().responsive.recalc();
-                }, 50); // Un pequeño delay
+                }, 50); 
             }
         } else if (origen === "consultar_asignaciones_cert_response" && lee.resultado === 'ok_asignaciones_cert') {
             destruyeDT("#tablaMallaCert");
@@ -407,9 +407,9 @@ function enviaAjax(datos, origen = "") {
             }
             crearDT("#tablaMallaCert");
             if ($.fn.DataTable.isDataTable("#tablaMallaCert")) {
-                 setTimeout(function() { // <--- Cambio aquí
+                 setTimeout(function() { 
                     $("#tablaMallaCert").DataTable().columns.adjust().responsive.recalc();
-                }, 50); // Un pequeño delay
+                }, 50); 
             }
         }
         else if (lee.resultado === 'error') { 
@@ -418,9 +418,9 @@ function enviaAjax(datos, origen = "") {
 
       } catch (e) {
         console.error("Error en análisis JSON:", e, "Respuesta:", respuesta);
-        // Mostrar parte de la respuesta si no es JSON válido
+       
         let errorMsg = "No se pudo procesar la respuesta del servidor: " + e.message;
-        if (typeof respuesta === 'string' && respuesta.length > 0 && respuesta.length < 500) { // Mostrar solo si no es demasiado larga
+        if (typeof respuesta === 'string' && respuesta.length > 0 && respuesta.length < 500) { 
             errorMsg += "<br><pre style='text-align:left; max-height: 100px; overflow-y:auto;'>" + respuesta.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</pre>";
         }
         muestraMensaje("error", 10000, "Error de Comunicación", errorMsg);

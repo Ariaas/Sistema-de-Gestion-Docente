@@ -16,14 +16,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 Inicio
             </span>
         </a>
-        <a href="?pagina=usuario" class="nav-link">
-            <span class="icon">
-                <img src="public/assets/icons/person.svg"></img>
-            </span>
-            <span class="description">
-                Gestionar Usuario
-            </span>
-        </a>
+        
         <?php if (!empty($permisos['Docentes'])): ?>
             <a href="?pagina=docente" class="nav-link">
                 <span class="icon">

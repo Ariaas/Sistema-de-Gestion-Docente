@@ -38,7 +38,7 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </section>
-        <!-- Modal -->
+       
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -52,14 +52,14 @@ if (!isset($_SESSION['name'])) {
 
                             <div class="container">
                                 <div class="row mb-3">
-                                    <!-- Campo Código -->
+                                    
                                     <div class="col-md-6">
                                         <label for="codigoEspacio" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio" placeholder="Ejemplo: H-12" required>
                                         <span id="scodigoEspacio" class="form-text"></span>
                                     </div>
 
-                                    <!-- Campo Tipo -->
+                                    
                                     <div class="col-md-6">
                                         <label for="tipoEspacio" class="form-label">Tipo</label>
                                         <select class="form-select" name="tipoEspacio" id="tipoEspacio" required>
@@ -81,16 +81,16 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-        <!-- Fin del Modal -->
+    
     </main>
-    <!-- Footer -->
+    
     <?php
     require_once("public/components/footer.php");
     ?>
-    <!-- Scripts -->
+    
     <script type="text/javascript" src="public/js/espacios.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
+    
 </body>
 
 </html>

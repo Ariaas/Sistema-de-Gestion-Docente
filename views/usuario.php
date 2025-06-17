@@ -127,9 +127,9 @@ if (!isset($_SESSION['name'])) {
                                             <option value="" disabled selected>Seleccione los permisos</option>
                                             <option value="1">Área</option>
                                             <option value="2">Respaldo</option>
-                                            <option value="3">categorias</option>
+                                            <option value="3">Categorias</option>
                                             <option value="4">Certificados</option>
-                                            <option value="5">docentes</option>
+                                            <option value="5">Docentes</option>
                                             <option value="6">Eje</option>
                                             <option value="7">Espacios</option>
                                             <option value="8">Seccion</option>

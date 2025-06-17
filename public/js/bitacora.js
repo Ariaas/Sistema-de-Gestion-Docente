@@ -5,7 +5,7 @@ function Listar() {
   }
   
   function destruyeDT() {
-    // se destruye el datatablet
+    
     if ($.fn.DataTable.isDataTable("#tablaBitacora")) {
       $("#tablaBitacora").DataTable().destroy();
     }
@@ -73,13 +73,7 @@ function Listar() {
   
   //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
   
-  /* function validarenvio() {
-    return true;
-  } */
-  
-  
-  
-  //funcion que envia y recibe datos por AJAX
+ 
   function enviaAjax(datos) {
     $.ajax({
       async: true,
@@ -90,7 +84,7 @@ function Listar() {
       processData: false,
       cache: false,
       beforeSend: function () {},
-      timeout: 10000, //tiempo maximo de espera por la respuesta del servidor
+      timeout: 10000, 
       success: function (respuesta) {
         try {
           var lee = JSON.parse(respuesta);
@@ -113,7 +107,7 @@ function Listar() {
             muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
           }
         } catch (e) {
-          console.error("Error en análisis JSON:", e); // Registrar el error para depuración
+          console.error("Error en análisis JSON:", e); 
           alert("Error en JSON " + e.name + ": " + e.message);
         }
       },
