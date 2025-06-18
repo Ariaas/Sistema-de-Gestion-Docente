@@ -162,12 +162,19 @@ $(document).ready(function () {
 });
 
 function validarenvio() {
-  return validarkeyup(
-    /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
-    $("#areaNombre"),
-    $("#sareaNombre"),
-    muestraMensaje("error", 4000, "ERROR", "El nombre del área <br/> No debe estar vacío y debe tener entre 4 y 30 caracteres")
-  ) == 1;
+  if (
+    validarkeyup(
+      /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+      $("#areaNombre"),
+      $("#sareaNombre"),
+      "El nombre debe tener entre 4 y 30 caracteres"
+    )
+  ) {
+    return true;
+  } else {
+    muestraMensaje("error", 4000, "ERROR", "El nombre del área <br/> No debe estar vacío y debe tener entre 4 y 30 caracteres");
+    return false;
+  }
 }
 
 function pone(pos, accion) {
