@@ -107,18 +107,18 @@ function Listar() {
       if ($(this).text() == "REGISTRAR") {
         if (validarenvio()) {
           var datos = new FormData();
-      datos.append("accion", "registrar");
-      datos.append("codigoUC", $("#codigoUC").val()); 
-      datos.append("nombreUC", $("#nombreUC").val()); 
-      datos.append("independienteUC", $("#independienteUC").val()); 
-      datos.append("asistidaUC", $("#asistidaUC").val()); 
-      datos.append("trayectoUC", $("#trayectoUC").val()); 
-      datos.append("ejeUC", $("#ejeUC").val()); 
-      datos.append("areaUC", $("#areaUC").val()); 
-      datos.append("creditosUC", $("#creditosUC").val()); 
-      datos.append("periodoUC", $("#periodoUC").val()); 
-      datos.append("electivaUC", $("#electivaUC").val()); 
-      datos.append("academicaUC", $("#academicaUC").val());     
+          datos.append("accion", "registrar");
+          datos.append("codigoUC", $("#codigoUC").val()); 
+          datos.append("nombreUC", $("#nombreUC").val()); 
+          datos.append("independienteUC", $("#independienteUC").val()); 
+          datos.append("asistidaUC", $("#asistidaUC").val()); 
+          datos.append("trayectoUC", $("#trayectoUC").val()); 
+          datos.append("ejeUC", $("#ejeUC").val()); 
+          datos.append("areaUC", $("#areaUC").val()); 
+          datos.append("creditosUC", $("#creditosUC").val()); 
+          datos.append("periodoUC", $("#periodoUC").val()); 
+          datos.append("electivaUC", $("#electivaUC").val()); 
+          datos.append("academicaUC", $("#academicaUC").val());     
   
           enviaAjax(datos);
         }

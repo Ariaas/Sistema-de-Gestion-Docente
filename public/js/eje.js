@@ -121,7 +121,7 @@ $(document).ready(function () {
           "error",
           4000,
           "ERROR!",
-          "Seleccionó la categoria incorrecto <br/> por favor verifique nuevamente"
+          "Seleccionó el eje incorrecto <br/> por favor verifique nuevamente"
         );
       } else {
         
