@@ -75,7 +75,7 @@ class Espacio extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El TRAYECTO colocado YA existe!';
+            $r['mensaje'] = 'ERROR! <br/> El ESPACIO colocado YA existe!';
         }
 
         return $r;
@@ -168,7 +168,7 @@ class Espacio extends Connection
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El TRAYECTO colocado YA existe!';
+                $r['mensaje'] = 'El ESPACIO colocado YA existe!';
             } 
         } catch (Exception $e) {
             $r['resultado'] = 'error';
