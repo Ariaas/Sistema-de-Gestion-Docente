@@ -2,11 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
+/*
 if (!is_file("model/" . $pagina . ".php")) {
     echo "Falta definir la clase " . $pagina;
     exit;
-}
+}*/
 require_once("model/" . $pagina . ".php");
 
 $obj4 = new Malla();
@@ -93,7 +93,7 @@ if (is_file("views/" . $pagina . ".php")) {
         exit;
     }
 
-    require_once("views/" . $pagina . ".php");
+    require_once("views/". $pagina . ".php");
 } else {
     echo "pagina en construccion";
 }
