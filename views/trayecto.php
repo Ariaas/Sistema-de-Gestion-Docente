@@ -30,6 +30,7 @@ if (!isset($_SESSION['name'])) {
                                 <th style="display: none;">ID</th>
                                 <th>Número</th>
                                 <th>Año</th>
+                                <th>Tipo</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -39,7 +40,7 @@ if (!isset($_SESSION['name'])) {
             </div>
         </section>
 
-        
+
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -57,12 +58,12 @@ if (!isset($_SESSION['name'])) {
                                         <input class="form-control" type="text" id="trayectoId" name="trayectoId">
                                         <span id="strayectoId"></span>
                                     </div>
-                                    
+
                                     <div class="col-md-6">
                                         <label for="trayectoNumero" class="form-label">Número</label>
                                         <select class="form-select" name="trayectoNumero" id="trayectoNumero">
                                             <option value="" disabled selected>Seleccione un Número</option>
-                                            <option value="0">Trayecto Inicial</option>
+                                            <option value="Inicial">Trayecto Inicial</option>
                                             <option value="1">Trayecto 1</option>
                                             <option value="2">Trayecto 2</option>
                                             <option value="3">Trayecto 3</option>
@@ -71,18 +72,31 @@ if (!isset($_SESSION['name'])) {
                                         <span id="strayectoNumero"></span>
                                     </div>
 
-                                    
+                                    <div class="col-md-6">
+                                        <label for="trayectoTipo" class="form-label">Tipo</label>
+                                        <select class="form-select" name="trayectoTipo" id="trayectoTipo">
+                                            <option value="" disabled selected>Seleccione un Tipo</option>
+                                            <option value="Regular">Regular</option>
+                                            <option value="Intensivo">Intensivo</option>
+                                        </select>
+                                        <span id="strayectoTipo"></span>
+                                    </div>
+
+                                </div>
+                                <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="trayectoAnio" class="form-label">Año</label>
                                         <select class="form-select" name="trayectoAnio" id="trayectoAnio" required>
-                                            <option value="" disabled selected>Seleccione un Año</option>
+                                            <option value="" disabled selected>Seleccione un año</option>
                                             <?php
-                                            $anoActual = date('Y');
-                                            for ($year = 1999; $year <= 2070; $year++):
-                                                $selected = ($year == $anoActual) ? ' selected' : '';
+                                            if (!empty($anios)) {
+                                                foreach ($anios as $anio) {
+                                                    echo "<option value='" . $anio['ani_id'] . "'>" . $anio['ani_anio'] . "</option>";
+                                                }
+                                            } else {
+                                                echo "<option value='' disabled>No hay años disponibles</option>";
+                                            }
                                             ?>
-                                                <option value="<?= $year ?>" <?= $selected ?>><?= $year ?></option>
-                                            <?php endfor; ?>
                                         </select>
                                         <span id="strayectoAnio"></span>
                                     </div>
@@ -97,7 +111,7 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-        
+
     </main>
     <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>

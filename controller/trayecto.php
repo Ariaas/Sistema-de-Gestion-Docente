@@ -9,6 +9,10 @@ if (!is_file("model/" . $pagina . ".php")) {
     exit;
 }
 require_once("model/" . $pagina . ".php");
+
+$t = new Trayecto();
+$anios = $t->obtenerAnio();
+
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
@@ -22,7 +26,6 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         $bitacora = new Bitacora();
 
-        $t = new Trayecto();
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
             echo json_encode($t->Listar());
@@ -35,11 +38,12 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'existe') {
             $t->setNumero($_POST['trayectoNumero']);
             $t->setAnio($_POST['trayectoAnio']);
-            $resultado = $t->Existe($_POST['trayectoNumero'], $_POST['trayectoAnio']);
+            $resultado = $t->Existe($_POST['trayectoNumero'], $_POST['trayectoAnio'], $_POST['trayectoId']);
             echo json_encode($resultado);
         } else {
             $t->setNumero($_POST['trayectoNumero']);
             $t->setAnio($_POST['trayectoAnio']);
+            $t->setTipo($_POST['trayectoTipo']);
           
             if ($accion == 'registrar') {
                 echo  json_encode($t->Registrar());

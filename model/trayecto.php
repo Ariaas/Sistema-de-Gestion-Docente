@@ -7,19 +7,18 @@ class Trayecto extends Connection
     private $trayectoNumero;
     private $trayectoAnio;
     private $trayectoId;
+    private $trayectoTipo;
 
-
-    //Construct
-    public function __construct($trayectoNumero = null, $trayectoAnio = null, $trayectoId = null)
+    public function __construct($trayectoNumero = null, $trayectoAnio = null, $trayectoId = null, $trayectoTipo = null)
     {
         parent::__construct();
 
         $this->trayectoNumero = $trayectoNumero;
         $this->trayectoAnio = $trayectoAnio;
         $this->trayectoId = $trayectoId;
+        $this->trayectoTipo = $trayectoTipo;
     }
 
-    //Getters 
     public function getNumero()
     {
         return $this->trayectoNumero;
@@ -32,7 +31,10 @@ class Trayecto extends Connection
     {
         return $this->trayectoId;
     }
-    //Setters
+    public function getTipo()
+    {
+        return $this->trayectoTipo;
+    }
     public function setNumero($trayectoNumero)
     {
         $this->trayectoNumero = $trayectoNumero;
@@ -45,8 +47,10 @@ class Trayecto extends Connection
     {
         $this->trayectoId = $trayectoId;
     }
-
-    //Methods
+    public function setTipo($trayectoTipo)
+    {
+        $this->trayectoTipo = $trayectoTipo;
+    }
 
     function Registrar()
     {
@@ -60,16 +64,19 @@ class Trayecto extends Connection
 
                 $stmt = $co->prepare("INSERT INTO tbl_trayecto (
                     tra_numero,
-                    tra_anio,
+                    tra_tipo,
+                    ani_id,
                     tra_estado
                 ) VALUES (
                     :trayectoNumero,
+                    :trayectoTipo,
                     :trayectoAnio,
                     1
                 )");
 
                 $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
                 $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoTipo', $this->trayectoTipo, PDO::PARAM_STR);
 
                 $stmt->execute();
 
@@ -90,7 +97,6 @@ class Trayecto extends Connection
         return $r;
     }
 
-    /// Actualizar
 
     function Modificar()
     {
@@ -98,14 +104,15 @@ class Trayecto extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         if ($this->ExisteTrayecto($this->trayectoId)) {
-            if (!$this->existe($this->trayectoNumero, $this->trayectoAnio)) {
+            if (!$this->existeOtro($this->trayectoNumero, $this->trayectoAnio, $this->trayectoId)) {
                 try {
                     $stmt = $co->prepare("UPDATE tbl_trayecto
-                    SET tra_anio = :trayectoAnio, tra_numero = :trayectoNumero
+                    SET ani_id = :trayectoAnio, tra_numero = :trayectoNumero, tra_tipo = :trayectoTipo
                     WHERE tra_id = :trayectoId");
 
                     $stmt->bindParam(':trayectoAnio', $this->trayectoAnio, PDO::PARAM_STR);
                     $stmt->bindParam(':trayectoNumero', $this->trayectoNumero, PDO::PARAM_STR);
+                    $stmt->bindParam(':trayectoTipo', $this->trayectoTipo, PDO::PARAM_STR);
                     $stmt->bindParam(':trayectoId', $this->trayectoId, PDO::PARAM_INT);
 
                     $stmt->execute();
@@ -127,7 +134,6 @@ class Trayecto extends Connection
         return $r;
     }
 
-    /// Eliminar
 
     function Eliminar()
     {
@@ -155,7 +161,6 @@ class Trayecto extends Connection
         return $r;
     }
 
-    /// Listar
 
     public function Listar()
     {
@@ -163,7 +168,7 @@ class Trayecto extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT tra_numero, tra_anio, tra_id FROM tbl_trayecto WHERE tra_estado = 1");
+            $stmt = $co->query("SELECT t.tra_numero, t.tra_id, t.tra_tipo, t.ani_id, a.ani_anio FROM tbl_trayecto t INNER JOIN tbl_anio a ON t.ani_id = a.ani_id WHERE t.tra_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -175,7 +180,6 @@ class Trayecto extends Connection
         return $r;
     }
 
-    /// Consultar exitencia
 
     public function Existe($trayectoNumero, $trayectoAnio)
     {
@@ -183,7 +187,7 @@ class Trayecto extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_numero=:trayectoNumero AND tra_anio=:trayectoAnio AND tra_estado = 1");
+            $stmt = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_numero=:trayectoNumero AND ani_id=:trayectoAnio AND tra_estado = 1");
 
             $stmt->bindParam(':trayectoNumero', $trayectoNumero, PDO::PARAM_STR);
             $stmt->bindParam(':trayectoAnio', $trayectoAnio, PDO::PARAM_STR);
@@ -197,9 +201,25 @@ class Trayecto extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
+    }
+
+    public function existeOtro($trayectoNumero, $trayectoAnio, $trayectoId)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $stmt = $co->prepare("SELECT * FROM tbl_trayecto WHERE tra_numero=:trayectoNumero AND ani_id=:trayectoAnio AND tra_id != :trayectoId AND tra_estado = 1");
+            $stmt->bindParam(':trayectoNumero', $trayectoNumero, PDO::PARAM_STR);
+            $stmt->bindParam(':trayectoAnio', $trayectoAnio, PDO::PARAM_STR);
+            $stmt->bindParam(':trayectoId', $trayectoId, PDO::PARAM_INT);
+            $stmt->execute();
+            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
+            return !empty($fila);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     public function ExisteTrayecto($trayectoId)
@@ -221,7 +241,21 @@ class Trayecto extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
+        $co = null;
+        return $r;
+    }
+
+    function obtenerAnio()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->query("SELECT ani_id, ani_anio FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1 ORDER BY ani_anio DESC");
+            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $r = [];
+        }
         $co = null;
         return $r;
     }

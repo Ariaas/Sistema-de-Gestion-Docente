@@ -109,6 +109,7 @@ $(document).ready(function () {
         datos.append("accion", "registrar");
         datos.append("trayectoNumero", $("#trayectoNumero").val());
         datos.append("trayectoAnio", $("#trayectoAnio").val());
+        datos.append("trayectoTipo", $("#trayectoTipo").val());
 
         enviaAjax(datos);
       }
@@ -119,6 +120,7 @@ $(document).ready(function () {
         datos.append("trayectoId", $("#trayectoId").val());
         datos.append("trayectoNumero", $("#trayectoNumero").val());
         datos.append("trayectoAnio", $("#trayectoAnio").val());
+        datos.append("trayectoTipo", $("#trayectoTipo").val());
 
         enviaAjax(datos);
       }
@@ -160,6 +162,7 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#strayectoNumero").show();
     $("#strayectoAnio").show();
+    $("#strayectoTipo").show();
     $("#modal1").modal("show");
     $("#trayectoAnio, #trayectoNumero").prop("disabled", false);
   });
@@ -180,13 +183,18 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#trayectoAnio").prop("disabled", false);
     $("#trayectoNumero").prop("disabled", false);
+    $("#trayectoTipo").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
     $("#trayectoAnio, #trayectoNumero").prop("disabled", true);
   }
   $("#trayectoId").val($(linea).find("td:eq(0)").text());
-  $("#trayectoAnio").val($(linea).find("td:eq(2)").text());
+  $("#trayectoAnio").val($(linea).find("td:eq(2)").data("anio"));;
   $("#trayectoNumero").val($(linea).find("td:eq(1)").text());
+  $("#trayectoTipo").val($(linea).find("td:eq(3)").text());
+
+  console.log("Sección ID:", $(linea).find("td:eq(3)").text());
+
 
   $("#strayectoNumero").hide();
   $("#strayectoAnio").hide();
@@ -216,7 +224,8 @@ function enviaAjax(datos) {
               <tr>
                 <td style="display: none;">${item.tra_id}</td>
                 <td>${item.tra_numero}</td>
-                <td>${item.tra_anio}</td>
+                <td data-anio="${item.ani_id}">${item.ani_anio}</td>
+                <td>${item.tra_tipo}</td>
                 <td>
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.tra_id}" data-numero="${item.tra_numero}" data-anio="${item.tra_anio}">Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.tra_id}" data-numero="${item.tra_numero}" data-anio="${item.tra_anio}">Eliminar</button>
