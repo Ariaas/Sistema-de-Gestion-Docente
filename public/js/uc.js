@@ -311,7 +311,7 @@ function Listar() {
                   <td>${item.uc_hora_independiente}</td>
                   <td>${item.uc_hora_asistida}</td>
                   <td>${item.uc_hora_independiente + item.uc_hora_asistida}</td>
-                  <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.tra_anio}</td>
+                  <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.ani_anio}</td>
                   <td data-eje="${item.eje_id}">${item.eje_nombre}</td>
                   <td data-area="${item.area_id}">${item.area_nombre}</td>
                   <td>${item.uc_creditos}</td>

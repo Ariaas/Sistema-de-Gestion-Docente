@@ -1,5 +1,5 @@
 <?php
-require_once('model/dbconnection.php'); 
+require_once('model/dbconnection.php');
 
 class Horario extends Connection
 {
@@ -12,15 +12,34 @@ class Horario extends Connection
         parent::__construct();
     }
 
-    public function setId($hor_id) { $this->hor_id = $hor_id; }
-    public function setEspacio($esp_id) { $this->esp_id = $esp_id; }
-    public function setFaseId($fase_id_param) { $this->fase_id = $fase_id_param; }
+    public function setId($hor_id)
+    {
+        $this->hor_id = $hor_id;
+    }
+    public function setEspacio($esp_id)
+    {
+        $this->esp_id = $esp_id;
+    }
+    public function setFaseId($fase_id_param)
+    {
+        $this->fase_id = $fase_id_param;
+    }
 
-    public function getId() { return $this->hor_id; }
-    public function getEspacio() { return $this->esp_id; }
-    public function getFaseId() { return $this->fase_id; }
+    public function getId()
+    {
+        return $this->hor_id;
+    }
+    public function getEspacio()
+    {
+        return $this->esp_id;
+    }
+    public function getFaseId()
+    {
+        return $this->fase_id;
+    }
 
-    public function verificarHorarioExistente($sec_id, $fase_id) {
+    public function verificarHorarioExistente($sec_id, $fase_id)
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
@@ -29,7 +48,7 @@ class Horario extends Connection
                     INNER JOIN seccion_horario sh ON th.hor_id = sh.hor_id
                     WHERE sh.sec_id = :sec_id
                       AND th.fase_id = :fase_id
-                      AND th.hor_estado = 1"; 
+                      AND th.hor_estado = 1";
             $stmt = $co->prepare($sql);
             $stmt->bindParam(':sec_id', $sec_id, PDO::PARAM_INT);
             $stmt->bindParam(':fase_id', $fase_id, PDO::PARAM_INT);
@@ -38,11 +57,12 @@ class Horario extends Connection
             return ($resultado['cuenta'] > 0);
         } catch (Exception $e) {
             error_log("Modelo Horario::verificarHorarioExistente - Error: " . $e->getMessage());
-            return true; 
+            return true;
         }
     }
-    
-    private function findOrCreateHorarioIdForGroup($co, $sec_id_clase, $fase_id_clase, $esp_id_clase, $doc_id_clase, $tur_id_clase) {
+
+    private function findOrCreateHorarioIdForGroup($co, $sec_id_clase, $fase_id_clase, $esp_id_clase, $doc_id_clase, $tur_id_clase)
+    {
         if (is_null($tur_id_clase)) {
             throw new Exception("Error Crítico: Se intentó crear un registro de horario con tur_id nulo.");
         }
@@ -56,12 +76,12 @@ class Horario extends Connection
                    AND th.esp_id = :esp_id
                    AND dh.doc_id = :doc_id
                    AND th.tur_id = :tur_id
-                   AND th.hor_estado = 1 LIMIT 1"; 
+                   AND th.hor_estado = 1 LIMIT 1";
 
         $params = [
             ':sec_id' => $sec_id_clase,
             ':fase_id' => $fase_id_clase,
-            ':esp_id' => $esp_id_clase, 
+            ':esp_id' => $esp_id_clase,
             ':doc_id' => $doc_id_clase,
             ':tur_id' => $tur_id_clase
         ];
@@ -75,7 +95,7 @@ class Horario extends Connection
         } else {
             $stmt_insert_hor = $co->prepare("INSERT INTO tbl_horario (esp_id, tur_id, fase_id, hor_modalidad, hor_estado) VALUES (:esp_id, :tur_id, :fase_id, 'presencial', 1)");
             $stmt_insert_hor->bindParam(':esp_id', $esp_id_clase, PDO::PARAM_INT);
-            $stmt_insert_hor->bindParam(':tur_id', $tur_id_clase, PDO::PARAM_INT); 
+            $stmt_insert_hor->bindParam(':tur_id', $tur_id_clase, PDO::PARAM_INT);
             $stmt_insert_hor->bindParam(':fase_id', $fase_id_clase, PDO::PARAM_INT);
             $stmt_insert_hor->execute();
             $new_hor_id = $co->lastInsertId();
@@ -84,9 +104,9 @@ class Horario extends Connection
             $stmt_sh->bindParam(':sec_id', $sec_id_clase);
             $stmt_sh->bindParam(':hor_id', $new_hor_id);
             $stmt_sh->execute();
-            
+
             $stmt_dh = $co->prepare("INSERT INTO docente_horario (doc_id, hor_id) VALUES (:doc_id, :hor_id)");
-            $stmt_dh->bindParam(':doc_id', $doc_id_clase, PDO::PARAM_INT); 
+            $stmt_dh->bindParam(':doc_id', $doc_id_clase, PDO::PARAM_INT);
             $stmt_dh->bindParam(':hor_id', $new_hor_id);
             $stmt_dh->execute();
 
@@ -104,6 +124,7 @@ class Horario extends Connection
                 "SELECT DISTINCT
                     sh.sec_id,
                     ts.sec_codigo,
+                    ts.sec_nombre, 
                     tf.fase_id,
                     tf.fase_numero,
                     tt.tra_numero,
@@ -126,11 +147,12 @@ class Horario extends Connection
         return $r;
     }
 
-    public function ConsultarDetallesParaGrupo($sec_id, $fase_id) {
+    public function ConsultarDetallesParaGrupo($sec_id, $fase_id)
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        
+
         try {
             $sql = "SELECT 
                         uh.uc_id,
@@ -153,12 +175,11 @@ class Horario extends Connection
             $stmt->bindParam(':sec_id', $sec_id, PDO::PARAM_INT);
             $stmt->bindParam(':fase_id', $fase_id, PDO::PARAM_INT);
             $stmt->execute();
-            
+
             $schedule_grid_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $r['mensaje'] = $schedule_grid_items;
             $r['resultado'] = 'ok';
-
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = "Error consultando detallado: " . $e->getMessage();
@@ -166,7 +187,8 @@ class Horario extends Connection
         return $r;
     }
 
-    private function eliminarLogicoPorSeccionFase($co, $sec_id, $fase_id) {
+    private function eliminarLogicoPorSeccionFase($co, $sec_id, $fase_id)
+    {
         $stmtHorIds = $co->prepare(
             "SELECT th.hor_id FROM tbl_horario th
              INNER JOIN seccion_horario sh ON th.hor_id = sh.hor_id
@@ -182,8 +204,9 @@ class Horario extends Connection
             $stmtUpdate->execute($horarios_a_eliminar);
         }
     }
-    
-    private function verificarConflictosDeEspacio($co, $sec_id_original, $fase_id_original, $nueva_seccion_id, $nueva_fase_id, $items_horario) {
+
+    private function verificarConflictosDeEspacio($co, $sec_id_original, $fase_id_original, $nueva_seccion_id, $nueva_fase_id, $items_horario)
+    {
         $stmtAnio = $co->prepare(
             "SELECT t.ani_id FROM tbl_seccion s
              JOIN tbl_trayecto t ON s.tra_id = t.tra_id
@@ -195,7 +218,7 @@ class Horario extends Connection
         if (!$ani_id) {
             return "No se pudo determinar el año académico para la validación.";
         }
-        
+
         $stmtConflicto = $co->prepare(
             "SELECT ts.sec_codigo, te.esp_codigo
              FROM uc_horario AS tuh
@@ -229,25 +252,28 @@ class Horario extends Connection
             $conflicto = $stmtConflicto->fetch(PDO::FETCH_ASSOC);
 
             if ($conflicto) {
-                return "Conflicto de Horario: El espacio '" . $conflicto['esp_codigo'] . 
-                       "' ya está ocupado el día " . $item['dia'] . " a las " . date("g:i A", strtotime($item['hora_inicio'])) .
-                       " por la sección '" . $conflicto['sec_codigo'] . "' en la misma fase y año académico.";
+                return "Conflicto de Horario: El espacio '" . $conflicto['esp_codigo'] .
+                    "' ya está ocupado el día " . $item['dia'] . " a las " . date("g:i A", strtotime($item['hora_inicio'])) .
+                    " por la sección '" . $conflicto['sec_codigo'] . "' en la misma fase y año académico.";
             }
         }
 
         return null;
     }
 
-    public function ModificarGrupo($sec_id_original_grupo, $fase_id_original_grupo, $nueva_seccion_id_grupo, $nueva_fase_id_grupo, $items_horario_json) {
+    public function ModificarGrupo($sec_id_original_grupo, $fase_id_original_grupo, $nueva_seccion_id_grupo, $nueva_fase_id_grupo, $items_horario_json)
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         $items_horario = json_decode($items_horario_json, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $r['resultado'] = 'error'; $r['mensaje'] = 'Error decodificando items: ' . json_last_error_msg(); return $r;
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Error decodificando items: ' . json_last_error_msg();
+            return $r;
         }
-        
+
         $conflict_error = $this->verificarConflictosDeEspacio($co, $sec_id_original_grupo, $fase_id_original_grupo, $nueva_seccion_id_grupo, $nueva_fase_id_grupo, $items_horario);
         if ($conflict_error !== null) {
             $r['resultado'] = 'error';
@@ -261,11 +287,11 @@ class Horario extends Connection
             $gruposNuevos = [];
             if (is_array($items_horario)) {
                 foreach ($items_horario as $item) {
-                    if (empty($item['uc_id'])) continue; 
+                    if (empty($item['uc_id'])) continue;
                     $doc_id_item = isset($item['doc_id']) && !empty($item['doc_id']) ? $item['doc_id'] : null;
                     $esp_id_item = isset($item['esp_id']) && !empty($item['esp_id']) ? $item['esp_id'] : null;
                     $tur_id_item = isset($item['tur_id']) && !empty($item['tur_id']) ? $item['tur_id'] : null;
-                    
+
                     if (is_null($tur_id_item)) {
                         throw new Exception("Se encontró un item de horario sin tur_id al intentar guardar.");
                     }
@@ -277,7 +303,7 @@ class Horario extends Connection
                             'doc_id' => $doc_id_item,
                             'esp_id' => $esp_id_item,
                             'tur_id' => $tur_id_item,
-                            'items_uc' => [] 
+                            'items_uc' => []
                         ];
                     }
                     $gruposNuevos[$key]['items_uc'][] = $item;
@@ -285,10 +311,14 @@ class Horario extends Connection
             }
             foreach ($gruposNuevos as $grupoData) {
                 $hor_id_maestro_grupo = $this->findOrCreateHorarioIdForGroup(
-                    $co, $nueva_seccion_id_grupo, $nueva_fase_id_grupo, 
-                    $grupoData['esp_id'], $grupoData['doc_id'], $grupoData['tur_id']
+                    $co,
+                    $nueva_seccion_id_grupo,
+                    $nueva_fase_id_grupo,
+                    $grupoData['esp_id'],
+                    $grupoData['doc_id'],
+                    $grupoData['tur_id']
                 );
-                
+
                 $stmtUcHorario = $co->prepare("INSERT INTO uc_horario (uc_id, hor_id, hor_dia, hor_horainicio, hor_horafin) VALUES (:ucId, :horId, :dia, :inicio, :fin)");
 
                 foreach ($grupoData['items_uc'] as $item_uc_data) {
@@ -308,13 +338,17 @@ class Horario extends Connection
             $r['resultado'] = 'modificar_grupo_ok';
             $r['mensaje'] = 'Grupo de horario modificado correctamente.';
         } catch (Exception $e) {
-            if ($co->inTransaction()) { $co->rollBack(); }
-            $r['resultado'] = 'error'; $r['mensaje'] = "Error interno del servidor: " . $e->getMessage();
+            if ($co->inTransaction()) {
+                $co->rollBack();
+            }
+            $r['resultado'] = 'error';
+            $r['mensaje'] = "Error interno del servidor: " . $e->getMessage();
         }
         return $r;
     }
 
-    public function EliminarPorSeccionFase($sec_id_grupo, $fase_id_grupo) {
+    public function EliminarPorSeccionFase($sec_id_grupo, $fase_id_grupo)
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
@@ -325,18 +359,20 @@ class Horario extends Connection
             $r['resultado'] = 'eliminar_por_seccion_fase_ok';
             $r['mensaje'] = 'Grupo de horario eliminado (desactivado) correctamente.';
         } catch (Exception $e) {
-            if ($co && $co->inTransaction()) { $co->rollBack(); }
-            $r['resultado'] = 'error'; $r['mensaje'] = "Error al eliminar grupo: " . $e->getMessage();
+            if ($co && $co->inTransaction()) {
+                $co->rollBack();
+            }
+            $r['resultado'] = 'error';
+            $r['mensaje'] = "Error al eliminar grupo: " . $e->getMessage();
         }
         return $r;
     }
-    
-    // ===== INICIO DE NUEVOS MÉTODOS PARA VALIDACIÓN EN TIEMPO REAL =====
 
-    public function verificarConflictoEspacioIndividual($esp_id, $dia, $hora_inicio, $fase_id_actual, $sec_id_actual, $sec_id_original, $fase_id_original) {
+    public function verificarConflictoEspacioIndividual($esp_id, $dia, $hora_inicio, $fase_id_actual, $sec_id_actual, $sec_id_original, $fase_id_original)
+    {
         $co = $this->Con();
         $r = ['conflicto' => false];
-    
+
         try {
             $stmtAnio = $co->prepare(
                 "SELECT t.ani_id FROM tbl_seccion s
@@ -345,11 +381,11 @@ class Horario extends Connection
             );
             $stmtAnio->execute([':sec_id' => $sec_id_actual]);
             $ani_id = $stmtAnio->fetchColumn();
-    
+
             if (!$ani_id) {
                 return $r;
             }
-    
+
             $sql = "SELECT ts.sec_codigo, te.esp_codigo
                      FROM uc_horario AS tuh
                      JOIN tbl_horario AS th ON tuh.hor_id = th.hor_id
@@ -364,15 +400,15 @@ class Horario extends Connection
                         th.fase_id = :fase_id AND
                         tt.ani_id = :ani_id AND
                         th.hor_estado = 1";
-    
+
             if (!empty($sec_id_original) && !empty($fase_id_original)) {
-                 $sql .= " AND NOT (tsh.sec_id = :sec_id_original AND th.fase_id = :fase_id_original)";
+                $sql .= " AND NOT (tsh.sec_id = :sec_id_original AND th.fase_id = :fase_id_original)";
             }
-    
+
             $sql .= " LIMIT 1";
-            
+
             $stmtConflicto = $co->prepare($sql);
-    
+
             $params = [
                 ':esp_id' => $esp_id,
                 ':dia' => $dia,
@@ -380,32 +416,32 @@ class Horario extends Connection
                 ':fase_id' => $fase_id_actual,
                 ':ani_id' => $ani_id,
             ];
-    
+
             if (!empty($sec_id_original) && !empty($fase_id_original)) {
                 $params[':sec_id_original'] = $sec_id_original;
                 $params[':fase_id_original'] = $fase_id_original;
             }
-            
+
             $stmtConflicto->execute($params);
             $conflicto = $stmtConflicto->fetch(PDO::FETCH_ASSOC);
-    
+
             if ($conflicto) {
                 $r['conflicto'] = true;
-                $r['mensaje'] = "Conflicto: El espacio '" . htmlspecialchars($conflicto['esp_codigo']) . 
-                               "' ya está ocupado el " . htmlspecialchars($dia) . " a las " . date("g:i A", strtotime($hora_inicio)) .
-                               " por la sección '" . htmlspecialchars($conflicto['sec_codigo']) . "' en la misma fase y año académico.";
+                $r['mensaje'] = "Conflicto: El espacio '" . htmlspecialchars($conflicto['esp_codigo']) .
+                    "' ya está ocupado el " . htmlspecialchars($dia) . " a las " . date("g:i A", strtotime($hora_inicio)) .
+                    " por la sección '" . htmlspecialchars($conflicto['sec_codigo']) . "' en la misma fase y año académico.";
             }
-    
         } catch (Exception $e) {
             error_log("Error en verificarConflictoEspacioIndividual: " . $e->getMessage());
         }
         return $r;
     }
-    
-    public function verificarConflictoDocenteIndividual($doc_id, $dia, $hora_inicio, $fase_id_actual, $sec_id_actual, $sec_id_original, $fase_id_original) {
+
+    public function verificarConflictoDocenteIndividual($doc_id, $dia, $hora_inicio, $fase_id_actual, $sec_id_actual, $sec_id_original, $fase_id_original)
+    {
         $co = $this->Con();
         $r = ['conflicto' => false];
-    
+
         try {
             $stmtAnio = $co->prepare(
                 "SELECT t.ani_id FROM tbl_seccion s
@@ -414,11 +450,11 @@ class Horario extends Connection
             );
             $stmtAnio->execute([':sec_id' => $sec_id_actual]);
             $ani_id = $stmtAnio->fetchColumn();
-    
+
             if (!$ani_id || !$doc_id) {
                 return $r;
             }
-    
+
             $sql = "SELECT ts.sec_codigo, d.doc_nombre, d.doc_apellido
                      FROM uc_horario AS tuh
                      JOIN tbl_horario AS th ON tuh.hor_id = th.hor_id
@@ -434,15 +470,15 @@ class Horario extends Connection
                         th.fase_id = :fase_id AND
                         tt.ani_id = :ani_id AND
                         th.hor_estado = 1";
-            
+
             if (!empty($sec_id_original) && !empty($fase_id_original)) {
                 $sql .= " AND NOT (tsh.sec_id = :sec_id_original AND th.fase_id = :fase_id_original)";
             }
-            
+
             $sql .= " LIMIT 1";
-    
+
             $stmtConflicto = $co->prepare($sql);
-    
+
             $params = [
                 ':doc_id' => $doc_id,
                 ':dia' => $dia,
@@ -450,31 +486,29 @@ class Horario extends Connection
                 ':fase_id' => $fase_id_actual,
                 ':ani_id' => $ani_id,
             ];
-    
+
             if (!empty($sec_id_original) && !empty($fase_id_original)) {
                 $params[':sec_id_original'] = $sec_id_original;
                 $params[':fase_id_original'] = $fase_id_original;
             }
-    
+
             $stmtConflicto->execute($params);
             $conflicto = $stmtConflicto->fetch(PDO::FETCH_ASSOC);
-    
+
             if ($conflicto) {
                 $r['conflicto'] = true;
-                $r['mensaje'] = "Conflicto: El docente " . htmlspecialchars($conflicto['doc_nombre'] . ' ' . $conflicto['doc_apellido']) . 
-                               " ya tiene una clase asignada el " . htmlspecialchars($dia) . " a las " . date("g:i A", strtotime($hora_inicio)) .
-                               " en la sección '" . htmlspecialchars($conflicto['sec_codigo']) . "' (misma fase y año).";
+                $r['mensaje'] = "Conflicto: El docente " . htmlspecialchars($conflicto['doc_nombre'] . ' ' . $conflicto['doc_apellido']) .
+                    " ya tiene una clase asignada el " . htmlspecialchars($dia) . " a las " . date("g:i A", strtotime($hora_inicio)) .
+                    " en la sección '" . htmlspecialchars($conflicto['sec_codigo']) . "' (misma fase y año).";
             }
-    
         } catch (Exception $e) {
             error_log("Error en verificarConflictoDocenteIndividual: " . $e->getMessage());
         }
         return $r;
     }
 
-    // ===== FIN DE NUEVOS MÉTODOS =====
-
-    public function obtenerTurnos(){
+    public function obtenerTurnos()
+    {
         try {
             $co = $this->Con();
             $stmt = $co->query(
@@ -489,7 +523,8 @@ class Horario extends Connection
         }
     }
 
-    public function obtenerFases(){
+    public function obtenerFases()
+    {
         try {
             $co = $this->Con();
             $stmt = $co->query(
@@ -506,7 +541,8 @@ class Horario extends Connection
         }
     }
 
-    public function obtenerUnidadesCurriculares(){
+    public function obtenerUnidadesCurriculares()
+    {
         try {
             $co = $this->Con();
             $stmt = $co->query(
@@ -521,11 +557,13 @@ class Horario extends Connection
         }
     }
 
-    public function obtenerSecciones(){
+    // ===== INICIO DE MODIFICACIÓN =====
+    public function obtenerSecciones()
+    {
         try {
             $co = $this->Con();
             $stmt = $co->query(
-                "SELECT s.sec_id, s.sec_codigo, s.tra_id, t.tra_numero, a.ani_anio
+                "SELECT s.sec_id, s.sec_codigo, s.sec_nombre, s.tra_id, t.tra_numero, a.ani_anio
                  FROM tbl_seccion s
                  JOIN tbl_trayecto t ON s.tra_id = t.tra_id
                  JOIN tbl_anio a ON t.ani_id = a.ani_id
@@ -537,8 +575,10 @@ class Horario extends Connection
             return [];
         }
     }
+    // ===== FIN DE MODIFICACIÓN =====
 
-    public function obtenerEspacios(){
+    public function obtenerEspacios()
+    {
         try {
             $co = $this->Con();
             $stmt = $co->query(
@@ -553,7 +593,8 @@ class Horario extends Connection
         }
     }
 
-    public function obtenerDocentes() {
+    public function obtenerDocentes()
+    {
         try {
             $co = $this->Con();
             $stmt = $co->query(
@@ -568,7 +609,8 @@ class Horario extends Connection
         }
     }
 
-    public function obtenerUcPorDocenteYTrayecto($doc_id, $tra_id = null) {
+    public function obtenerUcPorDocenteYTrayecto($doc_id, $tra_id = null)
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
@@ -590,4 +632,3 @@ class Horario extends Connection
         }
     }
 }
-?>

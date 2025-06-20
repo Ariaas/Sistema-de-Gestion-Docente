@@ -31,7 +31,7 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($s->Listar());
         } elseif ($accion == 'consultarUnion') {
-            echo json_encode($s->Listar());
+            //echo json_encode($s->Listar());
         } elseif ($accion == 'eliminar') {
             $s->setseccionId($_POST['seccionId']);
             echo json_encode($s->Eliminar());

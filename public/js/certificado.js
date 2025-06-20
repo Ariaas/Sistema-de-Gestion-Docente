@@ -72,8 +72,8 @@ $(document).ready(function () {
 
   $("#certificadotipo").on("keydown keyup", function () {
 
-    validarkeyup(/^[A-Za-z0-9\s-]{2,30}$/,$(this),$("#scertificadotipo"),"El tipo permite de 2 a 30 caracteres alfanuméricos, espacios o guiones.");
-  
+   
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadotipo"),$("#scertificadotipo"),"El tipo permite de 2 a 30 caracteres alfanuméricos, espacios o guiones.");
   });
 
 
@@ -155,6 +155,7 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#scertificadonombre").show();
+    $("#scertificadotipo").show();
     $("#certificadoid, #certificadonombre, #trayecto, certificadotipo").prop("disabled", false);
   });
 

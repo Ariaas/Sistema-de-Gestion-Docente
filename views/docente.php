@@ -34,6 +34,7 @@ if (!isset($_SESSION['name'])) {
                                 <th>Correo</th>
                                 <th>Categoría</th>
                                 <th>Títulos</th>
+                                <th>Coordinaciones</th>
                                 <th>Dedicación</th>
                                 <th>Condición</th>
                                 <th>Acciones</th>
@@ -44,7 +45,7 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </section>
-        
+
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -54,105 +55,100 @@ if (!isset($_SESSION['name'])) {
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                            <input type="text" class="form-control" name="accion" id="accion" style="display: none;">
+                            <input type="hidden" name="accion" id="accion">
 
-                            <div class="mb-4">
-                                <div class="row g-3">
-                                    <div class="col-md-2">
-                                        <label for="prefijoCedula" class="form-label">Prefijo</label>
-                                        <select class="form-select" name="prefijoCedula" id="prefijoCedula" required>
-                                            <option value="V">V</option>
-                                            <option value="E">E</option>
-                                        </select>
-                                        <span id="sprefijoCedula"></span>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="cedulaDocente" class="form-label">Cédula</label>
-                                        <input class="form-control" type="text" id="cedulaDocente" name="cedulaDocente"
-                                            placeholder="Ej: 12345678 (solo números)" required>
-                                        <span id="scedulaDocente"></span>
-                                    </div>
+                            <div class="row g-3">
+                                <div class="col-md-2">
+                                    <label for="prefijoCedula" class="form-label">Prefijo</label>
+                                    <select class="form-select" name="prefijoCedula" id="prefijoCedula" required>
+                                        <option value="V">V</option>
+                                        <option value="E">E</option>
+                                    </select>
                                 </div>
-
-                                <div class="row mt-3 g-3">
-                                    <div class="col-md-6">
-                                        <label for="nombreDocente" class="form-label">Nombre</label>
-                                        <input class="form-control" type="text" id="nombreDocente" name="nombreDocente"
-                                            placeholder="Ej: María José" required>
-                                        <span id="snombreDocente"></span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="apellidoDocente" class="form-label">Apellido</label>
-                                        <input class="form-control" type="text" id="apellidoDocente" name="apellidoDocente"
-                                            placeholder="Ej: González Pérez" required>
-                                        <span id="sapellidoDocente"></span>
-                                    </div>
+                                <div class="col-md-4">
+                                    <label for="cedulaDocente" class="form-label">Cédula</label>
+                                    <input class="form-control" type="text" id="cedulaDocente" name="cedulaDocente" placeholder="Ej: 12345678" required>
+                                    <span id="scedulaDocente" class="text-danger"></span>
                                 </div>
-
-                                <div class="row mt-3">
-                                    <div class="col-md-8">
-                                        <label for="correoDocente" class="form-label">Correo Electrónico</label>
-                                        <input class="form-control" type="email" id="correoDocente" name="correoDocente"
-                                            placeholder="Ej: docente@universidad.edu.ve" required>
-                                        <span id="scorreoDocente"></span>
-                                    </div>
+                                <div class="col-md-6">
+                                    <label for="nombreDocente" class="form-label">Nombre</label>
+                                    <input class="form-control" type="text" id="nombreDocente" name="nombreDocente" placeholder="Ej: María José" required>
+                                    <span id="snombreDocente" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="apellidoDocente" class="form-label">Apellido</label>
+                                    <input class="form-control" type="text" id="apellidoDocente" name="apellidoDocente" placeholder="Ej: González Pérez" required>
+                                    <span id="sapellidoDocente" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="correoDocente" class="form-label">Correo Electrónico</label>
+                                    <input class="form-control" type="email" id="correoDocente" name="correoDocente" placeholder="Ej: docente@universidad.edu.ve" required>
+                                    <span id="scorreoDocente" class="text-danger"></span>
                                 </div>
                             </div>
 
-                            <div class="mb-4">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label for="categoria" class="form-label">Categoría</label>
-                                        <select class="form-select" name="categoria" id="categoria" required>
-                                            <option value="" disabled selected>Seleccione una categoría</option>
-                                            <?php
-                                            foreach ($categorias as $categoria) {
-                                                echo "<option value='" . $categoria['cat_id'] . "'>" . $categoria['cat_nombre'] . "</option>";
-                                            }
-                                            ?>
-                                        </select>
-                                        <span id="scategoria" class="error"></span>
-                                    </div>
-                                     <div class="col-md-4">
-                                        <label for="dedicacion" class="form-label">Dedicación</label>
-                                        <select class="form-select" name="dedicacion" id="dedicacion" required>
-                                            <option value="" disabled selected>Seleccione una dedicación</option>
-                                            <option value="exclusiva">Exclusiva</option>
-                                            <option value="Medio tiempo">Medio tiempo</option>
-                                             <option value="Tiempo completo">Tiempo completo</option>
-                                        </select>
-                                        <span id="sdedicacion"></span>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="condicion" class="form-label">Condición</label>
-                                        <select class="form-select" name="condicion" id="condicion" required>
-                                            <option value="" disabled selected>Seleccione una condición</option>
-                                            <option value="Ordinario">Ordinario</option>
-                                            <option value="contratado">contratado</option>
-                                        </select>
-                                        <span id="scondicion"></span>
-                                    </div>
-                                <div class="col-md-12">
+                            <hr class="my-4">
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="categoria" class="form-label">Categoría</label>
+                                    <select class="form-select" name="categoria" id="categoria" required>
+                                        <option value="" disabled selected>Seleccione...</option>
+                                        <?php foreach ($categorias as $categoria) {
+                                            echo "<option value='" . $categoria['cat_id'] . "'>" . $categoria['cat_nombre'] . "</option>";
+                                        } ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="dedicacion" class="form-label">Dedicación</label>
+                                    <select class="form-select" name="dedicacion" id="dedicacion" required>
+                                        <option value="" disabled selected>Seleccione...</option>
+                                        <option value="Exclusiva">Exclusiva</option>
+                                        <option value="Medio tiempo">Medio tiempo</option>
+                                        <option value="Tiempo completo">Tiempo completo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="condicion" class="form-label">Condición</label>
+                                    <select class="form-select" name="condicion" id="condicion" required>
+                                        <option value="" disabled selected>Seleccione...</option>
+                                        <option value="Ordinario">Ordinario</option>
+                                        <option value="Contratado">Contratado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="row">
+                                <div class="col-md-6">
                                     <label class="form-label">Títulos <span class="text-danger">*</span></label>
                                     <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
                                         <?php foreach ($titulos as $titulo): ?>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="titulos[]" 
-                                                id="titulo_<?= $titulo['tit_id'] ?>" value="<?= $titulo['tit_id'] ?>">
-                                            <label class="form-check-label" for="titulo_<?= $titulo['tit_id'] ?>">
-                                                <?= $titulo['tit_nombre'] ?>
-                                            </label>
-                                        </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="titulos[]" id="titulo_<?= $titulo['tit_id'] ?>" value="<?= $titulo['tit_id'] ?>">
+                                                <label class="form-check-label" for="titulo_<?= $titulo['tit_id'] ?>"><?= $titulo['tit_nombre'] ?></label>
+                                            </div>
                                         <?php endforeach; ?>
                                     </div>
                                     <span id="stitulos" class="text-danger"></span>
                                 </div>
-                                    
-                                  
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Coordinaciones <span class="text-danger">*</span></label>
+                                    <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                        <?php foreach ($coordinaciones as $coordinacion): ?>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="coordinaciones[]" id="coordinacion_<?= $coordinacion['cor_id'] ?>" value="<?= $coordinacion['cor_id'] ?>">
+                                                <label class="form-check-label" for="coordinacion_<?= $coordinacion['cor_id'] ?>"><?= $coordinacion['cor_nombre'] ?></label>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <span id="scoordinaciones" class="text-danger"></span>
                                 </div>
                             </div>
 
-                            <div class="modal-footer justify-content-center">
+                            <div class="modal-footer justify-content-center mt-4">
                                 <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
@@ -161,16 +157,11 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-        
     </main>
- 
-    <?php
-    require_once("public/components/footer.php");
-    ?>
-  
+
+    <?php require_once("public/components/footer.php"); ?>
     <script type="text/javascript" src="public/js/docente.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-   
 </body>
 
 </html>

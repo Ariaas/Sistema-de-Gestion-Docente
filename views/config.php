@@ -47,7 +47,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                         </a>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($permisos['Area'])): 
+                <?php if (!empty($permisos['Area'])):
                 ?>
                     <div class="col">
                         <a class="a-cards" href="?pagina=area">
@@ -114,17 +114,72 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                     </div>
                 <?php endif; ?>
 
-                    <div class="col">
-                        <a class="a-cards" href="?pagina=preguntas">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
-                                    <h5 class="card-title">Preguntas Frecuentes</h5>
-                                    <p class="card-text"></p>
-                                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=preguntas">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                <h5 class="card-title">Preguntas Frecuentes</h5>
+                                <p class="card-text"></p>
                             </div>
-                        </a>
-                    </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=anio">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                <h5 class="card-title">Gestionar Año</h5>
+                                <p class="card-text"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=convenio">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                <h5 class="card-title">Gestionar Convenios</h5>
+                                <p class="card-text"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=coordinacion">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                <h5 class="card-title">Gestionar Coordinaciones</h5>
+                                <p class="card-text"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=fase">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                <h5 class="card-title">Gestionar Fases</h5>
+                                <p class="card-text"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=turno">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                <h5 class="card-title">Gestionar Turnos</h5>
+                                <p class="card-text"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
             </div>
         </div>
     </main>
