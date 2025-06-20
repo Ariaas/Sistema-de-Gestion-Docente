@@ -13,10 +13,6 @@
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Horario</title>
-    <link rel="stylesheet" href="">
-    <style>
-    
-    </style>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -35,7 +31,9 @@
                         <thead>
                             <tr>
                                 <th>Sección</th>
-                                <th>Trayecto</th> <th>Año Sección</th> <th>Fase</th>
+                                <th>Trayecto</th> 
+                                <th>Año</th> 
+                                <th>Fase</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -47,8 +45,7 @@
 
 
         <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
+            <div class="modal-dialog modal-xl" role="document"> <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title" id="modalHorarioGlobalTitle">Formulario de Horario</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -57,8 +54,8 @@
                         <form method="post" id="form-horario" autocomplete="off" class="needs-validation" novalidate>
                            <input type="hidden" name="accion" id="accion"> 
                            <input type="hidden" name="hor_id" id="hor_id"> 
-                           <input type="hidden" name="current_editing_sec_id_hidden" id="current_editing_sec_id_hidden"> 
-                           <input type="hidden" name="current_editing_hor_fase_hidden" id="current_editing_hor_fase_hidden"> 
+                           <input type="hidden" id="current_editing_sec_id_hidden"> 
+                           <input type="hidden" id="current_editing_fase_id_hidden"> 
                            
                            <div class="container-fluid">
                                 <div class="row">
@@ -69,65 +66,32 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6 mb-3" id="fase-group">
-                                        <label for="hor_fase" class="form-label">Fase <span class="text-danger">*</span></label>
-                                        <select class="form-select" id="hor_fase" name="hor_fase" required>
+                                        <label for="fase_id" class="form-label">Fase <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="fase_id" name="fase_id" required>
                                             <option value="">Seleccionar Fase...</option>
-                                            <option value="1">1</option>
-                                            <option value="2">2</option>
                                         </select>
                                     </div>
                                 </div>
                                 
-                               
-                                <div class="mb-3 form-group-horario-individual" id="espacio-group" style="display:none;"> <label for="esp_id" class="form-label">Espacio</label>
-                                    <select class="form-select" id="esp_id" name="esp_id" required>
-                                        </select>
-                                </div>
-                                <div class="mb-3 form-group-horario-individual" id="dia-group" style="display:none;"> <label for="dia" class="form-label">Día</label>
-                                    <select class="form-select" id="dia" name="dia" required>
-                                        <option value="">Seleccionar Día</option>
-                                        <option value="Lunes">Lunes</option>
-                                        <option value="Martes">Martes</option>
-                                        <option value="Miércoles">Miércoles</option> <option value="Jueves">Jueves</option>
-                                        <option value="Viernes">Viernes</option>
-                                        <option value="Sábado">Sábado</option>
-                                        <option value="Domingo">Domingo</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3 form-group-horario-individual" id="hora-inicio-group" style="display:none;"> <label for="hora_inicio" class="form-label">Hora Inicio</label>
-                                    <input type="time" class="form-control" id="hora_inicio" name="hora_inicio" required>
-                                    <span id="shora_inicio" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3 form-group-horario-individual" id="hora-fin-group" style="display:none;"> <label for="hora_fin" class="form-label">Hora Fin</label>
-                                    <input type="time" class="form-control" id="hora_fin" name="hora_fin" required>
-                                    <span id="shora_fin" class="text-danger"></span>
-                                </div>
-                                <div class="mb-3 form-group-horario-individual" id="uc-group" style="display:none;"> <label for="uc_id" class="form-label">Unidad curricular</label>
-                                    <select class="form-select" id="uc_id" name="uc_id" required>
-                                        </select>
-                                </div>
-                                <div class="mb-3 form-group-horario-individual" id="docente-group" style="display:none;"> <label for="doc_id" class="form-label">Docente</label>
-                                    <select class="form-select" id="doc_id" name="doc_id" required>
-                                        </select>
-                                </div>
+                                <div class="mb-3 form-group-horario-individual" id="espacio-group" style="display:none;"> <label for="esp_id" class="form-label">Espacio</label><select class="form-select" id="esp_id" name="esp_id" required></select></div>
+                                <div class="mb-3 form-group-horario-individual" id="dia-group" style="display:none;"> <label for="dia" class="form-label">Día</label><select class="form-select" id="dia" name="dia" required><option value="">Seleccionar Día</option><option value="Lunes">Lunes</option><option value="Martes">Martes</option><option value="Miércoles">Miércoles</option> <option value="Jueves">Jueves</option><option value="Viernes">Viernes</option><option value="Sábado">Sábado</option><option value="Domingo">Domingo</option></select></div>
+                                <div class="mb-3 form-group-horario-individual" id="hora-inicio-group" style="display:none;"> <label for="hora_inicio" class="form-label">Hora Inicio</label><input type="time" class="form-control" id="hora_inicio" name="hora_inicio" required><span id="shora_inicio" class="text-danger"></span></div>
+                                <div class="mb-3 form-group-horario-individual" id="hora-fin-group" style="display:none;"> <label for="hora_fin" class="form-label">Hora Fin</label><input type="time" class="form-control" id="hora_fin" name="hora_fin" required><span id="shora_fin" class="text-danger"></span></div>
+                                <div class="mb-3 form-group-horario-individual" id="uc-group" style="display:none;"> <label for="uc_id" class="form-label">Unidad curricular</label><select class="form-select" id="uc_id" name="uc_id" required></select></div>
+                                <div class="mb-3 form-group-horario-individual" id="docente-group" style="display:none;"> <label for="doc_id" class="form-label">Docente</label><select class="form-select" id="doc_id" name="doc_id" required></select></div>
                                 
-                                <div class="header mt-4" id="controlesTablaHorario">
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-success" id="btnAnadirFranja">
-                                            <i class="bi bi-plus-lg"></i> Nueva Franja
-                                        </button>
-                                    </div>
-                                </div>
+                                <div class="header mt-4" id="controlesTablaHorario"></div>
+
                                 <div class="table-responsive" id="contenedorTablaHorario">
-                                    <table class="table table-bordered" id="tablaHorario">
-                                        <thead>
+                                    <table class="table table-bordered text-center" id="tablaHorario"> <thead>
                                             <tr>
-                                                <th>Hora</th>
-                                                <th data-day="Lunes">Lunes</th>
-                                                <th data-day="Martes">Martes</th>
-                                                <th data-day="Miércoles">Miércoles</th> <th data-day="Jueves">Jueves</th>
-                                                <th data-day="Viernes">Viernes</th>
-                                                <th data-day="Sábado">Sábado</th>
+                                                <th style="min-width: 150px;">Hora</th>
+                                                <th>Lunes</th>
+                                                <th>Martes</th>
+                                                <th>Miércoles</th>
+                                                <th>Jueves</th>
+                                                <th>Viernes</th>
+                                                <th>Sábado</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -178,7 +142,7 @@
                                 <option value="">Seleccionar Espacio</option>
                                 </select>
                         </div>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <button type="submit" class="btn btn-primary" id="btnGuardarClase">Guardar Cambios</button>
                         <button type="button" class="btn btn-danger" id="btnEliminarEntrada" style="display:none;">Eliminar Clase</button>
                     </form>
                 </div>

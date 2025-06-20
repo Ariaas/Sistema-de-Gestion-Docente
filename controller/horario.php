@@ -17,7 +17,9 @@ $acciones_json_validas = [
     'eliminar_clase_individual',      
     'ver_horario_clase_individual',
     'obtener_uc_por_docente',
-    'verificar_horario_existente' 
+    'verificar_horario_existente',
+    'verificar_conflicto_espacio', // <-- NUEVA ACCIÓN
+    'verificar_conflicto_docente'  // <-- NUEVA ACCIÓN
 ];
 
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
@@ -39,14 +41,46 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     'ucs' => $o->obtenerUnidadesCurriculares(),
                     'secciones' => $o->obtenerSecciones(),
                     'espacios' => $o->obtenerEspacios(),
-                    'docentes' => $o->obtenerDocentes()
+                    'docentes' => $o->obtenerDocentes(),
+                    'turnos' => $o->obtenerTurnos(),
+                    'fases' => $o->obtenerFases()
                 ];
+                break;
+            case 'verificar_conflicto_espacio':
+                $esp_id = $_POST['esp_id'] ?? null;
+                $dia = $_POST['dia'] ?? null;
+                $hora_inicio = $_POST['hora_inicio'] ?? null;
+                $sec_id_actual = $_POST['sec_id_actual'] ?? null;
+                $fase_id_actual = $_POST['fase_id_actual'] ?? null;
+                $sec_id_original = $_POST['sec_id_original'] ?? null;
+                $fase_id_original = $_POST['fase_id_original'] ?? null;
+                
+                if($esp_id && $dia && $hora_inicio && $sec_id_actual && $fase_id_actual) {
+                    $respuesta = $o->verificarConflictoEspacioIndividual($esp_id, $dia, $hora_inicio, $fase_id_actual, $sec_id_actual, $sec_id_original, $fase_id_original);
+                } else {
+                    $respuesta['mensaje'] = 'Faltan datos para la verificación de conflicto de espacio.';
+                }
+                break;
+            case 'verificar_conflicto_docente':
+                $doc_id = $_POST['doc_id'] ?? null;
+                $dia = $_POST['dia'] ?? null;
+                $hora_inicio = $_POST['hora_inicio'] ?? null;
+                $sec_id_actual = $_POST['sec_id_actual'] ?? null;
+                $fase_id_actual = $_POST['fase_id_actual'] ?? null;
+                $sec_id_original = $_POST['sec_id_original'] ?? null;
+                $fase_id_original = $_POST['fase_id_original'] ?? null;
+            
+                if($doc_id && $dia && $hora_inicio && $sec_id_actual && $fase_id_actual) {
+                    $respuesta = $o->verificarConflictoDocenteIndividual($doc_id, $dia, $hora_inicio, $fase_id_actual, $sec_id_actual, $sec_id_original, $fase_id_original);
+                } else {
+                    $respuesta['mensaje'] = 'Faltan datos para la verificación de conflicto de docente.';
+                }
                 break;
             case 'verificar_horario_existente': 
                 $sec_id = $_POST['sec_id'] ?? null;
-                $hor_fase = $_POST['hor_fase'] ?? null;
-                if ($sec_id && $hor_fase) {
-                    $existe = $o->verificarHorarioExistente($sec_id, $hor_fase);
+                $fase_id = $_POST['fase_id'] ?? null;
+                if ($sec_id && $fase_id) {
+                    $existe = $o->verificarHorarioExistente($sec_id, $fase_id);
                     $respuesta = ['resultado' => 'ok', 'existe' => $existe];
                 } else {
                     $respuesta = ['resultado' => 'error', 'mensaje' => 'Faltan parámetros (sección, fase) para la verificación.'];
@@ -57,9 +91,9 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
             case 'consultar_detalles_para_grupo':
                 $sec_id = $_POST['sec_id'] ?? null;
-                $hor_fase = $_POST['hor_fase'] ?? null;
-                if ($sec_id && $hor_fase) {
-                    $respuesta = $o->ConsultarDetallesParaGrupo($sec_id, $hor_fase);
+                $fase_id = $_POST['fase_id'] ?? null;
+                if ($sec_id && $fase_id) {
+                    $respuesta = $o->ConsultarDetallesParaGrupo($sec_id, $fase_id);
                 } else {
                     $respuesta = ['resultado' => 'error', 'mensaje' => 'Faltan parámetros para consultar detalles del grupo.'];
                 }
@@ -75,76 +109,34 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 }
                 break;
             case 'modificar_grupo':
-                $sec_id_original = $_POST['sec_id'] ?? null;
-                $hor_fase_original = $_POST['hor_fase'] ?? null;
+                $sec_id_original = $_POST['sec_id_original'] ?? null;
+                $fase_id_original = $_POST['fase_id_original'] ?? null;
                 $nueva_seccion_id = $_POST['nueva_seccion_id'] ?? null; 
-                $nueva_hor_fase = $_POST['nueva_hor_fase'] ?? null;     
+                $nueva_fase_id = $_POST['nueva_fase_id'] ?? null;
                 $items_horario_json = $_POST['items_horario'] ?? '[]';
 
-                if ($sec_id_original !== null && $hor_fase_original !== null && $nueva_seccion_id !== null && $nueva_hor_fase !== null && $items_horario_json !== null) {
-                    $respuesta = $o->ModificarGrupo($sec_id_original, $hor_fase_original, $nueva_seccion_id, $nueva_hor_fase, $items_horario_json);
+                if ($sec_id_original !== null && $fase_id_original !== null && $nueva_seccion_id !== null && $nueva_fase_id !== null && $items_horario_json !== null) {
+                    $respuesta = $o->ModificarGrupo($sec_id_original, $fase_id_original, $nueva_seccion_id, $nueva_fase_id, $items_horario_json);
                 } else {
                     $missing_params = [];
-                    if ($sec_id_original === null) $missing_params[] = "sec_id (original)";
-                    if ($hor_fase_original === null) $missing_params[] = "hor_fase (original)";
+                    if ($sec_id_original === null) $missing_params[] = "sec_id_original";
+                    if ($fase_id_original === null) $missing_params[] = "fase_id_original";
                     if ($nueva_seccion_id === null) $missing_params[] = "nueva_seccion_id";
-                    if ($nueva_hor_fase === null) $missing_params[] = "nueva_hor_fase";
+                    if ($nueva_fase_id === null) $missing_params[] = "nueva_fase_id";
                     if ($items_horario_json === null) $missing_params[] = "items_horario";
                     $respuesta = ['resultado' => 'error', 'mensaje' => 'Faltan parámetros para modificar el grupo: ' . implode(', ', $missing_params)];
                 }
                 break;
             case 'eliminar_por_seccion_fase':
                 $sec_id = $_POST['sec_id'] ?? null;
-                $hor_fase = $_POST['hor_fase'] ?? null;
-                if ($sec_id && $hor_fase) {
-                    $respuesta = $o->EliminarPorSeccionFase($sec_id, $hor_fase);
+                $fase_id = $_POST['fase_id'] ?? null;
+                if ($sec_id && $fase_id) {
+                    $respuesta = $o->EliminarPorSeccionFase($sec_id, $fase_id);
                 } else {
                     $respuesta = ['resultado' => 'error', 'mensaje' => 'Faltan parámetros para eliminar el grupo.'];
                 }
                 break;
-            case 'registrar_clase_individual':
-                $esp_id = $_POST['esp_id'] ?? null;
-                $hor_fase_clase = $_POST['hor_fase'] ?? null; 
-                $dia = $_POST['dia'] ?? null;
-                $hora_inicio = $_POST['hora_inicio'] ?? null;
-                $hora_fin = $_POST['hora_fin'] ?? null;
-                $sec_id_clase = $_POST['sec_id'] ?? null; 
-                $doc_id_clase_reg = $_POST['doc_id'] ?? null; 
-                $uc_id = $_POST['uc_id'] ?? null;
-                $respuesta = $o->RegistrarClaseIndividual($esp_id, $hor_fase_clase, $dia, $hora_inicio, $hora_fin, $sec_id_clase, $doc_id_clase_reg, $uc_id);
-                break;
-            case 'ver_horario_clase_individual':
-                $hor_id = $_POST['hor_id'] ?? '';
-                if (!empty($hor_id)) {
-                    $respuesta = $o->VerHorarioClaseIndividual($hor_id);
-                } else {
-                    $respuesta = ['resultado' => 'error', 'mensaje' => 'ID de horario no proporcionado.'];
-                }
-                break;
-            case 'modificar_clase_individual':
-                $hor_id_clase = $_POST['hor_id'] ?? null;
-                $esp_id_clase = $_POST['esp_id'] ?? null;
-                $hor_fase_clase_mod = $_POST['hor_fase'] ?? null;
-                $dia_clase = $_POST['dia'] ?? null;
-                $hora_inicio_clase = $_POST['hora_inicio'] ?? null;
-                $hora_fin_clase = $_POST['hora_fin'] ?? null;
-                $sec_id_clase_mod = $_POST['sec_id'] ?? null;
-                $doc_id_clase = $_POST['doc_id'] ?? null;
-                $uc_id_clase = $_POST['uc_id'] ?? null;
-                if ($hor_id_clase) { 
-                     $respuesta = $o->ModificarClaseIndividual($hor_id_clase, $esp_id_clase, $hor_fase_clase_mod, $dia_clase, $hora_inicio_clase, $hora_fin_clase, $sec_id_clase_mod, $doc_id_clase, $uc_id_clase);
-                } else {
-                    $respuesta = ['resultado' => 'error', 'mensaje' => 'Faltan datos para modificar la clase.'];
-                }
-                break;
-            case 'eliminar_clase_individual':
-                $hor_id_eliminar = $_POST['hor_id'] ?? ''; 
-                if (!empty($hor_id_eliminar)) {
-                    $respuesta = $o->EliminarClaseIndividual($hor_id_eliminar);
-                } else {
-                     $respuesta = ['resultado' => 'error', 'mensaje' => 'ID de horario no proporcionado para eliminar.'];
-                }
-                break;
+            // ... otros cases ...
         }
     } catch (Exception $e) {
         error_log("Error en horarioC.php: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());
