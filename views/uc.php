@@ -130,7 +130,7 @@ if (!isset($_SESSION['name'])) {
                                             <?php
                                             if (!empty($trayectos)) {
                                                 foreach ($trayectos as $trayecto) {
-                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['tra_anio'] . "</option>";
+                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['ani_anio'] . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay trayectos disponibles</option>";

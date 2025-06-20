@@ -34,6 +34,72 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
         </div>
         <div class="container mt-4">
             <div class="row row-cols-1 row-cols-md-3 g-4">
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=cohorte">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Cohorte</h5>
+                                    <p class="card-text"></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=anio">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Año</h5>
+                                    <p class="card-text"></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=convenio">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Convenio</h5>
+                                    <p class="card-text"></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=turno">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Turno</h5>
+                                    <p class="card-text"></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=fase">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Fase</h5>
+                                    <p class="card-text"></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <a class="a-cards" href="?pagina=coordinacion">
+                            <div class="card h-100 text-center custom-card">
+                                <div class="card-body">
+                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
+                                    <h5 class="card-title">Gestionar Coordinación</h5>
+                                    <p class="card-text"></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>                                                                
                 <?php if (!empty($permisos['Certificados'])): ?>
                     <div class="col">
                         <a class="a-cards" href="?pagina=certificado">
@@ -47,7 +113,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                         </a>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($permisos['Area'])): 
+                <?php if (!empty($permisos['Area'])):
                 ?>
                     <div class="col">
                         <a class="a-cards" href="?pagina=area">
@@ -114,17 +180,17 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                     </div>
                 <?php endif; ?>
 
-                    <div class="col">
-                        <a class="a-cards" href="?pagina=preguntas">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
-                                    <h5 class="card-title">Preguntas Frecuentes</h5>
-                                    <p class="card-text"></p>
-                                </div>
+                <div class="col">
+                    <a class="a-cards" href="?pagina=preguntas">
+                        <div class="card h-100 text-center custom-card">
+                            <div class="card-body">
+                                <img src="public/assets/icons/folder-open-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Map Icon">
+                                <h5 class="card-title">Preguntas Frecuentes</h5>
+                                <p class="card-text"></p>
                             </div>
-                        </a>
-                    </div>
+                        </div>
+                    </a>
+                </div>
             </div>
         </div>
     </main>

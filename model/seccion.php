@@ -219,7 +219,7 @@ class Seccion extends Connection
                 s.sec_codigo, 
                 s.sec_cantidad, 
                 t.tra_numero, 
-                t.tra_anio 
+                t.ani_id
             FROM tbl_seccion s
             INNER JOIN tbl_trayecto t ON s.tra_id = t.tra_id
             WHERE s.sec_estado = 1");
@@ -227,7 +227,7 @@ class Seccion extends Connection
                 $sql = "SELECT 
                         g.gro_id,
                         GROUP_CONCAT(s.sec_codigo SEPARATOR '; ') AS secciones,
-                        CONCAT(t.tra_numero, ' - ', t.tra_anio)       AS trayecto
+                        CONCAT(t.ani_id, ' - ', t.tra_anio)       AS trayecto
                     FROM tbl_grupo g
                     JOIN seccion_grupo sg ON g.gro_id = sg.gro_id
                     JOIN tbl_seccion   s  ON sg.sec_id = s.sec_id

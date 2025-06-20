@@ -423,7 +423,7 @@ function enviaAjax(datos, origen = "") {
                     </div>
                     <div class="acciones-fila">
                         <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
-                        <button class="btn btn-dark btn-sm asignar-certificado-malla" data-id="${item.mal_id}" data-nombre="${item.mal_nombre}">Asignar Cert.</button>
+                        <button class="btn btn-info btn-sm asignar-certificado-malla" data-id="${item.mal_id}" data-nombre="${item.mal_nombre}">Asignar Cert.</button>
                     </div>
                 </td>`;
             $("#resultadoconsulta").append(`

@@ -322,12 +322,15 @@ class UC extends Connection
                 ar.area_nombre,
                 tr.tra_id,
                 tr.tra_numero,
-                tr.tra_anio
+                tr.ani_id,
+                a.ani_anio 
             FROM tbl_uc uc
             INNER JOIN tbl_eje ej ON uc.eje_id = ej.eje_id
             INNER JOIN tbl_area ar ON uc.area_id = ar.area_id
             INNER JOIN tbl_trayecto tr ON uc.tra_id = tr.tra_id
+            INNER JOIN tbl_anio a ON tr.ani_id = a.ani_id 
             WHERE uc.uc_estado = 1");
+
             } elseif ($accion === 'consultarAsignacion') {
                 $uc_id = $_POST['uc_id'] ?? null;
                 $sql = "SELECT 
@@ -342,9 +345,13 @@ class UC extends Connection
                 LEFT JOIN tbl_docente d ON ud.doc_id = d.doc_id AND d.doc_estado = 1
                 WHERE uc.uc_estado = 1";
                 if ($uc_id) {
-                    $sql .= " AND uc.uc_id = " . intval($uc_id);
+                    // Se usa una consulta preparada para mayor seguridad
+                    $sql .= " AND uc.uc_id = :uc_id";
+                    $stmt = $co->prepare($sql);
+                    $stmt->execute([':uc_id' => $uc_id]);
+                } else {
+                    $stmt = $co->query($sql);
                 }
-                $stmt = $co->query($sql);
             } else {
                 throw new Exception("Acción inválida: $accion");
             }
@@ -411,9 +418,12 @@ class UC extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT tra_id, tra_numero, tra_anio FROM tbl_trayecto WHERE tra_estado = 1");
+            $stmt = $co->query("SELECT t.tra_id, t.tra_numero, t.ani_id, a.ani_anio 
+                            FROM tbl_trayecto t
+                            INNER JOIN tbl_anio a ON t.ani_id = a.ani_id
+                            WHERE t.tra_estado = 1 AND a.ani_activo = 1");
             $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
+        } catch (Exception $e) { 
             $r = [];
         }
         $co = null;
