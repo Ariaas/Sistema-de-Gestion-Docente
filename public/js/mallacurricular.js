@@ -183,6 +183,30 @@ $("#mal_nombre").on("keydown", function () {
         enviaAjax(datos, "modificar_malla");
       }
     }
+  else  if ($(this).text() == "ELIMINAR") {  
+
+  Swal.fire({
+          title: "¿Está seguro de eliminar esta malla?",
+          text: "Esta acción no se puede deshacer.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+         
+ if (result.isConfirmed) {
+        var datos = new FormData();
+        datos.append("accion", "eliminar");
+        datos.append("mal_id", $(linea).find("td:eq(0)").text());
+        enviaAjax(datos, "eliminar_malla");
+      }else {
+            muestraMensaje("error",2000,"INFORMACIÓN","La eliminación ha sido cancelada.");
+            $("#modal1").modal("hide");
+          }
+    });
+      }
   });
 
   $("#registrar").on("click", function () {
@@ -312,15 +336,30 @@ function validarenvio() {
 }
 
 function pone(pos, accionBtn) {
-  $(".form-control").removeClass("is-invalid is-valid");
-  $(".form-text").empty();
+  
 
   linea = $(pos).closest("tr");
   $("#mal_id").val($(linea).find("td:eq(0)").text());
   $("#mal_codigo").val($(linea).find("td:eq(1)").text());
   $("#mal_nombre").val($(linea).find("td:eq(2)").text());
-  $("#mal_Anio").val($(linea).find("td:eq(3)").text());
-  $("#mal_cohorte").val($(linea).find("td:eq(4)").text());
+
+
+  var año = $(linea).find("td:eq(3)").text();
+  $('#mal_Anio option').filter(function() {
+      return $(this).text() == año;
+  }).prop('selected', true).change();
+
+  var cohorte = $(linea).find("td:eq(4)").text().trim();
+$('#mal_cohorte option').each(function() {
+    if ($(this).text().trim().includes(cohorte)) {
+        $(this).prop('selected', true).change();
+        return false; // salir del each
+    }
+});
+
+ /*$("#mal_Anio").val($(linea).find("td:eq(3)").text());
+  $("#mal_cohorte").val($(linea).find("td:eq(4)").text());*/
+
   $("#mal_descripcion").val($(linea).find("td:eq(5)").text());
 
   if (accionBtn === 0) {
@@ -330,7 +369,15 @@ function pone(pos, accionBtn) {
     $("#mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", false);
     $("#modal1").modal("show");
   } else if (accionBtn === 1) {
-    Swal.fire({
+
+    $("#accion").val("ELIMINAR");
+
+    $("#modal1Titulo").text("Eliminar Malla Curricular");
+    $("#proceso").text("ELIMINAR").removeClass("btn-danger").addClass("btn-primary");
+    
+     $("#mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", true);
+    $("#modal1").modal("show");
+ /*   Swal.fire({
       title: "¿Está seguro de eliminar esta malla curricular?",
       html: `<strong>Código:</strong> ${$(linea).find("td:eq(1)").text()}<br><strong>Nombre:</strong> ${$(linea).find("td:eq(2)").text()}<br><br>Esta acción no se puede deshacer.`,
       icon: "warning",
@@ -346,7 +393,7 @@ function pone(pos, accionBtn) {
         datos.append("mal_id", $(linea).find("td:eq(0)").text());
         enviaAjax(datos, "eliminar_malla");
       }
-    });
+    });*/
   }
 }
 
@@ -399,6 +446,7 @@ function enviaAjax(datos, origen = "") {
           }
         } else if (origen === "eliminar_malla" && lee.resultado === "eliminar") {
            muestraMensaje("success", 4000, "ELIMINADO", lee.mensaje);
+           $("#modal1").modal("hide");
            if (lee.mensaje.includes("correctamente")) {
              Listar();
            }
