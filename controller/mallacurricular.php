@@ -13,6 +13,8 @@ $obj4 = new Malla();
 
 $unidades_curriculares_disponibles = $obj4->obtenerUnidadesCurricularesActivas();
 $certificados_disponibles = $obj4->obtenerCertificadosActivos();
+$anios = $obj4->obtenerAnios();
+$cohortes= $obj4->obtenerCohorte();
 
 if (is_file("views/" . $pagina . ".php")) {
 
@@ -39,13 +41,29 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($obj4->Registrar());
 
             $bitacora->registrarAccion($usu_id, 'registrar', 'malla curricular');
+
         } else if ($accion == 'existe') {
-            $existe = $obj4->Existe($_POST['mal_codigo'], $_POST['mal_nombre']);
-            if($existe){
-                 echo json_encode(['resultado' => 'existe', 'mensaje' => 'La malla curricular con ese código y nombre YA existe!']);
-            } else {
-                 echo json_encode(['resultado' => 'noexiste', 'mensaje' => '']);
+            $obj4->setMalCodigo($_POST['mal_codigo']);
+            
+            // AÑADE ESTA LÓGICA: Asigna el ID al objeto si se está modificando
+            if (isset($_POST['mal_id']) && !empty($_POST['mal_id'])) {
+                $obj4->setMalId($_POST['mal_id']);
             }
+            
+            echo json_encode($obj4->Existecodigo());
+
+        
+        } 
+        else if ($accion == 'existe_nombre') {
+            $obj4->setMalNombre($_POST['mal_nombre']);
+
+            // AÑADE ESTA LÓGICA: Asigna el ID al objeto si se está modificando
+            if (isset($_POST['mal_id']) && !empty($_POST['mal_id'])) {
+                $obj4->setMalId($_POST['mal_id']);
+            }
+
+            echo json_encode($obj4->Existenombre());
+        
         } else if($accion == 'modificar'){
             $obj4->setMalId($_POST['mal_id']);
             $obj4->setMalCodigo($_POST['mal_codigo']);
@@ -57,35 +75,39 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'modificar', 'malla curricular');
         } elseif ($accion == 'eliminar') {
+
             $obj4->setMalId($_POST['mal_id']);
             echo json_encode($obj4->Eliminar());
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'malla curricular');
+
         } elseif ($accion == 'asignar_uc_malla') {
-            $mallaId = $_POST['mal_id'];
+            $mallaId  =$_POST['mal_id'];// usar setters y getter
             $ucIds = json_decode($_POST['uc_ids'], true);
             echo json_encode($obj4->AsignarUCsAMalla($mallaId, $ucIds));
 
             $bitacora->registrarAccion($usu_id, 'asignar', 'malla curricular');
+
+
         } elseif ($accion == 'quitar_uc_malla') { 
-            $mallaId = $_POST['mal_id'];
+            $mallaId = $_POST['mal_id']; // usar setters y getter
             $ucId = $_POST['uc_id'];
             echo json_encode($obj4->QuitarUCDeMalla($mallaId, $ucId));
 
             $bitacora->registrarAccion($usu_id, 'quitar', 'malla curricular');
         } elseif ($accion == 'asignar_certificado_malla') {
             $mallaId = $_POST['mal_id'];
-            $certIds = json_decode($_POST['cert_ids'], true);
+            $certIds = json_decode($_POST['cert_ids'], true);// usar setters y getter
             echo json_encode($obj4->AsignarCertificadosAMalla($mallaId, $certIds));
 
             $bitacora->registrarAccion($usu_id, 'asignar certificado', ' malla curricular');
-        } elseif ($accion == 'quitar_certificado_malla') { 
+        } elseif ($accion == 'quitar_certificado_malla') { // usar setters y getter
             $mallaId = $_POST['mal_id'];
             $certId = $_POST['cert_id'];
             echo json_encode($obj4->QuitarCertificadoDeMalla($mallaId, $certId));
 
             $bitacora->registrarAccion($usu_id, 'quitar certificado', 'malla curricular');
-        } elseif ($accion == 'consultar_asignaciones_uc') {
+        } elseif ($accion == 'consultar_asignaciones_uc') {// usar setters y getter
             echo json_encode($obj4->ListarAsignacionesUC());
         } elseif ($accion == 'consultar_asignaciones_certificados') {
             echo json_encode($obj4->ListarAsignacionesCertificados());

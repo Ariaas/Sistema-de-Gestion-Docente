@@ -32,19 +32,25 @@ if (is_file("views/" . $pagina . ".php")) {
         } else if ($accion == 'registrar') {
             $obj2->set_nombreCertificado($_POST['certificadonombre']);// pila con estos setters
             $obj2->set_trayecto($_POST['trayecto']);
+            $obj2->set_tipoCertificado($_POST['certificadotipo']);
             echo  json_encode($obj2->Registrar());
 
             $bitacora->registrarAccion($usu_id, 'registrar', 'certificado');
         }else if ($accion == 'existe') {
 
             $obj2->set_nombreCertificado($_POST['certificadonombre']);// pila con estos setters
-            $obj2->set_trayecto($_POST['trayecto']);
+            
+            if (isset($_POST['certificadoid']) && !empty($_POST['certificadoid'])) {
+                $obj2->set_certificadoId($_POST['certificadoid']);
+            }
+           
             echo json_encode($obj2->Existe());
 
         } else if($accion == 'modificar'){
             $obj2->set_certificadoId($_POST['certificadoid']);
             $obj2->set_nombreCertificado($_POST['certificadonombre']);// pila con estos setters
             $obj2->set_trayecto($_POST['trayecto']);
+            $obj2->set_tipoCertificado($_POST['certificadotipo']);
 
             echo  json_encode($obj2->Modificar());
 

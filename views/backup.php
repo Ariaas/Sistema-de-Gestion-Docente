@@ -11,7 +11,7 @@ if (!isset($_SESSION['name'])) {
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Gestionar Mantenimiento del Sistema</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+   
     <style>
         .mantenimiento-container {
             max-width: 600px;

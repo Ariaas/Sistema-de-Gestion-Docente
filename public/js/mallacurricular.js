@@ -79,7 +79,7 @@ function limpiarModalAsignarCertificado() {
 
 
 $(document).ready(function () {
-  Listar(); 
+ Listar(); 
 
   $('#modalAsignarUC').on('hidden.bs.modal', function () {
     limpiarModalAsignarUC();
@@ -116,18 +116,58 @@ $(document).ready(function () {
   });
 
 
-  $("#mal_codigo").on("keyup", function () {
+
+  
+
+
+ $("#mal_codigo").on("keydown", function () {
+
     validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/,$(this),$("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
+  
   });
-   $("#mal_nombre").on("keyup", function () {
+
+  $("#mal_codigo").on("keyup", function () {
+    validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $(this), $("#smalcodigo"), "El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
+    
+    var datos = new FormData();
+    datos.append('accion', 'existe');
+    datos.append("mal_codigo", $(this).val());
+
+    // AÑADE ESTA LÓGICA: Envía el ID si existe en el formulario (modo modificar)
+    var mal_id = $("#mal_id").val();
+    if (mal_id) {
+        datos.append("mal_id", mal_id);
+    }
+
+    enviaAjax(datos, "existe");
+});
+
+$("#mal_nombre").on("keydown", function () {
     validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$(this),$("#smalnombre"),"El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
+    
   });
-  $("#mal_cohorte").on("keyup", function () {
-    validarkeyup(/^[A-Za-z0-9\s-]{1,20}$/,$(this),$("#smalcohorte"),"El cohorte permite de 1 a 20 caracteres alfanuméricos, espacios o guiones.");
-  });
-  $("#mal_descripcion").on("keyup", function () {
+
+  
+   $("#mal_nombre").on("keyup", function () {
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/, $(this), $("#smalnombre"), "El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
+    
+    var datos = new FormData();
+    datos.append('accion', 'existe_nombre');
+    datos.append("mal_nombre", $(this).val());
+
+    // AÑADE ESTA LÓGICA: Envía el ID si existe en el formulario (modo modificar)
+    var mal_id = $("#mal_id").val();
+    if (mal_id) {
+        datos.append("mal_id", mal_id);
+    }
+
+    enviaAjax(datos, "existe");
+});
+
+  $("#mal_descripcion").on("keydown keyup", function () {
     validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/, $(this), $("#smaldescripcion"), "La descripción debe contener entre 5 y 100 caracteres.");
   });
+  
 
 
   $("#proceso").on("click", function () {
@@ -244,27 +284,31 @@ $(document).ready(function () {
 
 function validarenvio() {
     let anio = $("#mal_Anio").val();
-    let isValid = true;
-
+    let corte = $("#mal_cohorte").val();
+    
     if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/,$("#mal_codigo"),$("#smalcodigo"),"El formato permite de 2 a 10 caracteres.") == 0) {
-        isValid = false;
+       muestraMensaje("error",4000,"ERROR","El codigo de la malla <br/> No puede estar vacío y debe contener entre 2 a 10 carácteres.");
+        return false;
     }
     if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$("#mal_nombre"),$("#smalnombre"),"El nombre debe contener entre 5 y 50 caracteres.") == 0) {
-         isValid = false;
+      muestraMensaje("error",4000,"ERROR","El nombre de la malla <br/> No puede estar vacío y debe contener entre 5 a 10 carácteres.");
+         return false;
     }
     if (anio === null || anio === "" || anio === "0") {
-         isValid = false;
+        muestraMensaje("error",4000,"ERROR","Por favor, ¡seleccione un año!");
+        return false;
     }
-    if (validarkeyup(/^[A-Za-z0-9\s-]{1,20}$/,$("#mal_cohorte"),$("#smalcohorte"),"El formato permite de 1 a 20 caracteres.") == 0) {
-         isValid = false;
+    if (corte === null || corte === "" || corte === "0") {
+      muestraMensaje("error",4000,"ERROR","Por favor, ¡seleccione una cohorte!");
+        return false;
     }
+  
     if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/,$("#mal_descripcion"),$("#smaldescripcion"),"La descripción debe contener entre 5 y 100 caracteres.") == 0) {
-        isValid = false;
+      muestraMensaje("error",4000,"ERROR","La descripcion de la malla <br/> No puede estar vacía y debe contener entre 5 a 100 carácteres.");   
+      return false;
     }
-     if(!isValid) {
-        muestraMensaje("error",4000,"ERROR DE VALIDACIÓN","Por favor, corrija los campos marcados.");
-    }
-    return isValid;
+    
+    return true;
 }
 
 function pone(pos, accionBtn) {
@@ -340,15 +384,15 @@ function enviaAjax(datos, origen = "") {
                 <td style="display: none;">${item.mal_id}</td>
                 <td>${item.mal_codigo}</td>
                 <td>${item.mal_nombre}</td>
-                <td>${item.mal_anio}</td>
-                <td>${item.mal_cohorte}</td>
+                <td>${item.ani_anio}</td>
+                <td>${item.coh_numero}</td>
                 <td>${item.mal_descripcion}</td>
                 ${botonesAccion}
               </tr>`);
           });
           crearDT("#tablamalla");
         } else if ((origen === "registrar_malla" && lee.resultado === "registrar") || (origen === "modificar_malla" && lee.resultado === "modificar")) {
-          muestraMensaje("success", 4000, lee.resultado.toUpperCase(), lee.mensaje);
+          muestraMensaje("success", 4000, lee.resultado, lee.mensaje);
           if (lee.mensaje.includes("correctamente")) {
             $("#modal1").modal("hide");
             Listar();
@@ -358,10 +402,12 @@ function enviaAjax(datos, origen = "") {
            if (lee.mensaje.includes("correctamente")) {
              Listar();
            }
-        } else if (lee.resultado === "existe" && origen.includes("_malla")) {
-             muestraMensaje('warning', 4000, 'Atención', lee.mensaje);
-             $("#mal_codigo").addClass("is-invalid");
-             $("#smalcodigo").text(lee.mensaje);
+        } else if (lee.resultado === "existe" ) {
+          
+           
+            muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
+          
+
         } else if (origen === "asignar_uc_malla_response" && lee.resultado === 'ok') {
             muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
             $("#modalAsignarUC").modal("hide");

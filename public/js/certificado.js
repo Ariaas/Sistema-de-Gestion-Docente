@@ -68,13 +68,32 @@ function crearDT() {
 
 $(document).ready(function () {
   Listar(); 
-    $("#certificadonombre").on("keydown keyup", function () {
+
+
+  $("#certificadotipo").on("keydown keyup", function () {
+
+    validarkeyup(/^[A-Za-z0-9\s-]{2,30}$/,$(this),$("#scertificadotipo"),"El tipo permite de 2 a 30 caracteres alfanuméricos, espacios o guiones.");
+  
+  });
+
+
+  $("#certificadonombre").on("keydown", function () {
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"El formato permite de 5 a 30 carácteres. Ej:Certificado trayecto 1"); // revisar el ejemplo
+    });
+
+
+  $("#certificadonombre").on("keyup", function () {
     validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadonombre"),$("#scertificadonombre"),"El formato permite de 5 a 30 carácteres. Ej:Certificado trayecto 1"); // revisar el ejemplo
   
         var datos = new FormData();
         datos.append('accion', 'existe');
-        datos.append("certificadonombre", $("#certificadonombre").val());
-        datos.append("trayecto", $("#trayecto").val());
+        datos.append("certificadonombre", $(this).val());
+        
+        var certifi = $("#certificadoid").val();
+        if (certifi) {
+        datos.append("mal_id", certifi);
+            }
+
         enviaAjax(datos);
     });
 
@@ -87,6 +106,9 @@ $(document).ready(function () {
         datos.append("accion", "registrar");
         datos.append("certificadonombre", $("#certificadonombre").val());
         datos.append("trayecto", $("#trayecto").val());
+        datos.append("certificadotipo", $("#certificadotipo").val());
+        
+      
         
         enviaAjax(datos);
       }
@@ -97,6 +119,7 @@ $(document).ready(function () {
         datos.append("certificadoid", $("#certificadoid").val());
         datos.append("certificadonombre", $("#certificadonombre").val());
         datos.append("trayecto", $("#trayecto").val());
+        datos.append("certificadotipo", $("#certificadotipo").val());
         enviaAjax(datos);
       }
     }
@@ -132,7 +155,7 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#scertificadonombre").show();
-    $("#certificadoid, #certificadonombre, #trayecto").prop("disabled", false);
+    $("#certificadoid, #certificadonombre, #trayecto, certificadotipo").prop("disabled", false);
   });
 
   
@@ -149,8 +172,11 @@ function validarenvio() {
   } else if (trayecto === null || trayecto === "0") {
         muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un trayecto!"); 
           return false;
-
-}
+      }
+  else if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,30}$/,$("#certificadotipo"),$("#certificadotipo"),"El formato permite de 5 a 30 carácteres.") == 0) {
+         muestraMensaje("error",4000,"ERROR!","El tipo de certificado <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
+          return false;
+      }
     return true;
 }
 
@@ -161,18 +187,24 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#certificadonombre").prop("disabled", false);
     $("#trayecto").prop("disabled", false);
+    $("#certificadotipo").prop("disabled", false);
+
   } else {
     $("#proceso").text("ELIMINAR");
   
-    $("#certificadonombre, #trayecto").prop("disabled", true);
+    $("#certificadonombre, #trayecto, certificadotipo").prop("disabled", true);
   }
 
   
   $("#scertificadonombre").hide();
   $("#certificadoid").val($(linea).find("td:eq(0)").text());
   $("#certificadonombre").val($(linea).find("td:eq(1)").text());
+ 
     let tra_id = $(linea).find("td:eq(2)").attr("data-traid");
   $("#trayecto").val(tra_id);
+
+  $("#certificadotipo").val($(linea).find("td:eq(3)").text());
+  
   
 
   $("#modal1").modal("show");
@@ -201,7 +233,8 @@ function enviaAjax(datos) {
               <tr>
                 <td style="display: none;">${item.cert_id}</td>
                 <td>${item.cert_nombre}</td>
-                <td data-traid="${item.tra_id}">${item.tra_numero }-${item.tra_anio}</td>
+                <td data-traid="${item.tra_id}">${item.tra_numero}</td>
+                <td>${item.cert_tipo}</td>
                 <td>
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.cert_id}"  data-nombre="${item.cert_nombre}">Eliminar</button>
@@ -228,9 +261,9 @@ function enviaAjax(datos) {
           }
         }
         else if (lee.resultado == "existe") {
-          if ($("#proceso").text() == "REGISTRAR") {
+          
             muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
-          }
+          
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
@@ -261,5 +294,5 @@ function enviaAjax(datos) {
 function limpia() {
   $("#certificadonombre").val("");
   $("#trayecto").val("");
-  
+  $("#certificadotipo").val("");  
 }

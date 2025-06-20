@@ -30,6 +30,7 @@ if (!isset($_SESSION['name'])) {
                                 <th style="display: none;">ID</th>
                                 <th>Nombre</th>
                                 <th>Trayecto</th>
+                                <th>Tipo</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -63,6 +64,11 @@ if (!isset($_SESSION['name'])) {
                                         <input class="form-control" type="text" id="certificadonombre" name="certificadonombre" placeholder="Nombre del certificado" required>
                                         <span id="scertificadonombre"></span>
                                     </div>
+                                       <div class="col-md-6">
+                                        <label for="certificadotipo">Tipo</label>
+                                        <input class="form-control" type="text" id="certificadotipo" name="certificadotipo" placeholder="Tipo del certificado" required>
+                                        <span id="scertificadotipo"></span>
+                                    </div>
 
                                     <div class="col-md-6">
                                         <label for="trayecto">Trayecto</label>
@@ -71,7 +77,7 @@ if (!isset($_SESSION['name'])) {
                                             <?php
                                             if (!empty($trayectos)) {
                                                 foreach ($trayectos as $trayecto) {
-                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['tra_anio'] . "</option>";
+                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay trayectos disponibles</option>";

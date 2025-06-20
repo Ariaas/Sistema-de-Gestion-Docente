@@ -3,10 +3,12 @@ require_once('model/dbconnection.php');
 
 class Malla extends Connection {
     private $mal_id;
-    private $mal_codigo;
-    private $mal_nombre;
+    
     private $mal_anio;
     private $mal_cohorte;
+
+    private $mal_codigo;
+    private $mal_nombre;
     private $mal_descripcion;
     private $mal_estado;
 
@@ -14,6 +16,7 @@ class Malla extends Connection {
     {
         parent::__construct();
         $this->mal_id = $mal_id;
+        
         $this->mal_codigo = $mal_codigo;
         $this->mal_nombre = $mal_nombre;
         $this->mal_anio = $mal_anio;
@@ -22,46 +25,89 @@ class Malla extends Connection {
         $this->mal_estado = $mal_estado;
     }
 
-    public function getMalId() { return $this->mal_id; }
-    public function getMalCodigo() { return $this->mal_codigo; }
-    public function getMalNombre() { return $this->mal_nombre; }
-    public function getMalAnio() { return $this->mal_anio; }
-    public function getMalCohorte() { return $this->mal_cohorte; }
-    public function getMalDescripcion() { return $this->mal_descripcion; }
-    public function getMalEstado() { return $this->mal_estado; }
-    public function setMalId($mal_id) { $this->mal_id = $mal_id; }
-    public function setMalCodigo($mal_codigo) { $this->mal_codigo = $mal_codigo; }
-    public function setMalNombre($mal_nombre) { $this->mal_nombre = $mal_nombre; }
-    public function setMalAnio($mal_anio) { $this->mal_anio = $mal_anio; }
-    public function setMalCohorte($mal_cohorte) { $this->mal_cohorte = $mal_cohorte; }
-    public function setMalDescripcion($mal_descripcion) { $this->mal_descripcion = $mal_descripcion; }
-    public function setMalEstado($mal_estado) { $this->mal_estado = $mal_estado; }
+    public function getMalId() {
+        return $this->mal_id;
+    }
+    public function getMalCodigo() {
+        return $this->mal_codigo;
+    }
+    public function getMalNombre() {
+        return $this->mal_nombre;
+    }
+    public function getMalAnio() {
+        return $this->mal_anio;
+    }
+    public function getMalCohorte() {
+        return $this->mal_cohorte;
+    }
+    public function getMalDescripcion() {
+        return $this->mal_descripcion;
+    }
+    public function getMalEstado() {
+        return $this->mal_estado;
+    }
+    public function setMalId($mal_id) {
+        $this->mal_id = $mal_id;
+    }
+    public function setMalCodigo($mal_codigo) {
+        $this->mal_codigo = $mal_codigo;
+    }
+    public function setMalNombre($mal_nombre) {
+        $this->mal_nombre = $mal_nombre;
+    }
+    public function setMalAnio($mal_anio) {
+        $this->mal_anio = $mal_anio;
+    }
+    public function setMalCohorte($mal_cohorte) {
+        $this->mal_cohorte = $mal_cohorte;
+    }
+    public function setMalDescripcion($mal_descripcion) {
+        $this->mal_descripcion = $mal_descripcion;
+    }
+    public function setMalEstado($mal_estado) {
+        $this->mal_estado = $mal_estado;
+    }
+    
 
-    public function Registrar(){
+     public function Registrar(){
         $r = array();
-        if (!$this->Existe($this->mal_codigo, $this->mal_nombre)) {
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            try {
-                $stmt = $co->prepare("INSERT INTO tbl_malla( mal_codigo, mal_nombre, mal_anio, mal_cohorte, mal_descripcion, mal_estado)
-                 VALUES (:mal_codigo, :mal_nombre, :mal_anio, :mal_cohorte, :mal_descripcion, 1)");
-                $stmt->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-                $stmt->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
-                $stmt->bindParam(':mal_anio', $this->mal_anio, PDO::PARAM_STR);
-                $stmt->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
-                $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
-                $stmt->execute();
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/> Se registró la malla curricular correctamente!';
-            } catch (Exception $e) {
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-            $co = null;
-        } else {
-            $r['resultado'] = 'existe';
-            $r['mensaje'] = 'ERROR! <br/> La malla curricular con ese código y nombre ya existe!';
+        
+        // 1. Asegurarse de que el ID es nulo para la validación de registro
+        $this->setMalId(null);
+
+        // 2. Comprobar si el código ya existe
+        $check_codigo = $this->Existecodigo();
+        if (!empty($check_codigo['resultado']) && $check_codigo['resultado'] == 'existe') {
+            return $check_codigo; // Devuelve el mensaje de error de código existente
         }
+
+        // 3. Comprobar si el nombre ya existe
+        $check_nombre = $this->Existenombre();
+        if (!empty($check_nombre['resultado']) && $check_nombre['resultado'] == 'existe') {
+            return $check_nombre; // Devuelve el mensaje de error de nombre existente
+        }
+
+        // 4. Si no existen, proceder con el registro
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $stmt = $co->prepare("INSERT INTO tbl_malla( coh_id, ani_id, mal_codigo, mal_nombre, mal_descripcion, mal_estado)
+             VALUES (:mal_cohorte, :mal_anio, :mal_codigo, :mal_nombre, :mal_descripcion, 1)");
+
+            $stmt->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
+            $stmt->bindParam(':mal_anio', $this->mal_anio, PDO::PARAM_STR);
+            $stmt->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+            $stmt->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
+            $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
+        
+            $stmt->execute();
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/> Se registró la malla curricular correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        $co = null;
         return $r;
     }
 
@@ -70,7 +116,7 @@ class Malla extends Connection {
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT * FROM tbl_malla WHERE mal_estado = 1 ORDER BY mal_nombre ASC");
+            $stmt = $co->query("SELECT * FROM tbl_malla INNER JOIN tbl_cohorte on tbl_cohorte.coh_id = tbl_malla.coh_id INNER JOIN tbl_anio on tbl_anio.ani_id = tbl_malla.ani_id  WHERE mal_estado = 1 ORDER BY mal_nombre ASC");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -83,27 +129,33 @@ class Malla extends Connection {
     }
 
     public function Modificar(){
+        // Al modificar, el ID ya está en el objeto, por lo que las comprobaciones lo excluirán.
+        
+        // 1. Comprobar si el nuevo código ya existe en OTRO registro
+        $check_codigo = $this->Existecodigo();
+        if (!empty($check_codigo['resultado']) && $check_codigo['resultado'] == 'existe') {
+            return $check_codigo;
+        }
+
+        // 2. Comprobar si el nuevo nombre ya existe en OTRO registro
+        $check_nombre = $this->Existenombre();
+        if (!empty($check_nombre['resultado']) && $check_nombre['resultado'] == 'existe') {
+            return $check_nombre;
+        }
+
+        // 3. Si no hay conflictos, proceder con la modificación
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        $stmt_check = $co->prepare("SELECT * FROM tbl_malla WHERE mal_codigo = :mal_codigo AND mal_nombre = :mal_nombre AND mal_id != :mal_id AND mal_estado = 1");
-        $stmt_check->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-        $stmt_check->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
-        $stmt_check->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
-        $stmt_check->execute();
-        if ($stmt_check->fetch()) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = 'ERROR! <br/> Ya existe otra malla curricular con ese código y nombre.';
-            return $r;
-        }
         try {
             $stmt = $co->prepare("UPDATE tbl_malla
-                SET mal_codigo = :mal_codigo, mal_nombre = :mal_nombre, mal_anio = :mal_anio, mal_cohorte = :mal_cohorte, mal_descripcion = :mal_descripcion
+                SET  coh_id = :mal_cohorte, ani_id = :mal_anio,  mal_codigo = :mal_codigo, mal_nombre = :mal_nombre,  mal_descripcion = :mal_descripcion
                 WHERE mal_id = :mal_id");
+           
+            $stmt->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
+            $stmt->bindParam(':mal_anio', $this->mal_anio, PDO::PARAM_STR);
             $stmt->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
             $stmt->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
-            $stmt->bindParam(':mal_anio', $this->mal_anio, PDO::PARAM_STR);
-            $stmt->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
             $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
             $stmt->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
             $stmt->execute();
@@ -116,6 +168,7 @@ class Malla extends Connection {
         $co = null;
         return $r;
     }
+
 
     public function Eliminar(){
         $co = $this->Con();
@@ -135,21 +188,78 @@ class Malla extends Connection {
         return $r;
     }
 
-    public function Existe($codigo, $nombre){
+   public function Existecodigo(){
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_malla WHERE mal_codigo = :mal_codigo AND mal_nombre = :mal_nombre AND mal_estado = 1");
-            $stmt->bindParam(':mal_codigo', $codigo, PDO::PARAM_STR);
-            $stmt->bindParam(':mal_nombre', $nombre, PDO::PARAM_STR);
-            $stmt->execute();
-            if ($stmt->fetch()) {
-                return true;
+            // Consulta base
+            $sql = "SELECT * FROM tbl_malla WHERE mal_codigo = :mal_codigo AND mal_estado = 1";
+            
+            // Si el ID del objeto está definido, lo excluimos de la búsqueda
+            if ($this->mal_id !== null) {
+                $sql .= " AND mal_id != :mal_id";
             }
+
+            $stmt = $co->prepare($sql);
+            $stmt->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+            
+            // Vinculamos el ID solo si existe
+            if ($this->mal_id !== null) {
+                $stmt->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
+            }
+            
+            $stmt->execute();
+            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
+
+            if ($fila) {
+                $r['resultado'] = 'existe';
+                $r['mensaje'] = '¡Atención!<br>El código de la malla ya está en uso por otro registro.';
+            }
+        
         } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
         }
         $co = null;
-        return false;
+        return $r;
+    }
+
+    public function Existenombre(){
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            // Consulta base
+            $sql = "SELECT * FROM tbl_malla WHERE mal_nombre = :mal_nombre AND mal_estado = 1";
+
+            // Si el ID del objeto está definido, lo excluimos de la búsqueda
+            if ($this->mal_id !== null) {
+                $sql .= " AND mal_id != :mal_id";
+            }
+            
+            $stmt = $co->prepare($sql);
+            $stmt->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
+
+            // Vinculamos el ID solo si existe
+            if ($this->mal_id !== null) {
+                $stmt->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
+            }
+
+            $stmt->execute();
+            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
+
+            if ($fila) {
+                $r['resultado'] = 'existe';
+                $r['mensaje'] = '¡Atención!<br>El nombre de la malla ya está en uso por otro registro.';
+            }
+        
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        $co = null;
+        return $r;
     }
 
     public function obtenerUnidadesCurricularesActivas() {
@@ -158,6 +268,32 @@ class Malla extends Connection {
         $r = array();
         try {
             $stmt = $co->query("SELECT uc_id, uc_codigo, uc_nombre FROM tbl_uc WHERE uc_estado = 1 ORDER BY uc_nombre ASC");
+            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $r = [];
+        }
+        $co = null;
+        return $r;
+    }
+     public function obtenerAnios() {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->query("SELECT ani_id, ani_anio FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio ASC");
+            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $r = [];
+        }
+        $co = null;
+        return $r;
+    }
+     public function obtenerCohorte() {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->query("SELECT coh_id, coh_numero  FROM tbl_cohorte WHERE coh_estado = 1 ORDER BY coh_numero ASC");
             $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $r = [];
@@ -175,15 +311,15 @@ class Malla extends Connection {
             $assignedCount = 0;
             $alreadyAssignedCount = 0;
 
-            $stmtCheck = $co->prepare("SELECT COUNT(*) FROM uc_pensum WHERE pens_id = :mallaId AND uc_id = :ucId");
-            $stmtInsert = $co->prepare("INSERT INTO uc_pensum (pens_id, uc_id) VALUES (:mallaId, :ucId)");
+            $stmtCheck = $co->prepare("SELECT COUNT(*) FROM uc_pensum WHERE mal_id = :mallaId AND uc_id = :ucId");
+            $stmtInsert = $co->prepare("INSERT INTO uc_pensum(uc_id, mal_id) VALUES (:ucId, :mallaId)");
 
             foreach ($ucIdsArray as $ucId) {
                 $stmtCheck->execute([':mallaId' => $mallaId, ':ucId' => $ucId]);
                 $exists = $stmtCheck->fetchColumn();
 
                 if ($exists == 0) {
-                    $stmtInsert->execute([':mallaId' => $mallaId, ':ucId' => $ucId]);
+                    $stmtInsert->execute([ ':ucId' => $ucId, ':mallaId' => $mallaId,]);
                     $assignedCount++;
                 } else {
                     $alreadyAssignedCount++;
@@ -241,7 +377,7 @@ class Malla extends Connection {
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT cert_id, cert_nombre FROM tbl_certificado WHERE cert_estado = 1 ORDER BY cert_nombre ASC");
+            $stmt = $co->query("SELECT cert_id, cert_nombre FROM tbl_certificacion WHERE cert_estado = 1 ORDER BY cert_nombre ASC");
             $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $r = [];
@@ -259,8 +395,8 @@ class Malla extends Connection {
             $assignedCount = 0;
             $alreadyAssignedCount = 0;
 
-            $stmtCheck = $co->prepare("SELECT COUNT(*) FROM pensum_certificado WHERE pens_id = :mallaId AND cert_id = :certId");
-            $stmtInsert = $co->prepare("INSERT INTO pensum_certificado (pens_id, cert_id) VALUES (:mallaId, :certId)");
+            $stmtCheck = $co->prepare("SELECT COUNT(*) FROM pensum_certificado WHERE mal_id = :mallaId AND cert_id = :certId");
+            $stmtInsert = $co->prepare("INSERT INTO pensum_certificado (mal_id, cert_id) VALUES (:mallaId, :certId)");
 
             foreach ($certificadosIdsArray as $certId) {
                 $stmtCheck->execute([':mallaId' => $mallaId, ':certId' => $certId]);
@@ -332,7 +468,7 @@ class Malla extends Connection {
                     m.mal_nombre AS malla_nombre, 
                     GROUP_CONCAT(DISTINCT uc.uc_nombre ORDER BY uc.uc_nombre SEPARATOR ', ') AS ucs_asignadas
                 FROM tbl_malla m
-                LEFT JOIN uc_pensum up ON m.mal_id = up.pens_id
+                LEFT JOIN uc_pensum up ON m.mal_id = up.mal_id
                 LEFT JOIN tbl_uc uc ON up.uc_id = uc.uc_id AND uc.uc_estado = 1
                 WHERE m.mal_estado = 1
                 GROUP BY m.mal_id, m.mal_codigo, m.mal_nombre
@@ -361,8 +497,8 @@ class Malla extends Connection {
                     m.mal_nombre AS malla_nombre, 
                     GROUP_CONCAT(DISTINCT c.cert_nombre ORDER BY c.cert_nombre SEPARATOR ', ') AS certificados_asignados
                 FROM tbl_malla m
-                LEFT JOIN pensum_certificado pc ON m.mal_id = pc.pens_id
-                LEFT JOIN tbl_certificado c ON pc.cert_id = c.cert_id AND c.cert_estado = 1
+                LEFT JOIN pensum_certificado pc ON m.mal_id = pc.mal_id
+                LEFT JOIN tbl_certificacion c ON pc.cert_id = c.cert_id AND c.cert_estado = 1
                 WHERE m.mal_estado = 1
                 GROUP BY m.mal_id, m.mal_codigo, m.mal_nombre
                 ORDER BY m.mal_nombre ASC

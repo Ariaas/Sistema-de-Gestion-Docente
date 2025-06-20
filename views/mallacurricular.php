@@ -11,33 +11,7 @@ if (!isset($_SESSION['name'])) {
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Malla Curricular</title>
-    <style>
-        .acciones-cell .acciones-fila {
-            display: flex;
-            align-items: center;
-        }
-
-        .acciones-cell .acciones-fila:not(:last-child) {
-            margin-bottom: 5px;
-        }
-
-        .acciones-cell .acciones-fila .btn {
-            margin-right: 5px;
-            flex-grow: 0;
-            flex-shrink: 0;
-        }
-
-        .acciones-cell .acciones-fila .btn:last-child {
-            margin-right: 0;
-        }
-
-        .botones-cambio-tabla {
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="public/css/style.css">
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -131,13 +105,40 @@ if (!isset($_SESSION['name'])) {
                                     <div class="col-md-6"><label for="mal_nombre" class="form-label">Nombre</label><input class="form-control" type="text" id="mal_nombre" name="mal_nombre" placeholder="Ejemplo: Malla 2022" required><span id="smalnombre" class="form-text"></span></div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-4"><label for="mal_Anio" class="form-label">Año</label><select class="form-select" name="mal_Anio" id="mal_Anio" required>
-                                            <option value="" disabled selected>Seleccione un Año</option><?php for ($year = 1999; $year <= 2070; $year++): ?><option value="<?= $year ?>"><?= $year ?></option><?php endfor; ?>
+
+                                
+                                    <div class="col-md-4"><label for="mal_Anio" class="form-label">Año</label>
+                                    <select class="form-select" name="mal_Anio" id="mal_Anio" required>
+
+                                           <option value="" disabled selected>Seleccione una año</option><?php
+                                            if (!empty($anios)): foreach ($anios as $selectanio): ?>
+                                            <option value="<?= htmlspecialchars($selectanio['ani_id']) ?>"><?= htmlspecialchars($selectanio['ani_anio']) ?></option>
+                                            <?php endforeach;
+                                    else: ?><option value="" disabled>No hay año disponibles</option><?php endif; ?>   
                                         </select><span id="smalanio" class="form-text"></span></div>
-                                    <div class="col-md-4"><label for="mal_cohorte" class="form-label">Cohorte</label><input class="form-control" type="text" id="mal_cohorte" name="mal_cohorte" placeholder="Ejemplo: 3" required><span id="smalcohorte" class="form-text"></span></div>
-                                    <div class="col-md-4"><label for="mal_descripcion" class="form-label">Descripción</label><input class="form-control" type="text" id="mal_descripcion" name="mal_descripcion" placeholder="Descripción breve" required><span id="smaldescripcion" class="form-text"></span></div>
-                                </div>
+                                  
+                                
+                                   <div class="col-md-4"> <label for="mal_cohorte" class="form-label">Cohorte</label>
+                                   <select class="form-select" name="mal_cohorte" id="mal_cohorte" required>
+                                           <option value="" disabled selected>Seleccione una cohorte</option><?php
+
+
+                                          
+                                          if (!empty($cohortes)): foreach ($cohortes as $selectcohortes): ?>
+                                                 <option value="<?= htmlspecialchars($selectcohortes['coh_id']) ?>">
+                                                <?= htmlspecialchars($selectcohortes['coh_numero']) ?></option>
+                                            <?php endforeach;
+                                    else: ?><option value="" disabled>No hay cohorte disponibles</option><?php endif; ?> 
+                                    </select> <span id="smalcohorte" class="form-text"></span></div>
+                                  
+                                    
+                               
+                                     <div class="col-md-4"><label for="mal_descripcion" class="form-label">Descripción</label><input class="form-control" type="text" id="mal_descripcion" name="mal_descripcion" placeholder="Descripción breve" required><span id="smaldescripcion" class="form-text"></span></div>
+                            
+                                    </div>
+                                
                             </div>
+                           
                             <div class="modal-footer justify-content-center"><button type="button" class="btn btn-primary me-2" id="proceso">GUARDAR</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button></div>
                         </form>
                     </div>
@@ -154,9 +155,10 @@ if (!isset($_SESSION['name'])) {
                     <div class="modal-body">
                         <input type="hidden" id="mallaIdParaUC">
                         <div class="row g-3 mb-3">
-                            <div class="col-md-10"><label for="selectUCParaMalla" class="form-label">Unidad Curricular</label><select class="form-select" id="selectUCParaMalla">
-                                    <option value="" disabled selected>Seleccione una UC</option><?php if (!empty($unidades_curriculares_disponibles)): foreach ($unidades_curriculares_disponibles as $uc): ?><option value="<?= htmlspecialchars($uc['uc_id']) ?>"><?= htmlspecialchars($uc['uc_codigo'] . ' - ' . $uc['uc_nombre']) ?></option><?php endforeach;
-                                                                                                                                                                                                                                                                                                                                            else: ?><option value="" disabled>No hay UCs disponibles</option><?php endif; ?>
+                            <div class="col-md-10"><label for="selectUCParaMalla" class="form-label">Unidad Curricular</label>
+                            <select class="form-select" id="selectUCParaMalla">
+                                 <option value="" disabled selected>Seleccione una UC</option><?php if (!empty($unidades_curriculares_disponibles)): foreach ($unidades_curriculares_disponibles as $uc): ?><option value="<?= htmlspecialchars($uc['uc_id']) ?>"><?= htmlspecialchars($uc['uc_codigo'] . ' - ' . $uc['uc_nombre']) ?></option><?php endforeach;
+                                    else: ?><option value="" disabled>No hay UCs disponibles</option><?php endif; ?>   
                                 </select></div>
                             <div class="col-md-2 d-flex align-items-end"><button type="button" class="btn btn-primary w-100" id="btnAgregarUCMalla">Agregar</button></div>
                         </div>

@@ -68,7 +68,15 @@ function crearDT() {
 
 $(document).ready(function () {
   Listar(); 
-    $("#titulonombre").on("keydown keyup", function () {
+  
+  $("#titulonombre").on("keydown ", function () {
+  
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"El formato permite de 5 a 30 carácteres, Ej:En sistemas");
+   
+    });
+
+
+    $("#titulonombre").on(" keyup", function () {
   
     validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"El formato permite de 5 a 30 carácteres, Ej:En sistemas");
   
@@ -225,9 +233,9 @@ function enviaAjax(datos) {
           }
         }
         else if (lee.resultado == "existe") {
-          if ($("#proceso").text() == "REGISTRAR") {
+         
             muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
-          }
+          
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);

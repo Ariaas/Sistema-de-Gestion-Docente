@@ -525,3 +525,29 @@ footer {
 .form-group-horario-individual {
     display: none;
         }
+
+          .acciones-cell .acciones-fila {
+            display: flex;
+            align-items: center;
+        }
+
+        .acciones-cell .acciones-fila:not(:last-child) {
+            margin-bottom: 5px;
+        }
+
+        .acciones-cell .acciones-fila .btn {
+            margin-right: 5px;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+
+        .acciones-cell .acciones-fila .btn:last-child {
+            margin-right: 0;
+        }
+
+        .botones-cambio-tabla {
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
