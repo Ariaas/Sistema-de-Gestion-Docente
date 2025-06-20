@@ -28,8 +28,8 @@ if (!isset($_SESSION['name'])) {
 
             <div class="w-100 text-center botones-cambio-tabla" style="max-width: 1100px;">
                 <button class="btn btn-primary px-4" id="btnVerTablaPrincipal">Ver Mallas</button>
-                <button class="btn btn-info px-4" id="btnVerAsignacionUC">Ver Asignación UC</button>
-                <button class="btn btn btn-dark px-4 " id="btnVerAsignacionCert">Ver Asignación Certificados</button>
+                <button class="btn btn-primary px-4" id="btnVerAsignacionUC">Ver Asignación UC</button>
+                <button class="btn btn-primary px-4 " id="btnVerAsignacionCert">Ver Asignación Certificados</button>
             </div>
 
 
