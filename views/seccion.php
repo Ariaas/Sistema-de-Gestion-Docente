@@ -37,7 +37,9 @@ if (!isset($_SESSION['name'])) {
                         <thead>
                             <tr>
                                 <th style="display: none;">ID</th>
+                                <th>Nombre</th>
                                 <th>Código</th>
+                                <th>Cohorte</th>
                                 <th>Trayecto</th>
                                 <th>Cantidad</th>
                                 <th>Acciones</th>
@@ -81,15 +83,34 @@ if (!isset($_SESSION['name'])) {
                                         <label for="seccionId" class="form-label">ID</label>
                                         <input class="form-control" type="text" id="seccionId" name="seccionId" required>
                                     </div>
-                                    <div class="col-md-6">
+
+                                    <div class="col-md-4">
+                                        <label for="nombreSeccion" class="form-label">Nombre</label>
+                                        <input class="form-control" type="text" id="nombreSeccion" name="nombreSeccion" required>
+                                        <span id="snombreSeccion"></span>
+                                    </div>
+
+                                    <div class="col-md-4">
                                         <label for="codigoSeccion" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required>
                                         <span id="scodigoSeccion"></span>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="cantidadSeccion" class="form-label">Cantidad</label>
-                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
-                                        <span id="scantidadSeccion"></span>
+
+                                    <div class="col-md-4">
+                                        <label for="cohorteSeccion" class="form-label">Cohorte</label>
+                                        <select class="form-select" name="cohorteSeccion" id="cohorteSeccion" required>
+                                            <option value="" disabled selected>Seleccione un cohorte</option>
+                                            <?php
+                                            if (!empty($cohortes)) {
+                                                foreach ($cohortes as $cohorte) {
+                                                    echo "<option value='" . $cohorte['coh_id'] . "'>" . $cohorte['coh_numero'] ."</option>";
+                                                }
+                                            } else {
+                                                echo "<option value='' disabled>No hay cohortes disponibles</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                        <span id="scohorteSeccion"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3">
@@ -100,7 +121,7 @@ if (!isset($_SESSION['name'])) {
                                             <?php
                                             if (!empty($trayectos)) {
                                                 foreach ($trayectos as $trayecto) {
-                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['tra_anio'] . "</option>";
+                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['ani_anio'] . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay trayectos disponibles</option>";
@@ -108,6 +129,12 @@ if (!isset($_SESSION['name'])) {
                                             ?>
                                         </select>
                                         <span id="strayecto"></span>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="cantidadSeccion" class="form-label">Cantidad</label>
+                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
+                                        <span id="scantidadSeccion"></span>
                                     </div>
                                 </div>
                             </div>
