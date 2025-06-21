@@ -95,7 +95,7 @@ $(document).ready(function() {
 
     $("#registrar").on("click", function() {
         limpia();
-        $("#proceso").text("Guardar");
+        $("#proceso").text("REGISTRAR");
         $("#modal1 .modal-title").text("Formulario de Registro de Convenio");
         $(".form-control, .form-select").prop("disabled", false);
         $("#modal1").modal("show");
@@ -155,7 +155,7 @@ function pone(pos, accion) {
     $("#traId").val(traId);
     
     if (accion === 'modificar') {
-        $("#proceso").text("Modificar");
+        $("#proceso").text("MODIFICAR");
         $("#modal1 .modal-title").text("Formulario de Modificación de Convenio");
         $(".form-control, .form-select").prop("disabled", false);
         $("#modal1").modal("show");

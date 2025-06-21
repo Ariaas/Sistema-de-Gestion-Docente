@@ -37,7 +37,7 @@ function crearDT() {
         },
       },
       autoWidth: false,
-      // MODIFICADO: Ordena por la segunda columna (hora de inicio) por defecto
+      
       order: [[1, "asc"]],
       dom:
         "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
@@ -73,16 +73,13 @@ $(document).ready(function () {
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
-    // MODIFICADO: Ahora el texto del botón puede ser 'REGISTRAR' o 'GUARDAR CAMBIOS'
-    if ($(this).text() == "REGISTRAR" || $(this).text() == "GUARDAR CAMBIOS") {
+    if ($(this).text() == "REGISTRAR" || $(this).text() == "MODIFICAR") {
       if (validarenvio()) {
         var datos = new FormData();
-        // Se determina la acción basado en si existe un ID de turno o no
         datos.append("accion", $("#turnoid").val() ? "modificar" : "registrar");
         datos.append("turnoid", $("#turnoid").val());
         datos.append("horaInicio", $("#horaInicio").val());
         datos.append("horafin", $("#horafin").val());
-
         enviaAjax(datos);
       }
     }
@@ -99,7 +96,7 @@ $(document).ready(function () {
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
-// MODIFICADO: Se añaden más validaciones del lado del cliente
+
 function validarenvio() {
    let inicio = $("#horaInicio").val();
    let fin = $("#horafin").val();
@@ -113,7 +110,7 @@ function validarenvio() {
           return false;
   }
   
-  // Compara las horas. JavaScript puede comparar las cadenas de tiempo 'HH:mm' directamente.
+
   if (fin <= inicio) {
         muestraMensaje("error", 4000, "¡ERROR!", "La hora de fin no puede ser anterior o igual a la hora de inicio.");
         return false;
@@ -125,19 +122,18 @@ function validarenvio() {
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
-  limpia(); // Limpia el formulario antes de llenarlo
+  limpia(); 
 
   $("#turnoid").val($(linea).find("td:eq(0)").text());
   $("#horaInicio").val($(linea).find("td:eq(1)").text());
   $("#horafin").val($(linea).find("td:eq(2)").text());
 
-  if (accion == 0) { // Modificar
+  if (accion == 0) { 
     $(".modal-title").text("Modificar Turno");
-    $("#proceso").text("GUARDAR CAMBIOS");
+    $("#proceso").text("MODIFICAR");
     $("#horaInicio, #horafin").prop("disabled", false);
     $("#modal1").modal("show");
-  } else { // Eliminar
-      // Usamos una ventana de confirmación más robusta
+  } else { 
       Swal.fire({
           title: "¿Está seguro de eliminar este turno?",
           html: `<b>Inicio:</b> ${$(linea).find("td:eq(1)").text()}<br><b>Fin:</b> ${$(linea).find("td:eq(2)").text()}<br><br>Esta acción no se puede deshacer.`,
@@ -228,5 +224,5 @@ function limpia() {
   $("#turnoid").val("");
   $("#horaInicio").val("");
   $("#horafin").val("");
-  $(".modal-title").text("Formulario de Turno"); // Restaura el título original del modal
+  $(".modal-title").text("Formulario de Turno"); 
 }
