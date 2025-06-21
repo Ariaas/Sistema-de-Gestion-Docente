@@ -1,4 +1,4 @@
-// Variable global para la tabla DataTable
+
 let dataTable;
 
 function Listar() {
@@ -13,7 +13,7 @@ function cargarTrayectos() {
     
     $.ajax({
         async: true,
-        url: "", // Deja la URL vacía para que la petición sea a la misma página (controlador)
+        url: "", 
         type: "POST",
         contentType: false,
         data: datos,
@@ -86,10 +86,10 @@ $(document).ready(function() {
     $("#proceso").on("click", function() {
         if (validarenvio()) {
             var datos = new FormData($("#f")[0]);
-            if ($(this).text() === "Guardar") {
+            if ($(this).text() === "REGISTRAR") {
                 datos.append("accion", "registrar");
-            } else if ($(this).text() === "Modificar") {
-                datos.append("accion", "modificar");
+            } else if ($(this).text() === "MODIFICAR") {
+                datos.append("accion", "MODIFICAR");
             }
             enviaAjax(datos);
         }
@@ -97,7 +97,7 @@ $(document).ready(function() {
 
     $("#registrar").on("click", function() {
         limpia();
-        $("#proceso").text("Guardar");
+        $("#proceso").text("REGISTRAR");
         $("#modal1 .modal-title").text("Formulario de Registro de Fase");
         $(".form-control, .form-select").prop("disabled", false);
         $("#modal1").modal("show");
@@ -140,7 +140,7 @@ function validarRangoFechas() {
         spanCierre.text("La fecha de cierre debe ser posterior a la de apertura.").show();
         return false;
     }
-    // Si la fecha es válida, pero el mensaje de error anterior estaba, lo oculta.
+  
     if(spanCierre.text() === "La fecha de cierre debe ser posterior a la de apertura."){
        spanCierre.hide();
     }
@@ -150,11 +150,11 @@ function validarRangoFechas() {
 
 function pone(pos, accion) {
     let linea = $(pos).closest("tr");
-    if (dataTable) { // Si se usa DataTable, obtener datos de la API
+    if (dataTable) {
         linea = dataTable.row($(pos).closest("tr")).data();
     }
     
-    // Si es un array, acceder por índice, si es objeto, por propiedad
+
     const id = Array.isArray(linea) ? linea[0] : $(linea).find("td:eq(0)").text();
     const faseNumero = Array.isArray(linea) ? linea[2] : $(linea).find("td:eq(2)").text();
     const apertura = Array.isArray(linea) ? linea[3] : $(linea).find("td:eq(3)").text();
@@ -169,7 +169,7 @@ function pone(pos, accion) {
     $("#faseCierre").val(cierre);
     
     if (accion === 'modificar') {
-        $("#proceso").text("Modificar");
+        $("#proceso").text("MODIFICAR");
         $("#modal1 .modal-title").text("Formulario de Modificación de Fase");
         $(".form-control, .form-select").prop("disabled", false);
     } else if (accion === 'eliminar') {
@@ -190,7 +190,7 @@ function pone(pos, accion) {
                 enviaAjax(datos);
             }
         });
-        return; // Detener la ejecución para no mostrar el modal
+        return; 
     }
 
     $("#modal1").modal("show");
@@ -205,7 +205,7 @@ function enviaAjax(datos) {
         data: datos,
         processData: false,
         cache: false,
-        beforeSend: function() { /* Opcional: mostrar un loader */ },
+        beforeSend: function() {  },
         timeout: 10000,
         success: function(respuesta) {
             try {
@@ -260,11 +260,11 @@ function limpia() {
     $("#faseNumero").val("");
     $("#faseApertura").val("");
     $("#faseCierre").val("");
-    // Limpiar mensajes de error
+ 
     $("#straId, #sfaseNumero, #sfaseApertura, #sfaseCierre").hide().text("");
 }
 
-// Función para mostrar mensajes (asumo que tienes una función similar, si no, puedes usar esta)
+
 function muestraMensaje(tipo, duracion, titulo, mensaje) {
     Swal.fire({
         icon: tipo,

@@ -59,8 +59,8 @@ if (!isset($_SESSION['name'])) {
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center mt-4">
-                                <button type="button" class="btn btn-primary px-4 me-2" id="proceso">Guardar</button>
-                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary px-4 me-2" id="proceso">REGISTRAR</button>
+                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
                     </div>
