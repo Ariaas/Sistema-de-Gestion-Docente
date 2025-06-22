@@ -21,7 +21,7 @@ if (!isset($_SESSION['name'])) {
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Títulos</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar</button>
+                <button class="btn btn-success px-4" id="registrar">Registrar Título</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">

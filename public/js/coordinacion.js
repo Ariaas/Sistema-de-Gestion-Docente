@@ -1,4 +1,4 @@
-// Variable global para la tabla DataTable
+
 let dataTable;
 
 function Listar() {
@@ -57,10 +57,10 @@ $(document).ready(function () {
     const textoBoton = $(this).text();
     if (validarenvio()) {
       var datos = new FormData($("#f")[0]);
-      if (textoBoton === "Guardar") {
+      if (textoBoton === "REGISTRAR") {
         datos.append("accion", "registrar");
-      } else if (textoBoton === "Modificar") {
-        datos.append("accion", "modificar");
+      } else if (textoBoton === "MODIFICAR") {
+        datos.append("accion", "MODIFICAR");
       }
       enviaAjax(datos);
     }
@@ -68,7 +68,7 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("Guardar");
+    $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
   });
 });
@@ -95,7 +95,7 @@ function pone(pos, accion) {
   $("#coordinacionNombre").val(nombre);
 
   if (accion === 'modificar') {
-    $("#proceso").text("Modificar");
+    $("#proceso").text("MODIFICAR");
     $("#coordinacionNombre").prop("disabled", false);
     $("#modal1").modal("show");
   } else if (accion === 'eliminar') {
@@ -175,7 +175,7 @@ function limpia() {
   $("#coordinacionNombre").prop('disabled', false);
 }
 
-// Función para mostrar mensajes
+
 function muestraMensaje(tipo, duracion, titulo, mensaje) {
     Swal.fire({
         icon: tipo,

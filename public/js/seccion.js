@@ -3,9 +3,9 @@ function Listar() {
   datos.append("accion", "consultar");
   enviaAjax(datos);
   
-  var datosUnion = new FormData();
-  datosUnion.append("accion", "consultarUnion");
-  enviaAjax(datosUnion);
+  // var datosUnion = new FormData();
+  // datosUnion.append("accion", "consultarUnion");
+  // enviaAjax(datosUnion);
 }
 
 function Cambiar(){
@@ -87,11 +87,13 @@ function crearDT(selector) {
 function validarExiste() {
   const codigo = $("#codigoSeccion").val();
   const trayecto = $("#trayectoSeccion").val();
+  const nombre = $("#nombreSeccion").val();
   if (codigo && trayecto) {
     var datos = new FormData();
     datos.append('accion', 'existe');
     datos.append('codigoSeccion', codigo);
     datos.append('trayectoSeccion', trayecto);
+    datos.append('nombreSeccion', nombre);
     enviaAjax(datos);
   }
 }
@@ -113,11 +115,20 @@ $(document).ready(function () {
   });
   
   $("#codigoSeccion").on(" keydown keyup", function () {
-    validarkeyup(/^[0-9][0-9]{3}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener 4 dígitos");
+    validarkeyup(/^[0-9][0-9]{2}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener 3 dígitos Ej: 310");
     validarExiste();
   });
   
   $("#trayectoSeccion").on("keyup change", function () {
+    validarExiste();
+  });
+
+  $("#nombreSeccion").on(" keypress", function(e){
+    validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+  });
+  
+  $("#nombreSeccion").on(" keydown keyup", function () {
+    validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{2}$/, $(this), $("#snombreSeccion"), "Formato incorrecto, el nombre debe tener 2 dígitos Ej: IN");
     validarExiste();
   });
 
@@ -174,6 +185,8 @@ $(document).ready(function () {
         datos.append("codigoSeccion", $("#codigoSeccion").val());
         datos.append("cantidadSeccion", $("#cantidadSeccion").val());
         datos.append("trayectoSeccion", $("#trayectoSeccion").val());
+        datos.append("cohorteSeccion", $("#cohorteSeccion").val());
+        datos.append("nombreSeccion", $("#nombreSeccion").val());
 
         enviaAjax(datos);
       }
@@ -185,6 +198,8 @@ $(document).ready(function () {
         datos.append("codigoSeccion", $("#codigoSeccion").val());
         datos.append("cantidadSeccion", $("#cantidadSeccion").val());
         datos.append("trayectoSeccion", $("#trayectoSeccion").val());
+        datos.append("cohorteSeccion", $("#cohorteSeccion").val());
+        datos.append("nombreSeccion", $("#nombreSeccion").val());
 
         enviaAjax(datos);
       }
@@ -268,15 +283,21 @@ function pone(pos, accion) {
   }
   
   $("#seccionId").val($(linea).find("td:eq(0)").text());
-  $("#codigoSeccion").val($(linea).find("td:eq(1)").text());
+  $("#nombreSeccion").val($(linea).find("td:eq(1)").text());
+  $("#codigoSeccion").val($(linea).find("td:eq(2)").text());
   
-  let tra_text = $(linea).find("td:eq(2)").text();
-  let tra_id = tra_text.split(" - ")[0]; 
+  $("#cohorteSeccion").val($(linea).find("td:eq(3)").data("coh"));
+
+  // let tra_text = $(linea).find("td:eq(4)").text();
+  // let tra_id = tra_text.split(" - ")[0]; 
+  // $("#trayectoSeccion").val(tra_id);
+
+  let tra_id = $(linea).find("td:eq(4)").data("tra");
   $("#trayectoSeccion").val(tra_id);
   
-  $("#cantidadSeccion").val($(linea).find("td:eq(3)").text());
+  $("#cantidadSeccion").val($(linea).find("td:eq(5)").text());
   
-  console.log("Sección ID:", $(linea).find("td:eq(0)").text());
+  console.log("Sección ID:", $(linea).find("td:eq(4)").text());
   console.log("Trayecto ID:", tra_id);
   
   $("#scodigoSeccion").hide();
@@ -306,8 +327,10 @@ function enviaAjax(datos) {
             $("#resultadoconsulta1").append(`
               <tr>
                 <td style="display: none;">${item.sec_id}</td>
+                <td>${item.sec_nombre}</td>
                 <td>${item.sec_codigo}</td>
-                <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.tra_anio}</td>
+                <td data-coh="${item.coh_id}">${item.coh_numero}</td>
+                <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.ani_anio}</td>
                 <td>${item.sec_cantidad}</td>
                 <td>
                   <input type="checkbox" id="idSeccion" value="${item.sec_id}">
@@ -335,17 +358,20 @@ function enviaAjax(datos) {
           });
           crearDT("#tablaunion");
           ///
-        } else if (lee.resultado === "unir") {
-          muestraMensaje("info", 4000, "UNIR", lee.mensaje);
-          if (lee.mensaje === "Secciones unidas!<br/>Se unieron las secciones correctamente!") {
-            Listar(); 
-          }
-        } else if (lee.resultado === "separar") {
-          muestraMensaje("info", 4000, "SEPARAR", lee.mensaje);
-          if (lee.mensaje === "Secciones separadas!<br/>Se separaron las secciones correctamente!") {
-            Listar(); 
-          }
-        } else if (lee.resultado == "registrar") {
+        } 
+        // else if (lee.resultado === "unir") {
+        //   muestraMensaje("info", 4000, "UNIR", lee.mensaje);
+        //   if (lee.mensaje === "Secciones unidas!<br/>Se unieron las secciones correctamente!") {
+        //     Listar(); 
+        //   }
+        // } 
+        // else if (lee.resultado === "separar") {
+        //   muestraMensaje("info", 4000, "SEPARAR", lee.mensaje);
+        //   if (lee.mensaje === "Secciones separadas!<br/>Se separaron las secciones correctamente!") {
+        //     Listar(); 
+        //   }
+        // } 
+        else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
@@ -427,6 +453,8 @@ function limpia() {
   $("#codigoSeccion").val("");
   $("#cantidadSeccion").val("");
   $("#trayectoSeccion").val("");
+  $("#cohorteSeccion").val("");
+  $("#nombreSeccion").val("");
 }
 
 $("#promocionarBtn").on("click", function () {

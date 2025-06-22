@@ -10,7 +10,7 @@ if (!isset($_SESSION['name'])) {
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Gestión de Fases</title>
+    <title>Gestionar de Fases</title>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -84,8 +84,8 @@ if (!isset($_SESSION['name'])) {
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center mt-4">
-                                <button type="button" class="btn btn-primary px-4 me-2" id="proceso">Guardar</button>
-                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary px-4 me-2" id="proceso">REGISTAR</button>
+                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
                     </div>
