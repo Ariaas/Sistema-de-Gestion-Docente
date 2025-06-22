@@ -24,7 +24,6 @@ if (!isset($_SESSION['name'])) {
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar</button>
                 <button class="btn btn-warning px-4" id="unir">Unir</button>
-                <button class="btn btn-info px-4" id="promocionarBtn">Promover</button>
             </div>
 
             <div class="w-100 text-center mb-3" style="max-width: 1100px;">
@@ -55,9 +54,10 @@ if (!isset($_SESSION['name'])) {
                     <table class="table table-striped table-hover w-100" id="tablaunion">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
+                                <th>Grupo</th>
                                 <th>Secciones</th>
                                 <th>Trayecto</th>
+                                <th>Cantidad</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -103,7 +103,7 @@ if (!isset($_SESSION['name'])) {
                                             <?php
                                             if (!empty($cohortes)) {
                                                 foreach ($cohortes as $cohorte) {
-                                                    echo "<option value='" . $cohorte['coh_id'] . "'>" . $cohorte['coh_numero'] ."</option>";
+                                                    echo "<option value='" . $cohorte['coh_id'] . "'>" . $cohorte['coh_numero'] . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay cohortes disponibles</option>";
@@ -171,6 +171,30 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalGrupo">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Asignar Nombre al Grupo</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formGrupo">
+                            <div class="mb-3">
+                                <label for="nombreGrupo" class="form-label">Nombre del Grupo</label>
+                                <input type="text" class="form-control" id="nombreGrupo" name="nombreGrupo" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-success" id="guardarGrupo">Guardar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
     </main>
     <?php require_once("public/components/footer.php"); ?>
