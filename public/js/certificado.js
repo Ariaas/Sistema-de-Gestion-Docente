@@ -126,7 +126,7 @@ $(document).ready(function () {
     if ($(this).text() == "ELIMINAR") {  
         
         Swal.fire({
-          title: "¿Está seguro de eliminar este espacio?",
+          title: "¿Está seguro de eliminar este certificado?",
           text: "Esta acción no se puede deshacer.",
           icon: "warning",
           showCancelButton: true,
