@@ -18,8 +18,8 @@ $acciones_json_validas = [
     'ver_horario_clase_individual',
     'obtener_uc_por_docente',
     'verificar_horario_existente',
-    'verificar_conflicto_espacio', // <-- NUEVA ACCIÓN
-    'verificar_conflicto_docente'  // <-- NUEVA ACCIÓN
+    'verificar_conflicto_espacio',
+    'verificar_conflicto_docente'
 ];
 
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
@@ -109,6 +109,8 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 }
                 break;
             case 'modificar_grupo':
+                // ===== INICIO DE MODIFICACIÓN =====
+                $accion_original = $_POST['accion_original'] ?? 'modificar_grupo';
                 $sec_id_original = $_POST['sec_id_original'] ?? null;
                 $fase_id_original = $_POST['fase_id_original'] ?? null;
                 $nueva_seccion_id = $_POST['nueva_seccion_id'] ?? null; 
@@ -116,8 +118,10 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 $items_horario_json = $_POST['items_horario'] ?? '[]';
 
                 if ($sec_id_original !== null && $fase_id_original !== null && $nueva_seccion_id !== null && $nueva_fase_id !== null && $items_horario_json !== null) {
-                    $respuesta = $o->ModificarGrupo($sec_id_original, $fase_id_original, $nueva_seccion_id, $nueva_fase_id, $items_horario_json);
-                } else {
+                    $respuesta = $o->ModificarGrupo($sec_id_original, $fase_id_original, $nueva_seccion_id, $nueva_fase_id, $items_horario_json, $accion_original);
+                } 
+                // ===== FIN DE MODIFICACIÓN =====
+                else {
                     $missing_params = [];
                     if ($sec_id_original === null) $missing_params[] = "sec_id_original";
                     if ($fase_id_original === null) $missing_params[] = "fase_id_original";
@@ -136,7 +140,6 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     $respuesta = ['resultado' => 'error', 'mensaje' => 'Faltan parámetros para eliminar el grupo.'];
                 }
                 break;
-            // ... otros cases ...
         }
     } catch (Exception $e) {
         error_log("Error en horarioC.php: " . $e->getMessage() . " | Trace: " . $e->getTraceAsString());

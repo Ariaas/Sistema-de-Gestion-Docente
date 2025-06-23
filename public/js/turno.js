@@ -70,7 +70,7 @@ function crearDT() {
 $(document).ready(function () {
   Listar(); 
 
-  //////////////////////////////BOTONES/////////////////////////////////////
+
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR" || $(this).text() == "MODIFICAR") {
@@ -95,7 +95,7 @@ $(document).ready(function () {
 
 });
 
-//////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
+
 
 function validarenvio() {
    let inicio = $("#horaInicio").val();
@@ -224,5 +224,5 @@ function limpia() {
   $("#turnoid").val("");
   $("#horaInicio").val("");
   $("#horafin").val("");
-  $(".modal-title").text("Formulario de Turno"); 
+  $(".modal-title").text("Formulario de Turno"); // Restaura el título original del modal
 }

@@ -98,6 +98,7 @@ if (!isset($_SESSION['name'])) {
                                             echo "<option value='" . $categoria['cat_id'] . "'>" . $categoria['cat_nombre'] . "</option>";
                                         } ?>
                                     </select>
+                                    <span id="scategoria" class="text-danger"></span>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="dedicacion" class="form-label">Dedicación</label>
@@ -107,6 +108,7 @@ if (!isset($_SESSION['name'])) {
                                         <option value="Medio tiempo">Medio tiempo</option>
                                         <option value="Tiempo completo">Tiempo completo</option>
                                     </select>
+                                    <span id="sdedicacion" class="text-danger"></span>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="condicion" class="form-label">Condición</label>
@@ -115,6 +117,7 @@ if (!isset($_SESSION['name'])) {
                                         <option value="Ordinario">Ordinario</option>
                                         <option value="Contratado">Contratado</option>
                                     </select>
+                                    <span id="scondicion" class="text-danger"></span>
                                 </div>
                             </div>
 

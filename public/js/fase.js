@@ -1,276 +1,261 @@
-
-let dataTable;
-
-function Listar() {
-    var datos = new FormData();
-    datos.append("accion", "consultar");
-    enviaAjax(datos);
-}
-
-function cargarTrayectos() {
-    var datos = new FormData();
-    datos.append("accion", "consultar_trayectos");
-    
-    $.ajax({
-        async: true,
-        url: "", 
-        type: "POST",
-        contentType: false,
-        data: datos,
-        processData: false,
-        cache: false,
-        success: function(respuesta) {
-            try {
-                var lee = JSON.parse(respuesta);
-                if (lee.resultado === 'consultar_trayectos') {
-                    const selectTrayecto = $("#traId");
-                    selectTrayecto.empty().append('<option value="">Seleccione un trayecto</option>');
-                    lee.mensaje.forEach(item => {
-                        selectTrayecto.append(`<option value="${item.tra_id}">Trayecto ${item.tra_numero} (${item.tra_tipo}) - Año ${item.ani_anio}</option>`);
-                    });
-                }
-            } catch (e) {
-                console.error("Error al parsear JSON de trayectos:", e);
-            }
-        },
-        error: function(request, status, err) {
-            console.error("Error al cargar trayectos:", err);
-        }
-    });
-}
-
-function destruyeDT() {
-    if ($.fn.DataTable.isDataTable("#tablafase")) {
-        $('#tablafase').DataTable().destroy();
-    }
-}
-
-function crearDT() {
-    if (!$.fn.DataTable.isDataTable("#tablafase")) {
-        dataTable = $("#tablafase").DataTable({
-            paging: true,
-            lengthChange: true,
-            searching: true,
-            ordering: true,
-            info: true,
-            autoWidth: false,
-            responsive: true,
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-            },
-            order: [[1, "asc"]]
-        });
-    }
-}
-
 $(document).ready(function() {
+    let dataTable;
+
+
     Listar();
     cargarTrayectos();
 
-    // VALIDACIONES
-    $("#traId").on("change", function() {
-        validarSelect($(this), $("#straId"), "Seleccione un trayecto.");
-    });
-    $("#faseNumero").on("change", function() {
-        validarSelect($(this), $("#sfaseNumero"), "Seleccione un número de fase.");
-    });
-    $("#faseApertura").on("change", function() {
-        validarFecha($(this), $("#sfaseApertura"), "Seleccione una fecha de apertura.");
-    });
-    $("#faseCierre").on("change", function() {
-        validarFecha($(this), $("#sfaseCierre"), "Seleccione una fecha de cierre.");
-        validarRangoFechas();
-    });
-
-    // BOTONES
-    $("#proceso").on("click", function() {
-        if (validarenvio()) {
-            var datos = new FormData($("#f")[0]);
-            if ($(this).text() === "REGISTRAR") {
-                datos.append("accion", "registrar");
-            } else if ($(this).text() === "MODIFICAR") {
-                datos.append("accion", "MODIFICAR");
-            }
-            enviaAjax(datos);
-        }
-    });
+   
 
     $("#registrar").on("click", function() {
         limpia();
-        $("#proceso").text("REGISTRAR");
+        $("#proceso").text("REGISTRAR")
+                     .removeClass("btn-danger btn-warning")
+                     .addClass("btn-primary");
         $("#modal1 .modal-title").text("Formulario de Registro de Fase");
-        $(".form-control, .form-select").prop("disabled", false);
         $("#modal1").modal("show");
     });
-});
-
-function validarenvio() {
-    let esValido = true;
-    esValido &= validarSelect($("#traId"), $("#straId"), "Debe seleccionar un trayecto.");
-    esValido &= validarSelect($("#faseNumero"), $("#sfaseNumero"), "Debe seleccionar un número de fase.");
-    esValido &= validarFecha($("#faseApertura"), $("#sfaseApertura"), "Debe seleccionar una fecha de apertura.");
-    esValido &= validarFecha($("#faseCierre"), $("#sfaseCierre"), "Debe seleccionar una fecha de cierre.");
-    esValido &= validarRangoFechas();
-    return esValido;
-}
-
-function validarSelect(input, span, mensaje) {
-    if (!input.val()) {
-        span.text(mensaje).show();
-        return false;
-    }
-    span.hide();
-    return true;
-}
-
-function validarFecha(input, span, mensaje) {
-    if (!input.val()) {
-        span.text(mensaje).show();
-        return false;
-    }
-    span.hide();
-    return true;
-}
-
-function validarRangoFechas() {
-    const apertura = $("#faseApertura").val();
-    const cierre = $("#faseCierre").val();
-    const spanCierre = $("#sfaseCierre");
-    if (apertura && cierre && new Date(cierre) <= new Date(apertura)) {
-        spanCierre.text("La fecha de cierre debe ser posterior a la de apertura.").show();
-        return false;
-    }
-  
-    if(spanCierre.text() === "La fecha de cierre debe ser posterior a la de apertura."){
-       spanCierre.hide();
-    }
-    return true;
-}
 
 
-function pone(pos, accion) {
-    let linea = $(pos).closest("tr");
-    if (dataTable) {
-        linea = dataTable.row($(pos).closest("tr")).data();
-    }
-    
+    $("#proceso").on("click", function() {
+        const textoBoton = $(this).text();
 
-    const id = Array.isArray(linea) ? linea[0] : $(linea).find("td:eq(0)").text();
-    const faseNumero = Array.isArray(linea) ? linea[2] : $(linea).find("td:eq(2)").text();
-    const apertura = Array.isArray(linea) ? linea[3] : $(linea).find("td:eq(3)").text();
-    const cierre = Array.isArray(linea) ? linea[4] : $(linea).find("td:eq(4)").text();
-    const traId = Array.isArray(linea) ? linea[5] : $(linea).find("td:eq(5)").text();
-
-    limpia();
-    $("#faseId").val(id);
-    $("#traId").val(traId);
-    $("#faseNumero").val(faseNumero);
-    $("#faseApertura").val(apertura);
-    $("#faseCierre").val(cierre);
-    
-    if (accion === 'modificar') {
-        $("#proceso").text("MODIFICAR");
-        $("#modal1 .modal-title").text("Formulario de Modificación de Fase");
-        $(".form-control, .form-select").prop("disabled", false);
-    } else if (accion === 'eliminar') {
-        Swal.fire({
-            title: "¿Está seguro de eliminar esta fase?",
-            text: "Esta acción no se puede deshacer.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-            confirmButtonText: "Sí, eliminar",
-            cancelButtonText: "Cancelar",
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var datos = new FormData();
-                datos.append("accion", "eliminar");
-                datos.append("faseId", $("#faseId").val());
+        if (textoBoton === "REGISTRAR" || textoBoton === "MODIFICAR") {
+            if (validarenvio()) {
+                const datos = new FormData($("#f")[0]);
+                const accion = (textoBoton === "REGISTRAR") ? "registrar" : "modificar";
+                datos.append("accion", accion);
                 enviaAjax(datos);
             }
-        });
-        return; 
-    }
-
-    $("#modal1").modal("show");
-}
-
-function enviaAjax(datos) {
-    $.ajax({
-        async: true,
-        url: "",
-        type: "POST",
-        contentType: false,
-        data: datos,
-        processData: false,
-        cache: false,
-        beforeSend: function() {  },
-        timeout: 10000,
-        success: function(respuesta) {
-            try {
-                var lee = JSON.parse(respuesta);
-                if (lee.resultado === "consultar") {
-                    destruyeDT();
-                    $("#resultadoconsulta").empty();
-                    lee.mensaje.forEach(item => {
-                        $("#resultadoconsulta").append(`
-                          <tr>
-                            <td style="display: none;">${item.fase_id}</td>
-                            <td>Trayecto ${item.tra_numero} (${item.ani_anio})</td>
-                            <td>${item.fase_numero}</td>
-                            <td>${item.fase_apertura}</td>
-                            <td>${item.fase_cierre}</td>
-                            <td style="display: none;">${item.tra_id}</td>
-                            <td>
-                              <button class="btn btn-warning btn-sm" onclick="pone(this, 'modificar')">Modificar</button>
-                              <button class="btn btn-danger btn-sm" onclick="pone(this, 'eliminar')">Eliminar</button>
-                            </td>
-                          </tr>
-                        `);
-                    });
-                    crearDT();
-                } else if (lee.resultado === 'registrar' || lee.resultado === 'modificar' || lee.resultado === 'eliminar') {
-                    muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-                    $("#modal1").modal("hide");
-                    Listar();
-                } else if (lee.resultado === 'error') {
-                    muestraMensaje("error", 5000, "ERROR", lee.mensaje);
-                } else {
-                     muestraMensaje("info", 4000, "ATENCIÓN", lee.mensaje);
+        } else if (textoBoton === "ELIMINAR") {
+            Swal.fire({
+                title: "¿Está seguro de eliminar esta fase?",
+                text: "Esta acción no se puede deshacer.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Sí, eliminar",
+                cancelButtonText: "Cancelar",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const datos = new FormData();
+                    datos.append("accion", "eliminar");
+                    datos.append("faseId", $("#faseId").val());
+                    enviaAjax(datos);
                 }
-            } catch (e) {
-                console.error("Error al procesar la respuesta:", e, "Respuesta:", respuesta);
-                muestraMensaje("error", 5000, "ERROR", "No se pudo procesar la respuesta del servidor.");
-            }
-        },
-        error: function(request, status, err) {
-            if (status === "timeout") {
-                muestraMensaje("error", 5000, "ERROR", "Servidor ocupado, intente de nuevo.");
-            } else {
-                muestraMensaje("error", 5000, "ERROR", "Ocurrió un error: " + err);
-            }
+            });
         }
     });
-}
-
-function limpia() {
-    $("#faseId").val("");
-    $("#traId").val("");
-    $("#faseNumero").val("");
-    $("#faseApertura").val("");
-    $("#faseCierre").val("");
- 
-    $("#straId, #sfaseNumero, #sfaseApertura, #sfaseCierre").hide().text("");
-}
-
-
-function muestraMensaje(tipo, duracion, titulo, mensaje) {
-    Swal.fire({
-        icon: tipo,
-        title: titulo,
-        html: mensaje,
-        timer: duracion,
-        timerProgressBar: true,
+   
+    $(document).on('click', '.modificar-btn', function() {
+        pone(this, 'modificar');
     });
-}
+
+    $(document).on('click', '.eliminar-btn', function() {
+        pone(this, 'eliminar');
+    });
+
+ 
+    $("#traId, #faseNumero").on("change", function() {
+        validarSelects();
+    });
+    $("#faseApertura, #faseCierre").on("change", function() {
+        validarRangoFechas();
+    });
+
+
+
+    function Listar() {
+        const datos = new FormData();
+        datos.append("accion", "consultar");
+        enviaAjax(datos);
+    }
+
+    function cargarTrayectos() {
+        const datos = new FormData();
+        datos.append("accion", "consultar_trayectos");
+        enviaAjax(datos);
+    }
+
+    function destruyeDT() {
+        if ($.fn.DataTable.isDataTable("#tablafase")) {
+            $('#tablafase').DataTable().destroy();
+        }
+    }
+
+    function crearDT() {
+        if (!$.fn.DataTable.isDataTable("#tablafase")) {
+            dataTable = $("#tablafase").DataTable({
+                paging: true,
+                lengthChange: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                autoWidth: false,
+                responsive: true,
+                language: { url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json' },
+                order: [[1, "asc"]]
+            });
+        }
+    }
+
+    function validarenvio() {
+        let esValido = true;
+        if (!validarSelects()) esValido = false;
+        if (!validarRangoFechas()) esValido = false;
+
+        if (!$("#faseApertura").val() || !$("#faseCierre").val()){
+            muestraMensaje("error", 4000, "Error de validación", "Las fechas de apertura y cierre son obligatorias.");
+            esValido = false;
+        }
+
+        return esValido;
+    }
+
+    function validarSelects() {
+        let valido = true;
+        if (!$("#traId").val()) {
+            $("#straId").text("Debe seleccionar un trayecto.").show();
+            valido = false;
+        } else {
+            $("#straId").hide();
+        }
+        if (!$("#faseNumero").val()) {
+            $("#sfaseNumero").text("Debe seleccionar un número de fase.").show();
+            valido = false;
+        } else {
+            $("#sfaseNumero").hide();
+        }
+        return valido;
+    }
+
+    function validarRangoFechas() {
+        const apertura = $("#faseApertura").val();
+        const cierre = $("#faseCierre").val();
+        const spanCierre = $("#sfaseCierre");
+        if (apertura && cierre && new Date(cierre) <= new Date(apertura)) {
+            spanCierre.text("La fecha de cierre debe ser posterior a la de apertura.").show();
+            return false;
+        }
+        spanCierre.hide();
+        return true;
+    }
+
+   
+    function pone(pos, accion) {
+        const fila = $(pos).closest("tr");
+        
+
+        const id = fila.find("td:eq(0)").text();
+        const faseNumero = fila.find("td:eq(2)").text();
+        const apertura = fila.find("td:eq(3)").text();
+        const cierre = fila.find("td:eq(4)").text();
+        const traId = fila.find("td:eq(5)").text();
+        
+        limpia();
+        $("#faseId").val(id);
+        $("#traId").val(traId);
+        $("#faseNumero").val(faseNumero);
+        $("#faseApertura").val(apertura);
+        $("#faseCierre").val(cierre);
+        
+        if (accion === 'modificar') {
+            $("#proceso").text("MODIFICAR")
+                         .removeClass("btn-danger btn-warning")
+                         .addClass("btn-primary");
+            $("#modal1 .modal-title").text("Formulario de Modificación de Fase");
+            $(".form-control, .form-select").prop("disabled", false);
+        } else if (accion === 'eliminar') {
+            $("#proceso").text("ELIMINAR")
+                         .removeClass("btn-primary btn-warning")
+                         .addClass("btn-danger");
+            $("#modal1 .modal-title").text("Confirmar Eliminación de Fase");
+           
+            $("#traId, #faseNumero, #faseApertura, #faseCierre").prop("disabled", true);
+        }
+        
+        $("#modal1").modal("show");
+    }
+ 
+
+    function limpia() {
+        $("#f")[0].reset();
+        $(".form-control, .form-select").prop('disabled', false);
+        $("#straId, #sfaseNumero, #sfaseApertura, #sfaseCierre").hide().text("");
+    }
+    
+    function muestraMensaje(tipo, duracion, titulo, mensaje) {
+        Swal.fire({
+            icon: tipo,
+            title: titulo,
+            html: mensaje,
+            timer: duracion,
+            timerProgressBar: true,
+        });
+    }
+
+
+    function enviaAjax(datos) {
+        $.ajax({
+            async: true,
+            url: "",
+            type: "POST",
+            contentType: false,
+            data: datos,
+            processData: false,
+            cache: false,
+            timeout: 10000,
+            success: function(respuesta) {
+                try {
+                    const lee = JSON.parse(respuesta);
+                    switch (lee.resultado) {
+                        case 'consultar':
+                            destruyeDT();
+                            $("#resultadoconsulta").empty();
+                            lee.mensaje.forEach(item => {
+                                $("#resultadoconsulta").append(`
+                                  <tr>
+                                    <td style="display: none;">${item.fase_id}</td>
+                                    <td>Trayecto ${item.tra_numero} (${item.ani_anio})</td>
+                                    <td>${item.fase_numero}</td>
+                                    <td>${item.fase_apertura}</td>
+                                    <td>${item.fase_cierre}</td>
+                                    <td style="display: none;">${item.tra_id}</td>
+                                    <td>
+                                      <button class="btn btn-warning btn-sm modificar-btn">Modificar</button>
+                                      <button class="btn btn-danger btn-sm eliminar-btn">Eliminar</button>
+                                    </td>
+                                  </tr>
+                                `);
+                            });
+                            crearDT();
+                            break;
+                        case 'consultar_trayectos':
+                            const selectTrayecto = $("#traId");
+                            selectTrayecto.empty().append('<option value="">Seleccione un trayecto</option>');
+                            lee.mensaje.forEach(item => {
+                                selectTrayecto.append(`<option value="${item.tra_id}">Trayecto ${item.tra_numero} (${item.tra_tipo}) - Año ${item.ani_anio}</option>`);
+                            });
+                            break;
+                        case 'registrar':
+                        case 'modificar':
+                        case 'eliminar':
+                            muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
+                            $("#modal1").modal("hide");
+                            Listar();
+                            break;
+                        case 'error':
+                        default:
+                            muestraMensaje("error", 5000, "ERROR", lee.mensaje || "Ocurrió un error inesperado.");
+                            break;
+                    }
+                } catch (e) {
+                    console.error("Error:", e, "Respuesta:", respuesta);
+                    muestraMensaje("error", 5000, "ERROR", "No se pudo procesar la respuesta del servidor.");
+                }
+            },
+            error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${err}`)
+        });
+    }
+});

@@ -3,9 +3,9 @@ function Listar() {
   datos.append("accion", "consultar");
   enviaAjax(datos);
   
-  // var datosUnion = new FormData();
-  // datosUnion.append("accion", "consultarUnion");
-  // enviaAjax(datosUnion);
+  var datosUnion = new FormData();
+  datosUnion.append("accion", "consultarUnion");
+  enviaAjax(datosUnion);
 }
 
 function Cambiar(){
@@ -133,29 +133,46 @@ $(document).ready(function () {
   });
 
   //////////////////////////////BOTONES/////////////////////////////////////
-  
+  let seccionesAUnir = [];
+
   $("#unir").on("click", function () {
-  const seccionesSeleccionadas = [];
+  seccionesAUnir = [];
   $("input[type=checkbox]:checked").each(function () {
-      seccionesSeleccionadas.push($(this).val());
+    seccionesAUnir.push($(this).val());
   });
 
-  if (seccionesSeleccionadas.length <= 1) {
+  if (seccionesAUnir.length <= 1) {
+    Swal.fire("Atención", "Debe seleccionar al menos DOS secciones para unir.", "warning");
+    return;
+  }
+
+  $("#nombreGrupo").val("");
+  $("#modalGrupo").modal("show");
+  });
+
+  $("#guardarGrupo").on("click", function () {
+    const nombreGrupo = $("#nombreGrupo").val().trim();
+    if (!nombreGrupo) {
+      Swal.fire("Atención", "Debe ingresar un nombre para el grupo.", "warning");
+      return;
+    }
+    if (seccionesAUnir.length <= 1) {
       Swal.fire("Atención", "Debe seleccionar al menos DOS secciones para unir.", "warning");
       return;
-  }
-  var datos = new FormData();
-  datos.append("accion", "unir");
-  datos.append("secciones", JSON.stringify(seccionesSeleccionadas));
+    }
 
-  enviaAjax(datos);
+    var datos = new FormData();
+    datos.append("accion", "unir");
+    datos.append("secciones", JSON.stringify(seccionesAUnir));
+    datos.append("nombreGrupo", nombreGrupo);
+
+    enviaAjax(datos);
+    $("#modalGrupo").modal("hide");
   });
-
-  
 
 
   $(document).on("click", "#tablaunion .eliminar", function () {
-    const grupoId = $(this).data("id");
+  const grupoId = $(this).data("id");
 
     Swal.fire({
       title: "¿Está seguro de separar este grupo?",
@@ -288,10 +305,6 @@ function pone(pos, accion) {
   
   $("#cohorteSeccion").val($(linea).find("td:eq(3)").data("coh"));
 
-  // let tra_text = $(linea).find("td:eq(4)").text();
-  // let tra_id = tra_text.split(" - ")[0]; 
-  // $("#trayectoSeccion").val(tra_id);
-
   let tra_id = $(linea).find("td:eq(4)").data("tra");
   $("#trayectoSeccion").val(tra_id);
   
@@ -334,6 +347,7 @@ function enviaAjax(datos) {
                 <td>${item.sec_cantidad}</td>
                 <td>
                   <input type="checkbox" id="idSeccion" value="${item.sec_id}">
+                  <button class="btn btn-success btn-sm prosecusion" data-id="${item.sec_id}">Prosecusión</button>
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
                 </td>
@@ -347,11 +361,12 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta2").append(`
               <tr>
-                <td style="display: none;">${item.gro_id}</td>
+                <td>${item.sec_grupo}</td>
                 <td>${item.secciones}</td>
                 <td>${item.trayecto}</td>
+                <td>${item.suma_cantidades}</td>
                 <td>
-                  <button class="btn btn-danger btn-sm eliminar" data-id="${item.gro_id}">Separar</button>
+                  <button class="btn btn-danger btn-sm eliminar" data-id="${item.sec_grupo}">Separar</button>
                 </td>
               </tr>
             `);
@@ -359,18 +374,14 @@ function enviaAjax(datos) {
           crearDT("#tablaunion");
           ///
         } 
-        // else if (lee.resultado === "unir") {
-        //   muestraMensaje("info", 4000, "UNIR", lee.mensaje);
-        //   if (lee.mensaje === "Secciones unidas!<br/>Se unieron las secciones correctamente!") {
-        //     Listar(); 
-        //   }
-        // } 
-        // else if (lee.resultado === "separar") {
-        //   muestraMensaje("info", 4000, "SEPARAR", lee.mensaje);
-        //   if (lee.mensaje === "Secciones separadas!<br/>Se separaron las secciones correctamente!") {
-        //     Listar(); 
-        //   }
-        // } 
+        else if (lee.resultado === "unir") {
+          muestraMensaje("info", 4000, "UNIR", lee.mensaje);
+          Listar();
+        } 
+        else if (lee.resultado === "separar") {
+          muestraMensaje("info", 4000, "SEPARAR", lee.mensaje);
+          Listar();
+        }
         else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
@@ -402,33 +413,31 @@ function enviaAjax(datos) {
             $("#modal1").modal("hide");
             Listar();
           }
-        } else if (lee.resultado === "promocionar") {
-          muestraMensaje("info", 4000, "PROMOCIÓN", lee.mensaje);
+        } else if (lee.resultado === "prosecusion") {
+          muestraMensaje("info", 4000, "PROSECUSIÓN", lee.mensaje);
           Listar();
-        } else if (lee.resultado === "obtenerSeccionesDestino") { 
-          const selectDestino = $("#seccionDestinoPromocion");
-          selectDestino.empty(); 
-          selectDestino.append('<option value="" disabled selected>Seleccione una sección</option>');
-          if (lee.mensaje && lee.mensaje.length > 0) {
-            $.each(lee.mensaje, function (index, item) {
-              selectDestino.append(`<option value="${item.sec_id}">${item.sec_codigo} (Trayecto: ${item.tra_numero} - ${item.tra_anio})</option>`);
+          
+        }else if (lee.resultado === "obtenerSeccionDestinoProsecusion") {
+          if (lee.mensaje && lee.mensaje.sec_id) {
+            Swal.fire({
+              title: "Confirmar prosecusión",
+              text: `¿Desea hacer prosecusión a la sección ${lee.mensaje.sec_codigo}${lee.mensaje.coh_numero} (${lee.mensaje.tra_numero} - ${lee.mensaje.ani_anio})?`,
+              icon: "question",
+              showCancelButton: true,
+              confirmButtonText: "Sí, realizar",
+              cancelButtonText: "Cancelar"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                var datos2 = new FormData();
+                datos2.append("accion", "prosecusion");
+                datos2.append("seccionOrigenId", seccionOrigenIdProsecusion);
+                datos2.append("seccionDestinoId", lee.mensaje.sec_id);
+                enviaAjax(datos2);
+              }
             });
           } else {
-            selectDestino.append('<option value="" disabled>No hay secciones elegibles</option>');
+            Swal.fire("Atención", "No existe una sección destino válida para prosecusión.", "warning");
           }
-          
-          const seccionesSeleccionadas = $("#modalPromocion").data("seccionesOrigen"); 
-          if (seccionesSeleccionadas && seccionesSeleccionadas.length > 0) {
-            const nombresSeccionesOrigen = [];
-            seccionesSeleccionadas.forEach(idSeccion => {
-                const fila = $(`#tablaseccion input[type=checkbox][value="${idSeccion}"]`).closest('tr');
-                const codigo = fila.find('td:eq(1)').text();
-                nombresSeccionesOrigen.push(codigo);
-            });
-            $("#seccionesOrigenNombres").text("Secciones a promover: " + nombresSeccionesOrigen.join(', '));
-          }
-
-          $("#modalPromocion").modal("show");
         } else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
@@ -457,40 +466,10 @@ function limpia() {
   $("#nombreSeccion").val("");
 }
 
-$("#promocionarBtn").on("click", function () {
-  const seccionesSeleccionadas = [];
-  $("#tablaseccion input[type=checkbox]:checked").each(function () {
-    seccionesSeleccionadas.push($(this).val());
-  });
-
-  if (seccionesSeleccionadas.length === 0) {
-    Swal.fire("Atención", "Debe seleccionar al menos UNA sección.", "warning");
-    return;
-  }
-
-  $("#modalPromocion").data("seccionesOrigen", seccionesSeleccionadas);
-
+$(document).on("click", ".prosecusion", function () {
+  seccionOrigenIdProsecusion = $(this).data("id");
   var datos = new FormData();
-  datos.append("accion", "obtenerSeccionesDestino");
-  datos.append("seccionesOrigen", JSON.stringify(seccionesSeleccionadas)); 
-  
-  enviaAjax(datos); 
-});
-
-$("#confirmarPromocion").on("click", function () {
-  const seccionesOrigen = $("#modalPromocion").data("seccionesOrigen");
-  const seccionDestinoId = $("#seccionDestinoPromocion").val();
-
-  if (!seccionDestinoId) {
-    Swal.fire("Atención", "Debe seleccionar una sección.", "warning");
-    return;
-  }
-
-  var datos = new FormData();
-  datos.append("accion", "promocionar");
-  datos.append("seccionesOrigen", JSON.stringify(seccionesOrigen));
-  datos.append("seccionDestinoId", seccionDestinoId);
-
-  enviaAjax(datos); 
-  $("#modalPromocion").modal("hide");
+  datos.append("accion", "obtenerSeccionDestinoProsecusion");
+  datos.append("seccionOrigenId", seccionOrigenIdProsecusion);
+  enviaAjax(datos);
 });

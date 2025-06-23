@@ -66,39 +66,26 @@ if (is_file("views/" . $pagina . ".php")) {
             $bitacora->registrarAccion($usu_id, 'modificar', 'seccion');
 
         } elseif ($accion == 'unir') {
-            // echo json_encode($s->Unir($_POST['secciones'], true));
-
+            $secciones = $_POST['secciones'] ?? '[]';
+            $nombreGrupo = $_POST['nombreGrupo'];
+            echo json_encode($s->Unir($secciones, $nombreGrupo));
             $bitacora->registrarAccion($usu_id, 'unir', 'seccion');
+
         } elseif ($accion == 'separar') {
             $s->setGrupoId($_POST['grupoId']);
-            // echo json_encode($s->Separar());
+            echo json_encode($s->Separar());
             $bitacora->registrarAccion($usu_id, 'separar', 'seccion');
+        } elseif ($accion == 'obtenerSeccionDestinoProsecusion') {
+            $seccionOrigenId = $_POST['seccionOrigenId'];
+            echo json_encode($s->ObtenerSeccionDestinoProsecusion($seccionOrigenId));
+        } elseif ($accion == 'prosecusion') {
+            $seccionOrigenId = $_POST['seccionOrigenId'];
+            $seccionDestinoId = $_POST['seccionDestinoId'];
+            echo json_encode($s->ProsecusionSeccion($seccionOrigenId, $seccionDestinoId));
+            $bitacora->registrarAccion($usu_id, 'prosecusion', 'seccion');
+        }
 
 
-        } 
-        // elseif ($accion == 'obtenerSeccionesDestino') {
-        //     $seccionesOrigenJSON = $_POST['seccionesOrigen'] ?? '[]';
-        //     $seccionesOrigenIds = json_decode($seccionesOrigenJSON, true);
-        //     if (json_last_error() !== JSON_ERROR_NONE) {
-        //          echo json_encode(['resultado' => 'error', 'mensaje' => 'Error en los datos de secciones .']);
-        //          exit;
-        //     }
-            //echo json_encode($s->ObtenerSeccionesDestinoElegibles($seccionesOrigenIds));
-        // } 
-        // elseif ($accion == 'promocionar') {
-        //     $seccionesOrigenJSON = $_POST['seccionesOrigen'] ?? '[]';
-        //     $seccionesOrigenIds = json_decode($seccionesOrigenJSON, true);
-        //     $seccionDestinoId = $_POST['seccionDestinoId'] ?? null;
-
-        //     if (json_last_error() !== JSON_ERROR_NONE || empty($seccionesOrigenIds) || $seccionDestinoId === null) {
-        //         echo json_encode(['resultado' => 'error', 'mensaje' => 'Datos incompletos.']);
-        //         exit;
-        //     }
-            //echo json_encode($s->PromocionarSecciones($seccionesOrigenIds, $seccionDestinoId));
-            // $bitacora->registrarAccion($usu_id, 'promocionar', 'seccion');
-
-
-        // } 
         else {
             echo "Acción no válida";
         }

@@ -13,7 +13,7 @@ class Docente extends Connection
     private $doc_dedicacion;
     private $doc_condicion;
     private $titulos = array();
-    private $coordinaciones = array(); // NUEVA PROPIEDAD
+    private $coordinaciones = array(); 
 
     public function __construct()
     {
@@ -110,7 +110,7 @@ class Docente extends Connection
     public function setCoordinaciones($coordinaciones)
     {
         $this->coordinaciones = $coordinaciones;
-    } // NUEVO SETTER
+    } 
 
     //////////////////////////METODOS//////////////////////////
 
@@ -138,27 +138,25 @@ class Docente extends Connection
                     }
                 }
 
-                // ===== INICIO DE MODIFICACIÓN =====
                 if (!empty($this->coordinaciones)) {
                     $stmt_coordinaciones = $co->prepare("INSERT INTO coordinacion_docente (doc_id, cor_id, cor_doc_estado) VALUES (:doc_id, :cor_id, 1)");
                     foreach ($this->coordinaciones as $cor_id) {
                         $stmt_coordinaciones->execute([':doc_id' => $doc_id, ':cor_id' => $cor_id]);
                     }
                 }
-                // ===== FIN DE MODIFICACIÓN =====
 
                 $co->commit();
 
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/> Se registró el docente correctamente';
+                $r['resultado'] = 'incluir'; 
+                $r['mensaje'] = '¡Registro Incluido!<br/> Se registró el docente correctamente';
             } catch (Exception $e) {
                 $co->rollBack();
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
             }
         } else {
-            $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El DOCENTE con esta cédula ya existe!';
+            $r['resultado'] = 'error'; 
+            $r['mensaje'] = '¡Error!<br/>La cédula ingresada ya se encuentra registrada.';
         }
         return $r;
     }
@@ -188,7 +186,6 @@ class Docente extends Connection
                     }
                 }
 
-                // ===== INICIO DE MODIFICACIÓN =====
                 $stmt_eliminar_coordinaciones = $co->prepare("DELETE FROM coordinacion_docente WHERE doc_id = :doc_id");
                 $stmt_eliminar_coordinaciones->execute([':doc_id' => $doc_id]);
 
@@ -198,12 +195,11 @@ class Docente extends Connection
                         $stmt_coordinaciones->execute([':doc_id' => $doc_id, ':cor_id' => $cor_id]);
                     }
                 }
-                // ===== FIN DE MODIFICACIÓN =====
 
                 $co->commit();
 
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'Registro Modificado!<br/> Se modificó el docente correctamente';
+                $r['mensaje'] = '¡Registro Modificado!<br/> Se modificó el docente correctamente';
             } catch (Exception $e) {
                 $co->rollBack();
                 $r['resultado'] = 'error';
@@ -211,7 +207,7 @@ class Docente extends Connection
             }
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El DOCENTE con esta cédula NO existe!';
+            $r['mensaje'] = '¡ERROR!<br/> El DOCENTE con esta cédula NO existe!';
         }
         return $r;
     }
@@ -228,14 +224,14 @@ class Docente extends Connection
                 $stmt->execute([':doc_cedula' => $this->doc_cedula]);
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado! <br/> Se eliminó el docente correctamente';
+                $r['mensaje'] = '¡Registro Eliminado!<br/> Se eliminó el docente correctamente';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
-                $r['mensaje'] = 'No se puede eliminar este registro. <br/> Está asociado a otro registro existente.';
+                $r['mensaje'] = 'No se puede eliminar este registro.<br/> Está asociado a otro registro existente.';
             }
         } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El DOCENTE con esta cédula NO existe!';
+            $r['mensaje'] = '¡ERROR!<br/> El DOCENTE con esta cédula NO existe!';
         }
         return $r;
     }
@@ -260,7 +256,6 @@ class Docente extends Connection
                 $docente['titulos'] = $titulosData['titulos'] ?? 'Sin títulos';
                 $docente['titulos_ids'] = $titulosData['titulos_ids'] ?? '';
 
-                // ===== INICIO DE MODIFICACIÓN =====
                 // Obtener Coordinaciones
                 $stmtCoordinaciones = $co->prepare("SELECT GROUP_CONCAT(c.cor_nombre SEPARATOR ', ') AS coordinaciones, GROUP_CONCAT(c.cor_id SEPARATOR ',') AS coordinaciones_ids FROM coordinacion_docente cd JOIN tbl_coordinacion c ON cd.cor_id = c.cor_id WHERE cd.doc_id = :doc_id AND c.cor_estado = 1");
                 $stmtCoordinaciones->execute([':doc_id' => $docente['doc_id']]);
@@ -268,7 +263,6 @@ class Docente extends Connection
 
                 $docente['coordinaciones'] = $coordinacionesData['coordinaciones'] ?? 'Sin coordinaciones';
                 $docente['coordinaciones_ids'] = $coordinacionesData['coordinaciones_ids'] ?? '';
-                // ===== FIN DE MODIFICACIÓN =====
             }
 
             $r['resultado'] = 'consultar';
@@ -307,7 +301,6 @@ class Docente extends Connection
         }
     }
 
-    // ===== INICIO DE NUEVO MÉTODO =====
     public function obtenerCoordinacionesDocente($doc_id)
     {
         $co = $this->Con();
@@ -320,7 +313,6 @@ class Docente extends Connection
             return array();
         }
     }
-    // ===== FIN DE NUEVO MÉTODO =====
 
     public function obtenerIdPorCedula($doc_cedula)
     {
@@ -354,7 +346,6 @@ class Docente extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ===== INICIO DE NUEVO MÉTODO =====
     public function listaCoordinacion()
     {
         $co = $this->Con();
@@ -363,5 +354,4 @@ class Docente extends Connection
         $p->execute();
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
-    // ===== FIN DE NUEVO MÉTODO =====
 }

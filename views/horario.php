@@ -12,7 +12,7 @@
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Horario</title>
+    <title>Horario </title>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -34,7 +34,7 @@
                                 <th>Trayecto</th> 
                                 <th>Año</th> 
                                 <th>Fase</th>
-                                <th>Acciones</th>
+                                <th>Acciones  </th>
                             </tr>
                         </thead>
                         <tbody id="resultadoconsulta">
