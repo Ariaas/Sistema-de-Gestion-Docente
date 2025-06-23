@@ -1,15 +1,17 @@
 $(document).ready(function() {
     let dataTable;
+    let debounceTimer; // Timer para debounce en la validación
+    let originalNombre = ""; // Para guardar el nombre original al modificar
 
     Listar();
 
-
-
     $("#registrar").on("click", function() {
         limpia();
+        originalNombre = ""; // Es un registro nuevo, no hay nombre original
         $("#proceso").text("REGISTRAR")
                      .removeClass("btn-danger btn-warning")
-                     .addClass("btn-primary");
+                     .addClass("btn-primary")
+                     .prop("disabled", true); // Deshabilitar el botón al inicio para un nuevo registro
         $("#modal1 .modal-title").text("Formulario de Registro de Coordinación");
         $("#modal1").modal("show");
     });
@@ -55,11 +57,69 @@ $(document).ready(function() {
     });
 
    
+    // --- VALIDACIÓN EN TIEMPO REAL ---
     $("#coordinacionNombre").on("keyup", function() {
-        validarkeyup(/^[A-Za-z\sñÑáéíóúÁÉÍÓÚ-]{4,30}$/, $(this), $("#scoordinacionNombre"), "El nombre debe tener entre 4 y 30 caracteres.");
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            validarYVerificarNombre();
+        }, 500); 
     });
 
+    // Limpia el input en tiempo real para no permitir números ni caracteres especiales
+    $("#coordinacionNombre").on("input", function() {
+        this.value = this.value.replace(/[^A-Za-z\sñÑáéíóúÁÉÍÓÚ-]/g, '');
+    });
 
+    function validarYVerificarNombre() {
+        const etiqueta = $("#coordinacionNombre");
+        const etiquetamensaje = $("#scoordinacionNombre");
+        const nombreActual = etiqueta.val();
+        const id = $("#coordinacionId").val();
+
+        if (!validarkeyup(/^[A-Za-z\sñÑáéíóúÁÉÍÓÚ-]{4,30}$/, etiqueta, etiquetamensaje, "El nombre debe tener entre 4 y 30 caracteres.")) {
+            $("#proceso").prop("disabled", true);
+            return;
+        }
+
+        if (id && nombreActual === originalNombre) {
+            etiquetamensaje.hide().text("");
+            $("#proceso").prop("disabled", false);
+            return;
+        }
+
+        const datos = new FormData();
+        datos.append("accion", "existe");
+        datos.append("coordinacionNombre", nombreActual);
+        if (id) {
+            datos.append("coordinacionId", id);
+        }
+
+        $.ajax({
+            async: true, url: "", type: "POST", contentType: false, data: datos,
+            processData: false, cache: false,
+            success: function(respuesta) {
+                try {
+                    const lee = JSON.parse(respuesta);
+                    if (lee.resultado === 'existe') {
+                        etiquetamensaje.text(lee.mensaje).show();
+                        $("#proceso").prop("disabled", true);
+                        // --- LÍNEA AÑADIDA: MOSTRAR ALERTA ---
+                        muestraMensaje('warning', 3000, 'Nombre duplicado', lee.mensaje);
+                    } else {
+                        etiquetamensaje.hide().text("");
+                        $("#proceso").prop("disabled", false);
+                    }
+                } catch (e) {
+                    etiquetamensaje.text("Error al verificar, intente de nuevo.").show();
+                    $("#proceso").prop("disabled", true);
+                }
+            },
+            error: () => {
+                etiquetamensaje.text("Error de comunicación al verificar.").show();
+                $("#proceso").prop("disabled", true);
+            }
+        });
+    }
 
 
     function Listar() {
@@ -71,6 +131,10 @@ $(document).ready(function() {
     function validarenvio() {
         if (!validarkeyup(/^[A-Za-z\sñÑáéíóúÁÉÍÓÚ-]{4,30}$/, $("#coordinacionNombre"), $("#scoordinacionNombre"), "El nombre debe tener entre 4 y 30 caracteres.")) {
             muestraMensaje("error", 4000, "Error de validación", "Por favor, corrija el nombre de la coordinación.");
+            return false;
+        }
+        if ($("#proceso").is(":disabled")) {
+            muestraMensaje("error", 4000, "Error de validación", "El nombre de la coordinación ya está en uso o el formato es incorrecto.");
             return false;
         }
         return true;
@@ -87,20 +151,20 @@ $(document).ready(function() {
         $("#coordinacionNombre").val(nombre);
         
         if (accion === 'modificar') {
+            originalNombre = nombre;
             $("#proceso").text("MODIFICAR")
                          .removeClass("btn-danger btn-warning")
-                         .addClass("btn-primary");
+                         .addClass("btn-primary")
+                         .prop("disabled", false);
             $("#modal1 .modal-title").text("Formulario de Modificación de Coordinación");
         } else if (accion === 'eliminar') {
             $("#proceso").text("ELIMINAR")
                          .removeClass("btn-primary btn-warning")
                          .addClass("btn-danger");
             $("#modal1 .modal-title").text("Confirmar Eliminación de Coordinación");
-         
             $("#coordinacionNombre").prop("disabled", true);
         }
         
-       
         $("#modal1").modal("show");
     }
  
@@ -109,6 +173,8 @@ $(document).ready(function() {
         $("#f")[0].reset();
         $("#coordinacionNombre").prop('disabled', false);
         $("#scoordinacionNombre").hide().text("");
+        $("#proceso").prop("disabled", false);
+        originalNombre = "";
     }
     
     function muestraMensaje(tipo, duracion, titulo, mensaje) {
@@ -120,8 +186,6 @@ $(document).ready(function() {
             timerProgressBar: true,
         });
     }
-
-
 
     function enviaAjax(datos) {
         $.ajax({
@@ -180,13 +244,13 @@ $(document).ready(function() {
 
 function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
     if (etiqueta.val() === "") {
-        etiquetamensaje.text("");
-        return 0;
+        etiquetamensaje.text(mensaje).show();
+        return false;
     } else if (er.test(etiqueta.val())) {
-        etiquetamensaje.text("");
-        return 1;
+        etiquetamensaje.hide().text("");
+        return true;
     } else {
-        etiquetamensaje.text(mensaje);
-        return 0;
+        etiquetamensaje.text(mensaje).show();
+        return false;
     }
 }

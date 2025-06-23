@@ -85,8 +85,8 @@ $(document).ready(function() {
         }
     });
 
-    $("#nombreDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $(this), $("#snombreDocente"), "El formato del nombre es inválido."); });
-    $("#apellidoDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $(this), $("#sapellidoDocente"), "El formato del apellido es inválido."); });
+    $("#nombreDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{4,30}$/, $(this), $("#snombreDocente"), "El formato del nombre es inválido."); });
+    $("#apellidoDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{4,30}$/, $(this), $("#sapellidoDocente"), "El formato del apellido es inválido."); });
     $("#correoDocente").on("keyup", function() { validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $(this), $("#scorreoDocente"), "El formato del correo es inválido."); });
 
     function Listar() {
@@ -101,8 +101,8 @@ $(document).ready(function() {
         
         // Validaciones de inputs de texto
         if (!validarkeyup(/^[0-9]{7,8}$/, $("#cedulaDocente"), $("#scedulaDocente"), "Debe ser una cédula válida (7-8 dígitos).")) esValido = false;
-        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $("#nombreDocente"), $("#snombreDocente"), "El formato del nombre es inválido.")) esValido = false;
-        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $("#apellidoDocente"), $("#sapellidoDocente"), "El formato del apellido es inválido.")) esValido = false;
+        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{4,30}$/, $("#nombreDocente"), $("#snombreDocente"), "El formato del nombre es inválido.")) esValido = false;
+        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{4,30}$/, $("#apellidoDocente"), $("#sapellidoDocente"), "El formato del apellido es inválido.")) esValido = false;
         if (!validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $("#correoDocente"), $("#scorreoDocente"), "El formato del correo es inválido.")) esValido = false;
         
         // Validaciones de selects
