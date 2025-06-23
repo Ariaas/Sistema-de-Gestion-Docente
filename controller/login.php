@@ -6,11 +6,10 @@ if (!is_file("model/" . $pagina . ".php")) {
 }
 require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
-    if (!empty($_POST)) {
-
+    if (!empty($_POST) && isset($_POST['accion'])) {
         $o = new Login();
         $h = $_POST['accion'];
-        if ($_POST['accion'] == 'acceder') {
+        if ($h == 'acceder') {
             $o->set_nombreUsuario($_POST['nombreUsuario']);
             $o->set_contraseniaUsuario($_POST['contraseniaUsuario']);
             $m = $o->existe();
@@ -30,6 +29,29 @@ if (is_file("views/" . $pagina . ".php")) {
             } else {
                 $mensaje = $m['mensaje'];
             }
+        }
+    }
+
+    if (!empty($_POST) && isset($_GET['accion'])) {
+        $o = new Login();
+
+        if ($_GET['accion'] == 'recuperar') {
+            $usuario = $_POST['usuario'];
+            echo $o->enviarCodigoRecuperacionPorUsuario($usuario);
+            exit;
+        }
+        if ($_GET['accion'] == 'validarCodigo') {
+            $usuario = $_POST['usuario'];
+            $codigo = $_POST['codigo'];
+            echo $o->validarCodigoRecuperacion($usuario, $codigo);
+            exit;
+        }
+        if ($_GET['accion'] == 'cambiarClave') {
+            $usuario = $_POST['usuario'];
+            $codigo = $_POST['codigo'];
+            $nuevaClave = $_POST['nuevaClave'];
+            echo $o->cambiarClaveConToken($usuario, $codigo, $nuevaClave);
+            exit;
         }
     }
 
