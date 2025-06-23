@@ -143,13 +143,13 @@ $(document).ready(function () {
 });
 
 $("#mal_nombre").on("keydown", function () {
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,20}$/,$(this),$("#smalnombre"),"El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$(this),$("#smalnombre"),"El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
     
   });
 
   
    $("#mal_nombre").on("keyup", function () {
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,20}$/, $(this), $("#smalnombre"), "El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/, $(this), $("#smalnombre"), "El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
     
     var datos = new FormData();
     datos.append('accion', 'existe_nombre');
@@ -314,8 +314,8 @@ function validarenvio() {
        muestraMensaje("error",4000,"ERROR","El codigo de la malla <br/> No puede estar vacío y debe contener entre 2 a 10 carácteres.");
         return false;
     }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$("#mal_nombre"),$("#smalnombre"),"El nombre debe contener entre 5 y 20 caracteres.") == 0) {
-      muestraMensaje("error",4000,"ERROR","El nombre de la malla <br/> No puede estar vacío y debe contener entre 5 a 20 carácteres.");
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$("#mal_nombre"),$("#smalnombre"),"El nombre debe contener entre 5 y 50 caracteres.") == 0) {
+      muestraMensaje("error",4000,"ERROR","El nombre de la malla <br/> No puede estar vacío y debe contener entre 5 a 10 carácteres.");
          return false;
     }
     if (anio === null || anio === "" || anio === "0") {

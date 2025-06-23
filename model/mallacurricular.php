@@ -214,7 +214,7 @@ class Malla extends Connection {
 
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = '¡Atención!<br>El código de la malla curricular ya existe.';
+                $r['mensaje'] = '¡Atención!<br>El código de la malla ya está en uso por otro registro.';
             }
         
         } catch (Exception $e) {
@@ -251,7 +251,7 @@ class Malla extends Connection {
 
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = '¡Atención!<br>El nombre de la malla curricular ya existe.';
+                $r['mensaje'] = '¡Atención!<br>El nombre de la malla ya está en uso por otro registro.';
             }
         
         } catch (Exception $e) {

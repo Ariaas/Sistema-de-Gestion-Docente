@@ -124,7 +124,7 @@ function Listar() {
         } else {
           
           Swal.fire({
-            title: "¿Está seguro de eliminar esta COHORTE?",
+            title: "¿Está seguro de eliminar este espacio?",
             text: "Esta acción no se puede deshacer.",
             icon: "warning",
             showCancelButton: true,
