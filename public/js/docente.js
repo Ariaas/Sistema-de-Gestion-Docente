@@ -57,14 +57,23 @@ $(document).ready(function() {
         pone(this, 'eliminar');
     });
 
-    
+    // ===== INICIO DE NUEVAS VALIDACIONES =====
+    // Validar que cédula solo admita números
+    $("#cedulaDocente").on("input", function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Validar que nombre y apellido solo admitan letras y espacios
+    $("#nombreDocente, #apellidoDocente").on("input", function() {
+        this.value = this.value.replace(/[0-9]/g, '');
+    });
+    // ===== FIN DE NUEVAS VALIDACIONES =====
+
     $("#cedulaDocente").on("keyup", function () {
-        // Se asegura de que el botón se habilite/deshabilite según la validación del formato
         if (!validarkeyup(/^[0-9]{7,8}$/, $(this), $("#scedulaDocente"), "Debe ser una cédula válida (7-8 dígitos).")){
             $("#proceso").prop("disabled", true);
             return;
         } else {
-            // Si el formato es correcto y estamos registrando, se procede a verificar la existencia
             if ($("#proceso").text() === "REGISTRAR") {
                 const datos = new FormData();
                 datos.append('accion', 'Existe');
@@ -76,11 +85,9 @@ $(document).ready(function() {
         }
     });
 
-    $("#nombreDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $(this), $("#snombreDocente"), "El nombre es requerido."); });
-    $("#apellidoDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $(this), $("#sapellidoDocente"), "El apellido es requerido."); });
-    $("#correoDocente").on("keyup", function() { validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $(this), $("#scorreoDocente"), "El formato de correo no es válido."); });
-
-   
+    $("#nombreDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $(this), $("#snombreDocente"), "El formato del nombre es inválido."); });
+    $("#apellidoDocente").on("keyup", function() { validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $(this), $("#sapellidoDocente"), "El formato del apellido es inválido."); });
+    $("#correoDocente").on("keyup", function() { validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $(this), $("#scorreoDocente"), "El formato del correo es inválido."); });
 
     function Listar() {
         const datos = new FormData();
@@ -88,30 +95,58 @@ $(document).ready(function() {
         enviaAjax(datos);
     }
 
+    // ===== FUNCIÓN DE VALIDACIÓN MEJORADA =====
     function validarenvio() {
         let esValido = true;
-        if (!validarkeyup(/^[0-9]{7,8}$/, $("#cedulaDocente"), $("#scedulaDocente"), "Cédula inválida.")) esValido = false;
-        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $("#nombreDocente"), $("#snombreDocente"), "Nombre inválido.")) esValido = false;
-        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $("#apellidoDocente"), $("#sapellidoDocente"), "Apellido inválido.")) esValido = false;
-        if (!validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $("#correoDocente"), $("#scorreoDocente"), "Correo inválido.")) esValido = false;
-        if (!$("#categoria").val()) esValido = false;
-        if (!$("#dedicacion").val()) esValido = false;
-        if (!$("#condicion").val()) esValido = false;
+        
+        // Validaciones de inputs de texto
+        if (!validarkeyup(/^[0-9]{7,8}$/, $("#cedulaDocente"), $("#scedulaDocente"), "Debe ser una cédula válida (7-8 dígitos).")) esValido = false;
+        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $("#nombreDocente"), $("#snombreDocente"), "El formato del nombre es inválido.")) esValido = false;
+        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{1,30}$/, $("#apellidoDocente"), $("#sapellidoDocente"), "El formato del apellido es inválido.")) esValido = false;
+        if (!validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $("#correoDocente"), $("#scorreoDocente"), "El formato del correo es inválido.")) esValido = false;
+        
+        // Validaciones de selects
+        if (!$("#categoria").val()) {
+            $("#scategoria").text("Debe seleccionar una categoría.");
+            esValido = false;
+        } else {
+            $("#scategoria").text("");
+        }
+
+        if (!$("#dedicacion").val()) {
+            $("#sdedicacion").text("Debe seleccionar una dedicación.");
+            esValido = false;
+        } else {
+            $("#sdedicacion").text("");
+        }
+        
+        if (!$("#condicion").val()) {
+            $("#scondicion").text("Debe seleccionar una condición.");
+            esValido = false;
+        } else {
+            $("#scondicion").text("");
+        }
+
+        // Validaciones de checkboxes
         if ($("input[name='titulos[]']:checked").length === 0) {
             $("#stitulos").text("Debe seleccionar al menos un título.");
             esValido = false;
-        } else { $("#stitulos").text(""); }
+        } else { 
+            $("#stitulos").text(""); 
+        }
+
         if ($("input[name='coordinaciones[]']:checked").length === 0) {
             $("#scoordinaciones").text("Debe seleccionar al menos una coordinación.");
             esValido = false;
-        } else { $("#scoordinaciones").text(""); }
+        } else { 
+            $("#scoordinaciones").text(""); 
+        }
 
         if (!esValido) {
             muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del formulario.");
         }
         return esValido;
     }
-
     
     function pone(pos, accion) {
         limpia();
@@ -156,7 +191,6 @@ $(document).ready(function() {
         $("#modal1").modal("show");
     }
  
-    
     function limpia() {
         $("form#f")[0].reset();
         $("form#f :input").prop('disabled', false);
@@ -175,20 +209,17 @@ $(document).ready(function() {
                 try {
                     const lee = JSON.parse(respuesta);
                     
-                    // ===== MODIFICACIÓN: Bloque para manejar la respuesta de la verificación de cédula =====
                     if (typeof lee.existe !== 'undefined') {
                         if (lee.existe) {
                             muestraMensaje("error", 4000, "Cédula Duplicada", "Ya hay un docente registrado con esta cédula.");
                             $("#scedulaDocente").text("Cédula ya registrada.");
-                            $("#proceso").prop("disabled", true); // Deshabilita el botón de guardar
+                            $("#proceso").prop("disabled", true);
                         } else {
-                            // Si la cédula no existe, se limpia el mensaje de error y se habilita el botón.
                             $("#scedulaDocente").text("");
                             $("#proceso").prop("disabled", false);
                         }
-                        return; // Detiene la ejecución para no procesar el switch de abajo
+                        return;
                     }
-                    // ===== FIN DE LA MODIFICACIÓN =====
 
                     switch (lee.resultado) {
                         case 'consultar':
