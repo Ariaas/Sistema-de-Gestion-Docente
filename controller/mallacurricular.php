@@ -2,11 +2,6 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-/*
-if (!is_file("model/" . $pagina . ".php")) {
-    echo "Falta definir la clase " . $pagina;
-    exit;
-}*/
 require_once("model/" . $pagina . ".php");
 
 $obj4 = new Malla();
@@ -39,31 +34,19 @@ if (is_file("views/" . $pagina . ".php")) {
             $obj4->setMalCohorte($_POST['mal_cohorte']);
             $obj4->setMalDescripcion($_POST['mal_descripcion']);
             echo json_encode($obj4->Registrar());
-
             $bitacora->registrarAccion($usu_id, 'registrar', 'malla curricular');
-
         } else if ($accion == 'existe') {
             $obj4->setMalCodigo($_POST['mal_codigo']);
-            
-            // AÑADE ESTA LÓGICA: Asigna el ID al objeto si se está modificando
             if (isset($_POST['mal_id']) && !empty($_POST['mal_id'])) {
                 $obj4->setMalId($_POST['mal_id']);
             }
-            
             echo json_encode($obj4->Existecodigo());
-
-        
-        } 
-        else if ($accion == 'existe_nombre') {
+        } else if ($accion == 'existe_nombre') {
             $obj4->setMalNombre($_POST['mal_nombre']);
-
-            // AÑADE ESTA LÓGICA: Asigna el ID al objeto si se está modificando
             if (isset($_POST['mal_id']) && !empty($_POST['mal_id'])) {
                 $obj4->setMalId($_POST['mal_id']);
             }
-
             echo json_encode($obj4->Existenombre());
-        
         } else if($accion == 'modificar'){
             $obj4->setMalId($_POST['mal_id']);
             $obj4->setMalCodigo($_POST['mal_codigo']);
@@ -72,46 +55,46 @@ if (is_file("views/" . $pagina . ".php")) {
             $obj4->setMalCohorte($_POST['mal_cohorte']);
             $obj4->setMalDescripcion($_POST['mal_descripcion']);
             echo json_encode($obj4->Modificar());
-
             $bitacora->registrarAccion($usu_id, 'modificar', 'malla curricular');
         } elseif ($accion == 'eliminar') {
-
             $obj4->setMalId($_POST['mal_id']);
             echo json_encode($obj4->Eliminar());
-
             $bitacora->registrarAccion($usu_id, 'eliminar', 'malla curricular');
-
         } elseif ($accion == 'asignar_uc_malla') {
-            $mallaId  =$_POST['mal_id'];// usar setters y getter
+            $mallaId  = $_POST['mal_id'];
             $ucIds = json_decode($_POST['uc_ids'], true);
             echo json_encode($obj4->AsignarUCsAMalla($mallaId, $ucIds));
-
-            $bitacora->registrarAccion($usu_id, 'asignar', 'malla curricular');
-
-
-        } elseif ($accion == 'quitar_uc_malla') { 
-            $mallaId = $_POST['mal_id']; // usar setters y getter
-            $ucId = $_POST['uc_id'];
-            echo json_encode($obj4->QuitarUCDeMalla($mallaId, $ucId));
-
-            $bitacora->registrarAccion($usu_id, 'quitar', 'malla curricular');
+            $bitacora->registrarAccion($usu_id, 'asignar uc', 'malla curricular');
         } elseif ($accion == 'asignar_certificado_malla') {
             $mallaId = $_POST['mal_id'];
-            $certIds = json_decode($_POST['cert_ids'], true);// usar setters y getter
+            $certIds = json_decode($_POST['cert_ids'], true);
             echo json_encode($obj4->AsignarCertificadosAMalla($mallaId, $certIds));
-
-            $bitacora->registrarAccion($usu_id, 'asignar certificado', ' malla curricular');
-        } elseif ($accion == 'quitar_certificado_malla') { // usar setters y getter
-            $mallaId = $_POST['mal_id'];
-            $certId = $_POST['cert_id'];
-            echo json_encode($obj4->QuitarCertificadoDeMalla($mallaId, $certId));
-
-            $bitacora->registrarAccion($usu_id, 'quitar certificado', 'malla curricular');
-        } elseif ($accion == 'consultar_asignaciones_uc') {// usar setters y getter
+            $bitacora->registrarAccion($usu_id, 'asignar certificado', 'malla curricular');
+        } elseif ($accion == 'consultar_asignaciones_uc') {
             echo json_encode($obj4->ListarAsignacionesUC());
         } elseif ($accion == 'consultar_asignaciones_certificados') {
             echo json_encode($obj4->ListarAsignacionesCertificados());
+        
+        // --- INICIO DE NUEVA LÓGICA Y MODIFICACIONES ---
+        } elseif ($accion == 'consultar_ucs_de_malla') {
+            $mallaId = $_POST['mal_id'];
+            echo json_encode($obj4->obtenerUCsPorMalla($mallaId));
+        } elseif ($accion == 'quitar_uc_asignada') { 
+            $mallaId = $_POST['mal_id'];
+            $ucId = $_POST['uc_id'];
+            echo json_encode($obj4->QuitarUCDeMalla($mallaId, $ucId));
+            $bitacora->registrarAccion($usu_id, 'quitar uc asignada', 'malla curricular');
+        } elseif ($accion == 'consultar_cert_de_malla') {
+            $mallaId = $_POST['mal_id'];
+            echo json_encode($obj4->obtenerCertificadosPorMalla($mallaId));
+        } elseif ($accion == 'quitar_cert_asignado') {
+            $mallaId = $_POST['mal_id'];
+            $certId = $_POST['cert_id'];
+            echo json_encode($obj4->QuitarCertificadoDeMalla($mallaId, $certId));
+            $bitacora->registrarAccion($usu_id, 'quitar certificado asignado', 'malla curricular');
         }
+        // --- FIN DE NUEVA LÓGICA ---
+
         exit;
     }
 

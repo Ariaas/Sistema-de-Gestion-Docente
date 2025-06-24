@@ -63,6 +63,7 @@ if (!isset($_SESSION['name'])) {
                                 <th>Código Malla</th>
                                 <th>Nombre Malla</th>
                                 <th>UCs Asignadas</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="resultadoAsignacionesUC"></tbody>
@@ -81,6 +82,7 @@ if (!isset($_SESSION['name'])) {
                                 <th>Código Malla</th>
                                 <th>Nombre Malla</th>
                                 <th>Certificados Asignados</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="resultadoAsignacionesCert"></tbody>
@@ -105,40 +107,26 @@ if (!isset($_SESSION['name'])) {
                                     <div class="col-md-6"><label for="mal_nombre" class="form-label">Nombre</label><input class="form-control" type="text" id="mal_nombre" name="mal_nombre" placeholder="Ejemplo: Malla 2022" required><span id="smalnombre" class="form-text"></span></div>
                                 </div>
                                 <div class="row mb-3">
-
-                                
                                     <div class="col-md-4"><label for="mal_Anio" class="form-label">Año</label>
                                     <select class="form-select" name="mal_Anio" id="mal_Anio" required>
-
                                            <option value="" disabled selected>Seleccione una año</option><?php
                                             if (!empty($anios)): foreach ($anios as $selectanio): ?>
                                             <option value="<?= htmlspecialchars($selectanio['ani_id']) ?>"><?= htmlspecialchars($selectanio['ani_anio']) ?></option>
                                             <?php endforeach;
                                     else: ?><option value="" disabled>No hay año disponibles</option><?php endif; ?>   
                                         </select><span id="smalanio" class="form-text"></span></div>
-                                  
-                                
                                    <div class="col-md-4"> <label for="mal_cohorte" class="form-label">Cohorte</label>
                                    <select class="form-select" name="mal_cohorte" id="mal_cohorte" required>
                                            <option value="" disabled selected>Seleccione una cohorte</option><?php
-
-
-                                          
                                           if (!empty($cohortes)): foreach ($cohortes as $selectcohortes): ?>
                                                  <option value="<?= htmlspecialchars($selectcohortes['coh_id']) ?>">
                                                 <?= htmlspecialchars($selectcohortes['coh_numero']) ?></option>
                                             <?php endforeach;
                                     else: ?><option value="" disabled>No hay cohorte disponibles</option><?php endif; ?> 
                                     </select> <span id="smalcohorte" class="form-text"></span></div>
-                                  
-                                    
-                               
                                      <div class="col-md-4"><label for="mal_descripcion" class="form-label">Descripción</label><input class="form-control" type="text" id="mal_descripcion" name="mal_descripcion" placeholder="Descripción breve" required><span id="smaldescripcion" class="form-text"></span></div>
-                            
                                     </div>
-                                
                             </div>
-                           
                             <div class="modal-footer justify-content-center"><button type="button" class="btn btn-primary me-2" id="proceso">GUARDAR</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button></div>
                         </form>
                     </div>
@@ -181,7 +169,7 @@ if (!isset($_SESSION['name'])) {
                         <div class="row g-3 mb-3">
                             <div class="col-md-10"><label for="selectCertificadoParaMalla" class="form-label">Certificado</label><select class="form-select" id="selectCertificadoParaMalla">
                                     <option value="" disabled selected>Seleccione un Certificado</option><?php if (!empty($certificados_disponibles)): foreach ($certificados_disponibles as $certificado): ?><option value="<?= htmlspecialchars($certificado['cert_id']) ?>"><?= htmlspecialchars($certificado['cert_nombre']) ?></option><?php endforeach;
-                                                                                                                                                                                                                                                                                                                                    else: ?><option value="" disabled>No hay Certificados disponibles</option><?php endif; ?>
+                                    else: ?><option value="" disabled>No hay Certificados disponibles</option><?php endif; ?>
                                 </select></div>
                             <div class="col-md-2 d-flex align-items-end"><button type="button" class="btn btn-primary w-100" id="btnAgregarCertificadoMalla">Agregar</button></div>
                         </div>
@@ -192,7 +180,59 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-    </main>
+
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalDesafiliarUC">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">Gestionar Unidades Curriculares Asignadas</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>A continuación se listan las UCs asignadas a esta malla. Haga clic en "Quitar" para desafiliar la que desee.</p>
+                        <ul id="listaUCsAsignadas" class="list-group mb-3"></ul>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalDesafiliarCertificado">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">Gestionar Certificados Asignados</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>A continuación se listan los certificados asignados a esta malla. Haga clic en "Quitar" para desafiliar el que desee.</p>
+                        <ul id="listaCertificadosAsignados" class="list-group mb-3"></ul>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalVerDetalles">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-secondary text-white">
+                        <h5 class="modal-title" id="modalDetallesTitulo">Detalles de Asignación</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="listaDetalles" class="list-group">
+                            </ul>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </main>
     <?php require_once("public/components/footer.php"); ?>
     <script type="text/javascript" src="public/js/mallacurricular.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
