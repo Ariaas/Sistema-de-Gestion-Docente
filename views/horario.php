@@ -126,19 +126,19 @@
                         </div>
                         <div class="mb-3">
                             <label for="modalSeleccionarDocente" class="form-label">Docente <span class="text-danger">*</span></label>
-                            <select class="form-select" id="modalSeleccionarDocente" required>
+                            <select class="form-select" id="modalSeleccionarDocente" >
                                 <option value="">Seleccionar Docente</option>
                                 </select>
                         </div>
                         <div class="mb-3">
                             <label for="modalSeleccionarUc" class="form-label">Unidad Curricular <span class="text-danger">*</span></label>
-                            <select class="form-select" id="modalSeleccionarUc" required disabled>
+                            <select class="form-select" id="modalSeleccionarUc" >
                                 <option value="">Primero seleccione un docente</option>
                                 </select>
                         </div>
                         <div class="mb-3">
                             <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab) <span class="text-danger">*</span></label>
-                            <select class="form-select" id="modalSeleccionarEspacio" name="esp_id_modal" required disabled> 
+                            <select class="form-select" id="modalSeleccionarEspacio" name="esp_id_modal"> 
                                 <option value="">Seleccionar Espacio</option>
                                 </select>
                         </div>

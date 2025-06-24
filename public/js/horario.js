@@ -334,6 +334,58 @@ $(document).ready(function() {
         inicializarTablaHorario();
     });
 
+    $("#fase_id").on("change", function() {
+        if ($("#accion").val() !== "registrar") {
+            return;
+        }
+
+        const secId = $("#seccion_principal_id").val();
+        const faseId = $(this).val();
+        const procesoBtn = $("#proceso");
+
+        if (secId && faseId) {
+            const datos = new FormData();
+            datos.append("accion", "verificar_horario_existente");
+            datos.append("sec_id", secId);
+            datos.append("fase_id", faseId);
+
+            $.ajax({
+                url: "",
+                type: "POST",
+                data: datos,
+                contentType: false,
+                processData: false,
+                success: function(respuesta) {
+                    try {
+                        const data = JSON.parse(respuesta);
+                        if (data.resultado === 'ok' && data.existe) {
+                            const seccionSeleccionada = $("#seccion_principal_id option:selected").text();
+                            const faseSeleccionada = $("#fase_id option:selected").text();
+                            muestraMensaje(
+                                "error",
+                                8000,
+                                "Horario Existente",
+                                `Ya existe un horario registrado para la sección <strong>${seccionSeleccionada.trim()}</strong> y la <strong>${faseSeleccionada.trim()}</strong>.`
+                            );
+                            procesoBtn.prop("disabled", true);
+                        } else {
+                            procesoBtn.prop("disabled", false);
+                        }
+                    } catch (e) {
+                        console.error("Error al procesar la verificación de horario existente:", e);
+                        procesoBtn.prop("disabled", false);
+                    }
+                },
+                error: function() {
+                    console.error("Error de red al verificar el horario.");
+                    procesoBtn.prop("disabled", false);
+                }
+            });
+        } else {
+            procesoBtn.prop("disabled", false);
+        }
+    });
+
     $("#modalSeleccionarDocente").on("change", function() {
         const docId = $(this).val();
         const guardarBtn = $("#btnGuardarClase");
@@ -618,7 +670,7 @@ $(document).ready(function() {
         setTimeout(() => {
             $("#fase_id").val(fase_id_original);
         }, 500);
-        $("#seccion_principal_id, #fase_id").prop("disabled", false);
+        $("#seccion_principal_id, #fase_id").prop("disabled", true);
         $("#controlesTablaHorario, #contenedorTablaHorario").show();
         $("#modal-horario").data("mode", "modificar");
 

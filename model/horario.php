@@ -159,31 +159,44 @@ class Horario extends Connection
         }
     }
 
-    private function verificarConflictosDeEspacio($co, $items_horario, $sec_id_original, $fase_id_original, $nueva_seccion_id)
+    private function verificarConflictosDeEspacio($co, $items_horario, $sec_id_original, $fase_id_original, $nueva_seccion_id, $nueva_fase_id)
     {
         if (empty($items_horario)) return null;
+
         $stmtAnio = $co->prepare("SELECT t.ani_id FROM tbl_seccion s JOIN tbl_trayecto t ON s.tra_id = t.tra_id WHERE s.sec_id = :sec_id");
         $stmtAnio->execute([':sec_id' => $nueva_seccion_id]);
         $ani_id = $stmtAnio->fetchColumn();
         if (!$ani_id) return "No se pudo determinar el año académico para la validación de espacios.";
 
-        
+        $stmtFase = $co->prepare("SELECT fase_numero FROM tbl_fase WHERE fase_id = :fase_id");
+        $stmtFase->execute([':fase_id' => $nueva_fase_id]);
+        $current_fase_numero = $stmtFase->fetchColumn();
+        if (!$current_fase_numero) return "No se pudo determinar el número de fase para la validación.";
+
         $stmtConflicto = $co->prepare(
             "SELECT ts.sec_codigo, ts.sec_nombre, tc.coh_numero, te.esp_codigo 
              FROM uc_horario tuh JOIN tbl_horario th ON tuh.hor_id = th.hor_id JOIN seccion_horario tsh ON th.hor_id = tsh.hor_id
              JOIN tbl_seccion ts ON tsh.sec_id = ts.sec_id JOIN tbl_trayecto tt ON ts.tra_id = tt.tra_id 
              JOIN tbl_espacio te ON th.esp_id = te.esp_id JOIN tbl_cohorte tc ON ts.coh_id = tc.coh_id
-             WHERE th.esp_id = :esp_id AND tuh.hor_dia = :dia AND tuh.hor_horainicio = :hora_inicio AND tt.ani_id = :ani_id AND th.hor_estado = 1
+             JOIN tbl_fase tf ON th.fase_id = tf.fase_id
+             WHERE th.esp_id = :esp_id AND tuh.hor_dia = :dia AND tuh.hor_horainicio = :hora_inicio AND tt.ani_id = :ani_id AND tf.fase_numero = :current_fase_numero AND th.hor_estado = 1
              AND NOT (tsh.sec_id = :sec_id_original AND th.fase_id = :fase_id_original) LIMIT 1"
         );
 
         foreach ($items_horario as $item) {
-            $stmtConflicto->execute([':esp_id' => $item['esp_id'], ':dia' => $item['dia'], ':hora_inicio' => $item['hora_inicio'], ':ani_id' => $ani_id, ':sec_id_original' => $sec_id_original, ':fase_id_original' => $fase_id_original]);
+            $stmtConflicto->execute([
+                ':esp_id' => $item['esp_id'], 
+                ':dia' => $item['dia'], 
+                ':hora_inicio' => $item['hora_inicio'], 
+                ':ani_id' => $ani_id, 
+                ':current_fase_numero' => $current_fase_numero,
+                ':sec_id_original' => $sec_id_original, 
+                ':fase_id_original' => $fase_id_original
+            ]);
             $conflicto = $stmtConflicto->fetch(PDO::FETCH_ASSOC);
             if ($conflicto) {
-             
                 $nombreSeccionConflicto = $conflicto['sec_codigo'] . '-' . $conflicto['sec_nombre'] . $conflicto['coh_numero'];
-                return "Conflicto con BD: El espacio '" . $conflicto['esp_codigo'] . "' ya está ocupado a esa hora por la sección '" . $nombreSeccionConflicto . "'.";
+                return "Conflicto con BD: El espacio '" . $conflicto['esp_codigo'] . "' ya está ocupado a esa hora y fase por la sección '" . $nombreSeccionConflicto . "'.";
             }
         }
         return null;
@@ -227,7 +240,6 @@ class Horario extends Connection
             ]);
             $conflicto = $stmtConflicto->fetch(PDO::FETCH_ASSOC);
             if ($conflicto) {
-               
                 $nombreSeccionConflicto = $conflicto['sec_codigo'] . '-' . $conflicto['sec_nombre'] . $conflicto['coh_numero'];
                 return "Conflicto con BD: El docente '" . $conflicto['docente_nombre'] . "' ya tiene una clase en la sección '" . $nombreSeccionConflicto . "' a esa misma hora en el mismo año y fase.";
             }
@@ -269,7 +281,7 @@ class Horario extends Connection
             $espacioTracker[$espacio_key] = true;
         }
 
-        $error_espacio = $this->verificarConflictosDeEspacio($co, $items_horario, $sec_id_original_grupo, $fase_id_original_grupo, $nueva_seccion_id_grupo);
+        $error_espacio = $this->verificarConflictosDeEspacio($co, $items_horario, $sec_id_original_grupo, $fase_id_original_grupo, $nueva_seccion_id_grupo, $nueva_fase_id_grupo);
         if ($error_espacio !== null) {
             return ['resultado' => 'error', 'mensaje' => "¡ERROR DE VALIDACIÓN!<br/>" . $error_espacio];
         }
@@ -334,20 +346,32 @@ class Horario extends Connection
             $ani_id = $stmtAnio->fetchColumn();
             if (!$ani_id) return ['conflicto' => false];
 
-           
+            $stmtFase = $co->prepare("SELECT fase_numero FROM tbl_fase WHERE fase_id = :fase_id");
+            $stmtFase->execute([':fase_id' => $fase_id_actual]);
+            $current_fase_numero = $stmtFase->fetchColumn();
+            if (!$current_fase_numero) return ['conflicto' => false];
+
             $sql = "SELECT ts.sec_codigo, ts.sec_nombre, tc.coh_numero, te.esp_codigo, tf.fase_numero FROM uc_horario uh JOIN tbl_horario th ON uh.hor_id = th.hor_id JOIN seccion_horario sh ON th.hor_id = sh.hor_id
                     JOIN tbl_seccion ts ON sh.sec_id = ts.sec_id JOIN tbl_trayecto tt ON ts.tra_id = tt.tra_id JOIN tbl_espacio te ON th.esp_id = te.esp_id 
                     JOIN tbl_fase tf ON th.fase_id = tf.fase_id JOIN tbl_cohorte tc ON ts.coh_id = tc.coh_id
-                    WHERE th.esp_id = :esp_id AND uh.hor_dia = :dia AND uh.hor_horainicio = :hora_inicio AND tt.ani_id = :ani_id AND th.hor_estado = 1
+                    WHERE th.esp_id = :esp_id AND uh.hor_dia = :dia AND uh.hor_horainicio = :hora_inicio AND tt.ani_id = :ani_id AND tf.fase_numero = :current_fase_numero AND th.hor_estado = 1
                     AND NOT (sh.sec_id = :sec_id_original AND th.fase_id = :fase_id_original) LIMIT 1";
             
             $stmt = $co->prepare($sql);
-            $stmt->execute([':esp_id' => $esp_id, ':dia' => $dia, ':hora_inicio' => $hora_inicio, ':ani_id' => $ani_id, ':sec_id_original' => $sec_id_original, ':fase_id_original' => $fase_id_original]);
+            $stmt->execute([
+                ':esp_id' => $esp_id, 
+                ':dia' => $dia, 
+                ':hora_inicio' => $hora_inicio, 
+                ':ani_id' => $ani_id, 
+                ':current_fase_numero' => $current_fase_numero,
+                ':sec_id_original' => $sec_id_original, 
+                ':fase_id_original' => $fase_id_original
+            ]);
             $conflicto = $stmt->fetch(PDO::FETCH_ASSOC);
+
             if ($conflicto) {
-       
                 $nombreSeccionConflicto = $conflicto['sec_codigo'] . '-' . $conflicto['sec_nombre'] . $conflicto['coh_numero'];
-                return ['conflicto' => true, 'mensaje' => "Conflicto: Espacio '" . $conflicto['esp_codigo'] . "' ya ocupado por la sección '" . $nombreSeccionConflicto . "' (Fase ". $conflicto['fase_numero'] .") en ese bloque."];
+                return ['conflicto' => true, 'mensaje' => "Conflicto: Espacio '" . $conflicto['esp_codigo'] . "' ya ocupado por la sección '" . $nombreSeccionConflicto . "' en ese bloque para la misma fase."];
             }
             return ['conflicto' => false];
         } catch (Exception $e) {
@@ -370,7 +394,6 @@ class Horario extends Connection
             $current_fase_numero = $stmtFase->fetchColumn();
             if (!$current_fase_numero) return ['conflicto' => false];
             
-         
             $sql = "SELECT ts.sec_codigo, ts.sec_nombre, tc.coh_numero, CONCAT(td.doc_nombre, ' ', td.doc_apellido) as docente_nombre
                     FROM uc_horario uh JOIN tbl_horario th ON uh.hor_id = th.hor_id JOIN docente_horario dh ON th.hor_id = dh.hor_id
                     JOIN tbl_docente td ON dh.doc_id = td.doc_id JOIN seccion_horario sh ON th.hor_id = sh.hor_id
@@ -386,7 +409,6 @@ class Horario extends Connection
             ]);
             $conflicto = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($conflicto) {
-                
                 $nombreSeccionConflicto = $conflicto['sec_codigo'] . '-' . $conflicto['sec_nombre'] . $conflicto['coh_numero'];
                 return ['conflicto' => true, 'mensaje' => "Conflicto: El docente ya tiene una clase en la sección '" . $nombreSeccionConflicto . "' en ese bloque de tiempo para la misma fase."];
             }
