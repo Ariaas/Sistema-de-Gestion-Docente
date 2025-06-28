@@ -56,39 +56,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                             </div>
                         </a>
                     </div>
-                    <div class="col">
-                        <a class="a-cards" href="?pagina=convenio">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                    <h5 class="card-title">Gestionar Convenio</h5>
-                                    <p class="card-text"></p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a class="a-cards" href="?pagina=turno">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                    <h5 class="card-title">Gestionar Turno</h5>
-                                    <p class="card-text"></p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col">
-                        <a class="a-cards" href="?pagina=fase">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                    <h5 class="card-title">Gestionar Fase</h5>
-                                    <p class="card-text"></p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
+
                     <div class="col">
                         <a class="a-cards" href="?pagina=coordinacion">
                             <div class="card h-100 text-center custom-card">
@@ -100,19 +68,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                             </div>
                         </a>
                     </div>                                                                
-                <?php if (!empty($permisos['Certificados'])): ?>
-                    <div class="col">
-                        <a class="a-cards" href="?pagina=certificado">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/circle-user-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                    <h5 class="card-title">Gestionar Certificado</h5>
-                                    <p class="card-text"></p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                <?php endif; ?>
                 <?php if (!empty($permisos['Area'])):
                 ?>
                     <div class="col">
