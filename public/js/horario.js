@@ -335,7 +335,7 @@ $(document).ready(function() {
     });
 
     $("#fase_id").on("change", function() {
-        if ($("#accion").val() !== "registrar") {
+        if ($("#accion").val() !== "registrar_grupo") {
             return;
         }
 
@@ -564,7 +564,7 @@ $(document).ready(function() {
             $("#modal-horario").modal("hide");
             Swal.fire({
                 title: `¿Está seguro de eliminar el horario para ${seccionNombre}?`,
-                text: "Esta acción no se puede deshacer.",
+                text: "Esta acción marcará el horario como inactivo, pero no borrará los datos permanentemente.",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#d33",
@@ -586,16 +586,16 @@ $(document).ready(function() {
         }
 
         const accionActual = $("#accion").val();
-        if (accionActual === "registrar" || accionActual === "modificar_grupo") {
+        if (accionActual === "registrar_grupo" || accionActual === "modificar_grupo") {
             botonProceso.prop("disabled", true).text("Procesando...");
             const seccionPrincipalId = $("#seccion_principal_id").val();
             const faseGlobalId = $("#fase_id").val();
             if (!seccionPrincipalId || !faseGlobalId) {
                 muestraMensaje("error", 4000, "¡ERROR!", "Debe seleccionar la Sección y la Fase del horario.");
-                botonProceso.prop("disabled", false).text(accionActual === "registrar" ? "REGISTRAR" : "GUARDAR CAMBIOS");
+                botonProceso.prop("disabled", false).text(accionActual === "registrar_grupo" ? "REGISTRAR" : "GUARDAR CAMBIOS");
                 return;
             }
-            if (horarioContenidoGuardado.size === 0 && accionActual === "registrar") {
+            if (horarioContenidoGuardado.size === 0 && accionActual === "registrar_grupo") {
                 muestraMensaje("error", 4000, "¡ERROR!", "Debe añadir al menos una clase al horario para registrar.");
                 botonProceso.prop("disabled", false).text("REGISTRAR");
                 return;
@@ -606,10 +606,9 @@ $(document).ready(function() {
                 clasesAEnviar.push(value.data);
             }
             const datosGrupo = new FormData();
-            datosGrupo.append("accion", "modificar_grupo");
-            datosGrupo.append("accion_original", accionActual);
-            datosGrupo.append("sec_id_original", $("#current_editing_sec_id_hidden").val() || seccionPrincipalId);
-            datosGrupo.append("fase_id_original", $("#current_editing_fase_id_hidden").val() || faseGlobalId);
+            datosGrupo.append("accion", accionActual); // Se usa la acción directamente
+            datosGrupo.append("sec_id_original", $("#current_editing_sec_id_hidden").val());
+            datosGrupo.append("fase_id_original", $("#current_editing_fase_id_hidden").val());
             datosGrupo.append("nueva_seccion_id", seccionPrincipalId);
             datosGrupo.append("nueva_fase_id", faseGlobalId);
             datosGrupo.append("items_horario", JSON.stringify(clasesAEnviar));
@@ -642,8 +641,8 @@ $(document).ready(function() {
         const seccionesAnioActual = allSecciones.filter(s => parseInt(s.ani_anio, 10) === maxYear);
         poblarSelectSecciones(seccionesAnioActual, "#seccion_principal_id");
         $("#modalHorarioGlobalTitle").text("Registrar Nuevo Horario");
-        $("#accion").val("registrar");
-        $("#proceso").text("REGISTRAR").data("action-type", "registrar").removeClass("btn-danger btn-warning").addClass("btn-primary").prop("disabled", false);
+        $("#accion").val("registrar_grupo"); // ACCIÓN CAMBIADA
+        $("#proceso").text("REGISTRAR").data("action-type", "registrar_grupo").removeClass("btn-danger btn-warning").addClass("btn-primary").prop("disabled", false);
         $("#seccion_principal_id").prop("disabled", false);
         $("#fase_id").prop("disabled", true);
         $("#controlesTablaHorario, #contenedorTablaHorario").show();
@@ -661,7 +660,7 @@ $(document).ready(function() {
         limpiaParaNuevoRegistro();
         poblarSelectSecciones(allSecciones, "#seccion_principal_id");
         $("#modalHorarioGlobalTitle").text(`Modificar Horario: ${seccionNombreCompleto} - Fase ${faseNum}`);
-        $("#accion").val("modificar_grupo");
+        $("#accion").val("modificar_grupo"); // ACCIÓN CAMBIADA
         $("#proceso").text("GUARDAR").data("action-type", "modificar_grupo").removeClass("btn-danger btn-warning").addClass("btn-primary").prop("disabled", false);
         $("#current_editing_sec_id_hidden").val(sec_id_original);
         $("#current_editing_fase_id_hidden").val(fase_id_original);
@@ -794,7 +793,7 @@ function enviaAjax(datos) {
     const accionEnviada = datos.get("accion");
     let botonProceso = $("#proceso");
 
-    if (accionEnviada === "modificar_grupo") {
+    if (accionEnviada === "registrar_grupo" || accionEnviada === "modificar_grupo") {
         if (botonProceso.text() !== "Procesando...") {
             botonProceso.prop("disabled", true).text("Procesando...");
         }
@@ -812,9 +811,9 @@ function enviaAjax(datos) {
         success: function(respuesta) {
             try {
                 var lee = JSON.parse(respuesta);
-                let textoBotonOriginal = $("#accion").val() === 'registrar' ? 'REGISTRAR' : 'GUARDAR CAMBIOS';
+                let textoBotonOriginal = $("#accion").val() === 'registrar_grupo' ? 'REGISTRAR' : 'GUARDAR CAMBIOS';
 
-                if (accionEnviada === 'modificar_grupo') {
+                if (accionEnviada === 'registrar_grupo' || accionEnviada === 'modificar_grupo') {
                     botonProceso.prop("disabled", false).text(textoBotonOriginal);
                 }
 
@@ -839,13 +838,12 @@ function enviaAjax(datos) {
                         });
                     }
                     crearDT();
-                } else if (lee.resultado == "modificar_grupo_ok") {
-                    const accionOriginal = $("#accion").val();
-                    const titulo = (accionOriginal === 'registrar') ? 'REGISTRAR' : 'MODIFICAR';
+                } else if (lee.resultado == "registrar_grupo_ok" || lee.resultado == "modificar_grupo_ok") {
+                    const titulo = (lee.resultado == "registrar_grupo_ok") ? 'REGISTRAR' : 'MODIFICAR';
                     muestraMensaje("info", 4000, titulo, lee.mensaje);
                     $("#modal-horario").modal("hide");
                     Listar();
-                } else if (lee.resultado == "eliminar_por_seccion_fase_ok") {
+                } else if (lee.resultado == "eliminar_logico_ok") {
                     muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
                     $("#modal-horario").modal("hide");
                     Listar();
@@ -856,7 +854,7 @@ function enviaAjax(datos) {
             } catch (e) {
                 console.error("Error en JSON o success AJAX:", e, "Respuesta:", respuesta);
                 muestraMensaje("error", 10000, "¡ERROR!", "La respuesta del servidor no pudo ser procesada.");
-                if (accionEnviada === 'modificar_grupo') {
+                if (accionEnviada === 'registrar_grupo' || accionEnviada === 'modificar_grupo') {
                     botonProceso.prop("disabled", false).text("Reintentar");
                 }
             }
@@ -864,7 +862,7 @@ function enviaAjax(datos) {
         error: function(request, status, err) {
             console.error("Error AJAX:", status, err, request.responseText);
             muestraMensaje("error", 5000, status == "timeout" ? "SERVIDOR OCUPADO" : "ERROR DE CONEXIÓN", `No se pudo comunicar con el servidor.`);
-            if (accionEnviada === 'modificar_grupo') {
+            if (accionEnviada === 'registrar_grupo' || accionEnviada === 'modificar_grupo') {
                 botonProceso.prop("disabled", false).text("Reintentar");
             }
         },
