@@ -73,13 +73,6 @@
                                     </div>
                                 </div>
                                 
-                                <div class="mb-3 form-group-horario-individual" id="espacio-group" style="display:none;"> <label for="esp_id" class="form-label">Espacio</label><select class="form-select" id="esp_id" name="esp_id" required></select></div>
-                                <div class="mb-3 form-group-horario-individual" id="dia-group" style="display:none;"> <label for="dia" class="form-label">Día</label><select class="form-select" id="dia" name="dia" required><option value="">Seleccionar Día</option><option value="Lunes">Lunes</option><option value="Martes">Martes</option><option value="Miércoles">Miércoles</option> <option value="Jueves">Jueves</option><option value="Viernes">Viernes</option><option value="Sábado">Sábado</option><option value="Domingo">Domingo</option></select></div>
-                                <div class="mb-3 form-group-horario-individual" id="hora-inicio-group" style="display:none;"> <label for="hora_inicio" class="form-label">Hora Inicio</label><input type="time" class="form-control" id="hora_inicio" name="hora_inicio" required><span id="shora_inicio" class="text-danger"></span></div>
-                                <div class="mb-3 form-group-horario-individual" id="hora-fin-group" style="display:none;"> <label for="hora_fin" class="form-label">Hora Fin</label><input type="time" class="form-control" id="hora_fin" name="hora_fin" required><span id="shora_fin" class="text-danger"></span></div>
-                                <div class="mb-3 form-group-horario-individual" id="uc-group" style="display:none;"> <label for="uc_id" class="form-label">Unidad curricular</label><select class="form-select" id="uc_id" name="uc_id" required></select></div>
-                                <div class="mb-3 form-group-horario-individual" id="docente-group" style="display:none;"> <label for="doc_id" class="form-label">Docente</label><select class="form-select" id="doc_id" name="doc_id" required></select></div>
-                                
                                 <div class="header mt-4" id="controlesTablaHorario"></div>
 
                                 <div class="table-responsive" id="contenedorTablaHorario">
