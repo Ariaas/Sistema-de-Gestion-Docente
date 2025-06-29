@@ -20,14 +20,29 @@ $(document).ready(function(){
 
     $("#formRecuperarUsuario").on("submit", function(e){
         e.preventDefault();
-        $.post("?pagina=login&accion=recuperar", { usuario: $("#usuarioRecuperar").val() }, function(resp){
-            muestraMensaje("info", 4000, "Recuperación", resp);
+
+        const captchaResponse = $(this).find('.g-recaptcha-response').val();
+
+        if (!captchaResponse) {
+            muestraMensaje("error", 4000, "Error", "Por favor, complete el captcha.");
+            return;
+        }
+
+        $.post("?pagina=login&accion=recuperar", { 
+            usuario: $("#usuarioRecuperar").val(),
+            'g-recaptcha-response': captchaResponse 
+        }, function(resp){
+            grecaptcha.reset(); 
+            
             if(resp.includes("enviado")) {
+                muestraMensaje("info", 4000, "Recuperación", resp);
                 $("#usuarioCodigo").val($("#usuarioRecuperar").val());
                 $("#modalRecuperarUsuario").modal("hide");
                 setTimeout(function(){
                     $("#modalCodigo").modal("show");
                 }, 500);
+            } else {
+                muestraMensaje("error", 4000, "Error", resp);
             }
         });
     });
@@ -74,17 +89,6 @@ $(document).ready(function(){
         
         return true;
     }
-  
-    // function muestraMensaje(icono,tiempo,titulo,mensaje){
-    //     Swal.fire({
-    //     icon:icono,
-    //     timer:tiempo,	
-    //     title:titulo,
-    //     html:mensaje,
-    //     showConfirmButton:true,
-    //     confirmButtonText:'Aceptar',
-    //     });
-    // }
     
     document.addEventListener("DOMContentLoaded", function() {
         const mensajesDiv = document.getElementById("mensajes");
@@ -94,34 +98,3 @@ $(document).ready(function(){
             muestraMensaje("error", 4000, "Error", mensaje);
         }
     });
-
-    // function validarkeypress(er,e){
-        
-    //     key = e.keyCode;
-        
-        
-    //     tecla = String.fromCharCode(key);
-        
-        
-    //     a = er.test(tecla);
-        
-    //     if(!a){
-        
-    //         e.preventDefault();
-    //     }
-        
-        
-    // }
- 
-    // function validarkeyup(er,etiqueta,etiquetamensaje,
-    // mensaje){
-    //     a = er.test(etiqueta.val());
-    //     if(a){
-    //         etiquetamensaje.text("");
-    //         return 1;
-    //     }
-    //     else{
-    //         etiquetamensaje.text(mensaje);
-    //         return 0;
-    //     }
-    // }

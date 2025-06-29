@@ -19,7 +19,7 @@ $gestion_items = [
     'Docentes' => 'docente',
     'Espacios' => 'espacios',
     'Seccion' => 'seccion',
-    'Trayecto' => 'trayecto',
+    'Año' => 'anio',
     'Unidad Curricular' => 'uc',
     'Malla Curricular' => 'mallacurricular'
 ];

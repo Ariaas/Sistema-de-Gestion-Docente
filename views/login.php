@@ -12,40 +12,41 @@
 
     <section class="login-section">
         <div class="login-container">
-            <!-- Columna Gráfica -->
             <div class="login-graphic">
                 <img src="public/assets/img/logo.png" alt="Logo UPTAEB">
                 <h2>Sistema de Gestión Docente</h2>
                 <p>Universidad Politécnica Territorial de Lara "Andrés Eloy Blanco"</p>
             </div>
 
-            <!-- Columna del Formulario -->
             <div class="login-form-wrapper">
                 <h3>Iniciar Sesión</h3>
                 <p>Bienvenido de nuevo, por favor ingrese sus credenciales.</p>
-                
+
                 <form method="post" autocomplete="off" id="f">
                     <input type="hidden" name="accion" value="acceder">
-                    
+
                     <div class="mb-3">
                         <label for="nombreUsuario" class="form-label">Usuario</label>
                         <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" required autofocus>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label for="contraseniaUsuario" class="form-label">Contraseña</label>
                         <input type="password" class="form-control" id="contraseniaUsuario" name="contraseniaUsuario" required>
                     </div>
-                    
+
+                    <div class="mb-3">
+                        <div class="g-recaptcha" data-sitekey="6LeahHErAAAAAApcnm06Lpp53VDd_m2_CsXJGTTV"></div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary" id="acceder">Acceder</button>
-                    
+
                     <a href="#" class="forgot-password-link" id="recuperarBtn">¿Olvidaste tu contraseña?</a>
                 </form>
             </div>
         </div>
     </section>
 
-    <!-- Modales para recuperar contraseña (sin cambios) -->
     <div class="modal fade" id="modalRecuperarUsuario" tabindex="-1" aria-labelledby="modalRecuperarUsuarioLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form id="formRecuperarUsuario" method="post">
@@ -57,6 +58,9 @@
                     <div class="modal-body">
                         <label for="usuarioRecuperar" class="form-label">Nombre de usuario</label>
                         <input type="text" class="form-control" id="usuarioRecuperar" name="usuarioRecuperar" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="g-recaptcha" data-sitekey="6LeahHErAAAAAApcnm06Lpp53VDd_m2_CsXJGTTV"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary">Enviar código</button>
@@ -110,10 +114,11 @@
             </form>
         </div>
     </div>
-    
+
     <script type="text/javascript" src="public/js/validacion.js"></script>
     <script type="text/javascript" src="public/js/login.js"></script>
     <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 
 </html>

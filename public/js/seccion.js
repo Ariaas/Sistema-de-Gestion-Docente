@@ -2,37 +2,18 @@ function Listar() {
   var datos = new FormData();
   datos.append("accion", "consultar");
   enviaAjax(datos);
-  
-  var datosUnion = new FormData();
-  datosUnion.append("accion", "consultarUnion");
-  enviaAjax(datosUnion);
 }
 
-function Cambiar(){
-  document.getElementById('toggleTables').addEventListener('click', function() {
-  const tablaseccion = document.getElementById('tablaseccionContainer');
-  const tablaunion = document.getElementById('tablaunionContainer');
-
-  if (tablaseccion.style.display === 'none') {
-    tablaseccion.style.display = 'block';
-    tablaunion.style.display = 'none';
-    } else {
-      tablaseccion.style.display = 'none';
-      tablaunion.style.display = 'block';
-    }
-  });
-}
-
-function destruyeDT(selector) {
+function destruyeDT() {
   
-  if ($.fn.DataTable.isDataTable(selector)) {
-    $(selector).DataTable().destroy();
+  if ($.fn.DataTable.isDataTable("#tablaseccion")) {
+    $("#tablaseccion").DataTable().destroy();
   }
 }
 
-function crearDT(selector) {
-  if (!$.fn.DataTable.isDataTable(selector)) {
-    $(selector).DataTable({
+function crearDT() {
+  if (!$.fn.DataTable.isDataTable("#tablaseccion")) {
+    $("#tablaseccion").DataTable({
       paging: true,
       lengthChange: true,
       searching: true,
@@ -84,115 +65,55 @@ function crearDT(selector) {
   }
 }
 
-function validarExiste() {
-  const codigo = $("#codigoSeccion").val();
-  const trayecto = $("#trayectoSeccion").val();
-  const nombre = $("#nombreSeccion").val();
-  if (codigo && trayecto) {
-    var datos = new FormData();
-    datos.append('accion', 'existe');
-    datos.append('codigoSeccion', codigo);
-    datos.append('trayectoSeccion', trayecto);
-    datos.append('nombreSeccion', nombre);
-    enviaAjax(datos);
-  }
-}
-
 $(document).ready(function () {
   Listar();
-  Cambiar();
-  
-  destruyeDT("#tablaseccion");
-  crearDT("#tablaseccion");
-
-  destruyeDT("#tablaunion");
-  crearDT("#tablaunion");
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
   
-  $("#codigoSeccion").on(" keypress", function(e){
-    validarkeypress(/^[0-9][0-9]*$/, e);
+  
+  $("#codigoSeccion").on("keyup", function(e){
+    if ($("#codigoSeccion").val().length === 4) {
+			var datos = new FormData();
+      datos.append('accion', 'existe');
+      datos.append('codigoSeccion', $(this).val());
+      console.log("Año ID:", $("#anioId").val());
+      datos.append('anioId', $("#anioId").val());
+      enviaAjax(datos);
+		}
+    
+  });
+
+  $("#anioId").on("change", function() {
+    let codigo = $("#codigoSeccion").val();
+    let anio = $(this).val();
+    if (codigo.length === 4 && anio && anio !== "0") {
+        var datos = new FormData();
+        datos.append('accion', 'existe');
+        datos.append('codigoSeccion', codigo);
+        datos.append('anioId', anio);
+        enviaAjax(datos);
+    }
   });
   
   $("#codigoSeccion").on(" keydown keyup", function () {
-    validarkeyup(/^[0-9][0-9]{2}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener 3 dígitos Ej: 310");
-    validarExiste();
-  });
-  
-  $("#trayectoSeccion").on("keyup change", function () {
-    validarExiste();
+    validarkeyup(/^[0-9][0-9]{3}$/, $(this), $("#scodigoSeccion"), "Formato incorrecto, el código debe tener exactamente 4 dígitos. Ej: 3104");
   });
 
-  $("#nombreSeccion").on(" keypress", function(e){
-    validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+  $("#cantidadSeccion").on(" keypress", function(e){
+    validarkeypress(/^[0-9][0-9]*$/, e);
   });
   
-  $("#nombreSeccion").on(" keydown keyup", function () {
-    validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{2}$/, $(this), $("#snombreSeccion"), "Formato incorrecto, el nombre debe tener 2 dígitos Ej: IN");
-    validarExiste();
+  $("#cantidadSeccion").on("keydown keyup", function () {
+    let valor = $(this).val();
+  
+    if (valor.length >= 3) {
+      validarkeyup(/^[0-9]{2}$/, $(this), $("#scantidadSeccion"), "Error de formato, la cantidad de estudiantes es muy alta, debe ser menor. Ej: 20");
+    } else {
+      validarkeyup(/^[1-9][0-9]?$/, $(this), $("#scantidadSeccion"), "Error de formato, la cantidad de estudiantes debe ser mayor a 0. Ej: 20");
+    }
   });
 
   //////////////////////////////BOTONES/////////////////////////////////////
-  let seccionesAUnir = [];
-
-  $("#unir").on("click", function () {
-  seccionesAUnir = [];
-  $("input[type=checkbox]:checked").each(function () {
-    seccionesAUnir.push($(this).val());
-  });
-
-  if (seccionesAUnir.length <= 1) {
-    Swal.fire("Atención", "Debe seleccionar al menos DOS secciones para unir.", "warning");
-    return;
-  }
-
-  $("#nombreGrupo").val("");
-  $("#modalGrupo").modal("show");
-  });
-
-  $("#guardarGrupo").on("click", function () {
-    const nombreGrupo = $("#nombreGrupo").val().trim();
-    if (!nombreGrupo) {
-      Swal.fire("Atención", "Debe ingresar un nombre para el grupo.", "warning");
-      return;
-    }
-    if (seccionesAUnir.length <= 1) {
-      Swal.fire("Atención", "Debe seleccionar al menos DOS secciones para unir.", "warning");
-      return;
-    }
-
-    var datos = new FormData();
-    datos.append("accion", "unir");
-    datos.append("secciones", JSON.stringify(seccionesAUnir));
-    datos.append("nombreGrupo", nombreGrupo);
-
-    enviaAjax(datos);
-    $("#modalGrupo").modal("hide");
-  });
-
-
-  $(document).on("click", "#tablaunion .eliminar", function () {
-  const grupoId = $(this).data("id");
-
-    Swal.fire({
-      title: "¿Está seguro de separar este grupo?",
-      text: "Esta acción no se puede deshacer.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, separar",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        var datos = new FormData();
-        datos.append("accion", "separar");
-        datos.append("grupoId", grupoId);
-
-        enviaAjax(datos);
-      }
-    });
-  });
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
@@ -201,9 +122,7 @@ $(document).ready(function () {
         datos.append("accion", "registrar");
         datos.append("codigoSeccion", $("#codigoSeccion").val());
         datos.append("cantidadSeccion", $("#cantidadSeccion").val());
-        datos.append("trayectoSeccion", $("#trayectoSeccion").val());
-        datos.append("cohorteSeccion", $("#cohorteSeccion").val());
-        datos.append("nombreSeccion", $("#nombreSeccion").val());
+        datos.append("anioId", $("#anioId").val());
 
         enviaAjax(datos);
       }
@@ -214,9 +133,7 @@ $(document).ready(function () {
         datos.append("seccionId", $("#seccionId").val());
         datos.append("codigoSeccion", $("#codigoSeccion").val());
         datos.append("cantidadSeccion", $("#cantidadSeccion").val());
-        datos.append("trayectoSeccion", $("#trayectoSeccion").val());
-        datos.append("cohorteSeccion", $("#cohorteSeccion").val());
-        datos.append("nombreSeccion", $("#nombreSeccion").val());
+        datos.append("anioId", $("#anioId").val());
 
         enviaAjax(datos);
       }
@@ -259,6 +176,7 @@ $(document).ready(function () {
     $("#modal1").modal("show");
     $("#scodigoSeccion").show();
     $("#scantidadSeccion").show();
+    $("#sanioId").show();
   });
 
   
@@ -268,14 +186,20 @@ $(document).ready(function () {
 
 function validarenvio() {
 
-  var trayectoSeleccionado = $("#trayectoSeccion").val();
+  var anioSeleccionado = $("#anioId").val();
 
-    if (trayectoSeleccionado === null || trayectoSeleccionado === "0") {
+    if (validarkeyup( /^[A-Za-z0-9\s-]{4}$/,$("#codigoSeccion"),$("#scodigoSeccion"),"El formato permite 4 caracteres. Ej: 3104") == 0) {
+      muestraMensaje("error",4000,"ERROR!","El código de la sección<br/> No debe estar vacío y debe contener 4 carácteres exactos");
+      return false;
+    } else if (validarkeyup( /^[A-Za-z0-9\s-]{1,2}$/,$("#cantidadSeccion"),$("#scantidadSeccion"),"El formato permite numeros solamente numeros mayores a 0. Ej: 20") == 0) {
+      muestraMensaje("error",4000,"ERROR!","El código del espacio <br/> No debe estar vacío");
+      return false;
+    } else if (anioSeleccionado === null || anioSeleccionado === "0") {
         muestraMensaje(
             "error",
             4000,
             "ERROR!",
-            "Por favor, seleccione un trayecto! <br/> Recuerde que debe tener alguno registrado!"
+            "Por favor, seleccione un año! <br/> Recuerde que debe tener alguno registrado!"
         );
         return false;
     }
@@ -290,31 +214,26 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#codigoSeccion").prop("disabled", false);
     $("#cantidadSeccion").prop("disabled", false);
-    $("#trayectoSeccion").prop("disabled", false);
+    $("#anioId").prop("disabled", false);
 
   } else {
     $("#proceso").text("ELIMINAR");
     $(
-      "#seccionId, #codigoSeccion, #cantidadSeccion, #trayectoSeccion"
+      "#codigoSeccion, #cantidadSeccion, #anioId"
     ).prop("disabled", false);
   }
   
   $("#seccionId").val($(linea).find("td:eq(0)").text());
-  $("#nombreSeccion").val($(linea).find("td:eq(1)").text());
-  $("#codigoSeccion").val($(linea).find("td:eq(2)").text());
+  $("#codigoSeccion").val($(linea).find("td:eq(1)").text());
+  $("#cantidadSeccion").val($(linea).find("td:eq(2)").text());
+  let ani_id = $(linea).find("td:eq(3)").data("anio");
+  $("#anioId").val(ani_id);
   
-  $("#cohorteSeccion").val($(linea).find("td:eq(3)").data("coh"));
-
-  let tra_id = $(linea).find("td:eq(4)").data("tra");
-  $("#trayectoSeccion").val(tra_id);
-  
-  $("#cantidadSeccion").val($(linea).find("td:eq(5)").text());
-  
-  console.log("Sección ID:", $(linea).find("td:eq(4)").text());
-  console.log("Trayecto ID:", tra_id);
+  console.log("Sección ID:", $(linea).find("td:eq(3)").text());
   
   $("#scodigoSeccion").hide();
   $("#scantidadSeccion").hide();
+  $("#sanioId").hide();
   $("#modal1").modal("show");
 }
 
@@ -340,14 +259,10 @@ function enviaAjax(datos) {
             $("#resultadoconsulta1").append(`
               <tr>
                 <td style="display: none;">${item.sec_id}</td>
-                <td>${item.sec_nombre}</td>
                 <td>${item.sec_codigo}</td>
-                <td data-coh="${item.coh_id}">${item.coh_numero}</td>
-                <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.ani_anio}</td>
                 <td>${item.sec_cantidad}</td>
+                <td data-anio="${item.ani_id}">${item.ani_anio}</td>
                 <td>
-                  <input type="checkbox" id="idSeccion" value="${item.sec_id}">
-                  <button class="btn btn-success btn-sm prosecusion" data-id="${item.sec_id}">Prosecusión</button>
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.sec_id}" data-codigo="${item.sec_codigo}" data-cantidad="${item.sec_cantidad}">Eliminar</button>
                 </td>
@@ -355,34 +270,7 @@ function enviaAjax(datos) {
             `);
           });
           crearDT("#tablaseccion");
-        } else if (lee.resultado === "consultarUnion") {
-          destruyeDT("#tablaunion");
-          $("#resultadoconsulta2").empty();
-          $.each(lee.mensaje, function (index, item) {
-            $("#resultadoconsulta2").append(`
-              <tr>
-                <td>${item.sec_grupo}</td>
-                <td>${item.secciones}</td>
-                <td>${item.trayecto}</td>
-                <td>${item.suma_cantidades}</td>
-                <td>
-                  <button class="btn btn-danger btn-sm eliminar" data-id="${item.sec_grupo}">Separar</button>
-                </td>
-              </tr>
-            `);
-          });
-          crearDT("#tablaunion");
-          ///
-        } 
-        else if (lee.resultado === "unir") {
-          muestraMensaje("info", 4000, "UNIR", lee.mensaje);
-          Listar();
-        } 
-        else if (lee.resultado === "separar") {
-          muestraMensaje("info", 4000, "SEPARAR", lee.mensaje);
-          Listar();
-        }
-        else if (lee.resultado == "registrar") {
+        } else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
@@ -400,10 +288,10 @@ function enviaAjax(datos) {
             $("#modal1").modal("hide");
             Listar();
           }
-        } else if (lee.resultado == "existe") {
-          if ($("#proceso").text() == "REGISTRAR") {
-            muestraMensaje("info", 4000, "Atención!", lee.mensaje);
-          }
+        } else if (lee.resultado == "existe") {		
+          if (lee.mensaje == 'La SECCIÓN colocada YA existe!') {
+            muestraMensaje('info', 4000,'Atención!', lee.mensaje);
+          }	
         } else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
@@ -412,31 +300,6 @@ function enviaAjax(datos) {
           ) {
             $("#modal1").modal("hide");
             Listar();
-          }
-        } else if (lee.resultado === "prosecusion") {
-          muestraMensaje("info", 4000, "PROSECUSIÓN", lee.mensaje);
-          Listar();
-          
-        }else if (lee.resultado === "obtenerSeccionDestinoProsecusion") {
-          if (lee.mensaje && lee.mensaje.sec_id) {
-            Swal.fire({
-              title: "Confirmar prosecusión",
-              text: `¿Desea hacer prosecusión a la sección ${lee.mensaje.sec_codigo}${lee.mensaje.coh_numero} (${lee.mensaje.tra_numero} - ${lee.mensaje.ani_anio})?`,
-              icon: "question",
-              showCancelButton: true,
-              confirmButtonText: "Sí, realizar",
-              cancelButtonText: "Cancelar"
-            }).then((result) => {
-              if (result.isConfirmed) {
-                var datos2 = new FormData();
-                datos2.append("accion", "prosecusion");
-                datos2.append("seccionOrigenId", seccionOrigenIdProsecusion);
-                datos2.append("seccionDestinoId", lee.mensaje.sec_id);
-                enviaAjax(datos2);
-              }
-            });
-          } else {
-            Swal.fire("Atención", "No existe una sección destino válida para prosecusión.", "warning");
           }
         } else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
@@ -459,17 +322,8 @@ function enviaAjax(datos) {
 
 function limpia() {
   $("#seccionId").val("");
+  $("#anioId").val("");
   $("#codigoSeccion").val("");
   $("#cantidadSeccion").val("");
-  $("#trayectoSeccion").val("");
-  $("#cohorteSeccion").val("");
-  $("#nombreSeccion").val("");
+  $("#sanioId, #scodigoSeccion, #scantidadSeccion").text("");
 }
-
-$(document).on("click", ".prosecusion", function () {
-  seccionOrigenIdProsecusion = $(this).data("id");
-  var datos = new FormData();
-  datos.append("accion", "obtenerSeccionDestinoProsecusion");
-  datos.append("seccionOrigenId", seccionOrigenIdProsecusion);
-  enviaAjax(datos);
-});

@@ -23,11 +23,6 @@ if (!isset($_SESSION['name'])) {
 
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar</button>
-                <button class="btn btn-warning px-4" id="unir">Unir</button>
-            </div>
-
-            <div class="w-100 text-center mb-3" style="max-width: 1100px;">
-                <button class="btn btn-primary px-4" id="toggleTables">Cambiar Tabla</button>
             </div>
 
             <div class="datatable-ui w-100" id="tablaseccionContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
@@ -36,32 +31,13 @@ if (!isset($_SESSION['name'])) {
                         <thead>
                             <tr>
                                 <th style="display: none;">ID</th>
-                                <th>Nombre</th>
-                                <th>Código</th>
-                                <th>Cohorte</th>
-                                <th>Trayecto</th>
-                                <th>Cantidad</th>
+                                <th>Código de Sección</th>
+                                <th>Cantidad de Estudiantes</th>
+                                <th>Año</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="resultadoconsulta1"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="datatable-ui w-100" id="tablaunionContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem; display: none;">
-                <div class="table-responsive" style="overflow-x: hidden;">
-                    <table class="table table-striped table-hover w-100" id="tablaunion">
-                        <thead>
-                            <tr>
-                                <th>Grupo</th>
-                                <th>Secciones</th>
-                                <th>Trayecto</th>
-                                <th>Cantidad</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultadoconsulta2"></tbody>
                     </table>
                 </div>
             </div>
@@ -83,58 +59,33 @@ if (!isset($_SESSION['name'])) {
                                         <label for="seccionId" class="form-label">ID</label>
                                         <input class="form-control" type="text" id="seccionId" name="seccionId" required>
                                     </div>
-
-                                    <div class="col-md-4">
-                                        <label for="nombreSeccion" class="form-label">Nombre</label>
-                                        <input class="form-control" type="text" id="nombreSeccion" name="nombreSeccion" required>
-                                        <span id="snombreSeccion"></span>
-                                    </div>
-
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="codigoSeccion" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required>
                                         <span id="scodigoSeccion"></span>
                                     </div>
-
-                                    <div class="col-md-4">
-                                        <label for="cohorteSeccion" class="form-label">Cohorte</label>
-                                        <select class="form-select" name="cohorteSeccion" id="cohorteSeccion" required>
-                                            <option value="" disabled selected>Seleccione un cohorte</option>
-                                            <?php
-                                            if (!empty($cohortes)) {
-                                                foreach ($cohortes as $cohorte) {
-                                                    echo "<option value='" . $cohorte['coh_id'] . "'>" . $cohorte['coh_numero'] . "</option>";
-                                                }
-                                            } else {
-                                                echo "<option value='' disabled>No hay cohortes disponibles</option>";
-                                            }
-                                            ?>
-                                        </select>
-                                        <span id="scohorteSeccion"></span>
+                                    <div class="col-md-6">
+                                        <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes</label>
+                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
+                                        <span id="scantidadSeccion"></span>
                                     </div>
                                 </div>
                                 <div class="row mt-3">
-                                    <div class="col-md-6">
-                                        <label for="trayectoSeccion" class="form-label">Trayecto</label>
-                                        <select class="form-select" name="trayectoSeccion" id="trayectoSeccion" required>
-                                            <option value="" disabled selected>Seleccione un trayecto</option>
+                                    <div class="col-md-12">
+                                        <label for="anioId" class="form-label">Año</label>
+                                        <select class="form-select" name="anioId" id="anioId" required>
+                                            <option value="" disabled selected>Seleccione un año</option>
                                             <?php
-                                            if (!empty($trayectos)) {
-                                                foreach ($trayectos as $trayecto) {
-                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['ani_anio'] . "</option>";
+                                            if (!empty($anios)) {
+                                                foreach ($anios as $anio) {
+                                                    echo "<option value='" . $anio['ani_id'] . "'>" . $anio['ani_anio'] . "</option>";
                                                 }
                                             } else {
-                                                echo "<option value='' disabled>No hay trayectos disponibles</option>";
+                                                echo "<option value='' disabled>No hay años activos disponibles</option>";
                                             }
                                             ?>
                                         </select>
-                                        <span id="strayecto"></span>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label for="cantidadSeccion" class="form-label">Cantidad</label>
-                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
-                                        <span id="scantidadSeccion"></span>
+                                        <span id="sanioId" class="text-danger"></span>
                                     </div>
                                 </div>
                             </div>
@@ -147,55 +98,6 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-
-        <div class="modal fade" tabindex="-1" role="dialog" id="modalPromocion">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title">Promover Secciones</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p id="seccionesOrigenNombres">Secciones a promover: </p>
-                        <div class="mb-3">
-                            <label for="seccionDestinoPromocion" class="form-label">Seleccione la Sección Destino:</label>
-                            <select class="form-select" id="seccionDestinoPromocion" name="seccionDestinoPromocion">
-                                <option value="" disabled selected>Cargando secciones destino...</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-info me-2" id="confirmarPromocion">Confirmar</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" tabindex="-1" role="dialog" id="modalGrupo">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">Asignar Nombre al Grupo</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="formGrupo">
-                            <div class="mb-3">
-                                <label for="nombreGrupo" class="form-label">Nombre del Grupo</label>
-                                <input type="text" class="form-control" id="nombreGrupo" name="nombreGrupo" required>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-success" id="guardarGrupo">Guardar</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
     </main>
     <?php require_once("public/components/footer.php"); ?>
     <script type="text/javascript" src="public/js/seccion.js"></script>
