@@ -143,7 +143,7 @@ class Anio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         if ($this->ExisteId($this->aniId)) {
-            if (!$this->existe($this->aniAnio)) {
+            if (!$this->Existe($this->aniAnio, $this->aniId)) {
                 try {
                     $stmt = $co->prepare("UPDATE tbl_anio
                     SET ani_anio = :aniAnio,
@@ -220,7 +220,7 @@ class Anio extends Connection
                 WHERE ani_id = :aniId");
 
                 $stmt->bindParam(':aniActivo', $this->aniActivo, PDO::PARAM_INT);
-                $stmt->bindParam(':aniId', $this->aniId, PDO::PARAM_STR);
+                $stmt->bindParam(':aniId', $this->aniId, PDO::PARAM_INT);
                 $stmt->execute();
 
                 $r['resultado'] = 'activar';
@@ -243,7 +243,16 @@ class Anio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT * FROM tbl_anio WHERE ani_estado = 1");
+            $stmt = $co->query("SELECT 
+            ani_id,
+            ani_anio,
+            DATE_FORMAT(ani_apertura_fase1, '%d/%m/%Y') AS ani_apertura_fase1,
+            DATE_FORMAT(ani_cierra_fase1, '%d/%m/%Y') AS ani_cierra_fase1,
+            DATE_FORMAT(ani_apertura_fase2, '%d/%m/%Y') AS ani_apertura_fase2,
+            DATE_FORMAT(ani_cierra_fase2, '%d/%m/%Y') AS ani_cierra_fase2,
+            ani_activo,
+            ani_estado
+            FROM tbl_anio WHERE ani_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -257,13 +266,12 @@ class Anio extends Connection
 
     public function ExisteId($aniId)
     {
-        
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
             $stmt = $co->prepare("SELECT * FROM tbl_anio WHERE ani_id=:aniId AND ani_estado = 1");
-            $stmt->bindParam(':aniId', $aniId, PDO::PARAM_STR);
+            $stmt->bindParam(':aniId', $aniId, PDO::PARAM_INT);
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
@@ -286,7 +294,7 @@ class Anio extends Connection
         try {
             $sql = "SELECT * FROM tbl_anio WHERE ani_anio=:aniAnio AND ani_estado = 1";
             if ($anioIdExcluir !== null) {
-                $sql .= " AND s.sec_id != :anioIdExcluir";
+                $sql .= " AND ani_id != :anioIdExcluir";
             }
             $stmt = $co->prepare($sql);
             $stmt->bindParam(':aniAnio', $aniAnio, PDO::PARAM_STR);
@@ -313,11 +321,16 @@ class Anio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $fechaActual = date('Y-m-d');
+
             $stmt = $co->prepare("UPDATE tbl_anio SET ani_activo = 0 WHERE ani_cierra_fase2 < :fechaActual AND ani_activo = 1");
             $stmt->bindParam(':fechaActual', $fechaActual, PDO::PARAM_STR);
             $stmt->execute();
+
+            $stmt2 = $co->prepare("UPDATE tbl_anio SET ani_activo = 1 WHERE ani_cierra_fase2 >= :fechaActual AND ani_activo = 0");
+            $stmt2->bindParam(':fechaActual', $fechaActual, PDO::PARAM_STR);
+            $stmt2->execute();
         } catch (Exception $e) {
-            throw new Exception("Error al desactivar años: " . $e->getMessage());
+            throw new Exception("Error al desactivar/activar años: " . $e->getMessage());
         }
         $co = null;
     }

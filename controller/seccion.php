@@ -9,10 +9,8 @@ if (!is_file("model/" . $pagina . ".php")) {
     exit;
 }
 require_once("model/" . $pagina . ".php");
-
 $s = new Seccion();
-$trayectos = $s->obtenerTrayectos();
-
+$anios = $s->obtenerAnios();
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
@@ -27,51 +25,36 @@ if (is_file("views/" . $pagina . ".php")) {
         $bitacora = new Bitacora();
 
         $accion = $_POST['accion'];
-
         if ($accion == 'consultar') {
             echo json_encode($s->Listar());
-        } elseif ($accion == 'consultarUnion') {
-            echo json_encode($s->Listar());
         } elseif ($accion == 'eliminar') {
-            $s->setseccionId($_POST['seccionId']);
-            echo json_encode($s->Eliminar());
-
-            $bitacora->registrarAccion($usu_id, 'eliminar', 'seccion');
-
+            $s->setSeccionId($_POST['seccionId']);
+            echo  json_encode($s->Eliminar());
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'anio');
         } elseif ($accion == 'existe') {
-            $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['trayectoSeccion'], $_POST['nombreSeccion']);
+            $s->setCodigoSeccion($_POST['codigoSeccion']);
+            $s->setAnioId($_POST['anioId']);
+            $resultado = $s->Existe($_POST['codigoSeccion'], $_POST['anioId']);
             echo json_encode($resultado);
-        } elseif ($accion == 'registrar') {
+        }else {
+            $s->setAnioId($_POST['anioId']);
             $s->setCodigoSeccion($_POST['codigoSeccion']);
             $s->setCantidadSeccion($_POST['cantidadSeccion']);
-            $s->setTrayectoSeccion($_POST['trayectoSeccion']);
-            $s->setcohorteSeccion($_POST['cohorteSeccion']);
-            $s->setNombreSeccion($_POST['nombreSeccion']);
 
-            echo json_encode($s->Registrar());
+            if ($accion == 'registrar') {
+                echo  json_encode($s->Registrar());
+                $bitacora->registrarAccion($usu_id, 'registrar', 'anio');
+            } elseif ($accion == 'modificar') {
+                $s->setSeccionId($_POST['seccionId']);
+                echo  json_encode($s->modificar());
 
-            $bitacora->registrarAccion($usu_id, 'registrar', 'seccion');
-
-        } elseif ($accion == 'modificar') {
-            $s->setseccionId($_POST['seccionId']);
-            $s->setCodigoSeccion($_POST['codigoSeccion']);
-            $s->setCantidadSeccion($_POST['cantidadSeccion']);
-            $s->setTrayectoSeccion($_POST['trayectoSeccion']);
-            $s->setcohorteSeccion($_POST['cohorteSeccion']);
-            $s->setNombreSeccion($_POST['nombreSeccion']);
-
-            echo json_encode($s->Modificar());
-
-            $bitacora->registrarAccion($usu_id, 'modificar', 'seccion');
-
-        } 
-        else {
-            echo "Acción no válida";
+                $bitacora->registrarAccion($usu_id, 'modificar', 'anio');
+            }
         }
         exit;
     }
-    
+
     require_once("views/" . $pagina . ".php");
 } else {
-    echo "Página en construcción";
+    echo "pagina en construccion";
 }

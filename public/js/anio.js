@@ -81,7 +81,7 @@ function Listar() {
       enviaAjax(datos, 'existe');
     });
 
-      $("#aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").on("change", function() {
+    $("#aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").on("change", function() {
       validarFechas();
     });
 
@@ -165,6 +165,18 @@ function Listar() {
   
   //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
   
+  function existeAnio() {
+    var datos = new FormData();
+    datos.append('accion', 'existe');
+    datos.append('aniAnio', $("#aniAnio").val());
+    enviaAjax(datos, 'existe');
+}
+
+// Escucha el cambio en el select de año
+$("#aniAnio").on("change", function() {
+    existeAnio();
+});
+
   function validarFechas() {
     let esValido = true;
     const ap1 = $("#aniAperturaFase1").val();
@@ -229,28 +241,26 @@ function Listar() {
   
   
   function pone(pos, accion) {
-    linea = $(pos).closest("tr");
-  
-    if (accion == 0) {
-      $("#proceso").text("MODIFICAR");
-      $("#aniId").prop("disabled", false);
-      $("#aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
-    } else {
-      $("#proceso").text("ELIMINAR");
-      $(
-        "#aniId, #aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2"
-      ).prop("disabled", true);
-    }
-    $("#saniAnio").hide();
-    $("#aniId").val($(linea).find("td:eq(0)").text());
-    $("#aniAnio").val($(linea).find("td:eq(1)").text());
-    $("#aniAperturaFase1").val($(linea).find("td:eq(2)").text());
-    $("#aniCierraFase1").val($(linea).find("td:eq(3)").text());
-    $("#aniAperturaFase2").val($(linea).find("td:eq(4)").text());
-    $("#aniCierraFase2").val($(linea).find("td:eq(5)").text());
-  
-    $("#modal1").modal("show");
+  linea = $(pos).closest("tr");
+
+  if (accion == 0) {
+    $("#proceso").text("MODIFICAR");
+    $("#aniId").prop("disabled", false);
+    $("#aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+  } else {
+    $("#proceso").text("ELIMINAR");
+    $("#aniId, #aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
   }
+  $("#saniAnio").hide();
+  $("#aniId").val($(linea).find("td:eq(0)").text());
+  $("#aniAnio").val($(linea).find("td:eq(1)").text());
+  $("#aniAperturaFase1").val(convertirFecha($(linea).find("td:eq(2)").text()));
+  $("#aniCierraFase1").val(convertirFecha($(linea).find("td:eq(3)").text()));
+  $("#aniAperturaFase2").val(convertirFecha($(linea).find("td:eq(4)").text()));
+  $("#aniCierraFase2").val(convertirFecha($(linea).find("td:eq(5)").text()));
+
+  $("#modal1").modal("show");
+}
   
   
   function enviaAjax(datos) {
@@ -282,8 +292,9 @@ function Listar() {
                   <td>
                     <button class="btn btn-${item.ani_activo == 1 ? 'secondary' : 'success'} btn-sm activar-toggle" 
                     data-id="${item.ani_id}" 
-                    data-estado="${item.ani_activo}">
-                    ${item.ani_activo == 1 ? 'Desactivar' : 'Activar'}
+                    data-estado="${item.ani_activo}" 
+                    disabled>
+                    ${item.ani_activo == 1 ? 'Activo' : 'Inactivo'}
                     </button>
                   </td>
                   <td>
@@ -327,9 +338,7 @@ function Listar() {
               Listar();
             }
           }else if (lee.resultado == "existe") {		
-            if (lee.mensaje == 'El AÑO colocado YA existe!') {
-              muestraMensaje('info', 4000,'Atención!', lee.mensaje);
-            }	
+            muestraMensaje('info', 4000,'Atención!', lee.mensaje);
           }
           else if (lee.resultado == "eliminar") {
             muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
@@ -374,4 +383,11 @@ function Listar() {
     $("#saniAnio").text("");
     $("#saniAperturaFase1, #saniCierraFase1, #saniAperturaFase2, #saniCierraFase2").text("");
   }
+
+  function convertirFecha(fecha) {
+  if (!fecha) return "";
+  const partes = fecha.split("/");
+  if (partes.length !== 3) return fecha;
+  return `${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`;
+}
 
