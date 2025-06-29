@@ -26,56 +26,46 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content">
-        <div class="d-flex justify-content-center">
-            <img src="public/assets/img/logo.png" alt="Logo" style="width: 170px; height: auto;">
-        </div>
-        <div class="d-flex justify-content-center">
-            <h1 class="text-center text-primary fw-bold my-4">Gestionar Mantenimiento</h1>
-        </div>
-        <div class="container mt-4">
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                <?php if (!empty($permisos['Usuarios'])): ?>
+        <section class="container-fluid p-4">
+            <div class="dashboard-header">
+                <h1>Gestionar Mantenimiento</h1>
+                <p>Selecciona una opción para empezar.</p>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+                <?php if (!empty($permisos['Usuarios'])) : ?>
                     <div class="col">
-                        <a class="a-cards" href="?pagina=usuario">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/person.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                    <h5 class="card-title">Gestionar Usuario</h5>
-                                </div>
+                        <a href="?pagina=usuario" class="dashboard-card">
+                            <div class="icon-circle">
+                                <img src="public/assets/icons/person.svg" alt="Gestionar Usuario">
                             </div>
+                            <h5>Gestionar Usuario</h5>
                         </a>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($permisos['Bitacora'])): ?>
+                <?php if (!empty($permisos['Bitacora'])) : ?>
                     <div class="col">
-                        <a class="a-cards" href="?pagina=bitacora">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/clock-fill.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                    <h5 class="card-title">Gestionar Bitacora</h5>
-                                    <p class="card-text"></p>
-                                </div>
+                        <a href="?pagina=bitacora" class="dashboard-card">
+                            <div class="icon-circle">
+                                <img src="public/assets/icons/clock-fill.svg" alt="Gestionar Bitacora">
                             </div>
+                            <h5>Gestionar Bitacora</h5>
                         </a>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($permisos['Respaldo'])): 
+                <?php if (!empty($permisos['Respaldo'])) :
                 ?>
                     <div class="col">
-                        <a class="a-cards" href="?pagina=backup">
-                            <div class="card h-100 text-center custom-card">
-                                <div class="card-body">
-                                    <img src="public/assets/icons/device-hdd-fill.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Building Icon">
-                                    <h5 class="card-title">Gestionar Respaldo</h5>
-                                    <p class="card-text"></p>
-                                </div>
+                        <a href="?pagina=backup" class="dashboard-card">
+                            <div class="icon-circle">
+                                <img src="public/assets/icons/device-hdd-fill.svg" alt="Gestionar Respaldo">
                             </div>
+                            <h5>Gestionar Respaldo</h5>
                         </a>
                     </div>
                 <?php endif; ?>
 
             </div>
-        </div>
+        </section>
     </main>
     <?php require_once("public/components/footer.php"); ?>
 

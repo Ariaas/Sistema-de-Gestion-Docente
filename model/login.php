@@ -1,6 +1,7 @@
 <?php
 
 require_once('model/db_bitacora.php');
+require_once($_SERVER['DOCUMENT_ROOT'] . '/departamento/vendor/autoload.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/gestion docente/Sistema-de-Gestion-Docente\public\lib\PHPMailer/PHPMailer.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/gestion docente/Sistema-de-Gestion-Docente\public\lib\PHPMailer/SMTP.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/gestion docente/Sistema-de-Gestion-Docente\public\lib\PHPMailer/Exception.php');

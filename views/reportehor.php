@@ -23,46 +23,38 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content">
-        <div class="d-flex justify-content-center">
-            <img src="public/assets/img/logo.png" alt="Logo" style="width: 170px; height: auto;">
-        </div>
-        <div class="d-flex justify-content-center">
-            <h1 class="text-center text-primary fw-bold my-4">Sistema de Gestión Docente</h1>
-        </div>
-        <div class="container mt-4">
-            <div class="row row-cols-1 row-cols-md-3 g-4">
+        <section class="container-fluid p-4">
+            <div class="dashboard-header">
+                <h1>Sistema de Gestión Docente</h1>
+                <p>Selecciona una opción para empezar.</p>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
                 <div class="col">
-                    <a class="a-cards" href="?pagina=#">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/user-graduate-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                <h5 class="card-title">Reportes horarios por seccion</h5>
-                            </div>
+                    <a href="?pagina=#" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/user-graduate-solid.svg" alt="Reportes horarios por seccion">
                         </div>
+                        <h5>Reportes horarios por seccion</h5>
                     </a>
                 </div>
                 <div class="col">
-                    <a class="a-cards" href="?pagina=rhordocente">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/building-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Book Icon">
-                                <h5 class="card-title">Reportes horarios de docentes</h5>
-                            </div>
+                    <a href="?pagina=rhordocente" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/building-solid.svg" alt="Reportes horarios de docentes">
                         </div>
+                        <h5>Reportes horarios de docentes</h5>
                     </a>
                 </div>
                 <div class="col">
-                    <a class="a-cards" href="?pagina=raulario">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/book-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Book Icon">
-                                <h5 class="card-title">Reportes de aulario</h5>
-                            </div>
+                    <a href="?pagina=raulario" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reportes de aulario">
                         </div>
+                        <h5>Reportes de aulario</h5>
                     </a>
                 </div>
             </div>
-        </div>
+        </section>
     </main>
     <?php require_once("public/components/footer.php"); ?>
 

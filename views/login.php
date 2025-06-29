@@ -3,39 +3,50 @@
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Iniciar Sesión</title>
+    <title>Iniciar Sesión - Sistema Docente</title>
     <link rel="stylesheet" href="public/css/styles.css">
-    <style>
-    </style>
 </head>
 
-<div id="mensajes" style="display:none"
-    data-mensaje="<?php echo !empty($mensaje) ? $mensaje : ''; ?>">
-</div>
+<body>
+    <div id="mensajes" style="display:none" data-mensaje="<?php echo !empty($mensaje) ? htmlspecialchars($mensaje) : ''; ?>"></div>
 
-<body class="login-body-bg">
-    <div class="login-card">
-        <div class="d-flex justify-content-center">
-            <img src="public/assets/img/logo.png" alt="Logo" style="width: 100px; height: auto;">
+    <section class="login-section">
+        <div class="login-container">
+            <!-- Columna Gráfica -->
+            <div class="login-graphic">
+                <img src="public/assets/img/logo.png" alt="Logo UPTAEB">
+                <h2>Sistema de Gestión Docente</h2>
+                <p>Universidad Politécnica Territorial de Lara "Andrés Eloy Blanco"</p>
+            </div>
+
+            <!-- Columna del Formulario -->
+            <div class="login-form-wrapper">
+                <h3>Iniciar Sesión</h3>
+                <p>Bienvenido de nuevo, por favor ingrese sus credenciales.</p>
+                
+                <form method="post" autocomplete="off" id="f">
+                    <input type="hidden" name="accion" value="acceder">
+                    
+                    <div class="mb-3">
+                        <label for="nombreUsuario" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" required autofocus>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="contraseniaUsuario" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="contraseniaUsuario" name="contraseniaUsuario" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="acceder">Acceder</button>
+                    
+                    <a href="#" class="forgot-password-link" id="recuperarBtn">¿Olvidaste tu contraseña?</a>
+                </form>
+            </div>
         </div>
-        <h2 class="login-title">Iniciar Sesión</h2>
-        <form method="post" autocomplete="off" id="f">
-            <input type="hidden" name="accion" id="accion" value="acceder">
-            <div class="mb-3">
-                <label for="nombreUsuario" class="form-label">Usuario</label>
-                <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" required autofocus>
-            </div>
-            <div class="mb-3">
-                <label for="contraseniaUsuario" class="form-label">Contraseña</label>
-                <input type="password" class="form-control" id="contraseniaUsuario" name="contraseniaUsuario" required>
-            </div>
-            <button type="submit" class="btn bsb-btn-xl btn-primary" id="acceder">Iniciar Sesión</button>
-        </form>
-        <button type="button" class="btn btn-link" id="recuperarBtn">¿Olvidaste tu contraseña?</button>
-    </div>
+    </section>
 
-    <div class="modal fade" id="modalRecuperarUsuario" tabindex="-1" aria-labelledby="modalRecuperarUsuarioLabel"
-        aria-hidden="true">
+    <!-- Modales para recuperar contraseña (sin cambios) -->
+    <div class="modal fade" id="modalRecuperarUsuario" tabindex="-1" aria-labelledby="modalRecuperarUsuarioLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form id="formRecuperarUsuario" method="post">
                 <div class="modal-content">
@@ -45,8 +56,7 @@
                     </div>
                     <div class="modal-body">
                         <label for="usuarioRecuperar" class="form-label">Nombre de usuario</label>
-                        <input type="text" class="form-control" id="usuarioRecuperar" name="usuarioRecuperar"
-                            required>
+                        <input type="text" class="form-control" id="usuarioRecuperar" name="usuarioRecuperar" required>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary">Enviar código</button>
@@ -66,8 +76,7 @@
                     </div>
                     <div class="modal-body">
                         <label for="codigoRecuperacion" class="form-label">Código</label>
-                        <input type="text" class="form-control" id="codigoRecuperacion" name="codigoRecuperacion"
-                            required>
+                        <input type="text" class="form-control" id="codigoRecuperacion" name="codigoRecuperacion" required>
                         <input type="hidden" id="usuarioCodigo" name="usuarioCodigo">
                     </div>
                     <div class="modal-footer">
@@ -78,8 +87,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalNuevaClave" tabindex="-1" aria-labelledby="modalNuevaClaveLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="modalNuevaClave" tabindex="-1" aria-labelledby="modalNuevaClaveLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form id="formNuevaClave" method="post">
                 <div class="modal-content">

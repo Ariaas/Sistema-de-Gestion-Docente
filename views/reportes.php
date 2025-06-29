@@ -23,93 +23,79 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content">
-        <div class="d-flex justify-content-center">
-            <img src="public/assets/img/logo.png" alt="Logo" style="width: 170px; height: auto;">
-        </div>
-        <div class="d-flex justify-content-center">
-            <h1 class="text-center text-primary fw-bold my-4">Reportes</h1>
-        </div>
-        <div class="container mt-4">
-            <div class="row row-cols-1 row-cols-md-3 g-4">
+        <section class="container-fluid p-4">
+
+            <div class="dashboard-header">
+                <h1>Reportes</h1>
+                <p>Selecciona un reporte para empezar.</p>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=ruc">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/user-graduate-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Person Icon">
-                                <h5 class="card-title">Reporte Unidad Curricular</h5>
-                            </div>
+                    <a href="?pagina=ruc" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/user-graduate-solid.svg" alt="Reporte Unidad Curricular">
                         </div>
+                        <h5>Reporte Unidad Curricular</h5>
                     </a>
                 </div>
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=reportehor">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/building-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Book Icon">
-                                <h5 class="card-title">Reporte de horarios</h5>
-                            </div>
+                    <a href="?pagina=reportehor" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/building-solid.svg" alt="Reporte de horarios">
                         </div>
+                        <h5>Reporte de horarios</h5>
                     </a>
                 </div>
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=rtranscripcion">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/book-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Book Icon">
-                                <h5 class="card-title">Reporte de transcripción por fase</h5>
-                            </div>
+                    <a href="?pagina=rtranscripcion" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte de transcripción por fase">
                         </div>
+                        <h5>Reporte de transcripción por fase</h5>
                     </a>
                 </div>
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=rcargaAcademica">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/map-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Calendar Icon">
-                                <h5 class="card-title">Reporte carga académica</h5>
-                            </div>
+                    <a href="?pagina=rcargaAcademica" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/map-solid.svg" alt="Reporte carga académica">
                         </div>
+                        <h5>Reporte carga académica</h5>
                     </a>
                 </div>
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=rdefinitivo">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/map-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Calendar Icon">
-                                <h5 class="card-title">Reporte definitivo emtic por fase</h5>
-                            </div>
+                    <a href="?pagina=rdefinitivo" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/map-solid.svg" alt="Reporte definitivo emtic por fase">
                         </div>
+                        <h5>Reporte definitivo emtic por fase</h5>
                     </a>
                 </div>
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=raulaAsignada">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/map-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Calendar Icon">
-                                <h5 class="card-title">Reporte aulas asginadas</h5>
-                            </div>
+                    <a href="?pagina=raulaAsignada" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/map-solid.svg" alt="Reporte aulas asignadas">
                         </div>
+                        <h5>Reporte aulas asignadas</h5>
                     </a>
                 </div>
 
                 <div class="col">
-                    <a class="a-cards" href="?pagina=rprosecucion">
-                        <div class="card h-100 text-center custom-card">
-                            <div class="card-body">
-                                <img src="public/assets/icons/map-solid.svg" class="card-icon" style="width: 1.5em; height: 1.5em; fill: currentColor;" alt="Calendar Icon">
-                                <h5 class="card-title">Reporte de prosecución</h5>
-                            </div>
+                    <a href="?pagina=rprosecucion" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/map-solid.svg" alt="Reporte de prosecución">
                         </div>
+                        <h5>Reporte de prosecución</h5>
                     </a>
                 </div>
             </div>
-        </div>
+        </section>
     </main>
     <?php require_once("public/components/footer.php"); ?>
 
