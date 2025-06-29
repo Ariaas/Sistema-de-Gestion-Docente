@@ -1,6 +1,7 @@
 <?php
 
-require_once 'public/lib/dompdf/vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../model/reportes/rprosecucion.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;

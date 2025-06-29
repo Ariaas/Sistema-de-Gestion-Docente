@@ -14,16 +14,13 @@ function destruyeDT() {
 function crearDT() {
   if (!$.fn.DataTable.isDataTable("#tablaespacio")) {
     $("#tablaespacio").DataTable({
-
-
       paging: true,
       lengthChange: true,
       searching: true,
       ordering: true,
       info: true,
       autoWidth: false,
-      responsive: true,
-      scrollX: true,
+      // responsive: true, // Desactivado para evitar conflictos
       language: {
         lengthMenu: "Mostrar _MENU_ registros",
         zeroRecords: "No se encontraron resultados",
@@ -38,32 +35,10 @@ function crearDT() {
           previous: "Anterior",
         },
       },
-      autoWidth: false,
-      order: [[1, "asc"]],
       dom:
-        "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
-        "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-    });
-
-    $("div.dataTables_length select").css({
-      width: "auto",
-      display: "inline",
-      "margin-top": "10px",
-    });
-
-    $("div.dataTables_filter").css({
-      "margin-bottom": "50px",
-      "margin-top": "10px",
-    });
-
-    $("div.dataTables_filter label").css({
-      float: "left",
-    });
-
-    $("div.dataTables_filter input").css({
-      width: "300px",
-      float: "right",
-      "margin-left": "10px",
+        "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+        "<'row'<'col-sm-12'tr>>" +
+        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
     });
   }
 }
@@ -246,18 +221,23 @@ function enviaAjax(datos) {
         if (lee.resultado === "consultar") {
           destruyeDT();
           $("#resultadoconsulta").empty();
-          $.each(lee.mensaje, function (index, item) {
-            $("#resultadoconsulta").append(`
-              <tr>
+          let tabla = "";
+          lee.mensaje.forEach(item => {
+            tabla += `
+            <tr>
                 <td>${item.esp_codigo}</td>
                 <td>${item.esp_tipo}</td>
-                <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.esp_codigo}" data-tipo="${item.esp_tipo}">Eliminar</button>
+                <td class="text-center">
+                    <button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar">
+                        <img src="public/assets/icons/edit.svg" alt="Modificar">
+                    </button>
+                    <button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar">
+                        <img src="public/assets/icons/trash.svg" alt="Eliminar">
+                    </button>
                 </td>
-              </tr>
-            `);
+            </tr>`;
           });
+          $('#resultadoconsulta').html(tabla);
           crearDT();
         }
         ////////

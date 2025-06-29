@@ -1,0 +1,11 @@
+{
+    "name": "empresa/departamento",
+    "description": "Sistema de departamento",
+    "require": {
+        "phpmailer/phpmailer": "^6.9",
+        "dompdf/dompdf": "^3.0"
+    },
+    "config": {
+        "platform-check": false
+    }
+} 
