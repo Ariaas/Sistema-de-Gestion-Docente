@@ -1,5 +1,5 @@
 <?php
-
+require_once 'vendor/autoload.php';
 $pagina = 'login';
 
 if (!empty($_GET['pagina'])) {

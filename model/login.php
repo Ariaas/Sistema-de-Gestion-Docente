@@ -1,7 +1,6 @@
 <?php
 
 require_once('model/db_bitacora.php');
-require_once($_SERVER['DOCUMENT_ROOT'] . '/departamento/vendor/autoload.php');
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -79,7 +78,7 @@ class Login extends Connection_bitacora
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && !empty($user['usu_correo'])) {
-                $token = bin2hex(random_bytes(4)); 
+                $token = bin2hex(random_bytes(4));
                 $expira = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
                 $stmt = $co->prepare("UPDATE tbl_usuario SET reset_token = :token, reset_token_expira = :expira WHERE usu_id = :id");
@@ -91,16 +90,16 @@ class Login extends Connection_bitacora
                 $mail = new PHPMailer(true);
                 try {
                     $mail->isSMTP();
-                    $mail->Host = 'smtp.gmail.com'; 
+                    $mail->Host = 'smtp.gmail.com';
                     $mail->SMTPAuth = true;
-                    $mail->Username = 'chicuelomorrilloballena@gmail.com'; 
-                    $mail->Password = 'rwzg ndcd uoam ybox'; 
+                    $mail->Username = 'chicuelomorrilloballena@gmail.com';
+                    $mail->Password = 'rwzg ndcd uoam ybox';
                     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                     $mail->Port = 587;
 
                     $mail->setFrom('chicuelomorrilloballena@gmail.com', 'Sistema Docente');
                     $mail->addAddress($user['usu_correo']);
-                   
+
                     $mail->isHTML(true);
                     $mail->Subject = 'Recuperación de contraseña';
                     $mail->Body    = "Su código de recuperación es: <b>$token</b><br>Este código es válido por 1 hora.";
@@ -169,5 +168,13 @@ class Login extends Connection_bitacora
         } catch (Exception $e) {
             return "Error: " . $e->getMessage();
         }
+    }
+
+    public function validarCaptcha($token)
+    {
+        $secret = '6LeahHErAAAAAE7NIWRPVeJGe6Gq6IB2M3laWOY0';
+        $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret}&response={$token}");
+        $result = json_decode($response, true);
+        return $result['success'] ?? false;
     }
 }

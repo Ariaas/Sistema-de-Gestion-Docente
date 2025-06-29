@@ -10,24 +10,29 @@ if (is_file("views/" . $pagina . ".php")) {
         $o = new Login();
         $h = $_POST['accion'];
         if ($h == 'acceder') {
-            $o->set_nombreUsuario($_POST['nombreUsuario']);
-            $o->set_contraseniaUsuario($_POST['contraseniaUsuario']);
-            $m = $o->existe();
-            if ($m['resultado'] == 'existe') {
-                session_destroy();
-                session_start();
-                $_SESSION['name'] = $m['mensaje'];
-                $_SESSION['usu_id'] = $m['usu_id']; 
-
-                require_once("model/permisos.php");
-                $permisosModel = new Permisos();
-                $permisos = $permisosModel->obtenerPermisosPorUsuario($m['usu_id']);
-                $_SESSION['permisos'] = $permisos;
-
-                header('Location: ?pagina=principal');
-                die();
+            $captcha = $_POST['g-recaptcha-response'] ?? '';
+            if (!$o->validarCaptcha($captcha)) {
+                $mensaje = "Captcha inválido. Intente de nuevo.";
             } else {
-                $mensaje = $m['mensaje'];
+                $o->set_nombreUsuario($_POST['nombreUsuario']);
+                $o->set_contraseniaUsuario($_POST['contraseniaUsuario']);
+                $m = $o->existe();
+                if ($m['resultado'] == 'existe') {
+                    session_destroy();
+                    session_start();
+                    $_SESSION['name'] = $m['mensaje'];
+                    $_SESSION['usu_id'] = $m['usu_id']; 
+
+                    require_once("model/permisos.php");
+                    $permisosModel = new Permisos();
+                    $permisos = $permisosModel->obtenerPermisosPorUsuario($m['usu_id']);
+                    $_SESSION['permisos'] = $permisos;
+
+                    header('Location: ?pagina=principal');
+                    die();
+                } else {
+                    $mensaje = $m['mensaje'];
+                }
             }
         }
     }
@@ -36,6 +41,11 @@ if (is_file("views/" . $pagina . ".php")) {
         $o = new Login();
 
         if ($_GET['accion'] == 'recuperar') {
+            $captcha = $_POST['g-recaptcha-response'] ?? '';
+            if (!$o->validarCaptcha($captcha)) {
+                echo "Captcha inválido. Intente de nuevo.";
+                exit;
+            }
             $usuario = $_POST['usuario'];
             echo $o->enviarCodigoRecuperacionPorUsuario($usuario);
             exit;
