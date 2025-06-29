@@ -128,21 +128,20 @@ if (!isset($_SESSION['name'])) {
                                             <option value="1">Área</option>
                                             <option value="2">Respaldo</option>
                                             <option value="3">Categorias</option>
-                                            <option value="4">Certificados</option>
-                                            <option value="5">Docentes</option>
-                                            <option value="6">Eje</option>
-                                            <option value="7">Espacios</option>
-                                            <option value="8">Seccion</option>
-                                            <option value="9">Titulo</option>
-                                            <option value="10">Trayecto</option>
-                                            <option value="11">Unidad Curricular</option>
-                                            <option value="12">Horario</option>
-                                            <option value="13">Horario Docente</option>
-                                            <option value="14">Malla Curricular</option>
-                                            <option value="15">Archivos</option>
-                                            <option value="16">Reportes</option>
-                                            <option value="17">Bitacora</option>
-                                            <option value="18">Usuarios</option>
+                                            <option value="4">Docentes</option>
+                                            <option value="5">Eje</option>
+                                            <option value="6">Espacios</option>
+                                            <option value="7">Seccion</option>
+                                            <option value="8">Titulo</option>
+                                            <option value="9">Año</option>
+                                            <option value="10">Unidad Curricular</option>
+                                            <option value="11">Horario</option>
+                                            <option value="12">Horario Docente</option>
+                                            <option value="13">Malla Curricular</option>
+                                            <option value="14">Archivos</option>
+                                            <option value="15">Reportes</option>
+                                            <option value="16">Bitacora</option>
+                                            <option value="17">Usuarios</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4 d-flex align-items-end">

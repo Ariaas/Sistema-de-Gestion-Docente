@@ -7,15 +7,23 @@ class Anio extends Connection
     private $aniAnio;
     private $aniId;
     private $aniActivo;
+    private $aniAperturaFase1;
+    private $aniCierraFase1;
+    private $aniAperturaFase2;
+    private $aniCierraFase2;
 
 
-    public function __construct($aniAnio = null, $aniId = null, $aniActivo = 1)
+    public function __construct($aniAnio = null, $aniId = null, $aniActivo = 1, $aniAperturaFase1 = null, $aniCierraFase1 = null, $aniAperturaFase2 = null, $aniCierraFase2 = null)
     {
         parent::__construct();
 
         $this->aniAnio = $aniAnio;
         $this->aniId = $aniId;
         $this->aniActivo = $aniActivo;
+        $this->aniAperturaFase1 = $aniAperturaFase1;
+        $this->aniCierraFase1 = $aniCierraFase1;
+        $this->aniAperturaFase2 = $aniAperturaFase2;
+        $this->aniCierraFase2 = $aniCierraFase2;
     }
 
     public function getAnio()
@@ -30,6 +38,22 @@ class Anio extends Connection
     {
         return $this->aniActivo;
     }
+    public function getAperturaFase1()
+    {
+        return $this->aniAperturaFase1;
+    }
+    public function getCierraFase1()
+    {
+        return $this->aniCierraFase1;
+    }
+    public function getAperturaFase2()
+    {
+        return $this->aniAperturaFase2;
+    }
+    public function getCierraFase2()
+    {
+        return $this->aniCierraFase2;
+    }
     public function setAnio($aniAnio)
     {
         $this->aniAnio = $aniAnio;
@@ -41,6 +65,22 @@ class Anio extends Connection
     public function setActivo($aniActivo)
     {
         $this->aniActivo = $aniActivo;
+    }
+    public function setAperturaFase1($aniAperturaFase1)
+    {
+        $this->aniAperturaFase1 = $aniAperturaFase1;
+    }
+    public function setCierraFase1($aniCierraFase1)
+    {
+        $this->aniCierraFase1 = $aniCierraFase1;
+    }
+    public function setAperturaFase2($aniAperturaFase2)
+    {
+        $this->aniAperturaFase2 = $aniAperturaFase2;
+    }
+    public function setCierraFase2($aniCierraFase2)
+    {
+        $this->aniCierraFase2 = $aniCierraFase2;
     }
 
     function Registrar()
@@ -56,15 +96,27 @@ class Anio extends Connection
 
                 $stmt = $co->prepare("INSERT INTO tbl_anio (
                     ani_anio,
+                    ani_apertura_fase1,
+                    ani_cierra_fase1,
+                    ani_apertura_fase2,
+                    ani_cierra_fase2,
                     ani_activo,
                     ani_estado
                 ) VALUES (
                     :aniAnio,
+                    :aniAperturaFase1,
+                    :aniCierraFase1,
+                    :aniAperturaFase2,
+                    :aniCierraFase2,
                     1,
                     1
                 )");
 
                 $stmt->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_STR);
+                $stmt->bindParam(':aniAperturaFase1', $this->aniAperturaFase1, PDO::PARAM_STR);
+                $stmt->bindParam(':aniCierraFase1', $this->aniCierraFase1, PDO::PARAM_STR);
+                $stmt->bindParam(':aniAperturaFase2', $this->aniAperturaFase2, PDO::PARAM_STR);
+                $stmt->bindParam(':aniCierraFase2', $this->aniCierraFase2, PDO::PARAM_STR);
 
                 $stmt->execute();
 
@@ -94,11 +146,19 @@ class Anio extends Connection
             if (!$this->existe($this->aniAnio)) {
                 try {
                     $stmt = $co->prepare("UPDATE tbl_anio
-                    SET ani_anio = :aniAnio 
+                    SET ani_anio = :aniAnio,
+                        ani_apertura_fase1 = :aniAperturaFase1,
+                        ani_cierra_fase1 = :aniCierraFase1,
+                        ani_apertura_fase2 = :aniAperturaFase2,
+                        ani_cierra_fase2 = :aniCierraFase2
                     WHERE ani_id = :aniId");
 
                     $stmt->bindParam(':aniId', $this->aniId, PDO::PARAM_INT);
                     $stmt->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_STR);
+                    $stmt->bindParam(':aniAperturaFase1', $this->aniAperturaFase1, PDO::PARAM_STR);
+                    $stmt->bindParam(':aniCierraFase1', $this->aniCierraFase1, PDO::PARAM_STR);
+                    $stmt->bindParam(':aniAperturaFase2', $this->aniAperturaFase2, PDO::PARAM_STR);
+                    $stmt->bindParam(':aniCierraFase2', $this->aniCierraFase2, PDO::PARAM_STR);
 
                     $stmt->execute();
 
@@ -178,11 +238,12 @@ class Anio extends Connection
 
     public function Listar()
     {
+        $this->DesactivarAnios();
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT ani_anio,ani_activo, ani_id FROM tbl_anio WHERE ani_estado = 1");
+            $stmt = $co->query("SELECT * FROM tbl_anio WHERE ani_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -196,6 +257,7 @@ class Anio extends Connection
 
     public function ExisteId($aniId)
     {
+        
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
@@ -216,14 +278,21 @@ class Anio extends Connection
         return $r;
     }
 
-    public function Existe($aniAnio)
+    public function Existe($aniAnio, $anioIdExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_anio WHERE ani_anio=:aniAnio AND ani_estado = 1");
+            $sql = "SELECT * FROM tbl_anio WHERE ani_anio=:aniAnio AND ani_estado = 1";
+            if ($anioIdExcluir !== null) {
+                $sql .= " AND s.sec_id != :anioIdExcluir";
+            }
+            $stmt = $co->prepare($sql);
             $stmt->bindParam(':aniAnio', $aniAnio, PDO::PARAM_STR);
+            if ($anioIdExcluir !== null) {
+                $stmt->bindParam(':anioIdExcluir', $anioIdExcluir, PDO::PARAM_INT);
+            }
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
@@ -236,5 +305,20 @@ class Anio extends Connection
         }
         $co = null;
         return $r;
+    }
+
+    public function DesactivarAnios()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $fechaActual = date('Y-m-d');
+            $stmt = $co->prepare("UPDATE tbl_anio SET ani_activo = 0 WHERE ani_cierra_fase2 < :fechaActual AND ani_activo = 1");
+            $stmt->bindParam(':fechaActual', $fechaActual, PDO::PARAM_STR);
+            $stmt->execute();
+        } catch (Exception $e) {
+            throw new Exception("Error al desactivar años: " . $e->getMessage());
+        }
+        $co = null;
     }
 }

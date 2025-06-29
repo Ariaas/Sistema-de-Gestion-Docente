@@ -12,7 +12,6 @@ require_once("model/" . $pagina . ".php");
 
 $s = new Seccion();
 $trayectos = $s->obtenerTrayectos();
-$cohortes = $s->obtenerCohorte();
 
 if (is_file("views/" . $pagina . ".php")) {
 
@@ -65,27 +64,7 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'modificar', 'seccion');
 
-        } elseif ($accion == 'unir') {
-            $secciones = $_POST['secciones'] ?? '[]';
-            $nombreGrupo = $_POST['nombreGrupo'];
-            echo json_encode($s->Unir($secciones, $nombreGrupo));
-            $bitacora->registrarAccion($usu_id, 'unir', 'seccion');
-
-        } elseif ($accion == 'separar') {
-            $s->setGrupoId($_POST['grupoId']);
-            echo json_encode($s->Separar());
-            $bitacora->registrarAccion($usu_id, 'separar', 'seccion');
-        } elseif ($accion == 'obtenerSeccionDestinoProsecusion') {
-            $seccionOrigenId = $_POST['seccionOrigenId'];
-            echo json_encode($s->ObtenerSeccionDestinoProsecusion($seccionOrigenId));
-        } elseif ($accion == 'prosecusion') {
-            $seccionOrigenId = $_POST['seccionOrigenId'];
-            $seccionDestinoId = $_POST['seccionDestinoId'];
-            echo json_encode($s->ProsecusionSeccion($seccionOrigenId, $seccionDestinoId));
-            $bitacora->registrarAccion($usu_id, 'prosecusion', 'seccion');
-        }
-
-
+        } 
         else {
             echo "Acción no válida";
         }

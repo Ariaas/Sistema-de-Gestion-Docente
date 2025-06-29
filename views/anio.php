@@ -29,6 +29,10 @@ if (!isset($_SESSION['name'])) {
                             <tr>
                                 <th style="display: none;">ID</th>
                                 <th>Año</th>
+                                <th>Apertura Fase 1</th>
+                                <th>Cierre Fase 1</th>
+                                <th>Apertura Fase 2</th>
+                                <th>Cierre Fase 2</th>
                                 <th>Activo</th>
                                 <th>Acciones</th>
                             </tr>
@@ -52,10 +56,10 @@ if (!isset($_SESSION['name'])) {
 
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <label for="aniAnio" class="form-label">Año</label>
                                         <select class="form-select" name="aniAnio" id="aniAnio" required>
-                                            <option value="" disabled selected>Seleccione un Año</option>
+                                            <option value="" disabled>Seleccione un Año</option>
                                             <?php
                                             $anoActual = date('Y');
                                             for ($year = 1999; $year <= 2070; $year++):
@@ -65,6 +69,34 @@ if (!isset($_SESSION['name'])) {
                                             <?php endfor; ?>
                                         </select>
                                         <span id="saniAnio"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="aniAperturaFase1" class="form-label">Apertura Fase 1</label>
+                                        <input type="date" class="form-control" id="aniAperturaFase1" name="aniAperturaFase1" required>
+                                        <span id="saniAperturaFase1"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="aniCierraFase1" class="form-label">Cierre Fase 1</label>
+                                        <input type="date" class="form-control" id="aniCierraFase1" name="aniCierraFase1" required>
+                                        <span id="saniCierraFase1"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="aniAperturaFase2" class="form-label">Apertura Fase 2</label>
+                                        <input type="date" class="form-control" id="aniAperturaFase2" name="aniAperturaFase2" required>
+                                        <span id="saniAperturaFase2"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="aniCierraFase2" class="form-label">Cierre Fase 2</label>
+                                        <input type="date" class="form-control" id="aniCierraFase2" name="aniCierraFase2" required>
+                                        <span id="saniCierraFase2"></span>
                                     </div>
                                 </div>
                             </div>

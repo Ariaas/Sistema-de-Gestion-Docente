@@ -39,8 +39,12 @@ if (is_file("views/" . $pagina . ".php")) {
             $c->setActivo($_POST['aniActivo']);
             echo json_encode($c->Activar());
             $bitacora->registrarAccion($usu_id, 'activar', 'anio');
-        }else {
+        } else {
             $c->setAnio($_POST['aniAnio']);
+            $c->setAperturaFase1($_POST['aniAperturaFase1']);
+            $c->setCierraFase1($_POST['aniCierraFase1']);
+            $c->setAperturaFase2($_POST['aniAperturaFase2']);
+            $c->setCierraFase2($_POST['aniCierraFase2']);
 
             if ($accion == 'registrar') {
                 echo  json_encode($c->Registrar());

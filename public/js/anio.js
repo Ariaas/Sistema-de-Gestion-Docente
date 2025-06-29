@@ -74,12 +74,20 @@ function Listar() {
     
     //////////////////////////////VALIDACIONES/////////////////////////////////////
   
-      $("#aniAnio").on("keydown keyup",function(){
-              var datos = new FormData();
-              datos.append('accion', 'existe');
-              datos.append('aniAnio', $(this).val());
-              enviaAjax(datos, 'existe');
-      });
+    $("#aniAnio").on("keydown keyup",function(){
+      var datos = new FormData();
+      datos.append('accion', 'existe');
+      datos.append('aniAnio', $(this).val());
+      enviaAjax(datos, 'existe');
+    });
+
+      $("#aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").on("change", function() {
+      validarFechas();
+    });
+
+    $('#modal1').on('hidden.bs.modal', function () {
+        limpia();
+    });
   
     //////////////////////////////BOTONES/////////////////////////////////////
   
@@ -89,6 +97,10 @@ function Listar() {
           var datos = new FormData();
           datos.append("accion", "registrar");
           datos.append("aniAnio", $("#aniAnio").val());
+          datos.append("aniAperturaFase1", $("#aniAperturaFase1").val());
+          datos.append("aniCierraFase1", $("#aniCierraFase1").val());
+          datos.append("aniAperturaFase2", $("#aniAperturaFase2").val());
+          datos.append("aniCierraFase2", $("#aniCierraFase2").val());
   
           enviaAjax(datos);
         }
@@ -98,6 +110,10 @@ function Listar() {
           datos.append("accion", "modificar");
           datos.append("aniAnio", $("#aniAnio").val());
           datos.append("aniId", $("#aniId").val());
+          datos.append("aniAperturaFase1", $("#aniAperturaFase1").val());
+          datos.append("aniCierraFase1", $("#aniCierraFase1").val());
+          datos.append("aniAperturaFase2", $("#aniAperturaFase2").val());
+          datos.append("aniCierraFase2", $("#aniCierraFase2").val());
   
           enviaAjax(datos);
         }
@@ -137,21 +153,77 @@ function Listar() {
     $("#registrar").on("click", function () {
       limpia();
       $("#proceso").text("REGISTRAR");
+      var currentYear = new Date().getFullYear();
+      $("#aniAnio").val(currentYear);
+      $("#aniId").prop("disabled", true);
+      $("#aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
       $("#modal1").modal("show");
-      $("#saniAnio").show();
-      $("#aniAnio").prop("disabled", false);
     });
-  
+    
     
   });
   
   //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
   
+  function validarFechas() {
+    let esValido = true;
+    const ap1 = $("#aniAperturaFase1").val();
+    const c1 = $("#aniCierraFase1").val();
+    const ap2 = $("#aniAperturaFase2").val();
+    const c2 = $("#aniCierraFase2").val();
+
+    if (ap1 && c1 && new Date(c1) <= new Date(ap1)) {
+        $("#saniCierraFase1").text("Debe ser posterior a la apertura de la fase 1.").show();
+        esValido = false;
+    } else {
+        $("#saniCierraFase1").text("");
+    }
+
+    if (c1 && ap2 && new Date(ap2) <= new Date(c1)) {
+        $("#saniAperturaFase2").text("Debe ser posterior al cierre de la fase 1.").show();
+        esValido = false;
+    } else {
+        $("#saniAperturaFase2").text("");
+    }
+
+    if (ap2 && c2 && new Date(c2) <= new Date(ap2)) {
+        $("#saniCierraFase2").text("Debe ser posterior a la apertura de la fase 2.").show();
+        esValido = false;
+    } else {
+        $("#saniCierraFase2").text("");
+    }
+    
+    return esValido;
+  }
+
   function validarenvio() {
-    //   if (validarkeyup( /^[A-Za-z0-9\s]{1,3}$/,$("#cohNumero"),$("#scohNumero"),"El formato permite de 1 a 3 carácteres, Ej:Cohorte '4'") == 0) {
-    //       muestraMensaje("error",4000,"ERROR!","La Cohorte <br/> No debe estar vacío y debe contener entre 1 a 3 carácteres");
-    //         return false;
-    //       }
+    const ap1 = $("#aniAperturaFase1").val();
+    const c1 = $("#aniCierraFase1").val();
+    const ap2 = $("#aniAperturaFase2").val();
+    const c2 = $("#aniCierraFase2").val();
+
+    if (!ap1) {
+        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de apertura de la fase 1!");
+        return false;
+    }
+    if (!c1) {
+        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de cierre de la fase 1!");
+        return false;
+    }
+    if (!ap2) {
+        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de apertura de la fase 2!");
+        return false;
+    }
+    if (!c2) {
+        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de cierre de la fase 2!");
+        return false;
+    }
+
+    if (!validarFechas()) {
+        muestraMensaje("error", 4000, "ERROR!", "Por favor, corrija las fechas!");
+        return false;
+    }
+    
     return true;
   }
   
@@ -162,16 +234,20 @@ function Listar() {
     if (accion == 0) {
       $("#proceso").text("MODIFICAR");
       $("#aniId").prop("disabled", false);
-      $("#aniAnio").prop("disabled", false);
+      $("#aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
     } else {
       $("#proceso").text("ELIMINAR");
       $(
-        "#aniId, #aniAnio"
+        "#aniId, #aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2"
       ).prop("disabled", true);
     }
     $("#saniAnio").hide();
     $("#aniId").val($(linea).find("td:eq(0)").text());
     $("#aniAnio").val($(linea).find("td:eq(1)").text());
+    $("#aniAperturaFase1").val($(linea).find("td:eq(2)").text());
+    $("#aniCierraFase1").val($(linea).find("td:eq(3)").text());
+    $("#aniAperturaFase2").val($(linea).find("td:eq(4)").text());
+    $("#aniCierraFase2").val($(linea).find("td:eq(5)").text());
   
     $("#modal1").modal("show");
   }
@@ -199,6 +275,10 @@ function Listar() {
                 <tr>
                   <td style="display: none;">${item.ani_id}</td>
                   <td>${item.ani_anio}</td>
+                  <td>${item.ani_apertura_fase1}</td>
+                  <td>${item.ani_cierra_fase1}</td>
+                  <td>${item.ani_apertura_fase2}</td>
+                  <td>${item.ani_cierra_fase2}</td>
                   <td>
                     <button class="btn btn-${item.ani_activo == 1 ? 'secondary' : 'success'} btn-sm activar-toggle" 
                     data-id="${item.ani_id}" 
@@ -285,9 +365,13 @@ function Listar() {
   }
   
   function limpia() {
-    $("#cohId").val("");
-    $("#cohNumero").val("");
+    $("#aniId").val("");
+    $("#aniAnio").val("");
+    $("#aniAperturaFase1").val("");
+    $("#aniCierraFase1").val("");
+    $("#aniAperturaFase2").val("");
+    $("#aniCierraFase2").val("");
+    $("#saniAnio").text("");
+    $("#saniAperturaFase1, #saniCierraFase1, #saniAperturaFase2, #saniCierraFase2").text("");
   }
-  
-  
-  
+
