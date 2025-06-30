@@ -37,13 +37,7 @@ CREATE TABLE `coordinacion_docente` (
 -- Volcado de datos para la tabla `coordinacion_docente`
 --
 
-INSERT INTO `coordinacion_docente` (`cor_id`, `doc_id`, `cor_doc_estado`) VALUES
-(2, 4, 1),
-(2, 3, 1),
-(2, 5, 1),
-(2, 6, 1),
-(2, 2, 1),
-(2, 7, 1);
+
 
 -- --------------------------------------------------------
 
@@ -71,11 +65,6 @@ CREATE TABLE `docente_horario` (
 -- Volcado de datos para la tabla `docente_horario`
 --
 
-INSERT INTO `docente_horario` (`doc_id`, `hor_id`) VALUES
-(1, 3),
-(2, 1),
-(2, 2);
-
 -- --------------------------------------------------------
 
 --
@@ -91,8 +80,7 @@ CREATE TABLE `pensum_certificado` (
 -- Volcado de datos para la tabla `pensum_certificado`
 --
 
-INSERT INTO `pensum_certificado` (`mal_id`, `cert_id`) VALUES
-(1, 1);
+
 
 -- --------------------------------------------------------
 
@@ -109,10 +97,7 @@ CREATE TABLE `seccion_horario` (
 -- Volcado de datos para la tabla `seccion_horario`
 --
 
-INSERT INTO `seccion_horario` (`sec_id`, `hor_id`) VALUES
-(3, 1),
-(3, 2),
-(3, 3);
+
 
 -- --------------------------------------------------------
 
@@ -131,10 +116,6 @@ CREATE TABLE `tbl_anio` (
 -- Volcado de datos para la tabla `tbl_anio`
 --
 
-INSERT INTO `tbl_anio` (`ani_id`, `ani_anio`, `ani_activo`, `ani_estado`) VALUES
-(1, '2025', 1, 1),
-(2, '2024', 0, 1),
-(3, '2026', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -152,9 +133,7 @@ CREATE TABLE `tbl_area` (
 -- Volcado de datos para la tabla `tbl_area`
 --
 
-INSERT INTO `tbl_area` (`area_id`, `area_nombre`, `area_estado`) VALUES
-(1, 'Diseño', 1),
-(2, 'Programacion', 1);
+
 
 -- --------------------------------------------------------
 
@@ -172,9 +151,6 @@ CREATE TABLE `tbl_categoria` (
 -- Volcado de datos para la tabla `tbl_categoria`
 --
 
-INSERT INTO `tbl_categoria` (`cat_id`, `cat_nombre`, `cat_estado`) VALUES
-(1, 'Instructor', 1),
-(2, 'Titular', 1);
 
 -- --------------------------------------------------------
 
@@ -194,8 +170,6 @@ CREATE TABLE `tbl_certificacion` (
 -- Volcado de datos para la tabla `tbl_certificacion`
 --
 
-INSERT INTO `tbl_certificacion` (`cert_id`, `tra_id`, `cert_nombre`, `cert_tipo`, `cert_estado`) VALUES
-(1, 2, 'certificado  1', 'anual', 1);
 
 -- --------------------------------------------------------
 
@@ -213,9 +187,6 @@ CREATE TABLE `tbl_cohorte` (
 -- Volcado de datos para la tabla `tbl_cohorte`
 --
 
-INSERT INTO `tbl_cohorte` (`coh_id`, `coh_numero`, `coh_estado`) VALUES
-(1, 2, 1),
-(2, 4, 1);
 
 -- --------------------------------------------------------
 
@@ -235,8 +206,6 @@ CREATE TABLE `tbl_convenio` (
 -- Volcado de datos para la tabla `tbl_convenio`
 --
 
-INSERT INTO `tbl_convenio` (`con_id`, `tra_id`, `con_nombre`, `con_inicio`, `con_estado`) VALUES
-(1, 1, 'iujo', '2025-06-20', 1);
 
 -- --------------------------------------------------------
 
@@ -254,9 +223,6 @@ CREATE TABLE `tbl_coordinacion` (
 -- Volcado de datos para la tabla `tbl_coordinacion`
 --
 
-INSERT INTO `tbl_coordinacion` (`cor_id`, `cor_nombre`, `cor_estado`) VALUES
-(1, 'holaa', 0),
-(2, 'Ingeniería de software', 1);
 
 -- --------------------------------------------------------
 
@@ -281,14 +247,6 @@ CREATE TABLE `tbl_docente` (
 -- Volcado de datos para la tabla `tbl_docente`
 --
 
-INSERT INTO `tbl_docente` (`doc_id`, `cat_id`, `doc_prefijo`, `doc_cedula`, `doc_nombre`, `doc_apellido`, `doc_correo`, `doc_dedicacion`, `doc_condicion`, `doc_estado`) VALUES
-(1, 1, 'V', 56778453, 'Alberto', 'Velasquez', 'velasques@gmail.com', 'Medio tiempo', 'Contratado', 0),
-(2, 1, 'V', 34556298, 'Engels Moises', 'Morillo', 'morillo@gmail.com', 'Exclusiva', 'Ordinario', 1),
-(3, 2, 'V', 30894865, 'Liam', 'Morillo perez', 'liam@gmail.com', 'Medio tiempo', 'Ordinario', 0),
-(4, 1, 'V', 2323323, 'adsadad', 'dasdasd', 'dsadasdasd@gmail.com', 'Exclusiva', 'Ordinario', 0),
-(5, 1, 'V', 56778234, 'Juan ', 'Gonzalez', 'gonzalez@gmail.com', 'Medio tiempo', 'Contratado', 1),
-(6, 1, 'V', 43242323, 'fdsfdsf', 'sdfdsf', 'sdfsdfgq@gmail.com', 'Exclusiva', 'Ordinario', 0),
-(7, 1, 'V', 3343443, 'asdsadsad', 'asdasd', 'dasadsasd@gmail.com', 'Medio tiempo', 'Ordinario', 1);
 
 -- --------------------------------------------------------
 
@@ -307,10 +265,6 @@ CREATE TABLE `tbl_eje` (
 -- Volcado de datos para la tabla `tbl_eje`
 --
 
-INSERT INTO `tbl_eje` (`eje_id`, `eje_nombre`, `eje_descripcion`, `eje_estado`) VALUES
-(1, 'Ludico', '', 1),
-(2, 'Didactico', '', 1);
-
 -- --------------------------------------------------------
 
 --
@@ -328,9 +282,7 @@ CREATE TABLE `tbl_espacio` (
 -- Volcado de datos para la tabla `tbl_espacio`
 --
 
-INSERT INTO `tbl_espacio` (`esp_id`, `esp_codigo`, `esp_tipo`, `esp_estado`) VALUES
-(1, 'G-27', 'aula', 1),
-(2, 'L-6', 'laboratorio', 1);
+
 
 -- --------------------------------------------------------
 
@@ -351,11 +303,6 @@ CREATE TABLE `tbl_fase` (
 -- Volcado de datos para la tabla `tbl_fase`
 --
 
-INSERT INTO `tbl_fase` (`fase_id`, `tra_id`, `fase_numero`, `fase_apertura`, `fase_cierre`, `fase_estado`) VALUES
-(1, 1, '2', '2005-02-04', '2005-02-05', 0),
-(2, 1, '1', '2025-01-01', '2025-06-30', 0),
-(3, 2, '2', '2025-01-01', '2025-07-31', 0),
-(4, 1, '1', '2025-06-20', '2025-12-31', 1);
 
 -- --------------------------------------------------------
 
@@ -376,10 +323,6 @@ CREATE TABLE `tbl_horario` (
 -- Volcado de datos para la tabla `tbl_horario`
 --
 
-INSERT INTO `tbl_horario` (`hor_id`, `fase_id`, `esp_id`, `tur_id`, `hor_modalidad`, `hor_estado`) VALUES
-(1, 1, 1, 1, 'presencial', 0),
-(2, 1, 1, 1, 'presencial', 1),
-(3, 1, 2, 1, 'presencial', 1);
 
 -- --------------------------------------------------------
 
@@ -419,9 +362,6 @@ CREATE TABLE `tbl_malla` (
 -- Volcado de datos para la tabla `tbl_malla`
 --
 
-INSERT INTO `tbl_malla` (`mal_id`, `coh_id`, `ani_id`, `mal_codigo`, `mal_nombre`, `mal_descripcion`, `mal_estado`) VALUES
-(1, 1, 1, '1232', 'Malla 23', 'Nuevo pensum', 1),
-(2, 2, 2, '3456', 'Malla 2024', 'Pensum24', 1);
 
 -- --------------------------------------------------------
 
@@ -456,9 +396,6 @@ CREATE TABLE `tbl_seccion` (
 -- Volcado de datos para la tabla `tbl_seccion`
 --
 
-INSERT INTO `tbl_seccion` (`sec_id`, `tra_id`, `coh_id`, `sec_nombre`, `sec_codigo`, `sec_cantidad`, `sec_grupo`, `sec_estado`) VALUES
-(3, 1, 1, '3104', 'IN', 25, 1, 1),
-(4, 2, 1, '2014', 'IN', 25, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -476,10 +413,6 @@ CREATE TABLE `tbl_titulo` (
 --
 -- Volcado de datos para la tabla `tbl_titulo`
 --
-
-INSERT INTO `tbl_titulo` (`tit_id`, `tit_prefijo`, `tit_nombre`, `tit_estado`) VALUES
-(1, 'Ingeniero', 'Informatica', 1),
-(2, 'Master', 'Base de datos', 1);
 
 -- --------------------------------------------------------
 
@@ -499,9 +432,6 @@ CREATE TABLE `tbl_trayecto` (
 -- Volcado de datos para la tabla `tbl_trayecto`
 --
 
-INSERT INTO `tbl_trayecto` (`tra_id`, `tra_numero`, `tra_tipo`, `tra_estado`, `ani_id`) VALUES
-(1, '1', 'regular', 1, 1),
-(2, '2', 'intensivo', 1, 2);
 
 -- --------------------------------------------------------
 
@@ -519,10 +449,6 @@ CREATE TABLE `tbl_turno` (
 --
 -- Volcado de datos para la tabla `tbl_turno`
 --
-
-INSERT INTO `tbl_turno` (`tur_id`, `tur_horainicio`, `tur_horafin`, `tur_estado`) VALUES
-(1, '02:07:00', '03:10:00', 1),
-(2, '05:10:00', '06:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -550,9 +476,6 @@ CREATE TABLE `tbl_uc` (
 -- Volcado de datos para la tabla `tbl_uc`
 --
 
-INSERT INTO `tbl_uc` (`uc_id`, `eje_id`, `tra_id`, `area_id`, `uc_codigo`, `uc_nombre`, `uc_hora_independiente`, `uc_hora_asistida`, `uc_hora_academica`, `uc_creditos`, `uc_periodo`, `uc_electiva`, `uc_estado`) VALUES
-(1, 1, 1, 1, 'BD34', 'Base de datos', 23, 34, 56, 4, '1', 1, 1),
-(2, 1, 1, 1, 'hola', 'comovas', 3, 3, 3, 3, '1', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -569,16 +492,6 @@ CREATE TABLE `titulo_docente` (
 -- Volcado de datos para la tabla `titulo_docente`
 --
 
-INSERT INTO `titulo_docente` (`doc_id`, `tit_id`) VALUES
-(1, 1),
-(2, 1),
-(2, 2),
-(3, 2),
-(4, 1),
-(4, 2),
-(5, 2),
-(6, 1),
-(7, 1);
 
 -- --------------------------------------------------------
 
@@ -596,10 +509,6 @@ CREATE TABLE `uc_docente` (
 -- Volcado de datos para la tabla `uc_docente`
 --
 
-INSERT INTO `uc_docente` (`doc_id`, `uc_id`, `uc_doc_estado`) VALUES
-(1, 1, 1),
-(2, 1, 1),
-(2, 2, 1);
 
 -- --------------------------------------------------------
 
@@ -619,11 +528,6 @@ CREATE TABLE `uc_horario` (
 -- Volcado de datos para la tabla `uc_horario`
 --
 
-INSERT INTO `uc_horario` (`hor_id`, `uc_id`, `hor_dia`, `hor_horainicio`, `hor_horafin`) VALUES
-(1, 1, 'Lunes', '02:07', '03:10'),
-(2, 1, 'Lunes', '02:07', '03:10'),
-(3, 1, 'Miércoles', '02:07', '03:10');
-
 -- --------------------------------------------------------
 
 --
@@ -638,9 +542,6 @@ CREATE TABLE `uc_pensum` (
 --
 -- Volcado de datos para la tabla `uc_pensum`
 --
-
-INSERT INTO `uc_pensum` (`uc_id`, `mal_id`) VALUES
-(1, 1);
 
 --
 -- Índices para tablas volcadas

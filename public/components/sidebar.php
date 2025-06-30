@@ -54,18 +54,18 @@ foreach (array_keys($gestion_items) as $permiso) {
 
                 <!-- Nuevo Menú Desplegable "Gestión" -->
                 <?php if ($tiene_permiso_gestion): ?>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <?php echo is_active($paginas_gestion, $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Gestión
-                    </a>
-                    <ul class="dropdown-menu">
-                        <?php foreach ($gestion_items as $nombre => $pagina): ?>
-                            <?php if (!empty($permisos[$nombre])): ?>
-                                <li><a class="dropdown-item <?php echo is_active($pagina, $pagina_actual); ?>" href="?pagina=<?php echo $pagina; ?>"><?php echo $nombre === 'Unidad Curricular' ? 'Unidades C.' : $nombre; ?></a></li>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </ul>
-                </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle <?php echo is_active($paginas_gestion, $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Gestión
+                        </a>
+                        <ul class="dropdown-menu">
+                            <?php foreach ($gestion_items as $nombre => $pagina): ?>
+                                <?php if (!empty($permisos[$nombre])): ?>
+                                    <li><a class="dropdown-item <?php echo is_active($pagina, $pagina_actual); ?>" href="?pagina=<?php echo $pagina; ?>"><?php echo $nombre === 'Unidad Curricular' ? 'Unidades C.' : $nombre; ?></a></li>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </ul>
+                    </li>
                 <?php endif; ?>
 
                 <?php if (!empty($permisos['Horario'])) : ?>
@@ -81,16 +81,16 @@ foreach (array_keys($gestion_items) as $permiso) {
                 <?php endif; ?>
 
                 <?php if (!empty($permisos['Bitacora']) || !empty($permisos['Usuarios']) || !empty($permisos['Respaldo']) || !empty($permisos['Configuracion']) || !empty($permisos['Reportes'])) : ?>
-                     <li class="nav-item dropdown">
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Administración
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                             <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
-                             <?php if (!empty($permisos['Reportes'])) : ?>
+                            <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
+                            <?php if (!empty($permisos['Reportes'])) : ?>
                                 <li><a class="dropdown-item <?php echo is_active('reportes', $pagina_actual); ?>" href="?pagina=reportes">Reportes</a></li>
                             <?php endif; ?>
-                             <?php if (!empty($permisos['Configuracion'])): ?>
+                            <?php if (!empty($permisos['Configuracion'])): ?>
                                 <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
                             <?php endif; ?>
                             <?php if (!empty($permisos['Bitacora']) || !empty($permisos['Usuarios']) || !empty($permisos['Respaldo'])): ?>
@@ -108,7 +108,7 @@ foreach (array_keys($gestion_items) as $permiso) {
                     </ul>
                 </li>
             </ul>
-            
+
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -116,6 +116,7 @@ foreach (array_keys($gestion_items) as $permiso) {
                         <strong><?php echo $_SESSION['username'] ?? 'Usuario'; ?></strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="?pagina=perfil">Perfil</a></li>
                         <li><a class="dropdown-item" href="?pagina=fin">Cerrar Sesión</a></li>
                     </ul>
                 </li>
