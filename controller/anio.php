@@ -9,6 +9,8 @@ if (!is_file("model/" . $pagina . ".php")) {
     exit;
 }
 require_once("model/" . $pagina . ".php");
+$c = new Anio();
+$c->Notificaciones();
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
@@ -22,9 +24,10 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         $bitacora = new Bitacora();
 
-        $c = new Anio();
+        
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
+            
             echo json_encode($c->Listar());
         } elseif ($accion == 'eliminar') {
             $c->setId($_POST['aniId']);

@@ -1,27 +1,13 @@
-let mallaSeleccionadaId = null;
-let carritoUCsParaMalla = [];
-let carritoCertificadosParaMalla = [];
-
-const tablaPrincipalContainer = $("#tablaMallaPrincipalContainer");
-const tablaMallaUCContainer = $("#tablaMallaUCContainer");
-const tablaMallaCertContainer = $("#tablaMallaCertContainer");
+function cargarUnidadesCurriculares() {
+  var datos = new FormData();
+  datos.append("accion", "consultar_ucs");
+  enviaAjax(datos, "consultar_ucs");
+}
 
 function Listar() {
   var datos = new FormData();
   datos.append("accion", "consultar");
   enviaAjax(datos, "consultar_mallas");
-}
-
-function ListarAsignacionesUC() {
-  var datos = new FormData();
-  datos.append("accion", "consultar_asignaciones_uc");
-  enviaAjax(datos, "consultar_asignaciones_uc_response");
-}
-
-function ListarAsignacionesCertificados() {
-  var datos = new FormData();
-  datos.append("accion", "consultar_asignaciones_certificados");
-  enviaAjax(datos, "consultar_asignaciones_cert_response");
 }
 
 function destruyeDT(selector = "#tablamalla") {
@@ -46,14 +32,12 @@ function crearDT(selector = "#tablamalla", config = {}) {
             infoEmpty: "No hay registros disponibles para mostrar",
             infoFiltered: "(filtrado de _MAX_ registros totales)",
             search: "Buscar:",
-            paginate: {
-            first: "Primero",
-            last: "Último",
-            next: "Siguiente",
-            previous: "Anterior",
-            },
+            paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" },
             emptyTable: "No hay datos disponibles en la tabla"
         },
+        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
         order: [[1, "asc"]], 
     };
 
@@ -63,369 +47,172 @@ function crearDT(selector = "#tablamalla", config = {}) {
   }
 }
 
-function limpiarModalAsignarUC() {
-    $("#selectUCParaMalla").val($("#selectUCParaMalla option:first").val());
-    carritoUCsParaMalla = [];
-    actualizarListaUCsSeleccionadasMalla();
-}
-
-function limpiarModalAsignarCertificado() {
-    $("#selectCertificadoParaMalla").val($("#selectCertificadoParaMalla option:first").val());
-    carritoCertificadosParaMalla = [];
-    actualizarListaCertificadosSeleccionadosMalla();
-}
-
 $(document).ready(function () {
     Listar(); 
+    cargarUnidadesCurriculares(); 
 
-    $('#modalAsignarUC').on('hidden.bs.modal', function () {
-        limpiarModalAsignarUC();
+    $('#select_uc').select2({
+        theme: "bootstrap-5",
+        dropdownParent: $('#modal1')
     });
-
-    $('#modalAsignarCertificado').on('hidden.bs.modal', function () {
-        limpiarModalAsignarCertificado();
-    });
-
-    $("#btnVerTablaPrincipal").on("click", function() {
-        tablaPrincipalContainer.show();
-        tablaMallaUCContainer.hide();
-        tablaMallaCertContainer.hide();
-        if ($.fn.DataTable.isDataTable("#tablamalla")) {
-            setTimeout(function() {
-                $("#tablamalla").DataTable().columns.adjust().responsive.recalc();
-            }, 50);
+    
+    // Lógica de navegación del modal
+    $('#btn-siguiente').on('click', function() {
+        if (validarPagina1()) {
+            $('#pagina1').hide();
+            $('#botones-pagina1').hide();
+            $('#pagina2').show();
+            $('#botones-pagina2').show();
+            $('#modal1Titulo').text("Formulario de Malla (Paso 2 de 2)");
         }
     });
 
-    $("#btnVerAsignacionUC").on("click", function() {
-        tablaPrincipalContainer.hide();
-        tablaMallaUCContainer.show();
-        tablaMallaCertContainer.hide();
-        ListarAsignacionesUC(); 
+    $('#btn-anterior').on('click', function() {
+        $('#pagina2').hide();
+        $('#botones-pagina2').hide();
+        $('#pagina1').show();
+        $('#botones-pagina1').show();
+        $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)");
     });
 
-    $("#btnVerAsignacionCert").on("click", function() {
-        tablaPrincipalContainer.hide();
-        tablaMallaUCContainer.hide();
-        tablaMallaCertContainer.show();
-        ListarAsignacionesCertificados(); 
+    $("#filtroUnidadesAgregadas").on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $("#tablaUnidadesAgregadas tbody tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
     });
 
-    $("#mal_codigo").on("keydown", function () {
-        validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/,$(this),$("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
+    $('#modalVerMalla').on('hidden.bs.modal', function () {
+        destruyeDT('#tablaVerUnidades');
     });
 
-    $("#mal_codigo").on("keyup", function () {
-        validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $(this), $("#smalcodigo"), "El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
-        var datos = new FormData();
-        datos.append('accion', 'existe');
-        datos.append("mal_codigo", $(this).val());
-        var mal_id = $("#mal_id").val();
-        if (mal_id) {
-            datos.append("mal_id", mal_id);
-        }
-        enviaAjax(datos, "existe");
+    $("#btn_agregar_uc").on("click", function() {
+        const select = $("#select_uc");
+        const uc_id = select.val();
+        const uc_nombre = select.find("option:selected").text();
+        if (!uc_id) { muestraMensaje("error", 3000, "ERROR", "Debe seleccionar una unidad curricular."); return; }
+        let yaExiste = false;
+        $("#tablaUnidadesAgregadas tbody tr").each(function() { if ($(this).data("ucid") == uc_id) { yaExiste = true; } });
+        if (yaExiste) { muestraMensaje("info", 3000, "Atención", "Esa unidad curricular ya fue agregada."); return; }
+        const h_ind = $("#uc_horas_ind").val() || 0;
+        const h_asis = $("#uc_horas_asis").val() || 0;
+        const h_acad = $("#uc_horas_acad").val() || 0;
+        const fila = `<tr data-ucid="${uc_id}"><td>${uc_nombre}</td><td>${h_ind}</td><td>${h_asis}</td><td>${h_acad}</td><td><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td></tr>`;
+        $("#tablaUnidadesAgregadas tbody").append(fila);
+        $("#contenedorTablaUnidades").show();
+        select.val('').trigger('change');
+        $("#uc_horas_ind").val(0);
+        $("#uc_horas_asis").val(0);
+        $("#uc_horas_acad").val(0);
     });
 
-    $("#mal_nombre").on("keydown", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$(this),$("#smalnombre"),"El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
+    $("#tablaUnidadesAgregadas").on("click", ".btn-remover-uc", function() {
+        $(this).closest("tr").remove();
+        if ($("#tablaUnidadesAgregadas tbody tr").length === 0) { $("#contenedorTablaUnidades").hide(); }
     });
 
-    $("#mal_nombre").on("keyup", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/, $(this), $("#smalnombre"), "El nombre debe contener entre 5 y 50 caracteres alfanuméricos o espacios.");
-        var datos = new FormData();
-        datos.append('accion', 'existe_nombre');
-        datos.append("mal_nombre", $(this).val());
-        var mal_id = $("#mal_id").val();
-        if (mal_id) {
-            datos.append("mal_id", mal_id);
-        }
-        enviaAjax(datos, "existe");
-    });
-
-    $("#mal_descripcion").on("keydown keyup", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/, $(this), $("#smaldescripcion"), "La descripción debe contener entre 5 y 100 caracteres.");
-    });
+    $("#mal_codigo").on("keyup", function () { validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $(this), $("#smalcodigo")); var datos = new FormData(); datos.append('accion', 'existe'); datos.append("mal_codigo", $(this).val()); if ($("#mal_id").val()) datos.append("mal_id", $("#mal_id").val()); enviaAjax(datos, "existe"); });
+    $("#mal_nombre").on("keyup", function () { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/, $(this), $("#smalnombre")); var datos = new FormData(); datos.append('accion', 'existe_nombre'); datos.append("mal_nombre", $(this).val()); if ($("#mal_id").val()) datos.append("mal_id", $("#mal_id").val()); enviaAjax(datos, "existe"); });
+    $("#mal_descripcion").on("keyup", function () { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/, $(this), $("#smaldescripcion")); });
+    $("#mal_cohorte").on("input", function () { this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, ''); if (this.value.length > 3) this.value = this.value.slice(0, 3); });
 
     $("#proceso").on("click", function () {
-        const accionForm = $("#accion").val();
-        if (accionForm === "registrar") {
-            if (validarenvio()) {
-                var datos = new FormData($("#f")[0]);
-                enviaAjax(datos, "registrar_malla");
-            }
-        } else if (accionForm === "modificar") {
-            if (validarenvio()) {
-                var datos = new FormData($("#f")[0]);
-                enviaAjax(datos, "modificar_malla");
-            }
-        } else if ($(this).text() == "ELIMINAR") {
-            Swal.fire({
-                title: "¿Está seguro de eliminar esta malla?",
-                text: "Esta acción no se puede deshacer.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Sí, eliminar",
-                cancelButtonText: "Cancelar",
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    var datos = new FormData();
-                    datos.append("accion", "eliminar");
-                    datos.append("mal_id", $(linea).find("td:eq(0)").text());
-                    enviaAjax(datos, "eliminar_malla");
-                } else {
-                    muestraMensaje("error",2000,"INFORMACIÓN","La eliminación ha sido cancelada.");
-                    $("#modal1").modal("hide");
-                }
+        if (validarenvio()) {
+            var datos = new FormData($("#f")[0]);
+            let unidades = [];
+            $("#tablaUnidadesAgregadas tbody tr").each(function() {
+                unidades.push({ uc_id: $(this).data("ucid"), hora_independiente: $(this).find("td:eq(1)").text(), hora_asistida: $(this).find("td:eq(2)").text(), hora_academica: $(this).find("td:eq(3)").text() });
             });
+            datos.append("unidades", JSON.stringify(unidades));
+            const accionForm = $("#accion").val();
+            if (accionForm === "registrar") enviaAjax(datos, "registrar_malla");
+            else if (accionForm === "modificar") enviaAjax(datos, "modificar_malla");
         }
     });
 
     $("#registrar").on("click", function () {
         limpiaModal1();
         $("#accion").val("registrar");
-        $("#modal1Titulo").text("Registrar Malla Curricular");
-        $("#proceso").text("REGISTRAR").removeClass("btn-danger").addClass("btn-primary");
-        $("#mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", false);
+        $("#modal1Titulo").text("Formulario de Malla (Paso 1 de 2)");
+        $("#proceso").text("GUARDAR");
         $("#modal1").modal("show");
-    });
-
-    $(document).on("click", ".asignar-uc-malla", function () {
-        mallaSeleccionadaId = $(this).data("id");
-        $("#mallaIdParaUC").val(mallaSeleccionadaId);
-        actualizarListaUCsSeleccionadasMalla(); 
-        $("#modalAsignarUC").modal("show");
-    });
-
-    $("#btnAgregarUCMalla").on("click", function () {
-        const ucSelect = $("#selectUCParaMalla");
-        const ucId = ucSelect.val();
-        const ucTexto = ucSelect.find("option:selected").text();
-        if (!ucId) {
-            muestraMensaje("info", 2000, "Atención", "Debe seleccionar una Unidad Curricular.");
-            return;
-        }
-        if (carritoUCsParaMalla.some(uc => uc.id === ucId)) {
-            muestraMensaje("info", 2000, "Atención", "Esa Unidad Curricular ya está en la lista.");
-            return;
-        }
-        carritoUCsParaMalla.push({ id: ucId, texto: ucTexto });
-        actualizarListaUCsSeleccionadasMalla();
-        ucSelect.val(ucSelect.find("option:first").val());
-    });
-
-    $(document).on("click", ".quitar-uc-carrito-malla", function () {
-        const index = $(this).data("index");
-        carritoUCsParaMalla.splice(index, 1);
-        actualizarListaUCsSeleccionadasMalla();
-    });
-
-    $("#btnGuardarAsignacionUCMalla").on("click", function () {
-        if (carritoUCsParaMalla.length === 0) {
-            muestraMensaje("info", 2000, "Atención", "Debe agregar al menos una Unidad Curricular a la lista.");
-            return;
-        }
-        var datos = new FormData();
-        datos.append("accion", "asignar_uc_malla");
-        datos.append("mal_id", $("#mallaIdParaUC").val());
-        datos.append("uc_ids", JSON.stringify(carritoUCsParaMalla.map(uc => uc.id)));
-        enviaAjax(datos, "asignar_uc_malla_response");
-    });
-
-    $(document).on("click", ".asignar-certificado-malla", function () {
-        mallaSeleccionadaId = $(this).data("id");
-        $("#mallaIdParaCertificado").val(mallaSeleccionadaId);
-        actualizarListaCertificadosSeleccionadosMalla();
-        $("#modalAsignarCertificado").modal("show");
-    });
-
-    $("#btnAgregarCertificadoMalla").on("click", function () {
-        const certSelect = $("#selectCertificadoParaMalla");
-        const certId = certSelect.val();
-        const certTexto = certSelect.find("option:selected").text();
-        if (!certId) {
-            muestraMensaje("info", 2000, "Atención", "Debe seleccionar un Certificado.");
-            return;
-        }
-        if (carritoCertificadosParaMalla.some(c => c.id === certId)) {
-            muestraMensaje("info", 2000, "Atención", "Ese Certificado ya está en la lista.");
-            return;
-        }
-        carritoCertificadosParaMalla.push({ id: certId, texto: certTexto });
-        actualizarListaCertificadosSeleccionadosMalla();
-        certSelect.val(certSelect.find("option:first").val());
-    });
-
-    $(document).on("click", ".quitar-certificado-carrito-malla", function () {
-        const index = $(this).data("index");
-        carritoCertificadosParaMalla.splice(index, 1);
-        actualizarListaCertificadosSeleccionadosMalla();
-    });
-
-    $("#btnGuardarAsignacionCertificadoMalla").on("click", function () {
-        if (carritoCertificadosParaMalla.length === 0) {
-            muestraMensaje("info", 2000, "Atención", "Debe agregar al menos un Certificado a la lista.");
-            return;
-        }
-        var datos = new FormData();
-        datos.append("accion", "asignar_certificado_malla");
-        datos.append("mal_id", $("#mallaIdParaCertificado").val());
-        datos.append("cert_ids", JSON.stringify(carritoCertificadosParaMalla.map(c => c.id)));
-        enviaAjax(datos, "asignar_certificado_malla_response");
-    });
-
-    $(document).on("click", ".gestionar-uc-malla", function () {
-        const mal_id = $(this).data("id");
-        var datos = new FormData();
-        datos.append("accion", "consultar_ucs_de_malla");
-        datos.append("mal_id", mal_id);
-        enviaAjax(datos, "consultar_ucs_de_malla_response");
-    });
-
-    $(document).on("click", ".quitar-uc-asignada", function () {
-        const mal_id = $(this).data("mal-id");
-        const uc_id = $(this).data("uc-id");
-        const uc_nombre = $(this).closest("li").find(".uc-nombre-texto").text();
-        const li_element = $(this).closest("li");
-        Swal.fire({
-            title: '¿Está seguro?',
-            html: `Desea quitar la UC "<b>${uc_nombre}</b>" de esta malla?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, quitar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var datos = new FormData();
-                datos.append("accion", "quitar_uc_asignada");
-                datos.append("mal_id", mal_id);
-                datos.append("uc_id", uc_id);
-                enviaAjax(datos, "quitar_uc_asignada_response", li_element);
-            }
-        });
-    });
-
-    $(document).on("click", ".gestionar-cert-malla", function () {
-        const mal_id = $(this).data("id");
-        var datos = new FormData();
-        datos.append("accion", "consultar_cert_de_malla");
-        datos.append("mal_id", mal_id);
-        enviaAjax(datos, "consultar_cert_de_malla_response");
-    });
-
-    $(document).on("click", ".quitar-cert-asignado", function () {
-        const mal_id = $(this).data("mal-id");
-        const cert_id = $(this).data("cert-id");
-        const cert_nombre = $(this).closest("li").find(".cert-nombre-texto").text();
-        const li_element = $(this).closest("li");
-        Swal.fire({
-            title: '¿Está seguro?',
-            html: `Desea quitar el Certificado "<b>${cert_nombre}</b>" de esta malla?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, quitar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var datos = new FormData();
-                datos.append("accion", "quitar_cert_asignado");
-                datos.append("mal_id", mal_id);
-                datos.append("cert_id", cert_id);
-                enviaAjax(datos, "quitar_cert_asignado_response", li_element);
-            }
-        });
-    });
-    
-    $(document).on("click", ".ver-detalles-btn", function() {
-        const titulo = $(this).data("titulo");
-        const lista = $(this).data("lista");
-        const listaVacia = $(this).data("vacia");
-        
-        $("#modalDetallesTitulo").text(titulo);
-        const listaElement = $("#listaDetalles");
-        listaElement.empty();
-
-        if (lista) {
-            const items = String(lista).split('|||');
-            items.forEach(item => {
-                listaElement.append(`<li class="list-group-item">${item}</li>`);
-            });
-        } else {
-            listaElement.append(`<li class="list-group-item">${listaVacia}</li>`);
-        }
-
-        $("#modalVerDetalles").modal("show");
     });
 });
 
+function validarPagina1() {
+    if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/,$("#mal_codigo"),$("#smalcodigo"),"") == 0) {
+       muestraMensaje("error",4000,"ERROR","El código de la malla es inválido."); return false;
+    }
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$("#mal_nombre"),$("#smalnombre"),"") == 0) {
+      muestraMensaje("error",4000,"ERROR","El nombre de la malla es inválido."); return false;
+    }
+    if (!/^[1-9][0-9]{0,2}$/.test($("#mal_cohorte").val())) {
+      muestraMensaje("error",4000,"ERROR","La cohorte de la malla es inválida."); return false;
+    }
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/,$("#mal_descripcion"),$("#smaldescripcion"),"") == 0) {
+      muestraMensaje("error",4000,"ERROR","La descripción de la malla es inválida."); return false;
+    }
+    return true;
+}
+
 function validarenvio() {
-    let anio = $("#mal_Anio").val();
-    let corte = $("#mal_cohorte").val();
-    if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/,$("#mal_codigo"),$("#smalcodigo"),"El formato permite de 2 a 10 caracteres.") == 0) {
-       muestraMensaje("error",4000,"ERROR","El codigo de la malla <br/> No puede estar vacío y debe contener entre 2 a 10 carácteres.");
+    if (!validarPagina1()) return false;
+
+    if ($("#tablaUnidadesAgregadas tbody tr").length === 0) {
+        muestraMensaje("error", 4000, "ERROR", "Debe agregar al menos una unidad curricular en el Paso 2.");
         return false;
-    }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,50}$/,$("#mal_nombre"),$("#smalnombre"),"El nombre debe contener entre 5 y 50 caracteres.") == 0) {
-      muestraMensaje("error",4000,"ERROR","El nombre de la malla <br/> No puede estar vacío y debe contener entre 5 a 10 carácteres.");
-         return false;
-    }
-    if (anio === null || anio === "" || anio === "0") {
-        muestraMensaje("error",4000,"ERROR","Por favor, ¡seleccione un año!");
-        return false;
-    }
-    if (corte === null || corte === "" || corte === "0") {
-      muestraMensaje("error",4000,"ERROR","Por favor, ¡seleccione una cohorte!");
-        return false;
-    }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/,$("#mal_descripcion"),$("#smaldescripcion"),"La descripción debe contener entre 5 y 100 caracteres.") == 0) {
-      muestraMensaje("error",4000,"ERROR","La descripcion de la malla <br/> No puede estar vacía y debe contener entre 5 a 100 carácteres.");   
-      return false;
     }
     return true;
 }
 
 function pone(pos, accionBtn) {
     linea = $(pos).closest("tr");
-    $("#mal_id").val($(linea).find("td:eq(0)").text());
+    var mal_id = $(linea).find("td:eq(0)").text();
+    var mal_nombre = $(linea).find("td:eq(2)").text();
+
+    if (accionBtn === 2) {
+        $("#modalVerMallaTitulo").text("Unidades de: " + mal_nombre);
+        $("#tablaUnidadesVer").empty();
+        destruyeDT('#tablaVerUnidades');
+        var datos = new FormData(); datos.append("accion", "consultar_ucs_por_malla"); datos.append("mal_id", mal_id);
+        enviaAjax(datos, "consultar_ucs_para_ver"); 
+        $("#modalVerMalla").modal("show");
+        return; 
+    }
+
+    limpiaModal1(); 
+    $("#mal_id").val(mal_id);
     $("#mal_codigo").val($(linea).find("td:eq(1)").text());
-    $("#mal_nombre").val($(linea).find("td:eq(2)").text());
-    var año = $(linea).find("td:eq(3)").text();
-    $('#mal_Anio option').filter(function() { return $(this).text() == año; }).prop('selected', true).change();
-    var cohorte = $(linea).find("td:eq(4)").text().trim();
-    $('#mal_cohorte option').each(function() { if ($(this).text().trim().includes(cohorte)) { $(this).prop('selected', true).change(); return false; } });
-    $("#mal_descripcion").val($(linea).find("td:eq(5)").text());
+    $("#mal_nombre").val(mal_nombre);
+    $("#mal_cohorte").val($(linea).find("td:eq(3)").text());
+    $("#mal_descripcion").val($(linea).find("td:eq(4)").text());
+    
     if (accionBtn === 0) {
         $("#accion").val("modificar");
-        $("#modal1Titulo").text("Modificar Malla Curricular");
-        $("#proceso").text("MODIFICAR").removeClass("btn-danger").addClass("btn-primary");
-        $("#mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", false);
+        $("#modal1Titulo").text("Modificar Malla (Paso 1 de 2)");
+        $("#proceso").text("MODIFICAR");
+        var datos = new FormData(); datos.append("accion", "consultar_ucs_por_malla"); datos.append("mal_id", mal_id);
+        enviaAjax(datos, "consultar_ucs_por_malla");
         $("#modal1").modal("show");
     } else if (accionBtn === 1) {
-        $("#accion").val("ELIMINAR");
-        $("#modal1Titulo").text("Eliminar Malla Curricular");
-        $("#proceso").text("ELIMINAR").removeClass("btn-danger").addClass("btn-primary");
-        $("#mal_codigo, #mal_nombre, #mal_Anio, #mal_cohorte, #mal_descripcion").prop("disabled", true);
-        $("#modal1").modal("show");
+        Swal.fire({
+            title: "¿Está seguro de eliminar esta malla?", text: "Esta acción no se puede deshacer.",
+            icon: "warning", showCancelButton: true, confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6", confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var datos = new FormData(); datos.append("accion", "eliminar"); datos.append("mal_id", mal_id);
+                enviaAjax(datos, "eliminar_malla");
+            }
+        });
     }
 }
 
-function enviaAjax(datos, origen = "", extra_data = null) {
+function enviaAjax(datos, origen = "") {
   $.ajax({
-    async: true,
-    url: "",
-    type: "POST",
-    contentType: false,
-    data: datos,
-    processData: false,
-    cache: false,
-    beforeSend: function () { },
-    timeout: 10000,
+    async: true, url: "", type: "POST", contentType: false, data: datos,
+    processData: false, cache: false,
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
@@ -433,197 +220,84 @@ function enviaAjax(datos, origen = "", extra_data = null) {
           destruyeDT("#tablamalla");
           $("#resultadoconsulta").empty();
           $.each(lee.mensaje, function (index, item) {
-            let botonesAccion = `
-                <td class="acciones-cell">
-                    <div class="acciones-fila">
-                        <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
-                        <button class="btn btn-info btn-sm asignar-uc-malla" data-id="${item.mal_id}" data-nombre="${item.mal_nombre}">Asignar UC</button>
-                    </div>
-                    <div class="acciones-fila">
-                        <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
-                        <button class="btn btn-info btn-sm asignar-certificado-malla" data-id="${item.mal_id}" data-nombre="${item.mal_nombre}">Asignar Cert.</button>
-                    </div>
-                </td>`;
-            $("#resultadoconsulta").append(`<tr><td style="display: none;">${item.mal_id}</td><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.ani_anio}</td><td>${item.coh_numero}</td><td>${item.mal_descripcion}</td>${botonesAccion}</tr>`);
+            let botonesAccion = `<td class="acciones-cell"><button class="btn btn-info btn-sm" onclick='pone(this,2)'>Ver Malla</button> <button class="btn btn-warning btn-sm" onclick='pone(this,0)'>Modificar</button> <button class="btn btn-danger btn-sm" onclick='pone(this,1)'>Eliminar</button></td>`;
+            $("#resultadoconsulta").append(`<tr><td style="display: none;">${item.mal_id}</td><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.mal_cohorte}</td><td>${item.mal_descripcion}</td>${botonesAccion}</tr>`);
           });
           crearDT("#tablamalla");
-        } else if ((origen === "registrar_malla" && lee.resultado === "registrar") || (origen === "modificar_malla" && lee.resultado === "modificar")) {
-          muestraMensaje("success", 4000, lee.resultado, lee.mensaje);
-          if (lee.mensaje.includes("correctamente")) {
-            $("#modal1").modal("hide");
-            Listar();
-          }
+        } else if (origen === 'consultar_ucs' && lee.resultado === 'ok') {
+            const select = $("#select_uc");
+            select.empty().append('<option value="">Seleccione...</option>');
+            if(lee.mensaje.length > 0){
+                $.each(lee.mensaje, function(i, item) { select.append(`<option value="${item.uc_id}">${item.uc_nombre}</option>`); });
+            } else { select.append('<option value="" disabled>No hay unidades disponibles</option>'); }
+            select.trigger('change');
+        } else if (origen === 'consultar_ucs_por_malla' && lee.resultado === 'ok') {
+            if(lee.mensaje.length > 0) {
+                $("#contenedorTablaUnidades").show();
+                lee.mensaje.forEach(function(uc) {
+                    const fila = `<tr data-ucid="${uc.uc_id}"><td>${uc.uc_nombre}</td><td>${uc.mal_hora_independiente}</td><td>${uc.mal_hora_asistida}</td><td>${uc.mal_hora_academica}</td><td><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td></tr>`;
+                    $("#tablaUnidadesAgregadas tbody").append(fila);
+                });
+            }
+        } else if (origen === 'consultar_ucs_para_ver' && lee.resultado === 'ok') {
+            const tablaBody = $("#tablaUnidadesVer");
+            tablaBody.empty(); 
+            if(lee.mensaje.length > 0) {
+                lee.mensaje.forEach(function(uc) {
+                    const fila = `<tr><td>${uc.uc_nombre}</td><td>${uc.mal_hora_independiente}</td><td>${uc.mal_hora_asistida}</td><td>${uc.mal_hora_academica}</td></tr>`;
+                    tablaBody.append(fila);
+                });
+            } else { tablaBody.append('<tr><td colspan="4">Esta malla no tiene unidades curriculares asignadas.</td></tr>'); }
+            crearDT('#tablaVerUnidades'); 
+        } else if ((origen === "registrar_malla" || origen === "modificar_malla") && (lee.resultado === "registrar" || lee.resultado === 'modificar')) {
+          muestraMensaje("success", 4000, lee.resultado.toUpperCase(), lee.mensaje);
+          if (lee.mensaje.includes("correctamente")) { $("#modal1").modal("hide"); Listar(); }
         } else if (origen === "eliminar_malla" && lee.resultado === "eliminar") {
-           muestraMensaje("success", 4000, "ELIMINADO", lee.mensaje);
-           $("#modal1").modal("hide");
-           if (lee.mensaje.includes("correctamente")) {
-             Listar();
-           }
-        } else if (lee.resultado === "existe" ) {
-            muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
-        } else if (origen === "asignar_uc_malla_response" && lee.resultado === 'ok') {
-            muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-            $("#modalAsignarUC").modal("hide");
-            ListarAsignacionesUC();
-        } else if (origen === "asignar_certificado_malla_response" && lee.resultado === 'ok') {
-            muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-            $("#modalAsignarCertificado").modal("hide");
-            ListarAsignacionesCertificados();
-        } 
-        else if (origen === "consultar_asignaciones_uc_response" && lee.resultado === 'ok_asignaciones_uc') {
-            destruyeDT("#tablaMallaUC");
-            $("#resultadoAsignacionesUC").empty(); 
-            if(lee.mensaje && lee.mensaje.length > 0){ 
-                $.each(lee.mensaje, function(index, item){
-                    
-                    // --- INICIO DE LÓGICA MODIFICADA ---
-                    let celdaAsignadas = `<span>${item.total_ucs} UC(s) asignada(s)</span>`;
-                    let botonesAcciones = '';
-
-                    if (item.total_ucs > 0) {
-                        // Si hay UCs, creamos el grupo de botones para la columna de acciones
-                        botonesAcciones = `
-                            <div class="d-flex flex-wrap gap-1 justify-content-start">
-                                <button class="btn btn-info btn-sm ver-detalles-btn" 
-                                    data-titulo="UCs para: ${item.malla_nombre}" 
-                                    data-lista="${item.ucs_asignadas}"
-                                    data-vacia="No hay UCs asignadas.">
-                                    Ver Detalles
-                                </button>
-                                <button class="btn btn-info btn-sm gestionar-uc-malla" data-id="${item.mal_id}">
-                                Desvincular UC
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        celdaAsignadas = '<em>Ninguna asignada</em>';
-                        // Opcional: Podrías poner un botón para asignar directamente desde aquí si quisieras
-                        // botonesAcciones = `<button class="btn btn-success btn-sm">Asignar UC</button>`;
-                    }
-                    // --- FIN DE LÓGICA MODIFICADA ---
-
-                    $("#resultadoAsignacionesUC").append(`<tr><td style="display: none;">${item.mal_id}</td><td>${item.mal_codigo}</td><td>${item.malla_nombre}</td><td>${celdaAsignadas}</td><td>${botonesAcciones}</td></tr>`);
-                });
-            }
-            crearDT("#tablaMallaUC");
-            if ($.fn.DataTable.isDataTable("#tablaMallaUC")) { setTimeout(function() { $("#tablaMallaUC").DataTable().columns.adjust().responsive.recalc(); }, 50); }
-        } else if (origen === "consultar_asignaciones_cert_response" && lee.resultado === 'ok_asignaciones_cert') {
-            destruyeDT("#tablaMallaCert");
-            $("#resultadoAsignacionesCert").empty(); 
-            if(lee.mensaje && lee.mensaje.length > 0){ 
-                $.each(lee.mensaje, function(index, item){
-
-                    // --- INICIO DE LÓGICA MODIFICADA ---
-                    let celdaAsignadas = `<span>${item.total_certificados} Certificado(s) asignado(s)</span>`;
-                    let botonesAcciones = '';
-                    
-                    if (item.total_certificados > 0) {
-                        botonesAcciones = `
-                            <div class="d-flex flex-wrap gap-1 justify-content-start">
-                                <button class="btn btn-info btn-sm ver-detalles-btn" 
-                                    data-titulo="Certificados para: ${item.malla_nombre}" 
-                                    data-lista="${item.certificados_asignados}"
-                                    data-vacia="No hay certificados asignados.">
-                                    Ver Detalles
-                                </button>
-                                <button class="btn btn-info btn-sm gestionar-cert-malla" data-id="${item.mal_id}">
-                                    Desvincular Certificado
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        celdaAsignadas = '<em>Ninguno asignado</em>';
-                    }
-                    // --- FIN DE LÓGICA MODIFICADA ---
-                    
-                    $("#resultadoAsignacionesCert").append(`<tr><td style="display: none;">${item.mal_id}</td><td>${item.mal_codigo}</td><td>${item.malla_nombre}</td><td>${celdaAsignadas}</td><td>${botonesAcciones}</td></tr>`);
-                });
-            }
-            crearDT("#tablaMallaCert");
-            if ($.fn.DataTable.isDataTable("#tablaMallaCert")) { setTimeout(function() { $("#tablaMallaCert").DataTable().columns.adjust().responsive.recalc(); }, 50); }
-        } else if (origen === "consultar_ucs_de_malla_response" && lee.resultado === "ok_ucs_por_malla") {
-            const listaElement = $("#listaUCsAsignadas");
-            listaElement.empty();
-            if (lee.mensaje && lee.mensaje.length > 0) {
-                const mal_id = datos.get("mal_id");
-                lee.mensaje.forEach(uc => {
-                    listaElement.append(`<li class="list-group-item d-flex justify-content-between align-items-center"><span class="uc-nombre-texto">${uc.uc_codigo} - ${uc.uc_nombre}</span><button type="button" class="btn btn-danger btn-sm quitar-uc-asignada" data-mal-id="${mal_id}" data-uc-id="${uc.uc_id}">Quitar</button></li>`);
-                });
-            } else {
-                listaElement.append('<li class="list-group-item">No hay Unidades Curriculares asignadas a esta malla.</li>');
-            }
-            $("#modalDesafiliarUC").modal("show");
-        } else if (origen === "quitar_uc_asignada_response" && lee.resultado === "ok") {
-            muestraMensaje("success", 2000, "Éxito", lee.mensaje);
-            extra_data.fadeOut(500, function() { $(this).remove(); }); 
-            ListarAsignacionesUC(); 
-        } else if (origen === "consultar_cert_de_malla_response" && lee.resultado === "ok_cert_por_malla") {
-            const listaElement = $("#listaCertificadosAsignados");
-            listaElement.empty();
-            if (lee.mensaje && lee.mensaje.length > 0) {
-                const mal_id = datos.get("mal_id");
-                lee.mensaje.forEach(cert => {
-                    listaElement.append(`<li class="list-group-item d-flex justify-content-between align-items-center"><span class="cert-nombre-texto">${cert.cert_nombre}</span><button type="button" class="btn btn-danger btn-sm quitar-cert-asignado" data-mal-id="${mal_id}" data-cert-id="${cert.cert_id}">Quitar</button></li>`);
-                });
-            } else {
-                listaElement.append('<li class="list-group-item">No hay Certificados asignados a esta malla.</li>');
-            }
-            $("#modalDesafiliarCertificado").modal("show");
-        } else if (origen === "quitar_cert_asignado_response" && lee.resultado === "ok") {
-            muestraMensaje("success", 2000, "Éxito", lee.mensaje);
-            extra_data.fadeOut(500, function() { $(this).remove(); }); 
-            ListarAsignacionesCertificados(); 
+           muestraMensaje("success", 4000, "ELIMINADO", lee.mensaje); Listar();
+        } else if (origen === "existe") {
+           // popup omitido intencionalmente
         } else if (lee.resultado === 'error') { 
           muestraMensaje("error", 10000, "ERROR", lee.mensaje);
         }
       } catch (e) {
         console.error("Error en análisis JSON:", e, "Respuesta:", respuesta);
-        let errorMsg = "No se pudo procesar la respuesta del servidor: " + e.message;
-        if (typeof respuesta === 'string' && respuesta.length > 0 && respuesta.length < 500) { 
-            errorMsg += "<br><pre style='text-align:left; max-height: 100px; overflow-y:auto;'>" + respuesta.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</pre>";
-        }
-        muestraMensaje("error", 10000, "Error de Comunicación", errorMsg);
+        muestraMensaje("error", 10000, "Error de Comunicación", "No se pudo procesar la respuesta del servidor.");
       }
     },
-    error: function (request, status, err) {
-      if (status == "timeout") {
-        muestraMensaje("error", 5000, "Error de Comunicación", "Servidor ocupado, intente de nuevo.");
-      } else {
-        muestraMensaje("error", 5000, "Error de Comunicación", "ERROR: " + request.responseText + "<br>Status: " + status + "<br>Error: " + err);
-      }
-    },
-    complete: function () { },
+    error: function (request, status, err) { muestraMensaje("error", 5000, "Error de Comunicación", "ERROR: " + request.responseText); },
   });
 }
 
 function limpiaModal1() {
   $("#f")[0].reset();
   $("#mal_id").val("");
-  $(".form-control").removeClass("is-invalid is-valid");
+  $(".form-control").removeClass("is-invalid is-valid").prop("disabled", false);
   $(".form-text").empty();
-  $("#mal_Anio").val("");
+
+  $('#pagina2').hide();
+  $('#botones-pagina2').hide();
+  $('#pagina1').show();
+  $('#botones-pagina1').show();
+  $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)");
+
+  $("#tablaUnidadesAgregadas tbody").empty();
+  $("#contenedorTablaUnidades").hide();
+  $("#select_uc").val(null).trigger('change');
+  $("#filtroUnidadesAgregadas").val('');
 }
 
-function actualizarListaUCsSeleccionadasMalla() {
-  const listaElement = $("#listaUCsSeleccionadasMalla");
-  listaElement.empty();
-  if (carritoUCsParaMalla.length === 0) {
-    listaElement.append('<li class="list-group-item">No hay UCs seleccionadas.</li>');
-    return;
-  }
-  carritoUCsParaMalla.forEach((uc, index) => {
-    listaElement.append(`<li class="list-group-item d-flex justify-content-between align-items-center">${uc.texto}<button type="button" class="btn btn-danger btn-sm quitar-uc-carrito-malla" data-index="${index}">Quitar</button></li>`);
-  });
+function muestraMensaje(icono, tiempo, titulo, mensaje) {
+    Swal.fire({ icon: icono, timer: tiempo, title: titulo, html: mensaje, showConfirmButton: false });
 }
 
-function actualizarListaCertificadosSeleccionadosMalla() {
-  const listaElement = $("#listaCertificadosSeleccionadosMalla");
-  listaElement.empty();
-  if (carritoCertificadosParaMalla.length === 0) {
-    listaElement.append('<li class="list-group-item">No hay Certificados seleccionados.</li>');
-    return;
-  }
-  carritoCertificadosParaMalla.forEach((cert, index) => {
-    listaElement.append(`<li class="list-group-item d-flex justify-content-between align-items-center">${cert.texto}<button type="button" class="btn btn-danger btn-sm quitar-certificado-carrito-malla" data-index="${index}">Quitar</button></li>`);
-  });
+function validarkeyup(er, etiqueta, etiquetamensaje, mensaje = "") {
+    if (er.test(etiqueta.val())) {
+        if(etiquetamensaje) etiquetamensaje.text("");
+        etiqueta.removeClass('is-invalid').addClass('is-valid');
+        return 1;
+    } else {
+        if(etiquetamensaje) etiquetamensaje.text(mensaje);
+        etiqueta.removeClass('is-valid').addClass('is-invalid');
+        return 0;
+    }
 }

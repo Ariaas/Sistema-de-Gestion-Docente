@@ -334,4 +334,65 @@ class Anio extends Connection
         }
         $co = null;
     }
+
+    ///Notificaciones
+
+    public function Notificaciones()
+    {
+        require_once('model/notificaciones.php');
+        $n = new Notificaciones();
+
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $stmt = $co->query("SELECT ani_id, ani_anio, ani_cierra_fase1, ani_cierra_fase2 FROM tbl_anio WHERE ani_estado = 1");
+        $anios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $hoy = new DateTime();
+        $hoy = new DateTime($hoy->format('Y-m-d')); 
+
+        foreach ($anios as $anio) {
+            $cierreFase1 = new DateTime($anio['ani_cierra_fase1']);
+            $cierreFase1 = new DateTime($cierreFase1->format('Y-m-d')); 
+
+            $diasFase1 = (int)$hoy->diff($cierreFase1)->format('%r%a');
+
+            if ($diasFase1 === 20) {
+                $mensaje = "La fase 1 del año {$anio['ani_anio']} está a punto de cerrarse: faltan 20 días.";
+                $fin = (new DateTime($anio['ani_cierra_fase1']))->modify('+20 days')->format('Y-m-d');
+                if (!$n->existeNotificacion($mensaje, $fin)) {
+                    $n->RegistrarNotificacion($mensaje, $fin);
+                }
+            }
+
+            if ($diasFase1 === 0) {
+                $mensaje = "Hoy es el cierre de la fase 1 del año {$anio['ani_anio']}. ";
+                $fin = (new DateTime($anio['ani_cierra_fase1']))->modify('+20 days')->format('Y-m-d');
+                if (!$n->existeNotificacion($mensaje, $fin)) {
+                    $n->RegistrarNotificacion($mensaje, $fin);
+                }
+            }
+
+            $cierreFase2 = new DateTime($anio['ani_cierra_fase2']);
+            $cierreFase2 = new DateTime($cierreFase2->format('Y-m-d')); 
+
+            $diasFase2 = (int)$hoy->diff($cierreFase2)->format('%r%a');
+
+            if ($diasFase2 === 20) {
+                $mensaje = "La fase 2 del año {$anio['ani_anio']} está a punto de cerrarse: faltan 20 días.";
+                $fin = (new DateTime($anio['ani_cierra_fase2']))->modify('+20 days')->format('Y-m-d');
+                if (!$n->existeNotificacion($mensaje, $fin)) {
+                    $n->RegistrarNotificacion($mensaje, $fin);
+                }
+            }
+
+            if ($diasFase2 === 0) {
+                $mensaje = "Hoy es el cierre de la fase 2 del año {$anio['ani_anio']}. ";
+                $fin = (new DateTime($anio['ani_cierra_fase2']))->modify('+20 days')->format('Y-m-d');
+                if (!$n->existeNotificacion($mensaje, $fin)) {
+                    $n->RegistrarNotificacion($mensaje, $fin);
+                }
+            }
+        }
+    }
 }
