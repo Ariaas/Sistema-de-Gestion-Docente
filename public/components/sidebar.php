@@ -108,6 +108,24 @@ foreach (array_keys($gestion_items) as $permiso) {
                     </ul>
                 </li>
             </ul>
+            
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
+                        <span id="notificacionesBadge" class="badge bg-danger" style="display:none;position:absolute;top:8px;right:8px;">!</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdown" style="width:350px;max-width:90vw;">
+                        <li>
+                            <div id="notificacionesPanel" style="padding: 1rem; min-height: 120px; text-align: center;">
+                                <span class="text-muted">No hay notificaciones.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                </li>
+            </ul>
 
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">

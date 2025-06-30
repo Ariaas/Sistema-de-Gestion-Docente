@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="public/css/styles.css">
 
 <!-- Asegúrate de que las rutas a datatables sean correctas si están en otra ubicación -->
-<link rel="stylesheet" href="public/bootstrap/dataTables.bootstrap5.min.css"> 
+<link rel="stylesheet" href="public/bootstrap/dataTables.bootstrap5.min.css">
 
 <script src="public/jquery/jquery-3.7.1.js"></script>
 <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -15,5 +15,6 @@
 <script src="public/bootstrap/dataTables.bootstrap5.min.js"></script>
 <script src="public/jquery/datatable.js"></script>
 
+<!-- <script src="public/js/notificaciones.js"></script> -->
 
 <script src="public/sweetalert2/sweetalert2.js"></script>
