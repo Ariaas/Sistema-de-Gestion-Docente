@@ -6,12 +6,12 @@ if (!is_file("model/" . $pagina . ".php")) {
 
 require_once("model/" . $pagina . ".php");
 
-// Lista actualizada de acciones válidas
+
 $acciones_json_validas = [
     'obtener_datos_selects', 
     'consultar_agrupado',            
     'consultar_detalles_para_grupo',  
-    'registrar_grupo', // Nueva acción para registrar
+    'registrar_grupo', 
     'modificar_grupo',                
     'eliminar_por_seccion_fase',      
     'obtener_uc_por_docente',
@@ -46,7 +46,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'verificar_conflicto_espacio':
-                // Sin cambios
+               
                 $esp_id = $_POST['esp_id'] ?? null;
                 $dia = $_POST['dia'] ?? null;
                 $hora_inicio = $_POST['hora_inicio'] ?? null;
@@ -62,7 +62,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'verificar_conflicto_docente':
-                 // Sin cambios
+                 
                 $doc_id = $_POST['doc_id'] ?? null;
                 $dia = $_POST['dia'] ?? null;
                 $hora_inicio = $_POST['hora_inicio'] ?? null;
@@ -78,7 +78,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'verificar_horario_existente': 
-                 // Sin cambios
+             
                 $sec_id = $_POST['sec_id'] ?? null;
                 $fase_id = $_POST['fase_id'] ?? null;
                 if ($sec_id && $fase_id) {

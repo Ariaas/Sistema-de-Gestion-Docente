@@ -20,7 +20,7 @@ if (!isset($_SESSION['name'])) {
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
-                <button class="btn btn-success px-4" id="incluir">Registrar Docente</button>
+                <button class="btn btn-success px-4" id="registrar">Registrar Docente</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
@@ -104,9 +104,9 @@ if (!isset($_SESSION['name'])) {
                                     <label for="dedicacion" class="form-label">Dedicación</label>
                                     <select class="form-select" name="dedicacion" id="dedicacion" required>
                                         <option value="" disabled selected>Seleccione...</option>
-                                        <option value="Exclusiva">Exclusiva</option>
-                                        <option value="Medio tiempo">Medio tiempo</option>
-                                        <option value="Tiempo completo">Tiempo completo</option>
+                                        <option value="exclusiva">Exclusiva</option>
+                                        <option value="ordinaria">Ordinaria</option>
+                                        <option value="contratado">Contratado</option>
                                     </select>
                                     <span id="sdedicacion" class="text-danger"></span>
                                 </div>
@@ -114,8 +114,9 @@ if (!isset($_SESSION['name'])) {
                                     <label for="condicion" class="form-label">Condición</label>
                                     <select class="form-select" name="condicion" id="condicion" required>
                                         <option value="" disabled selected>Seleccione...</option>
-                                        <option value="Ordinario">Ordinario</option>
-                                        <option value="Contratado">Contratado</option>
+                                        <option value="medio">Medio</option>
+                                        <option value="completo">Completo</option>
+                                        <option value="parcial">Parcial</option>
                                     </select>
                                     <span id="scondicion" class="text-danger"></span>
                                 </div>
@@ -160,6 +161,43 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="modalHoras" tabindex="-1" role="dialog" aria-labelledby="modalHorasLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title" id="modalHorasLabel">Horas de Actividad Asignadas</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Docente:</strong> <span id="nombreDocenteHoras" class="fw-bold"></span></p>
+                        <hr>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Creación Intelectual
+                                <span class="badge bg-primary rounded-pill fs-6" id="horasCreacion">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Integración con la Comunidad
+                                <span class="badge bg-success rounded-pill fs-6" id="horasIntegracion">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Gestión Académica
+                                <span class="badge bg-warning text-dark rounded-pill fs-6" id="horasGestion">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Otras Actividades
+                                <span class="badge bg-secondary rounded-pill fs-6" id="horasOtras">0</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
