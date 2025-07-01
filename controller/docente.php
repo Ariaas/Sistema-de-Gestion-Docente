@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$pagina = 'docente'; // Nombre de la clase del modelo
+$pagina = 'docente'; 
 
 if (!is_file("model/" . $pagina . ".php")) {
     echo "Falta definir la clase " . $pagina;
@@ -27,9 +27,13 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         $bitacora = new Bitacora();
         
-
         if ($accion == 'consultar') {
             echo json_encode($p->Listar());
+
+        } elseif ($accion == 'consultar_horas') { 
+            $doc_id = $_POST['doc_id'] ?? 0;
+            echo json_encode($p->ObtenerHorasActividad($doc_id));
+
         } elseif ($accion == 'eliminar') {
             $p->setCedula($_POST['cedulaDocente']);
             $resultado = $p->Eliminar();

@@ -3,32 +3,36 @@ $(document).ready(function() {
 
     Listar();
 
-    $("#incluir").on("click", function () {
+
+    $("#registrar").on("click", function () {
         limpia();
-        $("#proceso").text("REGISTRAR")
-                     .removeClass("btn-danger btn-warning")
-                     .addClass("btn-primary");
+        $("#proceso").text("REGISTRAR");
+        $("form#f :input").prop('disabled', false);
         $("#modal1 .modal-title").text("Formulario de Registro de Docente");
         $("#modal1").modal("show");
     });
 
+
     $("#proceso").on("click", function () {
         const textoBoton = $(this).text();
 
-        if (textoBoton === "REGISTRAR" || textoBoton === "MODIFICAR") {
+        if (textoBoton === "REGISTRAR") {
             if (validarenvio()) {
                 const datos = new FormData($('#f')[0]);
-                const accion = (textoBoton === "REGISTRAR") ? "incluir" : "modificar";
-                datos.append("accion", accion);
-
-                if (accion === 'modificar') {
-                    datos.append("prefijoCedula", $("#prefijoCedula").val());
-                    datos.append("cedulaDocente", $("#cedulaDocente").val());
-                }
-                
+                datos.append("accion", "incluir");
                 enviaAjax(datos);
             }
-        } else if (textoBoton === "ELIMINAR") {
+        } 
+        else if (textoBoton === "MODIFICAR") {
+            if (validarenvio()) {
+                const datos = new FormData($('#f')[0]);
+                datos.append("accion", "modificar");
+                datos.append("prefijoCedula", $("#prefijoCedula").val());
+                datos.append("cedulaDocente", $("#cedulaDocente").val());
+                enviaAjax(datos);
+            }
+        } 
+        else if (textoBoton === "ELIMINAR") {
             Swal.fire({
                 title: "¿Está seguro de eliminar este docente?",
                 text: "Esta acción no se puede deshacer.",
@@ -49,6 +53,7 @@ $(document).ready(function() {
         }
     });
 
+
     $(document).on('click', '.modificar-btn', function() {
         pone(this, 'modificar');
     });
@@ -56,18 +61,21 @@ $(document).ready(function() {
     $(document).on('click', '.eliminar-btn', function() {
         pone(this, 'eliminar');
     });
-
-    // ===== INICIO DE NUEVAS VALIDACIONES =====
-    // Validar que cédula solo admita números
-    $("#cedulaDocente").on("input", function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
+    
+    $(document).on('click', '.ver-horas-btn', function() {
+        const fila = $(this).closest("tr");
+        const doc_id = fila.data('doc-id');
+        const nombreCompleto = fila.find("td:eq(2)").text() + ' ' + fila.find("td:eq(3)").text();
+        $("#nombreDocenteHoras").text(nombreCompleto);
+        const datos = new FormData();
+        datos.append("accion", "consultar_horas");
+        datos.append("doc_id", doc_id);
+        enviaAjax(datos);
     });
 
-    // Validar que nombre y apellido solo admitan letras y espacios
-    $("#nombreDocente, #apellidoDocente").on("input", function() {
-        this.value = this.value.replace(/[0-9]/g, '');
-    });
-    // ===== FIN DE NUEVAS VALIDACIONES =====
+
+    $("#cedulaDocente").on("input", function() { this.value = this.value.replace(/[^0-9]/g, ''); });
+    $("#nombreDocente, #apellidoDocente").on("input", function() { this.value = this.value.replace(/[0-9]/g, ''); });
 
     $("#cedulaDocente").on("keyup", function () {
         if (!validarkeyup(/^[0-9]{7,8}$/, $(this), $("#scedulaDocente"), "Debe ser una cédula válida (7-8 dígitos).")){
@@ -95,17 +103,16 @@ $(document).ready(function() {
         enviaAjax(datos);
     }
 
-    // ===== FUNCIÓN DE VALIDACIÓN MEJORADA =====
-    function validarenvio() {
+     function validarenvio() {
         let esValido = true;
         
-        // Validaciones de inputs de texto
+       
         if (!validarkeyup(/^[0-9]{7,8}$/, $("#cedulaDocente"), $("#scedulaDocente"), "Debe ser una cédula válida (7-8 dígitos).")) esValido = false;
-        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{4,30}$/, $("#nombreDocente"), $("#snombreDocente"), "El formato del nombre es inválido.")) esValido = false;
-        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{4,30}$/, $("#apellidoDocente"), $("#sapellidoDocente"), "El formato del apellido es inválido.")) esValido = false;
+        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{3,30}$/, $("#nombreDocente"), $("#snombreDocente"), "El formato del nombre es inválido.")) esValido = false;
+        if (!validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{3,30}$/, $("#apellidoDocente"), $("#sapellidoDocente"), "El formato del apellido es inválido.")) esValido = false;
         if (!validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $("#correoDocente"), $("#scorreoDocente"), "El formato del correo es inválido.")) esValido = false;
         
-        // Validaciones de selects
+
         if (!$("#categoria").val()) {
             $("#scategoria").text("Debe seleccionar una categoría.");
             esValido = false;
@@ -127,19 +134,12 @@ $(document).ready(function() {
             $("#scondicion").text("");
         }
 
-        // Validaciones de checkboxes
+   
         if ($("input[name='titulos[]']:checked").length === 0) {
             $("#stitulos").text("Debe seleccionar al menos un título.");
             esValido = false;
         } else { 
             $("#stitulos").text(""); 
-        }
-
-        if ($("input[name='coordinaciones[]']:checked").length === 0) {
-            $("#scoordinaciones").text("Debe seleccionar al menos una coordinación.");
-            esValido = false;
-        } else { 
-            $("#scoordinaciones").text(""); 
         }
 
         if (!esValido) {
@@ -148,7 +148,7 @@ $(document).ready(function() {
         return esValido;
     }
     
-    function pone(pos, accion) {
+      function pone(pos, accion) {
         limpia();
         const fila = $(pos).closest("tr");
         
@@ -221,49 +221,60 @@ $(document).ready(function() {
                         return;
                     }
 
-                    switch (lee.resultado) {
-                        case 'consultar':
-                            if ($.fn.DataTable.isDataTable("#tabladocente")) {
-                                $("#tabladocente").DataTable().destroy();
-                            }
-                            $("#resultadoconsulta").empty();
-                            lee.mensaje.forEach(item => {
-                                $("#resultadoconsulta").append(`
-                                    <tr data-titulos-ids="${item.titulos_ids || ''}" data-coordinaciones-ids="${item.coordinaciones_ids || ''}">
-                                        <td>${item.doc_prefijo}</td>
-                                        <td>${item.doc_cedula}</td>
-                                        <td>${item.doc_nombre}</td>
-                                        <td>${item.doc_apellido}</td>
-                                        <td>${item.doc_correo}</td>
-                                        <td>${item.cat_nombre}</td>
-                                        <td>${item.titulos || 'Sin títulos'}</td>
-                                        <td>${item.coordinaciones || 'Sin coordinaciones'}</td>
-                                        <td>${item.doc_dedicacion}</td>
-                                        <td>${item.doc_condicion}</td>
-                                        <td>
-                                            <button class="btn btn-warning btn-sm modificar-btn">Modificar</button>
-                                            <button class="btn btn-danger btn-sm eliminar-btn">Eliminar</button>
-                                        </td>
-                                    </tr>`);
-                            });
-                            dataTable = $("#tabladocente").DataTable({
-                                paging: true, lengthChange: true, searching: true, ordering: true,
-                                info: true, autoWidth: false, responsive: true, scrollX: true,
-                                language: { url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json' },
-                                order: [[1, "asc"]]
-                            });
-                            break;
-                        case 'incluir':
-                        case 'modificar':
-                        case 'eliminar':
-                            muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-                            $("#modal1").modal("hide");
-                            Listar();
-                            break;
-                        case 'error':
-                        default:
-                            muestraMensaje("error", 5000, "ERROR", lee.mensaje || "Ocurrió un error inesperado.");
-                            break;
+                    if (lee.resultado === 'consultar') {
+                        if ($.fn.DataTable.isDataTable("#tabladocente")) {
+                            $("#tabladocente").DataTable().destroy();
+                        }
+                        $("#resultadoconsulta").empty();
+                        lee.mensaje.forEach(item => {
+                            $("#resultadoconsulta").append(`
+                                <tr data-titulos-ids="${item.titulos_ids || ''}" data-coordinaciones-ids="${item.coordinaciones_ids || ''}" data-doc-id="${item.doc_id}">
+                                    <td>${item.doc_prefijo}</td><td>${item.doc_cedula}</td>
+                                    <td>${item.doc_nombre}</td><td>${item.doc_apellido}</td>
+                                    <td>${item.doc_correo}</td><td>${item.cat_nombre}</td>
+                                    <td>${item.titulos || 'Sin títulos'}</td>
+                                    <td>${item.coordinaciones || 'Sin coordinaciones'}</td>
+                                    <td>${item.doc_dedicacion}</td><td>${item.doc_condicion}</td>
+                                    <td>
+                                        <button class="btn btn-warning btn-sm modificar-btn">Modificar</button>
+                                        <button class="btn btn-danger btn-sm eliminar-btn">Eliminar</button>
+                                        <button class="btn btn-success btn-sm ver-horas-btn">Horas</button>
+                                    </td>
+                                </tr>`);
+                        });
+                        dataTable = $("#tabladocente").DataTable({
+                            paging: true, lengthChange: true, searching: true, ordering: true,
+                            info: true, autoWidth: false, responsive: true, scrollX: true,
+                            language: { url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json' },
+                            order: [[1, "asc"]]
+                        });
+                    } 
+                    else if (lee.resultado === 'consultar_horas' || lee.resultado === 'horas_no_encontradas') {
+                        const horas = lee.mensaje;
+                        $("#horasCreacion").text(horas.act_creacion_intelectual);
+                        $("#horasIntegracion").text(horas.act_integracion_comunidad);
+                        $("#horasGestion").text(horas.act_gestion_academica);
+                        $("#horasOtras").text(horas.act_otras);
+                        $("#modalHoras").modal("show");
+                    } 
+              
+                    else if (lee.resultado === 'incluir') {
+                        muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
+                        $("#modal1").modal("hide");
+                        Listar();
+                    } 
+                    else if (lee.resultado === 'modificar') {
+                        muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
+                        $("#modal1").modal("hide");
+                        Listar();
+                    }
+                    else if (lee.resultado === 'eliminar') {
+                        muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
+                        $("#modal1").modal("hide");
+                        Listar();
+                    }
+                    else {
+                        muestraMensaje("error", 5000, "ERROR", lee.mensaje || "Ocurrió un error inesperado.");
                     }
                 } catch (e) {
                     console.error("Error:", e, "Respuesta:", respuesta);

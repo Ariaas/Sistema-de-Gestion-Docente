@@ -64,7 +64,7 @@ class Docente extends Connection
     public function getCoordinaciones()
     {
         return $this->coordinaciones;
-    } // NUEVO GETTER
+    }
 
     //////////////////////////SETTERS//////////////////////////
     public function setDocId($doc_id)
@@ -354,4 +354,36 @@ class Docente extends Connection
         $p->execute();
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
+
+       public function ObtenerHorasActividad($doc_id)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->prepare("SELECT act_creacion_intelectual, act_integracion_comunidad, act_gestion_academica, act_otras FROM tbl_actividad WHERE doc_id = :doc_id");
+            $stmt->execute([':doc_id' => $doc_id]);
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($resultado) {
+                // Se cambia 'success' por un nombre de acción específico
+                $r['resultado'] = 'consultar_horas';
+                $r['mensaje'] = $resultado;
+            } else {
+                // Se cambia 'no_encontrado' por un nombre de acción específico
+                $r['resultado'] = 'horas_no_encontradas';
+                $r['mensaje'] = [
+                    'act_creacion_intelectual' => 'N/A',
+                    'act_integracion_comunidad' => 'N/A',
+                    'act_gestion_academica' => 'N/A',
+                    'act_otras' => 'N/A'
+                ];
+            }
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        return $r;
+    }
+
 }
