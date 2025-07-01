@@ -52,8 +52,7 @@ class Malla extends Connection
                     $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
                     $stmt->execute();
                     $this->mal_id = $co->lastInsertId();
-                    $stmt_pensum = $co->prepare("INSERT INTO uc_malla
-                     (mal_id, uc_id, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_id, :uc_id, :hora_ind, :hora_asis, :hora_acad)");
+                    $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_id, uc_id, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_id, :uc_id, :hora_ind, :hora_asis, :hora_acad)");
                     foreach ($unidades as $uc) {
                         $stmt_pensum->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
                         $stmt_pensum->bindParam(':uc_id', $uc['uc_id'], PDO::PARAM_INT);
