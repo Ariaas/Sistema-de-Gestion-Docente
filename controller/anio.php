@@ -35,8 +35,16 @@ if (is_file("views/" . $pagina . ".php")) {
             $bitacora->registrarAccion($usu_id, 'eliminar', 'anio');
         } elseif ($accion == 'existe') {
             $c->setAnio($_POST['aniAnio']);
-            $resultado = $c->Existe($_POST['aniAnio']);
+            $c->setTipo($_POST['tipoAnio']);
+            $resultado = $c->Existe($_POST['aniAnio'], $_POST['tipoAnio']);
             echo json_encode($resultado);
+        } elseif ($accion == 'registrar_per') {
+            $idAnioRegular = $_POST['aniId'];
+            echo json_encode($c->RegistrarPer($idAnioRegular));
+            $bitacora->registrarAccion($usu_id, 'registrar PER', 'anio');
+        } elseif ($accion == 'consultar_per') {
+            $idAnioRegular = $_POST['aniId'];
+            echo json_encode($c->ConsultarPerPorAnio($idAnioRegular));
         } elseif ($accion == 'activar') {
             $c->setId($_POST['aniId']);
             $c->setActivo($_POST['aniActivo']);
@@ -44,6 +52,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $bitacora->registrarAccion($usu_id, 'activar', 'anio');
         } else {
             $c->setAnio($_POST['aniAnio']);
+            $c->setTipo($_POST['tipoAnio']);
             $c->setAperturaFase1($_POST['aniAperturaFase1']);
             $c->setCierraFase1($_POST['aniCierraFase1']);
             $c->setAperturaFase2($_POST['aniAperturaFase2']);

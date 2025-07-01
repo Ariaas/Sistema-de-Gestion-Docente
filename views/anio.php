@@ -29,6 +29,7 @@ if (!isset($_SESSION['name'])) {
                             <tr>
                                 <th style="display: none;">ID</th>
                                 <th>Año</th>
+                                <th>Tipo</th>
                                 <th>Apertura Fase 1</th>
                                 <th>Cierre Fase 1</th>
                                 <th>Apertura Fase 2</th>
@@ -56,7 +57,7 @@ if (!isset($_SESSION['name'])) {
 
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <label for="aniAnio" class="form-label">Año</label>
                                         <select class="form-select" name="aniAnio" id="aniAnio" required>
                                             <option value="" disabled>Seleccione un Año</option>
@@ -69,6 +70,14 @@ if (!isset($_SESSION['name'])) {
                                             <?php endfor; ?>
                                         </select>
                                         <span id="saniAnio"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="tipoAnio" class="form-label">Tipo de Año</label>
+                                        <select class="form-select" name="tipoAnio" id="tipoAnio" required>
+                                            <option value="regular">Regular</option>
+                                            <option value="intensivo">Intensivo</option>
+                                        </select>
+                                        <span id="stipoAnio"></span>
                                     </div>
                                 </div>
                             </div>
@@ -106,6 +115,23 @@ if (!isset($_SESSION['name'])) {
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalVerPer">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">PER</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Apertura Fase 1 (PER):</strong> <span id="perApertura1"></span></p>
+                        <p><strong>Apertura Fase 2 (PER):</strong> <span id="perApertura2"></span></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>

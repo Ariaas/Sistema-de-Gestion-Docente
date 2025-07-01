@@ -224,7 +224,7 @@ function pone(pos, accion) {
   }
   
   $("#seccionId").val($(linea).find("td:eq(0)").text());
-  $("#codigoSeccion").val($(linea).find("td:eq(1)").text());
+  $("#codigoSeccion").val($(pos).data("codigo"));
   $("#cantidadSeccion").val($(linea).find("td:eq(2)").text());
   let ani_id = $(linea).find("td:eq(3)").data("anio");
   $("#anioId").val(ani_id);
@@ -259,7 +259,7 @@ function enviaAjax(datos) {
             $("#resultadoconsulta1").append(`
               <tr>
                 <td style="display: none;">${item.sec_id}</td>
-                <td>${item.sec_codigo}</td>
+                <td data-codigo=>IN${item.sec_codigo}</td>
                 <td>${item.sec_cantidad}</td>
                 <td data-anio="${item.ani_id}">${item.ani_anio}</td>
                 <td>

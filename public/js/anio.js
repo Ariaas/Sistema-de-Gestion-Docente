@@ -97,6 +97,7 @@ function Listar() {
           var datos = new FormData();
           datos.append("accion", "registrar");
           datos.append("aniAnio", $("#aniAnio").val());
+          datos.append("tipoAnio", $("#tipoAnio").val());
           datos.append("aniAperturaFase1", $("#aniAperturaFase1").val());
           datos.append("aniCierraFase1", $("#aniCierraFase1").val());
           datos.append("aniAperturaFase2", $("#aniAperturaFase2").val());
@@ -109,6 +110,7 @@ function Listar() {
           var datos = new FormData();
           datos.append("accion", "modificar");
           datos.append("aniAnio", $("#aniAnio").val());
+          datos.append("tipoAnio", $("#tipoAnio").val());
           datos.append("aniId", $("#aniId").val());
           datos.append("aniAperturaFase1", $("#aniAperturaFase1").val());
           datos.append("aniCierraFase1", $("#aniCierraFase1").val());
@@ -156,10 +158,40 @@ function Listar() {
       var currentYear = new Date().getFullYear();
       $("#aniAnio").val(currentYear);
       $("#aniId").prop("disabled", true);
-      $("#aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+      $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+      $("#modal1 .modal-title").text("Formulario de Año Regular/Intensivo");
       $("#modal1").modal("show");
     });
-    
+
+    $('#tablaanio').on('click', '.per-btn', function() {
+        const anioId = $(this).data('id');
+        const tienePer = $(this).data('tiene-per');
+
+        if (tienePer) {
+            const datos = new FormData();
+            datos.append("accion", "consultar_per");
+            datos.append("aniId", anioId);
+            enviaAjax(datos);
+        } else {
+            Swal.fire({
+                title: "¿Crear PER?",
+                text: "Se creará un PER para este año. Esta acción no se puede deshacer.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Sí, crear",
+                cancelButtonText: "Cancelar",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const datos = new FormData();
+                    datos.append("accion", "registrar_per");
+                    datos.append("aniId", anioId);
+                    enviaAjax(datos);
+                }
+            });
+        }
+    });
     
   });
   
@@ -172,7 +204,6 @@ function Listar() {
     enviaAjax(datos, 'existe');
 }
 
-// Escucha el cambio en el select de año
 $("#aniAnio").on("change", function() {
     existeAnio();
 });
@@ -235,6 +266,15 @@ $("#aniAnio").on("change", function() {
         muestraMensaje("error", 4000, "ERROR!", "Por favor, corrija las fechas!");
         return false;
     }
+    if (tipoAnio === null || tipoAnio === "0") {
+      muestraMensaje(
+          "error",
+          4000,
+          "ERROR!",
+          "Por favor, seleccione un tipo!"
+      );
+      return false;
+  }
     
     return true;
   }
@@ -246,18 +286,19 @@ $("#aniAnio").on("change", function() {
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
     $("#aniId").prop("disabled", false);
-    $("#aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+    $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#aniId, #aniAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
+    $("#aniId, #aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
   }
   $("#saniAnio").hide();
   $("#aniId").val($(linea).find("td:eq(0)").text());
   $("#aniAnio").val($(linea).find("td:eq(1)").text());
-  $("#aniAperturaFase1").val(convertirFecha($(linea).find("td:eq(2)").text()));
-  $("#aniCierraFase1").val(convertirFecha($(linea).find("td:eq(3)").text()));
-  $("#aniAperturaFase2").val(convertirFecha($(linea).find("td:eq(4)").text()));
-  $("#aniCierraFase2").val(convertirFecha($(linea).find("td:eq(5)").text()));
+  $("#tipoAnio").val($(linea).find("td:eq(2)").text());
+  $("#aniAperturaFase1").val(convertirFecha($(linea).find("td:eq(3)").text()));
+  $("#aniCierraFase1").val(convertirFecha($(linea).find("td:eq(4)").text()));
+  $("#aniAperturaFase2").val(convertirFecha($(linea).find("td:eq(5)").text()));
+  $("#aniCierraFase2").val(convertirFecha($(linea).find("td:eq(6)").text()));
 
   $("#modal1").modal("show");
 }
@@ -281,10 +322,19 @@ $("#aniAnio").on("change", function() {
             destruyeDT();
             $("#resultadoconsulta").empty();
             $.each(lee.mensaje, function (index, item) {
+              let perButton = '';
+              if (item.ani_tipo === 'Regular') {
+                  const tienePer = item.per_id !== null;
+                  const btnClass = tienePer ? 'btn-info' : 'btn-primary';
+                  const btnText = tienePer ? 'Ver PER' : 'Crear PER';
+                  perButton = `<button class="btn ${btnClass} btn-sm per-btn" data-id="${item.ani_id}" data-tiene-per="${tienePer}">${btnText}</button>`;
+              }
+
               $("#resultadoconsulta").append(`
                 <tr>
                   <td style="display: none;">${item.ani_id}</td>
                   <td>${item.ani_anio}</td>
+                  <td>${item.ani_tipo}</td>
                   <td>${item.ani_apertura_fase1}</td>
                   <td>${item.ani_cierra_fase1}</td>
                   <td>${item.ani_apertura_fase2}</td>
@@ -300,6 +350,7 @@ $("#aniAnio").on("change", function() {
                   <td>
                     <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}">Modificar</button>
                     <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}">Eliminar</button>
+                    ${perButton}
                   </td>
                 </tr>
               `);
@@ -350,6 +401,11 @@ $("#aniAnio").on("change", function() {
               Listar();
             }
           }
+          else if (lee.resultado == "consultar_per") {
+            $("#perApertura1").text(lee.mensaje.per_apertura_fase1);
+            $("#perApertura2").text(lee.mensaje.per_apertura_fase2);
+            $("#modalVerPer").modal("show");
+          }
           else if (lee.resultado == "activar") {
             muestraMensaje("info", 2000, "ESTADO", lee.mensaje);
             Listar();
@@ -376,6 +432,7 @@ $("#aniAnio").on("change", function() {
   function limpia() {
     $("#aniId").val("");
     $("#aniAnio").val("");
+    $("#tipoAnio").val("");
     $("#aniAperturaFase1").val("");
     $("#aniCierraFase1").val("");
     $("#aniAperturaFase2").val("");

@@ -52,7 +52,7 @@ class Malla extends Connection
                     $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
                     $stmt->execute();
                     $this->mal_id = $co->lastInsertId();
-                    $stmt_pensum = $co->prepare("INSERT INTO uc_pensum (mal_id, uc_id, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_id, :uc_id, :hora_ind, :hora_asis, :hora_acad)");
+                    $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_id, uc_id, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_id, :uc_id, :hora_ind, :hora_asis, :hora_acad)");
                     foreach ($unidades as $uc) {
                         $stmt_pensum->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
                         $stmt_pensum->bindParam(':uc_id', $uc['uc_id'], PDO::PARAM_INT);
@@ -113,10 +113,10 @@ class Malla extends Connection
                     $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
                     $stmt->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
                     $stmt->execute();
-                    $stmt_delete = $co->prepare("DELETE FROM uc_pensum WHERE mal_id = :mal_id");
+                    $stmt_delete = $co->prepare("DELETE FROM uc_malla WHERE mal_id = :mal_id");
                     $stmt_delete->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
                     $stmt_delete->execute();
-                    $stmt_pensum = $co->prepare("INSERT INTO uc_pensum (mal_id, uc_id, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_id, :uc_id, :hora_ind, :hora_asis, :hora_acad)");
+                    $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_id, uc_id, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_id, :uc_id, :hora_ind, :hora_asis, :hora_acad)");
                     foreach ($unidades as $uc) {
                         $stmt_pensum->bindParam(':mal_id', $this->mal_id, PDO::PARAM_INT);
                         $stmt_pensum->bindParam(':uc_id', $uc['uc_id'], PDO::PARAM_INT);
@@ -243,7 +243,7 @@ class Malla extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT p.uc_id, u.uc_nombre, p.mal_hora_independiente, p.mal_hora_asistida, p.mal_hora_academica FROM uc_pensum p INNER JOIN tbl_uc u ON p.uc_id = u.uc_id WHERE p.mal_id = :mal_id");
+            $stmt = $co->prepare("SELECT p.uc_id, u.uc_nombre, p.mal_hora_independiente, p.mal_hora_asistida, p.mal_hora_academica FROM uc_malla p INNER JOIN tbl_uc u ON p.uc_id = u.uc_id WHERE p.mal_id = :mal_id");
             $stmt->bindParam(':mal_id', $mal_id, PDO::PARAM_INT);
             $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
