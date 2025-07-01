@@ -50,6 +50,13 @@ if (is_file("views/" . $pagina . ".php")) {
                 ]);
                 break;
 
+            case 'listar_docentes_con_archivos':
+                echo json_encode([
+                    'resultado' => 'ok_docentes',
+                    'datos' => $archivo->obtenerDocentesConArchivos()
+                ]);
+                break;
+
             case 'eliminar':
                 if (isset($_POST['nombre_archivo'])) {
                     echo json_encode($archivo->eliminarArchivo($_POST['nombre_archivo']));

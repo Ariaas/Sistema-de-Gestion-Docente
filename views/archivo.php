@@ -22,6 +22,7 @@ if (!isset($_SESSION['name'])) {
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Resguardar Notas</h2>
 
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+                <button class="btn btn-info px-4 me-2" id="btnListadoDocentes">Listado de docentes</button>
                 <button class="btn btn-success px-4" id="btnSubir">Registrar Notas</button>
             </div>
 
@@ -40,7 +41,7 @@ if (!isset($_SESSION['name'])) {
             </div>
         </section>
 
-       
+
         <div class="modal fade" tabindex="-1" role="dialog" id="modalArchivo">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -64,7 +65,7 @@ if (!isset($_SESSION['name'])) {
                                         <option value="" disabled selected>Seleccione un docente</option>
                                         <?php
                                         foreach ($docentes as $docente) {
-                                            echo "<option value='" . htmlspecialchars($docente['doc_nombre']) . "'>" . htmlspecialchars($docente['doc_nombre']) . "</option>";
+                                            echo "<option value='" . htmlspecialchars($docente['doc_nombre_completo']) . "'>" . htmlspecialchars($docente['doc_nombre_completo']) . "</option>";
                                         }
                                         ?>
                                     </select>
@@ -97,6 +98,25 @@ if (!isset($_SESSION['name'])) {
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalDocentesConArchivos">
+            <div class="modal-dialog " role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">Docentes con Notas Resguardadas</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>A continuación se muestra cada docente y la fecha de su último resguardo:</p>
+                        <ul class="list-group" id="listaDocentesReporte">
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CERRAR</button>
                     </div>
                 </div>
             </div>

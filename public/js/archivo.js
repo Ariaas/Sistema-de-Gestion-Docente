@@ -5,8 +5,8 @@ function listarArchivos() {
     destruyeDT();
     crearDT();
 }
-function destruyeDT() {
 
+function destruyeDT() {
     if ($.fn.DataTable.isDataTable("#tablaArchivo")) { 
         $("#tablaArchivo").DataTable().destroy();
     }
@@ -38,7 +38,7 @@ function crearDT() {
                 },
             },
             autoWidth: false,
-            order: [[1, "asc"]], 
+            order: [[0, "asc"]], 
             dom:
                 "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
                 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
@@ -67,8 +67,6 @@ function crearDT() {
     }
 }
 
-
-
 function enviaAjax(datos) {
     $.ajax({
         async: true,
@@ -78,9 +76,7 @@ function enviaAjax(datos) {
         data: datos,
         processData: false,
         cache: false,
-        beforeSend: function () {
-           
-        },
+        beforeSend: function () {},
         timeout: 10000, 
         success: function (respuesta) {
             try {
@@ -115,30 +111,44 @@ function enviaAjax(datos) {
                     crearDT();
                 }
 
-                else if (lee.success !== "success") { 
-                    if (lee.success) {
-                        muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-                        $("#modalArchivo").modal("hide");
-                        listarArchivos(); 
+                else if (lee.resultado === 'ok_docentes') {
+                    $("#listaDocentesReporte").empty();
+                    if (Array.isArray(lee.datos) && lee.datos.length > 0) {
+                        $.each(lee.datos, function(index, item) {
+                            const listItem = `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    ${htmlspecialchars(item.nombre)}
+                                    <span class="badge bg-primary rounded-pill">${item.fecha}</span>
+                                </li>
+                            `;
+                            $("#listaDocentesReporte").append(listItem);
+                        });
                     } else {
-                        muestraMensaje("error", 5000, "ERROR", lee.mensaje);
+                        $("#listaDocentesReporte").append(
+                            '<li class="list-group-item">Aún no hay docentes con archivos subidos.</li>'
+                        );
                     }
-                    destruyeDT();
-                    crearDT();
+                    $('#modalDocentesConArchivos').modal('show');
                 }
+
                 else if (lee.resultado === "eliminar") {
+                    muestraMensaje("success", 3000, "ÉXITO", lee.mensaje); 
+                    listarArchivos(); 
+                }
+
+                else if (lee.success === true) { 
                     muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-                    listarArchivos();
+                    $("#modalArchivo").modal("hide");
+                    listarArchivos(); 
                 }
+                
                 else {
-                    muestraMensaje("error", 10000, "ERROR", "Respuesta inesperada del servidor: " + lee.mensaje || JSON.stringify(lee));
+                    muestraMensaje("error", 5000, "ERROR", lee.mensaje || "Ocurrió un error inesperado.");
                 }
-                destruyeDT();
-                crearDT();
 
             } catch (e) {
-                console.error("Error en análisis JSON:", e);
-                muestraMensaje("error", 10000, "ERROR!!!!", "Respuesta inválida del servidor. Detalles en consola.");
+                console.error("Error en análisis JSON:", e, respuesta);
+                muestraMensaje("error", 10000, "ERROR", "Respuesta inválida del servidor. Detalles en consola.");
             }
         },
         error: function (request, status, err) {
@@ -152,7 +162,6 @@ function enviaAjax(datos) {
 
     });
 }
-
 
 function eliminarArchivo(nombreArchivoEncoded) {
     const nombreArchivo = decodeURIComponent(nombreArchivoEncoded);
@@ -171,14 +180,12 @@ function eliminarArchivo(nombreArchivoEncoded) {
             var datos = new FormData();
             datos.append("accion", "eliminar");
             datos.append("nombre_archivo", nombreArchivoEncoded); 
-            enviaAjax(datos);
-            listarArchivos();
+            enviaAjax(datos); 
         } else {
             muestraMensaje("info", 2000, "CANCELADO", "La eliminación ha sido cancelada.");
         }
     });
 }
-
 
 function htmlspecialchars(str) {
     var map = {
@@ -198,7 +205,13 @@ $(document).ready(function () {
     $('#btnSubir').click(function() {
         $('#modalArchivo').modal('show');
     });
-
+   
+    $('#btnListadoDocentes').click(function() {
+        var datos = new FormData();
+        datos.append("accion", "listar_docentes_con_archivos");
+        enviaAjax(datos);
+    });
+    
 
     $('#modalArchivo').on('hidden.bs.modal', function () {
         $('#formArchivo')[0].reset(); 
@@ -208,49 +221,44 @@ $(document).ready(function () {
         $('#sucurricular').text('');
     });
 
-    $('#formArchivo').submit(function(e) {
-        e.preventDefault(); 
+      $('#formArchivo').submit(function(e) {
+        e.preventDefault();
 
         const archivoInput = document.getElementById('archivo');
         const docenteSelect = document.getElementById('docente');
         const ucurricularSelect = document.getElementById('ucurricular');
         const fechaInput = document.getElementById('fecha');
 
-        let isValid = true;
+        $('#sdocente').text('');
+        $('#sucurricular').text('');
 
         if (!archivoInput.files.length) {
             muestraMensaje("error", 3000, "ERROR", "Debe seleccionar un archivo.");
-            isValid = false;
-        }
-        if (!docenteSelect.value) {
-            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar un docente.");
-            $('#sdocente').text('Seleccione un docente.');
-            isValid = false;
-        } else {
-            $('#sdocente').text('');
-        }
-        if (!ucurricularSelect.value) {
-            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar una unidad curricular.");
-            $('#sucurricular').text('Seleccione una unidad curricular.');
-            isValid = false;
-        } else {
-            $('#sucurricular').text('');
-        }
-        if (!fechaInput.value) {
-            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar una fecha.");
-            isValid = false;
-        }
-
-        if (!isValid) {
             return; 
         }
 
+        if (!docenteSelect.value) {
+            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar un docente.");
+            $('#sdocente').text('Seleccione un docente.');
+            return; 
+        }
+        
+        if (!ucurricularSelect.value) {
+            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar una unidad curricular.");
+            $('#sucurricular').text('Seleccione una unidad curricular.');
+            return; 
+        }
+       
+        if (!fechaInput.value) {
+            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar una fecha.");
+            return; 
+        }
+        
         var formData = new FormData(this);
-        formData.append('accion', 'subir'); 
-
-        enviaAjax(formData); 
+        formData.append('accion', 'subir');
+        enviaAjax(formData);
     });
-
+    
 });
 
 function muestraMensaje(icon, timer, title, text) {

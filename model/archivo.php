@@ -3,13 +3,13 @@ require_once('model/dbconnection.php');
 
 class Archivo extends Connection
 {
-    private $uploadDir = __DIR__ . '/../archivos_subidos/';
+    private $archivosDir = __DIR__ . '/../archivos_subidos/';
 
     public function __construct()
     {
         parent::__construct();
-        if (!file_exists($this->uploadDir)) {
-            mkdir($this->uploadDir, 0777, true);
+        if (!file_exists($this->archivosDir)) {
+            mkdir($this->archivosDir, 0777, true);
         }
     }
 
@@ -48,13 +48,13 @@ class Archivo extends Connection
     public function listarArchivosLocales()
     {
         $archivos = [];
-        $files = scandir($this->uploadDir);
+        $files = scandir($this->archivosDir);
 
         foreach ($files as $file) {
             if ($file !== '.' && $file !== '..') {
                 $archivos[] = [
                     'nombre_guardado' => $file,
-                    'ruta_completa' => $this->uploadDir . $file
+                    'ruta_completa' => $this->archivosDir . $file
                 ];
             }
         }
@@ -63,7 +63,7 @@ class Archivo extends Connection
 
     public function eliminarArchivo($nombreArchivo)
     {
-        $ruta = $this->uploadDir . $nombreArchivo;
+        $ruta = $this->archivosDir . $nombreArchivo;
 
         if (file_exists($ruta)) {
             if (unlink($ruta)) {
@@ -76,11 +76,53 @@ class Archivo extends Connection
         }
     }
 
+ 
+    public function obtenerDocentesConArchivos()
+    {
+        $docentesInfo = [];
+        $archivosLocales = $this->listarArchivosLocales();
+        $todosLosDocentes = $this->obtenerdocente();
+
+        foreach ($archivosLocales as $archivo) {
+            $nombreArchivo = $archivo['nombre_guardado'];
+
+            foreach ($todosLosDocentes as $docente) {
+                $nombreCompleto = $docente['doc_nombre_completo'];
+                $llaveDocente = str_replace(' ', '_', $nombreCompleto) . '_';
+
+                if (strpos($nombreArchivo, $llaveDocente) === 0) {
+
+                    preg_match('/_(\d{4}-\d{2}-\d{2})\./', $nombreArchivo, $matches);
+                    $fecha = $matches[1] ?? null;
+
+                    if ($fecha) {
+                        if (!isset($docentesInfo[$nombreCompleto]) || $fecha > $docentesInfo[$nombreCompleto]) {
+                            $docentesInfo[$nombreCompleto] = $fecha;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        $resultadoFinal = [];
+        foreach ($docentesInfo as $nombre => $fecha) {
+            $resultadoFinal[] = ['nombre' => $nombre, 'fecha' => $fecha];
+        }
+
+        usort($resultadoFinal, function ($a, $b) {
+            return $b['fecha'] <=> $a['fecha'];
+        });
+
+        return $resultadoFinal;
+    }
+
     public function obtenerdocente()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $p = $co->prepare("SELECT doc_id,doc_nombre FROM tbl_docente");
+        $p = $co->prepare("SELECT doc_id, CONCAT_WS(' ', doc_nombre, doc_apellido) AS doc_nombre_completo FROM tbl_docente");
+
         $p->execute();
         $r = $p->fetchAll(PDO::FETCH_ASSOC);
         return $r;
