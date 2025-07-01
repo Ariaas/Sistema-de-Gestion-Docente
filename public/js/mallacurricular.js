@@ -141,7 +141,7 @@ $(document).ready(function () {
 
     $("#mal_nombre").on("keydown", function () {
   
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,20}$/,$("#mal_nombre"),$("#smalnombre"),"El formato permite de 5 a 20 carácteres, Ej:Malla 1");
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,20}$/,$("#mal_nombre"),$("#smalnombre"),"El formato permite de 5 a 20 carácteres, Ej:Malla 1");
    
     });
     $("#mal_nombre").on("keyup", function () {
