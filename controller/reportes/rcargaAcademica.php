@@ -2,150 +2,107 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
+
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../model/reportes/rcargaAcademica.php';
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-
-if (!is_file("model/reportes/rcargaAcademica.php")) { 
-    die("Error crítico: No se encuentra el archivo del modelo (rucmodel.php). Contacte al administrador.");
+if (!is_file("model/reportes/rcargaAcademica.php")) {
+    die("Error crítico: No se encuentra el archivo del modelo.");
 }
-require_once("model/reportes/rcargaAcademica.php"); 
 
 $vistaFormularioUc = "views/reportes/rcargaAcademica.php";
 if (!is_file($vistaFormularioUc)) {
-    die("Error crítico: No se encuentra el archivo de la vista del formulario (ruc.php). Contacte al administrador.");
+    die("Error crítico: No se encuentra el archivo de la vista del formulario (ruc.php).");
 }
 
 $oUc = new Carga();
-$trayectos = $oUc->obtenerTrayectos();
-$secciones = $oUc->obtenerSecciones(); 
 
 if (isset($_POST['generar_uc'])) {
-    $oUc->set_trayecto(isset($_POST['trayecto']) ? $_POST['trayecto'] : '');
-    $oUc->set_seccion(isset($_POST['seccion']) ? $_POST['seccion'] : '');
 
-    $unidades = $oUc->obtenerUnidadesCurriculares();
+    $oUc->set_trayecto($_POST['trayecto'] ?? '');
+    $oUc->set_seccion($_POST['seccion'] ?? '');
+    $datosReporte = $oUc->obtenerUnidadesCurriculares();
 
-    $reportTitle = "CARGA ACADÉMICA GENERAL";
-    $nombreTrayectoFiltrado = null;
-    if (!empty($_POST['trayecto'])) {
-        foreach ($trayectos as $t) {
-            if ($t['tra_id'] == $_POST['trayecto']) {
-                $nombreTrayectoFiltrado = $t['tra_numero'];
-                break;
+    $datosAgrupados = [];
+    if ($datosReporte) {
+        foreach ($datosReporte as $fila) {
+            $trayecto = $fila['Número de Trayecto'];
+            $seccion = $fila['Código de Sección'];
+            $datosAgrupados[$trayecto][$seccion][] = $fila;
+        }
+    } 
+
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle("CARGA ACADEMICA");
+
+    $styleHeaderTrayecto = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    $styleHeaderColumnas = ['font' => ['bold' => true], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleCentradoVertical = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER]];
+
+    $columnaInicial = 2; 
+
+    foreach ($datosAgrupados as $numTrayecto => $secciones) {
+        $filaActual = 3; 
+
+        $celdaInicio = Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual;
+        $celdaFin = Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual;
+        $sheet->mergeCells("{$celdaInicio}:{$celdaFin}");
+        $sheet->setCellValue($celdaInicio, "TRAYECTO " . $numTrayecto);
+        $sheet->getStyle("{$celdaInicio}:{$celdaFin}")->applyFromArray($styleHeaderTrayecto);
+        $filaActual++;
+
+        $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual, "SECCION");
+        $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 1) . $filaActual, "UNIDAD CURRICULAR");
+        $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual, "DOCENTE");
+        $sheet->getStyle(Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual . ':' . Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual)->applyFromArray($styleHeaderColumnas);
+        $filaActual++;
+
+        $filaInicioDatos = $filaActual;
+
+        foreach ($secciones as $codSeccion => $unidades) {
+            $numFilasSeccion = count($unidades);
+            if ($numFilasSeccion > 1) {
+                $rangoMergeSeccion = Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual . ':' . Coordinate::stringFromColumnIndex($columnaInicial) . ($filaActual + $numFilasSeccion - 1);
+                $sheet->mergeCells($rangoMergeSeccion);
+            }
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual, $codSeccion);
+
+            foreach ($unidades as $item) {
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 1) . $filaActual, $item['Nombre de la Unidad Curricular']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual, $item['Nombre Completo del Docente']);
+                $filaActual++;
             }
         }
-        if ($nombreTrayectoFiltrado) {
-            $reportTitle = "TRAYECTO " . mb_strtoupper($nombreTrayectoFiltrado);
-        }
+
+        $rangoTabla = Coordinate::stringFromColumnIndex($columnaInicial) . ($filaInicioDatos - 1) . ':' . Coordinate::stringFromColumnIndex($columnaInicial + 2) . ($filaActual - 1);
+        $sheet->getStyle($rangoTabla)->applyFromArray($styleBordes);
+        $sheet->getStyle($rangoTabla)->applyFromArray($styleCentradoVertical);
+
+        $columnaInicial += 4; 
     }
 
-   
-    $groupedData = [];
-    if ($unidades && count($unidades) > 0) {
-        foreach ($unidades as $uc) {
-            $trayectoNum = $uc['Número de Trayecto'];
-            $seccionCod = $uc['Código de Sección'];
-          
-            $groupedData[$trayectoNum][$seccionCod][] = $uc;
-        }
+    foreach (range('A', Coordinate::stringFromColumnIndex($columnaInicial)) as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
     }
 
-   
-    $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
-    $html .= '<title>' . htmlspecialchars($reportTitle) . '</title>';
-    $html .= '<style>
-        @page { margin: 20px 25px; }
-        body { font-family: Arial, sans-serif; font-size: 8px; color: #000; }
-        .report-title { text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        th, td { 
-            border: 1px solid #000; /* Bordes negros y delgados */
-            padding: 2px 4px;     /* Padding reducido */
-            text-align: left; 
-            vertical-align: middle; /* Centrado vertical para celdas con rowspan */
-        }
-        th { 
-            background-color: #FFFFFF; /* Fondo blanco para encabezados como en RED.jpg */
-            font-weight: bold; 
-            text-align: center; 
-            font-size: 9px;
-        }
-        td.trayecto-cell, td.seccion-cell {
-            text-align: center; /* Centrado horizontal para celdas de Trayecto y Sección */
-        }
-        .uc-column { width: 40%; }
-        .docente-column { width: 30%; }
-        .seccion-column { width: 15%; }
-        .trayecto-column { width: 15%; }
-    </style>';
-    $html .= '</head><body>';
-    $html .= '<div class="report-title">' . htmlspecialchars($reportTitle) . '</div>';
-
-    $html .= '<table><thead><tr>';
-    $html .= '<th class="trayecto-column">Trayecto</th>';
-    $html .= '<th class="seccion-column">Sección</th>';
-    $html .= '<th class="uc-column">Unidad curricular</th>';
-    $html .= '<th class="docente-column">Docente</th>';
-    $html .= '</tr></thead><tbody>';
-
-    if (!empty($groupedData)) {
-        foreach ($groupedData as $trayectoNum => $seccionesData) {
-            $trayectoRowCount = 0;
-            foreach ($seccionesData as $unidadesEnSeccion) {
-                $trayectoRowCount += count($unidadesEnSeccion);
-            }
-            $isFirstRowOfTrayecto = true;
-
-            foreach ($seccionesData as $seccionCod => $unidadesEnSeccion) {
-                $seccionRowCount = count($unidadesEnSeccion);
-                $isFirstRowOfSeccion = true;
-
-                foreach ($unidadesEnSeccion as $uc) {
-                    $html .= '<tr>';
-                    if ($isFirstRowOfTrayecto && $isFirstRowOfSeccion) {
-                        $html .= '<td class="trayecto-cell" rowspan="' . $trayectoRowCount . '">' . htmlspecialchars($trayectoNum) . '</td>';
-                    }
-                    if ($isFirstRowOfSeccion) {
-                        $html .= '<td class="seccion-cell" rowspan="' . $seccionRowCount . '">' . htmlspecialchars($seccionCod) . '</td>';
-                    }
-                    $html .= '<td>' . htmlspecialchars($uc['Nombre de la Unidad Curricular']) . '</td>';
-                    $html .= '<td>' . htmlspecialchars($uc['Nombre Completo del Docente']) . '</td>';
-                    $html .= '</tr>';
-
-                    $isFirstRowOfSeccion = false;
-                    $isFirstRowOfTrayecto = false;
-                }
-            }
-        }
-    } else {
-        $html .= '<tr><td colspan="4" style="text-align:center; padding: 20px;">No se encontraron unidades curriculares con los criterios seleccionados.</td></tr>';
-    }
-
-    $html .= '</tbody></table>';
-    $html .= '</body></html>';
-
-    $html = mb_convert_encoding($html, 'UTF-8', 'UTF-8');
-
-    $options = new Options();
-    $options->set('isHtml5ParserEnabled', true);
-    $options->set('isRemoteEnabled', true);
-    $options->set('defaultFont', 'Arial');
-   
-
-    $dompdf = new Dompdf($options);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-
+    $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-
-    $outputFileName = "CargaAcademica_" . ($nombreTrayectoFiltrado ? str_replace(array(' ', '/'), '_', $nombreTrayectoFiltrado) : "General") . ".pdf";
-    $dompdf->stream($outputFileName, array("Attachment" => false));
+    $fileName = "Carga_Academica_" . date('Y-m-d') . ".xlsx";
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $fileName . '"');
+    header('Cache-Control: max-age=0');
+    $writer->save('php://output');
     exit;
 } else {
+    $trayectos = $oUc->obtenerTrayectos();
+    $secciones = $oUc->obtenerSecciones();
     require_once($vistaFormularioUc);
 }

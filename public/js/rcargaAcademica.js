@@ -1,5 +1,5 @@
 
-
+ 
 document.addEventListener('DOMContentLoaded', function () {
     const generarBtnUc = document.getElementById("generar_uc");
     const trayectoSelect = document.getElementById("trayecto");

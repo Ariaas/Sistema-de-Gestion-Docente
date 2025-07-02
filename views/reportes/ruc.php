@@ -6,14 +6,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <?php require_once("public/components/head.php"); 
+    <?php require_once("public/components/head.php");
     ?>
     <title>Reportes Unidades Curriculares</title>
 
 </head>
 
 <body>
-    <?php require_once("public/components/sidebar.php"); 
+    <?php require_once("public/components/sidebar.php");
     ?>
 
     <main class="main-content flex-shrink-0" style="padding-top: 20px;">
@@ -26,14 +26,14 @@
                 <div class="card p-4 shadow-sm bg-white rounded">
                     <form method="post" action="" id="fReporteUnidadCurricular" target="_blank">
                         <div class="row mb-3 align-items-end">
-                            <div class="col-md-6"> 
+                            <div class="col-md-6">
                                 <label for="trayecto" class="form-label">Filtrar por Trayecto:</label>
                                 <select class="form-select" name="trayecto" id="trayecto">
                                     <option value="">Seleccione un trayecto</option>
                                     <?php
-                                    
+
                                     if (!empty($trayectos)) {
-                                        foreach ($trayectos as $Trayecto) { 
+                                        foreach ($trayectos as $Trayecto) {
                                             echo "<option value='" . htmlspecialchars($Trayecto['tra_id']) . "'>" . htmlspecialchars($Trayecto['tra_numero']) . "</option>";
                                         }
                                     } else {
@@ -42,14 +42,14 @@
                                     ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"> 
+                            <div class="col-md-6">
                                 <label for="ucurricular" class="form-label">Filtrar por Unidad curricular:</label>
                                 <select class="form-select" name="ucurricular" id="ucurricular">
                                     <option value="">Seleccione una unidad curricular</option>
                                     <?php
-                                    
+
                                     if (!empty($unidadesc)) {
-                                        foreach ($unidadesc as $unidadc) { 
+                                        foreach ($unidadesc as $unidadc) {
                                             echo "<option value='" . htmlspecialchars($unidadc['uc_id']) . "'>" . htmlspecialchars($unidadc['uc_nombre']) . "</option>";
                                         }
                                     } else {
@@ -63,8 +63,8 @@
                         <hr class="my-4">
                         <div class="row">
                             <div class="col-md text-center">
-                                <button type="submit" class="btn btn-primary btn-lg" id="generar_uc" name="generar_uc">
-                                    <i class="fas fa-file-pdf me-2"></i>Crear Reporte PDF
+                                <button type="submit" class="btn btn-success btn-lg" id="generar_uc" name="generar_uc">
+                                    <i class="fas fa-file-excel me-2"></i>Crear Reporte EXCEL
                                 </button>
                             </div>
                         </div>

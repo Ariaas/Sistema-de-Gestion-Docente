@@ -5,41 +5,20 @@ if (session_status() == PHP_SESSION_NONE) {
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../model/reportes/rtranscripcion.php';
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
+$oReporte = new Transcripcion();
 
-$modeloTranscripcionPath = "model/reportes/rtranscripcion.php";
-if (!is_file($modeloTranscripcionPath)) {
-    die("Error crítico: No se encuentra el archivo del modelo (rtranscripcion.php). Contacte al administrador.");
-}
-require_once($modeloTranscripcionPath);
+if (isset($_POST['generar_transcripcion'])) {
 
-
-$vistaFormularioTranscripcion = "views/reportes/rtranscripcion.php";
-if (!is_file($vistaFormularioTranscripcion)) {
-    die("Error crítico: No se encuentra el archivo de la vista del formulario (rtranscripcion.php). Contacte al administrador.");
-}
-$oReporteAsignacion = new Transcripcion(); 
-$anios = $oReporteAsignacion->obtenerAnios();
-$fases = $oReporteAsignacion->obtenerFases();
-
-if (isset($_POST['generar_transcripcion'])) { 
-    $selectedAnio = isset($_POST['anio']) ? $_POST['anio'] : '';
-    $selectedFase = isset($_POST['fase']) ? $_POST['fase'] : ''; 
-
-    if (empty($selectedAnio)) {
-       
-        die("Error: El Año es un filtro requerido. Por favor, regrese y seleccione un año.");
-    }
-
-    $oReporteAsignacion->set_anio($selectedAnio);
-    $oReporteAsignacion->set_fase($selectedFase);
-
-    $reportData = $oReporteAsignacion->obtenerTranscripciones();
+    $reportData = $oReporte->obtenerTranscripciones();
 
     $groupedData = [];
-    if ($reportData && count($reportData) > 0) {
+    if ($reportData) {
         foreach ($reportData as $row) {
             $teacherKey = $row['IDDocente'];
             if (!isset($groupedData[$teacherKey])) {
@@ -49,122 +28,84 @@ if (isset($_POST['generar_transcripcion'])) {
                     'assignments' => []
                 ];
             }
-            $groupedData[$teacherKey]['assignments'][] = [
-                'NombreUnidadCurricular' => $row['NombreUnidadCurricular'],
-                'NombreSeccion' => $row['NombreSeccion'],
-                'FaseHorario' => $row['FaseHorario'] 
-            ];
+            $groupedData[$teacherKey]['assignments'][] = $row;
         }
     }
 
-    $isAllPhasesMode = empty($selectedFase);
-    $reportMainTitle = "ASIGNACIÓN DE SECCIONES";
-    $reportSubTitleParts = [];
-    if (!empty($selectedAnio)) {
-        $reportSubTitleParts[] = "AÑO: " . htmlspecialchars($selectedAnio);
-    }
-    if (!$isAllPhasesMode) {
-        $reportSubTitleParts[] = "FASE: " . htmlspecialchars($selectedFase);
-    } else {
-        $reportSubTitleParts[] = "TODAS LAS FASES";
-    }
-    $reportSubTitle = implode(" - ", $reportSubTitleParts);
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle("TRANSCRIPCION");
 
-    $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
-    $html .= '<title>' . htmlspecialchars($reportMainTitle) . '</title>';
-    $html .= '<style>
-        @page { margin: 20px 25px; }
-        body { font-family: Arial, sans-serif; font-size: 9px; color: #000; }
-        .report-main-title { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
-        .report-sub-title { text-align: center; font-size: 11px; font-weight: normal; margin-bottom: 15px; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        th, td { border: 1px solid #333; padding: 2px 4px; text-align: left; vertical-align: middle; font-size: 8px; }
-        th { background-color: #E0E0E0; font-weight: bold; text-align: center; font-size: 9px; }
-        td.text-center { text-align: center; }
-        td.cell-seccion { text-align: center; }
-        td.cell-fase { text-align: center; }
+    $styleTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    $styleHeader = ['font' => ['bold' => true], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleData = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_LEFT]];
+    $styleDataCenter = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER]];
+ 
+    $sheet->mergeCells('A1:E1')->setCellValue('A1', "ASIGNACION DE SECCIONES");
+    $sheet->getStyle('A1:E1')->applyFromArray($styleTitle);
 
-        /* Column widths - adjusted for potential new Fase column */
-        .col-numero { width: 5%; }
-        .col-cedula { width: ' . ($isAllPhasesMode ? "11%" : "12%") . '; }
-        .col-nombre { width: ' . ($isAllPhasesMode ? "24%" : "28%") . '; }
-        .col-uc { width: ' . ($isAllPhasesMode ? "30%" : "35%") . '; }
-        .col-seccion { width: ' . ($isAllPhasesMode ? "20%" : "20%") . '; }
-        .col-fase-data { width: 10%; } /* Only for all phases mode */
-    </style>';
-    $html .= '</head><body>';
-    $html .= '<div class="report-main-title">' . htmlspecialchars($reportMainTitle) . '</div>';
-    if (!empty($reportSubTitle)) {
-        $html .= '<div class="report-sub-title">' . htmlspecialchars($reportSubTitle) . '</div>';
-    }
+    $sheet->setCellValue('A3', 'N°');
+    $sheet->setCellValue('B3', 'CEDULA');
+    $sheet->setCellValue('C3', 'NOMBRE Y APELLIDO');
+    $sheet->setCellValue('D3', 'UNIDAD CURRICULAR SIN ABREVIATURA');
+    $sheet->setCellValue('E3', 'SECCION COMPLETA');
+    $sheet->getStyle('A3:E3')->applyFromArray($styleHeader);
 
-    $html .= '<table><thead><tr>';
-    $html .= '<th class="col-numero">N°</th>';
-    $html .= '<th class="col-cedula">CÉDULA</th>';
-    $html .= '<th class="col-nombre">NOMBRE Y APELLIDO</th>';
-    $html .= '<th class="col-uc">UNIDAD CURRICULAR SIN ABREVIATURA</th>';
-    $html .= '<th class="col-seccion">SECCIÓN COMPLETA</th>';
-    if ($isAllPhasesMode) {
-        $html .= '<th class="col-fase-data">FASE</th>';
-    }
-    $html .= '</tr></thead><tbody>';
+    $filaActual = 4;
+    $itemNumber = 1;
 
     if (!empty($groupedData)) {
-        $itemNumber = 1;
         foreach ($groupedData as $teacherData) {
             $assignments = $teacherData['assignments'];
             $rowCount = count($assignments);
-            $isFirstRowOfTeacher = true;
 
             if ($rowCount > 0) {
-                foreach ($assignments as $assignment) {
-                    $html .= '<tr>';
-                    if ($isFirstRowOfTeacher) {
-                        $html .= '<td rowspan="' . $rowCount . '" class="text-center">' . $itemNumber . '</td>';
-                        $html .= '<td rowspan="' . $rowCount . '">' . htmlspecialchars($teacherData['CedulaDocente']) . '</td>';
-                        $html .= '<td rowspan="' . $rowCount . '">' . htmlspecialchars($teacherData['NombreCompletoDocente']) . '</td>';
-                    }
-                    $html .= '<td>' . htmlspecialchars($assignment['NombreUnidadCurricular']) . '</td>';
-                    $html .= '<td class="cell-seccion">' . htmlspecialchars($assignment['NombreSeccion']) . '</td>';
-                    if ($isAllPhasesMode) {
-                        $html .= '<td class="cell-fase">' . htmlspecialchars($assignment['FaseHorario']) . '</td>';
-                    }
-                    $html .= '</tr>';
-                    $isFirstRowOfTeacher = false;
+
+                if ($rowCount > 1) {
+                    $sheet->mergeCells("A{$filaActual}:A" . ($filaActual + $rowCount - 1));
+                    $sheet->mergeCells("B{$filaActual}:B" . ($filaActual + $rowCount - 1));
+                    $sheet->mergeCells("C{$filaActual}:C" . ($filaActual + $rowCount - 1));
                 }
+                $sheet->setCellValue("A{$filaActual}", $itemNumber);
+                $sheet->setCellValue("B{$filaActual}", $teacherData['CedulaDocente']);
+                $sheet->setCellValue("C{$filaActual}", $teacherData['NombreCompletoDocente']);
+
+                $tempFila = $filaActual;
+                foreach ($assignments as $assignment) {
+                    $sheet->setCellValue("D{$tempFila}", $assignment['NombreUnidadCurricular']);
+                    $sheet->setCellValue("E{$tempFila}", $assignment['NombreSeccion']);
+                    $tempFila++;
+                }
+
+                $filaActual += $rowCount;
                 $itemNumber++;
             }
         }
     } else {
-        $colspan = $isAllPhasesMode ? 6 : 5;
-        $html .= '<tr><td colspan="' . $colspan . '" style="text-align:center; padding: 20px; font-size: 10px;">No se encontraron asignaciones con los criterios seleccionados.</td></tr>';
+        $sheet->mergeCells("A{$filaActual}:E{$filaActual}")->setCellValue("A{$filaActual}", "No se encontraron datos.");
+        $filaActual++;
     }
 
-    $html .= '</tbody></table>';
-    $html .= '</body></html>';
+    $rangoTotal = 'A3:E' . ($filaActual - 1);
+    $sheet->getStyle($rangoTotal)->applyFromArray($styleBordes);
+    $sheet->getStyle('A4:C' . ($filaActual - 1))->applyFromArray($styleData);
+    $sheet->getStyle('D4:E' . ($filaActual - 1))->applyFromArray($styleDataCenter);
 
-    $html = mb_convert_encoding($html, 'UTF-8', 'UTF-8');
-    $options = new Options();
-    $options->set('isHtml5ParserEnabled', true);
-    $options->set('isRemoteEnabled', true);
-    $options->set('defaultFont', 'Arial');
-    $dompdf = new Dompdf($options);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
+    $sheet->getColumnDimension('A')->setWidth(5);
+    $sheet->getColumnDimension('B')->setWidth(15);
+    $sheet->getColumnDimension('C')->setWidth(40);
+    $sheet->getColumnDimension('D')->setWidth(50);
+    $sheet->getColumnDimension('E')->setWidth(20);
+
+    $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $outputFileName = "AsignacionSecciones";
-    if (!empty($selectedAnio)) $outputFileName .= "_" . $selectedAnio;
-    if (!$isAllPhasesMode) {
-        $outputFileName .= "_Fase_" . htmlspecialchars($selectedFase);
-    } else {
-        $outputFileName .= "_Todas_Fases";
-    }
-    $outputFileName .= ".pdf";
-    $dompdf->stream($outputFileName, array("Attachment" => false));
+    $fileName = "Transcripcion_Asignacion_Secciones.xlsx";
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $fileName . '"');
+    header('Cache-Control: max-age=0');
+    $writer->save('php://output');
     exit;
-
 } else {
-    require_once($vistaFormularioTranscripcion);
+    require_once("views/reportes/rtranscripcion.php");
 }
-?>
