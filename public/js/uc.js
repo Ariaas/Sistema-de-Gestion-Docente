@@ -110,8 +110,6 @@ function Listar() {
           datos.append("accion", "registrar");
           datos.append("codigoUC", $("#codigoUC").val()); 
           datos.append("nombreUC", $("#nombreUC").val()); 
-          datos.append("independienteUC", $("#independienteUC").val()); 
-          datos.append("asistidaUC", $("#asistidaUC").val()); 
           datos.append("trayectoUC", $("#trayectoUC").val()); 
           datos.append("ejeUC", $("#ejeUC").val()); 
           datos.append("areaUC", $("#areaUC").val()); 
@@ -129,15 +127,12 @@ function Listar() {
           datos.append("idUC", $("#idUC").val());
           datos.append("codigoUC", $("#codigoUC").val()); 
           datos.append("nombreUC", $("#nombreUC").val()); 
-          datos.append("independienteUC", $("#independienteUC").val()); 
-          datos.append("asistidaUC", $("#asistidaUC").val()); 
           datos.append("trayectoUC", $("#trayectoUC").val()); 
           datos.append("ejeUC", $("#ejeUC").val()); 
           datos.append("areaUC", $("#areaUC").val()); 
           datos.append("creditosUC", $("#creditosUC").val()); 
           datos.append("periodoUC", $("#periodoUC").val()); 
-          datos.append("electivaUC", $("#electivaUC").val()); 
-          datos.append("academicaUC", $("#academicaUC").val());     
+          datos.append("electivaUC", $("#electivaUC").val());     
   
           enviaAjax(datos);
         }
@@ -201,21 +196,6 @@ function Listar() {
       $("#creditosUC").focus();
       return false;
     }
-    if ($("#independienteUC").val() == "" || $("#independienteUC").val() == null) {
-      muestraMensaje("error", 4000, "Atención!", "Las horas independientes son obligatorias.");
-      $("#independienteUC").focus();
-      return false;
-    }
-    if ($("#asistidaUC").val() == "" || $("#asistidaUC").val() == null) {
-      muestraMensaje("error", 4000, "Atención!", "Las horas asistidas son obligatorias.");
-      $("#asistidaUC").focus();
-      return false;
-    }
-    if ($("#academicaUC").val() == "" || $("#academicaUC").val() == null) {
-      muestraMensaje("error", 4000, "Atención!", "Las horas académicas son obligatorias.");
-      $("#academicaUC").focus();
-      return false;
-    }
     if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
       muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
       $("#trayectoUC").focus();
@@ -241,6 +221,12 @@ function Listar() {
       $("#electivaUC").focus();
       return false;
     }
+    if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
+      muestraMensaje("error", 4000, "Atención!", "Una unidad curricular electiva no puede tener periodo anual.");
+      $("#periodoUC").focus();
+      return false;
+    }
+
     return true;
   }
   
@@ -261,9 +247,8 @@ function Listar() {
     $("#independienteUC").val($(linea).find("td:eq(3)").text());
     $("#asistidaUC").val($(linea).find("td:eq(4)").text());
 
-    let tra_text = $(linea).find("td:eq(6)").text();
-    let tra_id = tra_text.split(" - ")[0]; 
-    $("#trayectoUC").val(tra_id);
+    $("#trayectoUC").val($(linea).find("td:eq(6)").text());
+
 
     let eje_id = $(linea).find("td:eq(7)").data("eje");
     $("#ejeUC").val(eje_id);
@@ -308,14 +293,10 @@ function Listar() {
                   <td style="display: none;">${item.uc_id}</td>
                   <td>${item.uc_codigo}</td>
                   <td>${item.uc_nombre}</td>
-                  <td>${item.uc_hora_independiente}</td>
-                  <td>${item.uc_hora_asistida}</td>
-                  <td>${item.uc_hora_independiente + item.uc_hora_asistida}</td>
-                  <td data-tra="${item.tra_id}">${item.tra_numero} - ${item.ani_anio}</td>
+                  <td>${item.uc_trayecto}</td>
                   <td data-eje="${item.eje_id}">${item.eje_nombre}</td>
                   <td data-area="${item.area_id}">${item.area_nombre}</td>
                   <td>${item.uc_creditos}</td>
-                  <td>${item.uc_hora_academica}</td>
                   <td data-periodo="${item.uc_periodo}">${item.uc_periodo === "anual" ? "Anual" : item.uc_periodo === "1" ? "Fase 1" : item.uc_periodo === "2" ? "Fase 2" : item.uc_periodo}</td>
                   <td data-electiva="${item.uc_electiva}">${item.uc_electiva == "1" ? "Electiva" : "No Electiva"}</td>
                   <td>

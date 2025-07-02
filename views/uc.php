@@ -36,14 +36,10 @@ if (!isset($_SESSION['name'])) {
                                 <th style="display: none;">ID</th>
                                 <th>Código</th>
                                 <th>Nombre</th>
-                                <th>Horas Independientes</th>
-                                <th>Horas Asistidas</th>
-                                <th>Horas Totales</th>
                                 <th>Trayecto</th>
                                 <th>Eje</th>
                                 <th>Área</th>
                                 <th>Créditos</th>
-                                <th>Horas Acedemicas</th>
                                 <th>Periodo</th>
                                 <th>Electiva</th>
                                 <th>Acciones</th>
@@ -107,43 +103,9 @@ if (!isset($_SESSION['name'])) {
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <label for="independienteUC" class="form-label">Horas Independientes</label>
-                                        <input class="form-control" type="number" id="independienteUC" name="independienteUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 32">
-                                        <span id="sindependienteUC"></span>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="asistidaUC" class="form-label">Horas Asistidas</label>
-                                        <input class="form-control" type="number" id="asistidaUC" name="asistidaUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 48">
-                                        <span id="sasistidaUC"></span>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="academicaUC" class="form-label">Horas Académicas</label>
-                                        <input class="form-control" type="number" id="academicaUC" name="academicaUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 80">
-                                        <span id="sacademicaUC"></span>
-                                    </div>
-                                </div>
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label for="trayectoUC" class="form-label">Trayecto</label>
-                                        <select class="form-select" name="trayectoUC" id="trayectoUC" required>
-                                            <option value="" disabled selected>Seleccione un trayecto</option>
-                                            <?php
-                                            if (!empty($trayectos)) {
-                                                foreach ($trayectos as $trayecto) {
-                                                    echo "<option value='" . $trayecto['tra_id'] . "'>" . $trayecto['tra_numero'] . " - " . $trayecto['ani_anio'] . "</option>";
-                                                }
-                                            } else {
-                                                echo "<option value='' disabled>No hay trayectos disponibles</option>";
-                                            }
-                                            ?>
-                                        </select>
-                                        <span id="strayecto"></span>
-                                    </div>
-
-                                    <div class="col-md-4">
                                         <label for="ejeUC" class="form-label">Eje</label>
                                         <select class="form-select" name="ejeUC" id="ejeUC" required>
-                                            <option value="" disabled selected>Seleccione un eje</option>
+                                            <option value="" disabled selected>Seleccione una opción</option>
                                             <?php
                                             if (!empty($ejes)) {
                                                 foreach ($ejes as $eje) {
@@ -160,7 +122,7 @@ if (!isset($_SESSION['name'])) {
                                     <div class="col-md-4">
                                         <label for="areaUC" class="form-label">Área</label>
                                         <select class="form-select" name="areaUC" id="areaUC" required>
-                                            <option value="" disabled selected>Seleccione un Área</option>
+                                            <option value="" disabled selected>Seleccione una opción</option>
                                             <?php
                                             if (!empty($areas)) {
                                                 foreach ($areas as $area) {
@@ -173,12 +135,24 @@ if (!isset($_SESSION['name'])) {
                                         </select>
                                         <span id="sarea"></span>
                                     </div>
+
+                                    <div class="col-md-4">
+                                        <label for="trayectoUC" class="form-label">Trayecto</label>
+                                        <select class="form-select" name="trayectoUC" id="trayectoUC" required>
+                                            <option value="" disabled selected>Seleccione una opción</option>
+                                            <option value="1">Trayecto 1</option>
+                                            <option value="2">Trayecto 2</option>
+                                            <option value="3">Trayecto 3</option>
+                                            <option value="4">Trayecto 4</option>
+                                        </select>
+                                        <span id="strayectoUC"></span>
+                                    </div>
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="periodoUC" class="form-label">Periodo</label>
                                         <select class="form-select" name="periodoUC" id="periodoUC">
-                                            <option value="" disabled selected>Seleccione una opción</option>
+                                            <option value="" disabled selected>Seleccione un Periodo</option>
                                             <option value="anual">Anual</option>
                                             <option value="1">Fase 1</option>
                                             <option value="2">Fase 2</option>
@@ -248,7 +222,7 @@ if (!isset($_SESSION['name'])) {
                                     </div>
                                 </div>
                                 <div class="modal-footer justify-content-center">
-                                    <button type="button" class="btn btn-primary" id="procesarAsignacion">Procesar</button>
+                                    <button type="button" class="btn btn-primary" id="asignarDocentes">Procesar</button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                                 </div>
                             </div>
@@ -258,41 +232,41 @@ if (!isset($_SESSION['name'])) {
             </div>
         </div>
         <div class="modal fade" tabindex="-1" role="dialog" id="modal3">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="uc-nombre-header">Unidad Curricular</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <table class="table" id="tabladocente">
-                    <thead>
-                        <tr>
-                            <th style="display: none;">ID UC</th>
-                            <th style="display: none;">ID Docente</th>
-                            <th>Docente</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultadoconsulta3">
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="uc-nombre-header">Unidad Curricular</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table" id="tabladocente">
+                            <thead>
+                                <tr>
+                                    <th style="display: none;">ID UC</th>
+                                    <th style="display: none;">ID Docente</th>
+                                    <th>Docente</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultadoconsulta3">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
     </main>
-    
+
     <?php
     require_once("public/components/footer.php");
     ?>
-    
+
     <script type="text/javascript" src="public/js/uc.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    
+
 </body>
 
 </html>

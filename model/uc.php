@@ -165,43 +165,34 @@ class UC extends Connection
 
             try {
                 $stmt = $co->prepare("INSERT INTO tbl_uc (
-            eje_id,
-            tra_id,
-            area_id,
-            uc_codigo,
-            uc_nombre,
-            uc_hora_independiente,
-            uc_hora_asistida,
-            uc_hora_academica,
-            uc_creditos,
-            uc_periodo,
-            uc_electiva,
-            uc_estado
-        ) VALUES (
-            :ejeId,
-            :trayectoUC,
-            :areaId,
-            :codigoUC,
-            :nombreUC,
-            :independienteUC,
-            :asistidaUC,
-            :academicaUC,
-            :creditosUC,
-            :periodoUC,
-            :electivaUC,
-            1
-        )");
-                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_STR);
-                $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_STR);
+        eje_id,
+        area_id,
+        uc_codigo,
+        uc_nombre,
+        uc_creditos,
+        uc_trayecto,
+        uc_periodo,
+        uc_electiva,
+        uc_estado
+    ) VALUES (
+        :ejeId,
+        :areaId,
+        :codigoUC,
+        :nombreUC,
+        :creditosUC,
+        :trayectoUC,
+        :periodoUC,
+        :electivaUC,
+        1
+    )");
+                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_INT);
+                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_INT);
                 $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
-                $stmt->bindParam(':independienteUC', $this->independienteUC, PDO::PARAM_STR);
-                $stmt->bindParam(':asistidaUC', $this->asistidaUC, PDO::PARAM_STR);
-                $stmt->bindParam(':academicaUC', $this->academicaUC, PDO::PARAM_STR);
                 $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_INT);
 
                 $stmt->execute();
 
@@ -231,29 +222,23 @@ class UC extends Connection
                 $stmt = $co->prepare("UPDATE tbl_uc
                     SET uc_codigo = :codigoUC , 
                     uc_nombre = :nombreUC,
-                    uc_hora_independiente = :independienteUC,
-                    uc_hora_asistida = :asistidaUC,
-                    uc_hora_academica = :academicaUC,
                     uc_creditos = :creditosUC,
+                    uc_trayecto = :trayectoUC,
                     uc_periodo = :periodoUC,
                     uc_electiva = :electivaUC,
                     eje_id = :ejeId,
-                    tra_id = :trayectoId,
                     area_id = :areaId
                     WHERE uc_id = :idUC");
 
-                $stmt->bindParam(':idUC', $this->idUC, PDO::PARAM_STR);
+                $stmt->bindParam(':idUC', $this->idUC, PDO::PARAM_INT);
                 $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
-                $stmt->bindParam(':independienteUC', $this->independienteUC, PDO::PARAM_STR);
-                $stmt->bindParam(':asistidaUC', $this->asistidaUC, PDO::PARAM_STR);
-                $stmt->bindParam(':academicaUC', $this->academicaUC, PDO::PARAM_STR);
                 $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_STR);
-                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_STR);
-                $stmt->bindParam(':trayectoId', $this->trayectoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_INT);
+                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_INT);
+                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_INT);
 
                 $stmt->execute();
 
@@ -265,7 +250,7 @@ class UC extends Connection
             }
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> La unidad curricular colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> La unidad curricular colocada NO existe!';
         }
         return $r;
     }
@@ -310,27 +295,18 @@ class UC extends Connection
                 uc.uc_codigo,
                 uc.uc_nombre,
                 uc.uc_creditos,
-                uc.uc_hora_academica,
-                uc.uc_hora_asistida,
-                uc.uc_hora_independiente,
+                uc.uc_trayecto,
                 uc.uc_periodo,
                 uc.uc_electiva,
                 uc.uc_estado,
                 ej.eje_id,
                 ej.eje_nombre,
                 ar.area_id,
-                ar.area_nombre,
-                tr.tra_id,
-                tr.tra_numero,
-                tr.ani_id,
-                a.ani_anio 
+                ar.area_nombre
             FROM tbl_uc uc
             INNER JOIN tbl_eje ej ON uc.eje_id = ej.eje_id
             INNER JOIN tbl_area ar ON uc.area_id = ar.area_id
-            INNER JOIN tbl_trayecto tr ON uc.tra_id = tr.tra_id
-            INNER JOIN tbl_anio a ON tr.ani_id = a.ani_id 
             WHERE uc.uc_estado = 1");
-
             } elseif ($accion === 'consultarAsignacion') {
                 $uc_id = $_POST['uc_id'] ?? null;
                 $sql = "SELECT 
@@ -345,7 +321,6 @@ class UC extends Connection
                 LEFT JOIN tbl_docente d ON ud.doc_id = d.doc_id AND d.doc_estado = 1
                 WHERE uc.uc_estado = 1";
                 if ($uc_id) {
-                    // Se usa una consulta preparada para mayor seguridad
                     $sql .= " AND uc.uc_id = :uc_id";
                     $stmt = $co->prepare($sql);
                     $stmt->execute([':uc_id' => $uc_id]);
@@ -407,24 +382,6 @@ class UC extends Connection
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
-        }
-        $co = null;
-        return $r;
-    }
-
-    function obtenerTrayecto()
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
-        try {
-            $stmt = $co->query("SELECT t.tra_id, t.tra_numero, t.ani_id, a.ani_anio 
-                            FROM tbl_trayecto t
-                            INNER JOIN tbl_anio a ON t.ani_id = a.ani_id
-                            WHERE t.tra_estado = 1 AND a.ani_activo = 1");
-            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) { 
-            $r = [];
         }
         $co = null;
         return $r;
