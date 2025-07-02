@@ -143,37 +143,70 @@ $(document).ready(function () {
         }
     });
 
+    $("#mal_codigo").on("keydown ", function () {
+  
+   validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
+   
+    });
+
     $("#mal_codigo").on("keyup", function () {
-        validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $(this), $("#smalcodigo"), "De 2 a 10 caracteres.");
+        validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
         var datos = new FormData();
         datos.append('accion', 'existe');
-        datos.append("mal_codigo", $(this).val());
-        if ($("#mal_id").val()) {
-            datos.append("mal_id", $("#mal_id").val());
-        }
+        datos.append("mal_codigo",$("#mal_codigo").val());
+        if ($("#mal_id").val()) datos.append("mal_id", $("#mal_id").val());
         enviaAjax(datos);
     });
 
-    $("#mal_nombre").on("keyup", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,20}$/, $(this), $("#smalnombre"), "De 5 a 20 caracteres.");
+   $("#mal_codigo").on("keydown ", function () {
+  
+   validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
+   
+    });
+
+    $("#mal_codigo").on("keyup", function () {
+        validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
         var datos = new FormData();
-        datos.append('accion', 'existe_nombre');
-        datos.append("mal_nombre", $(this).val());
-        if ($("#mal_id").val()) {
-            datos.append("mal_id", $("#mal_id").val());
-        }
+        datos.append('accion', 'existe');
+        datos.append("mal_codigo",$("#mal_codigo").val());
+        if ($("#mal_id").val()) datos.append("mal_id", $("#mal_id").val());
         enviaAjax(datos);
+    });
+
+    $("#mal_nombre").on("keydown", function () {
+  
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,20}$/,$("#mal_nombre"),$("#smalnombre"),"El formato permite de 5 a 20 caracteres. Ej: Malla-1, Malla_2");
+   
+    });
+    $("#mal_nombre").on("keyup", function () {
+       validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,20}$/,$("#mal_nombre"),$("#smalnombre"),"El formato permite de 5 a 20 caracteres. Ej: Malla-1, Malla_2");
+       
+    });
+     $("#mal_descripcion").on("keydown", function () {
+        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"),"El formato permite de 5 a 30 carácteres, una breve descripcion");
     });
     
     $("#mal_descripcion").on("keyup", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"), "De 5 a 30 caracteres.");
+        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"),"El formato permite de 5 a 30 carácteres, una breve descripcion  ");
     });
-
-    $("#mal_cohorte").on("keyup", function () {
+    $("#mal_cohorte").on("input", function () {
         this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, '');
         if (this.value.length > 3) this.value = this.value.slice(0, 3);
-        validarkeyup(/^[1-9][0-9]{0,2}$/, $(this), $("#smalcohorte"), "Solo números de 1 a 3 dígitos.");
     });
+    $("#mal_cohorte").on("keydown", function () {
+    validarkeyup(/^[1-9][0-9]{0,3}$/,$("#mal_cohorte"),$("#smalcohorte"),"El formato permite de 1 a 3 carácteres, solo numero enteros EJ:4")
+    });
+
+
+     $("#mal_cohorte").on(" keyup", function () {
+    validarkeyup(/^[1-9][0-9]{0,3}$/,$("#mal_cohorte"),$("#smalcohorte"),"El formato permite de 1 a 3 carácteres, solo numero enteros EJ:4")
+    
+        var datos = new FormData();
+        datos.append('accion', 'existe_cohorte');
+        datos.append("mal_cohorte",$("#mal_cohorte").val());
+        if ($("#mal_id").val()) datos.append("mal_id", $("#mal_id").val());
+        enviaAjax(datos);   
+});
 
     $("#uc_horas_ind, #uc_horas_asis, #uc_horas_acad").on("input", function() {
         let valor = $(this).val();
@@ -227,20 +260,20 @@ $(document).ready(function () {
 });
 
 function validarPagina1() {
-    if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"), "") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "El código de la malla es inválido.");
+     if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"), "El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "El codigo de la malla <br/> No puede estar vacío y debe contener entre 2 a 10 carácteres.");
         return false;
     }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,20}$/, $("#mal_nombre"), $("#smalnombre"), "") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "El nombre de la malla es inválido.");
+    if ( validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,20}$/,$("#mal_nombre"),$("#smalnombre"), "El formato permite de 5 a 20 carácteres, Ej:Malla 1") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "El nombre de la malla <br/> No puede estar vacío y debe contener entre 5 a 20 carácteres");
         return false;
     }
-    if (validarkeyup(/^[1-9][0-9]{0,2}$/, $("#mal_cohorte"), $("#smalcohorte"), "") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "La cohorte de la malla es inválida.");
+    if (validarkeyup(/^[1-9][0-9]{0,3}$/,$("#mal_cohorte"),$("#smalcohorte"),"El formato permite de 1 a 3 carácteres, solo numero enteros EJ:4.") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "La cohorte de la malla <br/> No puede estar vacío y debe contener entre 1 a 3 carácteres.");
         return false;
     }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"), "") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "La descripción de la malla es inválida.");
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"), "El formato permite de 5 a 30 carácteres, una breve descripcion") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "La descripcion de la malla <br/> No puede estar vacía y debe contener entre 5 a 30 carácteres.");
         return false;
     }
     return true;

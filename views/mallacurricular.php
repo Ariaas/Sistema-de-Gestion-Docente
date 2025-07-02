@@ -11,8 +11,8 @@ if (!isset($_SESSION['name'])) {
     <?php require_once("public/components/head.php"); ?>
     <title>Malla Curricular</title>
     <link rel="stylesheet" href="public/css/style.css">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <style>
       .select2-container--open {
           z-index: 999999 !important;
@@ -128,7 +128,7 @@ if (!isset($_SESSION['name'])) {
     </main>
     <?php require_once("public/components/footer.php"); ?>
     
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/mallacurricular.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
