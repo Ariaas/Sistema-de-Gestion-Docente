@@ -55,6 +55,10 @@ if (is_file("views/" . $pagina . ".php")) {
                 $obj4->setMalId($_POST['mal_id']);
             }
             echo json_encode($obj4->ExisteCohorte());
+        } else if ($accion == 'activar') {
+            $obj4->setMalId($_POST['mal_id']);
+            echo json_encode($obj4->activarMalla());
+            $bitacora->registrarAccion($usu_id, 'activar', 'malla curricular');
         } else if ($accion == 'modificar') {
             $unidades = isset($_POST['unidades']) ? json_decode($_POST['unidades'], true) : [];
             $obj4->setMalId($_POST['mal_id']);

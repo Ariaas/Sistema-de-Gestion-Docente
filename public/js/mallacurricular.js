@@ -77,6 +77,30 @@ $(document).ready(function () {
 
     $('#modalVerMalla').on('hidden.bs.modal', function () { destruyeDT('#tablaVerUnidades'); });
 
+    $("#tablamalla").on('click', '.btn-activar', function() {
+        const fila = $(this).closest('tr');
+        const mal_id = fila.find('td:eq(0)').text();
+        const mal_nombre = fila.find('td:eq(2)').text();
+
+        Swal.fire({
+            title: "¿Activar Malla?",
+            html: `¿Estás seguro de que quieres activar la malla "<b>${mal_nombre}</b>"?<br><small>Cualquier otra malla que esté activa será desactivada.</small>`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#28a745",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Sí, activar",
+            cancelButtonText: "Cancelar",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var datos = new FormData();
+                datos.append("accion", "activar");
+                datos.append("mal_id", mal_id);
+                enviaAjax(datos);
+            }
+        });
+    });
+
     $("#btn_agregar_uc").on("click", function () {
         const select = $("#select_uc");
         const uc_id = select.val();
@@ -93,11 +117,9 @@ $(document).ready(function () {
             muestraMensaje("info", 3000, "Atención", "Esa unidad curricular ya fue agregada.");
             return;
         }
-
         const h_ind = $("#uc_horas_ind").val() || 0;
         const h_asis = $("#uc_horas_asis").val() || 0;
         const h_acad = $("#uc_horas_acad").val() || 0;
-
         const fila = `
             <tr data-ucid="${uc_id}">
                 <td class="align-middle">${uc_nombre}</td>
@@ -106,10 +128,8 @@ $(document).ready(function () {
                 <td><input type="number" class="form-control form-control-sm text-center horas-input" value="${h_acad}" min="0"></td>
                 <td class="align-middle"><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td>
             </tr>`;
-
         $("#tablaUnidadesAgregadas tbody").append(fila);
         $("#contenedorTablaUnidades").show();
-
         select.val('').trigger('change');
         $("#uc_horas_ind").val(0);
         $("#uc_horas_asis").val(0);
@@ -121,84 +141,63 @@ $(document).ready(function () {
         if ($("#tablaUnidadesAgregadas tbody tr").length === 0) {
             $("#contenedorTablaUnidades").hide();
         }
-    }); 
-    
-    
-    $("#mal_codigo").on("keydown ", function () {
-  
-   validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
-   
     });
 
     $("#mal_codigo").on("keyup", function () {
-        validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"),"El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.");
+        validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $(this), $("#smalcodigo"), "De 2 a 10 caracteres.");
         var datos = new FormData();
         datos.append('accion', 'existe');
-        datos.append("mal_codigo",$("#mal_codigo").val());
-        if ($("#mal_id").val()) datos.append("mal_id", $("#mal_id").val());
+        datos.append("mal_codigo", $(this).val());
+        if ($("#mal_id").val()) {
+            datos.append("mal_id", $("#mal_id").val());
+        }
         enviaAjax(datos);
     });
 
-    $("#mal_nombre").on("keydown", function () {
-  
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,20}$/,$("#mal_nombre"),$("#smalnombre"),"El formato permite de 5 a 20 carácteres, Ej:Malla 1");
-   
-    });
     $("#mal_nombre").on("keyup", function () {
-       validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,20}$/,$("#mal_nombre"),$("#smalnombre"),"El formato permite de 5 a 20 carácteres, Ej:Malla 1");
-       
-    });
-     $("#mal_descripcion").on("keydown", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"),"El formato permite de 5 a 30 carácteres, una breve descripcion");
+        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,20}$/, $(this), $("#smalnombre"), "De 5 a 20 caracteres.");
+        var datos = new FormData();
+        datos.append('accion', 'existe_nombre');
+        datos.append("mal_nombre", $(this).val());
+        if ($("#mal_id").val()) {
+            datos.append("mal_id", $("#mal_id").val());
+        }
+        enviaAjax(datos);
     });
     
     $("#mal_descripcion").on("keyup", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"),"El formato permite de 5 a 30 carácteres, una breve descripcion  ");
+        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"), "De 5 a 30 caracteres.");
     });
-    $("#mal_cohorte").on("input", function () {
+
+    $("#mal_cohorte").on("keyup", function () {
         this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, '');
         if (this.value.length > 3) this.value = this.value.slice(0, 3);
-    });
-    $("#mal_cohorte").on("keydown", function () {
-    validarkeyup(/^[1-9][0-9]{0,3}$/,$("#mal_cohorte"),$("#smalcohorte"),"El formato permite de 1 a 3 carácteres, solo numero enteros EJ:4")
+        validarkeyup(/^[1-9][0-9]{0,2}$/, $(this), $("#smalcohorte"), "Solo números de 1 a 3 dígitos.");
     });
 
-
-     $("#mal_cohorte").on(" keyup", function () {
-    validarkeyup(/^[1-9][0-9]{0,3}$/,$("#mal_cohorte"),$("#smalcohorte"),"El formato permite de 1 a 3 carácteres, solo numero enteros EJ:4")
-    
-        var datos = new FormData();
-        datos.append('accion', 'existe_cohorte');
-        datos.append("mal_cohorte",$("#mal_cohorte").val());
-        if ($("#mal_id").val()) datos.append("mal_id", $("#mal_id").val());
-        enviaAjax(datos);   
-});
-
- $("#uc_horas_ind, #uc_horas_asis, #uc_horas_acad").on("input", function() {
+    $("#uc_horas_ind, #uc_horas_asis, #uc_horas_acad").on("input", function() {
         let valor = $(this).val();
         valor = valor.replace(/[^0-9]/g, '');
         if (valor.length > 1) {
             valor = valor.replace(/^0+/, '');
         }
-        if (valor.length > 3) {
-            valor = valor.slice(0, 3);
+        if (valor.length > 2) {
+            valor = valor.slice(0, 2);
         }
         $(this).val(valor);
     });
 
-    
-$("#tablaUnidadesAgregadas").on("input", ".horas-input", function() {
-    let valor = $(this).val();
-    valor = valor.replace(/[^0-9]/g, '');
-    if (valor.length > 1) {
-        valor = valor.replace(/^0+/, '');
-    }
-    if (valor.length > 3) {
-        valor = valor.slice(0, 3);
-    }
-    $(this).val(valor);
-});
-
+    $("#tablaUnidadesAgregadas").on("input", ".horas-input", function() {
+        let valor = $(this).val();
+        valor = valor.replace(/[^0-9]/g, '');
+        if (valor.length > 1) {
+            valor = valor.replace(/^0+/, '');
+        }
+        if (valor.length > 2) {
+            valor = valor.slice(0, 2);
+        }
+        $(this).val(valor);
+    });
 
     $("#proceso").on("click", function () {
         if (validarenvio()) {
@@ -228,20 +227,20 @@ $("#tablaUnidadesAgregadas").on("input", ".horas-input", function() {
 });
 
 function validarPagina1() {
-    if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"), "El código permite de 2 a 10 caracteres alfanuméricos, espacios o guiones.") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "El codigo de la malla <br/> No puede estar vacío y debe contener entre 2 a 10 carácteres.");
+    if (validarkeyup(/^[A-Za-z0-9\s-]{2,10}$/, $("#mal_codigo"), $("#smalcodigo"), "") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "El código de la malla es inválido.");
         return false;
     }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{5,20}$/, $("#malnombre"), $("#smalnombre"), "El formato permite de 5 a 20 carácteres, Ej:Malla 1") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "El nombre de la malla <br/> No puede estar vacío y debe contener entre 5 a 20 carácteres");
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,20}$/, $("#mal_nombre"), $("#smalnombre"), "") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "El nombre de la malla es inválido.");
         return false;
     }
-    if (validarkeyup(/^[1-9][0-9]{0,3}$/,$("#mal_cohorte"),$("#smalcohorte"),"El formato permite de 1 a 3 carácteres, solo numero enteros EJ:4.") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "La cohorte de la malla <br/> No puede estar vacío y debe contener entre 1 a 3 carácteres.");
+    if (validarkeyup(/^[1-9][0-9]{0,2}$/, $("#mal_cohorte"), $("#smalcohorte"), "") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "La cohorte de la malla es inválida.");
         return false;
     }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"), "El formato permite de 5 a 30 carácteres, una breve descripcion") == 0) {
-        muestraMensaje("error", 4000, "ERROR", "La descripcion de la malla <br/> No puede estar vacía y debe contener entre 5 a 30 carácteres.");
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"), "") == 0) {
+        muestraMensaje("error", 4000, "ERROR", "La descripción de la malla es inválida.");
         return false;
     }
     return true;
@@ -316,18 +315,17 @@ function enviaAjax(datos) {
         success: function (respuesta) {
             try {
                 var lee = JSON.parse(respuesta);
-
                 switch (lee.resultado) {
                     case 'consultar':
                         destruyeDT("#tablamalla");
                         $("#resultadoconsulta").empty();
                         $.each(lee.mensaje, function (index, item) {
+                            let estadoActiva = (item.mal_activa == 1) ? '<span class="badge bg-success">Activa</span>' : '<button class="btn btn-xs btn-secondary btn-activar">Activar</button>';
                             let botonesAccion = `<td class="acciones-cell"><button class="btn btn-info btn-sm" onclick='pone(this,2)'>Ver Malla</button> <button class="btn btn-warning btn-sm" onclick='pone(this,0)'>Modificar</button> <button class="btn btn-danger btn-sm" onclick='pone(this,1)'>Eliminar</button></td>`;
-                            $("#resultadoconsulta").append(`<tr><td style="display: none;">${item.mal_id}</td><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.mal_cohorte}</td><td>${item.mal_descripcion}</td>${botonesAccion}</tr>`);
+                            $("#resultadoconsulta").append(`<tr><td style="display: none;">${item.mal_id}</td><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.mal_cohorte}</td><td>${item.mal_descripcion}</td><td>${estadoActiva}</td>${botonesAccion}</tr>`);
                         });
                         crearDT("#tablamalla");
                         break;
-
                     case 'ok':
                         if (lee.accion === 'consultar_ucs') {
                             const select = $("#select_uc");
@@ -341,14 +339,7 @@ function enviaAjax(datos) {
                                 if (lee.mensaje.length > 0) {
                                     $("#contenedorTablaUnidades").show();
                                     lee.mensaje.forEach(function (uc) {
-                                        const fila = `
-                                            <tr data-ucid="${uc.uc_id}">
-                                                <td class="align-middle">${uc.uc_nombre}</td>
-                                                <td><input type="number" class="form-control form-control-sm text-center horas-input" value="${uc.mal_hora_independiente}" min="0"></td>
-                                                <td><input type="number" class="form-control form-control-sm text-center horas-input" value="${uc.mal_hora_asistida}" min="0"></td>
-                                                <td><input type="number" class="form-control form-control-sm text-center horas-input" value="${uc.mal_hora_academica}" min="0"></td>
-                                                <td class="align-middle"><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td>
-                                            </tr>`;
+                                        const fila = `<tr data-ucid="${uc.uc_id}"><td class="align-middle">${uc.uc_nombre}</td><td><input type="number" class="form-control form-control-sm text-center horas-input" value="${uc.mal_hora_independiente}" min="0"></td><td><input type="number" class="form-control form-control-sm text-center horas-input" value="${uc.mal_hora_asistida}" min="0"></td><td><input type="number" class="form-control form-control-sm text-center horas-input" value="${uc.mal_hora_academica}" min="0"></td><td class="align-middle"><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td></tr>`;
                                         $("#tablaUnidadesAgregadas tbody").append(fila);
                                     });
                                 }
@@ -365,7 +356,10 @@ function enviaAjax(datos) {
                             }
                         }
                         break;
-
+                    case 'activar':
+                        muestraMensaje("success", 4000, "Éxito", lee.mensaje);
+                        Listar();
+                        break;
                     case 'registrar':
                     case 'modificar':
                     case 'eliminar':
@@ -373,11 +367,9 @@ function enviaAjax(datos) {
                         $("#modal1").modal("hide");
                         Listar();
                         break;
-
                     case 'existe':
                         muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
                         break;
-
                     case 'error':
                         muestraMensaje("error", 10000, "ERROR", lee.mensaje);
                         break;
@@ -398,10 +390,8 @@ function limpiaModal1() {
     $("#mal_id").val("");
     $(".form-control").removeClass("is-invalid is-valid").prop("disabled", false);
     $(".validation-span").empty();
-    $('#pagina2').hide();
-    $('#botones-pagina2').hide();
-    $('#pagina1').show();
-    $('#botones-pagina1').show();
+    $('#pagina2').hide(); $('#botones-pagina2').hide();
+    $('#pagina1').show(); $('#botones-pagina1').show();
     $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)");
     $("#tablaUnidadesAgregadas tbody").empty();
     $("#contenedorTablaUnidades").hide();
@@ -409,9 +399,10 @@ function limpiaModal1() {
     $("#filtroUnidadesAgregadas").val('');
 }
 
+function muestraMensaje(icono, tiempo, titulo, mensaje) {
+    Swal.fire({ icon: icono, timer: tiempo, title: titulo, html: mensaje, showConfirmButton: false });
+}
 
-
-// No se encontraron comentarios en este archivo. Solo código JavaScript.
 function validarkeyup(er, etiqueta, etiquetamensaje, mensaje = "") {
     if (er.test(etiqueta.val())) {
         if (etiquetamensaje) etiquetamensaje.text("");
