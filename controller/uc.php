@@ -11,7 +11,6 @@ if (!is_file("model/" . $pagina . ".php")) {
 require_once("model/" . $pagina . ".php");
 
 $u = new UC();
-$trayectos = $u->obtenerTrayecto();
 $ejes = $u->obtenerEje();
 $areas = $u->obtenerArea();
 $docentes = $u->obtenerDocente();
@@ -55,9 +54,6 @@ if (is_file("views/" . $pagina . ".php")) {
             $u->setcodigoUC($_POST['codigoUC']);
             $u->setnombreUC($_POST['nombreUC']);
             $u->setcreditosUC($_POST['creditosUC']);
-            $u->setasistidaUC($_POST['asistidaUC']);
-            $u->setacademicaUC($_POST['academicaUC']);
-            $u->setindependienteUC($_POST['independienteUC']);
             $u->settrayectoUC($_POST['trayectoUC']);
             $u->setejeUC($_POST['ejeUC']);
             $u->setareaUC($_POST['areaUC']);
