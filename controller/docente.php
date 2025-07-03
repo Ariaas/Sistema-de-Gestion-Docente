@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$pagina = 'docente'; 
+$pagina = 'docente';
 
 if (!is_file("model/" . $pagina . ".php")) {
     echo "Falta definir la clase " . $pagina;
@@ -30,7 +30,7 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($p->Listar());
 
-        } elseif ($accion == 'consultar_horas') { 
+        } elseif ($accion == 'consultar_horas') {
             $doc_id = $_POST['doc_id'] ?? 0;
             echo json_encode($p->ObtenerHorasActividad($doc_id));
 
@@ -59,6 +59,8 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setCorreo($_POST['correoDocente']);
             $p->setDedicacion($_POST['dedicacion']);
             $p->setCondicion($_POST['condicion']);
+            $p->setIngreso($_POST['fechaIngreso']);
+            $p->setObservacion($_POST['observacionesDocente']);
 
             if (isset($_POST['titulos']) && is_array($_POST['titulos'])) {
                 $p->setTitulos($_POST['titulos']);

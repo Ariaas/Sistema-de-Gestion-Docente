@@ -1,96 +1,108 @@
 <?php
-if (!isset($_SESSION['name'])) {
-    header('Location: .');
+ // Aseguramos que la sesión esté iniciada
+ if (!isset($_SESSION['name'])) {
+     header('Location: .');
     exit();
-}
+ }
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
     <?php require_once("public/components/head.php"); ?>
-
-    <title>Secciones</title>
+    <title>Sección</title>
 </head>
-
 <body class="d-flex flex-column min-vh-100">
-
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0">
+        <?php
+            if (isset($_SESSION['reporte_promocion'])) {
+                $reporte = $_SESSION['reporte_promocion'];
+                $clase_alerta = empty($reporte['fallos']) ? 'alert-success' : 'alert-warning';
+                
+                echo "<div class='container mt-3'><div class='alert {$clase_alerta} alert-dismissible fade show' role='alert'>";
+                echo "<h4 class='alert-heading'>Reporte de Promoción Automática a Fase 2</h4>";
+                echo "<p>El proceso de promoción automática ha finalizado. Se intentó la promoción para las secciones de Fase 1 del año activo.</p>";
+                echo "<p><strong>Secciones promovidas con éxito: {$reporte['exitos']}</strong></p>";
+
+                if (!empty($reporte['fallos'])) {
+                    echo "<hr><h5>Fallos (Secciones no promovidas):</h5><ul class='mb-0 text-start'>";
+                    foreach (array_unique($reporte['fallos']) as $fallo) { echo "<li>{$fallo}</li>"; }
+                    echo "</ul>";
+                }
+                if (!empty($reporte['observaciones'])) {
+                    echo "<hr><h5>Observaciones (Clases no asignadas):</h5><ul class='mb-0 text-start'>";
+                    foreach (array_unique($reporte['observaciones']) as $obs) { echo "<li>{$obs}</li>"; }
+                    echo "</ul>";
+                }
+                
+                echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                echo "</div></div>";
+                
+                unset($_SESSION['reporte_promocion']);
+            }
+        ?>
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
-            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Secciones</h2>
-
-            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar</button>
+            <h2 class="text-primary text-center mb-4">Gestionar Sección</h2>
+            <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
+                <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button>
+                <button class="btn btn-success px-4" id="btnIniciarRegistro">Registrar</button>
             </div>
-
-            <div class="datatable-ui w-100" id="tablaseccionContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
-                <div class="table-responsive" style="overflow-x: hidden;">
-                    <table class="table table-striped table-hover w-100" id="tablaseccion">
+            <div class="datatable-ui w-100" style="max-width: 900px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover w-100" id="tablaListadoHorarios">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
                                 <th>Código de Sección</th>
                                 <th>Cantidad de Estudiantes</th>
                                 <th>Año</th>
-                                <th>Acciones</th>
+                                <th style="width: 150px;">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="resultadoconsulta1"></tbody>
+                        <tbody id="resultadoconsulta"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalRegistroSeccion">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Formulario de Sección</h5>
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Paso 1: Registrar Nueva Sección</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                            <input type="hidden" name="accion" id="accion" value="registrar">
+                        <form method="post" id="formRegistroSeccion" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="hidden" name="accion" value="registrar_seccion">
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div style="display: none;" class="col-md-6">
-                                        <label for="seccionId" class="form-label">ID</label>
-                                        <input class="form-control" type="text" id="seccionId" name="seccionId" required>
+                                    <div class="col-md-6">
+                                        <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
+                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="codigoSeccion" class="form-label">Código</label>
-                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required>
-                                        <span id="scodigoSeccion"></span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes</label>
-                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required>
-                                        <span id="scantidadSeccion"></span>
+                                        <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
+                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required min="0" max="99" value="0">
                                     </div>
                                 </div>
                                 <div class="row mt-3">
                                     <div class="col-md-12">
-                                        <label for="anioId" class="form-label">Año</label>
+                                        <label for="anioId" class="form-label">Año <span class="text-danger">*</span></label>
                                         <select class="form-select" name="anioId" id="anioId" required>
                                             <option value="" disabled selected>Seleccione un año</option>
                                             <?php
                                             if (!empty($anios)) {
                                                 foreach ($anios as $anio) {
-                                                    echo "<option value='" . $anio['ani_id'] . "'>" . $anio['ani_anio'] . "</option>";
+                                                    echo "<option value='" . htmlspecialchars($anio['ani_id'], ENT_QUOTES) . "'>" . htmlspecialchars($anio['ani_anio'], ENT_QUOTES) . "</option>";
                                                 }
-                                            } else {
-                                                echo "<option value='' disabled>No hay años activos disponibles</option>";
                                             }
                                             ?>
                                         </select>
-                                        <span id="sanioId" class="text-danger"></span>
                                     </div>
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center">
-                                <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
+                                <button type="submit" class="btn btn-primary me-2" id="btnGuardarSeccion">Guardar y Continuar</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
@@ -98,10 +110,175 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
+        
+        <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalHorarioGlobalTitle"></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" id="form-horario" autocomplete="off">
+                           <input type="hidden" name="accion" id="accion"> 
+                           <input type="hidden" name="seccion_id" id="seccion_id_hidden">
+                           <div class="row">
+                                <div class="col-md-7 mb-3">
+                                    <label for="seccion_principal_id" class="form-label">Sección</label>
+                                    <select class="form-select" id="seccion_principal_id" name="seccion_id_display" disabled><option value=""></option></select>
+                                </div>
+                                <div class="col-md-5 mb-3">
+                                    <label for="filtro_turno" class="form-label">Turno de la Sección</label>
+                                    <select class="form-select" id="filtro_turno">
+                                        <option value="todos">Todos los Turnos</option>
+                                        <option value="mañana">Turno Mañana</option>
+                                        <option value="tarde">Turno Tarde</option>
+                                        <option value="noche">Turno Noche</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="table-responsive mt-3" id="contenedorTablaHorario">
+                                <table class="table table-bordered text-center" id="tablaHorario">
+                                    <thead><tr><th>Hora</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th><th>Sábado</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn me-2" id="proceso"></button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+     <div class="modal fade" id="modalVerHorario" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="modalVerHorarioTitle">Ver Horario</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive" id="contenedorTablaVerHorario">
+                        <table class="table table-bordered text-center" id="tablaVerHorario">
+                            <thead><tr><th>Hora</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th><th>Sábado</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-center fs-5">¿Está seguro de que desea eliminar la siguiente sección y su horario asociado? <strong>Esta acción no se puede deshacer.</strong></p>
+                    <div class="card my-3">
+                        <div class="card-header"><strong>Detalles de la Sección a Eliminar</strong></div>
+                        <div class="card-body" id="detallesParaEliminar">
+                            </div>
+                    </div>
+                    <h5 class="mt-4">Horario Asociado:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center" id="tablaEliminarHorario">
+                            <thead><tr><th>Hora</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th><th>Sábado</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btnProcederEliminacion">Eliminar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div class="modal fade" id="modalEntradaHorario" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Añadir/Editar Clase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formularioEntradaHorario" autocomplete="off">
+                        <div class="mb-3"><label class="form-label">Franja Horaria:</label><input type="text" class="form-control" id="modalFranjaHoraria" readonly></div>
+                        <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" id="modalDia" readonly></div>
+                        
+                        <div class="mb-3">
+                            <label for="modalSeleccionarDocente" class="form-label">Docente <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalSeleccionarDocente" required><option value="">Seleccionar Docente</option></select>
+                            <div id="conflicto-docente-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
+                        </div>
+                        
+                        <div class="mb-3"><label for="modalSeleccionarUc" class="form-label">Unidad Curricular <span class="text-danger">*</span></label><select class="form-select" id="modalSeleccionarUc" required><option value="">Primero seleccione un docente</option></select></div>
+                        
+                        <div class="mb-3">
+                            <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab) <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalSeleccionarEspacio" required><option value="">Seleccionar Espacio</option></select>
+                            <div id="conflicto-espacio-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="btnGuardarClase">Guardar Cambios</button>
+                        <button type="button" class="btn btn-danger" id="btnEliminarEntrada" style="display:none;">Eliminar Clase</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="modalUnirHorarios" tabindex="-1" aria-labelledby="modalUnirHorariosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalUnirHorariosLabel">Unir Horarios de Secciones</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formUnirHorarios" novalidate>
+                        <input type="hidden" name="accion" value="unir_horarios">
+                        <div class="alert alert-info" role="alert">
+                            <strong>Paso 1:</strong> Marque 2 o más secciones que desea unir. El sistema agrupará automáticamente las secciones compatibles (mismo año y trayecto).
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Secciones a Unir</label>
+                            <div id="unirSeccionesContainer" class="border p-3 rounded" style="height: 200px; overflow-y: auto;">
+                                </div>
+                        </div>
+
+                         <div class="alert alert-info mt-4" role="alert">
+                            <strong>Paso 2:</strong> De las secciones que marcó, seleccione cuál de ellas tiene el horario que desea copiar a las demás.
+                        </div>
+                        <div class="mb-3">
+                            <label for="unirSeccionOrigen" class="form-label">Usar el horario de la sección:</label>
+                            <select class="form-select" id="unirSeccionOrigen" name="id_seccion_origen" required>
+                                <option value="" disabled selected>Marque primero las secciones a unir...</option>
+                            </select>
+                            <div class="invalid-feedback">Debe seleccionar una sección de origen.</div>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="submit" class="btn btn-primary" id="btnConfirmarUnion">Confirmar y Unir Horarios</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     </main>
     <?php require_once("public/components/footer.php"); ?>
-    <script type="text/javascript" src="public/js/seccion.js"></script>
-    <script type="text/javascript" src="public/js/validacion.js"></script>
+    <script src="public/js/seccion.js"></script>
 </body>
-
 </html>
