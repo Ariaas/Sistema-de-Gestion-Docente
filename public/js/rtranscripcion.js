@@ -1,11 +1,9 @@
-
-
 document.addEventListener('DOMContentLoaded', function () {
    
-    const generarBtn = document.getElementById("generar_asignacion_btn");
-    const anioSelect = document.getElementById("anio_asig");
+    const generarBtn = document.getElementById("generar_transcripcion_btn");
+    const anioSelect = document.getElementById("anio_id");
+    const faseSelect = document.getElementById("fase");
     
-
     if (generarBtn) {
         generarBtn.addEventListener("click", function(event) {
             if (anioSelect && anioSelect.value === "") {
@@ -17,9 +15,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     confirmButtonColor: '#3085d6'
                 });
                 return;
-             }
+            }
 
-
+            setTimeout(function() {
+                if (anioSelect) anioSelect.value = "";
+                if (faseSelect) faseSelect.value = "";
+            }, 1800);
         });
     }
 });

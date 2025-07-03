@@ -15,6 +15,12 @@ $oReporte = new Transcripcion();
 
 if (isset($_POST['generar_transcripcion'])) {
 
+    $anioId = $_POST['anio_id'] ?? null;
+    $fase = $_POST['fase'] ?? '';
+
+    $oReporte->set_anio($anioId);
+    $oReporte->set_fase($fase);
+
     $reportData = $oReporte->obtenerTranscripciones();
 
     $groupedData = [];
@@ -83,7 +89,7 @@ if (isset($_POST['generar_transcripcion'])) {
             }
         }
     } else {
-        $sheet->mergeCells("A{$filaActual}:E{$filaActual}")->setCellValue("A{$filaActual}", "No se encontraron datos.");
+        $sheet->mergeCells("A{$filaActual}:E{$filaActual}")->setCellValue("A{$filaActual}", "No se encontraron datos para los filtros seleccionados.");
         $filaActual++;
     }
 
@@ -107,5 +113,6 @@ if (isset($_POST['generar_transcripcion'])) {
     $writer->save('php://output');
     exit;
 } else {
+    $listaAnios = $oReporte->obtenerAnios();
     require_once("views/reportes/rtranscripcion.php");
 }

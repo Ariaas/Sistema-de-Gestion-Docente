@@ -19,11 +19,12 @@
             <section class="py-3">
                 <div class="text-center mb-4">
                     <h2 class="text-primary">Reporte Definitivo EMITC</h2>
+                    <p class="lead">Seleccione los filtros para generar el reporte</p>
                 </div>
                 <div class="card p-4 shadow-sm bg-light rounded">
                     <form method="post" action="" id="fReporteDefinitivoEmit" target="_blank">
-                        <div class="row g-3 mb-4 justify-content-center">
-                            <div class="col-md-8">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
                                 <label for="docente_id" class="form-label">Filtrar por Docente:</label>
                                 <select class="form-select" name="docente_id" id="docente_id">
                                     <option value="">-- Todos los Docentes --</option>
@@ -35,7 +36,30 @@
                                     }
                                     ?>
                                 </select>
-                                <div class="form-text">Si no selecciona un docente, se mostrarán todos.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="seccion_id" class="form-label">Filtrar por Sección:</label>
+                                <select class="form-select" name="seccion_id" id="seccion_id">
+                                    <option value="">-- Todas las Secciones --</option>
+                                    <?php
+                                    if (!empty($listaSecciones)) {
+                                        foreach ($listaSecciones as $seccion) {
+                                            echo "<option value='" . htmlspecialchars($seccion['sec_id']) . "'>" . htmlspecialchars($seccion['sec_codigo']) . "</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4 justify-content-center">
+                            <div class="col-md-6">
+                                <label for="fase" class="form-label">Filtrar por Fase:</label>
+                                <select class="form-select" name="fase" id="fase">
+                                    <option value="">-- Todas las Fases --</option>
+                                    <option value="1">Fase I</option>
+                                    <option value="2">Fase II</option>
+                                    <option value="anual">Anual</option>
+                                </select>
                             </div>
                         </div>
                         <hr class="my-4">
