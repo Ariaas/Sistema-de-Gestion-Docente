@@ -12,6 +12,9 @@ function validarExiste() {
     datos.append('accion', 'existe');
     datos.append('nombreUsuario', nombre);
     datos.append('correoUsuario', correo);
+    if ($("#proceso").text() == "MODIFICAR") {
+      datos.append('usuarioId', $("#usuarioId").val());
+    }
     enviaAjax(datos);
   }
 }
@@ -110,7 +113,7 @@ $(document).ready(function () {
         datos.append("nombreUsuario", $("#usuarionombre").val());
         datos.append("correoUsuario", $("#correo").val());
         datos.append("contraseniaUsuario", $("#contrasenia").val());
-        datos.append("superUsuario", $("#superUsuario").val());
+        datos.append("usuarioRol", $("#usuarioRol").val());
         enviaAjax(datos);
       }
     } else if ($(this).text() == "MODIFICAR") {
@@ -120,6 +123,7 @@ $(document).ready(function () {
         datos.append("usuarioId", $("#usuarioId").val()); 
         datos.append("nombreUsuario", $("#usuarionombre").val());
         datos.append("correoUsuario", $("#correo").val());
+        datos.append("usuarioRol", $("#usuarioRol").val());
         enviaAjax(datos);
       }
     }
@@ -186,16 +190,18 @@ function pone(pos, accion) {
     $("#usuarionombre").prop("disabled", false);
     $("#correo").prop("disabled", false);
     $("#contrasenia").prop("disabled", false);
-    $(".grupo-modificar").hide();
+    $("#usuarioRol").prop("disabled", false);
+    $(".grupo-modificar").show();
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#usuarionombre, #correo, #contrasenia").prop("disabled", true);
+    $("#usuarionombre, #correo, #contrasenia, #usuarioRol").prop("disabled", true);
     $(".grupo-modificar").hide();
   }
 
   $("#usuarioId").val($(linea).find("td:eq(0)").text());
   $("#usuarionombre").val($(linea).find("td:eq(1)").text());
   $("#correo").val($(linea).find("td:eq(2)").text());
+  $("#usuarioRol").val($(linea).find("td:eq(3)").data("rol") || "");
 
   $("#susuarionombre").hide();
   $("#scontrasenia").hide();
@@ -228,17 +234,14 @@ function enviaAjax(datos) {
                 <td style="display: none;">${item.usu_id}</td>
                 <td>${item.usu_nombre}</td>
                 <td>${item.usu_correo}</td>
-
+                <td>${item.rol_nombre ?? ''}</td>
                 <td>
-                <button class="btn btn-warning btn-sm agregarPermiso" data-id="${item.usu_id}">Permisos</button>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.usu_id}"  data-nombre="${item.usu_nombre}  data-contrasenia="${item.usu_contrasenia} data-correo="${item.usu_correo} ">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.usu_id}"  data-nombre="${item.usu_nombre} data-contrasenia="${item.usu_contrasenia} data-correo="${item.usu_correo} 
-                  ">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Eliminar</button>
                 </td>
               </tr>
             `);
           });
-          
           crearDT();
         }
         ////////
@@ -270,17 +273,7 @@ function enviaAjax(datos) {
             Listar();
         }
         }
-        else if (lee.resultado === "listarPermisos") { 
-            carritoPermisos = lee.permisos || [];
-            actualizarCarritoPermisos();
-            $("#modal2").modal("show");
-        }
-        else if (lee.resultado === "asignarPermisos" || lee.resultado === "ok") {
-            muestraMensaje("info", 4000, "PERMISOS", lee.mensaje);
-            if (lee.resultado === "ok" || lee.mensaje === "Permisos asignados correctamente") { 
-                $("#modal2").modal("hide");
-            }
-        }
+        
         else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
@@ -303,71 +296,8 @@ function enviaAjax(datos) {
 function limpia() {
   $("#usuarioId").val("");
   $("#usuarionombre").val("");
-  $("#usuariocontrasenia").val("");
+  $("#contrasenia").val("");
   $("#correo").val("");
-  
+  $("#usuarioRol").val("");
 }
 
-let carritoPermisos = [];
-let usuarioSeleccionado = null;
-
-function actualizarCarritoPermisos() {
-    const ul = document.getElementById("carritoPermisos");
-    if (!ul) return;
-    ul.innerHTML = "";
-    carritoPermisos.forEach((perm, idx) => {
-        const nombre = $("#permisos option[value='" + perm + "']").text();
-        const li = document.createElement("li");
-        li.className = "list-group-item d-flex justify-content-between align-items-center";
-        li.innerHTML = `
-            ${nombre}
-            <button type="button" class="btn btn-danger btn-sm quitar-permiso" data-idx="${idx}">Quitar</button>
-        `;
-        ul.appendChild(li);
-    });
-}
-
-$(document).on("click", "#agregarPermiso", function () {
-    const select = document.getElementById("permisos");
-    const permisoId = select.value;
-    if (!permisoId) {
-        alert("Seleccione un permiso válido.");
-        return;
-    }
-    if (carritoPermisos.includes(permisoId)) {
-        alert("Este permiso ya está seleccionado.");
-        return;
-    }
-    carritoPermisos.push(permisoId);
-    actualizarCarritoPermisos();
-});
-
-$(document).on("click", ".quitar-permiso", function () {
-    const idx = $(this).data("idx");
-    carritoPermisos.splice(idx, 1);
-    actualizarCarritoPermisos();
-});
-
-$(document).on("click", ".agregarPermiso", function () {
-    usuarioSeleccionado = $(this).data("id");
-    var datos = new FormData();
-    datos.append("accion", "listarPermisos");
-    datos.append("usuarioId", usuarioSeleccionado);
-    enviaAjax(datos);
-});
-
-$(document).on("click", "#guardarPermisos", function () {
-    if (!usuarioSeleccionado) {
-        alert("Seleccione un usuario.");
-        return;
-    }
-    if (carritoPermisos.length === 0) {
-        alert("Agregue al menos un permiso.");
-        return;
-    }
-    var datos = new FormData();
-    datos.append("accion", "asignarPermisos");
-    datos.append("usuarioId", usuarioSeleccionado);
-    datos.append("permisos", JSON.stringify(carritoPermisos));
-    enviaAjax(datos);
-});

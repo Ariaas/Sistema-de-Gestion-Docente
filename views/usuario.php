@@ -32,6 +32,7 @@ if (!isset($_SESSION['name'])) {
                                 <th style="display: none;">ID</th>
                                 <th>Nombre</th>
                                 <th>Correo</th>
+                                <th>Rol</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -56,18 +57,18 @@ if (!isset($_SESSION['name'])) {
                                 style="display: none;">
                             <div class="container">
                                 <div class="row mb-3">
-                                    <div class="col-md-4" style="display: none;">
+                                    <div class="col-md-6" style="display: none;">
                                         <label for="usuarioId" class="form-label">ID</label>
                                         <input class="form-control" type="text" id="usuarioId" name="usuarioId" min="1">
                                         <span id="susuarioId" class="form-text"></span>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="usuarionombre" class="form-label">Nombre</label>
                                         <input class="form-control" type="text" id="usuarionombre" name="usuarionombre">
                                         <span id="susuarionombre" class="form-text"></span>
                                     </div>
 
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="correo" class="form-label">Correo</label>
                                         <input class="form-control" type="text" id="correo" name="correo">
                                         <span id="scorreo" class="form-text"></span>
@@ -81,84 +82,29 @@ if (!isset($_SESSION['name'])) {
                                             <input class="form-control" type="password" id="contrasenia" name="contrasenia">
                                             <span id="scontrasenia" class="form-text"></span>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label for="superUsuario" class="form-label ">Super Usuario</label>
-                                            <select class="form-select" name="superUsuario" id="superUsuario" required>
-                                                <option value="" disabled selected>Seleccione una opción</option>
-                                                <option value="0">No</option>
-                                                <option value="1">Sí</option>
-                                            </select>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="usuarioRol" class="form-label">Roles</label>
+                                                <select class="form-select" name="usuarioRol" id="usuarioRol" required>
+                                                    <option value="" disabled selected>Seleccione un rol</option>
+                                                    <?php
+                                                    if (!empty($roles)) {
+                                                        foreach ($roles as $rol) {
+                                                            echo "<option value='" . $rol['rol_id'] . "'>" . $rol['rol_nombre'] . "</option>";
+                                                        }
+                                                    } else {
+                                                        echo "<option value='' disabled>No hay roles disponibles</option>";
+                                                    }
+                                                    ?>
+                                                </select>
+                                                <span id="srol"></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" tabindex="-1" role="dialog" id="modal2">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Formulario de Permisos</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close">
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form method="post" id="f" autocomplete="off">
-                            <input autocomplete="off" type="text" class="form-control" name="accion" id="accion"
-                                style="display: none;">
-                            <div class="container">
-                                <div class="row mb-3">
-                                    <div class="col-md-4" style="display: none;">
-                                        <label for="permisoId" class="form-label">ID</label>
-                                        <input class="form-control" type="text" id="permisoId" name="permisoId" min="1">
-                                        <span id="spermisoId" class="form-text"></span>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label for="permisos" class="form-label">Permiso</label>
-                                        <select class="form-select" name="permisos" id="permisos" required>
-                                            <option value="" disabled selected>Seleccione los permisos</option>
-                                            <option value="1">Área</option>
-                                            <option value="2">Respaldo</option>
-                                            <option value="3">Categorias</option>
-                                            <option value="4">Docentes</option>
-                                            <option value="5">Eje</option>
-                                            <option value="6">Espacios</option>
-                                            <option value="7">Seccion</option>
-                                            <option value="8">Titulo</option>
-                                            <option value="9">Año</option>
-                                            <option value="10">Unidad Curricular</option>
-                                            <option value="11">Horario</option>
-                                            <option value="12">Horario Docente</option>
-                                            <option value="13">Malla Curricular</option>
-                                            <option value="14">Archivos</option>
-                                            <option value="15">Reportes</option>
-                                            <option value="16">Bitacora</option>
-                                            <option value="17">Usuarios</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4 d-flex align-items-end">
-                                        <button type="button" class="btn btn-success" id="agregarPermiso">Agregar Permiso
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-md-12">
-                                        <label>Permisos seleccionados:</label>
-                                        <ul id="carritoPermisos" class="list-group"></ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer justify-content-center">
-                                <button type="button" class="btn btn-primary me-2" id="guardarPermisos">Guardar Permisos
-                                </button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
