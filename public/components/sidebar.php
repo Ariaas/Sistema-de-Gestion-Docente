@@ -121,10 +121,10 @@ $tiene_permiso_reportes = !empty($permisos['Reportes']);
                 <?php if (!empty($permisos['Horario'])) : ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle <?php echo is_active(['horario', 'horariodocente'], $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Horarios
+                            Horario
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item <?php echo is_active('horario', $pagina_actual); ?>" href="?pagina=horario">Gestionar Horario</a></li>
+                           
                             <li><a class="dropdown-item <?php echo is_active('horariodocente', $pagina_actual); ?>" href="?pagina=horariodocente">Horario Docente</a></li>
                         </ul>
                     </li>

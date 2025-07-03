@@ -1,5 +1,70 @@
 
 
+function Listar() {
+    var datos = new FormData();
+    datos.append("accion", "consultar");
+    enviaAjax(datos);
+}
+
+function destruyeDT() {
+  if ($.fn.DataTable.isDataTable("#tablaactividad")) {
+    $("#tablaactividad").DataTable().destroy();
+  }
+}
+
+function crearDT() {
+  if (!$.fn.DataTable.isDataTable("#tablaactividad")) {
+    $("#tablaactividad").DataTable({
+      paging: true,
+      lengthChange: true,
+      searching: true,
+      ordering: true,
+      info: true,
+      autoWidth: false,
+      responsive: true,
+      language: {
+        lengthMenu: "Mostrar _MENU_ registros",
+        zeroRecords: "No se encontraron resultados",
+        info: "Mostrando _PAGE_ de _PAGES_",
+        infoEmpty: "No hay registros disponibles",
+        infoFiltered: "(filtrado de _MAX_ registros totales)",
+        search: "Buscar:",
+        paginate: {
+          first: "Primero",
+          last: "Último",
+          next: "Siguiente",
+          previous: "Anterior",
+        },
+      },
+      autoWidth: false,
+      order: [[0, "asc"]],
+      dom:
+        "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
+        "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+    });
+
+    $("div.dataTables_length select").css({
+      width: "auto",
+      display: "inline",
+      "margin-top": "10px",
+    });
+
+    $("div.dataTables_filter").css({
+      "margin-bottom": "50px",
+      "margin-top": "10px",
+    });
+
+    $("div.dataTables_filter label").css({
+      float: "left",
+    });
+
+    $("div.dataTables_filter input").css({
+      width: "300px",
+      float: "right",
+      "margin-left": "10px",
+    });
+  }
+}
 $(document).ready(function () {
     Listar();
 
@@ -78,11 +143,6 @@ $(document).ready(function () {
     });
 });
 
-function Listar() {
-    var datos = new FormData();
-    datos.append("accion", "consultar");
-    enviaAjax(datos);
-}
 
 function CargarDocentes() {
     var datos = new FormData();
@@ -103,21 +163,7 @@ function CargarDocentes() {
     });
 }
 
-function destruyeDT() {
-    if ($.fn.DataTable.isDataTable("#tablaactividad")) {
-        $("#tablaactividad").DataTable().destroy();
-    }
-}
 
-function crearDT() {
-    if (!$.fn.DataTable.isDataTable("#tablaactividad")) {
-        $("#tablaactividad").DataTable({
-            language: { url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json' },
-            autoWidth: false,
-            order: [[1, "asc"]],
-        });
-    }
-}
 
 function validarenvio() {
     if ($("#docId").val() == "") {
@@ -150,10 +196,10 @@ function pone(pos, accion) {
         $("#modal1 .modal-title").text("Modificar Actividad");
         $("form#f :input").prop('disabled', false);
         $("#docId").prop('disabled', true); 
-    } else if (accion === 1) { // Eliminar
+    } else if (accion === 1) { 
         $("#proceso").text("ELIMINAR");
         $("#modal1 .modal-title").text("Confirmar Eliminación");
-        // ===== CORRECCIÓN AQUÍ: Selector más específico para no deshabilitar los botones =====
+      
         $("form#f .form-control, form#f .form-select").prop('disabled', true); 
     }
     

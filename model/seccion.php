@@ -522,12 +522,10 @@ class seccion extends Connection
     
     public function obtenerAnios() { try { return $this->Con()->query("SELECT ani_anio, ani_id FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC")->fetchAll(PDO::FETCH_ASSOC); } catch (Exception $e) { return []; }}
     
-    // =================================================================
-    // ========= INICIO DEL CÓDIGO MODIFICADO ==========================
-    // =================================================================
+ 
     public function obtenerTurnos() { 
         return [
-            // Turno Mañana
+            
             ['tur_id' => 1, 'tur_horainicio' => '08:00:00', 'tur_horafin' => '08:40:00'],
             ['tur_id' => 2, 'tur_horainicio' => '08:40:00', 'tur_horafin' => '09:20:00'],
             ['tur_id' => 3, 'tur_horainicio' => '09:20:00', 'tur_horafin' => '10:00:00'],
@@ -535,14 +533,13 @@ class seccion extends Connection
             ['tur_id' => 5, 'tur_horainicio' => '10:40:00', 'tur_horafin' => '11:20:00'],
             ['tur_id' => 6, 'tur_horainicio' => '11:20:00', 'tur_horafin' => '12:00:00'],
             
-            // Turno Tarde
+        
             ['tur_id' => 7, 'tur_horainicio' => '13:00:00', 'tur_horafin' => '13:40:00'],
             ['tur_id' => 8, 'tur_horainicio' => '13:40:00', 'tur_horafin' => '14:20:00'],
             ['tur_id' => 9, 'tur_horainicio' => '14:20:00', 'tur_horafin' => '15:00:00'],
             ['tur_id' => 10, 'tur_horainicio' => '15:00:00', 'tur_horafin' => '15:40:00'],
          
 
-            // Turno Noche (5:00 PM a 11:00 PM)
             ['tur_id' => 11, 'tur_horainicio' => '17:00:00', 'tur_horafin' => '17:40:00'],
             ['tur_id' => 12, 'tur_horainicio' => '17:40:00', 'tur_horafin' => '18:20:00'],
             ['tur_id' => 13, 'tur_horainicio' => '18:20:00', 'tur_horafin' => '19:00:00'],
@@ -554,10 +551,7 @@ class seccion extends Connection
             ['tur_id' => 19, 'tur_horainicio' => '22:20:00', 'tur_horafin' => '23:00:00']
         ]; 
     }
-    // =================================================================
-    // ========= FIN DEL CÓDIGO MODIFICADO =============================
-    // =================================================================
-    
+
     public function obtenerUcPorDocente($doc_id) { 
         if (empty($doc_id)) {
             return ['data' => [], 'mensaje' => 'ID de docente no proporcionado.'];
