@@ -99,7 +99,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                     </div>
                 <?php endif; ?>
                 <div class="col">
-                    <a href="?pagina=prosecucion" class="dashboard-card">
+                    <a href="?pagina=prosecusion" class="dashboard-card">
                         <div class="icon-circle">
                             <img src="public/assets/icons/book-solid.svg" alt="Gestionar Prosecución">
                         </div>
