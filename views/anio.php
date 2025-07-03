@@ -74,6 +74,7 @@ if (!isset($_SESSION['name'])) {
                                     <div class="col-md-6">
                                         <label for="tipoAnio" class="form-label">Tipo de Año</label>
                                         <select class="form-select" name="tipoAnio" id="tipoAnio" required>
+                                            <option value="" disabled selected>Seleccione una opción</option>
                                             <option value="regular">Regular</option>
                                             <option value="intensivo">Intensivo</option>
                                         </select>

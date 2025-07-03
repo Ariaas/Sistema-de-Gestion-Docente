@@ -93,11 +93,30 @@ class Anio extends Connection
         $this->aniCierraFase2 = $aniCierraFase2;
     }
 
+    private function MallaActiva()
+    {
+        $co = $this->Con();
+        try {
+            $stmt = $co->query("SELECT 1 FROM tbl_malla WHERE mal_activa = 1 AND mal_estado = 1 LIMIT 1");
+            return $stmt->fetchColumn() !== false;
+        } catch (Exception $e) {
+            return false;
+        } finally {
+            $co = null;
+        }
+    }
+
     function Registrar()
     {
         $r = array();
 
-        if (!$this->Existe($this->aniAnio, null, $this->aniTipo)) {
+        if (!$this->MallaActiva()) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = '¡Error!<br/>No se puede registrar un nuevo año si no hay una malla curricular activa.';
+            return $r;
+        }
+
+        if (!$this->Existe($this->aniAnio, $this->aniTipo, null)) {
 
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -271,7 +290,7 @@ class Anio extends Connection
                 per.ani_id AS per_id 
             FROM tbl_anio a
             LEFT JOIN tbl_anio per ON a.ani_anio = per.ani_anio AND per.ani_tipo = 'per' AND per.ani_estado = 1
-            WHERE a.ani_estado = 1 AND a.ani_tipo != 'per'"); 
+            WHERE a.ani_estado = 1 AND a.ani_tipo != 'per'");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -312,10 +331,27 @@ class Anio extends Connection
             $this->setTipo('per');
             $this->setAperturaFase1($aperturaFase1->format('Y-m-d'));
             $this->setAperturaFase2($aperturaFase2->format('Y-m-d'));
-            $this->setCierraFase1(null); 
-            $this->setCierraFase2(null); 
+            $this->setCierraFase1(null);
+            $this->setCierraFase2(null);
 
-            return $this->Registrar();
+            $resultado = $this->Registrar();
+
+            if (isset($resultado['resultado']) && $resultado['resultado'] === 'registrar') {
+                require_once('model/notificaciones.php');
+                $n = new Notificaciones();
+
+                $fechaApertura1 = $aperturaFase1->format('d/m/Y');
+                $fechaApertura2 = $aperturaFase2->format('d/m/Y');
+
+                $mensaje = "Se ha abierto el PER para el año {$anioRegular['ani_anio']}. PER fase 1 abre el {$fechaApertura1} y Fase 2 abre el {$fechaApertura2}.";
+
+                $finNotificacion = (new DateTime())->modify('+20 days')->format('Y-m-d');
+
+                if (!$n->existeNotificacion($mensaje, $finNotificacion)) {
+                    $n->RegistrarNotificacion($mensaje, $finNotificacion);
+                }
+            }
+            return $resultado;
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => 'Error al crear el PER: ' . $e->getMessage()];
         }
@@ -435,52 +471,60 @@ class Anio extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $stmt = $co->query("SELECT ani_id, ani_anio, ani_cierra_fase1, ani_cierra_fase2 FROM tbl_anio WHERE ani_estado = 1");
+        $stmt = $co->query("SELECT ani_id, ani_anio, ani_tipo, ani_cierra_fase1, ani_cierra_fase2 FROM tbl_anio WHERE ani_estado = 1");
         $anios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $hoy = new DateTime();
         $hoy = new DateTime($hoy->format('Y-m-d'));
 
         foreach ($anios as $anio) {
+            if ($anio['ani_tipo'] === 'per') {
+                continue;
+            }
+
             $cierreFase1 = new DateTime($anio['ani_cierra_fase1']);
             $cierreFase1 = new DateTime($cierreFase1->format('Y-m-d'));
 
             $diasFase1 = (int)$hoy->diff($cierreFase1)->format('%r%a');
 
+            $tipoAnioTitle = ucfirst($anio['ani_tipo']);
+
             if ($diasFase1 === 20) {
-                $mensaje = "La fase 1 del año {$anio['ani_anio']} está a punto de cerrarse: faltan 20 días.";
-                $fin = (new DateTime($anio['ani_cierra_fase1']))->modify('+20 days')->format('Y-m-d');
+                $mensaje = "La fase 1 del año {$anio['ani_anio']} ({$tipoAnioTitle}) está a punto de cerrarse: faltan 20 días.";
+                $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
                 if (!$n->existeNotificacion($mensaje, $fin)) {
                     $n->RegistrarNotificacion($mensaje, $fin);
                 }
             }
 
             if ($diasFase1 === 0) {
-                $mensaje = "Hoy es el cierre de la fase 1 del año {$anio['ani_anio']}. ";
-                $fin = (new DateTime($anio['ani_cierra_fase1']))->modify('+20 days')->format('Y-m-d');
+                $mensaje = "Hoy es el cierre de la fase 1 del año {$anio['ani_anio']} ({$tipoAnioTitle}).";
+                $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
                 if (!$n->existeNotificacion($mensaje, $fin)) {
                     $n->RegistrarNotificacion($mensaje, $fin);
                 }
             }
 
-            $cierreFase2 = new DateTime($anio['ani_cierra_fase2']);
-            $cierreFase2 = new DateTime($cierreFase2->format('Y-m-d'));
+            if ($anio['ani_cierra_fase2']) {
+                $cierreFase2 = new DateTime($anio['ani_cierra_fase2']);
+                $cierreFase2 = new DateTime($cierreFase2->format('Y-m-d'));
 
-            $diasFase2 = (int)$hoy->diff($cierreFase2)->format('%r%a');
+                $diasFase2 = (int)$hoy->diff($cierreFase2)->format('%r%a');
 
-            if ($diasFase2 === 20) {
-                $mensaje = "La fase 2 del año {$anio['ani_anio']} está a punto de cerrarse: faltan 20 días.";
-                $fin = (new DateTime($anio['ani_cierra_fase2']))->modify('+20 days')->format('Y-m-d');
-                if (!$n->existeNotificacion($mensaje, $fin)) {
-                    $n->RegistrarNotificacion($mensaje, $fin);
+                if ($diasFase2 === 20) {
+                    $mensaje = "La fase 2 del año {$anio['ani_anio']} ({$tipoAnioTitle}) está a punto de cerrarse: faltan 20 días.";
+                    $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
+                    if (!$n->existeNotificacion($mensaje, $fin)) {
+                        $n->RegistrarNotificacion($mensaje, $fin);
+                    }
                 }
-            }
 
-            if ($diasFase2 === 0) {
-                $mensaje = "Hoy es el cierre de la fase 2 del año {$anio['ani_anio']}. ";
-                $fin = (new DateTime($anio['ani_cierra_fase2']))->modify('+20 days')->format('Y-m-d');
-                if (!$n->existeNotificacion($mensaje, $fin)) {
-                    $n->RegistrarNotificacion($mensaje, $fin);
+                if ($diasFase2 === 0) {
+                    $mensaje = "Hoy es el cierre de la fase 2 del año {$anio['ani_anio']} ({$tipoAnioTitle}).";
+                    $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
+                    if (!$n->existeNotificacion($mensaje, $fin)) {
+                        $n->RegistrarNotificacion($mensaje, $fin);
+                    }
                 }
             }
         }

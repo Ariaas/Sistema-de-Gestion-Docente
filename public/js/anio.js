@@ -201,11 +201,15 @@ function Listar() {
     var datos = new FormData();
     datos.append('accion', 'existe');
     datos.append('aniAnio', $("#aniAnio").val());
+    datos.append('tipoAnio',$("#tipoAnio").val());
     enviaAjax(datos, 'existe');
 }
 
 $("#aniAnio").on("change", function() {
     existeAnio();
+});
+$("#tipoAnio").on("change", function() {
+  existeAnio();
 });
 
   function validarFechas() {
@@ -323,7 +327,7 @@ $("#aniAnio").on("change", function() {
             $("#resultadoconsulta").empty();
             $.each(lee.mensaje, function (index, item) {
               let perButton = '';
-              if (item.ani_tipo === 'Regular') {
+              if (item.ani_tipo === 'Regular' || item.ani_tipo === 'regular') {
                   const tienePer = item.per_id !== null;
                   const btnClass = tienePer ? 'btn-info' : 'btn-primary';
                   const btnText = tienePer ? 'Ver PER' : 'Crear PER';
