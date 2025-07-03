@@ -78,6 +78,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                         </a>
                     </div>
                 <?php endif; ?>
+                  
                 <?php if (!empty($permisos['Titulo'])) : ?>
                     <div class="col">
                         <a href="?pagina=titulo" class="dashboard-card">
@@ -104,6 +105,14 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                             <img src="public/assets/icons/book-solid.svg" alt="Gestionar Prosecución">
                         </div>
                         <h5>Gestionar Prosecución</h5>
+                    </a>
+                </div>
+                 <div class="col">
+                    <a href="?pagina=actividad" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Gestionar Actividad">
+                        </div>
+                        <h5>Gestionar Actividad</h5>
                     </a>
                 </div>
             </div>

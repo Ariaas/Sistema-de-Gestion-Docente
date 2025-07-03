@@ -267,7 +267,7 @@ class Docente extends Connection
             $docentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($docentes as &$docente) {
-                // Obtener Títulos
+              
                 $stmtTitulos = $co->prepare("SELECT GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') AS titulos, GROUP_CONCAT(t.tit_id SEPARATOR ',') AS titulos_ids FROM titulo_docente td JOIN tbl_titulo t ON td.tit_id = t.tit_id WHERE td.doc_id = :doc_id AND t.tit_estado = 1");
                 $stmtTitulos->execute([':doc_id' => $docente['doc_id']]);
                 $titulosData = $stmtTitulos->fetch(PDO::FETCH_ASSOC);
@@ -275,7 +275,6 @@ class Docente extends Connection
                 $docente['titulos'] = $titulosData['titulos'] ?? 'Sin títulos';
                 $docente['titulos_ids'] = $titulosData['titulos_ids'] ?? '';
 
-                // Obtener Coordinaciones
                 $stmtCoordinaciones = $co->prepare("SELECT GROUP_CONCAT(c.cor_nombre SEPARATOR ', ') AS coordinaciones, GROUP_CONCAT(c.cor_id SEPARATOR ',') AS coordinaciones_ids FROM coordinacion_docente cd JOIN tbl_coordinacion c ON cd.cor_id = c.cor_id WHERE cd.doc_id = :doc_id AND c.cor_estado = 1");
                 $stmtCoordinaciones->execute([':doc_id' => $docente['doc_id']]);
                 $coordinacionesData = $stmtCoordinaciones->fetch(PDO::FETCH_ASSOC);

@@ -61,7 +61,7 @@ class Actividad extends Connection
             return ['resultado' => 'error', 'mensaje' => "El total de horas ($totalHoras) excede el límite de $maxHoras para la dedicación '$dedicacion' del docente."];
         }
 
-        return null; // No hay error
+        return null; 
     }
 
     public function DocenteYaTieneActividad($docId)

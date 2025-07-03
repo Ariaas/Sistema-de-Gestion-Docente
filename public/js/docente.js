@@ -1,21 +1,17 @@
-$(document).ready(function() {
-    
-    Listar();
 
-    /**
-     * @function destruyeDT
-     * @description Destruye la instancia de DataTable si ya existe para evitar reinicializaciones conflictivas.
-     */
+function Listar() {
+  var datos = new FormData();
+  datos.append("accion", "consultar");
+  enviaAjax(datos);
+}
+
     function destruyeDT() {
         if ($.fn.DataTable.isDataTable("#tabladocente")) {
             $("#tabladocente").DataTable().destroy();
         }
     }
 
-    /**
-     * @function crearDT
-     * @description Crea una nueva instancia de DataTable con la configuración estándar del sistema.
-     */
+  
     function crearDT() {
         if (!$.fn.DataTable.isDataTable("#tabladocente")) {
             $("#tabladocente").DataTable({
@@ -36,6 +32,11 @@ $(document).ready(function() {
             });
         }
     }
+$(document).ready(function() {
+    
+    Listar();
+
+ 
 
 
     $("#registrar").on("click", function() {
