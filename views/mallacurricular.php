@@ -31,8 +31,8 @@ if (!isset($_SESSION['name'])) {
   <canvas id="myChart"></canvas>
 </div>
 
-<script src="public/chart.js/chart.js"></script>
 
+<script src="public/package/dist/chart.umd.js"></script>
 <script>
   const ctx = document.getElementById('myChart');
 
