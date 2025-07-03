@@ -21,7 +21,7 @@ if (!isset($_SESSION['name'])) {
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Unidades Curriculares</h2>
 
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar</button>
+                <button class="btn btn-success px-4" id="registrar">Registrar Unidad Curricular</button>
             </div>
 
             <div class="datatable-ui w-100" id="tablaucContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
