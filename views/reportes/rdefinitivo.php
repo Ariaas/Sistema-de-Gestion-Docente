@@ -76,7 +76,6 @@
         </div>
     </main>
     <?php require_once("public/components/footer.php");  ?>
-    <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="public/js/rdefinitivo.js"></script>
 </body>
 

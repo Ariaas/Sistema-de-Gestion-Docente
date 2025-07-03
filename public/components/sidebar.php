@@ -33,6 +33,23 @@ foreach (array_keys($gestion_items) as $permiso) {
         break;
     }
 }
+
+// Lógica para el nuevo menú desplegable "Reportes"
+$reportes_items = [
+    'Reporte Estadístico' => 'reporte',
+    'Reporte de Malla' => 'rmalla',
+    'Reporte de Transcripción' => 'rtranscripcion',
+    'Reporte de U.C.' => 'ruc',
+    'Reporte Carga Académica' => 'rcargaAcademica',
+    'Reporte Definitivo' => 'rdefinitivo',
+    'Reporte Prosecución' => 'rprosecucion',
+    'Reporte Horario Docente' => 'rhordocente',
+    'Reporte Asignación Aulas' => 'raulaAsignada',
+    'Reporte Aulario' => 'raulario'
+];
+
+$paginas_reportes = array_values($reportes_items);
+$tiene_permiso_reportes = !empty($permisos['Reportes']);
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-custom">
@@ -87,11 +104,19 @@ foreach (array_keys($gestion_items) as $permiso) {
                         </ul>
                     </li>
                 <?php endif; ?>
-                <li class="nav-item">
-                    <a class="nav-link" href="?pagina=reporte">
-                        <i class="fas fa-chart-bar me-2"></i> Reporte Estadístico
-                    </a>
-                </li>
+                
+                <?php if ($tiene_permiso_reportes): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle <?php echo is_active($paginas_reportes, $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Reportes
+                        </a>
+                        <ul class="dropdown-menu">
+                            <?php foreach ($reportes_items as $nombre => $pagina): ?>
+                                <li><a class="dropdown-item <?php echo is_active($pagina, $pagina_actual); ?>" href="?pagina=<?php echo $pagina; ?>"><?php echo $nombre; ?></a></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </li>
+                <?php endif; ?>
 
                 <?php if (!empty($permisos['Horario'])) : ?>
                     <li class="nav-item dropdown">
@@ -112,9 +137,6 @@ foreach (array_keys($gestion_items) as $permiso) {
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                             <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
-                            <?php if (!empty($permisos['Reportes'])) : ?>
-                                <li><a class="dropdown-item <?php echo is_active('reportes', $pagina_actual); ?>" href="?pagina=reportes">Reportes</a></li>
-                            <?php endif; ?>
                             <?php if (!empty($permisos['Configuracion'])): ?>
                                 <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
                             <?php endif; ?>

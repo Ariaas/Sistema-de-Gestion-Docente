@@ -54,9 +54,7 @@
         </div>
     </main>
     <?php require_once("public/components/footer.php");  ?>
-  
-    <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="public/js/rtranscripcion.js"></script>
 </body>
+<script src="public/js/rtranscripcion.js"></script>
 
 </html>
