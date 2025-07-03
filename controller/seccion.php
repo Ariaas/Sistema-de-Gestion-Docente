@@ -12,7 +12,7 @@ $acciones_json_validas = [
     'consultar_agrupado',            
     'consultar_detalles',  
     'modificar',                
-    'obtener_uc_por_docente',
+    'obtener_uc_por_docente', 
     'registrar_seccion',
     'eliminar_seccion_y_horario',
     'validar_clase_en_vivo',
@@ -69,7 +69,23 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'obtener_uc_por_docente':
-                $resultado_uc = $o->obtenerUcPorDocente($_POST['doc_id'] ?? null);
+                $doc_id = $_POST['doc_id'] ?? null;
+                $sec_id_actual = $_POST['sec_id_actual'] ?? null; 
+                $trayecto_seccion = null;
+
+                
+                if ($sec_id_actual) {
+                
+                    $secciones_data = $o->obtenerSecciones();
+                    foreach ($secciones_data as $sec) {
+                        if ($sec['sec_id'] == $sec_id_actual) {
+                            $trayecto_seccion = substr($sec['sec_codigo'], 0, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                $resultado_uc = $o->obtenerUcPorDocente($doc_id, $trayecto_seccion); // Pasar trayecto
                 $respuesta = [
                     'resultado' => 'ok', 
                     'ucs_docente' => $resultado_uc['data'],
@@ -103,19 +119,26 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
         }
     } catch (Exception $e) {
-        error_log("Error en horarioC.php: " . $e->getMessage());
+        error_log("Error en seccionC.php: " . $e->getMessage()); 
         $respuesta = ['resultado' => 'error', 'mensaje' => "Error del servidor: " . $e->getMessage()];
     }
     
     header('Content-Type: application/json; charset=utf-8');
     
+  
     array_walk_recursive($respuesta, function(&$item, $key){
-        if(is_string($item)){ $item = mb_convert_encoding($item, 'UTF-8', 'UTF-8'); }
+        if(is_string($item)){ 
+        
+            if (!mb_check_encoding($item, 'UTF-8')) {
+                $item = mb_convert_encoding($item, 'UTF-8', mb_detect_encoding($item, 'UTF-8, ISO-8859-1', true));
+            }
+        }
     });
 
     $json_respuesta = json_encode($respuesta, JSON_UNESCAPED_UNICODE);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log("Error al codificar JSON en seccionC.php: " . json_last_error_msg() . " - Data: " . print_r($respuesta, true));
         $json_respuesta = json_encode(['resultado' => 'error', 'mensaje' => 'Error al codificar JSON: ' . json_last_error_msg()]);
     }
 

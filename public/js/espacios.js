@@ -5,7 +5,6 @@ function Listar() {
 }
 
 function destruyeDT() {
-
   if ($.fn.DataTable.isDataTable("#tablaespacio")) {
     $("#tablaespacio").DataTable().destroy();
   }
@@ -20,7 +19,6 @@ function crearDT() {
       ordering: true,
       info: true,
       autoWidth: false,
-      // responsive: true, // Desactivado para evitar conflictos
       language: {
         lengthMenu: "Mostrar _MENU_ registros",
         zeroRecords: "No se encontraron resultados",
@@ -48,73 +46,91 @@ $(document).ready(function () {
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
-    $("#codigoEspacio").on("keypress",function(e){
-    validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
-	});
+  $("#codigoEspacio").on("keypress", function (e) {
+    validarkeypress(/^[0-9\b]*$/, e); 
+  });
 
-	$("#codigoEspacio").on("keyup keydown",function(){
-		validarkeyup(/^[A-Za-z0-9]{2,5}$/,$(this),
-		$("#scodigoEspacio"),"El formato permite de 2 a 5 carácteres");
-		if ($("#codigoEspacio").val().length <= 3) {
-			var datos = new FormData();
-			datos.append('accion', 'existe');
-			datos.append('codigoEspacio', $(this).val());
-			enviaAjax(datos, 'existe');
-		}
-	});
+  $("#codigoEspacio").on("keyup keydown", function () {
+    validarkeyup(
+      /^[0-9]{1,4}$/, 
+      $(this),
+      $("#scodigoEspacio"),
+      "El formato permite de 1 a 4 dígitos numéricos."
+    );
 
-    $("#tipoEspacio").on("keypress", function (e) {
-      validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
-    });
+    if ($(this).val().length >= 1 && $("#edificio").val() !== "") {
+      var prefijo = getPrefijoEdificio($("#edificio").val());
+      var codigoCompleto = prefijo + $(this).val();
+      var datos = new FormData();
+      datos.append("accion", "existe");
+      datos.append("codigoEspacio", codigoCompleto); 
+      enviaAjax(datos, 'existe');
+    }
+  });
 
-    $("#tipoEspacio").on("keyup keydown", function () {
-      validarkeyup(
-        /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
-        $(this),
-        $("#stipoEspacio"),
-        "Este formato no debe estar vacío / permite un máximo 30 carácteres"
-      );
-    });
+  $("#tipoEspacio").on("change", function () {
+
+  });
+
+  $("#edificio").on("change", function () {
+
+    if ($("#codigoEspacio").val().length >= 1) {
+      var prefijo = getPrefijoEdificio($(this).val());
+      var codigoCompleto = prefijo + $("#codigoEspacio").val();
+      var datos = new FormData();
+      datos.append("accion", "existe");
+      datos.append("codigoEspacio", codigoCompleto); 
+      enviaAjax(datos, 'existe');
+    }
+    $("#scodigoEspacio").text(''); 
+    $("#proceso").prop("disabled", false); 
+  });
+
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
       if (validarenvio()) {
+        var prefijo = getPrefijoEdificio($("#edificio").val());
+        var codigoFinal = prefijo + $("#codigoEspacio").val(); 
+
         var datos = new FormData();
         datos.append("accion", "registrar");
-        datos.append("codigoEspacio", $("#codigoEspacio").val());
+        datos.append("codigoEspacio", codigoFinal); 
         datos.append("tipoEspacio", $("#tipoEspacio").val());
 
         enviaAjax(datos);
       }
     } else if ($(this).text() == "MODIFICAR") {
       if (validarenvio()) {
+        var prefijo = getPrefijoEdificio($("#edificio").val());
+        var codigoFinal = prefijo + $("#codigoEspacio").val(); 
+
         var datos = new FormData();
         datos.append("accion", "modificar");
-        datos.append("codigoEspacio", $("#codigoEspacio").val());
+        datos.append("codigoEspacio", codigoFinal); 
         datos.append("tipoEspacio", $("#tipoEspacio").val());
 
         enviaAjax(datos);
       }
-    }
-    if ($(this).text() == "ELIMINAR") {
+    } else if ($(this).text() == "ELIMINAR") {
+      
       if (
         validarkeyup(
-          /^[[A-Za-z0-9,\#\b\s\u00f1\u00d1\u00E0-\u00FC-]{2,6}$/,
+          /^[HGR][0-9]{1,4}$/, 
           $("#codigoEspacio"),
           $("#scodigoEspacio"),
-          "Formato de codigo incorrecto"
+          "Formato de código incorrecto (Ej: H12, G123, R45)"
         ) == 0
       ) {
         muestraMensaje(
           "error",
           4000,
           "ERROR!",
-          "Seleccionó un codigo incorrecto <br/> por favor verifique nuevamente"
+          "Seleccionó un código incorrecto <br/> por favor verifique nuevamente"
         );
       } else {
-        
         Swal.fire({
           title: "¿Está seguro de eliminar este espacio?",
           text: "Esta acción no se puede deshacer.",
@@ -126,10 +142,9 @@ $(document).ready(function () {
           cancelButtonText: "Cancelar",
         }).then((result) => {
           if (result.isConfirmed) {
-            
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("codigoEspacio", $("#codigoEspacio").val());
+            datos.append("codigoEspacio", $("#codigoEspacio").val()); 
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -150,26 +165,36 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
-    $("#scodigoEspacio").show();
-       $(
-      "#tipoEspacio, #codigoEspacio"
-    ).prop("disabled", false);
+    $("#scodigoEspacio").text(''); 
+    $("#tipoEspacio, #codigoEspacio, #edificio").prop("disabled", false);
+    $("#edificio").val(""); 
   });
-
-  
 
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-    var tipoEspacio = $("#tipoEspacio").val();
+  var codigoEspacio = $("#codigoEspacio").val();
+  var tipoEspacio = $("#tipoEspacio").val();
+  var edificio = $("#edificio").val();
 
-    if (validarkeyup( /^[A-Za-z0-9\s-]{2,5}$/,$("#codigoEspacio"),$("#scodigoEspacio"),"El formato permite de 2 a 5 caracteres, incluyendo guiones. Ej: H-12") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El código del espacio <br/> No debe estar vacío y debe contener entre 2 a 5 carácteres");
-          return false;
-        }
-    else if ( tipoEspacio === null || tipoEspacio === "0") {
+  if (edificio === null || edificio === "") {
+    muestraMensaje("error", 4000, "ERROR!", "Por favor, seleccione un edificio.");
+    return false;
+  }
+  if (
+    validarkeyup(
+      /^[0-9]{1,4}$/, 
+      $("#codigoEspacio"),
+      $("#scodigoEspacio"),
+      "El formato permite de 1 a 4 dígitos numéricos."
+    ) == 0
+  ) {
+    muestraMensaje("error", 4000, "ERROR!", "El código numérico del espacio <br/> No debe estar vacío y debe contener entre 1 a 4 dígitos.");
+    return false;
+  }
+  if (tipoEspacio === null || tipoEspacio === "") { 
     muestraMensaje(
       "error",
       4000,
@@ -182,36 +207,62 @@ function validarenvio() {
 }
 
 
-function pone(pos, accion) {
-  linea = $(pos).closest("tr");
-
-  if (accion == 0) {
-    $("#proceso").text("MODIFICAR");
-    $("#tipoEspacio").prop("disabled", false);
-    $("#codigoEspacio").prop("disabled", true);
-  } else {
-    $("#proceso").text("ELIMINAR");
-    $(
-      "#tipoEspacio, #codigoEspacio"
-    ).prop("disabled", true);
+function getPrefijoEdificio(nombreEdificio) {
+  if (nombreEdificio === "Hilandera") {
+    return "H";
+  } else if (nombreEdificio === "Giraluna") {
+    return "G";
+  } else if (nombreEdificio === "Rio 7 Estrellas") {
+    return "R";
   }
-
-  const codigo = $(linea).find("td:eq(0)").text().trim();
-  let tipo = $(linea).find("td:eq(1)").text().trim();
-
-  if (tipo) {
-    tipo = tipo.charAt(0).toUpperCase() + tipo.slice(1);
-  }
-
-  $("#codigoEspacio").val(codigo);
-  $("#tipoEspacio").val(tipo);
-
-  $("#modal1").modal("show");
-  $("#scodigoEspacio").hide();
+  return ""; 
 }
 
 
-function enviaAjax(datos) {
+function separarCodigoEdificio(codigoCompleto) {
+  if (codigoCompleto.length > 0) {
+    const prefijo = codigoCompleto.charAt(0);
+    const codigoNumerico = codigoCompleto.substring(1);
+    let nombreEdificio = "";
+    if (prefijo === "H") {
+      nombreEdificio = "Hilandera";
+    } else if (prefijo === "G") {
+      nombreEdificio = "Giraluna";
+    } else if (prefijo === "R") { 
+      nombreEdificio = "Rio 7 Estrellas";
+    }
+    return { prefijo: prefijo, codigoNumerico: codigoNumerico, nombreEdificio: nombreEdificio };
+  }
+  return { prefijo: "", codigoNumerico: "", nombreEdificio: "" };
+}
+
+function pone(pos, accion) {
+  linea = $(pos).closest("tr");
+
+  const codigoCompleto = $(linea).find("td:eq(0)").text().trim();
+  const tipo = $(linea).find("td:eq(1)").text().trim();
+  const edificio = $(linea).find("td:eq(2)").text().trim(); 
+
+  const { codigoNumerico } = separarCodigoEdificio(codigoCompleto); 
+
+  if (accion == 0) { 
+    $("#proceso").text("MODIFICAR");
+    $("#tipoEspacio, #codigoEspacio, #edificio").prop("disabled", false);
+  } else { 
+    $("#proceso").text("ELIMINAR");
+    $("#tipoEspacio, #codigoEspacio, #edificio").prop("disabled", true);
+  }
+
+  $("#codigoEspacio").val(codigoNumerico); 
+  $("#tipoEspacio").val(tipo.toLowerCase()); 
+  $("#edificio").val(edificio); 
+  
+  $("#modal1").modal("show");
+  $("#scodigoEspacio").text(''); 
+}
+
+
+function enviaAjax(datos, tipo_accion_local = null) { 
   $.ajax({
     async: true,
     url: "",
@@ -221,20 +272,22 @@ function enviaAjax(datos) {
     processData: false,
     cache: false,
     beforeSend: function () {},
-    timeout: 10000, 
+    timeout: 10000,
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
+
         if (lee.resultado === "consultar") {
           destruyeDT();
           $("#resultadoconsulta").empty();
           let tabla = "";
           lee.mensaje.forEach(item => {
+            const { prefijo, codigoNumerico, nombreEdificio } = separarCodigoEdificio(item.esp_codigo);
             tabla += `
             <tr>
                 <td>${item.esp_codigo}</td>
                 <td>${item.esp_tipo}</td>
-                <td class="text-center">
+                <td>${nombreEdificio}</td> <td class="text-center">
                     <button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar">
                         <img src="public/assets/icons/edit.svg" alt="Modificar">
                     </button>
@@ -247,7 +300,6 @@ function enviaAjax(datos) {
           $('#resultadoconsulta').html(tabla);
           crearDT();
         }
-        ////////
         else if (lee.resultado == "registrar") {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
@@ -267,10 +319,15 @@ function enviaAjax(datos) {
             $("#modal1").modal("hide");
             Listar();
           }
-        }else if (lee.resultado == "existe") {		
-          if (lee.mensaje == 'El espacio ya existe!') {
-            muestraMensaje('info', 4000,'Atención!', lee.mensaje);
-          }	
+        } else if (lee.resultado == "existe") {
+          
+          if (tipo_accion_local === 'existe' && lee.mensaje === 'El ESPACIO colocado YA existe!') {
+            $("#scodigoEspacio").text('El espacio ya existe con este prefijo de edificio y código.').css('color', 'red');
+            $("#proceso").prop("disabled", true); 
+          } else {
+            $("#scodigoEspacio").text('').css('color', ''); 
+            $("#proceso").prop("disabled", false); 
+          }
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
@@ -286,7 +343,7 @@ function enviaAjax(datos) {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
       } catch (e) {
-        console.error("Error en análisis JSON:", e); 
+        console.error("Error en análisis JSON:", e);
         alert("Error en JSON " + e.name + ": " + e.message);
       }
     },
@@ -304,4 +361,7 @@ function enviaAjax(datos) {
 function limpia() {
   $("#tipoEspacio").val("");
   $("#codigoEspacio").val("");
+  $("#edificio").val(""); 
+  $("#scodigoEspacio").text(''); 
+  $("#proceso").prop("disabled", false);
 }

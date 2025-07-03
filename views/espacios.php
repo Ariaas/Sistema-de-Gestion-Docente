@@ -28,8 +28,9 @@ if (!isset($_SESSION['name'])) {
                     <table class="table table-striped table-hover w-100" id="tablaespacio">
                         <thead>
                             <tr>
-                                <th>Codigo</th>
+                                <th>Código</th>
                                 <th>Tipo</th>
+                                <th>Edificio</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -55,19 +56,29 @@ if (!isset($_SESSION['name'])) {
                                     
                                     <div class="col-md-6">
                                         <label for="codigoEspacio" class="form-label">Código</label>
-                                        <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio" placeholder="Ejemplo: H-12" required>
+                                        <input class="form-control" type="text" id="codigoEspacio" name="codigoEspacio" placeholder="Ejemplo: 12" required>
                                         <span id="scodigoEspacio" class="form-text"></span>
                                     </div>
 
-                                    
                                     <div class="col-md-6">
                                         <label for="tipoEspacio" class="form-label">Tipo</label>
                                         <select class="form-select" name="tipoEspacio" id="tipoEspacio" required>
                                             <option value="" disabled>Seleccione un tipo</option>
-                                            <option value="Aula" selected>Aula</option>
-                                            <option value="Laboratorio">Laboratorio</option>
+                                            <option value="aula" selected>Aula</option>
+                                            <option value="laboratorio">Laboratorio</option>
                                         </select>
                                         <span id="stipoEspacio" class="form-text"></span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="edificio" class="form-label">Edificio</label>
+                                        <select class="form-select" name="edificio" id="edificio" required>
+                                            <option value="" disabled selected>Seleccione un edificio</option>
+                                            <option value="Hilandera">Hilandera</option>
+                                            <option value="Giraluna">Giraluna</option>
+                                            <option value="Rio 7 Estrellas">Río 7 Estrellas</option> </select>
+                                        <span id="sedificio" class="form-text"></span>
                                     </div>
                                 </div>
                             </div>
