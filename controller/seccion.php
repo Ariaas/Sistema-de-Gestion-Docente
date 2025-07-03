@@ -119,16 +119,16 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
         }
     } catch (Exception $e) {
-        error_log("Error en seccionC.php: " . $e->getMessage()); // Registro más específico
+        error_log("Error en seccionC.php: " . $e->getMessage()); 
         $respuesta = ['resultado' => 'error', 'mensaje' => "Error del servidor: " . $e->getMessage()];
     }
     
     header('Content-Type: application/json; charset=utf-8');
     
-    // Asegurar que el encoding sea UTF-8 para JSON
+  
     array_walk_recursive($respuesta, function(&$item, $key){
         if(is_string($item)){ 
-            // Detectar si ya es UTF-8 antes de convertir, para evitar doble codificación o errores
+        
             if (!mb_check_encoding($item, 'UTF-8')) {
                 $item = mb_convert_encoding($item, 'UTF-8', mb_detect_encoding($item, 'UTF-8, ISO-8859-1', true));
             }

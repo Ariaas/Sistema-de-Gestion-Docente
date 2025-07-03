@@ -1,7 +1,7 @@
 <?php
 require_once('model/dbconnection.php');
 
-class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para consistencia
+class Seccion extends Connection 
 {
     public function __construct()
     {
@@ -16,14 +16,14 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
     
             if ($fechas) {
                 $hoy = new DateTime();
-                // Asegurar que las fechas de cierre incluyan todo el día
+           
                 $apertura_f1 = new DateTime($fechas['ani_apertura_fase1']);
                 $cierre_f1 = new DateTime($fechas['ani_cierra_fase1']);
-                $cierre_f1->setTime(23, 59, 59); // Final del día
+                $cierre_f1->setTime(23, 59, 59);
 
                 $apertura_f2 = new DateTime($fechas['ani_apertura_fase2']);
                 $cierre_f2 = new DateTime($fechas['ani_cierra_fase2']);
-                $cierre_f2->setTime(23, 59, 59); // Final del día
+                $cierre_f2->setTime(23, 59, 59);
     
                 if ($hoy >= $apertura_f1 && $hoy <= $cierre_f1) {
                     return 'fase1';
@@ -39,8 +39,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
     }
 
     public function EjecutarPromocionAutomatica() {
-        // La lógica existente para EjecutarPromocionAutomatica permanece sin cambios
-        // debido a que el problema reportado es con obtenerUcPorDocente.
+        
         if ($this->determinarFaseActual() !== 'fase2' || isset($_SESSION['promocion_f2_ejecutada_session'])) {
             return null;
         }
@@ -91,16 +90,16 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
                     
                     $this->EliminarPorSeccion($sec_id_destino, $co);
     
-                    $trayecto_destino = substr($codigo_destino, 0, 1); // Extraer el trayecto del código de sección
-                    $docentes = $this->obtenerDocentes(); // Esto trae todos los docentes, necesario para el reporte
+                    $trayecto_destino = substr($codigo_destino, 0, 1); 
+                    $docentes = $this->obtenerDocentes(); 
                     
                     $nuevas_clases = [];
-                    // Ya no se necesita stmt_uc_fase2 aquí, se usará la función obtenerUcPorDocente
+                  
     
                     foreach ($clases_origen as $clase) {
-                        // Llamar a obtenerUcPorDocente con el trayecto específico
+                       
                         $resultado_uc_docente = $this->obtenerUcPorDocente($clase['doc_id'], $trayecto_destino);
-                        $ucs_posibles = $resultado_uc_docente['data']; // Esto ahora ya está filtrado por fase y trayecto
+                        $ucs_posibles = $resultado_uc_docente['data']; 
     
                         if (count($ucs_posibles) === 1) {
                             $nuevas_clases[] = ['uc_id' => $ucs_posibles[0]['uc_id'], 'doc_id' => $clase['doc_id'], 'esp_id' => $clase['esp_id'], 'dia' => $clase['dia'], 'hora_inicio' => $clase['hora_inicio'], 'hora_fin' => $clase['hora_fin']];
@@ -131,7 +130,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
                             $stmt_uh->execute([':uc_id' => $item['uc_id'], ':hor_id' => $new_hor_id, ':dia' => $item['dia'], ':inicio' => $item['hora_inicio'], ':fin' => $item['hora_fin']]);
                         }
                     } else {
-                        // Si no hay clases para copiar (ej. todas fallaron el filtro), se asegura un horario base
+                        
                         $this->CrearHorarioVacioParaSeccion($sec_id_destino, $co);
                     }
                     $co->commit();
@@ -153,15 +152,14 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
 
     public function UnirHorarios($id_origen, $ids_a_unir) {
-        // La lógica existente para UnirHorarios permanece sin cambios
-        // debido a que el problema reportado es con obtenerUcPorDocente.
+
         if (empty($id_origen) || empty($ids_a_unir) || count($ids_a_unir) < 2) {
             return ['resultado' => 'error', 'mensaje' => 'Debe seleccionar al menos 2 secciones y una de origen.'];
         }
         
         try {
             $co_val = $this->Con();
-            // Asegurarse de que $ids_a_unir solo contenga enteros para la consulta IN
+          
             $clean_ids_a_unir = array_map('intval', $ids_a_unir);
             $placeholders = implode(',', array_fill(0, count($clean_ids_a_unir), '?'));
             $stmt = $co_val->prepare("SELECT sec_id, sec_codigo, ani_id FROM tbl_seccion WHERE sec_id IN ($placeholders)");
@@ -172,7 +170,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
                  return ['resultado' => 'error', 'mensaje' => 'Una o más secciones seleccionadas no son válidas.'];
             }
 
-            // Encontrar la sección de origen en el array de secciones
+         
             $seccion_origen_data = null;
             foreach ($secciones as $s) {
                 if ($s['sec_id'] == $id_origen) {
@@ -206,27 +204,24 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
             $clases_origen_result = $this->ConsultarDetalles($id_origen);
             $clases_origen = $clases_origen_result['mensaje'] ?? [];
     
-            // Filtrar la sección de origen para no eliminarla y volver a insertarla en sí misma.
+
             $ids_destinos = array_filter($ids_a_unir, function($id) use ($id_origen) {
                 return $id != $id_origen;
             });
     
             foreach($ids_destinos as $id_destino) {
-                // Eliminar horario existente para la sección destino
+                
                 $this->EliminarPorSeccion($id_destino, $co);
                 
                 if (!empty($clases_origen)) {
-                    // Reutilizar prepared statements fuera del bucle interno si es posible,
-                    // pero para la claridad y aislamiento de esta corrección, se mantienen aquí.
+                
                     $stmt_insert_hor = $co->prepare("INSERT INTO tbl_horario (esp_id, hor_turno, hor_modalidad, hor_estado) VALUES (:esp_id, :hor_turno, 'presencial', 1)");
                     $stmt_sh = $co->prepare("INSERT INTO seccion_horario (sec_id, hor_id) VALUES (:sec_id, :hor_id)");
                     $stmt_dh = $co->prepare("INSERT INTO docente_horario (doc_id, hor_id) VALUES (:doc_id, :hor_id)");
                     $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_id, hor_id, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_id, :hor_id, :dia, :inicio, :fin)");
                     
                     foreach ($clases_origen as $item) {
-                        // Aquí se debería asegurar que las UCs copiadas sean válidas para el trayecto destino si los trayectos pueden variar entre secciones a unir,
-                        // pero la validación inicial ya asegura que son del mismo año y trayecto.
-                        // Si se quiere una validación más estricta por trayecto de la UC al unir, se necesitaría un filtro similar al de obtenerUcPorDocente.
+                     
                         $stmt_insert_hor->execute([':esp_id' => $item['esp_id'], ':hor_turno' => $this->getTurnoEnum($item['hora_inicio'])]);
                         $new_hor_id = $co->lastInsertId();
                         $stmt_sh->execute([':sec_id' => $id_destino, ':hor_id' => $new_hor_id]);
@@ -234,8 +229,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
                         $stmt_uh->execute([':uc_id' => $item['uc_id'], ':hor_id' => $new_hor_id, ':dia' => $item['dia'], ':inicio' => $item['hora_inicio'], ':fin' => $item['hora_fin']]);
                     }
                 } else {
-                    // Si la sección de origen no tiene clases, las secciones destino también se quedarán sin clases.
-                    // Se asegura que al menos tengan un registro de horario para la sección.
+                
                     $this->CrearHorarioVacioParaSeccion($id_destino, $co);
                 }
             }
@@ -252,7 +246,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
     public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anioId)
     {
-        // Lógica existente permanece sin cambios
+    
         if (empty($codigoSeccion) || !isset($cantidadSeccion) || $cantidadSeccion === '' || empty($anioId)) {
             return ['resultado' => 'error', 'mensaje' => 'Todos los campos de la sección son obligatorios.'];
         }
@@ -265,7 +259,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
             return ['resultado' => 'error', 'mensaje' => 'La cantidad de estudiantes debe ser un número entero entre 0 y 99.'];
         }
 
-        // Sección activa por defecto al registrar
+     
         if ($this->ExisteSeccion($codigoSeccion, $anioId)) {
             return ['resultado' => 'error', 'mensaje' => '¡ERROR! La sección con ese código ya existe para el año seleccionado.'];
         }
@@ -279,7 +273,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
             $stmtSeccion->bindParam(':anio', $anioId, PDO::PARAM_INT);
             $stmtSeccion->execute();
             $nuevo_sec_id = $co->lastInsertId();
-            $this->CrearHorarioVacioParaSeccion($nuevo_sec_id, $co); // Crea un horario vacío para la nueva sección
+            $this->CrearHorarioVacioParaSeccion($nuevo_sec_id, $co); 
             $co->commit();
             return ['resultado' => 'registrar_seccion_ok', 'mensaje' => '¡Se registró la sección correctamente!', 'nuevo_id' => $nuevo_sec_id, 'nuevo_codigo' => $codigoSeccion, 'nueva_cantidad' => $cantidadInt];
         } catch (Exception $e) {
@@ -290,11 +284,11 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
     private function CrearHorarioVacioParaSeccion($sec_id, $co)
     {
-        // Lógica existente permanece sin cambios
+     
         $stmtEspacio = $co->query("SELECT esp_id FROM tbl_espacio WHERE esp_estado = 1 LIMIT 1");
         $default_esp_id = $stmtEspacio->fetchColumn();
         if (!$default_esp_id) {
-            // Manejar si no hay espacios disponibles
+         
             throw new Exception("No hay espacios disponibles para crear un horario. Por favor, registre al menos un espacio.");
         }
         $stmtHorario = $co->prepare("INSERT INTO tbl_horario (esp_id, hor_turno, hor_modalidad, hor_estado) VALUES (:esp_id, 'mañana', 'presencial', 1)");
@@ -306,14 +300,14 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
     public function ExisteSeccion($codigoSeccion, $anioId)
     {
-        // Lógica existente permanece sin cambios
+       
         try {
             $co = $this->Con();
             $stmt = $co->prepare("SELECT 1 FROM tbl_seccion WHERE sec_codigo = :codigo AND ani_id = :anio AND sec_estado = 1");
             $stmt->execute([':codigo' => $codigoSeccion, ':anio' => $anioId]);
             return $stmt->fetchColumn() > 0;
         } catch (Exception $e) { 
-            // Si hay un error, asumimos que sí existe para evitar duplicados en caso de fallo de consulta.
+         
             error_log("Error en ExisteSeccion: " . $e->getMessage());
             return true; 
         }
@@ -321,10 +315,9 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
     public function ListarAgrupado()
     {
-        // Lógica existente permanece sin cambios
+        
         try {
-            // Se usa LEFT JOIN para asegurar que aparezcan secciones que aún no tienen horario asignado
-            // Opcional: si solo quieres secciones con horario, mantén INNER JOIN
+          
             $stmt = $this->Con()->query("SELECT ts.sec_id, ts.sec_codigo, ts.sec_cantidad, a.ani_anio, a.ani_id FROM tbl_seccion ts JOIN tbl_anio a ON ts.ani_id = a.ani_id WHERE ts.sec_estado = 1 ORDER BY a.ani_anio DESC, ts.sec_codigo");
             return ['resultado' => 'consultar_agrupado', 'mensaje' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (Exception $e) {
@@ -333,7 +326,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
     }
     
     private function validarConflictos($items_horario, $sec_id, $co) {
-        // Lógica existente permanece sin cambios, ya que está bien
+
         $stmt_docente = $co->prepare("
             SELECT s.sec_codigo, doc.doc_nombre, doc.doc_apellido
             FROM uc_horario uh
@@ -363,7 +356,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
         ");
 
         foreach ($items_horario as $item) {
-            // Se debe normalizar el día aquí también antes de la consulta
+    
             $dia_normalizado = strtolower(str_replace('é', 'e', str_replace('á', 'a', str_replace('í', 'i', str_replace('ó', 'o', str_replace('ú', 'u', $item['dia']))))));
 
             $stmt_docente->execute([
@@ -394,7 +387,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
     public function ValidarClaseEnVivo($doc_id, $esp_id, $dia, $hora_inicio, $sec_id)
     {
-        // Lógica existente permanece sin cambios, ya que está bien
+   
         if (empty($dia) || empty($hora_inicio) || empty($sec_id) || (empty($doc_id) && empty($esp_id))) {
             return ['conflicto' => false];
         }
@@ -403,7 +396,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            // Normalizar el día antes de la consulta
+      
             $dia_normalizado = strtolower(str_replace('é', 'e', str_replace('á', 'a', str_replace('í', 'i', str_replace('ó', 'o', str_replace('ú', 'u', $dia))))));
 
 
@@ -479,17 +472,17 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
     public function Modificar($sec_id, $items_horario_json)
     {
-        // Lógica existente permanece sin cambios
+    
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $items_horario = json_decode($items_horario_json, true);
 
-            // Se debe normalizar el día en cada item de items_horario
+          
             foreach ($items_horario as &$item) {
                 $item['dia'] = strtolower(str_replace('é', 'e', str_replace('á', 'a', str_replace('í', 'i', str_replace('ó', 'o', str_replace('ú', 'u', $item['dia']))))));
             }
-            unset($item); // Romper la referencia al último elemento
+            unset($item);
 
             $error_conflicto = $this->validarConflictos($items_horario, $sec_id, $co);
             if ($error_conflicto) {
@@ -497,7 +490,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
             }
 
             $co->beginTransaction();
-            $this->EliminarPorSeccion($sec_id, $co); // Elimina registros existentes
+            $this->EliminarPorSeccion($sec_id, $co); 
             
             if (!empty($items_horario)) {
                 $stmt_insert_hor = $co->prepare("INSERT INTO tbl_horario (esp_id, hor_turno, hor_modalidad, hor_estado) VALUES (:esp_id, :hor_turno, 'presencial', 1)");
@@ -513,7 +506,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
                     $stmt_uh->execute([':uc_id' => $item['uc_id'], ':hor_id' => $new_hor_id, ':dia' => $item['dia'], ':inicio' => $item['hora_inicio'], ':fin' => $item['hora_fin']]);
                 }
             } else {
-                // Si el horario queda vacío, se asegura de crear al menos un registro de horario para la sección
+           
                 $this->CrearHorarioVacioParaSeccion($sec_id, $co);
             }
             $co->commit();
@@ -525,14 +518,14 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
     }
 
     public function EliminarSeccionYHorario($sec_id) {
-        // Lógica existente permanece sin cambios
+   
         if (empty($sec_id)) return ['resultado' => 'error', 'mensaje' => 'ID de sección no proporcionado.'];
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $co->beginTransaction();
-            $this->EliminarPorSeccion($sec_id, $co); // Elimina los registros de horario relacionados
-            // Ahora, desactiva la sección (soft delete)
+            $this->EliminarPorSeccion($sec_id, $co); 
+          
             $stmt = $co->prepare("UPDATE tbl_seccion SET sec_estado = 0 WHERE sec_id = :sec_id");
             $stmt->bindParam(':sec_id', $sec_id, PDO::PARAM_INT);
             $stmt->execute();
@@ -546,13 +539,13 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
 
     public function EliminarPorSeccion($sec_id, $co_externo = null)
     {
-        // Lógica existente permanece sin cambios
+    
         $co = $co_externo ?? $this->Con();
         $es_transaccion_interna = ($co_externo === null);
         try {
             if ($es_transaccion_interna) $co->beginTransaction();
 
-            // Obtener los hor_id asociados a la sec_id
+           
             $stmtHorIds = $co->prepare("SELECT hor_id FROM seccion_horario WHERE sec_id = :sec_id");
             $stmtHorIds->execute([':sec_id' => $sec_id]);
             $horarios_a_eliminar = $stmtHorIds->fetchAll(PDO::FETCH_COLUMN);
@@ -560,42 +553,42 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
             if (!empty($horarios_a_eliminar)) {
                 $placeholders = implode(',', array_fill(0, count($horarios_a_eliminar), '?'));
                 
-                // Eliminar de las tablas de enlace primero
+                
                 $co->prepare("DELETE FROM seccion_horario WHERE hor_id IN ($placeholders)")->execute($horarios_a_eliminar);
                 $co->prepare("DELETE FROM docente_horario WHERE hor_id IN ($placeholders)")->execute($horarios_a_eliminar);
                 $co->prepare("DELETE FROM uc_horario WHERE hor_id IN ($placeholders)")->execute($horarios_a_eliminar);
                 
-                // Luego, marcar como inactivos en tbl_horario (soft delete)
+              
                 $co->prepare("UPDATE tbl_horario SET hor_estado = 0 WHERE hor_id IN ($placeholders)")->execute($horarios_a_eliminar);
             }
             if ($es_transaccion_interna) $co->commit();
         } catch (Exception $e) {
             if ($es_transaccion_interna && $co->inTransaction()) $co->rollBack();
-            throw $e; // Re-lanza la excepción para que el llamador pueda manejarla
+            throw $e; 
         }
     }
 
     public function ConsultarDetalles($sec_id)
     {
-        // Lógica existente permanece sin cambios
+
         if(!$sec_id) return ['resultado' => 'error', 'mensaje' => 'Falta el ID de la sección.'];
         $co = $this->Con();
         try {
-            // Se debe normalizar el campo 'dia' de la BD si es necesario, o al insertar
+         
             $sql = "SELECT th.hor_id, th.esp_id, th.hor_turno, dh.doc_id, uh.uc_id, uh.hor_dia as dia, uh.hor_horainicio as hora_inicio, uh.hor_horafin as hora_fin FROM tbl_horario th INNER JOIN seccion_horario sh ON th.hor_id = sh.hor_id LEFT JOIN docente_horario dh ON th.hor_id = dh.hor_id LEFT JOIN uc_horario uh ON th.hor_id = uh.hor_id WHERE sh.sec_id = :sec_id AND th.hor_estado = 1 AND uh.uc_id IS NOT NULL";
             $stmt = $co->prepare($sql);
             $stmt->execute([':sec_id' => $sec_id]);
             $schedule_grid_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Obtener turnos para mapear hor_horainicio a tur_id (si es necesario para el JS)
+      
             $turnos = $this->obtenerTurnos();
             $turnosMap = [];
             foreach($turnos as $turno) { $turnosMap[$turno['tur_horainicio']] = $turno['tur_id']; }
             
             foreach($schedule_grid_items as $key => $item){
-                 // Asegurarse de que 'hora_inicio' tenga el formato correcto para la clave del mapa
+                 
                  if (!empty($item['hora_inicio'])) { 
-                     $time_key = $item['hora_inicio'] . ":00"; // Agregar segundos si es necesario para coincidir
+                     $time_key = $item['hora_inicio'] . ":00"; 
                      $schedule_grid_items[$key]['tur_id'] = $turnosMap[$time_key] ?? 0; 
                  } 
                  else { 
@@ -618,8 +611,7 @@ class Seccion extends Connection // Renombrado a 'Seccion' con S mayúscula para
         }
     }
     
-    // Este array de turnos es estático y no viene de la BD. Si lo quieres dinámico, necesitarías una tabla tbl_turno.
-    // Asumiendo que es fijo como en el código original.
+
     public function obtenerTurnos() { 
         return [
             ['tur_id' => 1, 'tur_horainicio' => '08:00:00', 'tur_horafin' => '08:40:00'],
