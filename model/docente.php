@@ -12,8 +12,10 @@ class Docente extends Connection
     private $doc_correo;
     private $doc_dedicacion;
     private $doc_condicion;
+    private $doc_ingreso;
+    private $doc_observacion;
     private $titulos = array();
-    private $coordinaciones = array(); 
+    private $coordinaciones = array();
 
     public function __construct()
     {
@@ -56,6 +58,14 @@ class Docente extends Connection
     public function getCondicion()
     {
         return $this->doc_condicion;
+    }
+    public function getIngreso()
+    {
+        return $this->doc_ingreso;
+    }
+    public function getObservacion()
+    {
+        return $this->doc_observacion;
     }
     public function getTitulos()
     {
@@ -103,6 +113,14 @@ class Docente extends Connection
     {
         $this->doc_condicion = $doc_condicion;
     }
+    public function setIngreso($doc_ingreso)
+    {
+        $this->doc_ingreso = $doc_ingreso;
+    }
+    public function setObservacion($doc_observacion)
+    {
+        $this->doc_observacion = $doc_observacion;
+    }
     public function setTitulos($titulos)
     {
         $this->titulos = $titulos;
@@ -110,7 +128,7 @@ class Docente extends Connection
     public function setCoordinaciones($coordinaciones)
     {
         $this->coordinaciones = $coordinaciones;
-    } 
+    }
 
     //////////////////////////METODOS//////////////////////////
 
@@ -125,9 +143,9 @@ class Docente extends Connection
             try {
                 $co->beginTransaction();
 
-                $stmt = $co->prepare("INSERT INTO tbl_docente(cat_id, doc_prefijo, doc_cedula, doc_nombre, doc_apellido, doc_correo, doc_dedicacion, doc_condicion, doc_estado) VALUES (:cat_id, :doc_prefijo, :doc_cedula, :doc_nombre, :doc_apellido, :doc_correo, :doc_dedicacion, :doc_condicion, 1)");
+                $stmt = $co->prepare("INSERT INTO tbl_docente(cat_id, doc_prefijo, doc_cedula, doc_nombre, doc_apellido, doc_correo, doc_dedicacion, doc_condicion, doc_ingreso, doc_observacion, doc_estado) VALUES (:cat_id, :doc_prefijo, :doc_cedula, :doc_nombre, :doc_apellido, :doc_correo, :doc_dedicacion, :doc_condicion, :doc_ingreso, :doc_observacion, 1)");
 
-                $stmt->execute([':cat_id' => $this->cat_id, ':doc_prefijo' => $this->doc_prefijo, ':doc_cedula' => $this->doc_cedula, ':doc_nombre' => $this->doc_nombre, ':doc_apellido' => $this->doc_apellido, ':doc_correo' => $this->doc_correo, ':doc_dedicacion' => $this->doc_dedicacion, ':doc_condicion' => $this->doc_condicion]);
+                $stmt->execute([':cat_id' => $this->cat_id, ':doc_prefijo' => $this->doc_prefijo, ':doc_cedula' => $this->doc_cedula, ':doc_nombre' => $this->doc_nombre, ':doc_apellido' => $this->doc_apellido, ':doc_correo' => $this->doc_correo, ':doc_dedicacion' => $this->doc_dedicacion, ':doc_condicion' => $this->doc_condicion, ':doc_ingreso' => $this->doc_ingreso, ':doc_observacion' => $this->doc_observacion]);
 
                 $doc_id = $co->lastInsertId();
 
@@ -147,7 +165,7 @@ class Docente extends Connection
 
                 $co->commit();
 
-                $r['resultado'] = 'incluir'; 
+                $r['resultado'] = 'incluir';
                 $r['mensaje'] = '¡Registro Incluido!<br/> Se registró el docente correctamente';
             } catch (Exception $e) {
                 $co->rollBack();
@@ -155,7 +173,7 @@ class Docente extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
         } else {
-            $r['resultado'] = 'error'; 
+            $r['resultado'] = 'error';
             $r['mensaje'] = '¡Error!<br/>La cédula ingresada ya se encuentra registrada.';
         }
         return $r;
@@ -171,8 +189,9 @@ class Docente extends Connection
             try {
                 $co->beginTransaction();
 
-                $stmt = $co->prepare("UPDATE tbl_docente SET doc_nombre = :doc_nombre, doc_apellido = :doc_apellido, doc_correo = :doc_correo, cat_id = :cat_id, doc_prefijo = :doc_prefijo, doc_dedicacion = :doc_dedicacion, doc_condicion = :doc_condicion WHERE doc_cedula = :doc_cedula");
-                $stmt->execute([':doc_nombre' => $this->doc_nombre, ':doc_apellido' => $this->doc_apellido, ':doc_correo' => $this->doc_correo, ':cat_id' => $this->cat_id, ':doc_prefijo' => $this->doc_prefijo, ':doc_dedicacion' => $this->doc_dedicacion, ':doc_condicion' => $this->doc_condicion, ':doc_cedula' => $this->doc_cedula]);
+                $stmt = $co->prepare("UPDATE tbl_docente SET doc_nombre = :doc_nombre, doc_apellido = :doc_apellido, doc_correo = :doc_correo, cat_id = :cat_id, doc_prefijo = :doc_prefijo, doc_dedicacion = :doc_dedicacion, doc_condicion = :doc_condicion, doc_ingreso = :doc_ingreso, doc_observacion = :doc_observacion WHERE doc_cedula = :doc_cedula");
+                
+                $stmt->execute([':doc_nombre' => $this->doc_nombre, ':doc_apellido' => $this->doc_apellido, ':doc_correo' => $this->doc_correo, ':cat_id' => $this->cat_id, ':doc_prefijo' => $this->doc_prefijo, ':doc_dedicacion' => $this->doc_dedicacion, ':doc_condicion' => $this->doc_condicion, ':doc_ingreso' => $this->doc_ingreso, ':doc_observacion' => $this->doc_observacion, ':doc_cedula' => $this->doc_cedula]);
 
                 $doc_id = $this->obtenerIdPorCedula($this->doc_cedula);
 
@@ -243,12 +262,12 @@ class Docente extends Connection
         $r = array();
 
         try {
-            $stmt = $co->prepare("SELECT d.doc_id, d.doc_prefijo, d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo, d.doc_dedicacion, d.doc_condicion, c.cat_nombre FROM tbl_docente d JOIN tbl_categoria c ON d.cat_id = c.cat_id WHERE c.cat_estado = 1 AND d.doc_estado = 1");
+            $stmt = $co->prepare("SELECT d.doc_id, d.doc_prefijo, d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo, d.doc_dedicacion, d.doc_condicion, d.doc_ingreso, d.doc_observacion, c.cat_nombre FROM tbl_docente d JOIN tbl_categoria c ON d.cat_id = c.cat_id WHERE c.cat_estado = 1 AND d.doc_estado = 1");
             $stmt->execute();
             $docentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($docentes as &$docente) {
-                // Obtener Títulos
+              
                 $stmtTitulos = $co->prepare("SELECT GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') AS titulos, GROUP_CONCAT(t.tit_id SEPARATOR ',') AS titulos_ids FROM titulo_docente td JOIN tbl_titulo t ON td.tit_id = t.tit_id WHERE td.doc_id = :doc_id AND t.tit_estado = 1");
                 $stmtTitulos->execute([':doc_id' => $docente['doc_id']]);
                 $titulosData = $stmtTitulos->fetch(PDO::FETCH_ASSOC);
@@ -256,7 +275,6 @@ class Docente extends Connection
                 $docente['titulos'] = $titulosData['titulos'] ?? 'Sin títulos';
                 $docente['titulos_ids'] = $titulosData['titulos_ids'] ?? '';
 
-                // Obtener Coordinaciones
                 $stmtCoordinaciones = $co->prepare("SELECT GROUP_CONCAT(c.cor_nombre SEPARATOR ', ') AS coordinaciones, GROUP_CONCAT(c.cor_id SEPARATOR ',') AS coordinaciones_ids FROM coordinacion_docente cd JOIN tbl_coordinacion c ON cd.cor_id = c.cor_id WHERE cd.doc_id = :doc_id AND c.cor_estado = 1");
                 $stmtCoordinaciones->execute([':doc_id' => $docente['doc_id']]);
                 $coordinacionesData = $stmtCoordinaciones->fetch(PDO::FETCH_ASSOC);
@@ -355,7 +373,7 @@ class Docente extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-       public function ObtenerHorasActividad($doc_id)
+    public function ObtenerHorasActividad($doc_id)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -366,11 +384,9 @@ class Docente extends Connection
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($resultado) {
-                // Se cambia 'success' por un nombre de acción específico
                 $r['resultado'] = 'consultar_horas';
                 $r['mensaje'] = $resultado;
             } else {
-                // Se cambia 'no_encontrado' por un nombre de acción específico
                 $r['resultado'] = 'horas_no_encontradas';
                 $r['mensaje'] = [
                     'act_creacion_intelectual' => 'N/A',
@@ -385,5 +401,4 @@ class Docente extends Connection
         }
         return $r;
     }
-
 }

@@ -1,6 +1,3 @@
-<?php
-
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,16 +16,16 @@
             <section class="py-3">
                 <div class="text-center mb-4">
                     <h2 class="text-primary">Reporte de Asignación de Aulas</h2>
-                    <p class="text-muted">Este reporte muestra los días y horas en que cada aula está asignada.</p>
+                    <p class="text-muted">Este reporte muestra las aulas asignadas para cada día de la semana.</p>
                 </div>
 
                 <div class="card p-4 shadow-sm bg-light rounded">
                     <form method="post" action="" id="fReporteAsignacionAulas" target="_blank">
                         <div class="row">
                             <div class="col-12 text-center">
-                                <p>Presione el botón para generar el reporte en PDF.</p>
-                                <button type="submit" class="btn btn-primary btn-lg px-5" id="generar_asignacion_aulas_btn" name="generar_asignacion_aulas_report">
-                                    <i class="fas fa-file-pdf me-2"></i>Generar Reporte PDF
+                                <p>Presione el botón para generar el reporte en formato Excel.</p>
+                                <button type="submit" class="btn btn-success btn-lg px-5" id="generar_asignacion_aulas_btn" name="generar_asignacion_aulas_report">
+                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte EXCEL
                                 </button>
                             </div>
                         </div>

@@ -37,6 +37,8 @@ if (!isset($_SESSION['name'])) {
                                 <th>Coordinaciones</th>
                                 <th>Dedicación</th>
                                 <th>Condición</th>
+                                <th>Fecha Ingreso</th>
+                                <th>Observaciones</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -149,6 +151,21 @@ if (!isset($_SESSION['name'])) {
                                         <?php endforeach; ?>
                                     </div>
                                     <span id="scoordinaciones" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="fechaIngreso" class="form-label">Fecha de Ingreso</label>
+                                    <input class="form-control" type="date" id="fechaIngreso" name="fechaIngreso" required>
+                                    <span id="sfechaIngreso" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-12 mt-3">
+                                    <label for="observacionesDocente" class="form-label">Observaciones</label>
+                                    <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="100" placeholder="Añadir observaciones (máx. 100 caracteres)" required></textarea>
+                                    <span id="sobservacionesDocente" class="text-danger"></span>
                                 </div>
                             </div>
 

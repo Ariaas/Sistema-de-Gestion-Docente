@@ -5,102 +5,86 @@ if (session_status() == PHP_SESSION_NONE) {
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../model/reportes/raulaAsignada.php';
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
-
-$modeloPath = "model/reportes/raulaAsignada.php"; 
-if (!is_file($modeloPath)) {
-    die("Error: No se encuentra el archivo del modelo ($modeloPath).");
-}
-require_once($modeloPath);
-
-$vistaPath = "views/reportes/raulaAsignada.php"; 
-if (!is_file($vistaPath)) {
-    die("Error: No se encuentra el archivo de la vista ($vistaPath).");
-}
-
-
-function format_time_asign_aula($time_str) {
-    if (empty($time_str) || strlen($time_str) < 5) return '';
-    return substr($time_str, 0, 5); 
-}
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate; // NUEVO: Se importa la clase Coordinate
 
 if (isset($_POST['generar_asignacion_aulas_report'])) {
     $oAsignacionAulas = new AsignacionAulasReport();
     $aulasData = $oAsignacionAulas->getAulasConAsignaciones();
 
-    $reportTitle = "Reporte de Asignación de Aulas";
+    $dataPorDia = [];
+    $ordenDias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+    foreach ($ordenDias as $dia) {
+        $dataPorDia[$dia] = [];
+    }
 
-    $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
-    $html .= '<title>' . htmlspecialchars($reportTitle) . '</title>';
-    $html .= '<style>
-        @page { margin: 25px; }
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #333; line-height: 1.4; }
-        .report-main-title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #000; }
-        .aula-block { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .aula-title { font-size: 14px; font-weight: bold; color: #0056b3; margin-bottom: 8px; }
-        .dia-title { font-size: 12px; font-weight: bold; margin-top: 10px; margin-bottom: 5px; color: #333; }
-        .horario-list { list-style-type: none; padding-left: 20px; margin-bottom: 5px; }
-        .horario-list li { font-size: 10px; }
-        .no-asignaciones { font-style: italic; color: #777; }
-        hr.aula-separator { border: 0; border-top: 1px dashed #ccc; margin: 20px 0; }
-        .footer { text-align: center; font-size: 8px; color: #777; position: fixed; bottom: 0px; width:100%; }
-    </style>';
-    $html .= '</head><body>';
-    $html .= '<div class="report-main-title">' . htmlspecialchars($reportTitle) . '</div>';
-
-    if ($aulasData && count($aulasData) > 0) {
-        
-        $ordenDias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
-        foreach ($aulasData as $aula) {
-            $html .= '<div class="aula-block">';
-            $html .= '<div class="aula-title">Aula: ' . htmlspecialchars($aula['esp_codigo']) . ' (Tipo: ' . htmlspecialchars($aula['esp_tipo']) . ')</div>';
-            
-            $tieneAsignacionesEstaAula = false;
-            
-            foreach ($ordenDias as $diaNombre) {
-                if (isset($aula['horarios_por_dia'][$diaNombre]) && !empty($aula['horarios_por_dia'][$diaNombre])) {
-                    $tieneAsignacionesEstaAula = true;
-                    $html .= '<div class="dia-title">' . htmlspecialchars($diaNombre) . ':</div>';
-                    $html .= '<ul class="horario-list">';
-                    foreach ($aula['horarios_por_dia'][$diaNombre] as $horario) {
-                        $html .= '<li>' . format_time_asign_aula($horario['inicio']) . ' - ' . format_time_asign_aula($horario['fin']) . '</li>';
-                    }
-                    $html .= '</ul>';
+    if ($aulasData) {
+        foreach ($aulasData as $row) {
+            $dia = ucfirst(strtolower($row['hor_dia'])); 
+            if (isset($dataPorDia[$dia])) {
+                if (!in_array($row['esp_codigo'], $dataPorDia[$dia])) {
+                    $dataPorDia[$dia][] = $row['esp_codigo'];
                 }
             }
-
-            if (!$tieneAsignacionesEstaAula) {
-                $html .= '<p class="no-asignaciones">Esta aula no tiene asignaciones programadas.</p>';
-            }
-            $html .= '</div>';
-           
         }
-    } else {
-        $html .= '<p style="text-align:center;">No se encontraron datos de asignación de aulas.</p>';
     }
-    
-    
-    $html .= '</body></html>';
 
-    $html = mb_convert_encoding($html, 'UTF-8', 'UTF-8');
-    $options = new Options();
-    $options->set('isHtml5ParserEnabled', true);
-    $options->set('isRemoteEnabled', true);
-    $options->set('defaultFont', 'Arial');
-    $dompdf = new Dompdf($options);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait'); 
-    $dompdf->render();
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle("Asignación de Aulas");
 
+    $styleHeader = ['font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F81BD']]];
+    $styleCell = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+
+    $col = 'A';
+    foreach ($ordenDias as $dia) {
+        $sheet->setCellValue($col . '1', mb_strtoupper($dia, 'UTF-8'));
+        $sheet->getStyle($col . '1')->applyFromArray($styleHeader);
+        $sheet->getColumnDimension($col)->setWidth(15);
+        $col++;
+    }
+
+    $maxRows = 0;
+    foreach ($dataPorDia as $aulas) {
+        if (count($aulas) > $maxRows) {
+            $maxRows = count($aulas);
+        }
+    }
+
+    for ($i = 0; $i < $maxRows; $i++) {
+        $colIndex = 1; // El índice de columna empieza en 1 para Coordinate
+        foreach ($dataPorDia as $dia => $aulas) {
+            $cellValue = isset($aulas[$i]) ? $aulas[$i] : '';
+            
+            // MODIFICADO: Se usa un método alternativo para establecer el valor de la celda
+            $coordinate = Coordinate::stringFromColumnIndex($colIndex) . ($i + 2);
+            $sheet->setCellValue($coordinate, $cellValue);
+            
+            $colIndex++;
+        }
+    }
+
+    if ($maxRows > 0) {
+        $range = 'A1:' . $sheet->getHighestColumn() . ($maxRows + 1);
+        $sheet->getStyle($range)->applyFromArray($styleCell);
+    } else {
+        $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->applyFromArray($styleCell);
+    }
+
+    $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $outputFileName = "Reporte_Asignacion_Aulas.pdf";
-    $dompdf->stream($outputFileName, array("Attachment" => false));
+    $fileName = "Reporte_Asignacion_Aulas_" . date('Y-m-d') . ".xlsx";
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $fileName . '"');
+    header('Cache-Control: max-age=0');
+    $writer->save('php://output');
     exit;
 
 } else {
-  
-    require_once($vistaPath);
+    require_once("views/reportes/raulaAsignada.php");
 }
 ?>
