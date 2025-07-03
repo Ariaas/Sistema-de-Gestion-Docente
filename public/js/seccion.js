@@ -250,20 +250,22 @@ function generarCellContent(clase) {
     const doc_nombre = doc ? `${doc.doc_nombre} ${doc.doc_apellido}` : 'N/A';
     return `<p class="m-0" style="font-size:0.8em;"><strong>${uc}</strong></p><small class="text-muted" style="font-size:0.7em;">${esp} / ${doc_nombre}</small>`;
 }
+
 function limpiaModalPrincipal() {
     $("#form-horario")[0].reset();
     $("#accion, #seccion_id_hidden").val("");
     $("#seccion_principal_id").prop('disabled', true).val("");
     $("#filtro_turno").val("todos").prop('disabled', false);
-    horarioContenidoGuardado.clear();
     $("#proceso").show().removeClass("btn-danger btn-primary btn-success").text('');
     isNewSectionRegistration = false; 
     $("#detalles-tab").show();
     $("#horario-tab").show();
     $("#detalles-tab-btn").tab('show');
 }
+
 function abrirModalHorarioParaNuevaSeccion(secId, secCodigo, anioAnio, secCantidad) {
     limpiaModalPrincipal();
+    horarioContenidoGuardado.clear(); 
     isNewSectionRegistration = true; 
     
     allSecciones.push({ sec_id: secId, sec_codigo: secCodigo, ani_anio: anioAnio, sec_cantidad: secCantidad });
@@ -408,12 +410,12 @@ $(document).ready(function() {
             success: function(respuesta) {
                 if (respuesta.resultado === 'ok' && Array.isArray(respuesta.mensaje)) {
                     horarioContenidoGuardado.clear();
+                    
                     respuesta.mensaje.forEach(clase => {
-                        const turnoAsociado = allTurnos.find(t => t.tur_id == clase.tur_id);
-                        if(turnoAsociado) {
-                             const dia_key = normalizeDayKey(clase.dia);
-                             const key = `${turnoAsociado.tur_horainicio.substring(0, 5)}-${turnoAsociado.tur_horafin.substring(0, 5)}-${dia_key}`;
-                             horarioContenidoGuardado.set(key, { html: generarCellContent(clase), data: clase });
+                        if (clase.hora_inicio && clase.hora_fin && clase.dia) {
+                            const dia_key = normalizeDayKey(clase.dia);
+                            const key = `${clase.hora_inicio.substring(0, 5)}-${clase.hora_fin.substring(0, 5)}-${dia_key}`;
+                            horarioContenidoGuardado.set(key, { html: generarCellContent(clase), data: clase });
                         }
                     });
                     
@@ -467,7 +469,6 @@ $(document).ready(function() {
 
         $('#modalConfirmarEliminar').modal('hide');
 
-        // Retraso para asegurar que el modal se oculte antes de mostrar el SweetAlert
         setTimeout(() => {
             Swal.fire({
                 title: '¿Está realmente seguro?',
@@ -483,7 +484,7 @@ $(document).ready(function() {
                     const datos = new FormData();
                     datos.append("accion", "eliminar_seccion_y_horario");
                     datos.append("sec_id", sec_id);
-                    enviaAjax(datos, null); // No se pasa el botón porque está dentro de la alerta
+                    enviaAjax(datos, null);
                 }
             });
         }, 500);
@@ -544,6 +545,8 @@ $(document).ready(function() {
         if ($(this).find('form').length > 0) {
             $(this).find('form').removeClass('was-validated')[0].reset();
         }
+        // Al cerrar el modal de unir, reactivamos todos los checkboxes
+        $("#unirSeccionesContainer input[type='checkbox']").prop('disabled', false);
     });
 
     $("#btnAbrirModalUnir").on("click", function() {
@@ -570,13 +573,16 @@ $(document).ready(function() {
                 hayGrupos = true;
                 container.append(`<h6 class="text-primary mt-2">${grupo.nombre}</h6>`);
                 grupo.secciones.forEach(s => {
+                    // ====== INICIO: CÓDIGO MODIFICADO ======
+                    // Se añade el atributo data-group-key para identificar a qué grupo pertenece cada checkbox.
                     const checkboxHtml = `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="secciones_a_unir[]" value="${s.sec_id}" id="check_sec_${s.sec_id}">
+                            <input class="form-check-input" type="checkbox" name="secciones_a_unir[]" value="${s.sec_id}" id="check_sec_${s.sec_id}" data-group-key="${key}">
                             <label class="form-check-label" for="check_sec_${s.sec_id}">
                                 IN${s.sec_codigo} (${s.sec_cantidad} Est.)
                             </label>
                         </div>`;
+                    // ====== FIN: CÓDIGO MODIFICADO ======
                     container.append(checkboxHtml);
                 });
                 container.append('<hr class="my-2">');
@@ -591,21 +597,35 @@ $(document).ready(function() {
         $("#modalUnirHorarios").modal("show");
     });
 
+    // ====== INICIO: CÓDIGO MODIFICADO ======
+    // Se reemplaza la lógica anterior por esta nueva que deshabilita los checkboxes de otros grupos.
     $("#unirSeccionesContainer").on("change", "input[type='checkbox']", function() {
         const selectOrigen = $("#unirSeccionOrigen");
-        selectOrigen.empty().append('<option value="" disabled selected>Seleccione una opción...</option>');
+        const allCheckboxes = $("#unirSeccionesContainer input[type='checkbox']");
+        const checkedBoxes = allCheckboxes.filter(":checked");
 
-        const checkedBoxes = $("#unirSeccionesContainer input[type='checkbox']:checked");
-        
-        if (checkedBoxes.length > 0) {
+        selectOrigen.empty();
+
+        if (checkedBoxes.length === 0) {
+            // Si no hay nada seleccionado, se habilitan todos los checkboxes de nuevo.
+            allCheckboxes.prop('disabled', false);
+            selectOrigen.append('<option value="" disabled selected>Marque primero las secciones a unir...</option>');
+        } else {
+            // Si se selecciona al menos uno, se obtiene su clave de grupo.
+            const groupKey = checkedBoxes.first().data('group-key');
+
+            // Se deshabilitan todos los checkboxes que NO pertenezcan a ese grupo.
+            allCheckboxes.not(`[data-group-key="${groupKey}"]`).prop('disabled', true);
+            
+            // Se llena el menú desplegable con las opciones seleccionadas (del grupo válido).
+            selectOrigen.append('<option value="" disabled selected>Seleccione una opción...</option>');
             checkedBoxes.each(function() {
                 const labelText = $(this).siblings('label').text().trim();
                 selectOrigen.append(`<option value="${$(this).val()}">${labelText}</option>`);
             });
-        } else {
-            selectOrigen.empty().append('<option value="" disabled selected>Marque primero las secciones a unir...</option>');
         }
     });
+    // ====== FIN: CÓDIGO MODIFICADO ======
 
     $("#formUnirHorarios").on('submit', function(e) {
         e.preventDefault();

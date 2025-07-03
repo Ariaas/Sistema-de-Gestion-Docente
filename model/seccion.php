@@ -145,6 +145,29 @@ class seccion extends Connection
         if (empty($id_origen) || empty($ids_a_unir) || count($ids_a_unir) < 2) {
             return ['resultado' => 'error', 'mensaje' => 'Debe seleccionar al menos 2 secciones y una de origen.'];
         }
+        
+        try {
+            $co_val = $this->Con();
+            $placeholders = implode(',', array_fill(0, count($ids_a_unir), '?'));
+            $stmt = $co_val->prepare("SELECT sec_codigo, ani_id FROM tbl_seccion WHERE sec_id IN ($placeholders)");
+            $stmt->execute(array_values($ids_a_unir));
+            $secciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (count($secciones) !== count($ids_a_unir)) {
+                 return ['resultado' => 'error', 'mensaje' => 'Una o más secciones seleccionadas no son válidas.'];
+            }
+
+            $primer_anio_id = $secciones[0]['ani_id'];
+            $primer_trayecto = substr($secciones[0]['sec_codigo'], 0, 1);
+
+            foreach($secciones as $seccion) {
+                if ($seccion['ani_id'] !== $primer_anio_id || substr($seccion['sec_codigo'], 0, 1) !== $primer_trayecto) {
+                    return ['resultado' => 'error', 'mensaje' => 'Acción no permitida: Solo se pueden unir horarios de secciones del mismo año y trayecto.'];
+                }
+            }
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => 'Error al validar las secciones: ' . $e->getMessage()];
+        }
     
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -498,7 +521,42 @@ class seccion extends Connection
     }
     
     public function obtenerAnios() { try { return $this->Con()->query("SELECT ani_anio, ani_id FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC")->fetchAll(PDO::FETCH_ASSOC); } catch (Exception $e) { return []; }}
-    public function obtenerTurnos() { return [['tur_id' => 1, 'tur_horainicio' => '07:00:00', 'tur_horafin' => '08:30:00'], ['tur_id' => 2, 'tur_horainicio' => '08:30:00', 'tur_horafin' => '10:00:00'], ['tur_id' => 3, 'tur_horainicio' => '10:15:00', 'tur_horafin' => '11:45:00'], ['tur_id' => 4, 'tur_horainicio' => '13:00:00', 'tur_horafin' => '14:30:00'], ['tur_id' => 5, 'tur_horainicio' => '14:30:00', 'tur_horafin' => '16:00:00'], ['tur_id' => 6, 'tur_horainicio' => '16:15:00', 'tur_horafin' => '17:45:00'], ['tur_id' => 7, 'tur_horainicio' => '18:00:00', 'tur_horafin' => '19:30:00'], ['tur_id' => 8, 'tur_horainicio' => '19:30:00', 'tur_horafin' => '21:00:00']]; }
+    
+    // =================================================================
+    // ========= INICIO DEL CÓDIGO MODIFICADO ==========================
+    // =================================================================
+    public function obtenerTurnos() { 
+        return [
+            // Turno Mañana
+            ['tur_id' => 1, 'tur_horainicio' => '08:00:00', 'tur_horafin' => '08:40:00'],
+            ['tur_id' => 2, 'tur_horainicio' => '08:40:00', 'tur_horafin' => '09:20:00'],
+            ['tur_id' => 3, 'tur_horainicio' => '09:20:00', 'tur_horafin' => '10:00:00'],
+            ['tur_id' => 4, 'tur_horainicio' => '10:00:00', 'tur_horafin' => '10:40:00'],
+            ['tur_id' => 5, 'tur_horainicio' => '10:40:00', 'tur_horafin' => '11:20:00'],
+            ['tur_id' => 6, 'tur_horainicio' => '11:20:00', 'tur_horafin' => '12:00:00'],
+            
+            // Turno Tarde
+            ['tur_id' => 7, 'tur_horainicio' => '13:00:00', 'tur_horafin' => '13:40:00'],
+            ['tur_id' => 8, 'tur_horainicio' => '13:40:00', 'tur_horafin' => '14:20:00'],
+            ['tur_id' => 9, 'tur_horainicio' => '14:20:00', 'tur_horafin' => '15:00:00'],
+            ['tur_id' => 10, 'tur_horainicio' => '15:00:00', 'tur_horafin' => '15:40:00'],
+         
+
+            // Turno Noche (5:00 PM a 11:00 PM)
+            ['tur_id' => 11, 'tur_horainicio' => '17:00:00', 'tur_horafin' => '17:40:00'],
+            ['tur_id' => 12, 'tur_horainicio' => '17:40:00', 'tur_horafin' => '18:20:00'],
+            ['tur_id' => 13, 'tur_horainicio' => '18:20:00', 'tur_horafin' => '19:00:00'],
+            ['tur_id' => 14, 'tur_horainicio' => '19:00:00', 'tur_horafin' => '19:40:00'],
+            ['tur_id' => 15, 'tur_horainicio' => '19:40:00', 'tur_horafin' => '20:20:00'],
+            ['tur_id' => 16, 'tur_horainicio' => '20:20:00', 'tur_horafin' => '21:00:00'],
+            ['tur_id' => 17, 'tur_horainicio' => '21:00:00', 'tur_horafin' => '21:40:00'],
+            ['tur_id' => 18, 'tur_horainicio' => '21:40:00', 'tur_horafin' => '22:20:00'],
+            ['tur_id' => 19, 'tur_horainicio' => '22:20:00', 'tur_horafin' => '23:00:00']
+        ]; 
+    }
+    // =================================================================
+    // ========= FIN DEL CÓDIGO MODIFICADO =============================
+    // =================================================================
     
     public function obtenerUcPorDocente($doc_id) { 
         if (empty($doc_id)) {
