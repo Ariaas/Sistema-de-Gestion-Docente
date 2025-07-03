@@ -35,6 +35,7 @@ if (!isset($_SESSION['name'])) {
                                 <th>Sección</th>
                                 <th>U. Curricular</th>
                                 <th>Estudiantes</th>
+                                <th>Reprobados</th>
                                 <th>Para PER</th>
                                 <th>Aprob. PER</th>
                                 <th>Archivo Definitivo</th>
@@ -92,11 +93,17 @@ if (!isset($_SESSION['name'])) {
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label for="cantidad_per" class="form-label">Estudiantes para PER</label>
                                     <input type="number" class="form-control" name="cantidad_per" id="cantidad_per" required min="0">
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="cantidad_reprobados" class="form-label">Estudiantes Reprobados</label>
+                                    <input type="number" class="form-control" name="cantidad_reprobados" id="cantidad_reprobados" required min="0">
+                                </div>
+
+                                <div class="col-md-4 mb-3">
                                     <label for="fecha" class="form-label">Fecha de Resguardo</label>
                                     <input class="form-control" type="date" id="fecha" name="fecha" required />
                                 </div>
@@ -104,8 +111,8 @@ if (!isset($_SESSION['name'])) {
 
                             <div class="row mb-3">
                                 <div class="col-12">
-                                    <label for="archivo_notas" class="form-label">Archivo de Notas Definitivas (Opcional)</label>
-                                    <input type="file" class="form-control" name="archivo_notas" id="archivo_notas" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                    <label for="archivo_notas" class="form-label">Archivo de Notas Definitivas</label>
+                                    <input type="file" class="form-control" name="archivo_notas" id="archivo_notas" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
                                 </div>
                             </div>
 
@@ -143,8 +150,8 @@ if (!isset($_SESSION['name'])) {
                             </div>
 
                             <div class="mb-3">
-                                <label for="archivo_per" class="form-label">Archivo de Notas del PER (Opcional)</label>
-                                <input type="file" class="form-control" name="archivo_per" id="archivo_per" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                <label for="archivo_per" class="form-label">Archivo de Notas del PER</label>
+                                <input type="file" class="form-control" name="archivo_per" id="archivo_per" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
                             </div>
 
                             <div class="modal-footer">
@@ -190,5 +197,6 @@ if (!isset($_SESSION['name'])) {
 
     <?php require_once("public/components/footer.php"); ?>
     <script src="public/js/archivo.js"></script>
+    <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
 </html>

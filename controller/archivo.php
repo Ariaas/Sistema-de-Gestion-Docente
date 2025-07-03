@@ -36,7 +36,8 @@ if (is_file("views/" . $pagina . ".php")) {
                 $modelo->setSecId($_POST['seccion'] ?? null);
                 $modelo->setUcId($_POST['ucurricular'] ?? null);
                 $modelo->setDocId($doc_id);
-                $modelo->setRemCantidad($_POST['cantidad_per'] ?? 0);
+                $modelo->setRemCantidad($_POST['cantidad_reprobados'] ?? 0);
+                $modelo->setPerCantidad($_POST['cantidad_per'] ?? 0);
                 $modelo->setUcNombre($_POST['uc_nombre'] ?? '');
                 $modelo->setSeccionCodigo($_POST['seccion_codigo'] ?? '');
 
@@ -57,6 +58,16 @@ if (is_file("views/" . $pagina . ".php")) {
 
                 echo json_encode($modelo->registrarAprobadosPer($file));
                 $bitacora->registrarAccion($usu_id, 'registró resultados de remedial', 'archivo');
+                break;
+            
+            case 'eliminar_registro':
+                if (isset($_POST['rem_id'])) {
+                    $modelo->setRemId($_POST['rem_id']);
+                    echo json_encode($modelo->eliminarRegistroRemedial($_POST['rem_id']));
+                    $bitacora->registrarAccion($usu_id, 'eliminó un registro de remedial completo', 'archivo');
+                } else {
+                    echo json_encode(['success' => false, 'mensaje' => 'ID de registro no proporcionado.']);
+                }
                 break;
 
             case 'listar_registros':
@@ -97,3 +108,4 @@ if (is_file("views/" . $pagina . ".php")) {
 } else {
     echo "Página en construcción";
 }
+?>

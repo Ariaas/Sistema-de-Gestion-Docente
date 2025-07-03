@@ -23,10 +23,6 @@ const language_es = {
     }
 };
 
-function muestraMensaje(icon, title, text, timer = 2000) {
-    Swal.fire({ icon, title, text, showConfirmButton: false, timer });
-}
-
 function enviaAjax(datos, successCallback) {
     $.ajax({
         async: true,
@@ -43,14 +39,58 @@ function enviaAjax(datos, successCallback) {
                 successCallback(lee);
             } catch (e) {
                 console.error("Error en análisis JSON:", e, respuesta);
-                muestraMensaje("error", "Error", "Respuesta inválida del servidor.", 5000);
+                muestraMensaje("error", 5000, "Error", "Respuesta inválida del servidor.");
             }
         },
         error: function (request, status, err) {
             console.error("Error de petición AJAX:", status, err);
-            muestraMensaje("error", "Error", "Hubo un problema de conexión con el servidor.", 5000);
+            muestraMensaje("error", 5000, "Error", "Hubo un problema de conexión con el servidor.");
         },
     });
+}
+
+function validarFormularioRegistro() {
+    if ($('#anio').val() === null || $('#anio').val() === '') {
+        muestraMensaje("error", 4000, "ERROR", "Debe seleccionar un Año Académico.");
+        return false;
+    }
+    if ($('#seccion').val() === null || $('#seccion').val() === '') {
+        muestraMensaje("error", 4000, "ERROR", "Debe seleccionar una Sección.");
+        return false;
+    }
+    if ($('#ucurricular').val() === null || $('#ucurricular').val() === '') {
+        muestraMensaje("error", 4000, "ERROR", "Debe seleccionar una Unidad Curricular.");
+        return false;
+    }
+
+    const totalEstudiantes = parseInt($('#seccion option:selected').data('cantidad')) || 0;
+    const cantidadPer = parseInt($('#cantidad_per').val());
+    const cantidadReprobados = parseInt($('#cantidad_reprobados').val());
+
+    if (isNaN(cantidadPer) || $('#cantidad_per').val() === '' || cantidadPer < 0) {
+        muestraMensaje("error", 4000, "ERROR", "La cantidad para PER debe ser un número válido y no puede estar vacío.");
+        return false;
+    }
+    if (isNaN(cantidadReprobados) || $('#cantidad_reprobados').val() === '' || cantidadReprobados < 0) {
+        muestraMensaje("error", 4000, "ERROR", "La cantidad de reprobados debe ser un número válido y no puede estar vacío.");
+        return false;
+    }
+    if (totalEstudiantes > 0 && (cantidadPer + cantidadReprobados) > totalEstudiantes) {
+        muestraMensaje('error', 4000, 'Cantidad Excedida', `La suma de estudiantes (${cantidadPer + cantidadReprobados}) no puede superar el total de la sección (${totalEstudiantes}).`);
+        return false;
+    }
+
+    if ($('#fecha').val() === '') {
+        muestraMensaje("error", 4000, "ERROR", "Debe seleccionar una fecha de resguardo.");
+        return false;
+    }
+
+    if ($('#archivo_notas').get(0).files.length === 0) {
+        muestraMensaje("error", 4000, "ERROR", "Debe adjuntar el archivo de notas definitivas.");
+        return false;
+    }
+    
+    return true;
 }
 
 function listarRegistros() {
@@ -65,14 +105,21 @@ function listarRegistros() {
 
         if (response.resultado === 'ok_registros' && Array.isArray(response.datos)) {
             response.datos.forEach(item => {
+                const cantidadParaPer = item.per_cantidad || '0';
+
                 const btnRegistrarPer = `<button class="btn btn-sm btn-info" title="Registrar Aprobados"
-                    onclick="abrirModalPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}', '${item.cantidad_per}', '${item.per_aprobados}')">
+                    onclick="abrirModalPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}', '${cantidadParaPer}', '${item.per_aprobados}')">
                     <i class="fas fa-check me-1"></i> Registrar PER
                 </button>`;
                 
                 const btnVerNotasPer = `<button class="btn btn-sm btn-secondary" title="Ver Notas PER"
                     onclick="abrirModalVerPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}', '${item.per_aprobados || 0}')">
                     <i class="fas fa-file-alt me-1"></i> Ver Archivos
+                </button>`;
+
+                const btnEliminarRegistro = `<button class="btn btn-sm btn-danger" title="Eliminar Registro Completo"
+                    onclick="eliminarRegistro('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}')">
+                    <i class="fas fa-trash"></i> ELIMINAR
                 </button>`;
 
                 let archivoDefinitivoHtml = 'N/A';
@@ -84,9 +131,10 @@ function listarRegistros() {
                 }
                 
                 const accionesHtml = `
-                    <div class="d-grid gap-2">
+                    <div class="d-flex justify-content-start gap-2 flex-wrap">
                         ${btnRegistrarPer}
                         ${btnVerNotasPer}
+                        ${btnEliminarRegistro}
                     </div>`;
 
                 $("#resultadosRegistros").append(`
@@ -95,7 +143,8 @@ function listarRegistros() {
                         <td>${item.sec_codigo}</td>
                         <td>${item.uc_nombre}</td>
                         <td>${item.sec_cantidad}</td>
-                        <td>${item.cantidad_per}</td>
+                        <td>${item.reprobados || '0'}</td>
+                        <td>${cantidadParaPer}</td>
                         <td>${item.per_aprobados || '0'}</td>
                         <td>${archivoDefinitivoHtml}</td>
                         <td>${accionesHtml}</td>
@@ -104,72 +153,6 @@ function listarRegistros() {
             });
         }
         $("#tablaRegistros").DataTable({ responsive: true, language: language_es });
-    });
-}
-
-function abrirModalVerPer(rem_id, seccion, uc, aprobados) {
-    $('#verPer_seccion').text(seccion);
-    $('#verPer_uc').text(uc);
-    $('#verPer_aprobados').text(aprobados);
-    const tbody = $('#listaArchivosPerModal');
-    tbody.html('<tr><td colspan="2" class="text-center">Cargando...</td></tr>');
-    
-    const datos = new FormData();
-    datos.append("accion", "listar_per_por_id");
-    datos.append("rem_id", rem_id);
-
-    enviaAjax(datos, function(response) {
-        tbody.empty();
-        if (response.success && Array.isArray(response.datos) && response.datos.length > 0) {
-            response.datos.forEach(archivo => {
-                const downloadPath = 'archivos_per/' + encodeURIComponent(archivo.nombre_guardado);
-                const fila = `
-                    <tr>
-                        <td>
-                            <a href="${downloadPath}" download="${archivo.nombre_guardado}" class="text-decoration-none">
-                                <i class="fas fa-file-download me-2"></i> ${archivo.nombre_guardado}
-                            </a>
-                        </td>
-                        <td class="text-center">
-                            <button onclick="eliminarArchivoPer('${encodeURIComponent(archivo.nombre_guardado)}', '${rem_id}', '${seccion}', '${uc}', '${aprobados}')" class="btn btn-sm btn-danger">
-                                <i class="fas fa-trash me-1"></i> Eliminar
-                            </button>
-                        </td>
-                    </tr>`;
-                tbody.append(fila);
-            });
-        } else {
-            tbody.html('<tr><td colspan="2" class="text-center">No hay archivos PER para este registro.</td></tr>');
-        }
-    });
-
-    $('#modalVerNotasPer').modal('show');
-}
-
-function eliminarArchivoPer(nombreArchivoEncoded, rem_id, seccion, uc, aprobados) {
-    const nombreArchivo = decodeURIComponent(nombreArchivoEncoded);
-    Swal.fire({
-        title: "¿Está seguro?",
-        text: `Eliminará el archivo PER: "${nombreArchivo}". Esta acción no se puede deshacer.`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonText: "Cancelar",
-        confirmButtonText: "Sí, eliminar",
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const datos = new FormData();
-            datos.append("accion", "eliminar_archivo_per");
-            datos.append("nombre_archivo", nombreArchivo);
-            enviaAjax(datos, function(response) {
-                if (response.success) {
-                    muestraMensaje('success', 'Éxito', response.mensaje);
-                    abrirModalVerPer(rem_id, seccion, uc, aprobados);
-                } else {
-                    muestraMensaje('error', 'Error', response.mensaje);
-                }
-            });
-        }
     });
 }
 
@@ -185,22 +168,54 @@ function abrirModalPer(rem_id, seccion, uc, cantidad_per, aprobados_actuales) {
     $('#modalAprobadosPer').modal('show');
 }
 
+function validarCantidadesSeccion() {
+    const totalEstudiantes = parseInt($('#seccion option:selected').data('cantidad')) || 0;
+    if (totalEstudiantes === 0) return true;
+
+    let cantidadPer = parseInt($('#cantidad_per').val()) || 0;
+    let cantidadReprobados = parseInt($('#cantidad_reprobados').val()) || 0;
+
+    if (cantidadPer < 0) $('#cantidad_per').val(0);
+    if (cantidadReprobados < 0) $('#cantidad_reprobados').val(0);
+    
+    if ((cantidadPer + cantidadReprobados) > totalEstudiantes) {
+        muestraMensaje('error', 3500, 'Cantidad Excedida', `La suma de estudiantes (${cantidadPer + cantidadReprobados}) no puede superar el total (${totalEstudiantes}).`);
+        $(this).val(0);
+        return false;
+    }
+    return true;
+}
+
+function validarAprobadosPer() {
+    const totalEnPer = parseInt($('#cantidad_aprobados').attr('max')) || 0;
+    let cantidadAprobados = parseInt($('#cantidad_aprobados').val()) || 0;
+
+    if (cantidadAprobados < 0) {
+        $('#cantidad_aprobados').val(0);
+        cantidadAprobados = 0;
+    }
+    if (cantidadAprobados > totalEnPer) {
+        muestraMensaje('error', 3500, 'Cantidad Excedida', `Aprobados (${cantidadAprobados}) no puede superar el total en PER (${totalEnPer}).`);
+        $('#cantidad_aprobados').val(totalEnPer);
+        return false;
+    }
+    return true;
+}
+
 $(document).ready(function () {
     listarRegistros();
 
     $('#btnNuevoRegistro').click(() => $('#modalRegistroNotas').modal('show'));
-
+    
     $('#ucurricular').change(function() {
-        const nombre_uc = $(this).find('option:selected').text();
-        $('#uc_nombre').val(nombre_uc);
+        $('#uc_nombre').val($(this).find('option:selected').text());
     });
 
     $('#seccion').change(function() {
         const selected = $(this).find('option:selected');
-        const cantidad = selected.data('cantidad');
-        const codigo = selected.data('codigo');
-        $('#scantidad').text(cantidad ? `Total de estudiantes: ${cantidad}` : '');
-        $('#seccion_codigo').val(codigo);
+        $('#scantidad').text(selected.data('cantidad') ? `Total de estudiantes: ${selected.data('cantidad')}` : '');
+        $('#seccion_codigo').val(selected.data('codigo'));
+        $('#cantidad_per, #cantidad_reprobados').val('');
     });
 
     $('#modalRegistroNotas').on('hidden.bs.modal', function () {
@@ -208,37 +223,42 @@ $(document).ready(function () {
         $('#seccion').prop('disabled', true).html('<option value="">Seleccione un año primero</option>');
         $('#scantidad').text('');
     });
-    
+
+    $('#cantidad_per, #cantidad_reprobados').on('keyup change', validarCantidadesSeccion);
+    $('#cantidad_aprobados').on('keyup change', validarAprobadosPer);
+
     $('#formRegistro').submit(function (e) {
         e.preventDefault();
-        var formData = new FormData(this);
-        enviaAjax(formData, function(response){
+        if (!validarFormularioRegistro()) {
+            return;
+        }
+        enviaAjax(new FormData(this), function(response){
             if(response.success){
-                muestraMensaje('success', 'Éxito', response.mensaje);
+                muestraMensaje('success', 3500, 'Éxito', response.mensaje);
                 $('#modalRegistroNotas').modal('hide');
                 listarRegistros();
             } else {
-                muestraMensaje('error', 'Error', response.mensaje, 4000);
+                muestraMensaje('error', 4000, 'Error', response.mensaje);
             }
         });
     });
 
     $('#formAprobadosPer').submit(function (e) {
         e.preventDefault();
-        const max = parseInt($('#cantidad_aprobados').attr('max'));
-        const val = parseInt($('#cantidad_aprobados').val());
-        if (val > max) {
-            muestraMensaje('error', 'Error', 'Aprobados no puede ser mayor que estudiantes en PER.');
+        if (!validarAprobadosPer()) {
             return;
         }
-        var formData = new FormData(this);
-        enviaAjax(formData, function(response){
+        if ($('#archivo_per').get(0).files.length === 0) {
+            muestraMensaje("error", 4000, "ERROR", "Debe adjuntar el archivo de notas del PER.");
+            return;
+        }
+        enviaAjax(new FormData(this), function(response){
              if(response.success){
-                muestraMensaje('success', 'Éxito', response.mensaje);
+                muestraMensaje('success', 4000, 'Éxito', response.mensaje);
                 $('#modalAprobadosPer').modal('hide');
                 listarRegistros();
             } else {
-                muestraMensaje('error', 'Error', response.mensaje, 4000);
+                muestraMensaje('error', 4000, 'Error', response.mensaje, 4000);
             }
         });
     });
@@ -269,3 +289,99 @@ $(document).ready(function () {
         });
     });
 });
+
+function eliminarRegistro(rem_id, seccion, uc) {
+    Swal.fire({
+        title: "¿Está realmente seguro?",
+        html: `Esta acción eliminará permanentemente el registro de remedial para:<br><b>Sección:</b> ${seccion}<br><b>U.C.:</b> ${uc}<br>También se borrarán todos los archivos asociados.<br><b>¡Esta acción no se puede deshacer!</b>`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonText: "Cancelar",
+        confirmButtonText: "Sí, eliminar todo",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const datos = new FormData();
+            datos.append("accion", "eliminar_registro");
+            datos.append("rem_id", rem_id);
+            
+            enviaAjax(datos, function(response) {
+                if (response.success) {
+                    muestraMensaje('success', 4000, 'Eliminado', response.mensaje);
+                    listarRegistros();
+                } else {
+                    muestraMensaje('error', 4000, 'Error', response.mensaje);
+                }
+            });
+        }
+    });
+}
+
+function abrirModalVerPer(rem_id, seccion, uc, aprobados) {
+    $('#verPer_seccion').text(seccion);
+    $('#verPer_uc').text(uc);
+    $('#verPer_aprobados').text(aprobados);
+    const tbody = $('#listaArchivosPerModal');
+    tbody.html('<tr><td colspan="2" class="text-center">Cargando...</td></tr>');
+    
+    const datos = new FormData();
+    datos.append("accion", "listar_per_por_id");
+    datos.append("rem_id", rem_id);
+
+    enviaAjax(datos, function(response) {
+        tbody.empty();
+        if (response.success && Array.isArray(response.datos) && response.datos.length > 0) {
+            response.datos.forEach(archivo => {
+                const downloadPath = 'archivos_per/' + encodeURIComponent(archivo.nombre_guardado);
+                const fila = `
+                    <tr>
+                        <td>
+                            <a href="${downloadPath}" download="${archivo.nombre_guardado}" class="text-decoration-none">
+                                <i class="fas fa-file-download me-2"></i> ${archivo.nombre_guardado}
+                            </a>
+                        </td>
+                        <td class="text-center">
+                            <button onclick="eliminarArchivoPer(encodeURIComponent('${archivo.nombre_guardado}'), '${rem_id}', '${seccion}', '${uc}', '${aprobados}')" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash me-1"></i> Eliminar
+                            </button>
+                        </td>
+                    </tr>`;
+                tbody.append(fila);
+            });
+        } else {
+            tbody.html('<tr><td colspan="2" class="text-center">No hay archivos PER para este registro.</td></tr>');
+        }
+    });
+
+    $('#modalVerNotasPer').modal('show');
+}
+
+function eliminarArchivoPer(nombreArchivoEncoded, rem_id, seccion, uc, aprobados) {
+    const nombreArchivo = decodeURIComponent(nombreArchivoEncoded);
+    Swal.fire({
+        title: "¿Está seguro?",
+        text: `Eliminará el archivo PER: "${nombreArchivo}".`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonText: "Cancelar",
+        confirmButtonText: "Sí, eliminar",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const datos = new FormData();
+            datos.append("accion", "eliminar_archivo_per");
+            datos.append("nombre_archivo", nombreArchivo);
+            enviaAjax(datos, function(response) {
+                if (response.success) {
+                    muestraMensaje('success', 4000, 'Éxito', response.mensaje);
+                    // Cierra el modal actual y lo vuelve a abrir para refrescar la lista
+                    $('#modalVerNotasPer').modal('hide');
+                    abrirModalVerPer(rem_id, seccion, uc, aprobados);
+                    listarRegistros();
+                } else {
+                    muestraMensaje('error', 4000, 'Error', response.mensaje);
+                }
+            });
+        }
+    });
+}
