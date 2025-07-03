@@ -1,272 +1,271 @@
-function listarArchivos() {
-    var datos = new FormData();
-    datos.append("accion", "listar"); 
-    enviaAjax(datos);
-    destruyeDT();
-    crearDT();
-}
-
-function destruyeDT() {
-    if ($.fn.DataTable.isDataTable("#tablaArchivo")) { 
-        $("#tablaArchivo").DataTable().destroy();
+const language_es = {
+    "decimal": "",
+    "emptyTable": "No hay datos disponibles en la tabla",
+    "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+    "infoFiltered": "(filtrado de _MAX_ registros totales)",
+    "infoPostFix": "",
+    "thousands": ",",
+    "lengthMenu": "Mostrar _MENU_ registros",
+    "loadingRecords": "Cargando...",
+    "processing": "Procesando...",
+    "search": "Buscar:",
+    "zeroRecords": "No se encontraron registros coincidentes",
+    "paginate": {
+        "first": "Primero",
+        "last": "Último",
+        "next": "Siguiente",
+        "previous": "Anterior"
+    },
+    "aria": {
+        "sortAscending": ": activar para ordenar la columna de manera ascendente",
+        "sortDescending": ": activar para ordenar la columna de manera descendente"
     }
+};
+
+function muestraMensaje(icon, title, text, timer = 2000) {
+    Swal.fire({ icon, title, text, showConfirmButton: false, timer });
 }
 
-function crearDT() {
-    if (!$.fn.DataTable.isDataTable("#tablaArchivo")) { 
-        $("#tablaArchivo").DataTable({
-            paging: true,
-            lengthChange: true,
-            searching: true,
-            ordering: true,
-            info: true,
-            autoWidth: false,
-            responsive: true,
-            scrollX: true,
-            language: {
-                lengthMenu: "Mostrar _MENU_ registros",
-                zeroRecords: "No se encontraron resultados",
-                info: "Mostrando _PAGE_ de _PAGES_",
-                infoEmpty: "No hay registros disponibles",
-                infoFiltered: "(filtrado de _MAX_ registros totales)",
-                search: "Buscar:",
-                paginate: {
-                    first: "Primero",
-                    last: "Último",
-                    next: "Siguiente",
-                    previous: "Anterior",
-                },
-            },
-            autoWidth: false,
-            order: [[0, "asc"]], 
-            dom:
-                "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
-                "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-        });
-
-        $("div.dataTables_length select").css({
-            width: "auto",
-            display: "inline",
-            "margin-top": "10px",
-        });
-
-        $("div.dataTables_filter").css({
-            "margin-bottom": "50px",
-            "margin-top": "10px",
-        });
-
-        $("div.dataTables_filter label").css({
-            float: "left",
-        });
-
-        $("div.dataTables_filter input").css({
-            width: "300px",
-            float: "right",
-            "margin-left": "10px",
-        });
-    }
-}
-
-function enviaAjax(datos) {
+function enviaAjax(datos, successCallback) {
     $.ajax({
         async: true,
-        url: "?pagina=archivo", 
+        url: "?pagina=archivo",
         type: "POST",
         contentType: false,
         data: datos,
         processData: false,
         cache: false,
-        beforeSend: function () {},
-        timeout: 10000, 
+        timeout: 10000,
         success: function (respuesta) {
             try {
                 var lee = JSON.parse(respuesta);
-
-                if (lee.resultado === "listar") {
-                    destruyeDT();
-                    $("#resultados").empty(); 
-                    if (Array.isArray(lee.datos) && lee.datos.length > 0) {
-                        $.each(lee.datos, function (index, item) {
-                            const downloadPath = 'archivos_subidos/' + encodeURIComponent(item.nombre_guardado);
-                            $("#resultados").append(`
-                                <tr>
-                                    <td class="align-middle">
-                                        <a href="${downloadPath}"
-                                           download="${htmlspecialchars(item.nombre_guardado)}"
-                                           class="text-decoration-none link-primary">
-                                            <i class="fas fa-file-download me-2"></i>
-                                            ${htmlspecialchars(item.nombre_guardado)}
-                                        </a>
-                                    </td>
-                                    <td class="text-center">
-                                        <button onclick="eliminarArchivo('${encodeURIComponent(item.nombre_guardado)}')"
-                                            class="btn btn-sm btn-danger">
-                                            <i class="fas fa-trash me-1"></i> Eliminar
-                                        </button>
-                                    </td>
-                                </tr>
-                            `);
-                        });
-                    } 
-                    crearDT();
-                }
-
-                else if (lee.resultado === 'ok_docentes') {
-                    $("#listaDocentesReporte").empty();
-                    if (Array.isArray(lee.datos) && lee.datos.length > 0) {
-                        $.each(lee.datos, function(index, item) {
-                            const listItem = `
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    ${htmlspecialchars(item.nombre)}
-                                    <span class="badge bg-primary rounded-pill">${item.fecha}</span>
-                                </li>
-                            `;
-                            $("#listaDocentesReporte").append(listItem);
-                        });
-                    } else {
-                        $("#listaDocentesReporte").append(
-                            '<li class="list-group-item">Aún no hay docentes con archivos subidos.</li>'
-                        );
-                    }
-                    $('#modalDocentesConArchivos').modal('show');
-                }
-
-                else if (lee.resultado === "eliminar") {
-                    muestraMensaje("success", 3000, "ÉXITO", lee.mensaje); 
-                    listarArchivos(); 
-                }
-
-                else if (lee.success === true) { 
-                    muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-                    $("#modalArchivo").modal("hide");
-                    listarArchivos(); 
-                }
-                
-                else {
-                    muestraMensaje("error", 5000, "ERROR", lee.mensaje || "Ocurrió un error inesperado.");
-                }
-
+                successCallback(lee);
             } catch (e) {
                 console.error("Error en análisis JSON:", e, respuesta);
-                muestraMensaje("error", 10000, "ERROR", "Respuesta inválida del servidor. Detalles en consola.");
+                muestraMensaje("error", "Error", "Respuesta inválida del servidor.", 5000);
             }
         },
         error: function (request, status, err) {
-            console.error("Error de petición AJAX:", status, err, request.responseText);
-            if (status == "timeout") {
-                muestraMensaje("error", 5000, "ERROR", "Servidor ocupado o conexión lenta, intente de nuevo.");
-            } else {
-                muestraMensaje("error", 10000, "ERROR DE CONEXIÓN", "Hubo un problema al comunicarse con el servidor. Detalles en consola.");
-            }
+            console.error("Error de petición AJAX:", status, err);
+            muestraMensaje("error", "Error", "Hubo un problema de conexión con el servidor.", 5000);
         },
-
     });
 }
 
-function eliminarArchivo(nombreArchivoEncoded) {
-    const nombreArchivo = decodeURIComponent(nombreArchivoEncoded);
+function listarRegistros() {
+    const datos = new FormData();
+    datos.append("accion", "listar_registros");
 
+    enviaAjax(datos, function (response) {
+        if ($.fn.DataTable.isDataTable("#tablaRegistros")) {
+            $("#tablaRegistros").DataTable().destroy();
+        }
+        $("#resultadosRegistros").empty();
+
+        if (response.resultado === 'ok_registros' && Array.isArray(response.datos)) {
+            response.datos.forEach(item => {
+                const btnRegistrarPer = `<button class="btn btn-sm btn-info" title="Registrar Aprobados"
+                    onclick="abrirModalPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}', '${item.cantidad_per}', '${item.per_aprobados}')">
+                    <i class="fas fa-check me-1"></i> Registrar PER
+                </button>`;
+                
+                const btnVerNotasPer = `<button class="btn btn-sm btn-secondary" title="Ver Notas PER"
+                    onclick="abrirModalVerPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}', '${item.per_aprobados || 0}')">
+                    <i class="fas fa-file-alt me-1"></i> Ver Archivos
+                </button>`;
+
+                let archivoDefinitivoHtml = 'N/A';
+                if (item.archivo_definitivo) {
+                    const downloadPath = 'archivos_subidos/' + encodeURIComponent(item.archivo_definitivo);
+                    archivoDefinitivoHtml = `<a href="${downloadPath}" download="${item.archivo_definitivo}" class="text-decoration-none">
+                        <i class="fas fa-download me-1"></i> Descargar
+                    </a>`;
+                }
+                
+                const accionesHtml = `
+                    <div class="d-grid gap-2">
+                        ${btnRegistrarPer}
+                        ${btnVerNotasPer}
+                    </div>`;
+
+                $("#resultadosRegistros").append(`
+                    <tr>
+                        <td>${item.ani_anio}</td>
+                        <td>${item.sec_codigo}</td>
+                        <td>${item.uc_nombre}</td>
+                        <td>${item.sec_cantidad}</td>
+                        <td>${item.cantidad_per}</td>
+                        <td>${item.per_aprobados || '0'}</td>
+                        <td>${archivoDefinitivoHtml}</td>
+                        <td>${accionesHtml}</td>
+                    </tr>
+                `);
+            });
+        }
+        $("#tablaRegistros").DataTable({ responsive: true, language: language_es });
+    });
+}
+
+function abrirModalVerPer(rem_id, seccion, uc, aprobados) {
+    $('#verPer_seccion').text(seccion);
+    $('#verPer_uc').text(uc);
+    $('#verPer_aprobados').text(aprobados);
+    const tbody = $('#listaArchivosPerModal');
+    tbody.html('<tr><td colspan="2" class="text-center">Cargando...</td></tr>');
+    
+    const datos = new FormData();
+    datos.append("accion", "listar_per_por_id");
+    datos.append("rem_id", rem_id);
+
+    enviaAjax(datos, function(response) {
+        tbody.empty();
+        if (response.success && Array.isArray(response.datos) && response.datos.length > 0) {
+            response.datos.forEach(archivo => {
+                const downloadPath = 'archivos_per/' + encodeURIComponent(archivo.nombre_guardado);
+                const fila = `
+                    <tr>
+                        <td>
+                            <a href="${downloadPath}" download="${archivo.nombre_guardado}" class="text-decoration-none">
+                                <i class="fas fa-file-download me-2"></i> ${archivo.nombre_guardado}
+                            </a>
+                        </td>
+                        <td class="text-center">
+                            <button onclick="eliminarArchivoPer('${encodeURIComponent(archivo.nombre_guardado)}', '${rem_id}', '${seccion}', '${uc}', '${aprobados}')" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash me-1"></i> Eliminar
+                            </button>
+                        </td>
+                    </tr>`;
+                tbody.append(fila);
+            });
+        } else {
+            tbody.html('<tr><td colspan="2" class="text-center">No hay archivos PER para este registro.</td></tr>');
+        }
+    });
+
+    $('#modalVerNotasPer').modal('show');
+}
+
+function eliminarArchivoPer(nombreArchivoEncoded, rem_id, seccion, uc, aprobados) {
+    const nombreArchivo = decodeURIComponent(nombreArchivoEncoded);
     Swal.fire({
-        title: "¿Está seguro de eliminar este archivo?",
-        text: `Esta acción eliminará el archivo: "${nombreArchivo}". ¡No se puede deshacer!`,
+        title: "¿Está seguro?",
+        text: `Eliminará el archivo PER: "${nombreArchivo}". Esta acción no se puede deshacer.`,
         icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Sí, eliminar",
+        confirmButtonColor: "#d33",
         cancelButtonText: "Cancelar",
+        confirmButtonText: "Sí, eliminar",
     }).then((result) => {
         if (result.isConfirmed) {
-            var datos = new FormData();
-            datos.append("accion", "eliminar");
-            datos.append("nombre_archivo", nombreArchivoEncoded); 
-            enviaAjax(datos); 
-        } else {
-            muestraMensaje("info", 2000, "CANCELADO", "La eliminación ha sido cancelada.");
+            const datos = new FormData();
+            datos.append("accion", "eliminar_archivo_per");
+            datos.append("nombre_archivo", nombreArchivo);
+            enviaAjax(datos, function(response) {
+                if (response.success) {
+                    muestraMensaje('success', 'Éxito', response.mensaje);
+                    abrirModalVerPer(rem_id, seccion, uc, aprobados);
+                } else {
+                    muestraMensaje('error', 'Error', response.mensaje);
+                }
+            });
         }
     });
 }
 
-function htmlspecialchars(str) {
-    var map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return String(str).replace(/[&<>"']/g, function(m) { return map[m]; });
+function abrirModalPer(rem_id, seccion, uc, cantidad_per, aprobados_actuales) {
+    $('#formAprobadosPer')[0].reset();
+    $('#rem_id_per').val(rem_id);
+    $('#per_seccion').text(seccion);
+    $('#per_uc').text(uc);
+    $('#per_uc_nombre').val(uc);
+    $('#per_seccion_codigo').val(seccion);
+    $('#per_cantidad_en_remedial').text(cantidad_per);
+    $('#cantidad_aprobados').val(aprobados_actuales || '0').attr('max', cantidad_per);
+    $('#modalAprobadosPer').modal('show');
 }
-
 
 $(document).ready(function () {
-    listarArchivos(); 
+    listarRegistros();
 
-    $('#btnSubir').click(function() {
-        $('#modalArchivo').modal('show');
+    $('#btnNuevoRegistro').click(() => $('#modalRegistroNotas').modal('show'));
+
+    $('#ucurricular').change(function() {
+        const nombre_uc = $(this).find('option:selected').text();
+        $('#uc_nombre').val(nombre_uc);
     });
-   
-    $('#btnListadoDocentes').click(function() {
-        var datos = new FormData();
-        datos.append("accion", "listar_docentes_con_archivos");
-        enviaAjax(datos);
+
+    $('#seccion').change(function() {
+        const selected = $(this).find('option:selected');
+        const cantidad = selected.data('cantidad');
+        const codigo = selected.data('codigo');
+        $('#scantidad').text(cantidad ? `Total de estudiantes: ${cantidad}` : '');
+        $('#seccion_codigo').val(codigo);
+    });
+
+    $('#modalRegistroNotas').on('hidden.bs.modal', function () {
+        $('#formRegistro')[0].reset();
+        $('#seccion').prop('disabled', true).html('<option value="">Seleccione un año primero</option>');
+        $('#scantidad').text('');
     });
     
-
-    $('#modalArchivo').on('hidden.bs.modal', function () {
-        $('#formArchivo')[0].reset(); 
-        $('#docente').val('');
-        $('#ucurricular').val('');
-        $('#sdocente').text('');
-        $('#sucurricular').text('');
-    });
-
-      $('#formArchivo').submit(function(e) {
+    $('#formRegistro').submit(function (e) {
         e.preventDefault();
-
-        const archivoInput = document.getElementById('archivo');
-        const docenteSelect = document.getElementById('docente');
-        const ucurricularSelect = document.getElementById('ucurricular');
-        const fechaInput = document.getElementById('fecha');
-
-        $('#sdocente').text('');
-        $('#sucurricular').text('');
-
-        if (!archivoInput.files.length) {
-            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar un archivo.");
-            return; 
-        }
-
-        if (!docenteSelect.value) {
-            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar un docente.");
-            $('#sdocente').text('Seleccione un docente.');
-            return; 
-        }
-        
-        if (!ucurricularSelect.value) {
-            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar una unidad curricular.");
-            $('#sucurricular').text('Seleccione una unidad curricular.');
-            return; 
-        }
-       
-        if (!fechaInput.value) {
-            muestraMensaje("error", 3000, "ERROR", "Debe seleccionar una fecha.");
-            return; 
-        }
-        
         var formData = new FormData(this);
-        formData.append('accion', 'subir');
-        enviaAjax(formData);
+        enviaAjax(formData, function(response){
+            if(response.success){
+                muestraMensaje('success', 'Éxito', response.mensaje);
+                $('#modalRegistroNotas').modal('hide');
+                listarRegistros();
+            } else {
+                muestraMensaje('error', 'Error', response.mensaje, 4000);
+            }
+        });
     });
-    
-});
 
-function muestraMensaje(icon, timer, title, text) {
-    Swal.fire({
-        icon: icon,
-        title: title,
-        text: text,
-        showConfirmButton: false,
-        timer: timer,
+    $('#formAprobadosPer').submit(function (e) {
+        e.preventDefault();
+        const max = parseInt($('#cantidad_aprobados').attr('max'));
+        const val = parseInt($('#cantidad_aprobados').val());
+        if (val > max) {
+            muestraMensaje('error', 'Error', 'Aprobados no puede ser mayor que estudiantes en PER.');
+            return;
+        }
+        var formData = new FormData(this);
+        enviaAjax(formData, function(response){
+             if(response.success){
+                muestraMensaje('success', 'Éxito', response.mensaje);
+                $('#modalAprobadosPer').modal('hide');
+                listarRegistros();
+            } else {
+                muestraMensaje('error', 'Error', response.mensaje, 4000);
+            }
+        });
     });
-}
+
+    $('#anio').change(function () {
+        const anio_id = $(this).val();
+        const seccionSelect = $('#seccion');
+        seccionSelect.prop('disabled', true).html('<option value="">Cargando...</option>');
+        $('#scantidad').text('');
+        if (!anio_id) {
+            seccionSelect.html('<option value="">Seleccione un año primero</option>');
+            return;
+        }
+        const datos = new FormData();
+        datos.append("accion", "obtener_secciones");
+        datos.append("anio_id", anio_id);
+        enviaAjax(datos, function (secciones) {
+            let options = '<option value="" selected disabled>Seleccione una sección</option>';
+            if (Array.isArray(secciones) && secciones.length > 0) {
+                secciones.forEach(sec => {
+                    options += `<option value="${sec.sec_id}" data-cantidad="${sec.sec_cantidad}" data-codigo="${sec.sec_codigo}">${sec.sec_codigo}</option>`;
+                });
+                seccionSelect.prop('disabled', false);
+            } else {
+                options = '<option value="">No hay secciones para este año</option>';
+            }
+            seccionSelect.html(options);
+        });
+    });
+});

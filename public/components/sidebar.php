@@ -67,6 +67,11 @@ foreach (array_keys($gestion_items) as $permiso) {
                         </ul>
                     </li>
                 <?php endif; ?>
+                <li class="nav-item">
+                    <a class="nav-link" href="?pagina=reporte">
+                        <i class="fas fa-chart-bar me-2"></i> Reporte Estadístico
+                    </a>
+                </li>
 
                 <?php if (!empty($permisos['Horario'])) : ?>
                     <li class="nav-item dropdown">
@@ -108,7 +113,7 @@ foreach (array_keys($gestion_items) as $permiso) {
                     </ul>
                 </li>
             </ul>
-            
+
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
                     <a class="nav-link" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
