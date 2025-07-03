@@ -80,11 +80,6 @@ if (!isset($_SESSION['name'])) {
     <?php require_once("public/components/footer.php"); ?>
     <script type="text/javascript" src="public/js/perfil.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <script>
-        $(document).on('click', '.perfil-foto-label', function() {
-            $('#fotoPerfilInput').click();
-        });
-    </script>
 </body>
 
 </html>

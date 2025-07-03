@@ -165,43 +165,34 @@ class UC extends Connection
 
             try {
                 $stmt = $co->prepare("INSERT INTO tbl_uc (
-            eje_id,
-            tra_id,
-            area_id,
-            uc_codigo,
-            uc_nombre,
-            uc_hora_independiente,
-            uc_hora_asistida,
-            uc_hora_academica,
-            uc_creditos,
-            uc_periodo,
-            uc_electiva,
-            uc_estado
-        ) VALUES (
-            :ejeId,
-            :trayectoUC,
-            :areaId,
-            :codigoUC,
-            :nombreUC,
-            :independienteUC,
-            :asistidaUC,
-            :academicaUC,
-            :creditosUC,
-            :periodoUC,
-            :electivaUC,
-            1
-        )");
-                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_STR);
-                $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_STR);
+        eje_id,
+        area_id,
+        uc_codigo,
+        uc_nombre,
+        uc_creditos,
+        uc_trayecto,
+        uc_periodo,
+        uc_electiva,
+        uc_estado
+    ) VALUES (
+        :ejeId,
+        :areaId,
+        :codigoUC,
+        :nombreUC,
+        :creditosUC,
+        :trayectoUC,
+        :periodoUC,
+        :electivaUC,
+        1
+    )");
+                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_INT);
+                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_INT);
                 $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
-                $stmt->bindParam(':independienteUC', $this->independienteUC, PDO::PARAM_STR);
-                $stmt->bindParam(':asistidaUC', $this->asistidaUC, PDO::PARAM_STR);
-                $stmt->bindParam(':academicaUC', $this->academicaUC, PDO::PARAM_STR);
                 $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_INT);
 
                 $stmt->execute();
 
@@ -231,29 +222,23 @@ class UC extends Connection
                 $stmt = $co->prepare("UPDATE tbl_uc
                     SET uc_codigo = :codigoUC , 
                     uc_nombre = :nombreUC,
-                    uc_hora_independiente = :independienteUC,
-                    uc_hora_asistida = :asistidaUC,
-                    uc_hora_academica = :academicaUC,
                     uc_creditos = :creditosUC,
+                    uc_trayecto = :trayectoUC,
                     uc_periodo = :periodoUC,
                     uc_electiva = :electivaUC,
                     eje_id = :ejeId,
-                    tra_id = :trayectoId,
                     area_id = :areaId
                     WHERE uc_id = :idUC");
 
-                $stmt->bindParam(':idUC', $this->idUC, PDO::PARAM_STR);
+                $stmt->bindParam(':idUC', $this->idUC, PDO::PARAM_INT);
                 $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
-                $stmt->bindParam(':independienteUC', $this->independienteUC, PDO::PARAM_STR);
-                $stmt->bindParam(':asistidaUC', $this->asistidaUC, PDO::PARAM_STR);
-                $stmt->bindParam(':academicaUC', $this->academicaUC, PDO::PARAM_STR);
                 $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
+                $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
                 $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_STR);
-                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_STR);
-                $stmt->bindParam(':trayectoId', $this->trayectoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_STR);
+                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_INT);
+                $stmt->bindParam(':ejeId', $this->ejeUC, PDO::PARAM_INT);
+                $stmt->bindParam(':areaId', $this->areaUC, PDO::PARAM_INT);
 
                 $stmt->execute();
 
@@ -265,7 +250,7 @@ class UC extends Connection
             }
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> La unidad curricular colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> La unidad curricular colocada NO existe!';
         }
         return $r;
     }
@@ -310,27 +295,18 @@ class UC extends Connection
                 uc.uc_codigo,
                 uc.uc_nombre,
                 uc.uc_creditos,
-                uc.uc_hora_academica,
-                uc.uc_hora_asistida,
-                uc.uc_hora_independiente,
+                uc.uc_trayecto,
                 uc.uc_periodo,
                 uc.uc_electiva,
                 uc.uc_estado,
                 ej.eje_id,
                 ej.eje_nombre,
                 ar.area_id,
-                ar.area_nombre,
-                tr.tra_id,
-                tr.tra_numero,
-                tr.ani_id,
-                a.ani_anio 
+                ar.area_nombre
             FROM tbl_uc uc
             INNER JOIN tbl_eje ej ON uc.eje_id = ej.eje_id
             INNER JOIN tbl_area ar ON uc.area_id = ar.area_id
-            INNER JOIN tbl_trayecto tr ON uc.tra_id = tr.tra_id
-            INNER JOIN tbl_anio a ON tr.ani_id = a.ani_id 
             WHERE uc.uc_estado = 1");
-
             } elseif ($accion === 'consultarAsignacion') {
                 $uc_id = $_POST['uc_id'] ?? null;
                 $sql = "SELECT 
@@ -345,7 +321,6 @@ class UC extends Connection
                 LEFT JOIN tbl_docente d ON ud.doc_id = d.doc_id AND d.doc_estado = 1
                 WHERE uc.uc_estado = 1";
                 if ($uc_id) {
-                    // Se usa una consulta preparada para mayor seguridad
                     $sql .= " AND uc.uc_id = :uc_id";
                     $stmt = $co->prepare($sql);
                     $stmt->execute([':uc_id' => $uc_id]);
@@ -412,24 +387,6 @@ class UC extends Connection
         return $r;
     }
 
-    function obtenerTrayecto()
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
-        try {
-            $stmt = $co->query("SELECT t.tra_id, t.tra_numero, t.ani_id, a.ani_anio 
-                            FROM tbl_trayecto t
-                            INNER JOIN tbl_anio a ON t.ani_id = a.ani_id
-                            WHERE t.tra_estado = 1 AND a.ani_activo = 1");
-            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) { 
-            $r = [];
-        }
-        $co = null;
-        return $r;
-    }
-
     function obtenerEje()
     {
         $co = $this->Con();
@@ -475,7 +432,7 @@ class UC extends Connection
         return $r;
     }
 
-    function Asignar($docentes, $ucs)
+    function Asignar($asignacionesJSON, $ucsJSON)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -484,42 +441,54 @@ class UC extends Connection
         try {
             $co->beginTransaction();
 
-            $docentesArray = json_decode($docentes, true);
-            $ucsArray = json_decode($ucs, true);
+            $asignaciones = json_decode($asignacionesJSON, true);
+            $ucId = json_decode($ucsJSON, true)[0];
 
-            if (empty($docentesArray) || empty($ucsArray)) {
+            if (empty($asignaciones) || empty($ucId)) {
                 throw new Exception("Debe seleccionar al menos un docente y una unidad curricular.");
             }
+            
+            $conflictos = [];
 
-            $stmtCheck = $co->prepare("
-            SELECT COUNT(*) FROM uc_docente 
-            WHERE doc_id = :docenteId AND uc_id = :ucId AND uc_doc_estado = 1
-             ");
+            // Primero, verificar todos los posibles conflictos
+            foreach ($asignaciones as $asignacion) {
+                $docenteId = $asignacion['id'];
+                $stmtCheck = $co->prepare("SELECT COUNT(*) FROM uc_docente WHERE doc_id = :docId AND uc_id = :ucId AND uc_doc_estado = 1");
+                $stmtCheck->execute([':docId' => (int)$docenteId, ':ucId' => (int)$ucId]);
 
-            $stmtInsert = $co->prepare("
-            INSERT INTO uc_docente (doc_id, uc_id, uc_doc_estado) VALUES (:docenteId, :ucId, 1)
-            ");
-
-            foreach ($docentesArray as $docenteId) {
-                foreach ($ucsArray as $ucId) {
-                    $stmtCheck->execute([
-                        ':docenteId' => (int)$docenteId,
-                        ':ucId' => (int)$ucId
-                    ]);
-                    $exists = $stmtCheck->fetchColumn();
-                    if ($exists) {
-                        throw new Exception("Ya hay un docente asignado a esta unidad curricular.");
+                if ($stmtCheck->fetchColumn() > 0) {
+                     $stmtGetName = $co->prepare("SELECT CONCAT(doc_nombre, ' ', doc_apellido) as nombre_completo FROM tbl_docente WHERE doc_id = :docId");
+                     $stmtGetName->execute([':docId' => (int)$docenteId]);
+                     $docente = $stmtGetName->fetch(PDO::FETCH_ASSOC);
+                     if ($docente) {
+                        $conflictos[] = $docente['nombre_completo'];
                     }
-                    $stmtInsert->execute([
-                        ':docenteId' => (int)$docenteId,
-                        ':ucId' => (int)$ucId
-                    ]);
                 }
+            }
+            
+            if (!empty($conflictos)) {
+                $nombres = implode(', ', $conflictos);
+                $mensaje = count($conflictos) > 1 
+                    ? "Los docentes '$nombres' ya están asignados a esta unidad curricular."
+                    : "El docente '$nombres' ya está asignado a esta unidad curricular.";
+                throw new Exception($mensaje);
+            }
+            
+            // Si no hay conflictos, proceder con la inserción
+            $stmtInsert = $co->prepare("INSERT INTO uc_docente (doc_id, uc_id, uc_anio_concurso, uc_doc_estado) VALUES (:docenteId, :ucId, :fechaConcurso, 1)");
+
+            foreach ($asignaciones as $asignacion) {
+                $fechaConcursoCompleta = $asignacion['fecha'] . '-01';
+                $stmtInsert->execute([
+                    ':docenteId' => (int)$asignacion['id'],
+                    ':ucId' => (int)$ucId,
+                    ':fechaConcurso' => $fechaConcursoCompleta
+                ]);
             }
 
             $co->commit();
             $r['resultado'] = 'asignar';
-            $r['mensaje'] = 'Docentes asignados correctamente a las unidades curriculares!';
+            $r['mensaje'] = '¡Docente/s asignado/s correctamente!';
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';
@@ -547,6 +516,7 @@ class UC extends Connection
 
             $r['resultado'] = 'quitar';
             $r['mensaje'] = 'El docente ahora está fuera de esta unidad curricular.';
+            $r['uc_id'] = $uc_id;
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
@@ -554,6 +524,74 @@ class UC extends Connection
             $co = null;
         }
 
+        return $r;
+    }
+
+    public function obtenerDocentesPorUc($uc_id)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $stmt = $co->prepare("SELECT d.doc_id, d.doc_nombre, d.doc_apellido, ud.uc_anio_concurso 
+                                 FROM uc_docente ud
+                                 JOIN tbl_docente d ON ud.doc_id = d.doc_id
+                                 WHERE ud.uc_id = :uc_id AND ud.uc_doc_estado = 1");
+            $stmt->bindParam(':uc_id', $uc_id, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    public function verificarEnHorario($idUC) {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->prepare("SELECT COUNT(*) as cantidad FROM uc_horario WHERE uc_id = :idUC");
+            $stmt->bindParam(":idUC", $idUC, PDO::PARAM_INT);
+            $stmt->execute();
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($resultado['cantidad'] > 0) {
+                $r["resultado"] = "en_horario";
+                $r["mensaje"] = "La UC está en un horario.";
+            } else {
+                $r["resultado"] = "no_en_horario";
+                $r["mensaje"] = "La UC no está en un horario.";
+            }
+        } catch (Exception $e) {
+            $r["resultado"] = "error";
+            $r["mensaje"] = $e->getMessage();
+        }
+        $co = null;
+        return $r;
+    }
+
+    public function verificarDocenteEnHorario($ucId, $docId) {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->prepare("SELECT COUNT(*) as cantidad FROM uc_horario WHERE uc_id = :ucId AND doc_id = :docId");
+            $stmt->bindParam(":ucId", $ucId, PDO::PARAM_INT);
+            $stmt->bindParam(":docId", $docId, PDO::PARAM_INT);
+            $stmt->execute();
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($resultado['cantidad'] > 0) {
+                $r["resultado"] = "en_horario";
+                $r["mensaje"] = "El docente imparte esta UC en un horario.";
+            } else {
+                $r["resultado"] = "no_en_horario";
+                $r["mensaje"] = "El docente no imparte esta UC en un horario.";
+            }
+        } catch (Exception $e) {
+            $r["resultado"] = "error";
+            $r["mensaje"] = $e->getMessage();
+        }
+        $co = null;
         return $r;
     }
 }

@@ -4,9 +4,13 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be
+class ComposerStaticInit9a5ec6af041aacaa98120df2e721d470
 {
     public static $prefixLengthsPsr4 = array (
+        'Z' => 
+        array (
+            'ZipStream\\' => 10,
+        ),
         'S' => 
         array (
             'Svg\\' => 4,
@@ -14,10 +18,15 @@ class ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be
         ),
         'P' => 
         array (
+            'Psr\\SimpleCache\\' => 16,
+            'Psr\\Http\\Message\\' => 17,
+            'Psr\\Http\\Client\\' => 16,
+            'PhpOffice\\PhpSpreadsheet\\' => 25,
             'PHPMailer\\PHPMailer\\' => 20,
         ),
         'M' => 
         array (
+            'Matrix\\' => 7,
             'Masterminds\\' => 12,
         ),
         'F' => 
@@ -28,9 +37,18 @@ class ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be
         array (
             'Dompdf\\' => 7,
         ),
+        'C' => 
+        array (
+            'Composer\\Pcre\\' => 14,
+            'Complex\\' => 8,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
+        'ZipStream\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
+        ),
         'Svg\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
@@ -39,9 +57,30 @@ class ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be
         array (
             0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
         ),
+        'Psr\\SimpleCache\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/simple-cache/src',
+        ),
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Psr\\Http\\Client\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-client/src',
+        ),
+        'PhpOffice\\PhpSpreadsheet\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
+        ),
         'PHPMailer\\PHPMailer\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
+        ),
+        'Matrix\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
         'Masterminds\\' => 
         array (
@@ -55,6 +94,14 @@ class ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be
         array (
             0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
         ),
+        'Composer\\Pcre\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/composer/pcre/src',
+        ),
+        'Complex\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
+        ),
     );
 
     public static $classMap = array (
@@ -65,9 +112,9 @@ class ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitbbbe74309b42f6ec723c3f5a242245be::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit9a5ec6af041aacaa98120df2e721d470::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit9a5ec6af041aacaa98120df2e721d470::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit9a5ec6af041aacaa98120df2e721d470::$classMap;
 
         }, null, ClassLoader::class);
     }

@@ -94,6 +94,15 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                         <h5>Reporte de prosecución</h5>
                     </a>
                 </div>
+
+                 <div class="col">
+                    <a href="?pagina=rmalla" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/map-solid.svg" alt="Reporte de malla curricular">
+                        </div>
+                        <h5>Reporte de malla</h5>
+                    </a>
+                </div>
             </div>
         </section>
     </main>

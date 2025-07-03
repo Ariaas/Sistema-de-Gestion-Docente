@@ -15,6 +15,11 @@ function validarPerfil() {
 $(document).ready(function () {
     Listar();
 
+    $('.perfil-foto-label, #fotoPerfil').on('click', function(e) {
+        e.preventDefault();
+        $('#fotoPerfilInput').click();
+    });
+
     $('#formPerfil').on('submit', function (e) {
         e.preventDefault();
         if (validarPerfil()) {

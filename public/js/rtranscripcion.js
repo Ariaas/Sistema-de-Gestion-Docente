@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     confirmButtonColor: '#3085d6'
                 });
                 return;
-            }
+             }
 
 
         });

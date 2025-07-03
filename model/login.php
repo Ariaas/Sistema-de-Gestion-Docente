@@ -37,7 +37,7 @@ class Login extends Connection_bitacora
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $p = $co->prepare("SELECT usu_id, usu_nombre, usu_contrasenia, usu_estado FROM tbl_usuario 
+            $p = $co->prepare("SELECT usu_id, usu_nombre, usu_contrasenia, usu_foto, usu_estado FROM tbl_usuario 
             WHERE usu_nombre = :username AND usu_estado = 1");
             $p->bindParam(':username', $this->nombreUsuario);
 
@@ -52,6 +52,7 @@ class Login extends Connection_bitacora
                     $r['resultado'] = 'existe';
                     $r['mensaje'] = $fila['usu_nombre'];
                     $r['usu_id'] = $fila['usu_id'];
+                    $r['usu_foto'] = $fila['usu_foto'];
                 } else {
                     $r['resultado'] = 'noexiste';
                     $r['mensaje'] = "Error en el usuario o contraseña!!!";
