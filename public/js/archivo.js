@@ -1,4 +1,3 @@
-// --- Objeto de idioma para DataTables ---
 const language_es = {
     "decimal": "",
     "emptyTable": "No hay datos disponibles en la tabla",
@@ -24,7 +23,6 @@ const language_es = {
     }
 };
 
-// --- Funciones de ayuda y AJAX ---
 function muestraMensaje(icon, title, text, timer = 2000) {
     Swal.fire({ icon, title, text, showConfirmButton: false, timer });
 }
@@ -55,7 +53,6 @@ function enviaAjax(datos, successCallback) {
     });
 }
 
-// --- Lógica de la Tabla Principal ---
 function listarRegistros() {
     const datos = new FormData();
     datos.append("accion", "listar_registros");
@@ -68,14 +65,14 @@ function listarRegistros() {
 
         if (response.resultado === 'ok_registros' && Array.isArray(response.datos)) {
             response.datos.forEach(item => {
-                const btnRegistrarPer = `<button class="btn btn-sm btn-info me-1" title="Registrar Aprobados"
+                const btnRegistrarPer = `<button class="btn btn-sm btn-info" title="Registrar Aprobados"
                     onclick="abrirModalPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}', '${item.cantidad_per}', '${item.per_aprobados}')">
-                    <i class="fas fa-check"></i>
+                    <i class="fas fa-check me-1"></i> Registrar PER
                 </button>`;
                 
                 const btnVerNotasPer = `<button class="btn btn-sm btn-secondary" title="Ver Notas PER"
-                    onclick="abrirModalVerPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}')">
-                    <i class="fas fa-file-alt"></i>
+                    onclick="abrirModalVerPer('${item.rem_id}', '${item.sec_codigo}', '${item.uc_nombre}', '${item.per_aprobados || 0}')">
+                    <i class="fas fa-file-alt me-1"></i> Ver Archivos
                 </button>`;
 
                 let archivoDefinitivoHtml = 'N/A';
@@ -85,6 +82,12 @@ function listarRegistros() {
                         <i class="fas fa-download me-1"></i> Descargar
                     </a>`;
                 }
+                
+                const accionesHtml = `
+                    <div class="d-grid gap-2">
+                        ${btnRegistrarPer}
+                        ${btnVerNotasPer}
+                    </div>`;
 
                 $("#resultadosRegistros").append(`
                     <tr>
@@ -95,7 +98,7 @@ function listarRegistros() {
                         <td>${item.cantidad_per}</td>
                         <td>${item.per_aprobados || '0'}</td>
                         <td>${archivoDefinitivoHtml}</td>
-                        <td class="text-center">${btnRegistrarPer} ${btnVerNotasPer}</td>
+                        <td>${accionesHtml}</td>
                     </tr>
                 `);
             });
@@ -104,10 +107,10 @@ function listarRegistros() {
     });
 }
 
-// --- Lógica de Modales ---
-function abrirModalVerPer(rem_id, seccion, uc) {
+function abrirModalVerPer(rem_id, seccion, uc, aprobados) {
     $('#verPer_seccion').text(seccion);
     $('#verPer_uc').text(uc);
+    $('#verPer_aprobados').text(aprobados);
     const tbody = $('#listaArchivosPerModal');
     tbody.html('<tr><td colspan="2" class="text-center">Cargando...</td></tr>');
     
@@ -128,7 +131,7 @@ function abrirModalVerPer(rem_id, seccion, uc) {
                             </a>
                         </td>
                         <td class="text-center">
-                            <button onclick="eliminarArchivoPer('${encodeURIComponent(archivo.nombre_guardado)}', '${rem_id}', '${seccion}', '${uc}')" class="btn btn-sm btn-danger">
+                            <button onclick="eliminarArchivoPer('${encodeURIComponent(archivo.nombre_guardado)}', '${rem_id}', '${seccion}', '${uc}', '${aprobados}')" class="btn btn-sm btn-danger">
                                 <i class="fas fa-trash me-1"></i> Eliminar
                             </button>
                         </td>
@@ -143,7 +146,7 @@ function abrirModalVerPer(rem_id, seccion, uc) {
     $('#modalVerNotasPer').modal('show');
 }
 
-function eliminarArchivoPer(nombreArchivoEncoded, rem_id, seccion, uc) {
+function eliminarArchivoPer(nombreArchivoEncoded, rem_id, seccion, uc, aprobados) {
     const nombreArchivo = decodeURIComponent(nombreArchivoEncoded);
     Swal.fire({
         title: "¿Está seguro?",
@@ -161,7 +164,7 @@ function eliminarArchivoPer(nombreArchivoEncoded, rem_id, seccion, uc) {
             enviaAjax(datos, function(response) {
                 if (response.success) {
                     muestraMensaje('success', 'Éxito', response.mensaje);
-                    abrirModalVerPer(rem_id, seccion, uc);
+                    abrirModalVerPer(rem_id, seccion, uc, aprobados);
                 } else {
                     muestraMensaje('error', 'Error', response.mensaje);
                 }
@@ -182,7 +185,6 @@ function abrirModalPer(rem_id, seccion, uc, cantidad_per, aprobados_actuales) {
     $('#modalAprobadosPer').modal('show');
 }
 
-// --- Eventos y Document Ready ---
 $(document).ready(function () {
     listarRegistros();
 

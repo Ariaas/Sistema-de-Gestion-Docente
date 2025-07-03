@@ -26,24 +26,24 @@ if (!isset($_SESSION['name'])) {
             </div>
 
             <div class="w-100 datatable-ui" style="max-width: 1100px; margin: 0 auto 2rem auto; border: 1px solid #dee2e6; border-radius: .5rem; padding: 1.5rem 2rem;">
-                 <h3 class="text-secondary mt-3 mb-4">Datos de Remediales Registrados</h3>
-                 <div class="table-responsive">
-                     <table class="table table-striped table-hover w-100" id="tablaRegistros">
-                         <thead>
-                             <tr>
-                                 <th>Año</th>
-                                 <th>Sección</th>
-                                 <th>U. Curricular</th>
-                                 <th>Estudiantes</th>
-                                 <th>Para PER</th>
-                                 <th>Aprob. PER</th>
-                                 <th>Archivo Definitivo</th>
-                                 <th>Acciones</th>
-                             </tr>
-                         </thead>
-                         <tbody id="resultadosRegistros"></tbody>
-                     </table>
-                 </div>
+                <h3 class="text-secondary mt-3 mb-4">Datos de Remediales Registrados</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover w-100" id="tablaRegistros">
+                        <thead>
+                            <tr>
+                                <th>Año</th>
+                                <th>Sección</th>
+                                <th>U. Curricular</th>
+                                <th>Estudiantes</th>
+                                <th>Para PER</th>
+                                <th>Aprob. PER</th>
+                                <th>Archivo Definitivo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultadosRegistros"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -59,7 +59,7 @@ if (!isset($_SESSION['name'])) {
                             <input type="hidden" name="accion" value="registrar_notas">
                             <input type="hidden" id="seccion_codigo" name="seccion_codigo">
                             <input type="hidden" id="uc_nombre" name="uc_nombre">
-                            
+
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-3">
                                     <label for="anio" class="form-label">Año Académico</label>
@@ -80,16 +80,7 @@ if (!isset($_SESSION['name'])) {
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-md-6 mb-3">
-                                    <label for="docente" class="form-label">Docente</label>
-                                    <select class="form-select" name="docente" id="docente" required>
-                                        <option value="" disabled selected>Seleccione un docente</option>
-                                        <?php foreach ($docentes as $docente) {
-                                            echo "<option value='{$docente['doc_id']}'>{$docente['doc_nombre_completo']}</option>";
-                                        } ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12 mb-3">
                                     <label for="ucurricular" class="form-label">Unidad Curricular</label>
                                     <select class="form-select" name="ucurricular" id="ucurricular" required>
                                         <option value="" disabled selected>Seleccione una U.C.</option>
@@ -110,11 +101,11 @@ if (!isset($_SESSION['name'])) {
                                     <input class="form-control" type="date" id="fecha" name="fecha" required />
                                 </div>
                             </div>
-                            
+
                             <div class="row mb-3">
                                 <div class="col-12">
-                                     <label for="archivo_notas" class="form-label">Archivo de Notas Definitivas (Opcional)</label>
-                                     <input type="file" class="form-control" name="archivo_notas" id="archivo_notas" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                    <label for="archivo_notas" class="form-label">Archivo de Notas Definitivas (Opcional)</label>
+                                    <input type="file" class="form-control" name="archivo_notas" id="archivo_notas" accept=".pdf,.doc,.docx,.xls,.xlsx">
                                 </div>
                             </div>
 
@@ -129,7 +120,7 @@ if (!isset($_SESSION['name'])) {
         </div>
 
         <div class="modal fade" tabindex="-1" role="dialog" id="modalAprobadosPer">
-             <div class="modal-dialog" role="document">
+            <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-info text-white">
                         <h5 class="modal-title">Registrar Aprobados y Archivo del Remedial (PER)</h5>
@@ -176,7 +167,8 @@ if (!isset($_SESSION['name'])) {
                     <div class="modal-body">
                         <p>Sección: <strong id="verPer_seccion"></strong></p>
                         <p>U. Curricular: <strong id="verPer_uc"></strong></p>
-                        <div class="table-responsive">
+                        <p>Estudiantes Aprobados: <strong id="verPer_aprobados" class="text-success"></strong></p>
+                        <div class="table-responsive mt-3">
                             <table class="table table-hover w-100">
                                 <thead>
                                     <tr>
