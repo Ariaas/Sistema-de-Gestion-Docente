@@ -27,35 +27,6 @@ if (!isset($_SESSION['name'])) {
 <body class="d-flex flex-column min-vh-100">
     <?php require_once("public/components/sidebar.php"); ?>
 
-    <div>
-  <canvas id="myChart"></canvas>
-</div>
-
-
-<script src="public/package/dist/chart.umd.js"></script>
-<script>
-  const ctx = document.getElementById('myChart');
-
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-      datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-</script>
-
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Malla Curricular</h2>

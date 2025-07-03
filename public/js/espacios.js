@@ -196,8 +196,15 @@ function pone(pos, accion) {
     ).prop("disabled", true);
   }
 
-  $("#tipoEspacio").val($(linea).find("td:eq(1)").text());
-  $("#codigoEspacio").val($(linea).find("td:eq(0)").text());
+  const codigo = $(linea).find("td:eq(0)").text().trim();
+  let tipo = $(linea).find("td:eq(1)").text().trim();
+
+  if (tipo) {
+    tipo = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+  }
+
+  $("#codigoEspacio").val(codigo);
+  $("#tipoEspacio").val(tipo);
 
   $("#modal1").modal("show");
   $("#scodigoEspacio").hide();

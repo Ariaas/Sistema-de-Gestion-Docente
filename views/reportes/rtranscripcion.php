@@ -32,7 +32,6 @@
         </div>
     </main>
     <?php require_once("public/components/footer.php");  ?>
-    <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
