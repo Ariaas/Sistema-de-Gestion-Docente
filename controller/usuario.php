@@ -9,6 +9,10 @@ if (!is_file("model/" . $pagina . ".php")) {
     exit;
 }
 require_once("model/" . $pagina . ".php");
+
+$u = new Usuario();
+$roles = $u->obtenerRoles();
+
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
@@ -22,7 +26,7 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         $bitacora = new Bitacora();
 
-        $u = new Usuario();
+
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
             echo json_encode($u->Listar());
@@ -34,30 +38,24 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'existe') {
             $u->set_nombreUsuario($_POST['nombreUsuario']);
             $u->set_correoUsuario($_POST['correoUsuario']);
-            $resultado = $u->Existe($_POST['nombreUsuario'], $_POST['correoUsuario']);
+            $usuarioId = isset($_POST['usuarioId']) ? $_POST['usuarioId'] : null;
+            $resultado = $u->Existe($_POST['nombreUsuario'], $_POST['correoUsuario'], $usuarioId);
             echo json_encode($resultado);
-        } elseif ($accion == 'listarPermisos') {
-            $permisos = $u->listarPermisos($_POST['usuarioId']);
-            echo json_encode(['resultado' => 'listarPermisos', 'permisos' => $permisos]);
-            exit;
-        } elseif ($accion == 'asignarPermisos') {
-            $permisos = json_decode($_POST['permisos'], true);
-            $r = $u->asignarPermisos($_POST['usuarioId'], $permisos);
-            echo json_encode($r);
-            exit;
         } else {
             $u->set_nombreUsuario($_POST['nombreUsuario']);
             $u->set_correoUsuario($_POST['correoUsuario']);
+            $u->set_superUsuario($_POST['superUsuario'] ?? 0);
+            if (isset($_POST['usuarioRol'])) {
+                $u->set_rolId($_POST['usuarioRol']);
+            }
 
             if ($accion == 'registrar') {
-                $u->set_superUsuario($_POST['superUsuario']);
                 $u->set_contraseniaUsuario($_POST['contraseniaUsuario']);
                 echo  json_encode($u->Registrar());
                 $bitacora->registrarAccion($usu_id, 'registrar', 'usuario');
             } elseif ($accion == 'modificar') {
                 $u->set_usuarioId($_POST['usuarioId']);
                 echo  json_encode($u->modificar());
-
                 $bitacora->registrarAccion($usu_id, 'modificar', 'usuario');
             }
         }

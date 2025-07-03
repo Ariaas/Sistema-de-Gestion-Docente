@@ -14,13 +14,13 @@
             <section class="py-3">
                 <div class="text-center mb-4">
                     <h2 class="text-primary">Reporte de Organización Docente (ROD)</h2>
-                    <p class="lead">Seleccione los filtros para generar el cuadro resumen de la organización docente.</p>
+                    <p class="lead">Seleccione el año académico para generar el cuadro resumen.</p>
                 </div>
 
                 <div class="card p-4 shadow-sm bg-light rounded">
                     <form method="post" action="" target="_blank">
                         <div class="row g-3 justify-content-center mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <label for="anio_id" class="form-label">Filtrar por Año Académico:</label>
                                 <select class="form-select" name="anio_id" id="anio_id" required>
                                     <option value="" disabled selected>-- Seleccione un Año --</option>
@@ -29,15 +29,6 @@
                                             <option value="<?= htmlspecialchars($anio['ani_id']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="fase" class="form-label">Filtrar por Fase (Opcional):</label>
-                                <select class="form-select" name="fase" id="fase">
-                                    <option value="">-- Todas las Fases --</option>
-                                    <option value="1">Fase I</option>
-                                    <option value="2">Fase II</option>
-                                    <option value="anual">Anual</option>
                                 </select>
                             </div>
                         </div>
@@ -55,4 +46,6 @@
     </main>
     <?php require_once("public/components/footer.php");  ?>
 </body>
-<script src="public/js/rod.js"></script> </html>
+<script src="public/js/rod.js"></script>
+
+</html>

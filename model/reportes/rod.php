@@ -4,7 +4,6 @@ require_once('model/dbconnection.php');
 class Rod extends Connection
 {
     private $anio_id;
-    private $fase;
 
     public function __construct()
     {
@@ -15,93 +14,60 @@ class Rod extends Connection
         $this->anio_id = trim($valor);
     }
 
-    public function set_fase($valor) {
-        $this->fase = trim($valor);
-    }
-
-   
-    public function obtenerDocentesBase()
+    /**
+     * Obtiene todos los datos para el reporte, uniendo la información del docente
+     * con su asignación a través de uc_docente y las tablas de horario.
+     */
+    public function obtenerDatosReporte()
     {
         $co = $this->con();
         try {
             $sql = "SELECT
                         d.doc_id,
-                        CONCAT(d.doc_apellido, ' ', d.doc_nombre) AS nombre_completo,
+                        CONCAT(d.doc_apellidos, ' ', d.doc_nombres) AS nombre_completo,
                         d.doc_cedula,
+                        d.doc_fecha_ingreso,
+                        d.doc_perfil_profesional,
                         d.doc_dedicacion,
-                       
-                        GROUP_CONCAT(DISTINCT CONCAT(t.tit_prefijo, ' ', t.tit_nombre) SEPARATOR '\n') AS perfil_profesional,
-                       
-                        COALESCE(act.descarga_total, 0) AS horas_descarga,
-                      
-                        '' AS fecha_ingreso, 
-                        '' AS anio_concurso  
+                        d.doc_horas_max,
+                        d.doc_horas_descarga,
+                        d.doc_observacion,
+                        uc.uc_nombre,
+                        uc.uc_horas,
+                        s.sec_codigo,
+                        ud.uc_anio_concurso -- CAMBIO: Se obtiene el año de concurso desde la tabla uc_docente
                     FROM
                         tbl_docente d
-                    LEFT JOIN titulo_docente td ON d.doc_id = td.doc_id
-                    LEFT JOIN tbl_titulo t ON td.tit_id = t.tit_id
-                    LEFT JOIN (
-                        SELECT doc_id, (act_integracion_intelectual + act_integracion_comunidad + act_gestion_academica + act_otras) AS descarga_total
-                        FROM tbl_actividad
-                    ) act ON d.doc_id = act.doc_id
-                    WHERE d.doc_estado = 1
-                    GROUP BY d.doc_id
-                    ORDER BY d.doc_apellido, d.doc_nombre";
+                    LEFT JOIN
+                        uc_docente ud ON d.doc_id = ud.doc_id
+                    LEFT JOIN
+                        tbl_uc uc ON ud.uc_id = uc.uc_id
+                    LEFT JOIN 
+                        uc_horario uh ON uc.uc_id = uh.uc_id
+                    LEFT JOIN 
+                        tbl_horario h ON uh.hor_id = h.hor_id
+                    LEFT JOIN 
+                        seccion_horario sh ON h.hor_id = sh.hor_id
+                    LEFT JOIN 
+                        tbl_seccion s ON sh.sec_id = s.sec_id
+                    WHERE
+                        d.doc_estado = 1 AND s.ani_id = :anio_id -- El filtro se aplica por el ID del año en la sección
+                    ORDER BY
+                        d.doc_apellidos, d.doc_nombres, uc.uc_nombre";
             
             $resultado = $co->prepare($sql);
-            $resultado->execute();
+            $resultado->execute([':anio_id' => $this->anio_id]);
             return $resultado->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
-            error_log("Error en Rod::obtenerDocentesBase: " . $e->getMessage());
+            error_log("Error en Rod::obtenerDatosReporte: " . $e->getMessage());
             return false;
         }
     }
 
-   
-    public function obtenerAsignacionesDocente($doc_id)
-    {
-        $co = $this->con();
-        try {
-            $params = [':doc_id' => $doc_id];
-            
-            $sql = "SELECT
-                        uc.uc_nombre,
-                        s.sec_codigo,
-                        um.mal_hora_academica
-                    FROM
-                        uc_docente ud
-                    JOIN tbl_uc uc ON ud.uc_id = uc.uc_id
-                  
-                    LEFT JOIN uc_malla um ON uc.uc_id = um.uc_id
-                    LEFT JOIN uc_horario uh ON uc.uc_id = uh.uc_id
-                    LEFT JOIN tbl_horario h ON uh.hor_id = h.hor_id
-                    LEFT JOIN seccion_horario sh ON h.hor_id = sh.hor_id
-                    LEFT JOIN tbl_seccion s ON sh.sec_id = s.sec_id
-                    WHERE ud.doc_id = :doc_id AND ud.uc_doc_estado = 1";
-
-            if (!empty($this->anio_id)) {
-                $sql .= " AND s.ani_id = :anio_id";
-                $params[':anio_id'] = $this->anio_id;
-            }
-            if (!empty($this->fase)) {
-                $sql .= " AND uc.uc_periodo = :fase";
-                $params[':fase'] = $this->fase;
-            }
-            
-            $sql .= " ORDER BY uc.uc_nombre";
-
-            $resultado = $co->prepare($sql);
-            $resultado->execute($params);
-            return $resultado->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (PDOException $e) {
-            error_log("Error en Rod::obtenerAsignacionesDocente: " . $e->getMessage());
-            return false;
-        }
-    }
-
-   
+    /**
+     * Obtiene la lista de años académicos (lapsos) para el filtro.
+     */
     public function obtenerAnios()
     {
         $co = $this->con();

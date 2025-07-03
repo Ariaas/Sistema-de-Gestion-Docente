@@ -8,6 +8,7 @@ class Usuario extends Connection_bitacora
     private $contraseniaUsuario;
     private $correoUsuario;
     private $superUsuario;
+    private $rolId;
 
     public function __construct($usuarioId = null, $nombreUsuario = null, $contraseniaUsuario = null, $correoUsuario = null, $superUsuario = 0)
     {
@@ -43,6 +44,16 @@ class Usuario extends Connection_bitacora
     public function get_superUsuario()
     {
         return $this->superUsuario;
+    }
+
+    public function set_rolId($rolId)
+    {
+        $this->rolId = $rolId;
+    }
+
+    public function get_rolId()
+    {
+        return $this->rolId;
     }
 
     // Setters
@@ -87,36 +98,29 @@ class Usuario extends Connection_bitacora
                     usu_correo,
                     usu_contrasenia,
                     usu_estado,
-                    usu_super
+                    rol_id
                 ) VALUES (
                     :nombreUsuario,
                     :correoUsuario,
                     :contraseniaUsuario,
                     1,
-                    :superUsuario
+                    :rolId
                 )");
 
                 $stmt->bindParam(':nombreUsuario', $this->nombreUsuario, PDO::PARAM_STR);
                 $stmt->bindParam(':correoUsuario', $this->correoUsuario, PDO::PARAM_STR);
                 $stmt->bindParam(':contraseniaUsuario', $hashedPassword, PDO::PARAM_STR);
-                $stmt->bindParam(':superUsuario', $this->superUsuario, PDO::PARAM_INT);
+                $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
 
                 $stmt->execute();
-
-                if ($this->superUsuario == 1) {
-                    $todosLosPermisos = range(1, 18);
-                    $this->asignarPermisos($co->lastInsertId(), $todosLosPermisos);
-                }
 
                 $r['resultado'] = 'registrar';
                 $r['mensaje'] = 'Registro Incluido!<br/> Se registró el usuario correctamente!';
             } catch (Exception $e) {
-
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
             }
 
-            // Cerrar la conexión
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
@@ -132,7 +136,7 @@ class Usuario extends Connection_bitacora
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT * FROM tbl_usuario where usu_estado = 1");
+            $stmt = $co->query("SELECT u.*, r.rol_nombre FROM tbl_usuario u LEFT JOIN tbl_rol r ON u.rol_id = r.rol_id WHERE u.usu_estado = 1");
 
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -153,16 +157,15 @@ class Usuario extends Connection_bitacora
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         if ($this->ExisteId($this->usuarioId)) {
-            if (!$this->existe($this->nombreUsuario, $this->correoUsuario)) {
+            if (!$this->existe($this->nombreUsuario, $this->correoUsuario, $this->usuarioId)) {
                 try {
-                    $hashedPassword = password_hash($this->contraseniaUsuario, PASSWORD_DEFAULT);
-
                     $stmt = $co->prepare("UPDATE tbl_usuario
-                    SET usu_nombre = :nombreUsuario, usu_correo = :correoUsuario
+                    SET usu_nombre = :nombreUsuario, usu_correo = :correoUsuario, rol_id = :rolId
                     WHERE usu_id = :usuarioId");
 
                     $stmt->bindParam(':correoUsuario', $this->correoUsuario, PDO::PARAM_STR);
                     $stmt->bindParam(':nombreUsuario', $this->nombreUsuario, PDO::PARAM_STR);
+                    $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
                     $stmt->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_INT);
 
                     $stmt->execute();
@@ -212,16 +215,22 @@ class Usuario extends Connection_bitacora
         return $r;
     }
 
-    function Existe($nombreUsuario, $correoUsuario)
+    function Existe($nombreUsuario, $correoUsuario, $usuarioIdExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_usuario WHERE usu_nombre=:nombreUsuario AND usu_correo=:correoUsuario AND usu_estado = 1");
-
+            $sql = "SELECT * FROM tbl_usuario WHERE usu_nombre=:nombreUsuario AND usu_correo=:correoUsuario AND usu_estado = 1";
+            if ($usuarioIdExcluir !== null) {
+                $sql .= " AND usu_id != :usuarioIdExcluir";
+            }
+            $stmt = $co->prepare($sql);
             $stmt->bindParam(':nombreUsuario', $nombreUsuario, PDO::PARAM_STR);
             $stmt->bindParam(':correoUsuario', $correoUsuario, PDO::PARAM_STR);
+            if ($usuarioIdExcluir !== null) {
+                $stmt->bindParam(':usuarioIdExcluir', $usuarioIdExcluir, PDO::PARAM_INT);
+            }
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
@@ -232,7 +241,6 @@ class Usuario extends Connection_bitacora
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
         $co = null;
         return $r;
     }
@@ -261,75 +269,18 @@ class Usuario extends Connection_bitacora
         return $r;
     }
 
-    public function listarPermisos($usuarioId)
+    function obtenerRoles()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $permisos = [];
+        $r = array();
         try {
-            $stmt = $co->prepare("SELECT per_permisos FROM tbl_permisos WHERE usu_id = :usuarioId AND per_estado = 1");
-            $stmt->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
-            $stmt->execute();
-            $permisos = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $stmt = $co->query("SELECT rol_nombre, rol_id FROM tbl_rol WHERE rol_estado = 1");
+            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            $permisos = [];
+            $r = [];
         }
         $co = null;
-        return $permisos;
-    }
-
-    public function asignarPermisos($usuarioId, $permisos)
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        $modulos = [
-            1 => 'Area',
-            2 => 'Respaldo',
-            3 => 'Categorias',
-            4 => 'Certificados',
-            5 => 'Docentes',
-            6 => 'Eje',
-            7 => 'Espacios',
-            8 => 'Seccion',
-            9 => 'Titulo',
-            10 => 'Trayecto',
-            11 => 'Unidad Curricular',
-            12 => 'Horario',
-            13 => 'Horario Docente',
-            14 => 'Malla Curricular',
-            15 => 'Archivos',
-            16 => 'Reportes',
-            17 => 'Bitacora',
-            18 => 'Usuarios'
-        ];
-
-        try {
-            $stmt = $co->prepare("UPDATE tbl_permisos SET per_estado = 0 WHERE usu_id = :usuarioId");
-            $stmt->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
-            $stmt->execute();
-
-            if (!empty($permisos)) {
-                $stmtInsert = $co->prepare("INSERT INTO tbl_permisos (usu_id, per_permisos, per_modulo, per_estado) VALUES (:usuarioId, :permiso, :modulo, 1)");
-                foreach ($permisos as $permiso) {
-                    $check = $co->prepare("SELECT COUNT(*) FROM tbl_permisos WHERE usu_id = :usuarioId AND per_permisos = :permiso AND per_estado = 1");
-                    $check->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
-                    $check->bindParam(':permiso', $permiso, PDO::PARAM_INT);
-                    $check->execute();
-                    if ($check->fetchColumn() > 0) {
-                        return ['resultado' => 'error', 'mensaje' => 'No se pueden asignar permisos repetidos.'];
-                    }
-                    $modulo = isset($modulos[$permiso]) ? $modulos[$permiso] : '';
-                    $stmtInsert->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
-                    $stmtInsert->bindParam(':permiso', $permiso, PDO::PARAM_INT);
-                    $stmtInsert->bindParam(':modulo', $modulo, PDO::PARAM_STR);
-                    $stmtInsert->execute();
-                }
-            }
-            $co = null;
-            return ['resultado' => 'ok', 'mensaje' => 'Permisos asignados correctamente'];
-        } catch (Exception $e) {
-            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
-        }
+        return $r;
     }
 }
