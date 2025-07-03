@@ -17,32 +17,24 @@ if (!isset($_SESSION['name'])) {
 <body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
-    <main class="main-content">
-        <section class="container-fluid p-4">
-            <!-- Contenedor Centrado -->
-            <div class="datatable-ui">
-                <!-- Cabecera de la página -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="text-primary mb-0" style="font-weight: 600;">Gestionar Espacios</h2>
-                    <button class="btn btn-success px-4 d-flex align-items-center justify-content-center" id="registrar">
-                        <span>Registrar</span>
-                    </button>
-                </div>
-
-                <!-- Tarjeta de la DataTable -->
-                <div class="card">
-                    <div class="card-body" style="overflow-x: hidden;">
-                        <table class="table table-striped table-hover w-100" id="tablaespacio">
-                            <thead>
-                                <tr>
-                                    <th>Codigo</th>
-                                    <th>Tipo</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultadoconsulta"></tbody>
-                        </table>
-                    </div>
+    <main class="main-content flex-shrink-0">
+        <section class="d-flex flex-column align-items-center justify-content-center py-4">
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Espacios</h2>
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+                <button class="btn btn-success px-4" id="registrar">Registrar Espacio</button>
+            </div>
+            <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+                <div class="table-responsive" style="overflow-x: hidden;">
+                    <table class="table table-striped table-hover w-100" id="tablaespacio">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Tipo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultadoconsulta"></tbody>
+                    </table>
                 </div>
             </div>
         </section>

@@ -33,14 +33,6 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
             </div>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
                 <div class="col">
-                    <a href="?pagina=cohorte" class="dashboard-card">
-                        <div class="icon-circle">
-                            <img src="public/assets/icons/circle-user-solid.svg" alt="Gestionar Cohorte">
-                        </div>
-                        <h5>Gestionar Cohorte</h5>
-                    </a>
-                </div>
-                <div class="col">
                     <a href="?pagina=anio" class="dashboard-card">
                         <div class="icon-circle">
                             <img src="public/assets/icons/circle-user-solid.svg" alt="Gestionar Año">

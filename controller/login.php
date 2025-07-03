@@ -22,6 +22,8 @@ if (is_file("views/" . $pagina . ".php")) {
                     session_start();
                     $_SESSION['name'] = $m['mensaje'];
                     $_SESSION['usu_id'] = $m['usu_id']; 
+                    $_SESSION['usu_foto'] = $m['usu_foto'];
+                    $_SESSION['cedula'] = $m['mensaje'];
 
                     require_once("model/permisos.php");
                     $permisosModel = new Permisos();

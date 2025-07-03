@@ -18,3 +18,4 @@
 <!-- <script src="public/js/notificaciones.js"></script> -->
 
 <script src="public/sweetalert2/sweetalert2.js"></script>
+<script src="public/js/sidebar_notificaciones.js"></script>

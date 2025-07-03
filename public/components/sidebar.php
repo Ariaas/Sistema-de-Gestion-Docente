@@ -42,9 +42,29 @@ foreach (array_keys($gestion_items) as $permiso) {
             <span style="font-weight: 600;">Sistema Docente</span>
         </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarNavbar" aria-controls="sidebarNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <!-- Contenedor para móvil: notificaciones y toggler -->
+        <div class="d-flex align-items-center d-lg-none ms-auto">
+            <!-- Notificaciones para móvil -->
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="#" id="notificacionesDropdownMobile" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
+                        <span id="notificacionesBadgeMobile" class="badge bg-danger rounded-pill notification-badge" style="display:none;"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdownMobile" style="width:350px;max-width:90vw;">
+                        <li>
+                            <div id="notificacionesPanelMobile" style="padding: 1rem; min-height: 120px; text-align: center;">
+                                <span class="text-muted">No hay notificaciones.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarNavbar" aria-controls="sidebarNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
 
         <div class="collapse navbar-collapse" id="sidebarNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
@@ -107,38 +127,61 @@ foreach (array_keys($gestion_items) as $permiso) {
                         <li><a class="dropdown-item <?php echo is_active('preguntas', $pagina_actual); ?>" href="?pagina=preguntas">Preguntas</a></li>
                     </ul>
                 </li>
-            </ul>
-            
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
-                        <span id="notificacionesBadge" class="badge bg-danger" style="display:none;position:absolute;top:8px;right:8px;">!</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdown" style="width:350px;max-width:90vw;">
-                        <li>
-                            <div id="notificacionesPanel" style="padding: 1rem; min-height: 120px; text-align: center;">
-                                <span class="text-muted">No hay notificaciones.</span>
-                            </div>
-                        </li>
-                    </ul>
-                </li>
-                <li class="nav-item dropdown">
-                </li>
-            </ul>
 
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="public/assets/icons/user-circle.svg" alt="" width="24" height="24" class="rounded-circle me-2" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
-                        <strong><?php echo $_SESSION['username'] ?? 'Usuario'; ?></strong>
+                <!-- Dropdown de usuario para móvil -->
+                <li class="nav-item dropdown d-lg-none">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdownMobile" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <?php
+                            $foto_perfil_mobile = $_SESSION['usu_foto'] ?? 'public/assets/icons/user-circle.svg';
+                            $estilo_filtro_mobile = str_contains($foto_perfil_mobile, 'user-circle.svg') ? 'filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);' : '';
+                        ?>
+                        <img src="<?php echo $foto_perfil_mobile; ?>?v=<?php echo time(); ?>" alt="Foto de perfil" width="24" height="24" class="rounded-circle me-2" style="object-fit: cover; <?php echo $estilo_filtro_mobile; ?>">
+                        <strong><?php echo $_SESSION['name'] ?? 'Usuario'; ?></strong>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <ul class="dropdown-menu" aria-labelledby="userDropdownMobile">
                         <li><a class="dropdown-item" href="?pagina=perfil">Perfil</a></li>
                         <li><a class="dropdown-item" href="?pagina=fin">Cerrar Sesión</a></li>
                     </ul>
                 </li>
             </ul>
+            
+            <!-- Contenedor para Perfil y Notificaciones en Desktop -->
+            <div class="d-none d-lg-flex align-items-center ms-auto">
+                <!-- Notificaciones para Desktop -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
+                            <span id="notificacionesBadge" class="badge bg-danger rounded-pill notification-badge" style="display:none;"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdown" style="width:350px;max-width:90vw;">
+                            <li>
+                                <div id="notificacionesPanel" style="padding: 1rem; min-height: 120px; text-align: center;">
+                                    <span class="text-muted">No hay notificaciones.</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- Dropdown de Usuario -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <?php
+                                $foto_perfil = $_SESSION['usu_foto'] ?? 'public/assets/icons/user-circle.svg';
+                                $estilo_filtro = str_contains($foto_perfil, 'user-circle.svg') ? 'filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);' : '';
+                            ?>
+                            <img src="<?php echo $foto_perfil; ?>?v=<?php echo time(); ?>" alt="Foto de perfil" width="24" height="24" class="rounded-circle me-2" style="object-fit: cover; <?php echo $estilo_filtro; ?>">
+                            <strong><?php echo $_SESSION['name'] ?? 'Usuario'; ?></strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="?pagina=perfil">Perfil</a></li>
+                            <li><a class="dropdown-item" href="?pagina=fin">Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </nav>

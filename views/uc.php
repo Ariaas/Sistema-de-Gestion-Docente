@@ -24,10 +24,6 @@ if (!isset($_SESSION['name'])) {
                 <button class="btn btn-success px-4" id="registrar">Registrar</button>
             </div>
 
-            <div class="w-100 text-center mb-3" style="max-width: 1100px;">
-                <button class="btn btn-primary px-4" id="toggleTables">Cambiar Tabla</button>
-            </div>
-
             <div class="datatable-ui w-100" id="tablaucContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
                     <table class="table table-striped table-hover w-100" id="tablauc">
@@ -49,24 +45,6 @@ if (!isset($_SESSION['name'])) {
                     </table>
                 </div>
             </div>
-
-            <div class="datatable-ui w-100" id="tablaunionContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem; display: none;">
-                <div class="table-responsive" style="overflow-x: hidden;">
-                    <table class="table table-striped table-hover w-100" id="tablaunion">
-                        <thead>
-                            <tr>
-                                <th style="display: none;">ID</th>
-                                <th>Código</th>
-                                <th>Unidad Curricular</th>
-                                <th>Docentes</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultadoconsulta2"></tbody>
-                    </table>
-                </div>
-            </div>
-
-
         </section>
 
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
@@ -189,8 +167,7 @@ if (!isset($_SESSION['name'])) {
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                            <input type="hidden" name="accion" id="accion" value="registrar">
+                        <form method="post" id="f-asignar" autocomplete="off" class="needs-validation" novalidate>
                             <div class="mb-4">
                                 <div class="row g-3">
                                     <div class="col-md-12">
@@ -212,6 +189,12 @@ if (!isset($_SESSION['name'])) {
                                 </div>
                                 <div class="row g-3 mt-3">
                                     <div class="col-md-12">
+                                        <label for="fechaConcursoUC" class="form-label">Fecha del Concurso</label>
+                                        <input type="month" class="form-control" id="fechaConcursoUC" name="fechaConcursoUC">
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-3">
+                                    <div class="col-md-12">
                                         <button type="button" class="btn btn-success" id="agregarDocente">Agregar</button>
                                     </div>
                                 </div>
@@ -222,7 +205,7 @@ if (!isset($_SESSION['name'])) {
                                     </div>
                                 </div>
                                 <div class="modal-footer justify-content-center">
-                                    <button type="button" class="btn btn-primary" id="asignarDocentes">Procesar</button>
+                                    <button type="button" class="btn btn-success" id="asignarDocentes">Procesar</button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                                 </div>
                             </div>
@@ -231,26 +214,18 @@ if (!isset($_SESSION['name'])) {
                 </div>
             </div>
         </div>
-        <div class="modal fade" tabindex="-1" role="dialog" id="modal3">
-            <div class="modal-dialog modal-lg" role="document">
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalVerDocentes">
+            <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="uc-nombre-header">Unidad Curricular</h5>
+                        <h5 class="modal-title" id="modalVerDocentesLabel">Docentes Asignados</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <table class="table" id="tabladocente">
-                            <thead>
-                                <tr>
-                                    <th style="display: none;">ID UC</th>
-                                    <th style="display: none;">ID Docente</th>
-                                    <th>Docente</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultadoconsulta3">
-                            </tbody>
-                        </table>
+                        <h6 class="mb-3">Unidad Curricular: <span id="ucNombreModal" class="fw-bold"></span></h6>
+                        <ul class="list-group" id="listaDocentesAsignados">
+                            
+                        </ul>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
