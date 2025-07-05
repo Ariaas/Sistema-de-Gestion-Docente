@@ -25,9 +25,7 @@ if (is_file("views/" . $pagina . ".php")) {
                     $_SESSION['usu_foto'] = $m['usu_foto'];
                     $_SESSION['cedula'] = $m['mensaje'];
 
-                    require_once("model/permisos.php");
-                    $permisosModel = new Permisos();
-                    $permisos = $permisosModel->obtenerPermisosPorUsuario($m['usu_id']);
+                    $permisos = $o->get_permisos($m['usu_id']);
                     $_SESSION['permisos'] = $permisos;
 
                     header('Location: ?pagina=principal');

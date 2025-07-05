@@ -7,8 +7,6 @@ class Rol extends Connection_bitacora
     private $nombreRol;
     private $rolId;
 
-
-    //Construct
     public function __construct($nombreRol = null, $rolId = null)
     {
         parent::__construct();
@@ -17,7 +15,6 @@ class Rol extends Connection_bitacora
         $this->rolId = $rolId;
     }
 
-    //Getters 
     public function getNombre()
     {
         return $this->nombreRol;
@@ -28,7 +25,6 @@ class Rol extends Connection_bitacora
         return $this->rolId;
     }
 
-    //Setters
     public function setNombre($nombreRol)
     {
         $this->nombreRol = $nombreRol;
@@ -38,8 +34,6 @@ class Rol extends Connection_bitacora
     {
         $this->rolId = $rolId;
     }
-
-    //Methods
 
     function Registrar()
     {
@@ -210,17 +204,23 @@ class Rol extends Connection_bitacora
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $permisos = [];
+        $respuesta = [
+            'permisosAsignados' => [],
+            'modulosDisponibles' => []
+        ];
         try {
-            $stmt = $co->prepare("SELECT per_id, per_accion FROM rol_permisos WHERE rol_id = :rolId AND rol_per_estado = 1");
-            $stmt->bindParam(':rolId', $rolId, PDO::PARAM_INT);
-            $stmt->execute();
-            $permisos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmtAsignados = $co->prepare("SELECT per_id, per_accion FROM rol_permisos WHERE rol_id = :rolId AND rol_per_estado = 1");
+            $stmtAsignados->bindParam(':rolId', $rolId, PDO::PARAM_INT);
+            $stmtAsignados->execute();
+            $respuesta['permisosAsignados'] = $stmtAsignados->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmtDisponibles = $co->query("SELECT per_id, per_modulo FROM tbl_permisos WHERE per_estado = 1 ORDER BY per_modulo ASC");
+            $respuesta['modulosDisponibles'] = $stmtDisponibles->fetchAll(PDO::FETCH_ASSOC);
+
         } catch (Exception $e) {
-            $permisos = [];
         }
         $co = null;
-        return $permisos;
+        return $respuesta;
     }
 
     public function asignarPermisos($rolId, $permisos)

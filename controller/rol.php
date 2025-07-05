@@ -36,8 +36,8 @@ if (is_file("views/" . $pagina . ".php")) {
             $resultado = $r->Existe($_POST['nombreRol']);
             echo json_encode($resultado);
         } elseif ($accion == 'listarPermisos') {
-            $permisos = $r->listarPermisos($_POST['rolId']);
-            echo json_encode(['resultado' => 'listarPermisos', 'permisos' => $permisos]);
+            $data = $r->listarPermisos($_POST['rolId']);
+            echo json_encode(['resultado' => 'listarPermisos', 'data' => $data]);
             exit;
         } elseif ($accion == 'asignarPermisos') {
             $permisos = json_decode($_POST['permisos'], true);

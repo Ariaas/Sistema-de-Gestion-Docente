@@ -64,6 +64,8 @@ function crearDT() {
   }
 }
 
+let originalNombreArea = ''; 
+
 $(document).ready(function () {
   Listar();
 
@@ -91,39 +93,25 @@ $(document).ready(function () {
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
-    if ($(this).text() == "REGISTRAR") {
-      if (validarenvio()) {
-        var datos = new FormData();
-        datos.append("accion", "registrar");
-        datos.append("areaNombre", $("#areaNombre").val());
-
-        enviaAjax(datos);
-      }
-    } else if ($(this).text() == "MODIFICAR") {
+    let accion = $(this).text();
+    if (accion === "MODIFICAR") {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
         datos.append("areaNombre", $("#areaNombre").val());
-        datos.append("areaId", $("#areaId").val());
+        datos.append("areaDescripcion", $("#areaDescripcion").val());
+        datos.append("areaNombreOriginal", originalNombreArea); 
         enviaAjax(datos);
       }
-    }
-    if ($(this).text() == "ELIMINAR") {
-      if (
-        validarkeyup(
-          /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
-          $("#areanNombre"),
-          $("#sareaNombre"),
-          "Formato de nombre incorrecto"
-        ) == 0
-      ) {
-        muestraMensaje(
-          "error",
-          4000,
-          "ERROR!",
-          "Seleccionó un nombre incorrecto <br/> por favor verifique nuevamente"
-        );
-      } else {
+    } else if (accion === "REGISTRAR") {
+      if (validarenvio()) {
+        var datos = new FormData();
+        datos.append("accion", "registrar");
+        datos.append("areaNombre", $("#areaNombre").val());
+        datos.append("areaDescripcion", $("#areaDescripcion").val());
+        enviaAjax(datos);
+      }
+    } else if (accion === "ELIMINAR") {
         Swal.fire({
           title: "¿Está seguro de eliminar esta área?",
           text: "Esta acción no se puede deshacer.",
@@ -149,7 +137,6 @@ $(document).ready(function () {
             $("#modal1").modal("hide");
           }
         });
-      }
     }
   });
 
@@ -179,20 +166,19 @@ function validarenvio() {
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
+  originalNombreArea = $(linea).find("td:eq(0)").text(); 
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#areaId").prop("disabled", true);
     $("#areaNombre").prop("disabled", false);
+    $("#areaDescripcion").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#areaId, #areaNombre").prop("disabled", true);
+    $("#areaNombre, #areaDescripcion").prop("disabled", true);
   }
-
- 
-  $("#areaId").val($(linea).find("td:eq(0)").text());
   
-  $("#areaNombre").val($(linea).find("td:eq(1)").text());
+  $("#areaNombre").val($(linea).find("td:eq(0)").text());
+  $("#areaDescripcion").val($(linea).find("td:eq(1)").text());
 
   $("#sareaNombre").hide();
   $("#modal1").modal("show");
@@ -219,8 +205,8 @@ function enviaAjax(datos) {
           $.each(lee.mensaje, function (index, item) {
             $("#resultadoconsulta").append(`
               <tr>
-                <td style="display: none;">${item.area_id}</td>
                 <td>${item.area_nombre}</td>
+                <td>${item.area_descripcion}</td>
                 <td>
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
@@ -284,7 +270,8 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-     $("#areaId").val("");
   $("#areaNombre").val("");
-   $("#areaNombre").prop('disabled', false);
+  $("#areaDescripcion").val("");
+  $("#areaNombre").prop('disabled', false);
+  $("#areaDescripcion").prop('disabled', false);
 }

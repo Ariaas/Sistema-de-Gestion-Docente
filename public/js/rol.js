@@ -93,7 +93,7 @@ function Listar() {
       if ($(this).text() == "REGISTRAR") {
         if (validarenvio()) {
           var datos = new FormData();
-          datos.append("accion", "registrar"); // <-- LÍNEA FALTANTE
+          datos.append("accion", "registrar");
           datos.append("nombreRol", $("#nombreRol").val());
           enviaAjax(datos);
         }
@@ -101,8 +101,8 @@ function Listar() {
         if (validarenvio()) {
           var datos = new FormData();
           datos.append("accion", "modificar");
-          datos.append("rolId", $("#rolId").val()); // <--- debe existir y tener valor
-          datos.append("nombreRol", $("#nombreRol").val()); // <--- debe existir y tener valor
+          datos.append("rolId", $("#rolId").val()); 
+          datos.append("nombreRol", $("#nombreRol").val()); 
           enviaAjax(datos);
         }
       }
@@ -265,7 +265,7 @@ function Listar() {
             }
           }
           else if (lee.resultado === "listarPermisos") { 
-            renderTablaPermisos(lee.permisos || []);
+            renderTablaPermisos(lee.data.modulosDisponibles, lee.data.permisosAsignados);
             $("#modal2").modal("show");
           }
           else if (lee.resultado === "ok") {
@@ -356,10 +356,7 @@ $(document).on("click", "#guardarPermisos", function () {
             per_accion: $(this).data("accion")
         });
     });
-    if (permisos.length === 0) {
-        alert("Seleccione al menos un permiso.");
-        return;
-    }
+    
     var datos = new FormData();
     datos.append("accion", "asignarPermisos");
     datos.append("rolId", rolSeleccionado);
@@ -367,18 +364,20 @@ $(document).on("click", "#guardarPermisos", function () {
     enviaAjax(datos);
 });
 
-function renderTablaPermisos(permisosAsignados) {
+function renderTablaPermisos(modulosDisponibles, permisosAsignados) {
     let tbody = "";
-    MODULOS_PERMISOS.forEach(modulo => {
+    const ACCIONES = ["registrar", "modificar", "eliminar"]; 
+    
+    modulosDisponibles.forEach(modulo => {
         tbody += `<tr>
-            <td>${modulo.nombre}</td>
+            <td>${modulo.per_modulo}</td>
             ${ACCIONES.map(acc => {
                 const encontrado = permisosAsignados.find(
-                    p => p.per_id == modulo.id && p.per_accion == acc
+                    p => p.per_id == modulo.per_id && p.per_accion == acc
                 );
                 return `<td>
                     <input type="checkbox" class="permiso-check"
-                        data-perid="${modulo.id}" data-accion="${acc}"
+                        data-perid="${modulo.per_id}" data-accion="${acc}"
                         ${encontrado ? "checked" : ""}>
                 </td>`;
             }).join("")}
@@ -386,28 +385,5 @@ function renderTablaPermisos(permisosAsignados) {
     });
     $("#tablaPermisos tbody").html(tbody);
 }
-
-const MODULOS_PERMISOS = [
-    { id: 1, nombre: "seccion" },
-    { id: 2, nombre: "unidad curricular" },
-    { id: 3, nombre: "espacio" },
-    { id: 4, nombre: "usuario" },
-    { id: 5, nombre: "reportes" },
-    { id: 6, nombre: "prosecusion" },
-    { id: 7, nombre: "malla curricular" },
-    { id: 8, nombre: "horario docente" },
-    { id: 9, nombre: "reporte estadístico" },
-    { id: 10, nombre: "eje" },
-    { id: 11, nombre: "categoría" },
-    { id: 12, nombre: "docentes" },
-    { id: 13, nombre: "año" },
-    { id: 14, nombre: "coordinación" },
-    { id: 15, nombre: "título" },
-    { id: 16, nombre: "notas" },
-    { id: 17, nombre: "actividad" },
-    { id: 18, nombre: "bitácora" }
-];
-
-const ACCIONES = ["registrar", "modificar", "eliminar"];
 
 

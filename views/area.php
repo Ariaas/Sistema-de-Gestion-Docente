@@ -28,8 +28,8 @@ if (!isset($_SESSION['name'])) {
                     <table class="table table-striped table-hover w-100" id="tablaarea">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
-                                <th>Area</th>
+                                <th>Área</th>
+                                <th>Descripción</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -50,17 +50,22 @@ if (!isset($_SESSION['name'])) {
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                            <input type="hidden" name="accion" id="accion" value="registrar">
+                            <input type="hidden" name="accion" id="accion">
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div style="display: none;" class="col-md-6">
-                                        <label for="areaId" class="form-label">ID</label>
-                                        <input class="form-control" type="text" id="areaId" name="areaId" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="nombreArea" class="form-label">Area</label>
+                                    <div class="col-md-12">
+                                        <label for="areaNombre" class="form-label">Nombre del Área</label>
                                         <input class="form-control" type="text" id="areaNombre" name="areaNombre" required>
-                                        <span id="snombreArea"></span>
+                                        <span id="sareaNombre" class="form-text"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label for="areaDescripcion" class="form-label">Descripción del Área</label>
+                                        <input class="form-control" type="text" id="areaDescripcion" name="areaDescripcion" required>
+                                        <span id="sareaDescripcion" class="form-text"></span>
                                     </div>
                                 </div>
                             </div>

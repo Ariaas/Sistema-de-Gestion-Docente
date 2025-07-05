@@ -28,25 +28,20 @@ if (is_file("views/" . $pagina . ".php")) {
             if ($accion == 'consultar') {
                 echo json_encode($o->Listar());
             } elseif ($accion == 'eliminar') {
-               
-                  $o->setArea($_POST['areaNombre'] ?? ''); 
+                $o->setArea($_POST['areaNombre'] ?? ''); 
                 echo json_encode($o->Eliminar());
-
                 $bitacora->registrarAccion($usu_id, 'eliminar', 'area');
             } elseif ($accion == 'existe') {
                 $o->setArea($_POST['areaNombre'] ?? '');  
                 echo json_encode($o->Existe($_POST['areaNombre'] ?? ''));
             } else {
-                $o->setArea($_POST['areaNombre'] ?? '');  
+                $o->setArea($_POST['areaNombre'] ?? '');
+                $o->setDescripcion($_POST['areaDescripcion'] ?? '');
                 if ($accion == 'registrar') {
                     echo json_encode($o->Registrar());
-
                     $bitacora->registrarAccion($usu_id, 'registrar', 'area');
                 } elseif ($accion == 'modificar') {
-                    $o->setId($_POST['areaId'] ?? '');
-                     $o->setArea($_POST['areaNombre'] ?? ''); 
-                    echo json_encode($o->Modificar());
-
+                    echo json_encode($o->Modificar($_POST['areaNombreOriginal'] ?? ''));
                     $bitacora->registrarAccion($usu_id, 'modificar', 'area');
                 }
             }

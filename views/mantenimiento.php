@@ -8,12 +8,14 @@ if (!isset($_SESSION['name'])) {
     exit();
 }
 
-if (!isset($_SESSION['name'])) {
-    header('Location: .');
-    exit();
-}
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
 
-$permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+if (!function_exists('tiene_permiso')) {
+    function tiene_permiso($modulo, $permisos_array) {
+        return !empty($permisos_array[strtolower($modulo)]);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,7 +34,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                 <p>Selecciona una opción para empezar.</p>
             </div>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-                <?php if (!empty($permisos['Usuarios'])) : ?>
+                <?php if (tiene_permiso('Usuario', $permisos)) : ?>
                     <div class="col">
                         <a href="?pagina=usuario" class="dashboard-card">
                             <div class="icon-circle">
@@ -42,7 +44,17 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                         </a>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($permisos['Bitacora'])) : ?>
+                <?php if (tiene_permiso('Usuario', $permisos)) : ?>
+                    <div class="col">
+                        <a href="?pagina=rol" class="dashboard-card">
+                            <div class="icon-circle">
+                                <img src="public/assets/icons/person-badge.svg" alt="Gestionar Rol">
+                            </div>
+                            <h5>Gestionar Rol</h5>
+                        </a>
+                    </div>
+                <?php endif; ?>
+                <?php if (tiene_permiso('Usuario', $permisos)) : ?>
                     <div class="col">
                         <a href="?pagina=bitacora" class="dashboard-card">
                             <div class="icon-circle">
@@ -52,8 +64,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
                         </a>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($permisos['Respaldo'])) :
-                ?>
+                <?php if (tiene_permiso('Usuario', $permisos)) : ?>
                     <div class="col">
                         <a href="?pagina=backup" class="dashboard-card">
                             <div class="icon-circle">
