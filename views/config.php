@@ -134,6 +134,16 @@ if (!function_exists('tiene_permiso')) {
                         </a>
                     </div>
                 <?php endif; ?>
+                    <?php if (tiene_permiso('turno', $permisos)) : ?>
+                    <div class="col">
+                        <a href="?pagina=turno" class="dashboard-card">
+                            <div class="icon-circle">
+                                <img src="public/assets/icons/turno.svg" alt="Gestionar Turno">
+                            </div>
+                            <h5>Gestionar Turno</h5>
+                        </a>
+                    </div>
+                <?php endif; ?>
             </div>
         </section>
     </main>
