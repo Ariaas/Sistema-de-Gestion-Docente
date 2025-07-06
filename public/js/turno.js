@@ -1,6 +1,8 @@
 let nombresExistentes = [];
 let solapamientoDetectado = false;
 let timeoutValidacion = null;
+let originalHoraInicio = '';
+let originalHoraFin = '';
 
 function Listar() {
   var datos = new FormData();
@@ -23,22 +25,21 @@ function crearDT() {
     });
   }
 }
+
 $(document).ready(function () {
     Listar(); 
 
-
     $('#f .form-control').on('focus input change', function() {
         validarCampo($('#turnonombre'));
+        validarCampo($('#horaInicio'));
+        validarCampo($('#horafin'));
         validarLogicaHoras();
         chequearEstadoBoton();
     });
 
-   
     $('#horaInicio, #horafin').on('change', function() {
         validarHorasEnServidor();
     });
-
-
 
     $("#proceso").on("click", function () {
         if ($(this).text() === "REGISTRAR") {
@@ -47,7 +48,6 @@ $(document).ready(function () {
             procesarModificacion();
         }
     });
-
 
     $("#registrar").on("click", function () {
         limpia();
@@ -59,14 +59,10 @@ $(document).ready(function () {
         $("#modal1").modal("show");
     });
 
- 
     $("#btnConfirmarEliminar").on("click", function() {
         procesarEliminacion();
     });
 });
-
-
-
 
 function procesarRegistro() {
     if (validarenvio()) {
@@ -88,7 +84,6 @@ function procesarModificacion() {
         var datos = new FormData();
         datos.append("accion", "modificar");
         datos.append("turnoid", $("#turnoid").val());
-        datos.append("turnonombre", $("#turnonombre").val());
         datos.append("horaInicio", $("#horaInicio").val());
         datos.append("horafin", $("#horafin").val());
         enviaAjax(datos, function(respuesta) {
@@ -99,17 +94,23 @@ function procesarModificacion() {
     }
 }
 
+// --- FUNCIÓN ACTUALIZADA ---
+// Ahora el mensaje de la alerta es igual al de la imagen.
 function procesarEliminacion() {
-    const turnoAEliminar = $("#turnoid_eliminar").val();
     Swal.fire({
-        title: "¿Está seguro?", text: `Se eliminará el turno "${turnoAEliminar}".`, icon: "warning",
-        showCancelButton: true, confirmButtonColor: "#d33", cancelButtonColor: "#3085d6",
-        confirmButtonText: "Sí, eliminar", cancelButtonText: "Cancelar",
+        title: "¿Está seguro que quieres Eliminar este turno?",
+        text: "Esta acción no se puede deshacer.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
     }).then((result) => {
         if (result.isConfirmed) {
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("turnoid", turnoAEliminar);
+            datos.append("turnoid", $("#turnoid_eliminar").val());
             enviaAjax(datos, function(respuesta) {
                 muestraMensaje("info", 4000, "PROCESO COMPLETADO", "El turno ha sido eliminado.");
                 $("#modalEliminar").modal("hide");
@@ -118,9 +119,6 @@ function procesarEliminacion() {
         }
     });
 }
-
-
-
 
 function validarCampo(input) {
     const errorSpan = $(`#s${input.attr('id')}`);
@@ -152,12 +150,9 @@ function validarLogicaHoras() {
     const spanFin = $('#shorafin');
     const inicio = inputInicio.val();
     const fin = inputFin.val();
-    let esLogicaValida = true;
 
     if (spanInicio.text() === 'Las horas no pueden ser iguales.') spanInicio.text('');
     if (spanFin.text() === 'Las horas no pueden ser iguales.' || spanFin.text().includes('anterior')) spanFin.text('');
-    if (spanInicio.text() === '') inputInicio.removeClass('is-invalid');
-    if (spanFin.text() === '') inputFin.removeClass('is-invalid');
 
     if (inicio && fin) {
         if (inicio === fin) {
@@ -165,18 +160,11 @@ function validarLogicaHoras() {
             inputFin.addClass('is-invalid');
             spanInicio.text('Las horas no pueden ser iguales.');
             spanFin.text('Las horas no pueden ser iguales.');
-            esLogicaValida = false;
         } else if (fin < inicio) {
             inputFin.addClass('is-invalid');
             spanFin.text('La hora de fin no puede ser anterior a la de inicio.');
-            esLogicaValida = false;
         }
     }
-    
-    if(!inicio) { validarCampo(inputInicio); esLogicaValida = false; }
-    if(!fin) { validarCampo(inputFin); esLogicaValida = false; }
-
-    return esLogicaValida;
 }
 
 function validarHorasEnServidor() {
@@ -202,13 +190,11 @@ function validarHorasEnServidor() {
             success: function(respuesta) {
                 try {
                     var lee = JSON.parse(respuesta);
+                    solapamientoDetectado = !!lee.solapamiento;
                     if (lee.solapamiento) {
-                        solapamientoDetectado = true;
-                        const mensaje = `Este horario choca con el turno: ${lee.turno_choca}`;
-                        $('#sSolapamiento').text(mensaje);
+                        $('#sSolapamiento').text(`Este horario choca con el turno: ${lee.turno_choca}`);
                         $('#horaInicio, #horafin').addClass('is-invalid');
                     } else {
-                        solapamientoDetectado = false;
                         $('#sSolapamiento').text('');
                     }
                     chequearEstadoBoton();
@@ -219,33 +205,37 @@ function validarHorasEnServidor() {
 }
 
 function validarenvio() {
-    let esNombreValido = validarCampo($('#turnonombre'));
-    let sonHorasValidas = validarLogicaHoras();
-    
-    if (!esNombreValido || !sonHorasValidas) {
-        muestraMensaje('error', 4000, '¡CAMPOS INCOMPLETOS!', 'Por favor, rellene todos los campos marcados en rojo.');
+    if ($('#proceso').is(':disabled')) {
+        muestraMensaje('error', 4000, '¡ACCIÓN NO PERMITIDA!', 'Debe corregir los errores o realizar cambios para poder continuar.');
         return false;
     }
-    if (solapamientoDetectado) {
-        muestraMensaje('error', 4000, '¡HORARIO OCUPADO!', 'El rango de horas seleccionado se solapa con otro turno.');
-        return false;
-    }
-
     return true;
 }
-
-
-
 
 function chequearEstadoBoton() {
     const nombre = $('#turnonombre').val();
     const inicio = $('#horaInicio').val();
     const fin = $('#horafin').val();
-    if (nombre && inicio && fin && fin > inicio && !solapamientoDetectado) {
-        $('#proceso').prop('disabled', false);
-    } else {
+    const esModoModificar = $('#turnoid').val() !== '';
+    const spanSolapamiento = $('#sSolapamiento');
+    
+    if (solapamientoDetectado) {
         $('#proceso').prop('disabled', true);
+        return;
     }
+
+    let esValido = nombre && inicio && fin && fin > inicio;
+
+    if (esValido && esModoModificar) {
+        if (inicio === originalHoraInicio && fin === originalHoraFin) {
+            esValido = false;
+            spanSolapamiento.text('Debe alterar el horario para poder modificar.');
+        } else {
+            spanSolapamiento.text('');
+        }
+    }
+    
+    $('#proceso').prop('disabled', !esValido);
 }
 
 function pone(pos, accion) {
@@ -260,9 +250,15 @@ function pone(pos, accion) {
         $("#turnonombre").val(nombreTurno).prop('disabled', true);
         $("#horaInicio").val(horaInicio24h);
         $("#horafin").val(horaFin24h);
+        
+        originalHoraInicio = horaInicio24h;
+        originalHoraFin = horaFin24h;
+
         $(".modal-title").text("Modificar Turno");
         $("#proceso").text("MODIFICAR");
-        $('#proceso').prop('disabled', false);
+        $('#proceso').prop('disabled', true);
+        $('#sSolapamiento').text('Debe alterar el horario para poder modificar.');
+
         $("#modal1").modal("show");
     } else {
         const horaInicio12h = $(linea).find("td:eq(1)").text();
@@ -278,6 +274,8 @@ function pone(pos, accion) {
 function limpia() {
   limpiarErrores();
   solapamientoDetectado = false;
+  originalHoraInicio = '';
+  originalHoraFin = '';
   $("#turnoid").val("");
   $("#turnonombre").val("").prop('disabled', false);
   $("#horaInicio").val("");
@@ -323,8 +321,6 @@ function enviaAjax(datos, callbackExito) {
   });
 }
 
-
-
 function limpiarErrores() {
     $('#f .form-control').each(function() {
         $(this).removeClass('is-invalid');
@@ -333,4 +329,15 @@ function limpiarErrores() {
         $(this).text('');
     });
     $('#sSolapamiento').text('');
+}
+
+function muestraMensaje(tipo, duracion, titulo, mensaje) {
+    Swal.fire({
+        icon: tipo,
+        title: titulo,
+        html: mensaje,
+        timer: duracion,
+        timerProgressBar: true,
+        showConfirmButton: false
+    });
 }

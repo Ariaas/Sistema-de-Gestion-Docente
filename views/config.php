@@ -47,7 +47,7 @@ if (!function_exists('tiene_permiso')) {
                     </div>
                 <?php endif; ?>
 
-                <?php if (tiene_permiso('Coordinacion', $permisos)) : ?>
+                <?php if (tiene_permiso('coordinacion', $permisos)) : ?>
                     <div class="col">
                         <a href="?pagina=coordinacion" class="dashboard-card">
                             <div class="icon-circle">

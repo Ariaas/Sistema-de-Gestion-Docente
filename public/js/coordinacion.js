@@ -1,256 +1,259 @@
-$(document).ready(function() {
-    let dataTable;
-    let debounceTimer; // Timer para debounce en la validación
-    let originalNombre = ""; // Para guardar el nombre original al modificar
 
-    Listar();
 
-    $("#registrar").on("click", function() {
-        limpia();
-        originalNombre = ""; // Es un registro nuevo, no hay nombre original
-        $("#proceso").text("REGISTRAR")
-                     .removeClass("btn-danger btn-warning")
-                     .addClass("btn-primary")
-                     .prop("disabled", true); // Deshabilitar el botón al inicio para un nuevo registro
-        $("#modal1 .modal-title").text("Formulario de Registro de Coordinación");
-        $("#modal1").modal("show");
+function Listar() {
+  var datos = new FormData();
+  datos.append("accion", "consultar");
+  enviaAjax(datos);
+}
+
+function destruyeDT() {
+  if ($.fn.DataTable.isDataTable("#tablacoordinacion")) {
+    $("#tablacoordinacion").DataTable().destroy();
+  }
+}
+
+function crearDT() {
+  if (!$.fn.DataTable.isDataTable("#tablacoordinacion")) {
+    $("#tablacoordinacion").DataTable({
+      paging: true,
+      lengthChange: true,
+      searching: true,
+      ordering: true,
+      info: true,
+      autoWidth: false,
+      responsive: true,
+      language: {
+        lengthMenu: "Mostrar _MENU_ registros",
+        zeroRecords: "No se encontraron resultados",
+        info: "Mostrando _PAGE_ de _PAGES_",
+        infoEmpty: "No hay registros disponibles",
+        infoFiltered: "(filtrado de _MAX_ registros totales)",
+        search: "Buscar:",
+        paginate: {
+          first: "Primero",
+          last: "Último",
+          next: "Siguiente",
+          previous: "Anterior",
+        },
+      },
+      order: [[0, "asc"]],
     });
+  }
+}
 
-    $("#proceso").on("click", function() {
-        const textoBoton = $(this).text();
+let originalNombreCoordinacion = ''; 
 
-        if (textoBoton === "REGISTRAR" || textoBoton === "MODIFICAR") {
-            if (validarenvio()) {
-                const datos = new FormData($("#f")[0]);
-                const accion = (textoBoton === "REGISTRAR") ? "registrar" : "modificar";
-                datos.append("accion", accion);
-                enviaAjax(datos);
-            }
-        } else if (textoBoton === "ELIMINAR") {
-            Swal.fire({
-                title: "¿Está seguro de eliminar esta coordinación?",
-                text: "Esta acción no se puede deshacer.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#d33",
-                cancelButtonColor: "#3085d6",
-                confirmButtonText: "Sí, eliminar",
-                cancelButtonText: "Cancelar",
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const datos = new FormData();
-                    datos.append("accion", "eliminar");
-                    datos.append("coordinacionId", $("#coordinacionId").val());
-                    enviaAjax(datos);
-                }
-            });
-        }
-    });
+$(document).ready(function () {
+  Listar();
+
+ 
+
+  $("#coordinacionNombre").on("keypress", function (e) {
+    validarkeypress(/^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+  });
+
+ 
+  $("#coordinacionNombre").on("keyup", function () {
+    const nombreActual = $(this).val();
 
    
-    $(document).on('click', '.modificar-btn', function() {
-        pone(this, 'modificar');
-    });
+    const formatoValido = validarkeyup(
+      /^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+      $(this),
+      $("#scoordinacionNombre"),
+      "El nombre debe tener entre 4 y 30 caracteres."
+    );
 
-    $(document).on('click', '.eliminar-btn', function() {
-        pone(this, 'eliminar');
-    });
-
-   
-    // --- VALIDACIÓN EN TIEMPO REAL ---
-    $("#coordinacionNombre").on("keyup", function() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            validarYVerificarNombre();
-        }, 500); 
-    });
-
-    // Limpia el input en tiempo real para no permitir números ni caracteres especiales
-    $("#coordinacionNombre").on("input", function() {
-        this.value = this.value.replace(/[^A-Za-z\sñÑáéíóúÁÉÍÓÚ-]/g, '');
-    });
-
-    function validarYVerificarNombre() {
-        const etiqueta = $("#coordinacionNombre");
-        const etiquetamensaje = $("#scoordinacionNombre");
-        const nombreActual = etiqueta.val();
-        const id = $("#coordinacionId").val();
-
-        if (!validarkeyup(/^[A-Za-z\sñÑáéíóúÁÉÍÓÚ-]{4,30}$/, etiqueta, etiquetamensaje, "El nombre debe tener entre 4 y 30 caracteres.")) {
-            $("#proceso").prop("disabled", true);
-            return;
-        }
-
-        if (id && nombreActual === originalNombre) {
-            etiquetamensaje.hide().text("");
-            $("#proceso").prop("disabled", false);
-            return;
-        }
-
-        const datos = new FormData();
-        datos.append("accion", "existe");
-        datos.append("coordinacionNombre", nombreActual);
-        if (id) {
-            datos.append("coordinacionId", id);
-        }
-
-        $.ajax({
-            async: true, url: "", type: "POST", contentType: false, data: datos,
-            processData: false, cache: false,
-            success: function(respuesta) {
-                try {
-                    const lee = JSON.parse(respuesta);
-                    if (lee.resultado === 'existe') {
-                        etiquetamensaje.text(lee.mensaje).show();
-                        $("#proceso").prop("disabled", true);
-                        // --- LÍNEA AÑADIDA: MOSTRAR ALERTA ---
-                        muestraMensaje('warning', 3000, 'Nombre duplicado', lee.mensaje);
-                    } else {
-                        etiquetamensaje.hide().text("");
-                        $("#proceso").prop("disabled", false);
-                    }
-                } catch (e) {
-                    etiquetamensaje.text("Error al verificar, intente de nuevo.").show();
-                    $("#proceso").prop("disabled", true);
-                }
-            },
-            error: () => {
-                etiquetamensaje.text("Error de comunicación al verificar.").show();
-                $("#proceso").prop("disabled", true);
-            }
-        });
+    if (!formatoValido) {
+      $("#proceso").prop("disabled", true);
+      return; 
     }
 
+    
+    if (originalNombreCoordinacion !== '' && nombreActual === originalNombreCoordinacion) {
+        $("#scoordinacionNombre").text("No se han realizado cambios.").show();
+        $("#proceso").prop("disabled", true);
+        return; 
+    }
 
-    function Listar() {
-        const datos = new FormData();
-        datos.append("accion", "consultar");
+    
+    var datos = new FormData();
+    datos.append('accion', 'existe');
+    datos.append('coordinacionNombre', nombreActual);
+    datos.append('coordinacionOriginalNombre', originalNombreCoordinacion);
+    enviaAjax(datos);
+  });
+
+
+  $("#proceso").on("click", function () {
+    let accion = $(this).text();
+
+    if (accion === "ELIMINAR") {
+        Swal.fire({
+          title: "¿Está seguro que quieres Eliminar esta coordinación?",
+          text: "Esta acción no se puede deshacer.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            var datos = new FormData();
+            datos.append("accion", "eliminar");
+            datos.append("coordinacionNombre", $("#coordinacionNombre").val());
+            enviaAjax(datos);
+          }
+        });
+        return;
+    }
+    
+    if (validarenvio()) { 
+        var datos = new FormData($("#f")[0]);
+        if (accion === "MODIFICAR") {
+            datos.append("accion", "modificar");
+            datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
+        } else {
+            datos.append("accion", "registrar");
+        }
         enviaAjax(datos);
     }
+  });
 
-    function validarenvio() {
-        if (!validarkeyup(/^[A-Za-z\sñÑáéíóúÁÉÍÓÚ-]{4,30}$/, $("#coordinacionNombre"), $("#scoordinacionNombre"), "El nombre debe tener entre 4 y 30 caracteres.")) {
-            muestraMensaje("error", 4000, "Error de validación", "Por favor, corrija el nombre de la coordinación.");
-            return false;
-        }
-        if ($("#proceso").is(":disabled")) {
-            muestraMensaje("error", 4000, "Error de validación", "El nombre de la coordinación ya está en uso o el formato es incorrecto.");
-            return false;
-        }
-        return true;
-    }
+  $("#registrar").on("click", function () {
+    limpia();
+    let modalHeader = $("#modal1 .modal-header");
+    let modalTitle = $("#modal1 .modal-title");
     
-   
-    function pone(pos, accion) {
-        const fila = $(pos).closest("tr");
-        const id = fila.find("td:eq(0)").text();
-        const nombre = fila.find("td:eq(1)").text();
-        
-        limpia();
-        $("#coordinacionId").val(id);
-        $("#coordinacionNombre").val(nombre);
-        
-        if (accion === 'modificar') {
-            originalNombre = nombre;
-            $("#proceso").text("MODIFICAR")
-                         .removeClass("btn-danger btn-warning")
-                         .addClass("btn-primary")
-                         .prop("disabled", false);
-            $("#modal1 .modal-title").text("Formulario de Modificación de Coordinación");
-        } else if (accion === 'eliminar') {
-            $("#proceso").text("ELIMINAR")
-                         .removeClass("btn-primary btn-warning")
-                         .addClass("btn-danger");
-            $("#modal1 .modal-title").text("Confirmar Eliminación de Coordinación");
-            $("#coordinacionNombre").prop("disabled", true);
-        }
-        
-        $("#modal1").modal("show");
-    }
- 
-    
-    function limpia() {
-        $("#f")[0].reset();
-        $("#coordinacionNombre").prop('disabled', false);
-        $("#scoordinacionNombre").hide().text("");
-        $("#proceso").prop("disabled", false);
-        originalNombre = "";
-    }
-    
-    function muestraMensaje(tipo, duracion, titulo, mensaje) {
-        Swal.fire({
-            icon: tipo,
-            title: titulo,
-            html: mensaje,
-            timer: duracion,
-            timerProgressBar: true,
-        });
-    }
+    modalHeader.removeClass("bg-danger").addClass("bg-primary");
+    modalTitle.text("Formulario de Registro de Coordinación");
 
-    function enviaAjax(datos) {
-        $.ajax({
-            async: true, url: "", type: "POST", contentType: false, data: datos,
-            processData: false, cache: false, timeout: 10000,
-            success: function(respuesta) {
-                try {
-                    const lee = JSON.parse(respuesta);
-                    switch (lee.resultado) {
-                        case 'consultar':
-                            if ($.fn.DataTable.isDataTable("#tablacoordinacion")) {
-                                $("#tablacoordinacion").DataTable().destroy();
-                            }
-                            $("#resultadoconsulta").empty();
-                            lee.mensaje.forEach(item => {
-                                $("#resultadoconsulta").append(`
-                                  <tr>
-                                    <td style="display: none;">${item.cor_id}</td>
-                                    <td>${item.cor_nombre}</td>
-                                    <td>
-                                      <button class="btn btn-warning btn-sm modificar-btn">Modificar</button>
-                                      <button class="btn btn-danger btn-sm eliminar-btn">Eliminar</button>
-                                    </td>
-                                  </tr>
-                                `);
-                            });
-                            dataTable = $("#tablacoordinacion").DataTable({
-                                paging: true, lengthChange: true, searching: true, ordering: true,
-                                info: true, autoWidth: false, responsive: true,
-                                language: { url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json' },
-                                order: [[1, "asc"]]
-                            });
-                            break;
-                        case 'registrar':
-                        case 'modificar':
-                        case 'eliminar':
-                            muestraMensaje("success", 3000, "ÉXITO", lee.mensaje);
-                            $("#modal1").modal("hide");
-                            Listar();
-                            break;
-                        case 'error':
-                        default:
-                            muestraMensaje("error", 5000, "ERROR", lee.mensaje || "Ocurrió un error inesperado.");
-                            break;
-                    }
-                } catch (e) {
-                    console.error("Error:", e, "Respuesta:", respuesta);
-                    muestraMensaje("error", 5000, "ERROR", "No se pudo procesar la respuesta.");
-                }
-            },
-            error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${err}`)
-        });
-    }
+    $("#proceso").text("REGISTRAR").removeClass("btn-danger btn-warning").addClass("btn-primary");
+    $("#proceso").prop("disabled", true); 
+    $("#modal1").modal("show");
+  });
 });
 
-
-function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
-    if (etiqueta.val() === "") {
-        etiquetamensaje.text(mensaje).show();
-        return false;
-    } else if (er.test(etiqueta.val())) {
-        etiquetamensaje.hide().text("");
-        return true;
-    } else {
-        etiquetamensaje.text(mensaje).show();
+function validarenvio() {
+    if ($("#proceso").is(":disabled")) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Acción no permitida',
+            text: 'Por favor, corrija los errores en el formulario antes de continuar.'
+        });
         return false;
     }
+    return true;
+}
+
+function pone(pos, accion) {
+  let linea = $(pos).closest("tr");
+  originalNombreCoordinacion = $(linea).find("td:eq(0)").text(); 
+  
+  let modalHeader = $("#modal1 .modal-header");
+  let modalTitle = $("#modal1 .modal-title");
+  let procesoBtn = $("#proceso");
+
+  if (accion === 0) { 
+    modalTitle.text("Formulario de Modificación de Coordinación");
+    procesoBtn.text("MODIFICAR");
+    
+    modalHeader.removeClass("bg-danger").addClass("bg-primary");
+    procesoBtn.removeClass("btn-danger").addClass("btn-primary");
+
+    $("#coordinacionNombre").prop("disabled", false);
+
+    procesoBtn.prop("disabled", true);
+    $("#scoordinacionNombre").text("Realice un cambio para poder modificar.").show();
+
+  } else { 
+    modalTitle.text("Confirmar Eliminación de Coordinación");
+    procesoBtn.text("ELIMINAR");
+    
+    modalHeader.removeClass("bg-primary").addClass("bg-danger");
+    procesoBtn.removeClass("btn-primary").addClass("btn-danger");
+    
+    $("#coordinacionNombre").prop("disabled", true);
+    procesoBtn.prop("disabled", false);
+  }
+  
+  $("#coordinacionNombre").val(originalNombreCoordinacion);
+  
+  if (accion !== 0) {
+    $("#scoordinacionNombre").hide();
+  }
+  $("#modal1").modal("show");
+}
+
+function enviaAjax(datos) {
+  $.ajax({
+    async: true, url: "", type: "POST", contentType: false, data: datos,
+    processData: false, cache: false, timeout: 10000,
+    success: function (respuesta) {
+      try {
+        var lee = JSON.parse(respuesta);
+        if (lee.resultado === "consultar") {
+          destruyeDT();
+          $("#resultadoconsulta").empty();
+          $.each(lee.mensaje, function (index, item) {
+            $("#resultadoconsulta").append(`
+              <tr>
+                <td>${item.cor_nombre}</td>
+                <td>
+                  <button class="btn btn-warning btn-sm" onclick='pone(this, 0)'><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+                  <button class="btn btn-danger btn-sm" onclick='pone(this, 1)'><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
+                </td>
+              </tr>
+            `);
+          });
+          crearDT();
+        } 
+        else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
+          Swal.fire({ icon: 'success', title: 'Éxito', text: lee.mensaje, timer: 2000, showConfirmButton: false });
+          $("#modal1").modal("hide");
+          Listar();
+        } 
+        else if (lee.resultado === "existe") {
+            $("#scoordinacionNombre").text(lee.mensaje).show();
+            $("#proceso").prop("disabled", true);
+        } else if (lee.resultado === "no_existe") {
+            $("#scoordinacionNombre").text("").hide();
+            $("#proceso").prop("disabled", false);
+        } else if (lee.resultado === "error") {
+            Swal.fire({ icon: 'error', title: 'Error', html: lee.mensaje });
+        }
+      } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error en respuesta', text: 'No se pudo procesar la respuesta del servidor.'});
+        console.error("Error en JSON: ", e, "Respuesta: ", respuesta);
+      }
+    },
+    error: function (request, status, err) {
+      Swal.fire({ icon: 'error', title: 'Error de Conexión', text: "Ocurrió un problema de comunicación." });
+    }
+  });
+}
+
+function limpia() {
+  $("#coordinacionNombre").val("").prop('disabled', false);
+  $("#scoordinacionNombre").text("");
+  originalNombreCoordinacion = '';
+}
+
+function validarkeypress(er, e) {
+  let key = e.keyCode || e.which;
+  let teclado = String.fromCharCode(key);
+  if (!er.test(teclado)) {
+    e.preventDefault();
+  }
+}
+
+function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
+  if (etiqueta.val() === "" || !er.test(etiqueta.val())) {
+    etiquetamensaje.text(mensaje).show();
+    return false;
+  } else {
+    etiquetamensaje.hide().text("");
+    return true;
+  }
 }

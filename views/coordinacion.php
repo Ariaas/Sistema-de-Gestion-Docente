@@ -28,14 +28,12 @@ if (!isset($_SESSION['name'])) {
                     <table class="table table-striped table-hover w-100" id="tablacoordinacion">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
                                 <th>Coordinación</th>
-                                <th>Acciones</th>
+                                <th style="width: 20%;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="resultadoconsulta">
-
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -50,10 +48,11 @@ if (!isset($_SESSION['name'])) {
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="hidden" name="coordinacionOriginalNombre" id="coordinacionOriginalNombre">
+                            
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label for="coordinacionNombre" class="form-label">Nombre de la Coordinación</label>
-                                    <input type="hidden" name="coordinacionId" id="coordinacionId">
                                     <input class="form-control" type="text" id="coordinacionNombre" name="coordinacionNombre" required>
                                     <span id="scoordinacionNombre" class="text-danger"></span>
                                 </div>
@@ -70,7 +69,6 @@ if (!isset($_SESSION['name'])) {
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
-    <script type="text/javascript" src="public/js/validacion.js"></script>
     <script type="text/javascript" src="public/js/coordinacion.js"></script>
 </body>
 

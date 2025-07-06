@@ -56,7 +56,7 @@ class Usuario extends Connection_bitacora
         return $this->rolId;
     }
 
-    // Setters
+    
     public function set_usuarioId($usuarioId)
     {
         $this->usuarioId = $usuarioId;
@@ -187,7 +187,7 @@ class Usuario extends Connection_bitacora
         return $r;
     }
 
-    /// Eliminar
+    
 
     function Eliminar()
     {
@@ -264,7 +264,7 @@ class Usuario extends Connection_bitacora
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        // Se cierra la conexión
+     
         $co = null;
         return $r;
     }
