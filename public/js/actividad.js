@@ -1,5 +1,3 @@
-
-
 function Listar() {
     var datos = new FormData();
     datos.append("accion", "consultar");
@@ -65,6 +63,7 @@ function crearDT() {
     });
   }
 }
+
 $(document).ready(function () {
     Listar();
 
@@ -84,7 +83,8 @@ $(document).ready(function () {
         if (accion === "REGISTRAR" || accion === "MODIFICAR") {
             if (validarenvio()) {
                 datos.append("accion", accion.toLowerCase());
-                datos.append("actId", $("#actId").val());
+                // actId ahora contiene la cédula del docente para la modificación
+                datos.append("actId", $("#actId").val()); 
                 datos.append("docId", $("#docId").val());
                 datos.append("actCreacion", $("#actCreacion").val());
                 datos.append("actIntegracion", $("#actIntegracion").val());
@@ -105,6 +105,7 @@ $(document).ready(function () {
             }).then((result) => {
                 if (result.isConfirmed) {
                     datos.append("accion", "eliminar");
+                    // actId ahora contiene la cédula para identificar el registro a eliminar
                     datos.append("actId", $("#actId").val());
                     enviaAjax(datos);
                 }
@@ -114,7 +115,7 @@ $(document).ready(function () {
 
     $("#docId").on("change", function() {
         if ($("#actId").val()) return; 
-        var docId = $(this).val();
+        var docId = $(this).val(); // docId es la cédula
         var spanDocId = $("#sdocId");
         var botonProceso = $("#proceso");
         if (docId) {
@@ -143,7 +144,6 @@ $(document).ready(function () {
     });
 });
 
-
 function CargarDocentes() {
     var datos = new FormData();
     datos.append("accion", "listar_docentes");
@@ -155,15 +155,14 @@ function CargarDocentes() {
                 if (lee.resultado === "listar_docentes") {
                     $("#docId").empty().append('<option value="">Seleccione un docente</option>');
                     $.each(lee.mensaje, function (index, item) {
-                        $("#docId").append(`<option value="${item.doc_id}">${item.doc_nombre} ${item.doc_apellido}</option>`);
+                        // El valor del option es ahora la cédula del docente
+                        $("#docId").append(`<option value="${item.doc_cedula}">${item.doc_nombre} ${item.doc_apellido}</option>`);
                     });
                 }
             } catch (e) { alert("Error al cargar docentes: " + e); }
         }
     });
 }
-
-
 
 function validarenvio() {
     if ($("#docId").val() == "") {
@@ -178,35 +177,30 @@ function pone(pos, accion) {
     CargarDocentes();
     const fila = $(pos).closest("tr");
 
-
-    const actId = fila.find("td:eq(0)").text();
-    const docId = fila.data("docid");
-    $("#actId").val(actId);
+    // El primer TD (oculto) y el data-docid contienen la cédula del docente
+    const docCedula = fila.find("td:eq(0)").text();
+    $("#actId").val(docCedula); // Se usa el campo oculto para guardar la cédula
     $("#actCreacion").val(fila.find("td:eq(2)").text());
     $("#actIntegracion").val(fila.find("td:eq(3)").text());
     $("#actGestion").val(fila.find("td:eq(4)").text());
     $("#actOtras").val(fila.find("td:eq(5)").text());
     
-  
-    setTimeout(() => $("#docId").val(docId), 200);
+    // Se selecciona el docente en el dropdown usando su cédula
+    setTimeout(() => $("#docId").val(docCedula), 200);
 
- 
-    if (accion === 0) { 
+    if (accion === 0) { // Modificar
         $("#proceso").text("MODIFICAR");
         $("#modal1 .modal-title").text("Modificar Actividad");
         $("form#f :input").prop('disabled', false);
-        $("#docId").prop('disabled', true); 
-    } else if (accion === 1) { 
+        $("#docId").prop('disabled', true); // Se deshabilita cambiar el docente al modificar
+    } else if (accion === 1) { // Eliminar
         $("#proceso").text("ELIMINAR");
         $("#modal1 .modal-title").text("Confirmar Eliminación");
-      
         $("form#f .form-control, form#f .form-select").prop('disabled', true); 
     }
     
     $("#modal1").modal("show");
 }
-
-
 
 function enviaAjax(datos) {
     $.ajax({
@@ -219,8 +213,8 @@ function enviaAjax(datos) {
                     $("#resultadoconsulta").empty();
                     $.each(lee.mensaje, function (index, item) {
                         $("#resultadoconsulta").append(`
-                            <tr data-docid='${item.doc_id}'>
-                                <td style="display: none;">${item.act_id}</td>
+                            <tr data-docid='${item.doc_cedula}'>
+                                <td style="display: none;">${item.doc_cedula}</td>
                                 <td>${item.doc_nombre} ${item.doc_apellido}</td>
                                 <td>${item.act_creacion_intelectual}</td>
                                 <td>${item.act_integracion_comunidad}</td>
@@ -251,6 +245,7 @@ function enviaAjax(datos) {
         }
     });
 }
+
 function limpia() {
     $("#f")[0].reset();
     $("#actId").val("");
@@ -258,6 +253,7 @@ function limpia() {
     $("#sdocId").text("");
     $("#proceso").prop('disabled', false);
 }
+
 function muestraMensaje(tipo, duracion, titulo, mensaje) {
     Swal.fire({ icon: tipo, title: titulo, html: mensaje, timer: duracion, timerProgressBar: true });
 }

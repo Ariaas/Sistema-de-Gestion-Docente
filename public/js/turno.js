@@ -229,7 +229,7 @@ function chequearEstadoBoton() {
     if (esValido && esModoModificar) {
         if (inicio === originalHoraInicio && fin === originalHoraFin) {
             esValido = false;
-            spanSolapamiento.text('Debe alterar el horario para poder modificar.');
+            spanSolapamiento.text('Realice un cambio para poder modificar.');
         } else {
             spanSolapamiento.text('');
         }
@@ -257,7 +257,7 @@ function pone(pos, accion) {
         $(".modal-title").text("Modificar Turno");
         $("#proceso").text("MODIFICAR");
         $('#proceso').prop('disabled', true);
-        $('#sSolapamiento').text('Debe alterar el horario para poder modificar.');
+        $('#sSolapamiento').text('Realice un cambio para poder modificar.');
 
         $("#modal1").modal("show");
     } else {

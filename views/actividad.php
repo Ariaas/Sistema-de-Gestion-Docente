@@ -39,8 +39,7 @@ if (!isset($_SESSION['name'])) {
                             </tr>
                         </thead>
                         <tbody id="resultadoconsulta">
-                           
-                        </tbody>
+                           </tbody>
                     </table>
                 </div>
             </div>

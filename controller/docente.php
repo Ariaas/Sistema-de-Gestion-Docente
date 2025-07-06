@@ -17,41 +17,35 @@ if (is_file("views/" . $pagina . ".php")) {
         $p = new Docente();
         $accion = $_POST['accion'] ?? '';
 
-        
-        require_once("model/bitacora.php");
-        $usu_id = isset($_SESSION['usu_id']) ? $_SESSION['usu_id'] : null;
+        if ($accion !== 'consultar' && $accion !== 'Existe') {
+            require_once("model/bitacora.php");
+            $usu_id = $_SESSION['usu_id'] ?? null;
 
-        if ($usu_id === null) {
-            echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado.']);
-            exit;
+            if ($usu_id === null) {
+                echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado para realizar esta acción.']);
+                exit;
+            }
+            $bitacora = new Bitacora();
         }
-        $bitacora = new Bitacora();
         
         if ($accion == 'consultar') {
             echo json_encode($p->Listar());
 
         } elseif ($accion == 'consultar_horas') {
-            $doc_id = $_POST['doc_id'] ?? 0;
-            echo json_encode($p->ObtenerHorasActividad($doc_id));
+            $doc_cedula = $_POST['doc_cedula'] ?? 0;
+            echo json_encode($p->ObtenerHorasActividad($doc_cedula));
 
         } elseif ($accion == 'eliminar') {
             $p->setCedula($_POST['cedulaDocente']);
             $resultado = $p->Eliminar();
             echo json_encode($resultado);
-            $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
+            if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
+
         } elseif ($accion == 'Existe') {
             $resultado = $p->Existe($_POST['cedulaDocente']);
             echo json_encode(['existe' => $resultado]);
-        } elseif ($accion == 'obtenerTitulosDocente') {
-            $p->setCedula($_POST['cedulaDocente']);
-            $titulos = $p->obtenerTitulosDocente($p->obtenerIdPorCedula($_POST['cedulaDocente']));
-            echo json_encode(['resultado' => 'success', 'titulos' => $titulos]);
-        } elseif ($accion == 'obtenerCoordinacionesDocente') {
-            $p->setCedula($_POST['cedulaDocente']);
-            $coordinaciones = $p->obtenerCoordinacionesDocente($p->obtenerIdPorCedula($_POST['cedulaDocente']));
-            echo json_encode(['resultado' => 'success', 'coordinaciones' => $coordinaciones]);
         } else {
-            $p->setCategoriaId($_POST['categoria']);
+            $p->setCategoriaNombre($_POST['categoria']);
             $p->setPrefijo($_POST['prefijoCedula']);
             $p->setCedula($_POST['cedulaDocente']);
             $p->setNombre($_POST['nombreDocente']);
@@ -61,6 +55,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setCondicion($_POST['condicion']);
             $p->setIngreso($_POST['fechaIngreso']);
             $p->setObservacion($_POST['observacionesDocente']);
+            $p->setAnioConcurso($_POST['anioConcurso'] ?? '');
 
             if (isset($_POST['titulos']) && is_array($_POST['titulos'])) {
                 $p->setTitulos($_POST['titulos']);
@@ -76,10 +71,10 @@ if (is_file("views/" . $pagina . ".php")) {
 
             if ($accion == 'incluir') {
                 echo json_encode($p->Registrar());
-                $bitacora->registrarAccion($usu_id, 'registrar', 'docente');
+                if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'registrar', 'docente');
             } elseif ($accion == 'modificar') {
                 echo json_encode($p->Modificar());
-                 $bitacora->registrarAccion($usu_id, 'modificar', 'docente');
+                if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'modificar', 'docente');
             }
         }
         exit;
@@ -92,5 +87,6 @@ if (is_file("views/" . $pagina . ".php")) {
 
     require_once("views/" . $pagina . ".php");
 } else {
-    echo "pagina en construccion";
+    echo "Página en construcción";
 }
+?>
