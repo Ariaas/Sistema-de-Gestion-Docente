@@ -208,8 +208,8 @@ function enviaAjax(datos) {
                 <td>${item.area_nombre}</td>
                 <td>${item.area_descripcion}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
                 </td>
               </tr>
             `);

@@ -4,7 +4,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 $permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
-// Convertir todas las claves de permisos a minúsculas para una comparación consistente
 $permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
 
 $pagina_actual = $_GET['pagina'] ?? 'principal';
@@ -17,19 +16,19 @@ function is_active($paginas, $pagina_actual)
     return '';
 }
 
-// Función auxiliar para verificar permisos sin ser sensible a mayúsculas/minúsculas
 if (!function_exists('tiene_permiso')) {
-    function tiene_permiso($modulo, $permisos_array) {
+    function tiene_permiso($modulo, $permisos_array)
+    {
         return !empty($permisos_array[strtolower($modulo)]);
     }
 }
 
-// --- Definición de los elementos de cada menú ---
 
 $gestion_items = [
     'Docentes' => 'docente',
     'Espacios' => 'espacios',
     'Seccion' => 'seccion',
+    'Año' => 'anio',
     'Unidad Curricular' => 'uc',
     'Malla Curricular' => 'mallacurricular'
 ];
@@ -42,12 +41,8 @@ $reportes_estadisticos_items = [
     'Reporte General' => 'reporteG'
 ];
 
-// Listas de permisos para los sub-menús de Administración
 $mantenimiento_permisos = ['Usuario', 'Rol', 'Bitacora', 'backup'];
 $config_permisos = ['Año', 'Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Prosecusion', 'Actividad'];
-
-
-// --- Lógica para determinar si se muestra cada menú desplegable ---
 
 $tiene_permiso_gestion = false;
 foreach (array_keys($gestion_items) as $permiso) {
@@ -59,7 +54,6 @@ foreach (array_keys($gestion_items) as $permiso) {
 
 $tiene_permiso_reportes_estadisticos = tiene_permiso('Reportes', $permisos);
 
-// --- Lógica para el menú de Administración ---
 $tiene_permiso_config_subitem = false;
 foreach ($config_permisos as $permiso) {
     if (tiene_permiso($permiso, $permisos)) {
@@ -78,7 +72,6 @@ foreach ($mantenimiento_permisos as $permiso) {
 
 $tiene_permiso_reportes_subitem = tiene_permiso('Reportes', $permisos);
 
-// El menú "Administración" se muestra si tiene permiso para AL MENOS UNO de sus sub-menús.
 $tiene_permiso_admin = $tiene_permiso_config_subitem || $tiene_permiso_reportes_subitem || $tiene_permiso_mantenimiento_subitem;
 
 
@@ -118,7 +111,7 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                         </ul>
                     </li>
                 <?php endif; ?>
-                
+
                 <?php if ($tiene_permiso_reportes_estadisticos): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle <?php echo is_active($paginas_reportes_estadisticos, $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Reportes Estadísticos</a>
@@ -149,13 +142,13 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                             <?php if ($tiene_permiso_mantenimiento_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('mantenimiento', $pagina_actual); ?>" href="?pagina=mantenimiento">Mantenimiento</a></li>
                             <?php endif; ?>
-                             <?php if ($tiene_permiso_reportes_subitem): ?>
+                            <?php if ($tiene_permiso_reportes_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('reportes', $pagina_actual); ?>" href="?pagina=reportes">Reportes</a></li>
                             <?php endif; ?>
                         </ul>
                     </li>
                 <?php endif; ?>
-                
+
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle <?php echo is_active('preguntas', $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Ayuda</a>
                     <ul class="dropdown-menu">
@@ -163,14 +156,19 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                     </ul>
                 </li>
             </ul>
-            
+
             <div class="d-none d-lg-flex align-items-center ms-auto">
                 <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a href="?pagina=notificaciones" class="nav-link <?php echo is_active('notificaciones', $pagina_actual); ?>">
+                            <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <?php
-                                $foto_perfil = $_SESSION['usu_foto'] ?? 'public/assets/icons/user-circle.svg';
-                                $estilo_filtro = str_contains($foto_perfil, 'user-circle.svg') ? 'filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);' : '';
+                            $foto_perfil = $_SESSION['usu_foto'] ?? 'public/assets/icons/user-circle.svg';
+                            $estilo_filtro = str_contains($foto_perfil, 'user-circle.svg') ? 'filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);' : '';
                             ?>
                             <img src="<?php echo $foto_perfil; ?>?v=<?php echo time(); ?>" alt="Foto de perfil" width="24" height="24" class="rounded-circle me-2" style="object-fit: cover; <?php echo $estilo_filtro; ?>">
                             <strong><?php echo $_SESSION['name'] ?? 'Usuario'; ?></strong>
