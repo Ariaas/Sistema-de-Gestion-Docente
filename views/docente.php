@@ -16,7 +16,12 @@ if (!isset($_SESSION['name'])) {
 <body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
-    <main class="main-content flex-shrink-0">
+
+    <main class="main-content flex-shrink-0" 
+          data-count-titulos="<?= count($titulos) ?>" 
+          data-count-categorias="<?= count($categorias) ?>" 
+          data-count-coordinaciones="<?= count($coordinaciones) ?>">
+
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
@@ -38,6 +43,7 @@ if (!isset($_SESSION['name'])) {
                                 <th>Dedicación</th>
                                 <th>Condición</th>
                                 <th>Fecha Ingreso</th>
+                                <th>Año Concurso</th>
                                 <th>Observaciones</th>
                                 <th>Acciones</th>
                             </tr>
@@ -97,7 +103,7 @@ if (!isset($_SESSION['name'])) {
                                     <select class="form-select" name="categoria" id="categoria" required>
                                         <option value="" disabled selected>Seleccione...</option>
                                         <?php foreach ($categorias as $categoria) {
-                                            echo "<option value='" . $categoria['cat_id'] . "'>" . $categoria['cat_nombre'] . "</option>";
+                                            echo "<option value='" . htmlspecialchars($categoria['cat_nombre']) . "'>" . htmlspecialchars($categoria['cat_nombre']) . "</option>";
                                         } ?>
                                     </select>
                                     <span id="scategoria" class="text-danger"></span>
@@ -130,10 +136,13 @@ if (!isset($_SESSION['name'])) {
                                 <div class="col-md-6">
                                     <label class="form-label">Títulos <span class="text-danger">*</span></label>
                                     <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
-                                        <?php foreach ($titulos as $titulo): ?>
+                                        <?php foreach ($titulos as $titulo): 
+                                            $value = htmlspecialchars($titulo['tit_prefijo'] . '::' . $titulo['tit_nombre']);
+                                            $id = "titulo_" . htmlspecialchars($titulo['tit_prefijo'] . '_' . $titulo['tit_nombre']);
+                                        ?>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="titulos[]" id="titulo_<?= $titulo['tit_id'] ?>" value="<?= $titulo['tit_id'] ?>">
-                                                <label class="form-check-label" for="titulo_<?= $titulo['tit_id'] ?>"><?= $titulo['tit_nombre'] ?></label>
+                                                <input class="form-check-input" type="checkbox" name="titulos[]" id="<?= $id ?>" value="<?= $value ?>">
+                                                <label class="form-check-label" for="<?= $id ?>"><?= htmlspecialchars($titulo['tit_nombre']) ?></label>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -141,12 +150,15 @@ if (!isset($_SESSION['name'])) {
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Coordinaciones <span class="text-danger">*</span></label>
+                                    <label class="form-label">Coordinaciones (Opcional)</label>
                                     <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
-                                        <?php foreach ($coordinaciones as $coordinacion): ?>
+                                        <?php foreach ($coordinaciones as $coordinacion): 
+                                            $value = htmlspecialchars($coordinacion['cor_nombre']);
+                                            $id = "coordinacion_" . str_replace(' ', '_', $value);
+                                        ?>
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="coordinaciones[]" id="coordinacion_<?= $coordinacion['cor_id'] ?>" value="<?= $coordinacion['cor_id'] ?>">
-                                                <label class="form-check-label" for="coordinacion_<?= $coordinacion['cor_id'] ?>"><?= $coordinacion['cor_nombre'] ?></label>
+                                                <input class="form-check-input" type="checkbox" name="coordinaciones[]" id="<?= $id ?>" value="<?= $value ?>">
+                                                <label class="form-check-label" for="<?= $id ?>"><?= $value ?></label>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -158,13 +170,18 @@ if (!isset($_SESSION['name'])) {
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="fechaIngreso" class="form-label">Fecha de Ingreso</label>
+                                    <label for="fechaIngreso" class="form-label">Fecha de Ingreso <span class="text-danger">*</span></label>
                                     <input class="form-control" type="date" id="fechaIngreso" name="fechaIngreso" required>
                                     <span id="sfechaIngreso" class="text-danger"></span>
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="anioConcurso" class="form-label">Año Concurso (Opcional)</label>
+                                    <input class="form-control" type="date" id="anioConcurso" name="anioConcurso">
+                                    <span id="sanioConcurso" class="text-danger"></span>
+                                </div>
                                 <div class="col-md-12 mt-3">
-                                    <label for="observacionesDocente" class="form-label">Observaciones</label>
-                                    <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="100" placeholder="Añadir observaciones (máx. 100 caracteres)" required></textarea>
+                                    <label for="observacionesDocente" class="form-label">Observaciones (Opcional)</label>
+                                    <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="100" placeholder="Añadir observaciones (máx. 100 caracteres)"></textarea>
                                     <span id="sobservacionesDocente" class="text-danger"></span>
                                 </div>
                             </div>

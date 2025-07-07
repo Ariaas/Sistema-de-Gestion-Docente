@@ -69,8 +69,18 @@ function Listar() {
   
   $(document).ready(function () {
     Listar();
-  
+    Verificar();
 
+    $("#aniAnio").on("change", function() {
+      const year = $(this).val();
+      if (year) {
+        const minDate = `${year}-01-01`;
+        const maxDate = `${year}-12-31`;
+        $("#aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2")
+          .attr("min", minDate)
+          .attr("max", maxDate);
+      }
+    });
     
     //////////////////////////////VALIDACIONES/////////////////////////////////////
   
@@ -116,7 +126,9 @@ function Listar() {
           datos.append("aniCierraFase1", $("#aniCierraFase1").val());
           datos.append("aniAperturaFase2", $("#aniAperturaFase2").val());
           datos.append("aniCierraFase2", $("#aniCierraFase2").val());
-  
+          datos.append("anioOriginal", $("#anioOriginal").val());
+          datos.append("tipoOriginal", $("#tipoOriginal").val());
+
           enviaAjax(datos);
         }
       }
@@ -136,7 +148,8 @@ function Listar() {
               
               var datos = new FormData();
               datos.append("accion", "eliminar");
-              datos.append("aniId", $("#aniId").val());
+              datos.append("aniAnio", $("#aniAnio").val());
+              datos.append("tipoAnio", $("#tipoAnio").val());
               enviaAjax(datos);
             } else {
               muestraMensaje(
@@ -153,44 +166,33 @@ function Listar() {
   
   
     $("#registrar").on("click", function () {
+      if ($(this).is(':disabled')) {
+          const warningText = $("#registrar-warning").text();
+          Swal.fire({
+              icon: 'error',
+              title: 'Acción no permitida',
+              text: warningText || 'No se puede registrar un nuevo año en este momento.'
+          });
+          return;
+      }
       limpia();
       $("#proceso").text("REGISTRAR");
       var currentYear = new Date().getFullYear();
-      $("#aniAnio").val(currentYear);
+      $("#aniAnio").val(currentYear).trigger('change');
       $("#aniId").prop("disabled", true);
       $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
       $("#modal1 .modal-title").text("Formulario de Año Regular/Intensivo");
       $("#modal1").modal("show");
     });
 
-    $('#tablaanio').on('click', '.per-btn', function() {
-        const anioId = $(this).data('id');
-        const tienePer = $(this).data('tiene-per');
-
-        if (tienePer) {
-            const datos = new FormData();
-            datos.append("accion", "consultar_per");
-            datos.append("aniId", anioId);
-            enviaAjax(datos);
-        } else {
-            Swal.fire({
-                title: "¿Crear PER?",
-                text: "Se creará un PER para este año. Esta acción no se puede deshacer.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Sí, crear",
-                cancelButtonText: "Cancelar",
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const datos = new FormData();
-                    datos.append("accion", "registrar_per");
-                    datos.append("aniId", anioId);
-                    enviaAjax(datos);
-                }
-            });
-        }
+    $(document).on("click", ".ver-per-btn", function() {
+        const anio = $(this).data("anio");
+        const tipo = $(this).data("tipo");
+        const datos = new FormData();
+        datos.append("accion", "consultar_per");
+        datos.append("aniAnio", anio);
+        datos.append("aniTipo", tipo);
+        enviaAjax(datos);
     });
     
   });
@@ -286,6 +288,8 @@ $("#tipoAnio").on("change", function() {
   
   function pone(pos, accion) {
   linea = $(pos).closest("tr");
+  const anioOriginal = $(linea).find("td:eq(1)").text();
+  const tipoOriginal = $(linea).find("td:eq(2)").text();
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
@@ -297,8 +301,10 @@ $("#tipoAnio").on("change", function() {
   }
   $("#saniAnio").hide();
   $("#aniId").val($(linea).find("td:eq(0)").text());
-  $("#aniAnio").val($(linea).find("td:eq(1)").text());
+  $("#aniAnio").val($(linea).find("td:eq(1)").text()).trigger('change');
   $("#tipoAnio").val($(linea).find("td:eq(2)").text());
+  $("#anioOriginal").val(anioOriginal);
+  $("#tipoOriginal").val(tipoOriginal);
   $("#aniAperturaFase1").val(convertirFecha($(linea).find("td:eq(3)").text()));
   $("#aniCierraFase1").val(convertirFecha($(linea).find("td:eq(4)").text()));
   $("#aniAperturaFase2").val(convertirFecha($(linea).find("td:eq(5)").text()));
@@ -326,13 +332,6 @@ $("#tipoAnio").on("change", function() {
             destruyeDT();
             $("#resultadoconsulta").empty();
             $.each(lee.mensaje, function (index, item) {
-              let perButton = '';
-              if (item.ani_tipo === 'Regular' || item.ani_tipo === 'regular') {
-                  const tienePer = item.per_id !== null;
-                  const btnClass = tienePer ? 'btn-info' : 'btn-primary';
-                  const btnText = tienePer ? 'Ver PER' : 'Crear PER';
-                  perButton = `<button class="btn ${btnClass} btn-sm per-btn" data-id="${item.ani_id}" data-tiene-per="${tienePer}">${btnText}</button>`;
-              }
 
               $("#resultadoconsulta").append(`
                 <tr>
@@ -351,10 +350,10 @@ $("#tipoAnio").on("change", function() {
                     ${item.ani_activo == 1 ? 'Activo' : 'Inactivo'}
                     </button>
                   </td>
-                  <td>
-                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}">Modificar</button>
-                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}">Eliminar</button>
-                    ${perButton}
+                  <td class="text-nowrap">
+                    <button class="btn btn-info btn-sm ver-per-btn" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}">Ver PER</button>
+                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
+                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
                   </td>
                 </tr>
               `);
@@ -371,6 +370,32 @@ $("#tipoAnio").on("change", function() {
                 enviaAjax(datos);
               });
             crearDT();
+            Verificar();
+          }
+          else if (lee.resultado === "condiciones_registro") {
+            let warning = "";
+            if (!lee.malla_activa) {
+                warning = "Debe haber una malla curricular activa.";
+            } else if (lee.anio_activo_existe) {
+                warning = "Ya existe un año activo.";
+            }
+
+            if (warning) {
+                $("#registrar").prop("disabled", true);
+                $("#registrar-warning").text(warning);
+            } else {
+                if (PERMISOS.registrar) {
+                    $("#registrar").prop("disabled", false);
+                }
+                $("#registrar-warning").text("");
+            }
+          }
+          else if (lee.resultado === "per_consultado") {
+            const per1 = lee.data.per_fase1 ? new Date(lee.data.per_fase1).toLocaleDateString('es-ES') : "No definido";
+            const per2 = lee.data.per_fase2 ? new Date(lee.data.per_fase2).toLocaleDateString('es-ES') : "En espera de la apertura de fase 1 del próximo año.";
+            $("#perApertura1").text(per1);
+            $("#perApertura2").text(per2);
+            $("#modalVerPer").modal("show");
           }
           ////////
           else if (lee.resultado == "registrar") {
@@ -405,14 +430,10 @@ $("#tipoAnio").on("change", function() {
               Listar();
             }
           }
-          else if (lee.resultado == "consultar_per") {
-            $("#perApertura1").text(lee.mensaje.per_apertura_fase1);
-            $("#perApertura2").text(lee.mensaje.per_apertura_fase2);
-            $("#modalVerPer").modal("show");
-          }
           else if (lee.resultado == "activar") {
             muestraMensaje("info", 2000, "ESTADO", lee.mensaje);
             Listar();
+            Verificar();
           }
           else if (lee.resultado == "error") {
             muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
@@ -450,5 +471,11 @@ $("#tipoAnio").on("change", function() {
   const partes = fecha.split("/");
   if (partes.length !== 3) return fecha;
   return `${partes[2]}-${partes[1].padStart(2, "0")}-${partes[0].padStart(2, "0")}`;
+}
+
+function Verificar() {
+    var datos = new FormData();
+    datos.append("accion", "verificar_condiciones_registro");
+    enviaAjax(datos);
 }
 

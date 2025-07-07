@@ -90,25 +90,26 @@ $(document).ready(function () {
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
-    if ($(this).text() == "REGISTRAR") {
-      if (validarenvio()) {
-        var datos = new FormData();
-        datos.append("accion", "registrar");
-        datos.append("ejeNombre", $("#ejeNombre").val());
-
-        enviaAjax(datos);
-      }
-    } else if ($(this).text() == "MODIFICAR") {
+    let accion = $(this).text();
+    if (accion === "MODIFICAR") {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "modificar");
         datos.append("ejeNombre", $("#ejeNombre").val());
-        datos.append("ejeId", $("#ejeId").val());
+        datos.append("ejeDescripcion", $("#ejeDescripcion").val());
+        datos.append("ejeNombreOriginal", originalNombreEje); 
+        enviaAjax(datos);
+      }
+    } else if (accion === "REGISTRAR") {
+      if (validarenvio()) {
+        var datos = new FormData();
+        datos.append("accion", "registrar");
+        datos.append("ejeNombre", $("#ejeNombre").val());
+        datos.append("ejeDescripcion", $("#ejeDescripcion").val());
 
         enviaAjax(datos);
       }
-    }
-    if ($(this).text() == "ELIMINAR") {
+    } else if (accion === "ELIMINAR") {
       if (
         validarkeyup(
           /^[[A-Za-z0-9,\#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
@@ -139,7 +140,7 @@ $(document).ready(function () {
             
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("ejeId", $("#ejeId").val());
+            datos.append("ejeNombre", $("#ejeNombre").val());
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -180,11 +181,12 @@ function validarenvio() {
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
+  originalNombreEje = $(linea).find("td:eq(0)").text(); 
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#ejeId").prop("disabled", false);
     $("#ejeNombre").prop("disabled", false);
+    $("#ejeDescripcion").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
     $(
@@ -192,8 +194,8 @@ function pone(pos, accion) {
     ).prop("disabled", true);
   }
   $("#sejeNombre").hide();
-  $("#ejeId").val($(linea).find("td:eq(0)").text());
-  $("#ejeNombre").val($(linea).find("td:eq(1)").text());
+  $("#ejeNombre").val($(linea).find("td:eq(0)").text());
+  $("#ejeDescripcion").val($(linea).find("td:eq(1)").text());
 
   $("#modal1").modal("show");
 }
@@ -217,13 +219,17 @@ function enviaAjax(datos) {
           destruyeDT();
           $("#resultadoconsulta").empty();
           $.each(lee.mensaje, function (index, item) {
+            
+            const btnModificar = `<button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>`;
+            const btnEliminar = `<button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>`;
+
             $("#resultadoconsulta").append(`
               <tr>
-                <td style="display: none;">${item.eje_id}</td>
                 <td>${item.eje_nombre}</td>
+                <td>${item.eje_descripcion}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}">Eliminar</button>
+                  ${btnModificar}
+                  ${btnEliminar}
                 </td>
               </tr>
             `);

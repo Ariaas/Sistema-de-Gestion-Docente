@@ -1,8 +1,30 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['name'])) {
     header('Location: .');
     exit();
 }
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar = tiene_permiso_accion('año', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('año', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('año', 'eliminar', $permisos);
 ?>
 
 <!DOCTYPE html>
@@ -20,7 +42,10 @@ if (!isset($_SESSION['name'])) {
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestión de Años</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar Año</button>
+                <div class="d-flex flex-column align-items-end">
+                    <button class="btn btn-success px-4" id="registrar" <?php if (!$puede_registrar) echo 'disabled'; ?>>Registrar Año</button>
+                    <span id="registrar-warning" class="text-danger mt-1" style="font-size: 0.9rem;"></span>
+                </div>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
@@ -54,6 +79,8 @@ if (!isset($_SESSION['name'])) {
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
                             <input type="hidden" name="accion" id="accion">
                             <input type="hidden" id="aniId" name="aniId">
+                            <input type="hidden" id="anioOriginal" name="anioOriginal">
+                            <input type="hidden" id="tipoOriginal" name="tipoOriginal">
 
                             <div class="mb-4">
                                 <div class="row g-3">
@@ -141,6 +168,12 @@ if (!isset($_SESSION['name'])) {
     <?php
     require_once("public/components/footer.php");
     ?>
+    <script>
+        const PERMISOS = {
+            modificar: <?php echo json_encode($puede_modificar); ?>,
+            eliminar: <?php echo json_encode($puede_eliminar); ?>
+        };
+    </script>
     <script type="text/javascript" src="public/js/anio.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>

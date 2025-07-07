@@ -178,4 +178,42 @@ class Login extends Connection_bitacora
         $result = json_decode($response, true);
         return $result['success'] ?? false;
     }
+
+    public function get_permisos($usu_id)
+    {
+        $permisos = [];
+        try {
+            $co = $this->Con();
+            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            $stmt_rol = $co->prepare("SELECT rol_id FROM tbl_usuario WHERE usu_id = :usu_id");
+            $stmt_rol->bindParam(':usu_id', $usu_id, PDO::PARAM_INT);
+            $stmt_rol->execute();
+            $usuario = $stmt_rol->fetch(PDO::FETCH_ASSOC);
+
+            if ($usuario && !empty($usuario['rol_id'])) {
+                $rol_id = $usuario['rol_id'];
+
+                $sql = "SELECT p.per_modulo, rp.per_accion
+                        FROM rol_permisos rp
+                        JOIN tbl_permisos p ON rp.per_id = p.per_id
+                        WHERE rp.rol_id = :rol_id AND rp.rol_per_estado = 1 AND p.per_estado = 1";
+
+                $stmt_permisos = $co->prepare($sql);
+                $stmt_permisos->bindParam(':rol_id', $rol_id, PDO::PARAM_INT);
+                $stmt_permisos->execute();
+
+                while ($row = $stmt_permisos->fetch(PDO::FETCH_ASSOC)) {
+                    if (!isset($permisos[$row['per_modulo']])) {
+                        $permisos[$row['per_modulo']] = [];
+                    }
+                    $permisos[$row['per_modulo']][] = $row['per_accion'];
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error al obtener permisos: " . $e->getMessage());
+            return [];
+        }
+        return $permisos;
+    }
 }

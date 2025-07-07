@@ -27,26 +27,26 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($e->Listar());
         } elseif ($accion == 'eliminar') {
-            $e->setId($_POST['ejeId']);
+            $e->setEje($_POST['ejeNombre']);
             echo  json_encode($e->Eliminar());
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'eje');
-
         } elseif ($accion == 'existe') {
             $e->setEje($_POST['ejeNombre']);
-            $resultado = $e->Existe($_POST['ejeNombre']);
+            $resultado = $e->Existe($_POST['ejeNombre'], $_POST['ejeNombre']);
             echo json_encode($resultado);
         } else {
             $e->setEje($_POST['ejeNombre']);
-            
+            $e->setDescripcion($_POST['ejeDescripcion']);
+
             if ($accion == 'registrar') {
                 echo  json_encode($e->Registrar());
 
                 $bitacora->registrarAccion($usu_id, 'registrar', 'eje');
-
             } elseif ($accion == 'modificar') {
-                $e->setId($_POST['ejeId']);
-                echo  json_encode($e->modificar());
+                $e->setEje($_POST['ejeNombre']);
+                $e->setDescripcion($_POST['ejeDescripcion']);
+                echo  json_encode($e->modificar($_POST['ejeNombreOriginal']));
 
                 $bitacora->registrarAccion($usu_id, 'modificar', 'eje');
             }

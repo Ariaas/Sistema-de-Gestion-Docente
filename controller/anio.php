@@ -9,8 +9,7 @@ if (!is_file("model/" . $pagina . ".php")) {
     exit;
 }
 require_once("model/" . $pagina . ".php");
-$c = new Anio();
-$c->Notificaciones();
+
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
@@ -23,48 +22,43 @@ if (is_file("views/" . $pagina . ".php")) {
             exit;
         }
         $bitacora = new Bitacora();
+        $c = new Anio();
 
-        
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
-            
             echo json_encode($c->Listar());
+        } elseif ($accion == 'verificar_condiciones_registro') {
+            echo json_encode($c->Verificar());
+        } elseif ($accion == 'consultar_per') {
+            $c->setAnio($_POST['aniAnio']);
+            $c->setTipo($_POST['aniTipo']);
+            echo json_encode($c->consultarPer());
         } elseif ($accion == 'eliminar') {
-            $c->setId($_POST['aniId']);
+            $c->setAnio($_POST['aniAnio']);
+            $c->setTipo($_POST['tipoAnio']);
             echo  json_encode($c->Eliminar());
             $bitacora->registrarAccion($usu_id, 'eliminar', 'anio');
         } elseif ($accion == 'existe') {
-            $c->setAnio($_POST['aniAnio']);
-            $c->setTipo($_POST['tipoAnio']);
-            $resultado = $c->Existe($_POST['aniAnio'], $_POST['tipoAnio']);
-            echo json_encode($resultado);
-        } elseif ($accion == 'registrar_per') {
-            $idAnioRegular = $_POST['aniId'];
-            echo json_encode($c->RegistrarPer($idAnioRegular));
-            $bitacora->registrarAccion($usu_id, 'registrar PER', 'anio');
-        } elseif ($accion == 'consultar_per') {
-            $idAnioRegular = $_POST['aniId'];
-            echo json_encode($c->ConsultarPerPorAnio($idAnioRegular));
-        } elseif ($accion == 'activar') {
-            $c->setId($_POST['aniId']);
-            $c->setActivo($_POST['aniActivo']);
-            echo json_encode($c->Activar());
-            $bitacora->registrarAccion($usu_id, 'activar', 'anio');
+            $existe = $c->Existe($_POST['aniAnio'], $_POST['tipoAnio']);
+            if ($existe) {
+                echo json_encode(['resultado' => 'existe', 'mensaje' => 'El AÑO colocado YA existe!']);
+            } else {
+                echo json_encode(['resultado' => 'no_existe']);
+            }
         } else {
             $c->setAnio($_POST['aniAnio']);
             $c->setTipo($_POST['tipoAnio']);
-            $c->setAperturaFase1($_POST['aniAperturaFase1']);
-            $c->setCierraFase1($_POST['aniCierraFase1']);
-            $c->setAperturaFase2($_POST['aniAperturaFase2']);
-            $c->setCierraFase2($_POST['aniCierraFase2']);
+            $fases = [
+                ['numero' => 1, 'apertura' => $_POST['aniAperturaFase1'], 'cierre' => $_POST['aniCierraFase1']],
+                ['numero' => 2, 'apertura' => $_POST['aniAperturaFase2'], 'cierre' => $_POST['aniCierraFase2']]
+            ];
+            $c->setFases($fases);
 
             if ($accion == 'registrar') {
                 echo  json_encode($c->Registrar());
                 $bitacora->registrarAccion($usu_id, 'registrar', 'anio');
             } elseif ($accion == 'modificar') {
-                $c->setId($_POST['aniId']);
-                echo  json_encode($c->modificar());
-
+                echo  json_encode($c->modificar($_POST['anioOriginal'], $_POST['tipoOriginal']));
                 $bitacora->registrarAccion($usu_id, 'modificar', 'anio');
             }
         }

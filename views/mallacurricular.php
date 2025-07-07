@@ -14,19 +14,25 @@ if (!isset($_SESSION['name'])) {
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <style>
-      .select2-container--open {
-          z-index: 999999 !important;
-      }
       .btn-xs {
           --bs-btn-padding-y: .1rem;
           --bs-btn-padding-x: .5rem;
           --bs-btn-font-size: .75rem;
       }
+      .horas-input {
+          min-width: 60px;
+      }
+      .nav-link {
+          font-size: 0.9rem;
+      }
+      .form-control[readonly] {
+          background-color: #e9ecef;
+          opacity: 1;
+      }
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
     <?php require_once("public/components/sidebar.php"); ?>
-
 
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
@@ -39,7 +45,6 @@ if (!isset($_SESSION['name'])) {
                     <table class="table table-striped table-hover w-100" id="tablamalla">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Cohorte</th>
@@ -55,7 +60,7 @@ if (!isset($_SESSION['name'])) {
         </section>
         
         <div class="modal fade" role="dialog" id="modal1">
-            <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title" id="modal1Titulo">Formulario de Malla (Paso 1 de 2)</h5>
@@ -64,7 +69,7 @@ if (!isset($_SESSION['name'])) {
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
                             <input type="hidden" name="accion" id="accion">
-                            <input type="hidden" id="mal_id" name="mal_id">
+                            
                             <div id="pagina1">
                                 <fieldset class="border p-3 mb-4">
                                     <legend class="w-auto px-2 h6">Datos de la Malla</legend>
@@ -78,22 +83,24 @@ if (!isset($_SESSION['name'])) {
                             </div>
                             <div id="pagina2" style="display: none;">
                                 <fieldset class="border p-3">
-                                    <legend class="w-auto px-2 h6">Asignar Unidades Curriculares</legend>
-                                    <div class="row g-2 align-items-end">
-                                        <div class="col-md-5"><label for="select_uc" class="form-label">Unidad Curricular</label><select id="select_uc" class="form-select" style="width: 100%;"></select></div>
-                                        <div class="col-6 col-md-2" title="Horas de trabajo independiente"><label for="uc_horas_ind" class="form-label">H. Indep.</label><input type="number" id="uc_horas_ind" class="form-control" min="0" value="0"></div>
-                                        <div class="col-6 col-md-2" title="Horas de trabajo con asistencia del docente"><label for="uc_horas_asis" class="form-label">H. Asist.</label><input type="number" id="uc_horas_asis" class="form-control" min="0" value="0"></div>
-                                        <div class="col-6 col-md-2" title="Horas académicas totales"><label for="uc_horas_acad" class="form-label">H. Acad.</label><input type="number" id="uc_horas_acad" class="form-control" min="0" value="0"></div>
-                                        <div class="col-6 col-md-1"><button type="button" class="btn btn-info w-100" id="btn_agregar_uc" title="Añadir Unidad Curricular">+</button></div>
+                                    <legend class="w-auto px-2 h6">Asignar Unidades Curriculares por Trayecto</legend>
+                                    <div class="alert alert-light text-muted small p-2" role="alert">
+                                        <strong>Nota:</strong> El botón 'Guardar' aparecerá cuando todas las horas de todas las unidades curriculares sean completadas.
                                     </div>
-                                    <div id="contenedorTablaUnidades" class="mt-4" style="display: none;">
-                                        <div class="d-flex justify-content-end mb-2"><input type="text" id="filtroUnidadesAgregadas" class="form-control form-control-sm" style="max-width: 250px;" placeholder="Buscar en unidades agregadas..."></div>
-                                        <div class="table-responsive">
-                                            <table class="table table-sm table-bordered table-striped" id="tablaUnidadesAgregadas">
-                                                <thead class="table-light text-center"><tr><th>Unidad Curricular</th><th>H. Indep.</th><th>H. Asist.</th><th>H. Acad.</th><th>Acción</th></tr></thead>
-                                                <tbody class="text-center"></tbody>
-                                            </table>
-                                        </div>
+                                    <ul class="nav nav-tabs" id="ucTabs" role="tablist">
+                                        <li class="nav-item" role="presentation"><button class="nav-link active" id="trayecto-0-tab" data-bs-toggle="tab" data-bs-target="#trayecto-0" type="button" role="tab">T. Inicial</button></li>
+                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-1-tab" data-bs-toggle="tab" data-bs-target="#trayecto-1" type="button" role="tab">Trayecto I</button></li>
+                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-2-tab" data-bs-toggle="tab" data-bs-target="#trayecto-2" type="button" role="tab">Trayecto II</button></li>
+                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-3-tab" data-bs-toggle="tab" data-bs-target="#trayecto-3" type="button" role="tab">Trayecto III</button></li>
+                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-4-tab" data-bs-toggle="tab" data-bs-target="#trayecto-4" type="button" role="tab">Trayecto IV</button></li>
+                                    </ul>
+
+                                    <div class="tab-content border border-top-0 p-3" id="ucTabsContent">
+                                        <div class="tab-pane fade show active" id="trayecto-0" role="tabpanel"></div>
+                                        <div class="tab-pane fade" id="trayecto-1" role="tabpanel"></div>
+                                        <div class="tab-pane fade" id="trayecto-2" role="tabpanel"></div>
+                                        <div class="tab-pane fade" id="trayecto-3" role="tabpanel"></div>
+                                        <div class="tab-pane fade" id="trayecto-4" role="tabpanel"></div>
                                     </div>
                                 </fieldset>
                             </div>
@@ -112,15 +119,8 @@ if (!isset($_SESSION['name'])) {
                         <h5 class="modal-title" id="modalVerMallaTitulo">Detalles de la Malla</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                         <div class="datatable-ui w-100" style="padding: 1.5rem 2rem; margin: 0;">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover w-100" id="tablaVerUnidades">
-                                    <thead class="table-light text-center"><tr><th>Unidad Curricular</th><th>H. Indep.</th><th>H. Asist.</th><th>H. Acad.</th></tr></thead>
-                                    <tbody id="tablaUnidadesVer" class="text-center"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="modal-body" id="cuerpoModalVer">
+                        
                     </div>
                     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div>
                 </div>
@@ -130,7 +130,6 @@ if (!isset($_SESSION['name'])) {
     </main>
     <?php require_once("public/components/footer.php"); ?>
     
-    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/mallacurricular.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>

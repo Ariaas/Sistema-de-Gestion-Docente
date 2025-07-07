@@ -9,7 +9,15 @@ if (!isset($_SESSION['name'])) {
     exit();
 }
 
-$permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso')) {
+    function tiene_permiso($modulo, $permisos_array)
+    {
+        return !empty($permisos_array[strtolower($modulo)]);
+    }
+}
 
 require_once 'public/components/head.php';
 ?>
@@ -20,16 +28,14 @@ require_once 'public/components/head.php';
     <main class="main-content">
         <section class="container-fluid p-4">
 
-            <!-- Encabezado del Dashboard -->
             <div class="dashboard-header">
                 <h1>Panel de Control</h1>
                 <p>Bienvenido de nuevo, <strong><?php echo htmlspecialchars($_SESSION['name']); ?></strong>. Selecciona una opción para empezar.</p>
             </div>
 
-            <!-- Tarjetas de acceso rápido con nuevo diseño -->
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
                 
-                <?php if (!empty($permisos['Docentes'])) : ?>
+                <?php if (tiene_permiso('Docentes', $permisos)) : ?>
                 <div class="col">
                     <a href="?pagina=docente" class="dashboard-card">
                         <div class="icon-circle">
@@ -40,18 +46,7 @@ require_once 'public/components/head.php';
                 </div>
                 <?php endif; ?>
 
-                <?php if (!empty($permisos['Horario'])) : ?>
-                <div class="col">
-                    <a href="?pagina=horario" class="dashboard-card">
-                        <div class="icon-circle">
-                            <img src="public/assets/icons/calendar-solid.svg" alt="Horarios">
-                        </div>
-                        <h5>Horarios</h5>
-                    </a>
-                </div>
-                <?php endif; ?>
-
-                <?php if (!empty($permisos['Reportes'])) : ?>
+                <?php if (tiene_permiso('Reportes', $permisos)) : ?>
                 <div class="col">
                     <a href="?pagina=reportes" class="dashboard-card">
                         <div class="icon-circle">
@@ -62,7 +57,7 @@ require_once 'public/components/head.php';
                 </div>
                 <?php endif; ?>
 
-                <?php if (!empty($permisos['Malla Curricular'])) : ?>
+                <?php if (tiene_permiso('Malla Curricular', $permisos)) : ?>
                 <div class="col">
                     <a href="?pagina=mallacurricular" class="dashboard-card">
                         <div class="icon-circle">
