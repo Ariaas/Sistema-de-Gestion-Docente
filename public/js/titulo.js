@@ -5,7 +5,6 @@ function Listar() {
 }
 
 function destruyeDT() {
- 
   if ($.fn.DataTable.isDataTable("#tablatitulo")) {
     $("#tablatitulo").DataTable().destroy();
   }
@@ -36,236 +35,170 @@ function crearDT() {
           previous: "Anterior",
         },
       },
-      autoWidth: false,
-      order: [[1, "asc"]],
+      order: [[0, "asc"]],
       dom:
         "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
         "<'row'<'col-sm-5'i><'col-sm-7'p>>",
     });
-
-    $("div.dataTables_length select").css({
-      width: "auto",
-      display: "inline",
-      "margin-top": "10px",
-    });
-
-    $("div.dataTables_filter").css({
-      "margin-bottom": "50px",
-      "margin-top": "10px",
-    });
-
-    $("div.dataTables_filter label").css({
-      float: "left",
-    });
-
-    $("div.dataTables_filter input").css({
-      width: "300px",
-      float: "right",
-      "margin-left": "10px",
-    });
   }
 }
 
-$(document).ready(function () {
-  Listar(); 
-  
-  $("#titulonombre").on("keydown ", function () {
-  
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"El formato permite de 5 a 30 carácteres, Ej:En sistemas");
-   
+function muestraMensaje(tipo, duracion, titulo, mensaje) {
+    Swal.fire({
+        icon: tipo,
+        title: titulo,
+        html: mensaje,
+        timer: duracion,
+        timerProgressBar: true
     });
-
-
-    $("#titulonombre").on(" keyup", function () {
-  
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"El formato permite de 5 a 30 carácteres, Ej:En sistemas");
-  
-        var datos = new FormData();
-        datos.append('accion', 'existe');
-        datos.append("tituloprefijo", $("#tituloprefijo").val());
-        datos.append("titulonombre", $("#titulonombre").val());
-        enviaAjax(datos);
-   
-    });
-
-  //////////////////////////////BOTONES/////////////////////////////////////
-
-  $("#proceso").on("click", function () {
-    if ($(this).text() == "REGISTRAR") {
-      if (validarenvio()) {
-        var datos = new FormData();
-        datos.append("accion", "registrar");
-        datos.append("tituloprefijo", $("#tituloprefijo").val());
-        datos.append("titulonombre", $("#titulonombre").val());
-
-        enviaAjax(datos);
-      }
-    } else if ($(this).text() == "MODIFICAR") {
-      if (validarenvio()) {
-        var datos = new FormData();
-        datos.append("accion", "modificar");
-        datos.append("tituloid", $("#tituloid").val());
-        datos.append("tituloprefijo", $("#tituloprefijo").val());
-        datos.append("titulonombre", $("#titulonombre").val());
-
-        enviaAjax(datos);
-      }
-    }
-    if ($(this).text() == "ELIMINAR") {  
-        
-        Swal.fire({
-          title: "¿Está seguro de eliminar este espacio?",
-          text: "Esta acción no se puede deshacer.",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Sí, eliminar",
-          cancelButtonText: "Cancelar",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            
-            var datos = new FormData();
-            datos.append("accion", "eliminar");
-            datos.append("tituloid", $("#tituloid").val());
-            enviaAjax(datos);
-          } else {
-            muestraMensaje("error",2000,"INFORMACIÓN","La eliminación ha sido cancelada.");
-            $("#modal1").modal("hide");
-          }
-        });
-    }
-  });
-
-
-  $("#registrar").on("click", function () {
-    limpia();
-    $("#proceso").text("REGISTRAR");
-    $("#modal1").modal("show");
-    $("#tituloprefijo, #titulonombre").prop("disabled", false);
-  });
-
-  
-});
-
-//////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
-
-function validarenvio() {
-   let prefijo = $("#tituloprefijo").val();
-  if (prefijo === null || prefijo === "0") {
-        muestraMensaje("error",4000,"ERROR!","Por favor, seleccione un prefijo!"); 
-          return false;
-  } else if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/,$("#titulonombre"),$("#stitulonombre"),"El formato permite de 5 a 30 carácteres, Ej:En sistemas") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del titulo <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
-          return false;
-  }
-  return true;
 }
-
 
 function pone(pos, accion) {
-  linea = $(pos).closest("tr");
+    limpia();
+    let linea = $(pos).closest("tr");
+    let prefijo = $(linea).find("td:eq(0)").text();
+    let nombre = $(linea).find("td:eq(1)").text();
 
-  if (accion == 0) {
-    $("#proceso").text("MODIFICAR");
-    $("#tituloprefijo").prop("disabled", false);
-    $("#titulonombre").prop("disabled", false);
-  } else {
-    $("#proceso").text("ELIMINAR");
-    $("#tituloprefijo, #titulonombre").prop("disabled", true);
-  }
-  $("#tituloid").val($(linea).find("td:eq(0)").text());
-  $("#titulonombre").val($(linea).find("td:eq(2)").text());
-  $("#tituloprefijo").val($(linea).find("td:eq(1)").text());
- 
+    $("#tituloprefijo").val(prefijo);
+    $("#titulonombre").val(nombre);
 
-  $("#modal1").modal("show");
+    if (accion === 0) {
+        $("#proceso").text("MODIFICAR");
+        $("#tituloprefijo, #titulonombre").prop("disabled", false);
+       
+        $("#tituloprefijo_original").val(prefijo);
+        $("#titulonombre_original").val(nombre);
+    } else { 
+        $("#proceso").text("ELIMINAR");
+        $("#tituloprefijo, #titulonombre").prop("disabled", true);
+    }
+    $("#modal1").modal("show");
 }
 
+function validarenvio() {
+    let prefijo = $("#tituloprefijo").val();
+    if (!prefijo) {
+        muestraMensaje("error", 4000, "¡ERROR!", "Por favor, seleccione un prefijo."); 
+        return false;
+    }
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/.test($("#titulonombre").val())) {
+        muestraMensaje("error", 4000, "¡ERROR!", "El nombre del título no es válido.<br/>Debe contener entre 5 y 30 letras.");
+        return false;
+    }
+    return true;
+}
 
 function enviaAjax(datos) {
-  $.ajax({
-    async: true,
-    url: "",
-    type: "POST",
-    contentType: false,
-    data: datos,
-    processData: false,
-    cache: false,
-    beforeSend: function () {},
-    timeout: 10000, 
-    success: function (respuesta) {
-      try {
-        console.log(respuesta);
-        var lee = JSON.parse(respuesta);
-        if (lee.resultado === "consultar") {
-          destruyeDT();
-          $("#resultadoconsulta").empty();
-          $.each(lee.mensaje, function (index, item) {
-            $("#resultadoconsulta").append(`
-              <tr>
-                <td style="display: none;">${item.tit_id}</td>
-                <td>${item.tit_prefijo}</td>
-                <td>${item.tit_nombre}</td>
-                <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'data-id="${item.tit_id}" data-prefijo="${item.tit_prefijo}" data-nombre="${item.tit_nombre}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'data-id="${item.tit_id}" data-prefijo="${item.tit_prefijo}" data-nombre="${item.tit_nombre}">Eliminar</button>
-                </td>
-              </tr>
-            `);
-          });
-          crearDT();
-        }
-        ////////
-        else if (lee.resultado == "registrar") {
-          muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
-      if ( lee.mensaje =='Registro Incluido!<br/> Se registró el título correctamente!' ) {
-            $("#modal1").modal("hide");
-            limpia();
-            Listar();
-          }
-        }
-        else if (lee.resultado == "modificar") {
-          muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
-          if (lee.mensaje =="Registro Modificado!<br/>Se modificó el titulo correctamente!") {
-            $("#modal1").modal("hide");
-            Listar();
-          }
-        }
-        else if (lee.resultado == "existe") {
-         
-            muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
-          
-        }
-        else if (lee.resultado == "eliminar") {
-          muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
-        if (  lee.mensaje =="Registro Eliminado!<br/>Se eliminó el titulo correctamente!") {
-            $("#modal1").modal("hide");
-            Listar();
-         }
-        }
-        else if (lee.resultado == "error") {
-          muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
-        }
-      } catch (e) {
-        console.error("Error en análisis JSON:", e); 
-        alert("Error en JSON " + e.name + ": " + e.message);
-      }
-    },
-    error: function (request, status, err) {
-      if (status == "timeout") {
-        muestraMensaje("Servidor ocupado, intente de nuevo");
-      } else {
-        muestraMensaje("ERROR: <br/>" + request + status + err);
-      }
-    },
-    complete: function () {},
-  });
+    $.ajax({
+        async: true, url: "", type: "POST", contentType: false,
+        data: datos, processData: false, cache: false,
+        success: function(respuesta) {
+            try {
+                var lee = JSON.parse(respuesta);
+                if (lee.resultado === "consultar") {
+                    destruyeDT();
+                    $("#resultadoconsulta").empty();
+                    lee.mensaje.forEach(function(item) {
+                        $("#resultadoconsulta").append(`
+                            <tr>
+                                <td>${item.tit_prefijo}</td>
+                                <td>${item.tit_nombre}</td>
+                                <td>
+                                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
+                                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    crearDT();
+                } else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
+                    muestraMensaje("success", 4000, "¡ÉXITO!", lee.mensaje);
+                    $("#modal1").modal("hide");
+                    Listar();
+                } else if (lee.resultado === 'existe') {
+                    $("#stitulonombre").text(lee.mensaje);
+                } else if (lee.resultado === 'no_existe') {
+                    $("#stitulonombre").text('');
+                } else if (lee.resultado === "error") {
+                    muestraMensaje("error", 8000, "¡ERROR!", lee.mensaje);
+                }
+            } catch (e) {
+                console.error("Error al procesar JSON: ", e, respuesta);
+                muestraMensaje("error", 8000, "Error de Respuesta", "No se pudo procesar la respuesta del servidor.");
+            }
+        },
+        error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${status} - ${err}`)
+    });
 }
 
 function limpia() {
-  $("#tituloprefijo").val("");
-  $("#titulonombre").val("");
+    $("#tituloprefijo").val("");
+    $("#titulonombre").val("");
+    $("#tituloprefijo_original").val("");
+    $("#titulonombre_original").val("");
+    $(".text-danger").text("");
+    $("#tituloprefijo, #titulonombre").prop("disabled", false);
 }
 
+$(document).ready(function() {
+    Listar();
 
+    $("#titulonombre, #tituloprefijo").on("keyup change", function () {
+        if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "")) {
+            let datos = new FormData();
+            datos.append('accion', 'existe');
+            datos.append("tituloprefijo", $("#tituloprefijo").val());
+            datos.append("titulonombre", $("#titulonombre").val());
+            enviaAjax(datos);
+        }
+    });
+
+    $("#registrar").on("click", function() {
+        limpia();
+        $("#proceso").text("REGISTRAR");
+        $("#modal1").modal("show");
+    });
+
+    $("#proceso").on("click", function() {
+        if (!validarenvio()) {
+            return;
+        }
+
+        let accion = $(this).text().toLowerCase();
+        let datos = new FormData();
+        datos.append("accion", accion);
+
+        if (accion === "registrar") {
+            datos.append("tituloprefijo", $("#tituloprefijo").val());
+            datos.append("titulonombre", $("#titulonombre").val());
+        } else if (accion === "modificar") {
+            datos.append("tituloprefijo_original", $("#tituloprefijo_original").val());
+            datos.append("titulonombre_original", $("#titulonombre_original").val());
+            datos.append("tituloprefijo", $("#tituloprefijo").val());
+            datos.append("titulonombre", $("#titulonombre").val());
+        } else if (accion === "eliminar") {
+            Swal.fire({
+                title: "¿Está seguro de eliminar este título?",
+                text: "Esta acción no se puede deshacer.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Sí, eliminar",
+                cancelButtonText: "Cancelar",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let datos_eliminar = new FormData();
+                    datos_eliminar.append("accion", "eliminar");
+                    datos_eliminar.append("tituloprefijo", $("#tituloprefijo").val());
+                    datos_eliminar.append("titulonombre", $("#titulonombre").val());
+                    enviaAjax(datos_eliminar);
+                } else {
+                    $("#modal1").modal("hide");
+                }
+            });
+            return; 
+        }
+        enviaAjax(datos);
+    });
+});

@@ -10,7 +10,7 @@ class Seccion extends Connection
 
     private function determinarFaseActual() {
         try {
-            // Esta función permanece sin cambios
+        
             $stmt = $this->Con()->prepare("SELECT ani_apertura_fase1, ani_cierra_fase1, ani_apertura_fase2, ani_cierra_fase2 FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 LIMIT 1");
             $stmt->execute();
             $fechas = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -35,7 +35,7 @@ class Seccion extends Connection
     }
 
     public function EjecutarPromocionAutomatica() {
-        // Esta función permanece sin cambios
+      
         if ($this->determinarFaseActual() !== 'fase2' || isset($_SESSION['promocion_f2_ejecutada_session'])) {
             return null;
         }
@@ -117,7 +117,7 @@ class Seccion extends Connection
     }
 
     public function UnirHorarios($sec_codigo_origen, $sec_codigos_a_unir) {
-        // Esta función permanece sin cambios
+       
         if (empty($sec_codigo_origen) || empty($sec_codigos_a_unir) || count($sec_codigos_a_unir) < 2) {
             return ['resultado' => 'error', 'mensaje' => 'Debe seleccionar al menos 2 secciones y una de origen.'];
         }
@@ -179,12 +179,10 @@ class Seccion extends Connection
         }
     }
 
-    /**
-     * Registra una nueva sección o reactiva una existente que esté inactiva.
-     */
+    
     public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo)
     {
-        // 1. Validación de datos de entrada
+      
         if (empty($codigoSeccion) || !isset($cantidadSeccion) || $cantidadSeccion === '' || empty($anio_anio) || empty($anio_tipo)) {
             return ['resultado' => 'error', 'mensaje' => 'Todos los campos de la sección son obligatorios.'];
         }
@@ -195,37 +193,37 @@ class Seccion extends Connection
 
         $co = $this->Con();
         try {
-            // 2. Comprobar si la sección ya existe (independientemente de su estado)
+            
             $stmt_check = $co->prepare("SELECT sec_estado FROM tbl_seccion WHERE sec_codigo = :codigo");
             $stmt_check->execute([':codigo' => $codigoSeccion]);
             $seccion_existente = $stmt_check->fetch(PDO::FETCH_ASSOC);
 
             if ($seccion_existente) {
-                // La sección existe, se comprueba su estado
+      
                 if ($seccion_existente['sec_estado'] == 1) {
-                    // Si está activa, es un error porque no se puede duplicar.
+                    
                     return ['resultado' => 'error', 'mensaje' => '¡ERROR! La sección con ese código ya existe y está activa.'];
                 } else {
-                    // Si está inactiva (estado = 0), se ACTUALIZA para "reciclarla"
+                 
                     $stmtSeccion = $co->prepare(
                         "UPDATE tbl_seccion SET sec_cantidad = :cantidad, ani_anio = :anio, ani_tipo = :tipo, sec_estado = 1 WHERE sec_codigo = :codigo"
                     );
                 }
             } else {
-                // La sección no existe, se hace un INSERT nuevo
+                
                 $stmtSeccion = $co->prepare(
                     "INSERT INTO tbl_seccion (sec_codigo, sec_cantidad, ani_anio, ani_tipo, sec_estado) VALUES (:codigo, :cantidad, :anio, :tipo, 1)"
                 );
             }
             
-            // 3. Vincular parámetros y ejecutar la consulta decidida (INSERT o UPDATE)
+           
             $stmtSeccion->bindParam(':codigo', $codigoSeccion, PDO::PARAM_INT);
             $stmtSeccion->bindParam(':cantidad', $cantidadInt, PDO::PARAM_INT);
             $stmtSeccion->bindParam(':anio', $anio_anio, PDO::PARAM_INT);
             $stmtSeccion->bindParam(':tipo', $anio_tipo, PDO::PARAM_STR);
             $stmtSeccion->execute();
 
-            // 4. Devolver siempre el mismo mensaje de éxito para una experiencia de usuario consistente
+           
             return [
                 'resultado' => 'registrar_seccion_ok', 
                 'mensaje' => '¡Se registró la sección correctamente!', 
@@ -240,7 +238,7 @@ class Seccion extends Connection
     
     public function ExisteSeccion($codigoSeccion, $anio_anio, $anio_tipo)
     {
-        // Esta función permanece sin cambios, aunque ya no se usa en el flujo de registro principal
+       
         try {
             $co = $this->Con();
             $stmt = $co->prepare("SELECT 1 FROM tbl_seccion WHERE sec_codigo = :codigo AND ani_anio = :anio AND ani_tipo = :tipo AND sec_estado = 1");
@@ -254,7 +252,7 @@ class Seccion extends Connection
 
     public function ListarAgrupado()
     {
-        // Esta función permanece sin cambios
+     
         try {
             $stmt = $this->Con()->query("SELECT ts.sec_codigo, ts.sec_cantidad, ts.ani_anio, ts.ani_tipo FROM tbl_seccion ts WHERE ts.sec_estado = 1 ORDER BY ts.ani_anio DESC, ts.sec_codigo");
             return ['resultado' => 'consultar_agrupado', 'mensaje' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
@@ -264,7 +262,7 @@ class Seccion extends Connection
     }
     
     private function validarConflictos($items_horario, $sec_codigo, $co) {
-        // Esta función permanece sin cambios
+       
         $stmt_docente = $co->prepare("
             SELECT s.sec_codigo, d.doc_nombre, d.doc_apellido
             FROM uc_horario uh
@@ -294,7 +292,7 @@ class Seccion extends Connection
 
     public function ValidarClaseEnVivo($doc_cedula, $esp_codigo, $dia, $hora_inicio, $sec_codigo)
     {
-        // Esta función permanece sin cambios
+      
         if (empty($dia) || empty($hora_inicio) || empty($sec_codigo) || (empty($doc_cedula) && empty($esp_codigo))) {
             return ['conflicto' => false];
         }
@@ -327,7 +325,7 @@ class Seccion extends Connection
 
     public function Modificar($sec_codigo, $items_horario_json)
     {
-        // Esta función permanece sin cambios
+       
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
@@ -367,7 +365,7 @@ class Seccion extends Connection
     }
 
     public function EliminarSeccionYHorario($sec_codigo) {
-        // Esta función permanece sin cambios
+       
         if (empty($sec_codigo)) return ['resultado' => 'error', 'mensaje' => 'Código de sección no proporcionado.'];
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -387,7 +385,7 @@ class Seccion extends Connection
 
     public function EliminarPorSeccion($sec_codigo, $co_externo = null)
     {
-        // Esta función permanece sin cambios
+     
         $co = $co_externo ?? $this->Con();
         $es_transaccion_interna = ($co_externo === null);
         try {
@@ -404,7 +402,7 @@ class Seccion extends Connection
 
     public function ConsultarDetalles($sec_codigo)
     {
-        // Esta función permanece sin cambios
+     
         if(!$sec_codigo) return ['resultado' => 'error', 'mensaje' => 'Falta el código de la sección.'];
         try {
             $sql = "SELECT uh.uc_codigo, ud.doc_cedula, uh.hor_dia as dia, uh.hor_horainicio as hora_inicio, uh.hor_horafin as hora_fin FROM uc_horario uh LEFT JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo AND ud.uc_doc_estado = 1 WHERE uh.sec_codigo = :sec_codigo";
@@ -426,7 +424,7 @@ class Seccion extends Connection
     }
     
     public function obtenerAnios() { 
-        // Esta función permanece sin cambios
+      
         try { 
             return $this->Con()->query("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC")->fetchAll(PDO::FETCH_ASSOC); 
         } catch (Exception $e) { 
@@ -435,7 +433,7 @@ class Seccion extends Connection
     }
     
     public function obtenerTurnos() {
-        // Esta función permanece sin cambios
+      
         $bloques_horario = [];
         try {
             $stmt = $this->Con()->prepare("SELECT tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_estado = 1 ORDER BY tur_horaInicio");
@@ -470,7 +468,7 @@ class Seccion extends Connection
     }
 
     public function obtenerUcPorDocente($doc_cedula, $trayecto_seccion = null) { 
-        // Esta función permanece sin cambios
+     
         if (empty($doc_cedula)) {
             return ['data' => [], 'mensaje' => 'Cédula de docente no proporcionada.'];
         }
@@ -502,13 +500,13 @@ class Seccion extends Connection
         } 
     }
 
-    // El resto de funciones de "obtener" permanecen sin cambios
+   
     public function obtenerUnidadesCurriculares() { try { return $this->Con()->query("SELECT uc_codigo, uc_nombre, uc_trayecto FROM tbl_uc WHERE uc_estado = 1")->fetchAll(PDO::FETCH_ASSOC); } catch (Exception $e) { error_log("Error: " . $e->getMessage()); return []; } }
     public function obtenerEspacios() { try { return $this->Con()->query("SELECT esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1")->fetchAll(PDO::FETCH_ASSOC); } catch (Exception $e) { error_log("Error: " . $e->getMessage()); return []; } }
     public function obtenerDocentes() { try { return $this->Con()->query("SELECT doc_cedula, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1")->fetchAll(PDO::FETCH_ASSOC); } catch (Exception $e) { error_log("Error: " . $e->getMessage()); return []; } }
     private function getTurnoEnum($hora_inicio) { $hour = intval(substr($hora_inicio, 0, 2)); if ($hour >= 18) return 'noche'; if ($hour >= 13) return 'tarde'; return 'mañana'; }
 
-    // --- NUEVAS FUNCIONES PARA VALIDACIÓN INICIAL ---
+    
     public function contarDocentes() {
         try { return (int) $this->Con()->query("SELECT COUNT(*) FROM tbl_docente WHERE doc_estado = 1")->fetchColumn(); } catch (Exception $e) { error_log("Error al contar docentes: " . $e->getMessage()); return 0; }
     }

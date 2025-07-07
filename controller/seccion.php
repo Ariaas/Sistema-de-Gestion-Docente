@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-$pagina = "seccion"; // Se define la página para evitar errores si no está seteada
+$pagina = "seccion"; 
 
 if (!is_file("model/" . $pagina . ".php")) {
     echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina]);
@@ -24,13 +24,13 @@ $acciones_json_validas = [
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
     $o = new Seccion();
     
-    // --- VALIDACIÓN DE REQUISITOS INICIALES ---
+   
     $countDocentes = $o->contarDocentes();
     $countEspacios = $o->contarEspacios();
     $countTurnos = $o->contarTurnos();
     $countAnios = $o->contarAniosActivos();
     $countMallas = $o->contarMallasActivas();
-    // --- FIN DE VALIDACIÓN ---
+  
 
     $reporte_promocion = $o->EjecutarPromocionAutomatica();
     if ($reporte_promocion !== null) {

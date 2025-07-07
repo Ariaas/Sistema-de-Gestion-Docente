@@ -104,12 +104,9 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
     }
 }
 
-/**
- * Función central para validar en tiempo real la entrada de una clase en el horario.
- * Combina la validación de UC duplicada (cliente) y la de conflictos de docente/espacio (servidor).
- */
+
 function validarEntradaHorario() {
-    // Limpiar todas las alertas previas y habilitar el botón de guardar
+   
     $("#conflicto-docente-warning, #conflicto-espacio-warning, #conflicto-uc-warning").hide().html('');
     $("#btnGuardarClase").prop("disabled", false);
 
@@ -121,7 +118,7 @@ function validarEntradaHorario() {
     
     if (!currentClickedCell) return;
 
-    // --- 1. VALIDACIÓN CLIENTE: UC duplicada en el horario actual ---
+  
     if (ucId) {
         let ucDuplicada = false;
         const turnoCompleto = allTurnos.find(t => t.tur_horainicio === currentClickedCell.data("franja-inicio"));
@@ -129,7 +126,7 @@ function validarEntradaHorario() {
         const diaKeyActual = normalizeDayKey(currentClickedCell.data('dia-nombre'));
         const keyActual = `${turnoCompleto.tur_horainicio.substring(0, 5)}-${turnoCompleto.tur_horafin.substring(0, 5)}-${diaKeyActual}`;
 
-        // Revisa todas las clases ya guardadas en el horario
+        
         horarioContenidoGuardado.forEach((valor, key) => {
             if (valor.data.uc_codigo === ucId && key !== keyActual) {
                 ucDuplicada = true;
@@ -141,13 +138,13 @@ function validarEntradaHorario() {
             const nombreUc = ucInfo ? ucInfo.uc_nombre : `código ${ucId}`;
             $('#conflicto-uc-warning').html(`<strong>Inválido:</strong> La UC <strong>${nombreUc}</strong> ya fue asignada. Una UC solo puede ser asignada una vez por horario.`).show();
             $("#btnGuardarClase").prop("disabled", true);
-            return; // Detiene la validación si ya hay un error
+            return; 
         }
     }
 
-    // --- 2. VALIDACIÓN SERVIDOR: Conflicto de docente/espacio en otros horarios ---
+   
     if ((!docId && !espId) || !dia || !secId) {
-        return; // No hay suficiente data para validar en el servidor
+        return; 
     }
     
     const turnoCompleto = allTurnos.find(t => t.tur_horainicio === currentClickedCell.data("franja-inicio"));
@@ -336,7 +333,7 @@ function verificarRequisitosInicialesSeccion() {
         btnRegistrar.prop('disabled', true).attr('title', mensajeTooltip);
         btnUnir.prop('disabled', true).attr('title', mensajeTooltip);
         
-        // Se puede añadir un ícono o clase para que sea visualmente obvio
+      
         btnRegistrar.addClass('disabled-look');
         btnUnir.addClass('disabled-look');
 
@@ -483,7 +480,7 @@ $(document).ready(function() {
         });
     });
 
-    // Se asigna el manejador de eventos a los selectores del modal
+
     $("#modalSeleccionarDocente, #modalSeleccionarUc, #modalSeleccionarEspacio").on("change", validarEntradaHorario);
     
     $('#filtro_turno').on("change", function() { inicializarTablaHorario($(this).val(), "#tablaHorario", false); });
@@ -567,7 +564,7 @@ $(document).ready(function() {
     });
 
     $("#proceso").on("click", function() {
-        // La validación de UC duplicada ahora se hace aquí también, como una última comprobación antes de enviar.
+        
         const ucsEnHorario = new Set();
         let ucDuplicada = null;
         Array.from(horarioContenidoGuardado.values()).forEach(v => {

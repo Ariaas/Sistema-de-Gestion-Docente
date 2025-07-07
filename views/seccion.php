@@ -1,5 +1,5 @@
 <?php
- // Aseguramos que la sesión esté iniciada
+ 
  if (!isset($_SESSION['name'])) {
      header('Location: .');
     exit();
