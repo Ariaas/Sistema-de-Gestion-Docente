@@ -3,7 +3,6 @@ require_once('model/dbconnection.php');
 
 class Actividad extends Connection
 {
-    // Se utiliza docCedula como identificador único, ya que no hay act_id
     private $docCedula; 
     private $creacionIntelectual;
     private $integracionComunidad;
@@ -15,11 +14,9 @@ class Actividad extends Connection
         parent::__construct();
     }
 
-    // Setter para el identificador único (cédula del docente)
     public function setId($cedula) { $this->docCedula = $cedula; }
     public function setDocId($cedula) { $this->docCedula = $cedula; }
     
-    // Setters para las horas de actividad
     public function setCreacionIntelectual($creacion) { $this->creacionIntelectual = $creacion; }
     public function setIntegracionComunidad($integracion) { $this->integracionComunidad = $integracion; }
     public function setGestionAcademica($gestion) { $this->gestionAcademica = $gestion; }
@@ -28,7 +25,6 @@ class Actividad extends Connection
     private function ObtenerDedicacionDocente($doc_cedula) {
         $co = $this->Con();
         try {
-            // Se busca por doc_cedula en lugar de doc_id
             $stmt = $co->prepare("SELECT doc_dedicacion FROM tbl_docente WHERE doc_cedula = :doc_cedula");
             $stmt->bindParam(':doc_cedula', $doc_cedula, PDO::PARAM_INT);
             $stmt->execute();
@@ -40,57 +36,101 @@ class Actividad extends Connection
     }
     
     private function ValidarHorasPorDedicacion() {
-        $totalHoras = $this->creacionIntelectual + $this->integracionComunidad + $this->gestionAcademica + $this->otras;
-        // La dedicación se obtiene con la cédula del docente
+        $totalHorasActividad = $this->creacionIntelectual + $this->integracionComunidad + $this->gestionAcademica + $this->otras;
         $dedicacion = $this->ObtenerDedicacionDocente($this->docCedula);
 
         if (!$dedicacion) {
-            return ['resultado' => 'error', 'mensaje' => 'No se pudo encontrar la dedicación del docente seleccionado.'];
+            return ['resultado' => 'error', 'mensaje' => 'No se pudo encontrar la dedicación del docente para validar las horas.'];
         }
 
-        $maxHoras = 0;
-        switch ($dedicacion) {
-            case 'exclusiva': $maxHoras = 36; break;
-            case 'ordinaria': $maxHoras = 24; break;
-            case 'contratado': $maxHoras = 16; break;
+        $maxHorasActividad = 0;
+        switch (strtolower($dedicacion)) {
+            case 'exclusiva':
+                $maxHorasActividad = 29; 
+                break;
+            case 'tiempo completo':
+                $maxHorasActividad = 23; 
+                break;
+            case 'medio tiempo':
+                $maxHorasActividad = 13; 
+                break;
+            case 'tiempo convencional':
+                $maxHorasActividad = 0; 
+                break;
+            default:
+                return ['resultado' => 'error', 'mensaje' => "El tipo de dedicación ('$dedicacion') no es válido según el reglamento."];
         }
 
-        if ($maxHoras > 0 && $totalHoras > $maxHoras) {
-            return ['resultado' => 'error', 'mensaje' => "El total de horas ($totalHoras) excede el límite de $maxHoras para la dedicación '$dedicacion' del docente."];
+        if ($maxHorasActividad > 0 && $totalHorasActividad > $maxHorasActividad) {
+            return ['resultado' => 'error', 'mensaje' => "El total de horas de actividad ($totalHorasActividad) excede el límite de $maxHorasActividad para un docente con dedicación '$dedicacion'."];
+        }
+        
+        if ($maxHorasActividad === 0 && $totalHorasActividad > 0) {
+            return ['resultado' => 'error', 'mensaje' => "Un docente con dedicación '$dedicacion' no puede tener horas de actividad adicionales registradas."];
         }
 
-        return null; 
+        return null;
     }
 
-    public function DocenteYaTieneActividad($docCedula)
+    private function buscarEstadoPorCedula($doc_cedula)
     {
         $co = $this->Con();
         try {
-            // Se busca por doc_cedula y se elimina la condición de act_estado
-            $stmt = $co->prepare("SELECT 1 FROM tbl_actividad WHERE doc_cedula = :docCedula");
-            $stmt->bindParam(':docCedula', $docCedula, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchColumn() !== false;
+            $stmt = $co->prepare("SELECT act_estado FROM tbl_actividad WHERE doc_cedula = :doc_cedula");
+            $stmt->execute([':doc_cedula' => $doc_cedula]);
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado ? $resultado['act_estado'] : null;
         } catch (Exception $e) {
-            // Si hay un error, se asume que existe para prevenir duplicados
-            return true; 
+            return null;
+        }
+    }
+    
+    public function DocenteYaTieneActividad($docCedula) {
+        return $this->buscarEstadoPorCedula($docCedula) == '1';
+    }
+
+    private function _actualizarDatosActividad()
+    {
+        $co = $this->Con();
+        $r = array();
+        try {
+            $stmt = $co->prepare("UPDATE tbl_actividad SET act_creacion_intelectual = :creacion, act_integracion_comunidad = :integracion, act_gestion_academica = :gestion, act_otras = :otras, act_estado = 1 WHERE doc_cedula = :docCedula");
+            $stmt->bindParam(':docCedula', $this->docCedula, PDO::PARAM_INT);
+            $stmt->bindParam(':creacion', $this->creacionIntelectual, PDO::PARAM_INT);
+            $stmt->bindParam(':integracion', $this->integracionComunidad, PDO::PARAM_INT);
+            $stmt->bindParam(':gestion', $this->gestionAcademica, PDO::PARAM_INT);
+            $stmt->bindParam(':otras', $this->otras, PDO::PARAM_INT);
+            $stmt->execute();
+            return ['resultado' => 'ok'];
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
     }
 
     function Registrar()
     {
-        $errorHoras = $this->ValidarHorasPorDedicacion();
-        if ($errorHoras) return $errorHoras;
+        $errorValidacion = $this->ValidarHorasPorDedicacion();
+        if ($errorValidacion) return $errorValidacion;
 
-        if ($this->DocenteYaTieneActividad($this->docCedula)) {
+        $estado_actividad = $this->buscarEstadoPorCedula($this->docCedula);
+
+        if ($estado_actividad == '1') {
             return ['resultado' => 'error', 'mensaje' => 'ERROR! <br/> El docente seleccionado ya tiene horas de actividad registradas.'];
         }
 
+        if ($estado_actividad == '0') {
+            $resultado_actualizacion = $this->_actualizarDatosActividad();
+            if ($resultado_actualizacion['resultado'] === 'ok') {
+                return ['resultado' => 'registrar', 'mensaje' => 'Registro Incluido!<br/>Se reactivaron y actualizaron las actividades correctamente!'];
+            } else {
+                return $resultado_actualizacion;
+            }
+        }
+        
         $r = array();
         $co = $this->Con();
         try {
-            // La inserción ya no incluye act_estado
-            $stmt = $co->prepare("INSERT INTO tbl_actividad (doc_cedula, act_creacion_intelectual, act_integracion_comunidad, act_gestion_academica, act_otras) VALUES (:docCedula, :creacion, :integracion, :gestion, :otras)");
+            $stmt = $co->prepare("INSERT INTO tbl_actividad (doc_cedula, act_creacion_intelectual, act_integracion_comunidad, act_gestion_academica, act_otras, act_estado) VALUES (:docCedula, :creacion, :integracion, :gestion, :otras, 1)");
             $stmt->bindParam(':docCedula', $this->docCedula, PDO::PARAM_INT);
             $stmt->bindParam(':creacion', $this->creacionIntelectual, PDO::PARAM_INT);
             $stmt->bindParam(':integracion', $this->integracionComunidad, PDO::PARAM_INT);
@@ -108,26 +148,16 @@ class Actividad extends Connection
 
     function Modificar()
     {
-        $errorHoras = $this->ValidarHorasPorDedicacion();
-        if ($errorHoras) return $errorHoras;
+        $errorValidacion = $this->ValidarHorasPorDedicacion();
+        if ($errorValidacion) return $errorValidacion;
 
-        $co = $this->Con();
-        $r = array();
-        
-        try {
-            // Se actualiza el registro buscando por doc_cedula
-            $stmt = $co->prepare("UPDATE tbl_actividad SET act_creacion_intelectual = :creacion, act_integracion_comunidad = :integracion, act_gestion_academica = :gestion, act_otras = :otras WHERE doc_cedula = :docCedula");
-            $stmt->bindParam(':docCedula', $this->docCedula, PDO::PARAM_INT);
-            $stmt->bindParam(':creacion', $this->creacionIntelectual, PDO::PARAM_INT);
-            $stmt->bindParam(':integracion', $this->integracionComunidad, PDO::PARAM_INT);
-            $stmt->bindParam(':gestion', $this->gestionAcademica, PDO::PARAM_INT);
-            $stmt->bindParam(':otras', $this->otras, PDO::PARAM_INT);
-            $stmt->execute();
+        $resultado_actualizacion = $this->_actualizarDatosActividad();
+
+        if ($resultado_actualizacion['resultado'] === 'ok') {
             $r['resultado'] = 'modificar';
             $r['mensaje'] = 'Registro Modificado!<br/>Se modificaron las actividades correctamente!';
-        } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+        } else {
+            $r = $resultado_actualizacion;
         }
         return $r;
     }
@@ -136,10 +166,8 @@ class Actividad extends Connection
     {
         $co = $this->Con();
         $r = array();
-        
         try {
-            // Se realiza un borrado físico (DELETE) usando doc_cedula
-            $stmt = $co->prepare("DELETE FROM tbl_actividad WHERE doc_cedula = :docCedula");
+            $stmt = $co->prepare("UPDATE tbl_actividad SET act_estado = 0 WHERE doc_cedula = :docCedula");
             $stmt->bindParam(':docCedula', $this->docCedula, PDO::PARAM_INT);
             $stmt->execute();
             $r['resultado'] = 'eliminar';
@@ -155,13 +183,12 @@ class Actividad extends Connection
     {
         $co = $this->Con();
         $r = array();
-        
         try {
-            // El JOIN se hace con doc_cedula y se quita la condición de act_estado
             $stmt = $co->query("SELECT a.*, d.doc_cedula, d.doc_nombre, d.doc_apellido, 
                                 (a.act_creacion_intelectual + a.act_integracion_comunidad + a.act_gestion_academica + a.act_otras) AS horas_totales
                                 FROM tbl_actividad a 
-                                JOIN tbl_docente d ON a.doc_cedula = d.doc_cedula");
+                                JOIN tbl_docente d ON a.doc_cedula = d.doc_cedula
+                                WHERE a.act_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -177,8 +204,22 @@ class Actividad extends Connection
         $co = $this->Con();
         $r = array();
         try {
-            // Se selecciona doc_cedula como el valor para el <select>
-            $stmt = $co->query("SELECT doc_cedula, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1 ORDER BY doc_nombre, doc_apellido");
+            $stmt = $co->query("
+                SELECT 
+                    d.doc_cedula, 
+                    d.doc_nombre, 
+                    d.doc_apellido, 
+                    d.doc_dedicacion,
+                    CASE WHEN a.doc_cedula IS NOT NULL THEN 1 ELSE 0 END AS tiene_actividad
+                FROM 
+                    tbl_docente d
+                LEFT JOIN 
+                    tbl_actividad a ON d.doc_cedula = a.doc_cedula AND a.act_estado = 1
+                WHERE 
+                    d.doc_estado = 1 
+                ORDER BY 
+                    d.doc_nombre, d.doc_apellido
+            ");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'listar_docentes';
             $r['mensaje'] = $data;
@@ -188,4 +229,14 @@ class Actividad extends Connection
         }
         return $r;
     }
+    public function ContarDocentesActivos() {
+        try {
+            $co = $this->Con();
+            $stmt = $co->query("SELECT COUNT(*) FROM tbl_docente WHERE doc_estado = 1");
+            return (int) $stmt->fetchColumn();
+        } catch (Exception $e) {
+            return 0; 
+        }
+    }
 }
+?>

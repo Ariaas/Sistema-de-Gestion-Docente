@@ -17,7 +17,7 @@ if (!isset($_SESSION['name'])) {
 
     <?php require_once("public/components/sidebar.php"); ?>
 
-    <main class="main-content flex-shrink-0">
+    <main class="main-content flex-shrink-0" data-total-docentes="<?= $totalDocentes ?>">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Actividades</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
@@ -48,40 +48,41 @@ if (!isset($_SESSION['name'])) {
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
+                    <div class="modal-header text-white">
                         <h5 class="modal-title">Formulario de Actividades</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="hidden" name="accion" id="accion">
                             <input type="hidden" id="actId" name="actId">
+
                             <div class="row g-3">
                                 <div class="col-md-12">
                                     <label for="docId" class="form-label">Docente</label>
                                     <select class="form-control" id="docId" name="docId" required>
                                         <option value="">Seleccione un docente</option>
                                     </select>
-                                    <span id="sdocId"></span>
+                                    <span id="sdocId" class="text-danger fw-bold"></span>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="actCreacion" class="form-label">Horas de Creación Intelectual</label>
-                                    <input class="form-control" type="number" id="actCreacion" name="actCreacion" required min="0" value="0">
-                                    <span id="sactCreacion"></span>
+                                    <input class="form-control horas-actividad" type="number" id="actCreacion" name="actCreacion" required min="0" value="0">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="actIntegracion" class="form-label">Horas de Integración a la Comunidad</label>
-                                    <input class="form-control" type="number" id="actIntegracion" name="actIntegracion" required min="0" value="0">
-                                    <span id="sactIntegracion"></span>
+                                    <input class="form-control horas-actividad" type="number" id="actIntegracion" name="actIntegracion" required min="0" value="0">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="actGestion" class="form-label">Horas de Gestión Académica</label>
-                                    <input class="form-control" type="number" id="actGestion" name="actGestion" required min="0" value="0">
-                                    <span id="sactGestion"></span>
+                                    <input class="form-control horas-actividad" type="number" id="actGestion" name="actGestion" required min="0" value="0">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="actOtras" class="form-label">Otras Horas de Actividad</label>
-                                    <input class="form-control" type="number" id="actOtras" name="actOtras" required min="0" value="0">
-                                    <span id="sactOtras"></span>
+                                    <input class="form-control horas-actividad" type="number" id="actOtras" name="actOtras" required min="0" value="0">
+                                </div>
+                                <div class="col-12 text-center mt-3">
+                                    <span id="sHorasTotales" class="text-danger fw-bold"></span>
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center mt-4">
