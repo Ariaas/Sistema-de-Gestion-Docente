@@ -1,6 +1,8 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
+$pagina = "seccion"; // Se define la página para evitar errores si no está seteada
+
 if (!is_file("model/" . $pagina . ".php")) {
     echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina]);
     exit;
@@ -22,6 +24,14 @@ $acciones_json_validas = [
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
     $o = new Seccion();
     
+    // --- VALIDACIÓN DE REQUISITOS INICIALES ---
+    $countDocentes = $o->contarDocentes();
+    $countEspacios = $o->contarEspacios();
+    $countTurnos = $o->contarTurnos();
+    $countAnios = $o->contarAniosActivos();
+    $countMallas = $o->contarMallasActivas();
+    // --- FIN DE VALIDACIÓN ---
+
     $reporte_promocion = $o->EjecutarPromocionAutomatica();
     if ($reporte_promocion !== null) {
         $_SESSION['reporte_promocion'] = $reporte_promocion;
@@ -45,7 +55,6 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 $respuesta = [
                     'resultado' => 'ok', 
                     'ucs' => $o->obtenerUnidadesCurriculares(),
-                    'secciones' => $o->obtenerSecciones(),
                     'espacios' => $o->obtenerEspacios(),
                     'docentes' => $o->obtenerDocentes(),
                     'turnos' => $o->obtenerTurnos()
@@ -53,10 +62,14 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'registrar_seccion':
+                $anioCompuesto = $_POST['anioId'] ?? null;
+                list($anio_anio, $anio_tipo) = explode('|', $anioCompuesto . '|');
+                
                 $respuesta = $o->RegistrarSeccion(
                     $_POST['codigoSeccion'] ?? null, 
                     $_POST['cantidadSeccion'] ?? null, 
-                    $_POST['anioId'] ?? null
+                    $anio_anio,
+                    $anio_tipo
                 );
                 break;
 
@@ -65,27 +78,19 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'consultar_detalles':
-                $respuesta = $o->ConsultarDetalles($_POST['sec_id'] ?? null);
+                $respuesta = $o->ConsultarDetalles($_POST['sec_codigo'] ?? null);
                 break;
 
             case 'obtener_uc_por_docente':
-                $doc_id = $_POST['doc_id'] ?? null;
-                $sec_id_actual = $_POST['sec_id_actual'] ?? null; 
+                $doc_cedula = $_POST['doc_cedula'] ?? null;
+                $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null; 
                 $trayecto_seccion = null;
-
                 
-                if ($sec_id_actual) {
-                
-                    $secciones_data = $o->obtenerSecciones();
-                    foreach ($secciones_data as $sec) {
-                        if ($sec['sec_id'] == $sec_id_actual) {
-                            $trayecto_seccion = substr($sec['sec_codigo'], 0, 1);
-                            break;
-                        }
-                    }
+                if ($sec_codigo_actual) {
+                    $trayecto_seccion = substr($sec_codigo_actual, 0, 1);
                 }
                 
-                $resultado_uc = $o->obtenerUcPorDocente($doc_id, $trayecto_seccion); // Pasar trayecto
+                $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion);
                 $respuesta = [
                     'resultado' => 'ok', 
                     'ucs_docente' => $resultado_uc['data'],
@@ -94,20 +99,20 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'modificar':
-                $respuesta = $o->Modificar($_POST['seccion_id'] ?? null, $_POST['items_horario'] ?? '[]');
+                $respuesta = $o->Modificar($_POST['sec_codigo'] ?? null, $_POST['items_horario'] ?? '[]');
                 break;
 
             case 'eliminar_seccion_y_horario':
-                $respuesta = $o->EliminarSeccionYHorario($_POST['sec_id'] ?? null);
+                $respuesta = $o->EliminarSeccionYHorario($_POST['sec_codigo'] ?? null);
                 break;
             
             case 'validar_clase_en_vivo':
                 $respuesta = $o->ValidarClaseEnVivo(
-                    $_POST['doc_id'] ?? null,
-                    $_POST['esp_id'] ?? null,
+                    $_POST['doc_cedula'] ?? null,
+                    $_POST['esp_codigo'] ?? null,
                     $_POST['dia'] ?? null,
                     $_POST['hora_inicio'] ?? null,
-                    $_POST['sec_id'] ?? null
+                    $_POST['sec_codigo'] ?? null
                 );
                 break;
             
@@ -125,10 +130,8 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
     
     header('Content-Type: application/json; charset=utf-8');
     
-  
     array_walk_recursive($respuesta, function(&$item, $key){
         if(is_string($item)){ 
-        
             if (!mb_check_encoding($item, 'UTF-8')) {
                 $item = mb_convert_encoding($item, 'UTF-8', mb_detect_encoding($item, 'UTF-8, ISO-8859-1', true));
             }

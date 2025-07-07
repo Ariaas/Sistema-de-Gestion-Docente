@@ -13,7 +13,12 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
     <?php require_once("public/components/sidebar.php"); ?>
-    <main class="main-content flex-shrink-0">
+    <main class="main-content flex-shrink-0"
+        data-count-docentes="<?= $countDocentes ?? 0 ?>"
+        data-count-espacios="<?= $countEspacios ?? 0 ?>"
+        data-count-turnos="<?= $countTurnos ?? 0 ?>"
+        data-count-anios="<?= $countAnios ?? 0 ?>"
+        data-count-mallas="<?= $countMallas ?? 0 ?>">
         <?php
             if (isset($_SESSION['reporte_promocion'])) {
                 $reporte = $_SESSION['reporte_promocion'];
@@ -78,7 +83,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4">
+                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4" pattern="\d{4}" title="El código debe contener exactamente 4 números." oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
@@ -93,7 +98,9 @@
                                             <?php
                                             if (!empty($anios)) {
                                                 foreach ($anios as $anio) {
-                                                    echo "<option value='" . htmlspecialchars($anio['ani_id'], ENT_QUOTES) . "'>" . htmlspecialchars($anio['ani_anio'], ENT_QUOTES) . "</option>";
+                                                    $value = htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo'], ENT_QUOTES);
+                                                    $text = htmlspecialchars($anio['ani_anio'] . ' - ' . ucfirst($anio['ani_tipo']), ENT_QUOTES);
+                                                    echo "<option value='{$value}'>{$text}</option>";
                                                 }
                                             }
                                             ?>
@@ -121,7 +128,7 @@
                     <div class="modal-body">
                         <form method="post" id="form-horario" autocomplete="off">
                            <input type="hidden" name="accion" id="accion"> 
-                           <input type="hidden" name="seccion_id" id="seccion_id_hidden">
+                           <input type="hidden" name="sec_codigo" id="sec_codigo_hidden">
                            <div class="row">
                                 <div class="col-md-7 mb-3">
                                     <label for="seccion_principal_id" class="form-label">Sección</label>
@@ -223,7 +230,11 @@
                             <div id="conflicto-docente-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
                         </div>
                         
-                        <div class="mb-3"><label for="modalSeleccionarUc" class="form-label">Unidad Curricular <span class="text-danger">*</span></label><select class="form-select" id="modalSeleccionarUc" required><option value="">Primero seleccione un docente</option></select></div>
+                        <div class="mb-3">
+                            <label for="modalSeleccionarUc" class="form-label">Unidad Curricular <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalSeleccionarUc" required><option value="">Primero seleccione un docente</option></select>
+                            <div id="conflicto-uc-warning" class="alert alert-danger p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
+                        </div>
                         
                         <div class="mb-3">
                             <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab) <span class="text-danger">*</span></label>
@@ -250,7 +261,7 @@
                     <form id="formUnirHorarios" novalidate>
                         <input type="hidden" name="accion" value="unir_horarios">
                         <div class="alert alert-info" role="alert">
-                            <strong>Paso 1:</strong> Marque 2 o más secciones que desea unir. El sistema agrupará automáticamente las secciones compatibles (mismo año y trayecto).
+                            <strong>Paso 1:</strong> Marque 2 o más secciones que desea unir. El sistema agrupará automáticamente las secciones compatibles (mismo año, tipo y trayecto).
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Secciones a Unir</label>
