@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
    
-    const generarBtn = document.getElementById("generar_reporte_rod_btn");
-    // Se actualiza el ID del campo a validar
-    const anioSelect = document.getElementById("anio_id"); 
+    // Se cambia el ID del botón para que coincida con el nuevo formulario
+    const generarBtn = document.getElementById("generar_reporte_rod_btn"); 
+    const anioSelect = document.getElementById("anio_id");
+    const faseSelect = document.getElementById("fase");
     
     if (generarBtn) {
         generarBtn.addEventListener("click", function(event) {
@@ -12,15 +13,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Campo Requerido',
-                    text: 'Por favor, seleccione un Año Académico para generar el reporte.',
+                    text: 'Por favor, seleccione un Año para generar el reporte.',
                     confirmButtonColor: '#3085d6'
                 });
                 return;
             }
 
-            // Limpia el campo después de un tiempo para que el formulario se envíe
+            // Limpia los campos después de un tiempo prudencial para que el formulario se envíe
             setTimeout(function() {
                 if (anioSelect) anioSelect.value = "";
+                if (faseSelect) faseSelect.value = "";
             }, 1800);
         });
     }

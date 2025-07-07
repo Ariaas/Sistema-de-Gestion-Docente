@@ -27,13 +27,7 @@ if (!isset($_SESSION['name'])) {
 <body class="d-flex flex-column min-vh-100">
     <?php require_once("public/components/sidebar.php"); ?>
 
-<<<<<<< HEAD
- 
 
-
-
-=======
->>>>>>> c93293555c9b2cb18cff20502ee0c20ccf59f919
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Malla Curricular</h2>

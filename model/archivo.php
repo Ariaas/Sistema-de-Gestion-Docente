@@ -212,7 +212,7 @@ class Archivo extends Connection
             }
             $registros[$key]['archivo_definitivo'] = $nombreArchivoDef;
         }
-
+        $p = null;
         return $registros;
     }
     
