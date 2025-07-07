@@ -1,8 +1,30 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['name'])) {
     header('Location: .');
     exit();
 }
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar = tiene_permiso_accion('unidad curricular', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('unidad curricular', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permisos);
 ?>
 
 <!DOCTYPE html>
@@ -16,12 +38,15 @@ if (!isset($_SESSION['name'])) {
 <body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
-    <main class="main-content flex-shrink-0">
+    <main class="main-content flex-shrink-0" data-total-ejes="<?php echo count($ejes); ?>" data-total-areas="<?php echo count($areas); ?>">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Unidades Curriculares</h2>
 
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar Unidad Curricular</button>
+                <div class="d-flex flex-column align-items-end">
+                    <button class="btn btn-success px-4" id="registrar" <?php if (!$puede_registrar) echo 'disabled'; ?>>Registrar Unidad Curricular</button>
+                    <span id="registrar-warning" class="text-danger mt-1" style="font-size: 0.9rem;"></span>
+                </div>
             </div>
 
             <div class="datatable-ui w-100" id="tablaucContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
@@ -29,7 +54,6 @@ if (!isset($_SESSION['name'])) {
                     <table class="table table-striped table-hover w-100" id="tablauc">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Trayecto</th>
@@ -59,10 +83,6 @@ if (!isset($_SESSION['name'])) {
                             <input type="hidden" name="accion" id="accion" value="registrar">
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div style="display: none;" class="col-md-6">
-                                        <label for="idUC" class="form-label">ID</label>
-                                        <input class="form-control" type="text" id="idUC" name="idUC" required>
-                                    </div>
                                     <div class="col-md-4">
                                         <label for="codigoUC" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoUC" name="codigoUC" required placeholder="Ej: MAT101">
@@ -87,7 +107,7 @@ if (!isset($_SESSION['name'])) {
                                             <?php
                                             if (!empty($ejes)) {
                                                 foreach ($ejes as $eje) {
-                                                    echo "<option value='" . $eje['eje_id'] . "'>" . $eje['eje_nombre'] . "</option>";
+                                                    echo "<option value='" . htmlspecialchars($eje['eje_nombre']) . "'>" . htmlspecialchars($eje['eje_nombre']) . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay ejes disponibles</option>";
@@ -104,7 +124,7 @@ if (!isset($_SESSION['name'])) {
                                             <?php
                                             if (!empty($areas)) {
                                                 foreach ($areas as $area) {
-                                                    echo "<option value='" . $area['area_id'] . "'>" . $area['area_nombre'] . "</option>";
+                                                    echo "<option value='" . htmlspecialchars($area['area_nombre']) . "'>" . htmlspecialchars($area['area_nombre']) . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay areas disponibles</option>";
@@ -224,7 +244,7 @@ if (!isset($_SESSION['name'])) {
                     <div class="modal-body">
                         <h6 class="mb-3">Unidad Curricular: <span id="ucNombreModal" class="fw-bold"></span></h6>
                         <ul class="list-group" id="listaDocentesAsignados">
-                            
+
                         </ul>
                     </div>
                     <div class="modal-footer">
@@ -239,6 +259,12 @@ if (!isset($_SESSION['name'])) {
     require_once("public/components/footer.php");
     ?>
 
+    <script>
+        const PERMISOS = {
+            modificar: <?php echo json_encode($puede_modificar); ?>,
+            eliminar: <?php echo json_encode($puede_eliminar); ?>
+        };
+    </script>
     <script type="text/javascript" src="public/js/uc.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 

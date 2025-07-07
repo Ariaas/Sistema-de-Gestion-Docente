@@ -5,15 +5,15 @@ class Categoria extends Connection
 {
 
     private $categoriaNombre;
-    private $categoriaId;
+    private $categoriaDescripcion;
 
 
-    public function __construct($categoriaNombre = null, $categoriaId = null)
+    public function __construct($categoriaNombre = null, $categoriaDescripcion = null)
     {
         parent::__construct();
 
         $this->categoriaNombre = $categoriaNombre;
-        $this->categoriaId = $categoriaId;
+        $this->categoriaDescripcion = $categoriaDescripcion;
     }
 
 
@@ -21,17 +21,17 @@ class Categoria extends Connection
     {
         return $this->categoriaNombre;
     }
-    public function getId()
+    public function getDescripcion()
     {
-        return $this->categoriaId;
+        return $this->categoriaDescripcion;
     }
     public function setCategoria($categoriaNombre)
     {
         $this->categoriaNombre = $categoriaNombre;
     }
-    public function setId($categoriaId)
+    public function setDescripcion($categoriaDescripcion)
     {
-        $this->categoriaId = $categoriaId;
+        $this->categoriaDescripcion = $categoriaDescripcion;
     }
 
 
@@ -48,18 +48,21 @@ class Categoria extends Connection
 
                 $stmt = $co->prepare("INSERT INTO tbl_categoria (
                     cat_nombre,
+                    cat_descripcion,
                     cat_estado
                 ) VALUES (
                     :categoriaNombre,
+                    :categoriaDescripcion,
                     1
                 )");
 
                 $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+                $stmt->bindParam(':categoriaDescripcion', $this->categoriaDescripcion, PDO::PARAM_STR);
 
                 $stmt->execute();
 
                 $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el Categoría correctamente!';
+                $r['mensaje'] = 'Registro Incluido!<br/>Se registró la CATEGORÍA correctamente!';
             } catch (Exception $e) {
 
                 $r['resultado'] = 'error';
@@ -69,43 +72,39 @@ class Categoria extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El Categoría colocado ya existe!';
+            $r['mensaje'] = 'ERROR! <br/> La CATEGORÍA colocada ya existe!';
         }
 
         return $r;
     }
 
 
-    function Modificar()
+    function Modificar($categoriaOriginal)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->ExisteId($this->categoriaId)) {
-            if (!$this->existe($this->categoriaNombre)) {
-                try {
-                    $stmt = $co->prepare("UPDATE tbl_categoria
-                    SET cat_nombre = :categoriaNombre 
-                    WHERE cat_id = :categoriaId");
+        if (!$this->Existe($this->categoriaNombre, $categoriaOriginal)) {
+            try {
+                $stmt = $co->prepare("UPDATE tbl_categoria
+                SET cat_nombre = :categoriaNombre, cat_descripcion = :categoriaDescripcion
+                WHERE cat_nombre = :categoriaOriginal");
 
-                    $stmt->bindParam(':categoriaId', $this->categoriaId, PDO::PARAM_INT);
-                    $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+                $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+                $stmt->bindParam(':categoriaDescripcion', $this->categoriaDescripcion, PDO::PARAM_STR);
+                $stmt->bindParam(':categoriaOriginal', $categoriaOriginal, PDO::PARAM_STR);
 
-                    $stmt->execute();
+                $stmt->execute();
 
-                    $r['resultado'] = 'modificar';
-                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el Categoría correctamente!';
-                } catch (Exception $e) {
-                    $r['resultado'] = 'error';
-                    $r['mensaje'] = $e->getMessage();
-                }
-            } else {
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'ERROR! <br/> El Categoría colocado YA existe!';
+                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó la CATEGORÍA correctamente!';
+            } catch (Exception $e) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = $e->getMessage();
             }
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El Categoría colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> La CATEGORÍA colocada YA existe!';
         }
         return $r;
     }
@@ -116,25 +115,25 @@ class Categoria extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->ExisteId($this->categoriaId)) {
+        if ($this->Existe($this->categoriaNombre, NULL)) {
             try {
                 $stmt = $co->prepare("UPDATE tbl_categoria
                 SET cat_estado = 0
-                WHERE cat_id = :categoriaId");
+                WHERE cat_nombre = :categoriaNombre");
 
-                $stmt->bindParam(':categoriaId', $this->categoriaId, PDO::PARAM_STR);
+                $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
 
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el Categoría correctamente!';
+                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó la CATEGORÍA correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
             }
         } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El CÓDIGO colocado NO existe!';
+            $r['mensaje'] = 'ERROR! <br/> La Categoría no existe!';
         }
         return $r;
     }
@@ -146,7 +145,7 @@ class Categoria extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT cat_nombre, cat_id FROM tbl_categoria WHERE cat_estado = 1");
+            $stmt = $co->query("SELECT cat_nombre, cat_descripcion FROM tbl_categoria WHERE cat_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -158,42 +157,26 @@ class Categoria extends Connection
         return $r;
     }
 
-
-    public function ExisteId($categoriaId)
+    public function Existe($categoriaNombre, $categoriaExcluir = NULL)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_categoria WHERE cat_id=:categoriaId AND cat_estado = 1");
-            $stmt->bindParam(':categoriaId', $categoriaId, PDO::PARAM_STR);
-            $stmt->execute();
-            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
-            if ($fila) {
-                $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El Categoria ya existe!';
+            $sql = "SELECT * FROM tbl_categoria WHERE cat_nombre = :categoriaNombre AND cat_estado = 1";
+            if ($categoriaExcluir !== NULL) {
+                $sql .= " AND cat_nombre != :categoriaExcluir";
             }
-        } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
-        }
-        $co = null;
-        return $r;
-    }
-
-    public function Existe($categoriaNombre)
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
-        try {
-            $stmt = $co->prepare("SELECT * FROM tbl_categoria WHERE cat_nombre=:categoriaNombre AND cat_estado = 1");
+            $stmt = $co->prepare($sql);
             $stmt->bindParam(':categoriaNombre', $categoriaNombre, PDO::PARAM_STR);
+            if ($categoriaExcluir !== NULL) {
+                $stmt->bindParam(':categoriaExcluir', $categoriaExcluir, PDO::PARAM_STR);
+            }
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El Categoria ya existe!';
+                $r['mensaje'] = 'El CATEGORÍA colocado YA existe!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';

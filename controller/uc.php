@@ -34,7 +34,7 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'consultarAsignacion') {
             echo json_encode($u->Listar());
         } elseif ($accion == 'ver_docentes') {
-            $docentes = $u->obtenerDocentesPorUc($_POST['id']);
+            $docentes = $u->obtenerDocentesPorUc($_POST['codigo']);
             echo json_encode(['resultado' => 'ok', 'mensaje' => $docentes]);
         } elseif ($accion == 'asignar') {
             echo  json_encode($u->Asignar($_POST['asignaciones'], $_POST['ucs']));
@@ -45,28 +45,28 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'Quitar', 'Unidad Curricular');
         } elseif ($accion == 'eliminar') {
-            $u->setidUC($_POST['idUC']);
+            $u->setcodigoUC($_POST['codigoUC']);
             echo  json_encode($u->Eliminar());
 
-            $bitacora->registrarAccion($usu_id, 'eliminar', 'Unidad C urricular');
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'Unidad Curricular');
         } elseif ($accion == 'existe') {
             $u->setcodigoUC($_POST['codigoUC']);
             $resultado = $u->Existe($_POST['codigoUC']);
             echo json_encode($resultado);
         } elseif ($accion == 'verificar_horario') {
-            if (isset($_POST['idUC'])) {
-                $respuesta = $u->verificarEnHorario($_POST['idUC']);
+            if (isset($_POST['uc_codigo'])) {
+                $respuesta = $u->verificarEnHorario($_POST['uc_codigo']);
             } else {
                 $respuesta["resultado"] = "error";
-                $respuesta["mensaje"] = "ID de UC no proporcionado.";
+                $respuesta["mensaje"] = "Código de UC no proporcionado.";
             }
             echo json_encode($respuesta);
         } elseif ($accion == 'verificar_docente_horario') {
-            if (isset($_POST['uc_id']) && isset($_POST['doc_id'])) {
-                $respuesta = $u->verificarDocenteEnHorario($_POST['uc_id'], $_POST['doc_id']);
+            if (isset($_POST['uc_codigo']) && isset($_POST['doc_cedula'])) {
+                $respuesta = $u->verificarDocenteEnHorario($_POST['uc_codigo'], $_POST['doc_cedula']);
             } else {
                 $respuesta["resultado"] = "error";
-                $respuesta["mensaje"] = "ID de UC o Docente no proporcionado.";
+                $respuesta["mensaje"] = "Código de UC o Cédula de Docente no proporcionado.";
             }
             echo json_encode($respuesta);
         } else {
@@ -84,8 +84,7 @@ if (is_file("views/" . $pagina . ".php")) {
 
                 $bitacora->registrarAccion($usu_id, 'registrar', 'Unidad Curricular');
             } elseif ($accion == 'modificar') {
-                $u->setidUC($_POST['idUC']);
-                echo  json_encode($u->modificar());
+                echo  json_encode($u->modificar($_POST['codigoUCOriginal']));
 
                 $bitacora->registrarAccion($usu_id, 'modificar', 'Unidad Curricular');
             }
