@@ -10,7 +10,8 @@ class Docente extends Connection
     private $doc_apellido;
     private $doc_correo;
     private $doc_dedicacion;
-    private $doc_condicion;
+    private $doc_condicion; 
+    private $doc_tipo_concurso;
     private $doc_ingreso;
     private $doc_anio_concurso;
     private $doc_observacion;
@@ -22,27 +23,18 @@ class Docente extends Connection
         parent::__construct();
     }
 
-    public function getCedula() { return $this->doc_cedula; }
-    public function getNombre() { return $this->doc_nombre; }
-    public function getApellido() { return $this->doc_apellido; }
-    public function getCorreo() { return $this->doc_correo; }
-    public function getPrefijo() { return $this->doc_prefijo; }
-    public function getCategoriaNombre() { return $this->cat_nombre; }
-    public function getDedicacion() { return $this->doc_dedicacion; }
-    public function getCondicion() { return $this->doc_condicion; }
-    public function getIngreso() { return $this->doc_ingreso; }
-    public function getAnioConcurso() { return $this->doc_anio_concurso; }
-    public function getObservacion() { return $this->doc_observacion; }
-    public function getTitulos() { return $this->titulos; }
-    public function getCoordinaciones() { return $this->coordinaciones; }
+   
+    public function setCondicion($condicion) { $this->doc_condicion = $condicion; }
+    public function setTipoConcurso($concurso) { 
+        $this->doc_tipo_concurso = empty($concurso) ? null : $concurso; 
+    }
+    public function setDedicacion($dedicacion) { $this->doc_dedicacion = $dedicacion; }
     public function setCedula($doc_cedula) { $this->doc_cedula = $doc_cedula; }
     public function setNombre($doc_nombre) { $this->doc_nombre = $doc_nombre; }
     public function setApellido($doc_apellido) { $this->doc_apellido = $doc_apellido; }
     public function setCorreo($doc_correo) { $this->doc_correo = $doc_correo; }
     public function setPrefijo($doc_prefijo) { $this->doc_prefijo = $doc_prefijo; }
     public function setCategoriaNombre($cat_nombre) { $this->cat_nombre = $cat_nombre; }
-    public function setDedicacion($doc_dedicacion) { $this->doc_dedicacion = $doc_dedicacion; }
-    public function setCondicion($doc_condicion) { $this->doc_condicion = $doc_condicion; }
     public function setIngreso($doc_ingreso) { $this->doc_ingreso = $doc_ingreso; }
     public function setAnioConcurso($doc_anio_concurso) { 
         $this->doc_anio_concurso = empty($doc_anio_concurso) ? null : $doc_anio_concurso;
@@ -74,7 +66,7 @@ class Docente extends Connection
         try {
             $co->beginTransaction();
 
-            $stmt = $co->prepare("UPDATE tbl_docente SET doc_nombre = :doc_nombre, doc_apellido = :doc_apellido, doc_correo = :doc_correo, cat_nombre = :cat_nombre, doc_prefijo = :doc_prefijo, doc_dedicacion = :doc_dedicacion, doc_condicion = :doc_condicion, doc_ingreso = :doc_ingreso, doc_anio_concurso = :doc_anio_concurso, doc_observacion = :doc_observacion, doc_estado = 1 WHERE doc_cedula = :doc_cedula");
+            $stmt = $co->prepare("UPDATE tbl_docente SET doc_nombre = :doc_nombre, doc_apellido = :doc_apellido, doc_correo = :doc_correo, cat_nombre = :cat_nombre, doc_prefijo = :doc_prefijo, doc_dedicacion = :doc_dedicacion, doc_condicion = :doc_condicion, doc_ingreso = :doc_ingreso, doc_anio_concurso = :doc_anio_concurso, doc_tipo_concurso = :doc_tipo_concurso, doc_observacion = :doc_observacion, doc_estado = 1 WHERE doc_cedula = :doc_cedula");
             $stmt->execute([
                 ':doc_nombre' => $this->doc_nombre, 
                 ':doc_apellido' => $this->doc_apellido, 
@@ -82,9 +74,10 @@ class Docente extends Connection
                 ':cat_nombre' => $this->cat_nombre, 
                 ':doc_prefijo' => $this->doc_prefijo, 
                 ':doc_dedicacion' => $this->doc_dedicacion, 
-                ':doc_condicion' => $this->doc_condicion, 
+                ':doc_condicion' => $this->doc_condicion,
                 ':doc_ingreso' => $this->doc_ingreso, 
                 ':doc_anio_concurso' => $this->doc_anio_concurso,
+                ':doc_tipo_concurso' => $this->doc_tipo_concurso,
                 ':doc_observacion' => $this->doc_observacion, 
                 ':doc_cedula' => $this->doc_cedula
             ]);
@@ -147,7 +140,7 @@ class Docente extends Connection
         try {
             $co->beginTransaction();
             
-            $stmt = $co->prepare("INSERT INTO tbl_docente(cat_nombre, doc_prefijo, doc_cedula, doc_nombre, doc_apellido, doc_correo, doc_dedicacion, doc_condicion, doc_ingreso, doc_anio_concurso, doc_observacion, doc_estado) VALUES (:cat_nombre, :doc_prefijo, :doc_cedula, :doc_nombre, :doc_apellido, :doc_correo, :doc_dedicacion, :doc_condicion, :doc_ingreso, :doc_anio_concurso, :doc_observacion, 1)");
+            $stmt = $co->prepare("INSERT INTO tbl_docente(cat_nombre, doc_prefijo, doc_cedula, doc_nombre, doc_apellido, doc_correo, doc_dedicacion, doc_condicion, doc_ingreso, doc_anio_concurso, doc_tipo_concurso, doc_observacion, doc_estado) VALUES (:cat_nombre, :doc_prefijo, :doc_cedula, :doc_nombre, :doc_apellido, :doc_correo, :doc_dedicacion, :doc_condicion, :doc_ingreso, :doc_anio_concurso, :doc_tipo_concurso, :doc_observacion, 1)");
             $stmt->execute([
                 ':cat_nombre' => $this->cat_nombre, 
                 ':doc_prefijo' => $this->doc_prefijo, 
@@ -156,9 +149,10 @@ class Docente extends Connection
                 ':doc_apellido' => $this->doc_apellido, 
                 ':doc_correo' => $this->doc_correo, 
                 ':doc_dedicacion' => $this->doc_dedicacion, 
-                ':doc_condicion' => $this->doc_condicion, 
+                ':doc_condicion' => $this->doc_condicion,
                 ':doc_ingreso' => $this->doc_ingreso, 
                 ':doc_anio_concurso' => $this->doc_anio_concurso,
+                ':doc_tipo_concurso' => $this->doc_tipo_concurso,
                 ':doc_observacion' => $this->doc_observacion
             ]);
 
@@ -237,7 +231,7 @@ class Docente extends Connection
         $r = array();
     
         try {
-            $stmt = $co->prepare("SELECT d.doc_prefijo, d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo, d.doc_dedicacion, d.doc_condicion, d.doc_ingreso, d.doc_anio_concurso, d.doc_observacion, d.cat_nombre FROM tbl_docente d WHERE d.doc_estado = 1");
+            $stmt = $co->prepare("SELECT d.doc_prefijo, d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo, d.doc_dedicacion, d.doc_condicion, d.doc_ingreso, d.doc_anio_concurso, d.doc_tipo_concurso, d.doc_observacion, d.cat_nombre FROM tbl_docente d WHERE d.doc_estado = 1");
             $stmt->execute();
             $docentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

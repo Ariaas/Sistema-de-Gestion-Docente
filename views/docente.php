@@ -24,10 +24,10 @@ if (!isset($_SESSION['name'])) {
 
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
-            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1200px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar Docente</button>
             </div>
-            <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+            <div class="datatable-ui w-100" style="max-width: 1200px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
                     <table class="table table-striped table-hover w-100" id="tabladocente">
                         <thead>
@@ -38,12 +38,13 @@ if (!isset($_SESSION['name'])) {
                                 <th>Apellido</th>
                                 <th>Correo</th>
                                 <th>Categoría</th>
-                                <th>Títulos</th>
-                                <th>Coordinaciones</th>
                                 <th>Dedicación</th>
                                 <th>Condición</th>
-                                <th>Fecha Ingreso</th>
+                                <th>Tipo Concurso</th>
                                 <th>Año Concurso</th>
+                                <th>Títulos</th>
+                                <th>Coordinaciones</th>
+                                <th>Fecha Ingreso</th>
                                 <th>Observaciones</th>
                                 <th>Acciones</th>
                             </tr>
@@ -99,7 +100,7 @@ if (!isset($_SESSION['name'])) {
 
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label for="categoria" class="form-label">Categoría</label>
+                                    <label for="categoria" class="form-label">Categoría Académica</label>
                                     <select class="form-select" name="categoria" id="categoria" required>
                                         <option value="" disabled selected>Seleccione...</option>
                                         <?php foreach ($categorias as $categoria) {
@@ -112,25 +113,42 @@ if (!isset($_SESSION['name'])) {
                                     <label for="dedicacion" class="form-label">Dedicación</label>
                                     <select class="form-select" name="dedicacion" id="dedicacion" required>
                                         <option value="" disabled selected>Seleccione...</option>
-                                        <option value="exclusiva">Exclusiva</option>
-                                        <option value="ordinaria">Ordinaria</option>
-                                        <option value="contratado">Contratado</option>
+                                        <option value="Exclusiva">Exclusiva</option>
+                                        <option value="Tiempo Completo">Tiempo Completo</option>
+                                        <option value="Medio Tiempo">Medio Tiempo</option>
+                                        <option value="Tiempo Convencional">Tiempo Convencional</option>
                                     </select>
                                     <span id="sdedicacion" class="text-danger"></span>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="condicion" class="form-label">Condición</label>
+                                 <div class="col-md-4">
+                                    <label for="condicion" class="form-label">Condición (Relación Laboral)</label>
                                     <select class="form-select" name="condicion" id="condicion" required>
                                         <option value="" disabled selected>Seleccione...</option>
-                                        <option value="medio">Medio</option>
-                                        <option value="completo">Completo</option>
-                                        <option value="parcial">Parcial</option>
+                                        <option value="Ordinario">Ordinario</option>
+                                        <option value="Contratado por Credenciales">Contratado por Credenciales</option>
+                                        <option value="Contratado por Situaciones Inesperadas">Contratado por Situaciones Inesperadas</option>
+                                        <option value="Suplente">Suplente</option>
                                     </select>
                                     <span id="scondicion" class="text-danger"></span>
                                 </div>
                             </div>
 
                             <hr class="my-4">
+                            
+                            <div id="concurso-fields-wrapper" style="display: none;">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="tipoConcurso" class="form-label">Tipo de Concurso</label>
+                                        <input class="form-control" type="text" id="tipoConcurso" name="tipoConcurso" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="anioConcurso" class="form-label">Año Concurso</label>
+                                        <input class="form-control" type="date" id="anioConcurso" name="anioConcurso">
+                                        <span id="sanioConcurso" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <hr class="my-4">
+                            </div>
 
                             <div class="row">
                                 <div class="col-md-6">
@@ -150,7 +168,7 @@ if (!isset($_SESSION['name'])) {
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Coordinaciones (Opcional)</label>
+                                    <label class="form-label">Coordinaciones</label>
                                     <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
                                         <?php foreach ($coordinaciones as $coordinacion): 
                                             $value = htmlspecialchars($coordinacion['cor_nombre']);
@@ -174,15 +192,9 @@ if (!isset($_SESSION['name'])) {
                                     <input class="form-control" type="date" id="fechaIngreso" name="fechaIngreso" required>
                                     <span id="sfechaIngreso" class="text-danger"></span>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="anioConcurso" class="form-label">Año Concurso (Opcional)</label>
-                                    <input class="form-control" type="date" id="anioConcurso" name="anioConcurso">
-                                    <span id="sanioConcurso" class="text-danger"></span>
-                                </div>
                                 <div class="col-md-12 mt-3">
                                     <label for="observacionesDocente" class="form-label">Observaciones (Opcional)</label>
                                     <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="100" placeholder="Añadir observaciones (máx. 100 caracteres)"></textarea>
-                                    <span id="sobservacionesDocente" class="text-danger"></span>
                                 </div>
                             </div>
 

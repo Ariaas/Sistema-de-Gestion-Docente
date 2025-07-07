@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+$pagina = 'actividad'; 
+
 if (!is_file("model/" . $pagina . ".php")) {
     echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina]);
     exit;
@@ -15,14 +17,16 @@ if (is_file("views/" . $pagina . ".php")) {
         $o = new Actividad();
         $accion = $_POST['accion'] ?? '';
 
-        require_once("model/bitacora.php");
-        $usu_id = $_SESSION['usu_id'] ?? null;
+        if ($accion !== 'consultar' && $accion !== 'listar_docentes' && $accion !== 'verificar_docente') {
+            require_once("model/bitacora.php");
+            $usu_id = $_SESSION['usu_id'] ?? null;
 
-        if ($usu_id === null) {
-            echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado.']);
-            exit;
+            if ($usu_id === null) {
+                echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado.']);
+                exit;
+            }
+            $bitacora = new Bitacora();
         }
-        $bitacora = new Bitacora();
         
         try {
             if ($accion == 'consultar') {
@@ -37,13 +41,11 @@ if (is_file("views/" . $pagina . ".php")) {
                 echo json_encode(['existe' => $existe]);
 
             } elseif ($accion == 'eliminar') {
-                // Se usa 'actId' que ahora contiene la cédula para identificar y eliminar
                 $o->setId($_POST['actId'] ?? ''); 
                 echo json_encode($o->Eliminar());
-                $bitacora->registrarAccion($usu_id, 'eliminar', 'actividad');
+                if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'actividad');
 
             } else {
-                // Para registrar y modificar, la cédula viene en 'docId'
                 $o->setDocId($_POST['docId'] ?? '');
                 $o->setCreacionIntelectual((int)($_POST['actCreacion'] ?? 0));
                 $o->setIntegracionComunidad((int)($_POST['actIntegracion'] ?? 0));
@@ -52,12 +54,11 @@ if (is_file("views/" . $pagina . ".php")) {
                 
                 if ($accion == 'registrar') {
                     echo json_encode($o->Registrar());
-                    $bitacora->registrarAccion($usu_id, 'registrar', 'actividad');
+                    if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'registrar', 'actividad');
                 } elseif ($accion == 'modificar') {
-                    // Para modificar, el 'actId' (cédula) identifica el registro a cambiar
                     $o->setId($_POST['actId'] ?? '');
                     echo json_encode($o->Modificar());
-                    $bitacora->registrarAccion($usu_id, 'modificar', 'actividad');
+                    if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'modificar', 'actividad');
                 }
             }
         } catch (Exception $e) {
@@ -65,6 +66,10 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         exit;
     }
+
+   
+    $o = new Actividad();
+    $totalDocentes = $o->ContarDocentesActivos();
 
     require_once("views/" . $pagina . ".php");
 } else {

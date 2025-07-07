@@ -45,6 +45,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $resultado = $p->Existe($_POST['cedulaDocente']);
             echo json_encode(['existe' => $resultado]);
         } else {
+          
             $p->setCategoriaNombre($_POST['categoria']);
             $p->setPrefijo($_POST['prefijoCedula']);
             $p->setCedula($_POST['cedulaDocente']);
@@ -53,9 +54,11 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setCorreo($_POST['correoDocente']);
             $p->setDedicacion($_POST['dedicacion']);
             $p->setCondicion($_POST['condicion']);
+            $p->setTipoConcurso($_POST['tipoConcurso'] ?? '');
             $p->setIngreso($_POST['fechaIngreso']);
-            $p->setObservacion($_POST['observacionesDocente']);
             $p->setAnioConcurso($_POST['anioConcurso'] ?? '');
+            $p->setObservacion($_POST['observacionesDocente']);
+            
 
             if (isset($_POST['titulos']) && is_array($_POST['titulos'])) {
                 $p->setTitulos($_POST['titulos']);
