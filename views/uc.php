@@ -197,7 +197,7 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                             <?php
                                             if (!empty($docentes)) {
                                                 foreach ($docentes as $docente) {
-                                                    echo "<option value='" . $docente['doc_id'] . "'>" . $docente['doc_nombre'] . " " . $docente['doc_apellido'] . "</option>";
+                                                    echo "<option value='" . $docente['doc_cedula'] . "'>" . $docente['doc_nombre'] . " " . $docente['doc_apellido'] . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay docentes disponibles</option>";
@@ -205,12 +205,6 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                             ?>
                                         </select>
                                         <span id="sdocente"></span>
-                                    </div>
-                                </div>
-                                <div class="row g-3 mt-3">
-                                    <div class="col-md-12">
-                                        <label for="fechaConcursoUC" class="form-label">Fecha del Concurso</label>
-                                        <input type="month" class="form-control" id="fechaConcursoUC" name="fechaConcursoUC">
                                     </div>
                                 </div>
                                 <div class="row g-3 mt-3">

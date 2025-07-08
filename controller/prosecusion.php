@@ -26,11 +26,14 @@ if (is_file("views/" . $pagina . ".php")) {
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
             echo json_encode($p->Listar());
+        } else if ($accion == 'verificar_estado') {
+            echo json_encode($p->VerificarEstado());
+            exit;
         } else if ($accion == 'obtenerOpcionesDestinoManual') {
-            echo json_encode($p->obtenerOpcionesDestinoManual($_POST['seccionOrigenId']));
+            echo json_encode($p->obtenerOpcionesDestinoManual($_POST['seccionOrigenCodigo']));
             exit;
         } else if ($accion == 'calcularCantidadProsecusion') {
-            echo json_encode($p->calcularCantidadProsecusion($_POST['seccionId']));
+            echo json_encode($p->calcularCantidadProsecusion($_POST['seccionCodigo']));
             exit;
         } else if ($accion == 'consultarSeccionesOrigen') {
             echo json_encode($p->ListarSeccionesOrigen());
@@ -41,11 +44,12 @@ if (is_file("views/" . $pagina . ".php")) {
             $bitacora->registrarAccion($usu_id, 'eliminar', 'prosecusion');
             exit;
         } else if ($accion == 'prosecusion') {
-            $seccionOrigenId = $_POST['seccionOrigenId'];
+            $seccionOrigenCodigo = $_POST['seccionOrigenCodigo'];
             $cantidad = $_POST['cantidad'];
-            $seccionDestinoId = isset($_POST['seccionDestinoId']) ? $_POST['seccionDestinoId'] : null;
+            $seccionDestinoCodigo = isset($_POST['seccionDestinoCodigo']) ? $_POST['seccionDestinoCodigo'] : null;
+            $confirmarExceso = isset($_POST['confirmar_exceso']) && $_POST['confirmar_exceso'] === 'true';
 
-            $resultado = $p->RealizarProsecusion($seccionOrigenId, $cantidad, $seccionDestinoId);
+            $resultado = $p->RealizarProsecusion($seccionOrigenCodigo, $cantidad, $seccionDestinoCodigo, $confirmarExceso);
 
             if (isset($resultado['resultado']) && $resultado['resultado'] === 'prosecusion') {
                 $bitacora->registrarAccion($usu_id, 'realizó una prosecusion', 'prosecusion');

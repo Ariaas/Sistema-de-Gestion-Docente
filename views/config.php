@@ -17,6 +17,17 @@ if (!function_exists('tiene_permiso')) {
         return !empty($permisos_array[strtolower($modulo)]);
     }
 }
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -113,7 +124,7 @@ if (!function_exists('tiene_permiso')) {
                     </div>
                 <?php endif; ?>
 
-                <?php if (tiene_permiso('Prosecusion', $permisos)) : ?>
+                <?php if (tiene_permiso_accion('seccion', 'registrar', $permisos) && tiene_permiso_accion('seccion', 'modificar', $permisos)) : ?>
                     <div class="col">
                         <a href="?pagina=prosecusion" class="dashboard-card">
                             <div class="icon-circle">

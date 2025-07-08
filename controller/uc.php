@@ -34,11 +34,12 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'consultarAsignacion') {
             echo json_encode($u->Listar());
         } elseif ($accion == 'ver_docentes') {
-            $docentes = $u->obtenerDocentesPorUc($_POST['codigo']);
-            echo json_encode(['resultado' => 'ok', 'mensaje' => $docentes]);
+            $docentesAsignados = $u->obtenerDocentesPorUc($_POST['codigo']);
+            echo json_encode(['resultado' => 'ok', 'mensaje' => $docentesAsignados]);
         } elseif ($accion == 'asignar') {
-            echo  json_encode($u->Asignar($_POST['asignaciones'], $_POST['ucs']));
-
+            $asignacionesJSON = $_POST['asignaciones'];
+            $ucsJSON = $_POST['ucs'];
+            echo json_encode($u->Asignar($asignacionesJSON, $ucsJSON));
             $bitacora->registrarAccion($usu_id, 'Asignar', 'Unidad Curricular');
         } elseif ($accion == 'quitar') {
             echo json_encode($u->Quitar());

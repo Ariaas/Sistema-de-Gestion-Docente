@@ -402,7 +402,7 @@ class UC extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1");
+            $stmt = $co->query("SELECT doc_cedula, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1");
             $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $r = [];
@@ -430,7 +430,7 @@ class UC extends Connection
             $conflictos = [];
 
             foreach ($asignaciones as $asignacion) {
-                $docenteCedula = $asignacion['id'];
+                $docenteCedula = $asignacion['cedula'];
                 $stmtCheck = $co->prepare("SELECT COUNT(*) FROM uc_docente WHERE doc_cedula = :docCedula AND uc_codigo = :ucCodigo AND uc_doc_estado = 1");
                 $stmtCheck->execute([':docCedula' => (int)$docenteCedula, ':ucCodigo' => $ucCodigo]);
 
@@ -456,7 +456,7 @@ class UC extends Connection
 
             foreach ($asignaciones as $asignacion) {
                 $stmtInsert->execute([
-                    ':docenteCedula' => (int)$asignacion['id'],
+                    ':docenteCedula' => (int)$asignacion['cedula'],
                     ':ucCodigo' => $ucCodigo
                 ]);
             }

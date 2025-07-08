@@ -1,8 +1,30 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['name'])) {
     header('Location: .');
     exit();
 }
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar_seccion = tiene_permiso_accion('seccion', 'registrar', $permisos);
+$puede_modificar_seccion = tiene_permiso_accion('seccion', 'modificar', $permisos);
+$puede_realizar_prosecusion = $puede_registrar_seccion && $puede_modificar_seccion;
 ?>
 
 <!DOCTYPE html>
@@ -19,20 +41,20 @@ if (!isset($_SESSION['name'])) {
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
-            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Prosecusion
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar de Prosecusión
             </h2>
-
-            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px; gap: 10px;">
-                <button class="btn btn-primary px-4" id="btnProsecusion">Prosecusión</button>
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+                <div class="d-flex flex-column align-items-end">
+                    <button class="btn btn-success px-4" id="btnProsecusion" <?php if (!$puede_realizar_prosecusion) echo 'disabled'; ?>>Realizar Prosecusión</button>
+                    <span id="prosecusion-warning" class="text-danger mt-1" style="font-size: 0.9rem;"></span>
+                </div>
             </div>
-
             <div class="datatable-ui w-100" id="tablaseccionContainer"
                 style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
                     <table class="table table-striped table-hover w-100" id="tablaseccion">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
                                 <th>Sección Origen</th>
                                 <th>Año Origen</th>
                                 <th>Sección Destino</th>

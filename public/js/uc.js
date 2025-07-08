@@ -286,17 +286,10 @@ function verDocentes(ucCodigo, ucNombre) {
 
                     if(lee.mensaje.length > 0) {
                         lee.mensaje.forEach(function(docente) {
-                            let fechaConcurso = 'Sin fecha registrada';
-                            if (docente.uc_anio_concurso) {
-                                const [year, month] = docente.uc_anio_concurso.split('-');
-                                fechaConcurso = `${month}/${year}`;
-                            }
-
                             var li = `
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span>
                                         ${docente.doc_nombre} ${docente.doc_apellido}
-                                        <small class="text-muted d-block">Fecha Concurso: ${fechaConcurso}</small>
                                     </span>
                                     <button class="btn btn-danger btn-sm quitar-docente-uc" data-uccodigo="${ucCodigo}" data-doccedula="${docente.doc_cedula}" title="Quitar Docente">
                                         Quitar
@@ -344,8 +337,8 @@ function enviaAjax(datos) {
                         
                         const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
                         const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                        const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar"><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
-                        const btnVerDocentes = `<button class="btn btn-icon btn-info" onclick="verDocentes('${item.uc_codigo}', '${item.uc_nombre}')" title="Ver Docentes"><img src="public/assets/icons/people.svg" alt="Ver Docentes"></button>`;
+                        const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
+                        const btnVerDocentes = `<button class="btn btn-icon btn-info" onclick="verDocentes('${item.uc_codigo}', '${item.uc_nombre}')" title="Ver Docentes" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/people.svg" alt="Ver Docentes"></button>`;
 
                         tabla += `
                             <tr data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${item.uc_periodo}" data-electiva="${item.uc_electiva}">
@@ -434,16 +427,10 @@ function actualizarCarritoDocentes() {
     if (!ul) return;
     ul.innerHTML = "";
     carritoDocentes.forEach((asignacion, idx) => {
-        const [year, month] = asignacion.fecha.split('-');
-        const fechaFormateada = `${month}/${year}`;
-
         const li = document.createElement("li");
         li.className = "list-group-item d-flex justify-content-between align-items-center";
         li.innerHTML = `
-            <span>
-                ${asignacion.nombre}
-                <small class="text-muted d-block">Fecha Concurso: ${fechaFormateada}</small>
-            </span>
+            <span>${asignacion.nombre}</span>
             <button type="button" class="btn btn-danger btn-sm quitar-docente" data-idx="${idx}">Quitar</button>
         `;
         ul.appendChild(li);
@@ -452,33 +439,25 @@ function actualizarCarritoDocentes() {
 
 $(document).on("click", "#agregarDocente", function() {
     const select = document.getElementById("docenteUC");
-    const docenteId = select.value;
+    const docenteCedula = select.value;
     const docenteNombre = select.options[select.selectedIndex]?.text;
-    const fechaConcurso = $("#fechaConcursoUC").val();
 
-    if (!docenteId) {
+    if (!docenteCedula) {
         Swal.fire({ icon: 'warning', title: 'Atención', text: 'Seleccione un docente válido.' });
         return;
     }
     
-    if (!fechaConcurso) {
-        Swal.fire({ icon: 'warning', title: 'Atención', text: 'Seleccione una fecha de concurso para el docente.' });
-        return;
-    }
-
-    if (carritoDocentes.some(doc => doc.id === docenteId)) {
+    if (carritoDocentes.some(doc => doc.cedula === docenteCedula)) {
         Swal.fire({ icon: 'warning', title: 'Atención', text: 'Este docente ya está en la lista.' });
         return;
     }
 
     carritoDocentes.push({
-        id: docenteId,
-        nombre: docenteNombre,
-        fecha: fechaConcurso
+        cedula: docenteCedula,
+        nombre: docenteNombre
     });
     actualizarCarritoDocentes();
     $("#docenteUC").val("");
-    $("#fechaConcursoUC").val("");
 });
 
 $(document).on("click", ".quitar-docente", function() {
@@ -519,10 +498,9 @@ $(document).on("click", "#asignarDocentes", function() {
 });
 
 $(document).on("click", ".ver-docentes", function() {
-    const uc_id = $(this).closest("tr").find("td:eq(0)").text();
-    $("#tabladocenteContainer").show();
-    $("#modal3").modal("show");
-    solicitarDocentesPorUC(uc_id);
+    const uc_codigo = $(this).closest("tr").data("codigo");
+    const uc_nombre = $(this).closest("tr").data("nombre");
+    verDocentes(uc_codigo, uc_nombre);
 });
 
 function solicitarDocentesPorUC(uc_codigo) {
