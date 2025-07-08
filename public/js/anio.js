@@ -134,7 +134,7 @@ function Listar() {
       if ($(this).text() == "ELIMINAR") {
        
           Swal.fire({
-            title: "¿Está seguro de eliminar este espacio?",
+            title: "¿Está seguro de eliminar este año?",
             text: "Esta acción no se puede deshacer.",
             icon: "warning",
             showCancelButton: true,
@@ -304,6 +304,7 @@ $("#tipoAnio").on("change", function() {
     $("#proceso").text("MODIFICAR");
     $("#aniId").prop("disabled", false);
     $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+    $('#tipoAnio option[value="regular"], #tipoAnio option[value="intensivo"]').prop('disabled', false);
   } else {
     $("#proceso").text("ELIMINAR");
     $("#aniId, #aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
