@@ -1,7 +1,7 @@
 <?php
-require_once('model/db_bitacora.php');
+require_once('model/dbconnection.php');
 
-class Bitacora extends Connection_bitacora
+class Bitacora extends Connection
 {
     public function registrarAccion($usu_id, $accion, $modulo)
     {

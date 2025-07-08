@@ -1,7 +1,7 @@
 <?php
-require_once('model/db_bitacora.php');
+require_once('model/dbconnection.php');
 
-class Perfil extends Connection_bitacora
+class Perfil extends Connection
 {
     private $usuarioId;
     private $nombreUsuario;
