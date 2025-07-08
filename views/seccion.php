@@ -1,10 +1,32 @@
 <?php
- 
- if (!isset($_SESSION['name'])) {
-     header('Location: .');
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['name'])) {
+    header('Location: .');
     exit();
- }
+}
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,33 +41,7 @@
         data-count-turnos="<?= $countTurnos ?? 0 ?>"
         data-count-anios="<?= $countAnios ?? 0 ?>"
         data-count-mallas="<?= $countMallas ?? 0 ?>">
-        <?php
-            if (isset($_SESSION['reporte_promocion'])) {
-                $reporte = $_SESSION['reporte_promocion'];
-                $clase_alerta = empty($reporte['fallos']) ? 'alert-success' : 'alert-warning';
-                
-                echo "<div class='container mt-3'><div class='alert {$clase_alerta} alert-dismissible fade show' role='alert'>";
-                echo "<h4 class='alert-heading'>Reporte de Promoción Automática a Fase 2</h4>";
-                echo "<p>El proceso de promoción automática ha finalizado. Se intentó la promoción para las secciones de Fase 1 del año activo.</p>";
-                echo "<p><strong>Secciones promovidas con éxito: {$reporte['exitos']}</strong></p>";
-
-                if (!empty($reporte['fallos'])) {
-                    echo "<hr><h5>Fallos (Secciones no promovidas):</h5><ul class='mb-0 text-start'>";
-                    foreach (array_unique($reporte['fallos']) as $fallo) { echo "<li>{$fallo}</li>"; }
-                    echo "</ul>";
-                }
-                if (!empty($reporte['observaciones'])) {
-                    echo "<hr><h5>Observaciones (Clases no asignadas):</h5><ul class='mb-0 text-start'>";
-                    foreach (array_unique($reporte['observaciones']) as $obs) { echo "<li>{$obs}</li>"; }
-                    echo "</ul>";
-                }
-                
-                echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-                echo "</div></div>";
-                
-                unset($_SESSION['reporte_promocion']);
-            }
-        ?>
+       
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4">Gestionar Sección</h2>
             <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
@@ -289,6 +285,18 @@
         </div>
     </div>
     </main>
+     <script>
+        const PERMISOS = {
+            modificar: <?php echo json_encode($puede_modificar); ?>,
+            eliminar: <?php echo json_encode($puede_eliminar); ?>
+        };
+    </script>
+     <script>
+        const PERMISOS = {
+            modificar: <?php echo json_encode($puede_modificar); ?>,
+            eliminar: <?php echo json_encode($puede_eliminar); ?>
+        };
+    </script>
     <?php require_once("public/components/footer.php"); ?>
     <script src="public/js/seccion.js"></script>
 </body>

@@ -106,7 +106,7 @@ if (!function_exists('tiene_permiso_accion')) {
                     <div class="col">
                         <a href="?pagina=titulo" class="dashboard-card">
                             <div class="icon-circle">
-                                <img src="public/assets/icons/award-solid.svg" alt="Gestionar Titulo">
+                                <img src="public/assets/icons/diploma.svg" alt="Gestionar Titulo">
                             </div>
                             <h5>Gestionar Titulo</h5>
                         </a>

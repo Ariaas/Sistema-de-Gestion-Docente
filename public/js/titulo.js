@@ -99,13 +99,15 @@ function enviaAjax(datos) {
                     destruyeDT();
                     $("#resultadoconsulta").empty();
                     lee.mensaje.forEach(function(item) {
+                         const btnModificar = `<button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'  ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                       const btnEliminar = `<button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'  ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
                         $("#resultadoconsulta").append(`
                             <tr>
                                 <td>${item.tit_prefijo}</td>
                                 <td>${item.tit_nombre}</td>
                                 <td>
-                                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)'>Modificar</button>
-                                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)'>Eliminar</button>
+                                    ${btnModificar}
+                                    ${btnEliminar}
                                 </td>
                             </tr>
                         `);
