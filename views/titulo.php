@@ -1,9 +1,32 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['name'])) {
     header('Location: .');
     exit();
 }
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -79,6 +102,12 @@ if (!isset($_SESSION['name'])) {
         </div>
        
     </main>
+     <script>
+        const PERMISOS = {
+            modificar: <?php echo json_encode($puede_modificar); ?>,
+            eliminar: <?php echo json_encode($puede_eliminar); ?>
+        };
+    </script>
     <?php require_once("public/components/footer.php"); ?>
     <script type="text/javascript" src="public/js/titulo.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>

@@ -297,7 +297,10 @@ $(document).ready(function() {
                     if (lee.resultado === "consultar") {
                         destruyeDT();
                         $("#resultadoconsulta").empty();
+
                         $.each(lee.mensaje, function (index, item) {
+                             const btnModificar = `<button class="btn btn-warning btn-sm modificar-btn" onclick='pone(this,0)'  ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+            const btnEliminar = `<button class="btn btn-danger btn-sm eliminar-btn" onclick='pone(this,1)'  ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
                             $("#resultadoconsulta").append(`
                                 <tr data-docid='${item.doc_cedula}'>
                                     <td style="display: none;">${item.doc_cedula}</td>
@@ -308,8 +311,8 @@ $(document).ready(function() {
                                     <td>${item.act_otras}</td>
                                     <td><span class="badge bg-primary fs-6">${item.horas_totales}</span></td>
                                     <td>
-                                        <button class="btn btn-warning btn-sm modificar-btn"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-                                        <button class="btn btn-danger btn-sm eliminar-btn"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
+                                              ${btnModificar}
+                                               ${btnEliminar}
                                     </td>
                                 </tr>`);
                         });
