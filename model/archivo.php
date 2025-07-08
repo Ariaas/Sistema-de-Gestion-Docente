@@ -3,270 +3,232 @@ require_once('model/dbconnection.php');
 
 class Archivo extends Connection
 {
-    private $rem_id;
-    private $sec_id;
-    private $uc_id;
-    private $doc_id;
-    private $rem_cantidad; // Esta propiedad almacena los REPROBADOS
-    private $per_cantidad; // Propiedad para la cantidad de estudiantes para PER
-    private $ani_id;
+    private $sec_codigo;
+    private $uc_codigo;
+    private $ani_anio;
+    private $ani_tipo;
+    private $apro_cantidad;
+    private $per_cantidad;
     private $per_aprobados;
     private $uc_nombre;
-    private $seccion_codigo;
 
     private $archivosDir = __DIR__ . '/../archivos_subidos/';
     private $archivosPerDir = __DIR__ . '/../archivos_per/';
 
-    public function __construct()
-    {
+    public function __construct(){
         parent::__construct();
-        if (!file_exists($this->archivosDir)) {
-            mkdir($this->archivosDir, 0777, true);
-        }
-        if (!file_exists($this->archivosPerDir)) {
-            mkdir($this->archivosPerDir, 0777, true);
-        }
+        if (!file_exists($this->archivosDir)) { mkdir($this->archivosDir, 0777, true); }
+        if (!file_exists($this->archivosPerDir)) { mkdir($this->archivosPerDir, 0777, true); }
     }
 
-    public function setRemId($rem_id) { $this->rem_id = $rem_id; }
-    public function getRemId() { return $this->rem_id; }
-    public function setSecId($sec_id) { $this->sec_id = $sec_id; }
-    public function getSecId() { return $this->sec_id; }
-    public function setUcId($uc_id) { $this->uc_id = $uc_id; }
-    public function getUcId() { return $this->uc_id; }
-    public function setDocId($doc_id) { $this->doc_id = $doc_id; }
-    public function getDocId() { return $this->doc_id; }
-    public function setRemCantidad($rem_cantidad) { $this->rem_cantidad = $rem_cantidad; }
-    public function getRemCantidad() { return $this->rem_cantidad; }
-    public function setAnioId($ani_id) { $this->ani_id = $ani_id; }
-    public function getAnioId() { return $this->ani_id; }
+    public function setSecCodigo($sec_codigo) { $this->sec_codigo = $sec_codigo; }
+    public function getSecCodigo() { return $this->sec_codigo; }
+    public function setUcCodigo($uc_codigo) { $this->uc_codigo = $uc_codigo; }
+    public function getUcCodigo() { return $this->uc_codigo; }
+    public function setAnioAnio($ani_anio) { $this->ani_anio = $ani_anio; }
+    public function getAnioAnio() { return $this->ani_anio; }
+    public function setAnioTipo($ani_tipo) { $this->ani_tipo = $ani_tipo; }
+    public function getAnioTipo() { return $this->ani_tipo; }
+    public function setAproCantidad($apro_cantidad) { $this->apro_cantidad = $apro_cantidad; }
+    public function getAproCantidad() { return $this->apro_cantidad; }
+    public function setPerCantidad($per_cantidad) { $this->per_cantidad = $per_cantidad; }
+    public function getPerCantidad() { return $this->per_cantidad; }
     public function setPerAprobados($per_aprobados) { $this->per_aprobados = $per_aprobados; }
     public function getPerAprobados() { return $this->per_aprobados; }
     public function setUcNombre($uc_nombre) { $this->uc_nombre = $uc_nombre; }
     public function getUcNombre() { return $this->uc_nombre; }
-    public function setSeccionCodigo($seccion_codigo) { $this->seccion_codigo = $seccion_codigo; }
-    public function getSeccionCodigo() { return $this->seccion_codigo; }
 
-    public function setPerCantidad($per_cantidad) { $this->per_cantidad = $per_cantidad; }
-    public function getPerCantidad() { return $this->per_cantidad; }
-
-    private function guardarArchivoDefinitivoLocal($archivo, $rem_id, $ucurricular, $seccion, $fecha_resguardo)
-    {
-        $ucurricular = preg_replace('/[^a-zA-Z0-9\s]/', '', $ucurricular);
-        $ucurricular = str_replace(' ', '_', $ucurricular);
-        $seccion = str_replace(' ', '_', $seccion);
-        $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
-        $nombreArchivo = "DEF_{$rem_id}_{$ucurricular}_{$seccion}_" . $fecha_resguardo . ".{$extension}";
-        $rutaFinal = $this->archivosDir . $nombreArchivo;
-        if (!move_uploaded_file($archivo['tmp_name'], $rutaFinal)) {
-            throw new Exception('Error al guardar el archivo definitivo en el disco.');
-        }
-        return $nombreArchivo;
+    private function generarIdentificadorUnico() {
+        $ucNombre = $this->getUcNombre();
+        $secCodigo = $this->getSecCodigo();
+        $anioAnio = $this->getAnioAnio();
+        $anioTipo = $this->getAnioTipo();
+        return preg_replace('/[^a-zA-Z0-9_]/', '', $ucNombre) . "_" . $secCodigo . "_" . $anioAnio . "_" . $anioTipo;
     }
-
-    private function guardarArchivoPERLocal($archivo, $rem_id, $ucurricular, $seccion)
-    {
-        $ucurricular = preg_replace('/[^a-zA-Z0-9\s]/', '', $ucurricular);
-        $ucurricular = str_replace(' ', '_', $ucurricular);
-        $seccion = str_replace(' ', '_', $seccion);
-        $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
-        $nombreArchivo = "PER_{$rem_id}_{$ucurricular}_{$seccion}_" . date('Y-m-d_H-i-s') . ".{$extension}";
-        $rutaFinal = $this->archivosPerDir . $nombreArchivo;
-        if (!move_uploaded_file($archivo['tmp_name'], $rutaFinal)) {
-            throw new Exception('Error al guardar el archivo PER en el disco.');
-        }
-        return $nombreArchivo;
-    }
-
-    public function guardarNotasRemedial($archivo, $fecha_para_nombre)
-    {
-        if (!isset($archivo) || $archivo['error'] !== UPLOAD_ERR_OK) {
-            return ['success' => false, 'mensaje' => 'El archivo de notas definitivas es obligatorio.'];
-        }
-
+    
+    public function guardarRegistroInicial($archivo) {
+        if (!isset($archivo) || $archivo['error'] !== UPLOAD_ERR_OK) { return ['success' => false, 'mensaje' => 'El archivo de acta es obligatorio.']; }
         $this->Con()->beginTransaction();
         try {
-            if (empty($this->getDocId())) {
-                throw new Exception('No se ha podido identificar al docente.');
-            }
+            $uc_codigo_val = $this->getUcCodigo();
+            $sec_codigo_val = $this->getSecCodigo();
+            $anio_anio_val = $this->getAnioAnio();
+            $ani_tipo_val = $this->getAnioTipo();
+
+            $chk = $this->Con()->prepare("SELECT COUNT(*) FROM per_aprobados WHERE uc_codigo = :uc AND sec_codigo = :sec AND ani_anio = :anio AND ani_tipo = :tipo AND pa_estado = 1");
+            $chk->bindParam(':uc', $uc_codigo_val, PDO::PARAM_STR);
+            $chk->bindParam(':sec', $sec_codigo_val, PDO::PARAM_INT);
+            $chk->bindParam(':anio', $anio_anio_val, PDO::PARAM_INT);
+            $chk->bindParam(':tipo', $ani_tipo_val, PDO::PARAM_STR);
+            $chk->execute();
+            if($chk->fetchColumn() > 0) { throw new Exception('Ya existe un registro activo para esta materia y sección. No se puede duplicar.'); }
             
-            $p = $this->Con()->prepare("INSERT INTO tbl_remedial (sec_id, uc_id, doc_id, rem_cantidad, rem_estado) VALUES (:sec_id, :uc_id, :doc_id, :rem_cantidad, 1)");
-            $secId = $this->getSecId();
-            $ucId = $this->getUcId();
-            $docId = $this->getDocId();
-            $remCantidad = $this->getRemCantidad();
-            $p->bindParam(':sec_id', $secId, PDO::PARAM_INT);
-            $p->bindParam(':uc_id', $ucId, PDO::PARAM_INT);
-            $p->bindParam(':doc_id', $docId, PDO::PARAM_INT);
-            $p->bindParam(':rem_cantidad', $remCantidad, PDO::PARAM_INT);
-            $p->execute();
-            $this->setRemId($this->Con()->lastInsertId());
+            $identificador = $this->generarIdentificadorUnico();
+            $nombreArchivo = "DEF_{$identificador}." . pathinfo($archivo['name'], PATHINFO_EXTENSION);
+            if (!move_uploaded_file($archivo['tmp_name'], $this->archivosDir . $nombreArchivo)) { throw new Exception('Error al guardar el archivo definitivo.'); }
 
-            $p = $this->Con()->prepare("INSERT INTO remedial_anio (ani_id, rem_id, per_cantidad, per_aprobados) VALUES (:ani_id, :rem_id, :per_cantidad, 0)");
-            $anioId = $this->getAnioId();
-            $lastRemId = $this->getRemId();
-            $perCantidad = $this->getPerCantidad(); 
-            $p->bindParam(':ani_id', $anioId, PDO::PARAM_INT);
-            $p->bindParam(':rem_id', $lastRemId, PDO::PARAM_INT);
-            $p->bindParam(':per_cantidad', $perCantidad, PDO::PARAM_INT);
-            $p->execute();
+            $p_periodo = $this->Con()->prepare("INSERT INTO tbl_per (ani_anio, ani_tipo, per_apertura, per_fase) VALUES (:anio, :tipo, CURDATE(), 1) ON DUPLICATE KEY UPDATE ani_anio = VALUES(ani_anio)");
+            $p_periodo->bindParam(':anio', $anio_anio_val, PDO::PARAM_INT);
+            $p_periodo->bindParam(':tipo', $ani_tipo_val, PDO::PARAM_STR);
+            $p_periodo->execute();
 
-            $this->guardarArchivoDefinitivoLocal($archivo, $this->getRemId(), $this->getUcNombre(), $this->getSeccionCodigo(), $fecha_para_nombre);
+            $p_apro = $this->Con()->prepare("INSERT INTO tbl_aprobados (uc_codigo, sec_codigo, apro_cantidad, apro_estado) VALUES (:uc, :sec, :cant, 1) ON DUPLICATE KEY UPDATE apro_cantidad = :cant, apro_estado = 1");
+            $apro_cantidad_val = $this->getAproCantidad();
+            $p_apro->bindParam(':uc', $uc_codigo_val, PDO::PARAM_STR);
+            $p_apro->bindParam(':sec', $sec_codigo_val, PDO::PARAM_INT);
+            $p_apro->bindParam(':cant', $apro_cantidad_val, PDO::PARAM_INT);
+            $p_apro->execute();
+            
+            $p_per = $this->Con()->prepare("INSERT INTO per_aprobados (ani_anio, ani_tipo, uc_codigo, sec_codigo, per_cantidad, pa_estado) VALUES (:anio, :tipo, :uc, :sec, :cant, 1) ON DUPLICATE KEY UPDATE per_cantidad = :cant, pa_estado = 1");
+            $per_cantidad_val = $this->getPerCantidad();
+            $p_per->bindParam(':anio', $anio_anio_val, PDO::PARAM_INT);
+            $p_per->bindParam(':tipo', $ani_tipo_val, PDO::PARAM_STR);
+            $p_per->bindParam(':uc', $uc_codigo_val, PDO::PARAM_STR);
+            $p_per->bindParam(':sec', $sec_codigo_val, PDO::PARAM_INT);
+            $p_per->bindParam(':cant', $per_cantidad_val, PDO::PARAM_INT);
+            $p_per->execute();
             
             $this->Con()->commit();
-            return ['success' => true, 'mensaje' => 'Registro de remedial guardado con éxito.'];
+            return ['success' => true, 'mensaje' => 'Registro inicial guardado con éxito.'];
         } catch (Exception $e) {
             $this->Con()->rollBack();
             return ['success' => false, 'mensaje' => 'Error en la operación: ' . $e->getMessage()];
         }
     }
 
-    public function registrarAprobadosPer($archivo)
-    {
-        if (!isset($archivo) || $archivo['error'] !== UPLOAD_ERR_OK) {
-            return ['success' => false, 'mensaje' => 'El archivo de notas del PER es obligatorio.'];
-        }
-
+    public function registrarAprobadosPer($archivo) {
+        if (!isset($archivo) || $archivo['error'] !== UPLOAD_ERR_OK) { return ['success' => false, 'mensaje' => 'El archivo del PER es obligatorio.']; }
         $this->Con()->beginTransaction();
         try {
-            $this->guardarArchivoPERLocal($archivo, $this->getRemId(), $this->getUcNombre(), $this->getSeccionCodigo());
-
-            $p = $this->Con()->prepare("UPDATE remedial_anio SET per_aprobados = :per_aprobados WHERE rem_id = :rem_id");
-            $aprobados = $this->getPerAprobados();
-            $remId = $this->getRemId();
-            $p->bindParam(':per_aprobados', $aprobados, PDO::PARAM_INT);
-            $p->bindParam(':rem_id', $remId, PDO::PARAM_INT);
-            $p->execute();
+            $identificador = $this->generarIdentificadorUnico();
+            $nombreArchivo = "PER_{$identificador}_" . time() . "." . pathinfo($archivo['name'], PATHINFO_EXTENSION);
+            if (!move_uploaded_file($archivo['tmp_name'], $this->archivosPerDir . $nombreArchivo)) { throw new Exception('Error al guardar el archivo del PER.'); }
+            
+            $p_update = $this->Con()->prepare("UPDATE per_aprobados SET per_aprobados = :aprob WHERE uc_codigo = :uc AND sec_codigo = :sec");
+            $per_aprobados_val = $this->getPerAprobados();
+            $uc_codigo_val = $this->getUcCodigo();
+            $sec_codigo_val = $this->getSecCodigo();
+            $p_update->bindParam(':aprob', $per_aprobados_val, PDO::PARAM_INT);
+            $p_update->bindParam(':uc', $uc_codigo_val, PDO::PARAM_STR);
+            $p_update->bindParam(':sec', $sec_codigo_val, PDO::PARAM_INT);
+            $p_update->execute();
 
             $this->Con()->commit();
-            return ['success' => true, 'mensaje' => 'Aprobados del remedial registrados con éxito.'];
+            return ['success' => true, 'mensaje' => 'Aprobados del PER registrados con éxito.'];
         } catch (Exception $e) {
             $this->Con()->rollBack();
             return ['success' => false, 'mensaje' => 'Error al registrar aprobados: ' . $e->getMessage()];
         }
     }
     
-    public function eliminarRegistroRemedial($rem_id)
-    {
-        $this->Con()->beginTransaction();
-        try {
-            // 1. Eliminar archivos físicos asociados
-            $globPatternDef = $this->archivosDir . "DEF_" . $rem_id . "_*.*";
-            $foundFilesDef = glob($globPatternDef);
-            if ($foundFilesDef !== false) {
-                foreach ($foundFilesDef as $file) {
-                    unlink($file);
-                }
-            }
-            
-            $globPatternPer = $this->archivosPerDir . "PER_" . $rem_id . "_*.*";
-            $foundFilesPer = glob($globPatternPer);
-            if ($foundFilesPer !== false) {
-                foreach ($foundFilesPer as $file) {
-                    unlink($file);
-                }
-            }
-
-            // 2. Eliminar de la tabla 'remedial_anio'
-            $p_ra = $this->Con()->prepare("DELETE FROM remedial_anio WHERE rem_id = :rem_id");
-            $p_ra->bindParam(':rem_id', $rem_id, PDO::PARAM_INT);
-            $p_ra->execute();
-
-            // 3. Eliminar de la tabla 'tbl_remedial'
-            $p_r = $this->Con()->prepare("DELETE FROM tbl_remedial WHERE rem_id = :rem_id");
-            $p_r->bindParam(':rem_id', $rem_id, PDO::PARAM_INT);
-            $p_r->execute();
-
-            $this->Con()->commit();
-            return ['success' => true, 'mensaje' => 'Registro de remedial eliminado exitosamente.'];
-        } catch (Exception $e) {
-            $this->Con()->rollBack();
-            return ['success' => false, 'mensaje' => 'Error al eliminar el registro: ' . $e->getMessage()];
-        }
-    }
-
-    public function listarRegistros()
-    {
-        $p = $this->Con()->prepare("
-            SELECT r.rem_id, a.ani_anio, s.sec_codigo, uc.uc_nombre,
-                   s.sec_cantidad, 
-                   r.rem_cantidad AS reprobados,
-                   ra.per_cantidad, 
-                   ra.per_aprobados
-            FROM tbl_remedial r
-            JOIN tbl_seccion s ON r.sec_id = s.sec_id
-            JOIN tbl_uc uc ON r.uc_id = uc.uc_id
-            JOIN remedial_anio ra ON r.rem_id = ra.rem_id
-            JOIN tbl_anio a ON ra.ani_id = a.ani_id
-            ORDER BY a.ani_anio DESC, s.sec_codigo ASC
-        ");
+    public function listarRegistros() {
+        $sql = "SELECT 
+                    s.sec_codigo, s.sec_cantidad,
+                    a.ani_anio, a.ani_tipo,
+                    uc.uc_codigo, uc.uc_nombre,
+                    ap.apro_cantidad,
+                    p.per_cantidad, p.per_aprobados
+                FROM (
+                    SELECT uc_codigo, sec_codigo FROM tbl_aprobados WHERE apro_estado = 1
+                    UNION
+                    SELECT uc_codigo, sec_codigo FROM per_aprobados WHERE pa_estado = 1
+                ) AS distinct_records
+                JOIN tbl_seccion s ON distinct_records.sec_codigo = s.sec_codigo
+                JOIN tbl_uc uc ON distinct_records.uc_codigo = uc.uc_codigo
+                JOIN tbl_anio a ON s.ani_anio = a.ani_anio AND s.ani_tipo = a.ani_tipo
+                LEFT JOIN tbl_aprobados ap ON distinct_records.uc_codigo = ap.uc_codigo AND distinct_records.sec_codigo = ap.sec_codigo AND ap.apro_estado = 1
+                LEFT JOIN per_aprobados p ON distinct_records.uc_codigo = p.uc_codigo AND distinct_records.sec_codigo = p.sec_codigo AND p.pa_estado = 1
+                ORDER BY a.ani_anio DESC, s.sec_codigo ASC, uc.uc_nombre ASC";
+        
+        $p = $this->Con()->prepare($sql);
         $p->execute();
         $registros = $p->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($registros as $key => $registro) {
-            $nombreArchivoDef = null;
-            $globPattern = $this->archivosDir . "DEF_" . $registro['rem_id'] . "_*.*";
-            $foundFiles = glob($globPattern);
-            if (!empty($foundFiles)) {
-                $nombreArchivoDef = basename($foundFiles[0]);
-            }
-            $registros[$key]['archivo_definitivo'] = $nombreArchivoDef;
+            $identificador = preg_replace('/[^a-zA-Z0-9_]/', '', $registro['uc_nombre']) . "_" . $registro['sec_codigo'] . "_" . $registro['ani_anio'] . "_" . $registro['ani_tipo'];
+            $foundFilesDef = glob($this->archivosDir . "DEF_{$identificador}.*");
+            $registros[$key]['archivo_definitivo'] = !empty($foundFilesDef) ? basename($foundFilesDef[0]) : null;
+            
+            $foundFilesPer = glob($this->archivosPerDir . "PER_{$identificador}_*.*");
+            $registros[$key]['archivo_per'] = !empty($foundFilesPer) ? basename($foundFilesPer[0]) : null;
         }
-        $p = null;
         return $registros;
     }
     
-    public function listarArchivosPerPorId($rem_id)
-    {
-        $archivos = [];
-        $globPattern = $this->archivosPerDir . "PER_" . $rem_id . "_*.*";
-        $foundFiles = glob($globPattern);
-        if ($foundFiles !== false) {
-            foreach ($foundFiles as $file) {
-                $archivos[] = ['nombre_guardado' => basename($file)];
-            }
-        }
-        return $archivos;
-    }
+    public function eliminarRegistroCompleto() {
+        $this->Con()->beginTransaction();
+        try {
+            $uc_codigo_val = $this->getUcCodigo();
+            $sec_codigo_val = $this->getSecCodigo();
 
-    public function eliminarArchivoPer($nombreArchivo)
-    {
-        $ruta = $this->archivosPerDir . $nombreArchivo;
-        if (file_exists($ruta)) {
-            if (unlink($ruta)) {
-                return ['success' => true, 'mensaje' => 'Archivo PER eliminado.'];
-            }
-            return ['success' => false, 'mensaje' => 'Error al eliminar el archivo PER.'];
+            $p_del_per = $this->Con()->prepare("UPDATE per_aprobados SET pa_estado = 0 WHERE uc_codigo = :uc AND sec_codigo = :sec");
+            $p_del_per->bindParam(':uc', $uc_codigo_val, PDO::PARAM_STR);
+            $p_del_per->bindParam(':sec', $sec_codigo_val, PDO::PARAM_INT);
+            $p_del_per->execute();
+
+            $p_del_apro = $this->Con()->prepare("UPDATE tbl_aprobados SET apro_estado = 0 WHERE uc_codigo = :uc AND sec_codigo = :sec");
+            $p_del_apro->bindParam(':uc', $uc_codigo_val, PDO::PARAM_STR);
+            $p_del_apro->bindParam(':sec', $sec_codigo_val, PDO::PARAM_INT);
+            $p_del_apro->execute();
+            
+            $this->Con()->commit();
+            return ['success' => true, 'mensaje' => 'Registro eliminado exitosamente.'];
+        } catch (Exception $e) {
+            $this->Con()->rollBack();
+            return ['success' => false, 'mensaje' => 'Error al desactivar el registro: ' . $e->getMessage()];
         }
-        return ['success' => false, 'mensaje' => 'Archivo PER no encontrado.'];
     }
     
-    public function obtenerAnios()
-    {
-        $p = $this->Con()->prepare("SELECT ani_id, ani_anio FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC");
-        $p->execute();
-        return $p->fetchAll(PDO::FETCH_ASSOC);
+    public function verificarAcceso(){
+        $p_malla = $this->Con()->prepare("SELECT COUNT(*) FROM tbl_malla WHERE mal_activa = 1");
+        $p_malla->execute();
+        if($p_malla->fetchColumn() == 0) return "Acceso Denegado: No hay ninguna malla curricular activa. Contacte al administrador.";
+
+        return null;
+    }
+    
+    public function obtenerAnios() {
+        $p = $this->Con()->prepare("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo ASC");
+        $p->execute(); return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function obtenerUnidadesPorDocente($doc_id)
-    {
-        $sql = "SELECT DISTINCT uc.uc_id, uc.uc_nombre
-                FROM tbl_uc uc
-                INNER JOIN uc_docente ud ON uc.uc_id = ud.uc_id
-                WHERE ud.doc_id = :doc_id AND uc.uc_estado = 1 AND ud.uc_doc_estado = 1
-                ORDER BY uc.uc_nombre ASC";
+    public function obtenerFaseActual() {
+        $p = $this->Con()->prepare("SELECT ani_anio, ani_tipo, fase_numero FROM tbl_fase WHERE NOW() BETWEEN fase_apertura AND fase_cierre LIMIT 1");
+        $p->execute(); return $p->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function determinarFaseParaRemedial($fase_actual) {
+        if (!$fase_actual) return null;
+        if ($fase_actual['fase_numero'] == 2) return ['anio' => $fase_actual['ani_anio'], 'tipo' => $fase_actual['ani_tipo'], 'fase' => 1];
+        if ($fase_actual['fase_numero'] == 1) {
+            $anio_anterior = $fase_actual['ani_anio'] - 1;
+            $p = $this->Con()->prepare("SELECT ani_tipo FROM tbl_anio WHERE ani_anio = :anio ORDER BY ani_tipo DESC LIMIT 1");
+            $p->bindParam(':anio', $anio_anterior, PDO::PARAM_INT);
+            $p->execute();
+            $tipo_anterior = $p->fetchColumn();
+            if ($tipo_anterior) return ['anio' => $anio_anterior, 'tipo' => $tipo_anterior, 'fase' => 2];
+        }
+        return null;
+    }
+
+    public function obtenerUnidadesParaRemedial($doc_cedula, $fase_uc) {
+        $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre FROM tbl_uc uc INNER JOIN uc_docente ud ON uc.uc_codigo = ud.uc_codigo INNER JOIN uc_malla um ON uc.uc_codigo = um.uc_codigo INNER JOIN tbl_malla mal ON um.mal_codigo = mal.mal_codigo WHERE ud.doc_cedula = :doc_cedula AND uc.uc_estado = 1 AND ud.uc_doc_estado = 1 AND mal.mal_activa = 1 AND (uc.uc_periodo = :fase_uc OR uc.uc_periodo = 'ANUAL') ORDER BY uc.uc_nombre ASC";
         $p = $this->Con()->prepare($sql);
-        $p->bindParam(':doc_id', $doc_id, PDO::PARAM_INT);
+        $p->bindParam(':doc_cedula', $doc_cedula, PDO::PARAM_INT);
+        $p->bindParam(':fase_uc', $fase_uc, PDO::PARAM_INT);
         $p->execute();
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function obtenerSeccionesPorAnio($anio_id)
-    {
-        $p = $this->Con()->prepare("SELECT sec_id, sec_codigo, sec_cantidad FROM tbl_seccion WHERE ani_id = :anio_id AND sec_estado = 1");
-        $p->bindParam(':anio_id', $anio_id, PDO::PARAM_INT);
+    public function obtenerSeccionesPorAnio($anio_anio, $ani_tipo, $doc_cedula) {
+        $sql = "SELECT DISTINCT s.sec_codigo, s.sec_cantidad FROM tbl_seccion s JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo WHERE s.ani_anio = :anio_anio AND s.ani_tipo = :ani_tipo AND ud.doc_cedula = :doc_cedula AND s.sec_estado = 1 ORDER BY s.sec_codigo ASC";
+        $p = $this->Con()->prepare($sql);
+        $p->bindParam(':anio_anio', $anio_anio, PDO::PARAM_INT);
+        $p->bindParam(':ani_tipo', $ani_tipo, PDO::PARAM_STR);
+        $p->bindParam(':doc_cedula', $doc_cedula, PDO::PARAM_INT);
         $p->execute();
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>
+

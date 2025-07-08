@@ -42,45 +42,72 @@ class Espacio extends Connection
     {
         $r = array();
 
-       
-        if (!$this->existeDirecto($this->codigoEspacio)) { 
-
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            try {
-
-                $stmt = $co->prepare("INSERT INTO tbl_espacio (
-                    esp_codigo,
-                    esp_tipo,
-                    esp_estado
-                ) VALUES (
-                    :codigoEspacio,
-                    :tipoEspacio,
-                    1
-                )");
-
-                $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
-                $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-
-                $stmt->execute();
-
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
-            } catch (Exception $e) {
-
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-
-            $co = null;
-        } else {
+  
+        if ($this->existeDirecto($this->codigoEspacio)) { 
             $r['resultado'] = 'error'; 
             $r['mensaje'] = 'ERROR! <br/> El ESPACIO colocado YA existe!';
+            return $r;
         }
 
+      
+        if ($this->existeInactivo($this->codigoEspacio)) {
+         
+            return $this->Reactivar();
+        }
+        
+       
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        try {
+            $stmt = $co->prepare("INSERT INTO tbl_espacio (
+                esp_codigo,
+                esp_tipo,
+                esp_estado
+            ) VALUES (
+                :codigoEspacio,
+                :tipoEspacio,
+                1
+            )");
+
+            $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+
+        $co = null;
         return $r;
     }
+    
+    
+    function Reactivar() {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->prepare("UPDATE tbl_espacio
+            SET esp_tipo = :tipoEspacio, esp_estado = 1
+            WHERE esp_codigo = :codigoEspacio"); 
+
+            $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $r['resultado'] = 'registrar'; 
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        return $r;
+    }
+
 
     function Modificar()
     {
@@ -198,6 +225,20 @@ class Espacio extends Connection
             return $stmt->fetchColumn() > 0;
         } catch (Exception $e) {
             error_log("Error en existeDirecto: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+
+    private function existeInactivo($codigoEspacio) {
+        try {
+            $co = $this->Con();
+            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_codigo = :codigoEspacio AND esp_estado = 0");
+            $stmt->bindParam(':codigoEspacio', $codigoEspacio, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            error_log("Error en existeInactivo: " . $e->getMessage());
             return false;
         }
     }

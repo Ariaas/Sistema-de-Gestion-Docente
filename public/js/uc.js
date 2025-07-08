@@ -66,8 +66,30 @@ function crearDT(selector) {
     }
 }
 
+function verificarRequisitosIniciales() {
+    const totalEjes = parseInt($('.main-content').data('total-ejes'), 10);
+    const totalAreas = parseInt($('.main-content').data('total-areas'), 10);
+    const registrarBtn = $("#registrar");
+    const warningSpan = $("#registrar-warning");
+    let warningMsg = "";
+
+    if (totalEjes === 0 && totalAreas === 0) {
+        warningMsg = "Debe registrar al menos un Eje y un Área.";
+    } else if (totalEjes === 0) {
+        warningMsg = "Debe registrar al menos un Eje.";
+    } else if (totalAreas === 0) {
+        warningMsg = "Debe registrar al menos un Área.";
+    }
+
+    if (warningMsg) {
+        registrarBtn.prop("disabled", true).attr("title", warningMsg);
+        warningSpan.text(warningMsg);
+    }
+}
+
 $(document).ready(function() {
     Listar();
+    verificarRequisitosIniciales();
 
     destruyeDT("#tablauc");
     crearDT("#tablauc");
@@ -76,51 +98,32 @@ $(document).ready(function() {
     crearDT("#tabladocente");
 
     $(document).on("click", ".asignar-uc", function() {
-        ucSeleccionada = $(this).data("id");
+        ucSeleccionada = $(this).closest("tr").data("codigo");
         carritoDocentes = [];
         actualizarCarritoDocentes();
         $("#modal2").modal("show");
     });
 
     $("#proceso").on("click", function() {
-        if ($(this).text() == "REGISTRAR") {
+        if ($(this).text() == "MODIFICAR") {
             if (validarenvio()) {
-                var datos = new FormData();
-                datos.append("accion", "registrar");
-                datos.append("codigoUC", $("#codigoUC").val());
-                datos.append("nombreUC", $("#nombreUC").val());
-                datos.append("trayectoUC", $("#trayectoUC").val());
-                datos.append("ejeUC", $("#ejeUC").val());
-                datos.append("areaUC", $("#areaUC").val());
-                datos.append("creditosUC", $("#creditosUC").val());
-                datos.append("periodoUC", $("#periodoUC").val());
-                datos.append("electivaUC", $("#electivaUC").val());
-                datos.append("academicaUC", $("#academicaUC").val());
-
+                var datos = new FormData($("#f")[0]);
+                datos.append("accion", "modificar");
+                datos.append("codigoUCOriginal", originalCodigoUC);
                 enviaAjax(datos);
             }
-        } else if ($(this).text() == "MODIFICAR") {
+        } else if ($(this).text() == "REGISTRAR") {
             if (validarenvio()) {
-                var datos = new FormData();
-                datos.append("accion", "modificar");
-                datos.append("idUC", $("#idUC").val());
-                datos.append("codigoUC", $("#codigoUC").val());
-                datos.append("nombreUC", $("#nombreUC").val());
-                datos.append("trayectoUC", $("#trayectoUC").val());
-                datos.append("ejeUC", $("#ejeUC").val());
-                datos.append("areaUC", $("#areaUC").val());
-                datos.append("creditosUC", $("#creditosUC").val());
-                datos.append("periodoUC", $("#periodoUC").val());
-                datos.append("electivaUC", $("#electivaUC").val());
-
+                var datos = new FormData($("#f")[0]);
+                datos.append("accion", "registrar");
                 enviaAjax(datos);
             }
         }
         if ($(this).text() == "ELIMINAR") {
-            var idUC = $("#idUC").val();
+            var codigoUC = $("#codigoUC").val();
             var datosVerificacion = new FormData();
             datosVerificacion.append("accion", "verificar_horario");
-            datosVerificacion.append("idUC", idUC);
+            datosVerificacion.append("codigoUC", codigoUC);
 
             $.ajax({
                 async: true,
@@ -154,7 +157,7 @@ $(document).ready(function() {
                             if (result.isConfirmed) {
                                 var datos = new FormData();
                                 datos.append("accion", "eliminar");
-                                datos.append("idUC", idUC);
+                                datos.append("codigoUC", codigoUC);
                                 enviaAjax(datos);
                             } else {
                                 muestraMensaje("info", 2000, "INFORMACIÓN", "La eliminación ha sido cancelada.");
@@ -176,56 +179,56 @@ $(document).ready(function() {
     $("#registrar").on("click", function() {
         limpia();
         $("#proceso").text("REGISTRAR");
-        $("#idUC, #codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC").prop("disabled", false);
+        $("#codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC").prop("disabled", false);
         $("#modal1").modal("show");
     });
     $(
-        "#idUC, #codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC"
+        "#codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC"
     ).prop("disabled", false);
 
 });
 
 function validarenvio() {
-    if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "El código de la unidad curricular es obligatorio.");
-        $("#codigoUC").focus();
-        return false;
-    }
-    if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "El nombre de la unidad curricular es obligatorio.");
-        $("#nombreUC").focus();
-        return false;
-    }
-    if ($("#creditosUC").val() == "" || $("#creditosUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Las unidades de crédito son obligatorias.");
-        $("#creditosUC").focus();
-        return false;
-    }
-    if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
-        $("#trayectoUC").focus();
-        return false;
-    }
-    if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un eje.");
-        $("#ejeUC").focus();
-        return false;
-    }
-    if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un área.");
-        $("#areaUC").focus();
-        return false;
-    }
-    if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un periodo.");
-        $("#periodoUC").focus();
-        return false;
-    }
-    if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar si es electiva o no.");
-        $("#electivaUC").focus();
-        return false;
-    }
+    // if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "El código de la unidad curricular es obligatorio.");
+    //     $("#codigoUC").focus();
+    //     return false;
+    // }
+    // if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "El nombre de la unidad curricular es obligatorio.");
+    //     $("#nombreUC").focus();
+    //     return false;
+    // }
+    // if ($("#creditosUC").val() == "" || $("#creditosUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "Las unidades de crédito son obligatorias.");
+    //     $("#creditosUC").focus();
+    //     return false;
+    // }
+    // if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
+    //     $("#trayectoUC").focus();
+    //     return false;
+    // }
+    // if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un eje.");
+    //     $("#ejeUC").focus();
+    //     return false;
+    // }
+    // if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un área.");
+    //     $("#areaUC").focus();
+    //     return false;
+    // }
+    // if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un periodo.");
+    //     $("#periodoUC").focus();
+    //     return false;
+    // }
+    // if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
+    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar si es electiva o no.");
+    //     $("#electivaUC").focus();
+    //     return false;
+    // }
     if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
         muestraMensaje("error", 4000, "Atención!", "Una unidad curricular electiva no puede tener periodo anual.");
         $("#periodoUC").focus();
@@ -237,16 +240,16 @@ function validarenvio() {
 
 function pone(pos, accion) {
     linea = $(pos).closest("tr");
+    originalCodigoUC = linea.data("codigo");
 
     if (accion == 0) {
         $("#proceso").text("MODIFICAR");
-        $("#idUC, #codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC").prop("disabled", false);
+        $("#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC").prop("disabled", false);
     } else {
         $("#proceso").text("ELIMINAR");
-        $("#idUC, #codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC").prop("disabled", true);
+        $("#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC").prop("disabled", true);
     }
 
-    $("#idUC").val(linea.data("id"));
     $("#codigoUC").val(linea.data("codigo"));
     $("#nombreUC").val(linea.data("nombre"));
     $("#trayectoUC").val(linea.data("trayecto"));
@@ -260,10 +263,10 @@ function pone(pos, accion) {
     $("#scodigoUC, #snombreUC, #strayectoUC, #seje, #sarea, #screditosUC, #speriodoUC, #selectivaUC").hide();
 }
 
-function verDocentes(ucId, ucNombre) {
+function verDocentes(ucCodigo, ucNombre) {
     var datos = new FormData();
     datos.append('accion', 'ver_docentes');
-    datos.append('id', ucId);
+    datos.append('codigo', ucCodigo);
 
     $.ajax({
         async: true,
@@ -283,19 +286,12 @@ function verDocentes(ucId, ucNombre) {
 
                     if(lee.mensaje.length > 0) {
                         lee.mensaje.forEach(function(docente) {
-                            let fechaConcurso = 'Sin fecha registrada';
-                            if (docente.uc_anio_concurso) {
-                                const [year, month] = docente.uc_anio_concurso.split('-');
-                                fechaConcurso = `${month}/${year}`;
-                            }
-
                             var li = `
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span>
                                         ${docente.doc_nombre} ${docente.doc_apellido}
-                                        <small class="text-muted d-block">Fecha Concurso: ${fechaConcurso}</small>
                                     </span>
-                                    <button class="btn btn-danger btn-sm quitar-docente-uc" data-ucid="${ucId}" data-docid="${docente.doc_id}" title="Quitar Docente">
+                                    <button class="btn btn-danger btn-sm quitar-docente-uc" data-uccodigo="${ucCodigo}" data-doccedula="${docente.doc_cedula}" title="Quitar Docente">
                                         Quitar
                                     </button>
                                 </li>`;
@@ -338,9 +334,14 @@ function enviaAjax(datos) {
                     lee.mensaje.forEach(item => {
                         let electivaTexto = item.uc_electiva == 1 ? "Sí" : "No";
                         let periodoTexto = item.uc_periodo === "anual" ? "Anual" : (item.uc_periodo === "1" ? "Fase 1" : (item.uc_periodo === "2" ? "Fase 2" : item.uc_periodo));
+                        
+                        const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                        const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                        const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
+                        const btnVerDocentes = `<button class="btn btn-icon btn-info" onclick="verDocentes('${item.uc_codigo}', '${item.uc_nombre}')" title="Ver Docentes" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/people.svg" alt="Ver Docentes"></button>`;
+
                         tabla += `
-                            <tr data-id="${item.uc_id}" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_id}" data-area="${item.area_id}" data-creditos="${item.uc_creditos}" data-periodo="${item.uc_periodo}" data-electiva="${item.uc_electiva}">
-                                <td style="display: none;">${item.uc_id}</td>
+                            <tr data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${item.uc_periodo}" data-electiva="${item.uc_electiva}">
                                 <td>${item.uc_codigo}</td>
                                 <td>${item.uc_nombre}</td>
                                 <td>${item.uc_trayecto}</td>
@@ -350,10 +351,10 @@ function enviaAjax(datos) {
                                 <td>${periodoTexto}</td>
                                 <td>${electivaTexto}</td>
                                 <td class="text-center">
-                                    <button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-                                    <button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
-                                    <button class="btn btn-icon btn-success asignar-uc" data-id="${item.uc_id}" title="Asignar"><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>
-                                    <button class="btn btn-icon btn-info" onclick="verDocentes('${item.uc_id}', '${item.uc_nombre}')" title="Ver Docentes"><img src="public/assets/icons/people.svg" alt="Ver Docentes"></button>
+                                    ${btnModificar}
+                                    ${btnEliminar}
+                                    ${btnAsignar}
+                                    ${btnVerDocentes}
                                 </td>
                             </tr>`;
                     });
@@ -383,9 +384,9 @@ function enviaAjax(datos) {
                     Listar();
                 } else if (lee.resultado == "quitar") {
                     muestraMensaje("info", 2000, "QUITAR", lee.mensaje);
-                    if (lee.uc_id) {
+                    if (lee.uc_codigo) {
                         const ucNombre = $('#ucNombreModal').text();
-                        verDocentes(lee.uc_id, ucNombre);
+                        verDocentes(lee.uc_codigo, ucNombre);
                     }
                     Listar();
                 } else if (lee.resultado == 'error' || lee.resultado == 'existe') {
@@ -404,8 +405,6 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-    // Limpia los campos del formulario
-    $("#idUC").val("");
     $("#codigoUC").val("");
     $("#nombreUC").val("");
     $("#creditosUC").val("");
@@ -428,16 +427,10 @@ function actualizarCarritoDocentes() {
     if (!ul) return;
     ul.innerHTML = "";
     carritoDocentes.forEach((asignacion, idx) => {
-        const [year, month] = asignacion.fecha.split('-');
-        const fechaFormateada = `${month}/${year}`;
-
         const li = document.createElement("li");
         li.className = "list-group-item d-flex justify-content-between align-items-center";
         li.innerHTML = `
-            <span>
-                ${asignacion.nombre}
-                <small class="text-muted d-block">Fecha Concurso: ${fechaFormateada}</small>
-            </span>
+            <span>${asignacion.nombre}</span>
             <button type="button" class="btn btn-danger btn-sm quitar-docente" data-idx="${idx}">Quitar</button>
         `;
         ul.appendChild(li);
@@ -446,34 +439,25 @@ function actualizarCarritoDocentes() {
 
 $(document).on("click", "#agregarDocente", function() {
     const select = document.getElementById("docenteUC");
-    const docenteId = select.value;
+    const docenteCedula = select.value;
     const docenteNombre = select.options[select.selectedIndex]?.text;
-    const fechaConcurso = $("#fechaConcursoUC").val();
 
-    if (!docenteId) {
+    if (!docenteCedula) {
         Swal.fire({ icon: 'warning', title: 'Atención', text: 'Seleccione un docente válido.' });
         return;
     }
     
-    if (!fechaConcurso) {
-        Swal.fire({ icon: 'warning', title: 'Atención', text: 'Seleccione una fecha de concurso para el docente.' });
-        return;
-    }
-
-    if (carritoDocentes.some(doc => doc.id === docenteId)) {
+    if (carritoDocentes.some(doc => doc.cedula === docenteCedula)) {
         Swal.fire({ icon: 'warning', title: 'Atención', text: 'Este docente ya está en la lista.' });
         return;
     }
 
     carritoDocentes.push({
-        id: docenteId,
-        nombre: docenteNombre,
-        fecha: fechaConcurso
+        cedula: docenteCedula,
+        nombre: docenteNombre
     });
     actualizarCarritoDocentes();
-    // Limpiar campos para la siguiente entrada
     $("#docenteUC").val("");
-    $("#fechaConcursoUC").val("");
 });
 
 $(document).on("click", ".quitar-docente", function() {
@@ -514,27 +498,26 @@ $(document).on("click", "#asignarDocentes", function() {
 });
 
 $(document).on("click", ".ver-docentes", function() {
-    const uc_id = $(this).closest("tr").find("td:eq(0)").text();
-    $("#tabladocenteContainer").show();
-    $("#modal3").modal("show");
-    solicitarDocentesPorUC(uc_id);
+    const uc_codigo = $(this).closest("tr").data("codigo");
+    const uc_nombre = $(this).closest("tr").data("nombre");
+    verDocentes(uc_codigo, uc_nombre);
 });
 
-function solicitarDocentesPorUC(uc_id) {
+function solicitarDocentesPorUC(uc_codigo) {
     var datos = new FormData();
     datos.append("accion", "consultarAsignacion");
-    datos.append("uc_id", uc_id);
+    datos.append("uc_codigo", uc_codigo);
     enviaAjax(datos, "mostrarDocentesDeUC");
 }
 
 $(document).on("click", ".quitar-docente-uc", function() {
-    const docId = $(this).data("docid");
-    const ucId = $(this).data("ucid");
+    const docCedula = $(this).data("doccedula");
+    const ucCodigo = $(this).data("uccodigo");
 
     var datosVerificacion = new FormData();
     datosVerificacion.append("accion", "verificar_docente_horario");
-    datosVerificacion.append("uc_id", ucId);
-    datosVerificacion.append("doc_id", docId);
+    datosVerificacion.append("uc_codigo", ucCodigo);
+    datosVerificacion.append("doc_cedula", docCedula);
 
     $.ajax({
         async: true,
@@ -568,8 +551,8 @@ $(document).on("click", ".quitar-docente-uc", function() {
                     if (result.isConfirmed) {
                         var datos = new FormData();
                         datos.append("accion", "quitar");
-                        datos.append("doc_id", docId);
-                        datos.append("uc_id", ucId);
+                        datos.append("doc_cedula", docCedula);
+                        datos.append("uc_codigo", ucCodigo);
                         enviaAjax(datos);
                     }
                 });

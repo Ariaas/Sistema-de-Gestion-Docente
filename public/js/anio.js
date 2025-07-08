@@ -121,7 +121,6 @@ function Listar() {
           datos.append("accion", "modificar");
           datos.append("aniAnio", $("#aniAnio").val());
           datos.append("tipoAnio", $("#tipoAnio").val());
-          datos.append("aniId", $("#aniId").val());
           datos.append("aniAperturaFase1", $("#aniAperturaFase1").val());
           datos.append("aniCierraFase1", $("#aniCierraFase1").val());
           datos.append("aniAperturaFase2", $("#aniAperturaFase2").val());
@@ -135,7 +134,7 @@ function Listar() {
       if ($(this).text() == "ELIMINAR") {
        
           Swal.fire({
-            title: "¿Está seguro de eliminar este espacio?",
+            title: "¿Está seguro de eliminar este año?",
             text: "Esta acción no se puede deshacer.",
             icon: "warning",
             showCancelButton: true,
@@ -181,6 +180,16 @@ function Listar() {
       $("#aniAnio").val(currentYear).trigger('change');
       $("#aniId").prop("disabled", true);
       $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+      
+      const tiposActivos = window.tiposActivos || [];
+      $('#tipoAnio option').prop('disabled', false); 
+      if (tiposActivos.includes('regular')) {
+          $('#tipoAnio option[value="regular"]').prop('disabled', true);
+      }
+      if (tiposActivos.includes('intensivo')) {
+          $('#tipoAnio option[value="intensivo"]').prop('disabled', true);
+      }
+
       $("#modal1 .modal-title").text("Formulario de Año Regular/Intensivo");
       $("#modal1").modal("show");
     });
@@ -295,6 +304,7 @@ $("#tipoAnio").on("change", function() {
     $("#proceso").text("MODIFICAR");
     $("#aniId").prop("disabled", false);
     $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+    $('#tipoAnio option[value="regular"], #tipoAnio option[value="intensivo"]').prop('disabled', false);
   } else {
     $("#proceso").text("ELIMINAR");
     $("#aniId, #aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
@@ -351,7 +361,7 @@ $("#tipoAnio").on("change", function() {
                     </button>
                   </td>
                   <td class="text-nowrap">
-                    <button class="btn btn-info btn-sm ver-per-btn" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}">Ver PER</button>
+                    ${item.ani_tipo !== 'intensivo' ? `<button class="btn btn-info btn-sm ver-per-btn" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}">Ver PER</button>` : ''}
                     <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
                     <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
                   </td>
@@ -365,7 +375,6 @@ $("#tipoAnio").on("change", function() {
                 var nuevoEstado = estado == 1 ? 0 : 1;
                 var datos = new FormData();
                 datos.append("accion", "activar");
-                datos.append("aniId", id);
                 datos.append("aniActivo", nuevoEstado);
                 enviaAjax(datos);
               });
@@ -373,20 +382,19 @@ $("#tipoAnio").on("change", function() {
             Verificar();
           }
           else if (lee.resultado === "condiciones_registro") {
+            window.tiposActivos = lee.tipos_activos || [];
             let warning = "";
             if (!lee.malla_activa) {
                 warning = "Debe haber una malla curricular activa.";
-            } else if (lee.anio_activo_existe) {
-                warning = "Ya existe un año activo.";
+            } else if (window.tiposActivos.includes('regular') && window.tiposActivos.includes('intensivo')) {
+                warning = "Ya existe un año regular y uno intensivo activos.";
             }
 
             if (warning) {
                 $("#registrar").prop("disabled", true);
                 $("#registrar-warning").text(warning);
             } else {
-                if (PERMISOS.registrar) {
-                    $("#registrar").prop("disabled", false);
-                }
+                $("#registrar").prop("disabled", false);
                 $("#registrar-warning").text("");
             }
           }
@@ -428,12 +436,12 @@ $("#tipoAnio").on("change", function() {
             ) {
               $("#modal1").modal("hide");
               Listar();
+              Verificar();
             }
           }
           else if (lee.resultado == "activar") {
             muestraMensaje("info", 2000, "ESTADO", lee.mensaje);
-            Listar();
-            Verificar();
+            Listar(); 
           }
           else if (lee.resultado == "error") {
             muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
@@ -455,7 +463,6 @@ $("#tipoAnio").on("change", function() {
   }
   
   function limpia() {
-    $("#aniId").val("");
     $("#aniAnio").val("");
     $("#tipoAnio").val("");
     $("#aniAperturaFase1").val("");

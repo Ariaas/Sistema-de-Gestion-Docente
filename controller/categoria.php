@@ -22,11 +22,11 @@ if (is_file("views/" . $pagina . ".php")) {
             exit;
         }
         $bitacora = new Bitacora();
-        
+
         if ($accion == 'consultar') {
             echo json_encode($c->Listar());
         } elseif ($accion == 'eliminar') {
-            $c->setId($_POST['categoriaId']);
+            $c->setCategoria($_POST['categoriaNombre']);
             echo  json_encode($c->Eliminar());
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'categoria');
@@ -36,13 +36,13 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($resultado);
         } else {
             $c->setCategoria($_POST['categoriaNombre']);
+            $c->setDescripcion($_POST['categoriaDescripcion']);
             if ($accion == 'registrar') {
                 echo  json_encode($c->Registrar());
 
                 $bitacora->registrarAccion($usu_id, 'registrar', 'categoria');
             } elseif ($accion == 'modificar') {
-                $c->setId($_POST['categoriaId']);
-                echo  json_encode($c->modificar());
+                echo  json_encode($c->modificar($_POST['categoriaNombreOriginal']));
 
                 $bitacora->registrarAccion($usu_id, 'modificar', 'categoria');
             }

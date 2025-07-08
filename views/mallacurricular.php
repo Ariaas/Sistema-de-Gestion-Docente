@@ -37,9 +37,16 @@ if (!isset($_SESSION['name'])) {
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Malla Curricular</h2>
+            
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar Malla Curricular</button>
+                <div class="text-end">
+                    <button class="btn btn-success px-4" id="registrar">Registrar Malla Curricular</button>
+                    <div>
+                        <span id="mensaje-validacion" class="text-danger small"></span>
+                    </div>
+                </div>
             </div>
+
             <div class="datatable-ui w-100" id="tablaMallaPrincipalContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: auto;">
                     <table class="table table-striped table-hover w-100" id="tablamalla">
@@ -83,29 +90,17 @@ if (!isset($_SESSION['name'])) {
                             </div>
                             <div id="pagina2" style="display: none;">
                                 <fieldset class="border p-3">
-                                    <legend class="w-auto px-2 h6">Asignar Unidades Curriculares por Trayecto</legend>
-                                    <div class="alert alert-light text-muted small p-2" role="alert">
-                                        <strong>Nota:</strong> El botón 'Guardar' aparecerá cuando todas las horas de todas las unidades curriculares sean completadas.
+                                    <legend class="w-auto px-2 h6">Asignar Unidades Curriculares</legend>
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-9"><label for="select_uc" class="form-label">Unidad Curricular</label><select id="select_uc" class="form-select" style="width: 100%;"></select></div>
+                                        <div class="col-md-3"><button type="button" class="btn btn-info w-100" id="btn_agregar_uc">Agregar Unidad</button></div>
                                     </div>
-                                    <ul class="nav nav-tabs" id="ucTabs" role="tablist">
-                                        <li class="nav-item" role="presentation"><button class="nav-link active" id="trayecto-0-tab" data-bs-toggle="tab" data-bs-target="#trayecto-0" type="button" role="tab">T. Inicial</button></li>
-                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-1-tab" data-bs-toggle="tab" data-bs-target="#trayecto-1" type="button" role="tab">Trayecto I</button></li>
-                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-2-tab" data-bs-toggle="tab" data-bs-target="#trayecto-2" type="button" role="tab">Trayecto II</button></li>
-                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-3-tab" data-bs-toggle="tab" data-bs-target="#trayecto-3" type="button" role="tab">Trayecto III</button></li>
-                                        <li class="nav-item" role="presentation"><button class="nav-link" id="trayecto-4-tab" data-bs-toggle="tab" data-bs-target="#trayecto-4" type="button" role="tab">Trayecto IV</button></li>
-                                    </ul>
-
-                                    <div class="tab-content border border-top-0 p-3" id="ucTabsContent">
-                                        <div class="tab-pane fade show active" id="trayecto-0" role="tabpanel"></div>
-                                        <div class="tab-pane fade" id="trayecto-1" role="tabpanel"></div>
-                                        <div class="tab-pane fade" id="trayecto-2" role="tabpanel"></div>
-                                        <div class="tab-pane fade" id="trayecto-3" role="tabpanel"></div>
-                                        <div class="tab-pane fade" id="trayecto-4" role="tabpanel"></div>
-                                    </div>
+                                    <div id="contenedorAcordeonUC" class="accordion mt-4">
+                                        </div>
                                 </fieldset>
                             </div>
                             <div id="botones-pagina1" class="modal-footer justify-content-end mt-4"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary" id="btn-siguiente">Siguiente &raquo;</button></div>
-                            <div id="botones-pagina2" class="modal-footer justify-content-between mt-4" style="display: none;"><button type="button" class="btn btn-secondary" id="btn-anterior">&laquo; Anterior</button><div><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary px-4" id="proceso">GUARDAR</button></div></div>
+                            <div id="botones-pagina2" class="modal-footer justify-content-between mt-4" style="display: none;"><button type="button" class="btn btn-secondary" id="btn-anterior">&laquo; Anterior</button><div><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary px-4" id="proceso" disabled>GUARDAR</button></div></div>
                         </form>
                     </div>
                 </div>
@@ -130,6 +125,7 @@ if (!isset($_SESSION['name'])) {
     </main>
     <?php require_once("public/components/footer.php"); ?>
     
+    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/mallacurricular.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>

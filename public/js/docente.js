@@ -2,10 +2,12 @@ $(document).ready(function() {
     let formInteracted = false;
     let initialState = '';
 
+
     $('#modal1').on('hidden.bs.modal', function () {
         $('#modification_tip_wrapper').remove();
     });
     
+  
     function verificarRequisitosIniciales() {
         const mainContent = $(".main-content");
         const countTitulos = parseInt(mainContent.data('count-titulos'), 10);
@@ -55,6 +57,9 @@ $(document).ready(function() {
         if (!$('#dedicacion').val()) { $('#sdedicacion').text('Debe seleccionar una dedicación.'); }
         if (!$('#condicion').val()) { $('#scondicion').text('Debe seleccionar una condición.'); }
         if (!$('#fechaIngreso').val()) { $('#sfechaIngreso').text('La fecha de ingreso es requerida.'); }
+        if ($('#anioConcurso').prop('required') && !$('#anioConcurso').val()) {
+            $('#sanioConcurso').text('El año de concurso es requerido.');
+        }
     }
 
     function actualizarEstadoBoton() {
@@ -68,13 +73,52 @@ $(document).ready(function() {
         const dedicacionValida = $("#dedicacion").val() ? true : false;
         const condicionValida = $("#condicion").val() ? true : false;
         const fechaValida = $("#fechaIngreso").val() ? true : false;
+        
+        let anioConcursoValido = true;
+        if ($('#anioConcurso').prop('required')) {
+            anioConcursoValido = $('#anioConcurso').val() ? true : false;
+        }
 
-        if (cedulaValida && nombreValido && apellidoValido && correoValido && titulosValidos && categoriaValida && dedicacionValida && condicionValida && fechaValida) {
+        if (cedulaValida && nombreValido && apellidoValido && correoValido && titulosValidos && categoriaValida && dedicacionValida && condicionValida && fechaValida && anioConcursoValido) {
             $("#proceso").prop("disabled", false);
         } else {
             $("#proceso").prop("disabled", true);
         }
     }
+
+  
+    $('#condicion').on('change', function() {
+        if (formInteracted && !$(this).val()) {
+            $('#scondicion').text('Debe seleccionar una condición.');
+        } else {
+            $('#scondicion').text('');
+        }
+
+        const seleccion = $(this).val();
+        const concursoWrapper = $('#concurso-fields-wrapper');
+        const tipoConcursoInput = $('#tipoConcurso');
+        const anioConcursoInput = $('#anioConcurso');
+
+        switch(seleccion) {
+            case 'Ordinario':
+                tipoConcursoInput.val('Oposición');
+                anioConcursoInput.prop('required', true);
+                concursoWrapper.slideDown();
+                break;
+            case 'Contratado por Credenciales':
+                tipoConcursoInput.val('Credenciales');
+                anioConcursoInput.prop('required', true);
+                concursoWrapper.slideDown();
+                break;
+            default:
+                concursoWrapper.slideUp();
+                tipoConcursoInput.val('');
+                anioConcursoInput.val('').prop('required', false);
+                $('#sanioConcurso').text('');
+                break;
+        }
+        actualizarEstadoBoton();
+    });
 
     $('#f').on('input change', function() {
         if ($("#accion").val() === 'modificar') {
@@ -167,9 +211,10 @@ $(document).ready(function() {
     $(document).on('click', '.eliminar-btn', function() { pone(this, 'eliminar'); });
     $(document).on('click', '.ver-horas-btn', function() {
         const fila = $(this).closest("tr");
-        const doc_cedula = fila.find("td:eq(1)").text(); 
+        const doc_cedula = fila.data('doc-cedula');
         const nombreCompleto = fila.find("td:eq(2)").text() + ' ' + fila.find("td:eq(3)").text();
         $("#nombreDocenteHoras").text(nombreCompleto);
+
         const datos = new FormData();
         datos.append("accion", "consultar_horas");
         datos.append("doc_cedula", doc_cedula);
@@ -195,18 +240,21 @@ $(document).ready(function() {
         }
         actualizarEstadoBoton();
     });
+    
+    $("#categoria, #dedicacion, #fechaIngreso, #anioConcurso").on("change", function() {
+        const el = $(this);
+        const spanId = "#s" + el.attr('id');
 
-    $("#categoria, #dedicacion, #condicion, #fechaIngreso, #anioConcurso").on("change", function() {
-        if (formInteracted && !$(this).val() && $(this).prop('required')) {
-            $("#s" + $(this).attr('id')).text("Debe seleccionar una opción.");
+        if (formInteracted && el.prop('required') && !el.val()) {
+            $(spanId).text("Este campo es requerido.");
         } else {
-            $("#s" + $(this).attr('id')).text("");
+            $(spanId).text("");
         }
         actualizarEstadoBoton();
     });
 
     $("input[name='titulos[]']").on("change", function() {
-        if (formInteracted && $(`input[name='titulos[]']:checked`).length === 0) {
+        if (formInteracted && $("input[name='titulos[]']:checked").length === 0) {
             $("#stitulos").text("Debe seleccionar al menos un título.");
         } else {
             $("#stitulos").text("");
@@ -238,6 +286,7 @@ $(document).ready(function() {
         if (!$('#condicion').val()) esValido = false;
         if (!$('#fechaIngreso').val()) esValido = false;
         if ($("input[name='titulos[]']:checked").length === 0) esValido = false;
+        if ($('#anioConcurso').prop('required') && !$('#anioConcurso').val()) esValido = false;
     
         if (!esValido) {
             muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del formulario.");
@@ -256,10 +305,10 @@ $(document).ready(function() {
         const apellido = fila.find("td:eq(3)").text();
         const correo = fila.find("td:eq(4)").text();
         const categoria = fila.find("td:eq(5)").text();
-        const dedicacion = fila.find("td:eq(8)").text();
-        const condicion = fila.find("td:eq(9)").text().trim();
-        const fechaIngreso = fila.find("td:eq(10)").text();
-        const anioConcurso = fila.find("td:eq(11)").text();
+        const dedicacion = fila.find("td:eq(6)").text();
+        const condicion = fila.find("td:eq(7)").text();
+        const anioConcurso = fila.find("td:eq(9)").text();
+        const fechaIngreso = fila.find("td:eq(12)").text();
         const observaciones = fila.attr('data-observacion');
         const titulosIds = fila.attr('data-titulos-ids');
         const coordinacionesIds = fila.attr('data-coordinaciones-ids');
@@ -272,7 +321,7 @@ $(document).ready(function() {
         $("#correoDocente").val(correo);
         $('#categoria').val(categoria);
         $('#dedicacion').val(dedicacion);
-        $('#condicion').val(condicion);
+        $('#condicion').val(condicion).trigger('change');
         $("#fechaIngreso").val(fechaIngreso);
         $("#observacionesDocente").val(observaciones);
         if (anioConcurso !== 'N/A') {
@@ -290,7 +339,10 @@ $(document).ready(function() {
             $("#prefijoCedula, #cedulaDocente").prop('disabled', true);
             $("#proceso").prop('disabled', true);
             $(".modal-footer").prepend('<div id="modification_tip_wrapper" class="w-100 text-center mb-2"><small class="form-text text-danger">Realice un cambio para poder modificar.</small></div>');
-            initialState = $('#f').serialize();
+            
+            setTimeout(function() {
+                initialState = $('#f').serialize();
+            }, 200);
 
         } else if (accion === 'eliminar') {
             $("#modal1 .modal-header").removeClass('bg-primary').addClass('bg-danger');
@@ -309,6 +361,8 @@ $(document).ready(function() {
         $("#accion").val("incluir");
         formInteracted = false;
         initialState = '';
+        $('#concurso-fields-wrapper').hide();
+        $('#anioConcurso').prop('required', false);
         $('#modification_tip_wrapper').remove();
     }
 
@@ -335,24 +389,30 @@ $(document).ready(function() {
                         destruyeDT();
                         $("#resultadoconsulta").empty();
                         lee.mensaje.forEach(item => {
+                             const btnModificar = `<button class="btn btn-warning btn-sm modificar-btn" onclick='pone(this,0)'  ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                             const btnEliminar = `<button class="btn btn-danger btn-sm eliminar-btn" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                             const btnHoras = `<button class="btn btn-info btn-sm ver-horas-btn" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>Ver horas</svg></button>`;
                             $("#resultadoconsulta").append(`
-                                <tr data-titulos-ids="${item.titulos_ids || ''}" data-coordinaciones-ids="${item.coordinaciones_ids || ''}" data-observacion="${item.doc_observacion || ''}">
+                                <tr data-doc-cedula="${item.doc_cedula}" data-titulos-ids="${item.titulos_ids || ''}" data-coordinaciones-ids="${item.coordinaciones_ids || ''}" data-observacion="${item.doc_observacion || ''}">
                                     <td>${item.doc_prefijo}</td>
                                     <td>${item.doc_cedula}</td>
                                     <td>${item.doc_nombre}</td>
                                     <td>${item.doc_apellido}</td>
                                     <td>${item.doc_correo}</td>
                                     <td>${item.cat_nombre}</td>
+                                    <td>${item.doc_dedicacion || 'N/A'}</td>
+                                    <td>${item.doc_condicion || 'N/A'}</td>
+                                    <td>${item.doc_tipo_concurso || 'N/A'}</td>
+                                    <td>${item.doc_anio_concurso || 'N/A'}</td>
                                     <td>${item.titulos || 'Sin títulos'}</td>
                                     <td>${item.coordinaciones || 'Sin coordinaciones'}</td>
-                                    <td>${item.doc_dedicacion}</td>
-                                    <td>${item.doc_condicion}</td>
                                     <td>${item.doc_ingreso}</td>
-                                    <td>${item.doc_anio_concurso || 'N/A'}</td>
                                     <td>${item.doc_observacion || 'Sin observaciones'}</td>
                                     <td>
-                                        <button class="btn btn-warning btn-sm modificar-btn"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-                                        <button class="btn btn-danger btn-sm eliminar-btn"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
+                                            ${btnModificar}
+                                          ${btnEliminar}
+                                           ${btnHoras}
+                                    
                                         <button class="btn btn-info btn-sm ver-horas-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>Ver horas</svg></button>
                                     </td>
                                 </tr>`);

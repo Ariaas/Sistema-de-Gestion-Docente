@@ -397,17 +397,16 @@ class Anio extends Connection
     public function Verificar()
     {
         $co = $this->Con();
-        $r = ['malla_activa' => false, 'anio_activo_existe' => false];
+        $r = ['malla_activa' => false, 'tipos_activos' => []];
         try {
             $stmtMalla = $co->query("SELECT COUNT(*) FROM tbl_malla WHERE mal_estado = 1 AND mal_activa = 1");
             if ($stmtMalla->fetchColumn() > 0) {
                 $r['malla_activa'] = true;
             }
 
-            $stmtAnio = $co->query("SELECT COUNT(*) FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1");
-            if ($stmtAnio->fetchColumn() > 0) {
-                $r['anio_activo_existe'] = true;
-            }
+            $stmtAnio = $co->query("SELECT ani_tipo FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1");
+            $r['tipos_activos'] = $stmtAnio->fetchAll(PDO::FETCH_COLUMN, 0);
+
             $r['resultado'] = 'condiciones_registro';
         } catch (Exception $e) {
             $r['resultado'] = 'error';

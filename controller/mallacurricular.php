@@ -2,11 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require_once("model/" . $pagina . ".php");
+require_once("model/mallacurricular.php");
 
 $obj4 = new Malla();
 
-if (is_file("views/" . $pagina . ".php")) {
+if (is_file("views/mallacurricular.php")) {
 
     if (!empty($_POST)) {
         $accion = $_POST['accion'];
@@ -23,6 +23,9 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($obj4->Consultar());
 
+        } else if($accion == 'verificar_condiciones') {
+            echo json_encode($obj4->verificarCondicionesParaRegistrar());
+        
         } else if ($accion == 'consultar_ucs') {
             $response = $obj4->obtenerUnidadesCurriculares();
             $response['accion'] = 'consultar_ucs'; 
@@ -78,7 +81,7 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         exit;
     }
-    require_once("views/". $pagina . ".php");
+    require_once("views/mallacurricular.php");
 } else {
     echo "pagina en construccion";
 }

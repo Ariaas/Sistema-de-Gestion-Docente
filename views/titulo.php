@@ -1,19 +1,38 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['name'])) {
     header('Location: .');
     exit();
 }
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
     <?php require_once("public/components/head.php"); ?>
-
     <title>Títulos</title>
 </head>
-
 <body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
@@ -28,7 +47,6 @@ if (!isset($_SESSION['name'])) {
                     <table class="table table-striped table-hover w-100" id="tablatitulo">
                         <thead>
                             <tr>
-                                <th style="display: none;">ID</th>
                                 <th>Tipo (prefijo)</th>
                                 <th>Nombre</th>
                                 <th>Acciones</th>
@@ -40,7 +58,6 @@ if (!isset($_SESSION['name'])) {
             </div>
         </section>
 
-       
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -50,28 +67,27 @@ if (!isset($_SESSION['name'])) {
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                            <input type="hidden" name="accion" id="accion">
+                            <input type="hidden" id="tituloprefijo_original" name="tituloprefijo_original">
+                            <input type="hidden" id="titulonombre_original" name="titulonombre_original">
+                            
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div class="col-md-4" style="display: none;">
-                                        <label for="tituloid">ID</label>
-                                        <input class="form-control" type="text" id="tituloid" name="tituloid">
-                                        <span id="stituloid"></span>
-                                    </div>
                                     <div class="col-md-6">
                                         <label for="tituloprefijo" class="form-label">Tipo (prefijo)</label>
                                         <select class="form-select" name="tituloprefijo" id="tituloprefijo" required>
-                                            <option value="" disabled selected>Seleccione un tipo (prefijo)</option>
-                                            <option value="Ingeniero">Ingeniero</option>
-                                            <option value="Master">Maestría</option>
-                                            <option value="Doctorado">Doctorado</option>
+                                            <option value="" disabled selected>Seleccione un tipo</option>
+                                            <option value="Ing.">Ingeniero</option>
+                                            <option value="MSc.">Maestría</option>
+                                            <option value="Dr.">Doctorado</option>
+                                            <option value="TSU.">TSU</option>
+                                            <option value="Lic.">Licenciado</option>
                                         </select>
                                         <span id="stituloprefijo"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="titulonombre" class="form-label">Nombre</label>
-                                        <input class="form-control" type="text" id="titulonombre" name="titulonombre" required>
-                                        <span id="stitulonombre"></span>
+                                        <input class="form-control" type="text" id="titulonombre" name="titulonombre" placeholder="Ej: Informática" required>
+                                        <span id="stitulonombre" class="text-danger"></span>
                                     </div>
                                 </div>
                             </div>
@@ -86,12 +102,14 @@ if (!isset($_SESSION['name'])) {
         </div>
        
     </main>
-    <!-- Footer -->
+     <script>
+        const PERMISOS = {
+            modificar: <?php echo json_encode($puede_modificar); ?>,
+            eliminar: <?php echo json_encode($puede_eliminar); ?>
+        };
+    </script>
     <?php require_once("public/components/footer.php"); ?>
-    <!-- Scripts -->
     <script type="text/javascript" src="public/js/titulo.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
 </body>
-
 </html>

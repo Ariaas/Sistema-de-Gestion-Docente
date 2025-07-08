@@ -23,6 +23,17 @@ if (!function_exists('tiene_permiso')) {
     }
 }
 
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
 
 $gestion_items = [
     'Docentes' => 'docente',
@@ -42,7 +53,7 @@ $reportes_estadisticos_items = [
 ];
 
 $mantenimiento_permisos = ['Usuario', 'Rol', 'Bitacora', 'backup'];
-$config_permisos = ['Año', 'Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Prosecusion', 'Actividad'];
+$config_permisos = ['Año', 'Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad'];
 
 $tiene_permiso_gestion = false;
 foreach (array_keys($gestion_items) as $permiso) {
@@ -60,6 +71,9 @@ foreach ($config_permisos as $permiso) {
         $tiene_permiso_config_subitem = true;
         break;
     }
+}
+if (!$tiene_permiso_config_subitem) {
+    $tiene_permiso_config_subitem = tiene_permiso_accion('seccion', 'registrar', $permisos) && tiene_permiso_accion('seccion', 'modificar', $permisos);
 }
 
 $tiene_permiso_mantenimiento_subitem = false;

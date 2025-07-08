@@ -67,6 +67,8 @@ function crearDT() {
   }
 }
 
+let originalNombreCategoria = '';
+
 $(document).ready(function () {
   Listar();
 
@@ -75,23 +77,35 @@ $(document).ready(function () {
 	});
 
 
-	$("#categoriaNombre").on("keydown keyup ",function(){
-  
-    validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$("#categoriaNombre"),
-		$("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres. Ej:Instructor");
+$("#categoriaNombre").on("keydown keyup", function () {
+  validarkeyup(
+    /^[A-Za-z0-9\s]{5,30}$/,
+    $("#categoriaNombre"),
+    $("#scategoriaNombre"),
+    "El formato permite de 5 a 30 carácteres. Ej:Instructor"
+  );
+  if ($("#categoriaNombre").val().length >= 5) {
+    var datos = new FormData();
+    datos.append('accion', 'existe');
+    datos.append('categoriaNombre', $("#categoriaNombre").val());
+    enviaAjax(datos, 'existe');
+  }
+});
 
-			if ($("#categoriaNombre").val().length >= 5) {
-			var datos = new FormData();
-			datos.append('accion', 'existe');
-			datos.append('categoriaNombre', $(this).val());
-			enviaAjax(datos, 'existe');
-		}
-		
-	});
+$("#categoriaDescripcion").on("keypress", function(e){
+  validarkeypress(/^[A-Za-z0-9-\b]*$/, e);
+});
 
+$("#categoriaDescripcion").on("keydown keyup", function () {
+  validarkeyup(
+    /^[A-Za-z0-9\s]{5,100}$/,
+    $("#categoriaDescripcion"),
+    $("#scategoriaDescripcion"),
+    "El formato permite de 5 a 100 carácteres. Ej:Esta categoría..."
+  );
+});
 
-
-  //////////////////////////////BOTONES/////////////////////////////////////
+//////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
@@ -99,6 +113,7 @@ $(document).ready(function () {
         var datos = new FormData();
         datos.append("accion", "registrar");
         datos.append("categoriaNombre", $("#categoriaNombre").val());
+        datos.append("categoriaDescripcion", $("#categoriaDescripcion").val());
 
         enviaAjax(datos);
       }
@@ -107,8 +122,8 @@ $(document).ready(function () {
         var datos = new FormData();
         datos.append("accion", "modificar");
         datos.append("categoriaNombre", $("#categoriaNombre").val());
-        datos.append("categoriaId", $("#categoriaId").val());
-
+        datos.append("categoriaDescripcion", $("#categoriaDescripcion").val());
+        datos.append("categoriaNombreOriginal", originalNombreCategoria);
         enviaAjax(datos);
       }
     }
@@ -130,7 +145,7 @@ $(document).ready(function () {
       } else {
         
         Swal.fire({
-          title: "¿Está seguro de eliminar este espacio?",
+          title: "¿Está seguro de eliminar esta categoría?",
           text: "Esta acción no se puede deshacer.",
           icon: "warning",
           showCancelButton: true,
@@ -140,10 +155,9 @@ $(document).ready(function () {
           cancelButtonText: "Cancelar",
         }).then((result) => {
           if (result.isConfirmed) {
-            
             var datos = new FormData();
             datos.append("accion", "eliminar");
-            datos.append("categoriaId", $("#categoriaId").val());
+            datos.append("categoriaNombre", $("#categoriaNombre").val());
             enviaAjax(datos);
           } else {
             muestraMensaje(
@@ -166,7 +180,7 @@ $(document).ready(function () {
     $("#modal1").modal("show");
     $("#scategoriaNombre").show();
         $(
-      "#categoriaId, #categoriaNombre"
+      "#categoriaDescripcion, #categoriaNombre"
     ).prop("disabled", false);
   });
 
@@ -177,9 +191,14 @@ $(document).ready(function () {
 
 function validarenvio() {
 
-  if (validarkeyup( /^[A-Za-z0-9]{5,30}$/,$("#categoriaNombre"),
+  if (validarkeyup( /^[A-Za-z0-9\s]{5,30}$/,$("#categoriaNombre"),
   $("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres. Ej:Instructor") == 0) {
         muestraMensaje("error",4000,"ERROR!","El nombre de la Categoría <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
+          return false;
+  }
+  if (validarkeyup( /^[A-Za-z0-9\s]{5,100}$/,$("#categoriaDescripcion"),
+  $("#scategoriaDescripcion"),"La descripción debe tener entre 5 y 100 caracteres.") == 0) {
+        muestraMensaje("error",4000,"ERROR!","La descripción de la Categoría <br/> No debe estar vacía y debe contener entre 5 a 100 carácteres");
           return false;
   }
   return true;
@@ -188,20 +207,19 @@ function validarenvio() {
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
+  originalNombreCategoria = $(linea).find("td:eq(0)").text();
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#categoriaId").prop("disabled", false);
     $("#categoriaNombre").prop("disabled", false);
+    $("#categoriaDescripcion").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $(
-      "#categoriaId, #categoriaNombre"
-    ).prop("disabled", true);
+    $("#categoriaNombre, #categoriaDescripcion").prop("disabled", true);
   }
-  $("#scategoriaNombre").hide();
-  $("#categoriaId").val($(linea).find("td:eq(0)").text());
-  $("#categoriaNombre").val($(linea).find("td:eq(1)").text());
+  $("#scategoriaNombre, #scategoriaDescripcion").hide();
+  $("#categoriaNombre").val($(linea).find("td:eq(0)").text());
+  $("#categoriaDescripcion").val($(linea).find("td:eq(1)").text());
 
   $("#modal1").modal("show");
 }
@@ -224,18 +242,23 @@ function enviaAjax(datos) {
         if (lee.resultado === "consultar") {
           destruyeDT();
           $("#resultadoconsulta").empty();
+          let tabla = "";
           $.each(lee.mensaje, function (index, item) {
-            $("#resultadoconsulta").append(`
+            const btnModificar = `<button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>`;
+            const btnEliminar = `<button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>`;
+            
+            tabla += `
               <tr>
-                <td style="display: none;">${item.cat_id}</td>
                 <td>${item.cat_nombre}</td>
-                <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}">Eliminar</button>
+                <td>${item.cat_descripcion}</td>
+                <td class="text-center">
+                  ${btnModificar}
+                  ${btnEliminar}
                 </td>
               </tr>
-            `);
+            `;
           });
+          $("#resultadoconsulta").html(tabla);
           crearDT();
         }
         ////////
@@ -243,7 +266,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el Categoría correctamente!"
+            "Registro Incluido!<br/>Se registró la CATEGORÍA correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -253,7 +276,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el Categoría correctamente!"
+            "Registro Modificado!<br/>Se modificó la CATEGORÍA correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -267,7 +290,7 @@ function enviaAjax(datos) {
           muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el Categoría correctamente!"
+            "Registro Eliminado!<br/>Se eliminó la CATEGORÍA correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -293,7 +316,7 @@ function enviaAjax(datos) {
 }
 
 function limpia() {
-  $("#categoriaId").val("");
+  $("#categoriaDescripcion").val("");
   $("#categoriaNombre").val("");
 }
 
