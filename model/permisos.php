@@ -1,7 +1,7 @@
 <?php
-require_once('model/db_bitacora.php');
+require_once('model/dbconnection.php');
 
-class Permisos extends Connection_bitacora
+class Permisos extends Connection
 {
     function obtenerPermisosPorUsuario($usu_id)
     {

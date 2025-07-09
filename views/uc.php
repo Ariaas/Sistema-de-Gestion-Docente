@@ -138,7 +138,7 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                         <label for="trayectoUC" class="form-label">Trayecto</label>
                                         <select class="form-select" name="trayectoUC" id="trayectoUC" required>
                                             <option value="" disabled selected>Seleccione una opción</option>
-                                            <option value="0">Inicial</option>
+                                            <option value="0">Trayecto inicial</option>
                                             <option value="1">Trayecto 1</option>
                                             <option value="2">Trayecto 2</option>
                                             <option value="3">Trayecto 3</option>

@@ -1,7 +1,7 @@
 <?php
-require_once('model/db_bitacora.php');
+require_once('model/dbconnection.php');
 
-class Rol extends Connection_bitacora
+class Rol extends Connection
 {
 
     private $nombreRol;
