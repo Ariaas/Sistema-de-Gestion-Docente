@@ -25,26 +25,26 @@
                     <form method="post" action="" id="fReporteDefinitivoEmit" target="_blank">
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label for="docente_id" class="form-label">Filtrar por Docente:</label>
-                                <select class="form-select" name="docente_id" id="docente_id">
+                                <label for="doc_cedula" class="form-label">Filtrar por Docente:</label>
+                                <select class="form-select" name="doc_cedula" id="doc_cedula">
                                     <option value="">-- Todos los Docentes --</option>
                                     <?php
                                     if (!empty($listaDocentes)) {
                                         foreach ($listaDocentes as $docente) {
-                                            echo "<option value='" . htmlspecialchars($docente['doc_id']) . "'>" . htmlspecialchars($docente['NombreCompleto']) . "</option>";
+                                            echo "<option value='" . htmlspecialchars($docente['doc_cedula']) . "'>" . htmlspecialchars($docente['NombreCompleto']) . "</option>";
                                         }
                                     }
                                     ?>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="seccion_id" class="form-label">Filtrar por Sección:</label>
-                                <select class="form-select" name="seccion_id" id="seccion_id">
+                                <label for="sec_codigo" class="form-label">Filtrar por Sección:</label>
+                                <select class="form-select" name="sec_codigo" id="sec_codigo">
                                     <option value="">-- Todas las Secciones --</option>
                                     <?php
                                     if (!empty($listaSecciones)) {
                                         foreach ($listaSecciones as $seccion) {
-                                            echo "<option value='" . htmlspecialchars($seccion['sec_id']) . "'>" . htmlspecialchars($seccion['sec_codigo']) . "</option>";
+                                            echo "<option value='" . htmlspecialchars($seccion['sec_codigo']) . "'>" . htmlspecialchars($seccion['sec_codigo']) . "</option>";
                                         }
                                     }
                                     ?>
@@ -58,7 +58,7 @@
                                     <option value="">-- Todas las Fases --</option>
                                     <option value="1">Fase I</option>
                                     <option value="2">Fase II</option>
-                                    <option value="anual">Anual</option>
+                                    <option value="Anual">Anual</option>
                                 </select>
                             </div>
                         </div>

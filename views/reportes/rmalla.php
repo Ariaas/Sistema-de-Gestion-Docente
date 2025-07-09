@@ -1,4 +1,5 @@
 <?php 
+// views/reportes/rmalla.php
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -23,12 +24,12 @@
                         <div class="row justify-content-center">
                             <div class="col-md-10 col-lg-8">
                                 <div class="mb-3">
-                                    <label for="malla_id" class="form-label fw-bold">Seleccione la Malla Curricular:</label>
-                                    <select class="form-select" id="malla_id" name="malla_id" required>
+                                    <label for="malla_codigo" class="form-label fw-bold">Seleccione la Malla Curricular:</label>
+                                    <select class="form-select" id="malla_codigo" name="malla_codigo" required>
                                         <option value="" selected disabled>-- Elegir una opción --</option>
                                         <?php if (isset($listaMallas) && !empty($listaMallas)): ?>
                                             <?php foreach ($listaMallas as $malla): ?>
-                                                <option value="<?php echo htmlspecialchars($malla['mal_id']); ?>">
+                                                <option value="<?php echo htmlspecialchars($malla['mal_codigo']); ?>">
                                                     <?php echo htmlspecialchars($malla['mal_nombre'] . ' - Cohorte ' . $malla['mal_cohorte']); ?>
                                                 </option>
                                             <?php endforeach; ?>

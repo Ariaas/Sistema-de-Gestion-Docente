@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const generarBtn = document.getElementById("generar_rmalla_btn");
-    const mallaSelect = document.getElementById("malla_id");
+    const mallaSelect = document.getElementById("malla_codigo");
 
     if (generarBtn && mallaSelect) {
         // Deshabilitar el botón inicialmente

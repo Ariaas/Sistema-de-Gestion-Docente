@@ -14,8 +14,8 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 $oDefinitivo = new DefinitivoEmit();
 
 if (isset($_POST['generar_definitivo_emit'])) {
-    $selectedDocente = $_POST['docente_id'] ?? '';
-    $selectedSeccion = $_POST['seccion_id'] ?? '';
+    $selectedDocente = $_POST['doc_cedula'] ?? '';
+    $selectedSeccion = $_POST['sec_codigo'] ?? '';
     $selectedFase = $_POST['fase'] ?? '';
 
     $oDefinitivo->set_docente($selectedDocente);

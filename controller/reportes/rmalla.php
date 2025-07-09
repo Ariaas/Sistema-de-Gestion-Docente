@@ -1,10 +1,13 @@
 <?php
+// controller/reportes/rmalla.php
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once ('vendor/autoload.php');
-require_once ('model/reportes/rmalla.php'); // Ruta corregida
+// Asegúrate que la ruta a tu autoload de vendor sea correcta
+require_once ('vendor/autoload.php'); 
+require_once ('model/reportes/rmalla.php');
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -12,10 +15,11 @@ use Dompdf\Options;
 // Lógica para generar el reporte en PDF
 if (isset($_POST['generar_rmalla_report'])) {
     
-    if (isset($_POST['malla_id']) && !empty($_POST['malla_id'])) {
-        $mallaId = $_POST['malla_id'];
+    // Se verifica la variable correcta que viene del formulario ('malla_codigo')
+    if (isset($_POST['malla_codigo']) && !empty($_POST['malla_codigo'])) {
+        $mallaCodigo = $_POST['malla_codigo']; // Usar la variable correcta
         $oMallaReport = new MallaReport();
-        $mallasData = $oMallaReport->getMallaConUnidades($mallaId);
+        $mallasData = $oMallaReport->getMallaConUnidades($mallaCodigo);
 
         $reportTitle = "Plan de Estudio";
 
@@ -49,12 +53,12 @@ if (isset($_POST['generar_rmalla_report'])) {
                 $html .= '<thead><tr><th>CÓDIGO</th><th>UNIDADES DE FORMACIÓN</th><th>HTE</th><th>HTA</th><th>HTI</th><th>UC</th><th>EJE INTEGRADOR</th><th>Período</th><th>Horas Académicas</th></tr></thead>';
                 $html .= '<tbody>';
 
-                $totalHteGeneral = 0; $totalHtaGeneral = 0; $totalHtiGeneral = 0; $totalUcGeneral = 0;
+                $totalHteGeneral = 0; $totalHtaGeneral = 0; $totalHtiGeneral = 0; $totalUcGeneral = 0; $totalHorasAcadGeneral = 0;
 
                 foreach ($malla['unidades_por_trayecto'] as $trayectoNombre => $unidades) {
                     $html .= '<tr class="trayecto-header"><td colspan="9">' . htmlspecialchars(strtoupper($trayectoNombre)) . '</td></tr>';
                     
-                    $subtotalHte = 0; $subtotalHta = 0; $subtotalHti = 0; $subtotalUc = 0;
+                    $subtotalHte = 0; $subtotalHta = 0; $subtotalHti = 0; $subtotalUc = 0; $subtotalHorasAcad = 0;
 
                     foreach ($unidades as $uc) {
                         $html .= '<tr>';
@@ -66,20 +70,22 @@ if (isset($_POST['generar_rmalla_report'])) {
                         $html .= '<td>' . htmlspecialchars($uc['uc_creditos']) . '</td>';
                         $html .= '<td class="text-left">' . htmlspecialchars($uc['eje_nombre']) . '</td>';
                         $html .= '<td>' . htmlspecialchars($uc['uc_periodo']) . '</td>';
-                        $html .= '<td>0</td>'; // Columna Horas Académicas, ajustar si se tiene el dato.
+                        $html .= '<td>' . htmlspecialchars($uc['mal_hora_academica']) . '</td>'; // Usar el dato correcto
                         $html .= '</tr>';
 
                         $subtotalHte += $uc['hte']; $subtotalHta += $uc['hta'];
                         $subtotalHti += $uc['hti']; $subtotalUc += $uc['uc_creditos'];
+                        $subtotalHorasAcad += $uc['mal_hora_academica'];
                     }
                     
-                    $html .= '<tr class="subtotal-row"><td colspan="2" class="text-left">SUB TOTAL</td><td>' . $subtotalHte . '</td><td>' . $subtotalHta . '</td><td>' . $subtotalHti . '</td><td>' . $subtotalUc . '</td><td colspan="3"></td></tr>';
+                    $html .= '<tr class="subtotal-row"><td colspan="2" class="text-left">SUB TOTAL</td><td>' . $subtotalHte . '</td><td>' . $subtotalHta . '</td><td>' . $subtotalHti . '</td><td>' . $subtotalUc . '</td><td colspan="2"></td><td>' . $subtotalHorasAcad . '</td></tr>';
                     
                     $totalHteGeneral += $subtotalHte; $totalHtaGeneral += $subtotalHta;
                     $totalHtiGeneral += $subtotalHti; $totalUcGeneral += $subtotalUc;
+                    $totalHorasAcadGeneral += $subtotalHorasAcad;
                 }
 
-                $html .= '<tr class="subtotal-row" style="background-color: #a0a0a0;"><td colspan="2" class="text-left">TOTAL GENERAL</td><td>' . $totalHteGeneral . '</td><td>' . $totalHtaGeneral . '</td><td>' . $totalHtiGeneral . '</td><td>' . $totalUcGeneral . '</td><td colspan="3"></td></tr>';
+                $html .= '<tr class="subtotal-row" style="background-color: #a0a0a0;"><td colspan="2" class="text-left">TOTAL GENERAL</td><td>' . $totalHteGeneral . '</td><td>' . $totalHtaGeneral . '</td><td>' . $totalHtiGeneral . '</td><td>' . $totalUcGeneral . '</td><td colspan="2"></td><td>' . $totalHorasAcadGeneral . '</td></tr>';
                 $html .= '</tbody></table>';
             }
         } else {
@@ -102,15 +108,15 @@ if (isset($_POST['generar_rmalla_report'])) {
         $dompdf->stream($outputFileName, array("Attachment" => false));
         exit;
     } else {
-        // Redirigir si no se seleccionó una malla, podrías añadir un mensaje de error.
-        header('Location: ' . $_SERVER['PHP_SELF']);
+        // Redirigir si no se seleccionó una malla
+        header('Location: ?pagina=rmalla'); // Redirige a la página del formulario
         exit;
     }
 
 } else {
     // Lógica para mostrar la página del formulario
     $oMallaReport = new MallaReport();
-    $listaMallas = $oMallaReport->getMallasActivas(); // Obtener lista para el select
+    $listaMallas = $oMallaReport->getMallasActivas();
     require_once('views/reportes/rmalla.php');
 }
 ?>

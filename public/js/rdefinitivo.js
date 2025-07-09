@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const generarBtn = document.querySelector("button[name='generar_definitivo_emit']");
-    const docenteSelect = document.getElementById("docente_id");
-    const seccionSelect = document.getElementById("seccion_id");
+    const docenteSelect = document.getElementById("doc_cedula");
+    const seccionSelect = document.getElementById("sec_codigo");
     const faseSelect = document.getElementById("fase");
    
     if (generarBtn) {
