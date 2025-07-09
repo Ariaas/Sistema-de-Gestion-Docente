@@ -1,5 +1,5 @@
 // =================================================================
-// ARCHIVO: public/js/seccion.js (CORREGIDO CON PREFIJO DINÁMICO)
+// ARCHIVO: public/js/seccion.js (CORREGIDO CON AÑO SIMPLIFICADO)
 // =================================================================
 
 function muestraMensaje(tipo, tiempo, titulo, mensaje) {
@@ -17,12 +17,8 @@ function muestraMensaje(tipo, tiempo, titulo, mensaje) {
     }
 }
 
-/**
- * ▼▼▼ NUEVA FUNCIÓN ▼▼▼
- * Determina el prefijo correcto ("IN" o "IIN") basado en el primer dígito del código.
- */
 function getPrefijoSeccion(codigo) {
-    if (!codigo) return 'IN'; // Prefijo por defecto
+    if (!codigo) return 'IN';
     const trayecto = String(codigo).charAt(0);
     if (trayecto === '3' || trayecto === '4') {
         return 'IIN';
@@ -283,12 +279,13 @@ function limpiaModalPrincipal() {
     $("#proceso").show().removeClass("btn-danger btn-primary btn-success").text('');
 }
 
-function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTextoCompleto) {
+// ▼▼▼ FUNCIÓN MODIFICADA para recibir el valor del año y no solo el texto ▼▼▼
+function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, anioValue) {
     limpiaModalPrincipal();
     horarioContenidoGuardado.clear(); 
     
-    const anioAnio = anioTextoCompleto.split(' - ')[0].replace('Año ', '');
-    const anioTipo = anioTextoCompleto.split(' - ')[1];
+    // Se usan los valores del año para reconstruir el objeto de sección
+    const [anioAnio, anioTipo] = anioValue.split('|');
     allSecciones.push({ sec_codigo: secCodigo, sec_cantidad: secCantidad, ani_anio: anioAnio, ani_tipo: anioTipo });
     
     let turnoSeleccionado = 'mañana';
@@ -299,7 +296,7 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTextoComp
     }
 
     const prefijo = getPrefijoSeccion(secCodigo);
-    const textoSeccion = `${prefijo}${secCodigo} (${secCantidad} Est.) (${anioTextoCompleto})`;
+    const textoSeccion = `${prefijo}${secCodigo} (${secCantidad} Est.) (Año ${anioTexto})`;
     $("#seccion_principal_id").empty().append(`<option value="${secCodigo}" selected>${textoSeccion}</option>`).prop('disabled', true);
     $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true); 
     
@@ -389,7 +386,8 @@ function enviaAjax(datos, boton) {
                               <button class="btn btn-info btn-sm ver-horario" data-sec-codigo="${item.sec_codigo}" title="Ver"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></button>
                               <button class="btn btn-warning btn-sm modificar-horario" data-sec-codigo="${item.sec_codigo}" title="Modificar"> <img src="public/assets/icons/edit.svg" alt="Modificar"></button>
                               <button class="btn btn-danger btn-sm eliminar-horario" data-sec-codigo="${item.sec_codigo}" title="Eliminar"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                            $("#resultadoconsulta").append(`<tr><td>${prefijo}${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'} - ${item.ani_tipo||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
+                            // ▼▼▼ MODIFICADO para mostrar solo el año ▼▼▼
+                            $("#resultadoconsulta").append(`<tr><td>${prefijo}${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
                     }
                     crearDT();
@@ -500,7 +498,7 @@ $(document).ready(function() {
             const trayecto = seccion.sec_codigo.toString().charAt(0);
             const key = `${seccion.ani_anio}-${seccion.ani_tipo}-${trayecto}`;
             if (!acc[key]) {
-                acc[key] = { nombre: `Año ${seccion.ani_anio} (${seccion.ani_tipo}) - Trayecto ${trayecto}`, secciones: [] };
+                acc[key] = { nombre: `Año ${seccion.ani_anio} - Trayecto ${trayecto}`, secciones: [] };
             }
             acc[key].secciones.push(seccion);
             return acc;
@@ -559,9 +557,10 @@ $(document).ready(function() {
                         }
                     });
                     const prefijo = getPrefijoSeccion(seccionData.sec_codigo);
-                    const seccionTexto = `${prefijo}${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio} - ${seccionData.ani_tipo})`;
+                    // ▼▼▼ MODIFICADO para mostrar solo el año ▼▼▼
+                    const seccionTexto = `${prefijo}${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio})`;
                     if (isDelete) {
-                        $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> ${prefijo}${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio} - ${seccionData.ani_tipo}</p>`);
+                        $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> ${prefijo}${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio}</p>`);
                         inicializarTablaHorario(turnoSeleccionado, "#tablaEliminarHorario", true);
                         $("#btnProcederEliminacion").data('sec-codigo', sec_codigo);
                         $("#modalConfirmarEliminar").modal('show');
@@ -606,8 +605,11 @@ $(document).ready(function() {
             success: function(respuesta) {
                 if (respuesta.resultado === 'registrar_seccion_ok') {
                     $("#modalRegistroSeccion").modal("hide");
-                    const anioTexto = $("#anioId option:selected").text();
-                    abrirModalHorarioParaNuevaSeccion(respuesta.nuevo_codigo, respuesta.nueva_cantidad, anioTexto);
+                    // ▼▼▼ MODIFICADO para pasar el valor y el texto del año por separado ▼▼▼
+                    const anioOption = $("#anioId option:selected");
+                    const anioTexto = anioOption.text();
+                    const anioValue = anioOption.val();
+                    abrirModalHorarioParaNuevaSeccion(respuesta.nuevo_codigo, respuesta.nueva_cantidad, anioTexto, anioValue);
                 } else {
                     muestraMensaje("error", 5000, "Error al Registrar", respuesta.mensaje);
                 }

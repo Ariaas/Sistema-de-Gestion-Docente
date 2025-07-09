@@ -91,18 +91,22 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                                 <div class="row mt-3">
                                     <div class="col-md-12">
                                         <label for="anioId" class="form-label">Año <span class="text-danger">*</span></label>
-                                        <select class="form-select" name="anioId" id="anioId" required>
-                                            <option value="" disabled selected>Seleccione un año</option>
-                                            <?php
-                                            if (!empty($anios)) {
-                                                foreach ($anios as $anio) {
-                                                    $value = htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo'], ENT_QUOTES);
-                                                    $text = htmlspecialchars($anio['ani_anio'] . ' - ' . ucfirst($anio['ani_tipo']), ENT_QUOTES);
-                                                    echo "<option value='{$value}'>{$text}</option>";
-                                                }
+                                      <select class="form-select" name="anioId" id="anioId" required>
+                                        <option value="" disabled selected>Seleccione un año</option>
+                                        <?php
+                                        if (!empty($anios)) {
+                                            foreach ($anios as $anio) {
+                                                // El valor interno sigue siendo el mismo (ej: "2025|3")
+                                                $value = htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo'], ENT_QUOTES);
+                                                
+                                                // El texto visible ahora será solo el año (ej: "2025")
+                                                $text = htmlspecialchars($anio['ani_anio'], ENT_QUOTES); 
+
+                                                echo "<option value='{$value}'>{$text}</option>";
                                             }
-                                            ?>
-                                        </select>
+                                        }
+                                        ?>
+                                    </select>
                                     </div>
                                 </div>
                             </div>
