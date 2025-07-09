@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Limpia el campo después de un tiempo para que el formulario se envíe
+            // Limpia los campos después de un tiempo prudencial para que el formulario se envíe
             setTimeout(function() {
                 if (faseSelect) faseSelect.value = "";
             }, 1800);

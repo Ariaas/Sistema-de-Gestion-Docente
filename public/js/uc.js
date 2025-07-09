@@ -189,46 +189,46 @@ $(document).ready(function() {
 });
 
 function validarenvio() {
-    // if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "El código de la unidad curricular es obligatorio.");
-    //     $("#codigoUC").focus();
-    //     return false;
-    // }
-    // if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "El nombre de la unidad curricular es obligatorio.");
-    //     $("#nombreUC").focus();
-    //     return false;
-    // }
-    // if ($("#creditosUC").val() == "" || $("#creditosUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "Las unidades de crédito son obligatorias.");
-    //     $("#creditosUC").focus();
-    //     return false;
-    // }
-    // if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
-    //     $("#trayectoUC").focus();
-    //     return false;
-    // }
-    // if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un eje.");
-    //     $("#ejeUC").focus();
-    //     return false;
-    // }
-    // if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un área.");
-    //     $("#areaUC").focus();
-    //     return false;
-    // }
-    // if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un periodo.");
-    //     $("#periodoUC").focus();
-    //     return false;
-    // }
-    // if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
-    //     muestraMensaje("error", 4000, "Atención!", "Debe seleccionar si es electiva o no.");
-    //     $("#electivaUC").focus();
-    //     return false;
-    // }
+    if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "El código de la unidad curricular es obligatorio.");
+        $("#codigoUC").focus();
+        return false;
+    }
+    if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "El nombre de la unidad curricular es obligatorio.");
+        $("#nombreUC").focus();
+        return false;
+    }
+    if ($("#creditosUC").val() == "" || $("#creditosUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "Las unidades de crédito son obligatorias.");
+        $("#creditosUC").focus();
+        return false;
+    }
+    if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
+        $("#trayectoUC").focus();
+        return false;
+    }
+    if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un eje.");
+        $("#ejeUC").focus();
+        return false;
+    }
+    if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un área.");
+        $("#areaUC").focus();
+        return false;
+    }
+    if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un periodo.");
+        $("#periodoUC").focus();
+        return false;
+    }
+    if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar si es electiva o no.");
+        $("#electivaUC").focus();
+        return false;
+    }
     if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
         muestraMensaje("error", 4000, "Atención!", "Una unidad curricular electiva no puede tener periodo anual.");
         $("#periodoUC").focus();

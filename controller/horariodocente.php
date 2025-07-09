@@ -1,87 +1,65 @@
 <?php
-require_once("model/" . $pagina . ".php"); 
-
-if (is_file("views/" . $pagina . ".php")) {
-
-    $accion = $_POST['action'] ?? $_GET['action'] ?? $_POST['accion'] ?? $_GET['accion'] ?? '';
-
-    if (!empty($accion)) { 
-        $e = new Horariodocente(); 
-
-        header('Content-Type: application/json'); 
-
-        switch ($accion) {
-            case 'load_aux_data':
-                echo json_encode($e->obtenerDocentes());
-                break;
-            
-            case 'obtener_lapsos_docente':
-                $doc_id = $_POST['doc_id'] ?? null;
-                if ($doc_id) {
-                    echo json_encode($e->obtenerLapsosParaDocente($doc_id));
-                } else {
-                    echo json_encode(['success' => false, 'lapsos' => [], 'message' => 'ID de docente no proporcionado.']);
-                }
-                break;
-            
-            case 'load_schedule_display_data':
-                $respuesta = [
-                    'success' => true,
-                    'ucs' => $e->obtenerUnidadesCurriculares(),
-                    'espacios' => $e->obtenerEspacios(),
-                    'secciones' => $e->obtenerSecciones()
-                ];
-                echo json_encode($respuesta);
-                break;
-
-            case 'consultar_horario_docente_especifico':
-                $doc_id = $_POST['doc_id'] ?? null;
-                $fase_filtro = $_POST['fase_filtro'] ?? null;
-                $anio_filtro = $_POST['anio_filtro'] ?? null;
-
-                if ($doc_id && $fase_filtro && $anio_filtro) {
-                    echo json_encode($e->obtenerHorarioCompletoPorDocente($doc_id, $fase_filtro, $anio_filtro)); 
-                } else {
-                    echo json_encode(['resultado' => 'error', 'mensaje' => 'Faltan parámetros (docente, fase o año) para ver el horario.']);
-                }
-                break;
-
-            case 'consultar':
-                echo json_encode($e->Consultar()); 
-                break;
-
-            case 'eliminar':
-                $e->setHdoId($_POST['hdoId'] ?? null); 
-                echo json_encode($e->Eliminar()); 
-                break;
-
-            case 'registrar':
-            case 'modificar':
-                $doc_id_seleccionado = $_POST['docente'] ?? null;
-                $lapso_compuesto = $_POST['lapso'] ?? null;
-                
-                $e->setHdoTipoactividad($_POST['actividad'] ?? null); 
-                $e->setHdoDescripcion($_POST['descripcion'] ?? null); 
-                $e->setHdoDependencia($_POST['dependencia'] ?? null); 
-                $e->setHdoObservacion($_POST['observacion'] ?? ''); 
-                $e->setHdoHora($_POST['horas'] ?? null); 
-
-                if ($accion == 'registrar') { 
-                    echo json_encode($e->Registrar($doc_id_seleccionado, $lapso_compuesto));
-                } elseif ($accion == 'modificar') { 
-                    $e->setHdoId($_POST['hdoId'] ?? null); 
-                    echo json_encode($e->Modificar($doc_id_seleccionado, $lapso_compuesto));
-                }
-                break;
-            
-            default:
-                echo json_encode(['resultado' => 'error', 'mensaje' => 'Acción no reconocida.']);
-                break;
-        }
-        exit; 
-    }
-    require_once("views/" . $pagina . ".php"); 
-} else {
-    echo "Error: La página solicitada no se encuentra en construcción o no existe."; 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-?>
+require_once("model/horariodocente.php");
+
+if (is_file("views/horariodocente.php")) {
+    if (!empty($_POST)) {
+        $e = new HorarioDocente();
+        $accion = $_POST['accion'] ?? '';
+
+        require_once("model/bitacora.php");
+        $usu_id = $_SESSION['usu_id'] ?? null;
+        if ($usu_id === null) {
+            echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado.']);
+            exit;
+        }
+        $bitacora = new Bitacora();
+
+        if ($accion == 'consultar') {
+            echo json_encode($e->Listar());
+        } elseif ($accion == 'eliminar') {
+            $e->setDocCedula($_POST['docente']);
+            $e->setHdoLapso($_POST['lapso']);
+            $e->setHdoTipoactividad($_POST['actividad']);
+            echo json_encode($e->Eliminar());
+            $bitacora->registrarAccion($usu_id, 'eliminar', 'horario_docente');
+        } elseif ($accion == 'existe') {
+            echo json_encode($e->Existe($_POST['docente'], $_POST['lapso'], $_POST['actividad']));
+        } elseif ($accion == 'registrar') {
+            $e->setDocCedula($_POST['docente']);
+            $e->setHdoLapso($_POST['lapso']);
+            $e->setHdoTipoactividad($_POST['actividad']);
+            $e->setHdoDescripcion($_POST['descripcion']);
+            $e->setHdoDependencia($_POST['dependencia']);
+            $e->setHdoObservacion($_POST['observacion']);
+            $e->setHdoHoras($_POST['horas']);
+            echo json_encode($e->Registrar());
+            $bitacora->registrarAccion($usu_id, 'registrar', 'horario_docente');
+        } elseif ($accion == 'modificar') {
+            $e->setDocCedula($_POST['docente']);
+            $e->setHdoLapso($_POST['lapso']);
+            $e->setHdoTipoactividad($_POST['actividad']);
+            $e->setHdoDescripcion($_POST['descripcion']);
+            $e->setHdoDependencia($_POST['dependencia']);
+            $e->setHdoObservacion($_POST['observacion']);
+            $e->setHdoHoras($_POST['horas']);
+            echo json_encode($e->Modificar($_POST['original_cedula'], $_POST['original_lapso'], $_POST['original_actividad']));
+            $bitacora->registrarAccion($usu_id, 'modificar', 'horario_docente');
+            // --- Acciones auxiliares ---
+        } elseif ($accion == 'load_docentes') {
+            echo json_encode($e->obtenerDocentes());
+        } elseif ($accion == 'load_lapsos') {
+            echo json_encode($e->obtenerLapsosActivos());
+        } elseif ($accion == 'consultar_horario_clases') {
+            echo json_encode($e->obtenerHorarioCompletoPorDocente($_POST['doc_cedula']));
+        } else {
+            echo json_encode(['resultado' => 'error', 'mensaje' => 'Acción no reconocida.']);
+        }
+        exit;
+    }
+    require_once("views/horariodocente.php");
+} else {
+    echo "Página en construcción";
+}

@@ -20,11 +20,16 @@ class Rod extends Connection
         }
     }
 
+    public function set_fase($valor)
+    {
+        $this->fase = trim($valor);
+    }
+
     /**
      * Obtiene los datos para el reporte.
      * SQL AJUSTADO: Se añaden campos para las nuevas columnas y se quitan los innecesarios.
      */
-    public function obtenerDatosReporte()
+    public function obtenerDocentesBase()
     {
         if (empty($this->fase_numero)) {
             return false;
@@ -81,9 +86,8 @@ class Rod extends Connection
             $resultado = $co->prepare($sql);
             $resultado->execute([':fase_numero' => $this->fase_numero]);
             return $resultado->fetchAll(PDO::FETCH_ASSOC);
-
         } catch (PDOException $e) {
-            error_log("Error en Rod::obtenerDatosReporte: " . $e->getMessage());
+            error_log("Error en Rod::obtenerAsignacionesDocente: " . $e->getMessage());
             return false;
         }
     }
@@ -101,4 +105,3 @@ class Rod extends Connection
         }
     }
 }
-?>

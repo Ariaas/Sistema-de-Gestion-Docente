@@ -9,11 +9,15 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 
-$oReporte = new Rod();
+$oReporte = new Rod(); // Cambiado a Rod
 
-if (isset($_POST['generar_reporte_rod'])) {
+if (isset($_POST['generar_reporte_rod'])) { // Cambiado el name del botón
+
+    $anioId = $_POST['anio_id'] ?? null;
+    $fase = $_POST['fase'] ?? '';
 
     $faseId = $_POST['fase_id'] ?? null;
     $oReporte->set_fase_y_anio($faseId);
@@ -151,6 +155,9 @@ if (isset($_POST['generar_reporte_rod'])) {
             $filaActual += $rowCount;
             $itemNumber++;
         }
+    } else {
+        $sheet->mergeCells("A{$filaActual}:N{$filaActual}")->setCellValue("A{$filaActual}", "No se encontraron datos para los filtros seleccionados.");
+        $filaActual++;
     }
 
     $finDeDatos = $filaActual - 1;
@@ -218,9 +225,7 @@ if (isset($_POST['generar_reporte_rod'])) {
     header('Cache-Control: max-age=0');
     $writer->save('php://output');
     exit;
-
 } else {
     $listaFases = $oReporte->obtenerFasesActivas();
     require_once("views/reportes/rod.php");
 }
-?>
