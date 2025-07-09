@@ -9,15 +9,11 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 
-$oReporte = new Rod(); // Cambiado a Rod
+$oReporte = new Rod();
 
-if (isset($_POST['generar_reporte_rod'])) { // Cambiado el name del botón
-
-    $anioId = $_POST['anio_id'] ?? null;
-    $fase = $_POST['fase'] ?? '';
+if (isset($_POST['generar_reporte_rod'])) {
 
     $faseId = $_POST['fase_id'] ?? null;
     $oReporte->set_fase_y_anio($faseId);
@@ -155,9 +151,6 @@ if (isset($_POST['generar_reporte_rod'])) { // Cambiado el name del botón
             $filaActual += $rowCount;
             $itemNumber++;
         }
-    } else {
-        $sheet->mergeCells("A{$filaActual}:N{$filaActual}")->setCellValue("A{$filaActual}", "No se encontraron datos para los filtros seleccionados.");
-        $filaActual++;
     }
 
     $finDeDatos = $filaActual - 1;
@@ -172,20 +165,18 @@ if (isset($_POST['generar_reporte_rod'])) { // Cambiado el name del botón
     $sheet->getStyle("F6:J{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     $sheet->getStyle("L6:M{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-    // --- SECCIÓN DE RESÚMENES CORREGIDA (LADO A LADO) ---
+    // --- SECCIÓN DE RESÚMENES (LADO A LADO) ---
     $filaInicioResumen = $finDeDatos + 3;
 
-    // Bloque 1: Resumen por Dedicación (Columnas B, C, D)
+    // Bloque 1: Resumen por Dedicación
     $fila = $filaInicioResumen;
     $sheet->mergeCells("B{$fila}:D{$fila}")->setCellValue("B{$fila}", 'RESUMEN POR DEDICACIÓN');
     $sheet->getStyle("B{$fila}")->getFont()->setBold(true);
     $fila++;
-
     $sheet->setCellValue("B{$fila}", 'DEDICACIÓN')->getStyle("B{$fila}")->applyFromArray($summaryStyle);
     $sheet->setCellValue("C{$fila}", 'TOTAL DOCENTES')->getStyle("C{$fila}")->applyFromArray($summaryStyle);
     $sheet->setCellValue("D{$fila}", 'TOTAL HORAS ASIGNADAS')->getStyle("D{$fila}")->applyFromArray($summaryStyle);
     $fila++;
-
     $totalGeneralDocentes = 0;
     foreach ($resumenDedicacion as $nombreDedicacion => $data) {
         $sheet->setCellValue("B{$fila}", $nombreDedicacion)->getStyle("B{$fila}:D{$fila}")->applyFromArray($cellStyle);
@@ -194,24 +185,20 @@ if (isset($_POST['generar_reporte_rod'])) { // Cambiado el name del botón
         $totalGeneralDocentes += $data['total_docentes'];
         $fila++;
     }
-
     $sheet->setCellValue("B{$fila}", 'TOTAL GENERAL')->getStyle("B{$fila}:D{$fila}")->applyFromArray($summaryStyle);
     $sheet->setCellValue("C{$fila}", $totalGeneralDocentes)->getStyle("C{$fila}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     $sheet->setCellValue("D{$fila}", $totalHorasAsignadas)->getStyle("D{$fila}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-    // Bloque 2: Resumen de Horas (Columnas H, I, J)
-    $fila = $filaInicioResumen; // Se resetea la fila para empezar a la misma altura
+    // Bloque 2: Resumen de Horas
+    $fila = $filaInicioResumen;
     $sheet->mergeCells("H{$fila}:I{$fila}")->setCellValue("H{$fila}", 'HORAS ACADEMICAS ASIGNADAS:')->getStyle("H{$fila}")->applyFromArray($summaryLabelStyle);
     $sheet->setCellValue("J{$fila}", $totalHorasAsignadas)->getStyle("J{$fila}")->applyFromArray($summaryValueStyle);
     $fila++;
-    
     $sheet->mergeCells("H{$fila}:I{$fila}")->setCellValue("H{$fila}", 'HORAS FALTANTES:')->getStyle("H{$fila}")->applyFromArray($summaryLabelStyle);
     $sheet->setCellValue("J{$fila}", $totalHorasFaltantes)->getStyle("J{$fila}")->applyFromArray($summaryValueStyle);
     $fila++;
-
     $sheet->mergeCells("H{$fila}:I{$fila}")->setCellValue("H{$fila}", 'DESCARGAS:')->getStyle("H{$fila}")->applyFromArray($summaryLabelStyle);
     $sheet->setCellValue("J{$fila}", $totalHorasDescarga)->getStyle("J{$fila}")->applyFromArray($summaryValueStyle);
-
 
     // Anchos de columna
     $anchos = ['A'=>4, 'B'=>22, 'C'=>10, 'D'=>10, 'E'=>22, 'F'=>10, 'G'=>10, 'H'=>10, 'I'=>10, 'J'=>10, 'K'=>28, 'L'=>15, 'M'=>15, 'N'=>25];
@@ -225,7 +212,9 @@ if (isset($_POST['generar_reporte_rod'])) { // Cambiado el name del botón
     header('Cache-Control: max-age=0');
     $writer->save('php://output');
     exit;
+
 } else {
     $listaFases = $oReporte->obtenerFasesActivas();
     require_once("views/reportes/rod.php");
 }
+?>

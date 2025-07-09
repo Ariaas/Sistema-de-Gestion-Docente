@@ -36,15 +36,6 @@
                                     <?php endif; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label for="fase" class="form-label">Filtrar por Fase (Opcional):</label>
-                                <select class="form-select" name="fase" id="fase">
-                                    <option value="">-- Todas las Fases --</option>
-                                    <option value="1">Fase I</option>
-                                    <option value="2">Fase II</option>
-                                    <option value="anual">Anual</option>
-                                </select>
-                            </div>
                         </div>
                         <div class="row">
                             <div class="col-12 text-center">

@@ -20,16 +20,11 @@ class Rod extends Connection
         }
     }
 
-    public function set_fase($valor)
-    {
-        $this->fase = trim($valor);
-    }
-
     /**
      * Obtiene los datos para el reporte.
-     * SQL AJUSTADO: Se añaden campos para las nuevas columnas y se quitan los innecesarios.
+     * ESTA ES LA CONSULTA DEFINITIVA Y CORRECTA.
      */
-    public function obtenerDocentesBase()
+    public function obtenerDatosReporte()
     {
         if (empty($this->fase_numero)) {
             return false;
@@ -47,7 +42,7 @@ class Rod extends Connection
                          WHERE td.doc_cedula = d.doc_cedula) AS doc_perfil_profesional,
                         d.doc_dedicacion,
                         d.doc_anio_concurso,
-                        d.doc_tipo_concurso, -- Añadido para 'Año de Concurso'
+                        d.doc_tipo_concurso,
                         CASE d.doc_dedicacion
                             WHEN 'Exclusivo' THEN 36
                             WHEN 'Tiempo Completo' THEN 30
@@ -61,7 +56,7 @@ class Rod extends Connection
                         d.doc_observacion,
                         (SELECT GROUP_CONCAT(cor_nombre SEPARATOR ', ')
                          FROM coordinacion_docente 
-                         WHERE doc_cedula = d.doc_cedula) AS coordinaciones, -- Añadido para 'Observación'
+                         WHERE doc_cedula = d.doc_cedula) AS coordinaciones,
                         uc.uc_nombre,
                         um.mal_hora_academica AS uc_horas,
                         s.sec_codigo
@@ -86,12 +81,16 @@ class Rod extends Connection
             $resultado = $co->prepare($sql);
             $resultado->execute([':fase_numero' => $this->fase_numero]);
             return $resultado->fetchAll(PDO::FETCH_ASSOC);
+
         } catch (PDOException $e) {
-            error_log("Error en Rod::obtenerAsignacionesDocente: " . $e->getMessage());
+            error_log("Error en Rod::obtenerDatosReporte: " . $e->getMessage());
             return false;
         }
     }
 
+    /**
+     * Obtiene las fases y años disponibles desde la tabla tbl_fase para el select.
+     */
     public function obtenerFasesActivas()
     {
         $co = $this->con();
@@ -105,3 +104,4 @@ class Rod extends Connection
         }
     }
 }
+?>
