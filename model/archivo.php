@@ -179,13 +179,13 @@ class Archivo extends Connection
         }
     }
     
-    public function verificarAcceso(){
+  /*  public function verificarAcceso(){
         $p_malla = $this->Con()->prepare("SELECT COUNT(*) FROM tbl_malla WHERE mal_activa = 1");
         $p_malla->execute();
         if($p_malla->fetchColumn() == 0) return "Acceso Denegado: No hay ninguna malla curricular activa. Contacte al administrador.";
 
         return null;
-    }
+    }*/
     
     public function obtenerAnios() {
         $p = $this->Con()->prepare("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo ASC");
@@ -212,7 +212,7 @@ class Archivo extends Connection
     }
 
     public function obtenerUnidadesParaRemedial($doc_cedula, $fase_uc) {
-        $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre FROM tbl_uc uc INNER JOIN uc_docente ud ON uc.uc_codigo = ud.uc_codigo INNER JOIN uc_malla um ON uc.uc_codigo = um.uc_codigo INNER JOIN tbl_malla mal ON um.mal_codigo = mal.mal_codigo WHERE ud.doc_cedula = :doc_cedula AND uc.uc_estado = 1 AND ud.uc_doc_estado = 1 AND mal.mal_activa = 1 AND (uc.uc_periodo = :fase_uc OR uc.uc_periodo = 'ANUAL') ORDER BY uc.uc_nombre ASC";
+        $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre FROM tbl_uc uc INNER JOIN uc_docente ud ON uc.uc_codigo = ud.uc_codigo INNER JOIN uc_malla um ON uc.uc_codigo = um.uc_codigo INNER JOIN tbl_malla mal ON um.mal_codigo = mal.mal_codigo WHERE ud.doc_cedula = :doc_cedula AND uc.uc_estado = 1 AND ud.uc_doc_estado = 1 AND mal.mal_activa = 1 AND (uc.uc_periodo = :fase_uc OR uc.uc_periodo = 'Anual') ORDER BY uc.uc_nombre ASC";
         $p = $this->Con()->prepare($sql);
         $p->bindParam(':doc_cedula', $doc_cedula, PDO::PARAM_INT);
         $p->bindParam(':fase_uc', $fase_uc, PDO::PARAM_INT);

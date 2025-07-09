@@ -36,7 +36,7 @@ function gestionarBotonGuardar() {
         haySeleccionados = true;
         $(this).find('.horas-input').each(function() {
             const valor = $(this).val();
-            if (!valor || valor.trim() === '') {
+            if (!valor || valor.trim() === '' || parseInt(valor) <= 0) {
                 todoValido = false;
             }
         });
@@ -421,14 +421,16 @@ function enviaAjax(datos) {
         success: function (respuesta) {
             try {
                 var lee = JSON.parse(respuesta);
-
+                
                 if (datos.get('accion') === 'verificar_condiciones') {
+                    const registrarBtn = $("#registrar");
+                    const mensajeSpan = $("#mensaje-validacion");
                     if (lee.puede_registrar) {
-                        $('#registrar').prop('disabled', false);
-                        $('#mensaje-validacion').text('');
+                        registrarBtn.prop('disabled', false);
+                        mensajeSpan.text('');
                     } else {
-                        $('#registrar').prop('disabled', true);
-                        $('#mensaje-validacion').text(lee.mensaje);
+                        registrarBtn.prop('disabled', true);
+                        mensajeSpan.text(lee.mensaje);
                     }
                     return;
                 }

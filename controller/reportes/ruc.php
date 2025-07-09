@@ -44,11 +44,11 @@ if (isset($_POST['generar_uc'])) {
 
     $styleHeaderTrayecto = [
         'font' => ['bold' => true, 'size' => 12],
-        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
     ];
     $styleHeaderColumnas = [
         'font' => ['bold' => true, 'size' => 12],
-        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
     ];
     $styleBordes = [
         'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
@@ -76,21 +76,36 @@ if (isset($_POST['generar_uc'])) {
         $rangoEncabezados = Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual . ':' . Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual;
         $sheet->getStyle($rangoEncabezados)->applyFromArray($styleHeaderColumnas);
 
-
         $filaActual++;
-
-        $ultimaUnidad = null;
         $filaInicioDatos = $filaActual;
-
+        
+        // 1. Escribir todos los datos en cada fila
         foreach ($datos as $item) {
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual, $item['Código de Sección']);
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 1) . $filaActual, $item['Nombre de la Unidad Curricular']);
             $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual, $item['Nombre Completo del Docente']);
-
-            if ($item['Nombre de la Unidad Curricular'] !== $ultimaUnidad) {
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 1) . $filaActual, $item['Nombre de la Unidad Curricular']);
-                $ultimaUnidad = $item['Nombre de la Unidad Curricular'];
-            }
             $filaActual++;
+        }
+
+        // 2. Pre-calcular los rangos para combinar por UNIDAD CURRICULAR
+        $unidadesParaMerge = [];
+        foreach ($datos as $index => $item) {
+            $unidad = $item['Nombre de la Unidad Curricular'];
+            if (!$unidad) continue; 
+            if (!isset($unidadesParaMerge[$unidad])) {
+                $unidadesParaMerge[$unidad] = ['start_row' => $filaInicioDatos + $index, 'count' => 0];
+            }
+            $unidadesParaMerge[$unidad]['count']++;
+        }
+
+        // 3. Aplicar la combinación de celdas en la columna "UNIDAD CURRICULAR"
+        foreach ($unidadesParaMerge as $info) {
+            if ($info['count'] > 1) {
+                $start = $info['start_row'];
+                $end = $start + $info['count'] - 1;
+                $columnaCombinar = Coordinate::stringFromColumnIndex($columnaInicial + 1); // Columna "UNIDAD CURRICULAR"
+                $sheet->mergeCells($columnaCombinar . $start . ':' . $columnaCombinar . $end);
+            }
         }
 
         $rangoTabla = Coordinate::stringFromColumnIndex($columnaInicial) . ($filaInicioDatos - 1) . ':' . Coordinate::stringFromColumnIndex($columnaInicial + 2) . ($filaActual - 1);

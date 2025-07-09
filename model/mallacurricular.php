@@ -22,11 +22,26 @@ class Malla extends Connection
         $this->mal_activa = $mal_activa;
     }
     
+    // GETTERS Y SETTERS (VITALES PARA QUE EL CONTROLADOR FUNCIONE)
+    public function getMalCodigo() { return $this->mal_codigo; }
     public function setMalCodigo($mal_codigo) { $this->mal_codigo = $mal_codigo; }
+    
+    public function getMalNombre() { return $this->mal_nombre; }
     public function setMalNombre($mal_nombre) { $this->mal_nombre = $mal_nombre; }
+
+    public function getMalCohorte() { return $this->mal_cohorte; }
     public function setMalCohorte($mal_cohorte) { $this->mal_cohorte = $mal_cohorte; }
+
+    public function getMalDescripcion() { return $this->mal_descripcion; }
     public function setMalDescripcion($mal_descripcion) { $this->mal_descripcion = $mal_descripcion; }
 
+    public function getMalEstado() { return $this->mal_estado; }
+    public function setMalEstado($mal_estado) { $this->mal_estado = $mal_estado; }
+
+    public function getMalActiva() { return $this->mal_activa; }
+    public function setMalActiva($mal_activa) { $this->mal_activa = $mal_activa; }
+
+    
     public function verificarCondicionesParaRegistrar() {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -39,10 +54,25 @@ class Malla extends Connection
                 return $r;
             }
 
+            $stmt_trayectos = $co->query("SELECT DISTINCT uc_trayecto FROM tbl_uc WHERE uc_estado = 1");
+            $trayectos_existentes = $stmt_trayectos->fetchAll(PDO::FETCH_COLUMN, 0);
+            $trayectos_requeridos = ['0', '1', '2', '3', '4'];
+            
+            $faltantes = array_diff($trayectos_requeridos, $trayectos_existentes);
+
+            if (!empty($faltantes)) {
+                $nombres_faltantes = [];
+                foreach($faltantes as $t) {
+                    $nombres_faltantes[] = ($t == '0') ? "Inicial" : $t;
+                }
+                $r['mensaje'] = 'Faltan unidades curriculares en los trayectos: ' . implode(', ', $nombres_faltantes) . '.';
+                return $r;
+            }
+            
             $r['puede_registrar'] = true;
 
         } catch(Exception $e) {
-            $r['puede_registrar'] = false;
+            $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
 

@@ -14,19 +14,24 @@
             <section class="py-3">
                 <div class="text-center mb-4">
                     <h2 class="text-primary">Reporte de Organización Docente (ROD)</h2>
-                    <p class="lead">Seleccione el año académico para generar el cuadro resumen.</p>
+                    <p class="lead">Seleccione la fase y año para generar el cuadro resumen.</p>
                 </div>
 
                 <div class="card p-4 shadow-sm bg-light rounded">
                     <form method="post" action="" target="_blank">
                         <div class="row g-3 justify-content-center mb-4">
                             <div class="col-md-8">
-                                <label for="anio_id" class="form-label">Filtrar por Año Académico:</label>
-                                <select class="form-select" name="anio_id" id="anio_id" required>
-                                    <option value="" disabled selected>-- Seleccione un Año --</option>
-                                    <?php if (!empty($listaAnios)): ?>
-                                        <?php foreach ($listaAnios as $anio): ?>
-                                            <option value="<?= htmlspecialchars($anio['ani_id']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
+                                <label for="fase_id" class="form-label">Filtrar por Fase y Año:</label>
+                                <select class="form-select" name="fase_id" id="fase_id" required>
+                                    <option value="" disabled selected>-- Seleccione una Fase --</option>
+                                    <?php if (!empty($listaFases)): ?>
+                                        <?php foreach ($listaFases as $fase):
+                                            // Se crea un valor combinado ej: "1-2022"
+                                            $valor = $fase['fase_numero'] . '-' . $fase['ani_anio'];
+                                            // Se crea el texto para mostrar ej: "Fase 1 - Año 2022"
+                                            $texto = 'Fase ' . $fase['fase_numero'] . ' - Año ' . $fase['ani_anio'];
+                                        ?>
+                                            <option value="<?= htmlspecialchars($valor) ?>"><?= htmlspecialchars($texto) ?></option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>

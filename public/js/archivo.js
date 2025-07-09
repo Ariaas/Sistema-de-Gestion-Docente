@@ -6,9 +6,18 @@ function enviaAjax(datos, successCallback) {
     $.ajax({
         async: true, url: "?pagina=archivo", type: "POST", contentType: false, data: datos, processData: false, cache: false, timeout: 10000,
         success: function (respuesta) {
-            try { var lee = JSON.parse(respuesta); successCallback(lee); } catch (e) { console.error("Error en análisis JSON:", e, respuesta); muestraMensaje("error", 5000, "Error", "Respuesta inválida del servidor."); }
+            try { 
+                var lee = JSON.parse(respuesta); 
+                successCallback(lee); 
+            } catch (e) { 
+                console.error("Error en análisis JSON:", e, respuesta); 
+                muestraMensaje("error", 5000, "Error", "Respuesta inválida del servidor."); 
+            }
         },
-        error: function (request, status, err) { console.error("Error de petición AJAX:", status, err); muestraMensaje("error", 5000, "Error", "Hubo un problema de conexión con el servidor."); },
+        error: function (request, status, err) { 
+            console.error("Error de petición AJAX:", status, err); 
+            muestraMensaje("error", 5000, "Error", "Hubo un problema de conexión con el servidor."); 
+        },
     });
 }
 
@@ -36,8 +45,11 @@ function validarFormularioRegistro() {
     const cantPer = $('#cantidad_per');
     if (cantPer.val() === '') { cantPer.addClass('is-invalid'); isValid = false; }
 
+    // --- CÁLCULO DE VALIDACIÓN MEJORADO ---
     const totalEstudiantes = parseInt($('#seccion option:selected').data('cantidad')) || 0;
-    if (totalEstudiantes > 0 && (parseInt(cantAprobados.val() || 0) + parseInt(cantPer.val() || 0)) > totalEstudiantes) {
+    const sumaAprobados = (parseInt(cantAprobados.val() || 0) + parseInt(cantPer.val() || 0));
+    
+    if (totalEstudiantes > 0 && sumaAprobados > totalEstudiantes) {
         cantAprobados.addClass('is-invalid');
         cantPer.addClass('is-invalid');
         $('#feedback-aprobados').text('La suma de aprobados y para PER excede el total de estudiantes.');
@@ -66,12 +78,9 @@ function listarRegistros() {
                 const aprobadosPer = parseInt(item.per_aprobados) || 0;
                 const aprobadosTotales = aprobadosDir + aprobadosPer;
                 
-                let reprobadosDisplay;
-                if (item.archivo_per === null) {
-                    reprobadosDisplay = totalEst - aprobadosDir - paraPer;
-                } else {
-                    reprobadosDisplay = totalEst - aprobadosTotales;
-                }
+                // --- CÁLCULO DE REPROBADOS CORREGIDO ---
+                // El número de reprobados es simplemente el total de estudiantes menos el total de aprobados (directos + per).
+                const reprobadosTotales = totalEst - aprobadosTotales;
                 
                 const esPerCero = paraPer === 0;
 
@@ -91,7 +100,7 @@ function listarRegistros() {
                     <td class="text-center">${paraPer}</td>
                     <td class="text-center">${aprobadosPer}</td>
                     <td class="text-center fw-bold text-success">${aprobadosTotales}</td>
-                    <td class="text-center fw-bold text-danger">${reprobadosDisplay}</td>
+                    <td class="text-center fw-bold text-danger">${reprobadosTotales}</td>
                     <td>${accionesHtml}</td>
                 </tr>`);
             });

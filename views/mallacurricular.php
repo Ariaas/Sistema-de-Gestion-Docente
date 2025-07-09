@@ -91,11 +91,11 @@ if (!isset($_SESSION['name'])) {
                             <div id="pagina2" style="display: none;">
                                 <fieldset class="border p-3">
                                     <legend class="w-auto px-2 h6">Asignar Unidades Curriculares</legend>
-                                    <div class="row g-2 align-items-end">
+                                    <div class="row g-2 align-items-end mb-3">
                                         <div class="col-md-9"><label for="select_uc" class="form-label">Unidad Curricular</label><select id="select_uc" class="form-select" style="width: 100%;"></select></div>
                                         <div class="col-md-3"><button type="button" class="btn btn-info w-100" id="btn_agregar_uc">Agregar Unidad</button></div>
                                     </div>
-                                    <div id="contenedorAcordeonUC" class="accordion mt-4">
+                                    <div id="contenedorAcordeonUC" class="accordion">
                                         </div>
                                 </fieldset>
                             </div>

@@ -4,10 +4,7 @@ if (!isset($_SESSION['name'])) {
     exit();
 }
 
-if (!empty($acceso_denegado)) {
-    echo "<h2 class='text-danger text-center mt-5'>{$acceso_denegado}</h2>";
-    exit();
-}
+
 ?>
 
 <!DOCTYPE html>
@@ -86,13 +83,7 @@ if (!empty($acceso_denegado)) {
                             <input type="hidden" name="accion" value="registrar_notas">
                             <input type="hidden" id="uc_nombre" name="uc_nombre">
                             
-                             <div class="alert alert-info" role="alert">
-                                <?php if ($fase_actual) {
-                                    echo "Registrando notas para las materias de la <strong>Fase {$fase_remedial['fase']} del Período {$fase_remedial['anio']}-{$fase_remedial['tipo']}</strong>.";
-                                } else {
-                                    echo "No hay un período de registro de notas activo en este momento.";
-                                } ?>
-                            </div>
+                            
 
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-3">
