@@ -1,3 +1,7 @@
+// =================================================================
+// ARCHIVO: public/js/seccion.js (CORREGIDO CON PREFIJO DINÁMICO)
+// =================================================================
+
 function muestraMensaje(tipo, tiempo, titulo, mensaje) {
     if (typeof Swal !== 'undefined' && Swal.fire) {
         Swal.fire({
@@ -12,6 +16,21 @@ function muestraMensaje(tipo, tiempo, titulo, mensaje) {
         alert(`${titulo}: ${mensaje.replace(/<br\/>/g, "\n")}`);
     }
 }
+
+/**
+ * ▼▼▼ NUEVA FUNCIÓN ▼▼▼
+ * Determina el prefijo correcto ("IN" o "IIN") basado en el primer dígito del código.
+ */
+function getPrefijoSeccion(codigo) {
+    if (!codigo) return 'IN'; // Prefijo por defecto
+    const trayecto = String(codigo).charAt(0);
+    if (trayecto === '3' || trayecto === '4') {
+        return 'IIN';
+    }
+    return 'IN';
+}
+
+
 function formatTime12Hour(time24) {
     if (!time24) return "";
     const [hoursStr, minutesStr] = time24.split(':');
@@ -22,11 +41,11 @@ function formatTime12Hour(time24) {
     hours = hours ? hours : 12;
     return `${hours}:${minutes} ${ampm}`;
 }
+
 let currentClickedCell = null;
 let horarioContenidoGuardado = new Map();
-let allUcs = [], allEspacios = [], allDocentes = [], allSecciones = [], allTurnos = [];
+let allUcs = [], allEspacios = [], allDocentes = [], allSecciones = [], allTurnos = [], allCohortes = [];
 let modalDataLoaded = false;
-
 
 function Listar() {
     const datos = new FormData();
@@ -57,6 +76,7 @@ function crearDT() {
         });
     }
 }
+
 function normalizeDayKey(day) {
     if (!day) return '';
     return day.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -104,7 +124,6 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
     }
 }
 
-
 function validarEntradaHorario() {
    
     $("#conflicto-docente-warning, #conflicto-espacio-warning, #conflicto-uc-warning").hide().html('');
@@ -141,7 +160,6 @@ function validarEntradaHorario() {
             return; 
         }
     }
-
    
     if ((!docId && !espId) || !dia || !secId) {
         return; 
@@ -177,7 +195,6 @@ function validarEntradaHorario() {
     });
 }
 
-
 function onCeldaHorarioClick() {
     currentClickedCell = $(this);
     const data = currentClickedCell.data("horario-data");
@@ -202,7 +219,7 @@ function onCeldaHorarioClick() {
     if (data) {
         $("#modalSeleccionarDocente").val(data.doc_cedula);
         cargarUcPorDocente(data.doc_cedula, () => {
-             $("#modalSeleccionarUc").val(data.uc_codigo).trigger('change'); // se agrega trigger para que la validación corra
+             $("#modalSeleccionarUc").val(data.uc_codigo).trigger('change');
         });
         $("#modalSeleccionarEspacio").val(data.esp_codigo);
         $("#btnEliminarEntrada").show();
@@ -221,10 +238,6 @@ function cargarUcPorDocente(docCedula, callback) {
     }
 
     const secCodigo = $("#sec_codigo_hidden").val();
-    let seccionTrayecto = null;
-    if (secCodigo) {
-        seccionTrayecto = secCodigo.toString().charAt(0);
-    }
     
     const datos = new FormData();
     datos.append("accion", "obtener_uc_por_docente");
@@ -285,11 +298,12 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTextoComp
         else if (segundoDigito === '3') turnoSeleccionado = 'noche';
     }
 
-    const textoSeccion = `IN${secCodigo} (${secCantidad} Est.) (${anioTextoCompleto})`;
+    const prefijo = getPrefijoSeccion(secCodigo);
+    const textoSeccion = `${prefijo}${secCodigo} (${secCantidad} Est.) (${anioTextoCompleto})`;
     $("#seccion_principal_id").empty().append(`<option value="${secCodigo}" selected>${textoSeccion}</option>`).prop('disabled', true);
     $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true); 
     
-    $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario para la sección IN${secCodigo}`);
+    $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario para la sección ${prefijo}${secCodigo}`);
     $("#accion").val("modificar");
     $("#proceso").text("GUARDAR HORARIO").data("action-type", "modificar").addClass("btn-success");
     $("#sec_codigo_hidden").val(secCodigo);
@@ -333,7 +347,6 @@ function verificarRequisitosInicialesSeccion() {
         btnRegistrar.prop('disabled', true).attr('title', mensajeTooltip);
         btnUnir.prop('disabled', true).attr('title', mensajeTooltip);
         
-      
         btnRegistrar.addClass('disabled-look');
         btnUnir.addClass('disabled-look');
 
@@ -352,11 +365,94 @@ function verificarRequisitosInicialesSeccion() {
     }
 }
 
+function enviaAjax(datos, boton) {
+    let textoOriginal;
+    if (boton) {
+        textoOriginal = boton.html();
+        boton.prop("disabled", true).text("Procesando...");
+    }
+
+    $.ajax({
+        url: "", type: "POST", contentType: false, data: datos, processData: false,
+        success: function(respuesta) {
+            try {
+                if (typeof respuesta !== 'object') throw new Error("Respuesta no es JSON.");
+                
+                if (respuesta.resultado == "consultar_agrupado") {
+                    destruyeDT();
+                    $("#resultadoconsulta").empty();
+                    if (respuesta.mensaje && respuesta.mensaje.length > 0) {
+                        allSecciones = respuesta.mensaje.map(s => ({...s, sec_id: s.sec_codigo}));
+                        respuesta.mensaje.forEach(item => {
+                            const prefijo = getPrefijoSeccion(item.sec_codigo);
+                            const botones_accion = `
+                              <button class="btn btn-info btn-sm ver-horario" data-sec-codigo="${item.sec_codigo}" title="Ver"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></button>
+                              <button class="btn btn-warning btn-sm modificar-horario" data-sec-codigo="${item.sec_codigo}" title="Modificar"> <img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+                              <button class="btn btn-danger btn-sm eliminar-horario" data-sec-codigo="${item.sec_codigo}" title="Eliminar"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                            $("#resultadoconsulta").append(`<tr><td>${prefijo}${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'} - ${item.ani_tipo||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
+                        });
+                    }
+                    crearDT();
+                } else if (respuesta.resultado.endsWith("_ok")) {
+                    $('.modal').modal('hide');
+                    muestraMensaje("success", 4000, "¡ÉXITO!", respuesta.mensaje);
+                    Listar();
+                } else if (respuesta.resultado == "error") {
+                    muestraMensaje("error", 8000, "¡ERROR!", respuesta.mensaje);
+                }
+            } catch (e) {
+                muestraMensaje("error", 8000, "Error de Procesamiento", "La respuesta del servidor no es válida: " + e.message);
+                console.error("Error en success de AJAX:", e);
+                console.error("Respuesta del servidor:", respuesta);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) { 
+            muestraMensaje("error", 5000, "Error de Conexión", `No se pudo comunicar con el servidor. ${textStatus}: ${errorThrown}`); 
+            console.error("Error en AJAX:", textStatus, errorThrown, jqXHR.responseText);
+        },
+        complete: function() {
+            if (boton) {
+                boton.prop("disabled", false).html(textoOriginal);
+            }
+        }
+    });
+}
+
 
 $(document).ready(function() {
     
-    verificarRequisitosInicialesSeccion();
+    function validarFormularioRegistro() {
+        const form = document.getElementById('formRegistroSeccion');
+        const codigoInput = document.getElementById('codigoSeccion');
+        const alerta = $("#alerta-cohorte");
+        const btnGuardar = $("#btnGuardarSeccion");
 
+        let isCohorteValid = false;
+        if (codigoInput.value.length === 4) {
+            const cohorteIngresado = parseInt(codigoInput.value.charAt(3), 10);
+            if (allCohortes.includes(cohorteIngresado)) {
+                alerta.hide();
+                isCohorteValid = true;
+            } else {
+                const cohortesDisponibles = allCohortes.join(', ');
+                alerta.text(`Cohorte '${cohorteIngresado}' no registrado. Válidos: ${cohortesDisponibles}`).show();
+                isCohorteValid = false;
+            }
+        } else {
+            alerta.hide();
+            isCohorteValid = false;
+        }
+
+        const isFormValid = form.checkValidity();
+        
+        if (isCohorteValid && isFormValid) {
+            btnGuardar.prop("disabled", false);
+        } else {
+            btnGuardar.prop("disabled", true);
+        }
+    }
+
+    verificarRequisitosInicialesSeccion();
     $('#resultadoconsulta').html('<tr><td colspan="4" class="text-center">Cargando datos...</td></tr>');
     
     const datosIniciales = new FormData();
@@ -368,6 +464,7 @@ $(document).ready(function() {
             allEspacios = respuesta.espacios.map(e => ({...e, esp_id: e.esp_codigo})) || [];
             allDocentes = respuesta.docentes.map(d => ({...d, doc_id: d.doc_cedula})) || [];
             allTurnos = respuesta.turnos || [];
+            allCohortes = respuesta.cohortes.map(c => parseInt(c, 10)) || [];
             modalDataLoaded = true;
             Listar(); 
         },
@@ -378,7 +475,7 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.ver-horario, .modificar-horario, .eliminar-horario, #btnIniciarRegistro, #btnAbrirModalUnir', function(e) {
-        if (!modalDataLoaded && !$(this).prop('disabled')) { // solo mostrar si no está deshabilitado
+        if (!modalDataLoaded && !$(this).prop('disabled')) {
             e.stopPropagation();
             muestraMensaje('info', 2000, 'Un momento...', 'Cargando datos necesarios, por favor intente de nuevo en un segundo.');
             return;
@@ -387,7 +484,13 @@ $(document).ready(function() {
 
     $('#btnIniciarRegistro').on('click', function() {
         $("#formRegistroSeccion")[0].reset();
+        $("#alerta-cohorte").hide();
+        $("#btnGuardarSeccion").prop("disabled", true);
         $("#modalRegistroSeccion").modal("show");
+    });
+    
+    $('#formRegistroSeccion').on('input change', function() {
+        validarFormularioRegistro();
     });
     
     $('#btnAbrirModalUnir').on('click', function() {
@@ -410,7 +513,8 @@ $(document).ready(function() {
                 hayGrupos = true;
                 container.append(`<h6 class="text-primary mt-2">${grupo.nombre}</h6>`);
                 grupo.secciones.forEach(s => {
-                    const checkboxHtml = `<div class="form-check"><input class="form-check-input" type="checkbox" name="secciones_a_unir[]" value="${s.sec_codigo}" id="check_sec_${s.sec_codigo}" data-group-key="${key}"><label class="form-check-label" for="check_sec_${s.sec_codigo}">IN${s.sec_codigo} (${s.sec_cantidad} Est.)</label></div>`;
+                    const prefijo = getPrefijoSeccion(s.sec_codigo);
+                    const checkboxHtml = `<div class="form-check"><input class="form-check-input" type="checkbox" name="secciones_a_unir[]" value="${s.sec_codigo}" id="check_sec_${s.sec_codigo}" data-group-key="${key}"><label class="form-check-label" for="check_sec_${s.sec_codigo}">${prefijo}${s.sec_codigo} (${s.sec_cantidad} Est.)</label></div>`;
                     container.append(checkboxHtml);
                 });
                 container.append('<hr class="my-2">');
@@ -454,9 +558,10 @@ $(document).ready(function() {
                             horarioContenidoGuardado.set(key, { html: generarCellContent(clase), data: clase });
                         }
                     });
-                    const seccionTexto = `IN${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio} - ${seccionData.ani_tipo})`;
+                    const prefijo = getPrefijoSeccion(seccionData.sec_codigo);
+                    const seccionTexto = `${prefijo}${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio} - ${seccionData.ani_tipo})`;
                     if (isDelete) {
-                        $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> IN${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio} - ${seccionData.ani_tipo}</p>`);
+                        $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> ${prefijo}${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio} - ${seccionData.ani_tipo}</p>`);
                         inicializarTablaHorario(turnoSeleccionado, "#tablaEliminarHorario", true);
                         $("#btnProcederEliminacion").data('sec-codigo', sec_codigo);
                         $("#modalConfirmarEliminar").modal('show');
@@ -469,7 +574,7 @@ $(document).ready(function() {
                         $("#sec_codigo_hidden").val(sec_codigo);
                         $("#seccion_principal_id").html(`<option value="${sec_codigo}">${seccionTexto}</option>`).prop('disabled', true);
                         $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
-                        $("#modalHorarioGlobalTitle").text(`Modificar Horario: IN${seccionData.sec_codigo}`);
+                        $("#modalHorarioGlobalTitle").text(`Modificar Horario: ${prefijo}${seccionData.sec_codigo}`);
                         $("#accion").val("modificar");
                         $("#proceso").text("GUARDAR CAMBIOS").addClass("btn-primary");
                         inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
@@ -516,9 +621,11 @@ $(document).ready(function() {
         const sec_codigo = $(this).data('sec-codigo');
         $('#modalConfirmarEliminar').modal('hide');
         setTimeout(() => {
+            const seccion = allSecciones.find(s=>s.sec_codigo == sec_codigo);
+            const prefijo = getPrefijoSeccion(seccion.sec_codigo);
             Swal.fire({
                 title: '¿Está realmente seguro?',
-                html: `Esta acción es irreversible y eliminará permanentemente la sección <strong>IN${allSecciones.find(s=>s.sec_codigo == sec_codigo).sec_codigo}</strong>.`,
+                html: `Esta acción es irreversible y eliminará permanentemente la sección <strong>${prefijo}${seccion.sec_codigo}</strong>.`,
                 icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar'
             }).then((result) => {
@@ -619,52 +726,4 @@ $(document).ready(function() {
         $(this).removeClass('was-validated');
         enviaAjax(new FormData(this), $("#btnConfirmarUnion"));
     });
-
-
-    function enviaAjax(datos, boton) {
-        let textoOriginal;
-        if (boton) {
-            textoOriginal = boton.html();
-            boton.prop("disabled", true).text("Procesando...");
-        }
-
-        $.ajax({
-            url: "", type: "POST", contentType: false, data: datos, processData: false,
-            success: function(respuesta) {
-                try {
-                    if (typeof respuesta !== 'object') throw new Error("Respuesta no es JSON.");
-                    
-                    if (respuesta.resultado == "consultar_agrupado") {
-                        destruyeDT();
-                        $("#resultadoconsulta").empty();
-                        if (respuesta.mensaje && respuesta.mensaje.length > 0) {
-                            allSecciones = respuesta.mensaje.map(s => ({...s, sec_id: s.sec_codigo}));
-                            respuesta.mensaje.forEach(item => {
-                                const botones_accion = `
-                                  <button class="btn btn-info btn-sm ver-horario" data-sec-codigo="${item.sec_codigo}" title="Ver"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></button>
-                                  <button class="btn btn-warning btn-sm modificar-horario" data-sec-codigo="${item.sec_codigo}" title="Modificar"> <img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-                                  <button class="btn btn-danger btn-sm eliminar-horario" data-sec-codigo="${item.sec_codigo}" title="Eliminar"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                                $("#resultadoconsulta").append(`<tr><td>IN${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'} - ${item.ani_tipo||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
-                            });
-                        }
-                        crearDT();
-                    } else if (respuesta.resultado.endsWith("_ok")) {
-                        $('.modal').modal('hide');
-                        muestraMensaje("success", 4000, "¡ÉXITO!", respuesta.mensaje);
-                        Listar();
-                    } else if (respuesta.resultado == "error") {
-                        muestraMensaje("error", 8000, "¡ERROR!", respuesta.mensaje);
-                    }
-                } catch (e) {
-                    muestraMensaje("error", 8000, "Error de Procesamiento", "La respuesta del servidor no es válida: " + e.message);
-                }
-            },
-            error: function() { muestraMensaje("error", 5000, "Error de Conexión", "No se pudo comunicar con el servidor."); },
-            complete: function() {
-                if (boton) {
-                    boton.prop("disabled", false).html(textoOriginal);
-                }
-            }
-        });
-    }
 });

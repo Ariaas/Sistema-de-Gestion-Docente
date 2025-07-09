@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-$pagina = "seccion"; 
+
 
 if (!is_file("model/" . $pagina . ".php")) {
     echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina]);
@@ -51,16 +51,17 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
         $o = new Seccion(); 
 
         switch ($accion) {
+  
             case 'obtener_datos_selects':
                 $respuesta = [
                     'resultado' => 'ok', 
                     'ucs' => $o->obtenerUnidadesCurriculares(),
                     'espacios' => $o->obtenerEspacios(),
                     'docentes' => $o->obtenerDocentes(),
-                    'turnos' => $o->obtenerTurnos()
+                    'turnos' => $o->obtenerTurnos(),
+                    'cohortes' => $o->obtenerCohortesMalla() 
                 ];
                 break;
-
             case 'registrar_seccion':
                 $anioCompuesto = $_POST['anioId'] ?? null;
                 list($anio_anio, $anio_tipo) = explode('|', $anioCompuesto . '|');

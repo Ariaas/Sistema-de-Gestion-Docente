@@ -33,7 +33,15 @@ class Seccion extends Connection
             return 'ninguna';
         }
     }
-
+ public function obtenerCohortesMalla() {
+        try {
+            
+            return $this->Con()->query("SELECT DISTINCT mal_cohorte FROM tbl_malla WHERE mal_estado = 1 AND mal_activa = 1")->fetchAll(PDO::FETCH_COLUMN, 0);
+        } catch (Exception $e) {
+            error_log("Error al obtener cohortes: " . $e->getMessage());
+            return [];
+        }
+    }
     public function EjecutarPromocionAutomatica() {
       
         if ($this->determinarFaseActual() !== 'fase2' || isset($_SESSION['promocion_f2_ejecutada_session'])) {

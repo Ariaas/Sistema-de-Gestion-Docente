@@ -78,9 +78,11 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                             <div class="mb-4">
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4" pattern="\d{4}" title="El código debe contener exactamente 4 números." oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                                    </div>
+    <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
+    <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4" pattern="\d{4}" title="El código debe contener exactamente 4 números." oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+    
+    <div id="alerta-cohorte" class="alert alert-danger p-1 mt-2 text-center" role="alert" style="display:none; font-size: 0.85em;"></div>
+</div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
                                         <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required min="0" max="99" value="0">
