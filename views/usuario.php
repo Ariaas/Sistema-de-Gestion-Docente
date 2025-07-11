@@ -33,6 +33,7 @@ if (!isset($_SESSION['name'])) {
                                 <th>Nombre</th>
                                 <th>Correo</th>
                                 <th>Rol</th>
+                                <th>Docente Asignado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -76,28 +77,32 @@ if (!isset($_SESSION['name'])) {
 
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="grupo-modificar">
-                                        <div class="col-md-6">
-                                            <label for="contrasenia" class="form-label">contraseña</label>
-                                            <input class="form-control" type="password" id="contrasenia" name="contrasenia">
-                                            <span id="scontrasenia" class="form-text"></span>
+                                    <div class="col-md-12">
+                                        <label for="docente_asignado" class="form-label">Docente Asignado</label>
+                                        <div class="input-group">
+                                            <input type="text" id="docente_asignado_nombre" class="form-control" placeholder="Ningún docente asignado" readonly>
+                                            <button class="btn btn-info" type="button" id="btnSeleccionarDocente">Seleccionar</button>
+                                            <button class="btn btn-danger" type="button" id="btnQuitarDocente">Quitar</button>
                                         </div>
+                                        <input type="hidden" id="usu_docente" name="usu_docente">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="grupo-modificar">
                                         <div class="row g-3">
                                             <div class="col-md-6">
-                                                <label for="usuarioRol" class="form-label">Roles</label>
-                                                <select class="form-select" name="usuarioRol" id="usuarioRol" required>
-                                                    <option value="" disabled selected>Seleccione un rol</option>
-                                                    <?php
-                                                    if (!empty($roles)) {
-                                                        foreach ($roles as $rol) {
-                                                            echo "<option value='" . $rol['rol_id'] . "'>" . $rol['rol_nombre'] . "</option>";
-                                                        }
-                                                    } else {
-                                                        echo "<option value='' disabled>No hay roles disponibles</option>";
-                                                    }
-                                                    ?>
-                                                </select>
-                                                <span id="srol"></span>
+                                                <label for="contrasenia" class="form-label">Contraseña</label>
+                                                <input class="form-control" type="password" id="contrasenia" name="contrasenia">
+                                                <span id="scontrasenia" class="form-text"></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="rol_asignado" class="form-label">Rol Asignado</label>
+                                                <div class="input-group">
+                                                    <input type="text" id="rol_asignado_nombre" class="form-control" placeholder="Usuario sin rol" readonly>
+                                                    <button class="btn btn-info" type="button" id="btnSeleccionarRol">Seleccionar</button>
+                                                    <button class="btn btn-danger" type="button" id="btnQuitarRol">Quitar</button>
+                                                </div>
+                                                <input type="hidden" id="usuarioRol" name="usuarioRol">
                                             </div>
                                         </div>
                                     </div>
@@ -113,6 +118,73 @@ if (!isset($_SESSION['name'])) {
             </div>
         </div>
         <!-- Fin del Modal -->
+
+        <!-- Modal Docentes -->
+        <div class="modal fade" id="modalDocentes" tabindex="-1" aria-labelledby="modalDocentesLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content" style="border: 1px solid #000;">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalDocentesLabel">Seleccionar Docente</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaDocentes">
+                                <thead>
+                                    <tr>
+                                        <th>Cédula</th>
+                                        <th>Nombre</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpoTablaDocentes">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin del Modal Docentes -->
+
+        <!-- Modal Roles -->
+        <div class="modal fade" id="modalRoles" tabindex="-1" aria-labelledby="modalRolesLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content" style="border: 1px solid #000;">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalRolesLabel">Seleccionar Rol</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="tablaRoles">
+                                <thead>
+                                    <tr>
+                                        <th>Rol</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpoTablaRoles">
+                                    <?php
+                                    if (!empty($roles)) {
+                                        foreach ($roles as $rol) {
+                                            echo "<tr>";
+                                            echo "<td>" . htmlspecialchars($rol['rol_nombre']) . "</td>";
+                                            echo "<td><button class='btn btn-success btn-sm btn-seleccionar-rol' data-id='" . $rol['rol_id'] . "' data-nombre='" . htmlspecialchars($rol['rol_nombre']) . "'>Seleccionar</button></td>";
+                                            echo "</tr>";
+                                        }
+                                    } else {
+                                        echo "<tr><td colspan='2' class='text-center'>No hay roles disponibles.</td></tr>";
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin del Modal Roles -->
     </main>
     <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>

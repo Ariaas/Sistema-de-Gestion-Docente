@@ -53,9 +53,11 @@ $reportes_estadisticos_items = [
 ];
 
 $mantenimiento_permisos = ['Usuario', 'Rol', 'Bitacora', 'backup'];
-$config_permisos = ['Año', 'Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad'];
+$config_permisos = ['Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad'];
 
 $tiene_permiso_gestion = false;
+$docente_asignado = isset($_SESSION['usu_docente']) && !empty($_SESSION['usu_docente']);
+
 foreach (array_keys($gestion_items) as $permiso) {
     if (tiene_permiso($permiso, $permisos)) {
         $tiene_permiso_gestion = true;
@@ -86,7 +88,7 @@ foreach ($mantenimiento_permisos as $permiso) {
 
 $tiene_permiso_reportes_subitem = tiene_permiso('Reportes', $permisos);
 
-$tiene_permiso_admin = $tiene_permiso_config_subitem || $tiene_permiso_reportes_subitem || $tiene_permiso_mantenimiento_subitem;
+$tiene_permiso_admin = $tiene_permiso_config_subitem || $tiene_permiso_reportes_subitem || $tiene_permiso_mantenimiento_subitem || $docente_asignado;
 
 
 $paginas_gestion = array_values($gestion_items);
@@ -148,8 +150,11 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
 
                 <?php if ($tiene_permiso_admin) : ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
+                        <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes', 'archivo'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                            <?php if ($docente_asignado): ?>
+                                <li><a class="dropdown-item <?php echo is_active('archivo', $pagina_actual); ?>" href="?pagina=archivo">Resguardar Notas</a></li>
+                            <?php endif; ?>
                             <?php if ($tiene_permiso_config_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
                             <?php endif; ?>

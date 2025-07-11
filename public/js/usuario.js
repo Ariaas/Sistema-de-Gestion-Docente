@@ -114,6 +114,7 @@ $(document).ready(function () {
         datos.append("correoUsuario", $("#correo").val());
         datos.append("contraseniaUsuario", $("#contrasenia").val());
         datos.append("usuarioRol", $("#usuarioRol").val());
+        datos.append("usu_docente", $("#usu_docente").val());
         enviaAjax(datos);
       }
     } else if ($(this).text() == "MODIFICAR") {
@@ -124,6 +125,12 @@ $(document).ready(function () {
         datos.append("nombreUsuario", $("#usuarionombre").val());
         datos.append("correoUsuario", $("#correo").val());
         datos.append("usuarioRol", $("#usuarioRol").val());
+        datos.append("usu_docente", $("#usu_docente").val());
+        
+        if ($("#contrasenia").val()) {
+            datos.append("contraseniaUsuario", $("#contrasenia").val());
+        }
+
         enviaAjax(datos);
       }
     }
@@ -157,10 +164,84 @@ $(document).ready(function () {
   $("#registrar").on("click", function () {
     limpia();
     $("#proceso").text("REGISTRAR");
+    $("#usuarionombre, #correo, #contrasenia, #btnSeleccionarDocente, #btnQuitarDocente, #btnSeleccionarRol, #btnQuitarRol").prop("disabled", false);
     $(".grupo-modificar").show();
     $("#modal1").modal("show");
   });
 
+  $('#btnSeleccionarDocente').on('click', function() {
+    $('#modal1').modal('hide');
+    var datos = new FormData();
+    datos.append("accion", "consultar_docentes");
+    $.ajax({
+        async: true, url: "", type: "POST", contentType: false, data: datos, processData: false, cache: false,
+        success: function(respuesta) {
+            try {
+                var lee = JSON.parse(respuesta);
+                if (lee.resultado === 'ok') {
+                    const cuerpoTabla = $('#cuerpoTablaDocentes');
+                    cuerpoTabla.empty();
+                    if (lee.mensaje.length > 0) {
+                        lee.mensaje.forEach(function(docente) {
+                            cuerpoTabla.append(`
+                                <tr>
+                                    <td>${docente.doc_cedula}</td>
+                                    <td>${docente.doc_nombre} ${docente.doc_apellido}</td>
+                                    <td><button class="btn btn-success btn-sm btn-seleccionar-doc" data-cedula="${docente.doc_cedula}" data-nombre="${docente.doc_nombre} ${docente.doc_apellido}">Seleccionar</button></td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        cuerpoTabla.append('<tr><td colspan="3" class="text-center">No hay docentes disponibles para asignar.</td></tr>');
+                    }
+                    $('#modalDocentes').modal('show');
+                } else {
+                    muestraMensaje("error", 5000, "Error", lee.mensaje);
+                }
+            } catch (e) {
+                alert("Error al procesar la respuesta de docentes: " + e);
+            }
+        }
+    });
+  });
+
+  $(document).on('click', '.btn-seleccionar-doc', function() {
+      const nombre = $(this).data('nombre');
+      $('#usu_docente').val(nombre);
+      $('#docente_asignado_nombre').val(nombre);
+      $('#modalDocentes').modal('hide');
+  });
+
+  $('#modalDocentes').on('hidden.bs.modal', function () {
+    $('#modal1').modal('show');
+  });
+
+  $('#btnQuitarDocente').on('click', function() {
+      $('#usu_docente').val('');
+      $('#docente_asignado_nombre').val('');
+  });
+
+  $('#btnSeleccionarRol').on('click', function() {
+    $('#modal1').modal('hide');
+    $('#modalRoles').modal('show');
+  });
+
+  $(document).on('click', '.btn-seleccionar-rol', function() {
+      const id = $(this).data('id');
+      const nombre = $(this).data('nombre');
+      $('#usuarioRol').val(id);
+      $('#rol_asignado_nombre').val(nombre);
+      $('#modalRoles').modal('hide');
+  });
+
+  $('#modalRoles').on('hidden.bs.modal', function () {
+    $('#modal1').modal('show');
+  });
+
+  $('#btnQuitarRol').on('click', function() {
+      $('#usuarioRol').val('');
+      $('#rol_asignado_nombre').val('');
+  });
   
 });
 
@@ -187,21 +268,26 @@ function pone(pos, accion) {
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#usuarionombre").prop("disabled", false);
-    $("#correo").prop("disabled", false);
-    $("#contrasenia").prop("disabled", false);
-    $("#usuarioRol").prop("disabled", false);
+    $("#usuarionombre, #correo, #contrasenia, #btnSeleccionarDocente, #btnQuitarDocente, #btnSeleccionarRol, #btnQuitarRol").prop("disabled", false);
     $(".grupo-modificar").show();
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#usuarionombre, #correo, #contrasenia, #usuarioRol").prop("disabled", true);
+    $("#usuarionombre, #correo, #contrasenia, #btnSeleccionarDocente, #btnQuitarDocente, #btnSeleccionarRol, #btnQuitarRol").prop("disabled", true);
     $(".grupo-modificar").hide();
   }
 
   $("#usuarioId").val($(linea).find("td:eq(0)").text());
   $("#usuarionombre").val($(linea).find("td:eq(1)").text());
   $("#correo").val($(linea).find("td:eq(2)").text());
-  $("#usuarioRol").val($(linea).find("td:eq(3)").data("rol") || "");
+  
+  const rolId = $(linea).find("td:eq(3)").data("rol") || "";
+  const rolNombre = $(linea).find("td:eq(3)").text() || "";
+  $("#usuarioRol").val(rolId);
+  $("#rol_asignado_nombre").val(rolNombre === 'Usuario sin rol' ? '' : rolNombre);
+
+  const docenteAsignado = $(linea).find("td:eq(4)").text() || "";
+  $("#usu_docente").val(docenteAsignado === 'No asignado' ? '' : docenteAsignado);
+  $("#docente_asignado_nombre").val(docenteAsignado === 'No asignado' ? '' : docenteAsignado);
 
   $("#susuarionombre").hide();
   $("#scontrasenia").hide();
@@ -210,7 +296,6 @@ function pone(pos, accion) {
   $("#modal1").modal("show");
 }
 
-//funcion que envia y recibe datos por AJAX
 function enviaAjax(datos) {
   $.ajax({
     async: true,
@@ -221,7 +306,7 @@ function enviaAjax(datos) {
     processData: false,
     cache: false,
     beforeSend: function () {},
-    timeout: 10000, //tiempo maximo de espera por la respuesta del servidor
+    timeout: 10000, 
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
@@ -234,7 +319,8 @@ function enviaAjax(datos) {
                 <td style="display: none;">${item.usu_id}</td>
                 <td>${item.usu_nombre}</td>
                 <td>${item.usu_correo}</td>
-                <td>${item.rol_nombre ?? ''}</td>
+                <td data-rol="${item.rol_id}">${item.rol_nombre || 'Usuario sin rol' }</td>
+                <td>${item.usu_docente || 'No asignado'}</td>
                 <td>
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Eliminar</button>

@@ -4,14 +4,13 @@ if (!isset($_SESSION['name'])) {
     exit();
 }
 
-
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Gestión de Notas y Remediales</title>
+    <title>Resguardar Notas</title>
     <style>
         .table-compact {
             font-size: 0.9rem;
@@ -22,12 +21,12 @@ if (!isset($_SESSION['name'])) {
             text-align: left;
         }
         .btn.download-link {
-            color: #6c757d; /* Color de ícono secundario */
+            color: #6c757d; 
             box-shadow: none;
         }
         .btn.download-link:hover {
             background-color: transparent !important;
-            color: #212529; /* Color de ícono más oscuro al pasar el ratón */
+            color: #212529; 
         }
     </style>
 </head>
