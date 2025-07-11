@@ -48,6 +48,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $u->set_correoUsuario($_POST['correoUsuario']);
             $u->set_superUsuario($_POST['superUsuario'] ?? null);
             $u->set_usu_docente($_POST['usu_docente'] ?? null);
+            $u->set_usu_cedula($_POST['usu_cedula'] ?? null);
             if (isset($_POST['usuarioRol'])) {
                 $u->set_rolId($_POST['usuarioRol']);
             }
@@ -68,6 +69,7 @@ if (is_file("views/" . $pagina . ".php")) {
                 if (isset($resultado['resultado']) && $resultado['resultado'] == 'modificar') {
                     if ($_POST['usuarioId'] == $usu_id) {
                         $_SESSION['usu_docente'] = $_POST['usu_docente'] ?? null;
+                        $_SESSION['usu_cedula'] = $_POST['usu_cedula'] ?? null;
                     }
                     $bitacora->registrarAccion($usu_id, 'modificar', 'usuario');
                 }

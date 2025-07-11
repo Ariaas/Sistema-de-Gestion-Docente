@@ -85,6 +85,7 @@ if (!isset($_SESSION['name'])) {
                                             <button class="btn btn-danger" type="button" id="btnQuitarDocente">Quitar</button>
                                         </div>
                                         <input type="hidden" id="usu_docente" name="usu_docente">
+                                        <input type="hidden" id="usu_cedula" name="usu_cedula">
                                     </div>
                                 </div>
                                 <div class="row mb-3">

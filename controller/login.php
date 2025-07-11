@@ -24,6 +24,7 @@ if (is_file("views/" . $pagina . ".php")) {
                     $_SESSION['usu_id'] = $m['usu_id'];
                     $_SESSION['usu_foto'] = $m['usu_foto'];
                     $_SESSION['usu_docente'] = $m['usu_docente'];
+                    $_SESSION['usu_cedula'] = $m['usu_cedula'];
                     $_SESSION['cedula'] = $m['mensaje'];
 
                     $permisos = $o->get_permisos($m['usu_id']);

@@ -115,6 +115,7 @@ $(document).ready(function () {
         datos.append("contraseniaUsuario", $("#contrasenia").val());
         datos.append("usuarioRol", $("#usuarioRol").val());
         datos.append("usu_docente", $("#usu_docente").val());
+        datos.append("usu_cedula", $("#usu_cedula").val());
         enviaAjax(datos);
       }
     } else if ($(this).text() == "MODIFICAR") {
@@ -126,6 +127,7 @@ $(document).ready(function () {
         datos.append("correoUsuario", $("#correo").val());
         datos.append("usuarioRol", $("#usuarioRol").val());
         datos.append("usu_docente", $("#usu_docente").val());
+        datos.append("usu_cedula", $("#usu_cedula").val());
         
         if ($("#contrasenia").val()) {
             datos.append("contraseniaUsuario", $("#contrasenia").val());
@@ -207,7 +209,9 @@ $(document).ready(function () {
 
   $(document).on('click', '.btn-seleccionar-doc', function() {
       const nombre = $(this).data('nombre');
+      const cedula = $(this).data('cedula');
       $('#usu_docente').val(nombre);
+      $('#usu_cedula').val(cedula);
       $('#docente_asignado_nombre').val(nombre);
       $('#modalDocentes').modal('hide');
   });
@@ -218,6 +222,7 @@ $(document).ready(function () {
 
   $('#btnQuitarDocente').on('click', function() {
       $('#usu_docente').val('');
+      $('#usu_cedula').val('');
       $('#docente_asignado_nombre').val('');
   });
 
@@ -286,7 +291,9 @@ function pone(pos, accion) {
   $("#rol_asignado_nombre").val(rolNombre === 'Usuario sin rol' ? '' : rolNombre);
 
   const docenteAsignado = $(linea).find("td:eq(4)").text() || "";
+  const cedulaAsignada = $(linea).find("td:eq(4)").data("cedula") || "";
   $("#usu_docente").val(docenteAsignado === 'No asignado' ? '' : docenteAsignado);
+  $("#usu_cedula").val(cedulaAsignada);
   $("#docente_asignado_nombre").val(docenteAsignado === 'No asignado' ? '' : docenteAsignado);
 
   $("#susuarionombre").hide();
@@ -320,7 +327,7 @@ function enviaAjax(datos) {
                 <td>${item.usu_nombre}</td>
                 <td>${item.usu_correo}</td>
                 <td data-rol="${item.rol_id}">${item.rol_nombre || 'Usuario sin rol' }</td>
-                <td>${item.usu_docente || 'No asignado'}</td>
+                <td data-cedula="${item.usu_cedula || ''}">${item.usu_docente || 'Usuario no es un docente'}</td>
                 <td>
                   <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Modificar</button>
                   <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Eliminar</button>
@@ -385,5 +392,9 @@ function limpia() {
   $("#contrasenia").val("");
   $("#correo").val("");
   $("#usuarioRol").val("");
+  $("#usu_docente").val("");
+  $("#usu_cedula").val("");
+  $("#docente_asignado_nombre").val("");
+  $("#rol_asignado_nombre").val("");
 }
 

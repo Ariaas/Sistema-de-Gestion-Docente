@@ -10,6 +10,7 @@ class Usuario extends Connection
     private $superUsuario;
     private $rolId;
     private $usu_docente;
+    private $usu_cedula;
 
     public function __construct($usuarioId = null, $nombreUsuario = null, $contraseniaUsuario = null, $correoUsuario = null, $superUsuario = 0)
     {
@@ -29,6 +30,15 @@ class Usuario extends Connection
     public function get_usu_docente()
     {
         return $this->usu_docente;
+    }
+
+    public function set_usu_cedula($usu_cedula)
+    {
+        $this->usu_cedula = $usu_cedula;
+    }
+    public function get_usu_cedula()
+    {
+        return $this->usu_cedula;
     }
 
     public function get_usuarioId()
@@ -109,14 +119,16 @@ class Usuario extends Connection
                     usu_contrasenia,
                     usu_estado,
                     rol_id,
-                    usu_docente
+                    usu_docente,
+                    usu_cedula
                 ) VALUES (
                     :nombreUsuario,
                     :correoUsuario,
                     :contraseniaUsuario,
                     1,
                     :rolId,
-                    :usu_docente
+                    :usu_docente,
+                    :usu_cedula
                 )");
 
                 $stmt->bindParam(':nombreUsuario', $this->nombreUsuario, PDO::PARAM_STR);
@@ -124,6 +136,7 @@ class Usuario extends Connection
                 $stmt->bindParam(':contraseniaUsuario', $hashedPassword, PDO::PARAM_STR);
                 $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
                 $stmt->bindParam(':usu_docente', $this->usu_docente, PDO::PARAM_STR);
+                $stmt->bindParam(':usu_cedula', $this->usu_cedula, PDO::PARAM_STR);
 
                 $stmt->execute();
 
@@ -149,7 +162,7 @@ class Usuario extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT u.usu_id, u.usu_nombre, u.usu_correo, u.usu_docente, r.rol_nombre, u.rol_id
+            $stmt = $co->query("SELECT u.usu_id, u.usu_nombre, u.usu_correo, u.usu_docente, u.usu_cedula, r.rol_nombre, u.rol_id
                                 FROM tbl_usuario u 
                                 LEFT JOIN tbl_rol r ON u.rol_id = r.rol_id 
                                 WHERE u.usu_estado = 1");
@@ -176,7 +189,7 @@ class Usuario extends Connection
             if (!$this->existe($this->nombreUsuario, $this->correoUsuario, $this->usuarioId)) {
                 try {
                     $sql = "UPDATE tbl_usuario
-                            SET usu_nombre = :nombreUsuario, usu_correo = :correoUsuario, rol_id = :rolId, usu_docente = :usu_docente";
+                            SET usu_nombre = :nombreUsuario, usu_correo = :correoUsuario, rol_id = :rolId, usu_docente = :usu_docente, usu_cedula = :usu_cedula";
 
                     if (!empty($this->contraseniaUsuario)) {
                         $sql .= ", usu_contrasenia = :contraseniaUsuario";
@@ -190,6 +203,7 @@ class Usuario extends Connection
                     $stmt->bindParam(':correoUsuario', $this->correoUsuario, PDO::PARAM_STR);
                     $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
                     $stmt->bindParam(':usu_docente', $this->usu_docente, PDO::PARAM_STR);
+                    $stmt->bindParam(':usu_cedula', $this->usu_cedula, PDO::PARAM_STR);
                     $stmt->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_INT);
 
                     if (!empty($this->contraseniaUsuario)) {

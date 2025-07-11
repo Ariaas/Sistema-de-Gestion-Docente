@@ -56,7 +56,7 @@ $mantenimiento_permisos = ['Usuario', 'Rol', 'Bitacora', 'backup'];
 $config_permisos = ['Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad'];
 
 $tiene_permiso_gestion = false;
-$docente_asignado = isset($_SESSION['usu_docente']) && !empty($_SESSION['usu_docente']);
+$docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedula']);
 
 foreach (array_keys($gestion_items) as $permiso) {
     if (tiene_permiso($permiso, $permisos)) {
