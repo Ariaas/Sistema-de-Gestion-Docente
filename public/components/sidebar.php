@@ -178,10 +178,14 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
 
             <div class="d-none d-lg-flex align-items-center ms-auto">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a href="?pagina=notificaciones" class="nav-link <?php echo is_active('notificaciones', $pagina_actual); ?>">
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link <?php echo is_active('notificaciones', $pagina_actual); ?>" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificacionesBadge" style="display: none;"></span>
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdown" id="notificacionesPanel" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                            <li><a class="dropdown-item text-center" href="#">Cargando...</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -202,3 +206,5 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
         </div>
     </div>
 </nav>
+
+<script type="text/javascript" src="public/js/notificaciones.js"></script>
