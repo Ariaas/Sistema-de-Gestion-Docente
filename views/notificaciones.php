@@ -40,7 +40,6 @@ if (!isset($_SESSION['name'])) {
     <?php require_once("public/components/footer.php"); ?>
 
     <script type="text/javascript" src="public/js/notificaciones.js"></script>
-    <script type="text/javascript" src="public/js/validacion.js"></script>
 
 </body>
 

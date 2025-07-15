@@ -9,6 +9,8 @@ class Usuario extends Connection
     private $correoUsuario;
     private $superUsuario;
     private $rolId;
+    private $usu_docente;
+    private $usu_cedula;
 
     public function __construct($usuarioId = null, $nombreUsuario = null, $contraseniaUsuario = null, $correoUsuario = null, $superUsuario = 0)
     {
@@ -19,6 +21,24 @@ class Usuario extends Connection
         $this->contraseniaUsuario = $contraseniaUsuario;
         $this->correoUsuario = $correoUsuario;
         $this->superUsuario = $superUsuario;
+    }
+
+    public function set_usu_docente($usu_docente)
+    {
+        $this->usu_docente = $usu_docente;
+    }
+    public function get_usu_docente()
+    {
+        return $this->usu_docente;
+    }
+
+    public function set_usu_cedula($usu_cedula)
+    {
+        $this->usu_cedula = $usu_cedula;
+    }
+    public function get_usu_cedula()
+    {
+        return $this->usu_cedula;
     }
 
     public function get_usuarioId()
@@ -56,7 +76,7 @@ class Usuario extends Connection
         return $this->rolId;
     }
 
-    
+
     public function set_usuarioId($usuarioId)
     {
         $this->usuarioId = $usuarioId;
@@ -98,19 +118,25 @@ class Usuario extends Connection
                     usu_correo,
                     usu_contrasenia,
                     usu_estado,
-                    rol_id
+                    rol_id,
+                    usu_docente,
+                    usu_cedula
                 ) VALUES (
                     :nombreUsuario,
                     :correoUsuario,
                     :contraseniaUsuario,
                     1,
-                    :rolId
+                    :rolId,
+                    :usu_docente,
+                    :usu_cedula
                 )");
 
                 $stmt->bindParam(':nombreUsuario', $this->nombreUsuario, PDO::PARAM_STR);
                 $stmt->bindParam(':correoUsuario', $this->correoUsuario, PDO::PARAM_STR);
                 $stmt->bindParam(':contraseniaUsuario', $hashedPassword, PDO::PARAM_STR);
                 $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
+                $stmt->bindParam(':usu_docente', $this->usu_docente, PDO::PARAM_STR);
+                $stmt->bindParam(':usu_cedula', $this->usu_cedula, PDO::PARAM_STR);
 
                 $stmt->execute();
 
@@ -136,7 +162,10 @@ class Usuario extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT u.*, r.rol_nombre FROM tbl_usuario u LEFT JOIN tbl_rol r ON u.rol_id = r.rol_id WHERE u.usu_estado = 1");
+            $stmt = $co->query("SELECT u.usu_id, u.usu_nombre, u.usu_correo, u.usu_docente, u.usu_cedula, r.rol_nombre, u.rol_id
+                                FROM tbl_usuario u 
+                                LEFT JOIN tbl_rol r ON u.rol_id = r.rol_id 
+                                WHERE u.usu_estado = 1");
 
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -159,14 +188,28 @@ class Usuario extends Connection
         if ($this->ExisteId($this->usuarioId)) {
             if (!$this->existe($this->nombreUsuario, $this->correoUsuario, $this->usuarioId)) {
                 try {
-                    $stmt = $co->prepare("UPDATE tbl_usuario
-                    SET usu_nombre = :nombreUsuario, usu_correo = :correoUsuario, rol_id = :rolId
-                    WHERE usu_id = :usuarioId");
+                    $sql = "UPDATE tbl_usuario
+                            SET usu_nombre = :nombreUsuario, usu_correo = :correoUsuario, rol_id = :rolId, usu_docente = :usu_docente, usu_cedula = :usu_cedula";
 
-                    $stmt->bindParam(':correoUsuario', $this->correoUsuario, PDO::PARAM_STR);
+                    if (!empty($this->contraseniaUsuario)) {
+                        $sql .= ", usu_contrasenia = :contraseniaUsuario";
+                    }
+
+                    $sql .= " WHERE usu_id = :usuarioId";
+
+                    $stmt = $co->prepare($sql);
+
                     $stmt->bindParam(':nombreUsuario', $this->nombreUsuario, PDO::PARAM_STR);
+                    $stmt->bindParam(':correoUsuario', $this->correoUsuario, PDO::PARAM_STR);
                     $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
+                    $stmt->bindParam(':usu_docente', $this->usu_docente, PDO::PARAM_STR);
+                    $stmt->bindParam(':usu_cedula', $this->usu_cedula, PDO::PARAM_STR);
                     $stmt->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_INT);
+
+                    if (!empty($this->contraseniaUsuario)) {
+                        $hashedPassword = password_hash($this->contraseniaUsuario, PASSWORD_DEFAULT);
+                        $stmt->bindParam(':contraseniaUsuario', $hashedPassword, PDO::PARAM_STR);
+                    }
 
                     $stmt->execute();
 
@@ -187,7 +230,7 @@ class Usuario extends Connection
         return $r;
     }
 
-    
+
 
     function Eliminar()
     {
@@ -264,7 +307,7 @@ class Usuario extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-     
+
         $co = null;
         return $r;
     }
@@ -279,6 +322,25 @@ class Usuario extends Connection
             $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $r = [];
+        }
+        $co = null;
+        return $r;
+    }
+
+    public function obtenerDocentesDisponibles()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $stmt = $co->query("SELECT d.doc_cedula, d.doc_nombre, d.doc_apellido 
+                                FROM tbl_docente d 
+                                WHERE d.doc_estado = 1 ORDER BY d.doc_nombre ASC, d.doc_apellido ASC");
+            $r['resultado'] = 'ok';
+            $r['mensaje'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
         }
         $co = null;
         return $r;

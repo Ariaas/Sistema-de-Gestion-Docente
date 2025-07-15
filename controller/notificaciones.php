@@ -16,6 +16,10 @@ if (is_file("views/" . $pagina . ".php")) {
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
             echo json_encode($n->Listar());
+        } else if ($accion == 'consultar_nuevas') {
+            echo json_encode($n->ListarNuevas());
+        } else if ($accion == 'marcar_vistas') {
+            echo json_encode($n->MarcarComoVistas());
         }
         exit;
     }

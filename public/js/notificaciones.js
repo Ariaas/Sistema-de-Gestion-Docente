@@ -6,14 +6,14 @@ function Listar() {
   
   function destruyeDT() {
     
-    if ($.fn.DataTable.isDataTable("#tablaBitacora")) {
-      $("#tablaBitacora").DataTable().destroy();
+    if ($.fn.DataTable.isDataTable("#tablaNoti")) {
+      $("#tablaNoti").DataTable().destroy();
     }
   }
   
   function crearDT() {
-    if (!$.fn.DataTable.isDataTable("#tablaBitacora")) {
-      $("#tablaBitacora").DataTable({
+    if (!$.fn.DataTable.isDataTable("#tablaNoti")) {
+      $("#tablaNoti").DataTable({
         paging: true,
         lengthChange: true,
         searching: true,
@@ -37,7 +37,7 @@ function Listar() {
           },
         },
         autoWidth: false,
-        order: [[1, "asc"]],
+        order: [[0, "asc"]],
         dom:
           "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
           "<'row'<'col-sm-5'i><'col-sm-7'p>>",
@@ -67,39 +67,61 @@ function Listar() {
   }
 
 $(document).ready(function() {
-    Listar();
-    // function cargarNotificaciones() {
-    //     $.ajax({
-    //         url: '',
-    //         type: 'POST',
-    //         data: { accion: 'consultar' },
-    //         dataType: 'json',
-    //         success: function(resp) {
-    //             const panel = $("#notificacionesPanel");
-    //             const badge = $("#notificacionesBadge");
-    //             if (resp.resultado === 'consultar' && Array.isArray(resp.mensaje) && resp.mensaje.length > 0) {
-    //                 let html = '<ul class="list-group list-group-flush">';
-    //                 resp.mensaje.forEach(function(not) {
-    //                     html += `<li class="list-group-item">${not.not_notificacion}</li>`;
-    //                 });
-    //                 html += '</ul>';
-    //                 panel.html(html);
-    //                 badge.show(); 
-    //             } else {
-    //                 panel.html('<span class="text-muted">No hay notificaciones nuevas.</span>');
-    //                 badge.hide(); 
-    //             }
-    //         },
-    //         error: function() {
-    //             $("#notificacionesPanel").html('<span class="text-danger">Error al cargar notificaciones.</span>');
-    //             $("#notificacionesBadge").hide();
-    //         }
-    //     });
-    // }
+    if ($("#tablaNoti").length) {
+        Listar();
+    }
+    
+    function cargarNotificaciones() {
+        $.ajax({
+            url: '?pagina=notificaciones',
+            type: 'POST',
+            data: { accion: 'consultar_nuevas' },
+            dataType: 'json',
+            success: function(resp) {
+                const panel = $("#notificacionesPanel");
+                const badge = $("#notificacionesBadge");
+                panel.empty();
 
-    // cargarNotificaciones();
+                if (resp.resultado === 'ok' && Array.isArray(resp.mensaje) && resp.mensaje.length > 0) {
+                    let html = '<ul class="list-group list-group-flush">';
+                    resp.mensaje.forEach(function(not) {
+                        html += `<li class="list-group-item">${not.not_notificacion}</li>`;
+                    });
+                    html += '</ul>';
+                    panel.html(html);
+                    badge.text(resp.mensaje.length).show();
+                } else {
+                    panel.html('<li><a class="dropdown-item text-muted" href="#">No hay notificaciones nuevas.</a></li>');
+                    badge.hide(); 
+                }
+                panel.append('<div class="dropdown-divider"></div>');
+                panel.append('<li><a class="dropdown-item text-center text-primary fw-bold" href="?pagina=notificaciones">Ver todas</a></li>');
+            },
+            error: function() {
+                $("#notificacionesPanel").html('<li><a class="dropdown-item text-danger" href="#">Error al cargar.</a></li>');
+                $("#notificacionesBadge").hide();
+            }
+        });
+    }
 
-    // $('#notificacionesDropdown').on('show.bs.dropdown', cargarNotificaciones);
+    cargarNotificaciones();
+
+    $('#notificacionesDropdown').on('show.bs.dropdown', function () {
+        const badge = $("#notificacionesBadge");
+        if(badge.is(":visible")){
+             $.ajax({
+                url: '?pagina=notificaciones',
+                type: 'POST',
+                data: { accion: 'marcar_vistas' },
+                dataType: 'json',
+                success: function(resp) {
+                    if(resp.resultado === 'ok'){
+                        badge.hide();
+                    }
+                }
+            });
+        }
+    });
 });
 
 function enviaAjax(datos) {
@@ -119,13 +141,15 @@ function enviaAjax(datos) {
           if (lee.resultado === "consultar") {
             destruyeDT();
             $("#resultadoconsulta").empty();
-            $.each(lee.mensaje, function (index, item) {
-              $("#resultadoconsulta").append(`
-                <tr>
-                  <td>${item.not_notificacion}</td>
-                </tr>
-              `);
-            });
+            if (lee.mensaje.length > 0) {
+              $.each(lee.mensaje, function (index, item) {
+                $("#resultadoconsulta").append(`
+                  <tr>
+                    <td>${item.not_notificacion}</td>
+                  </tr>
+                `);
+              });
+            }
             crearDT();
           }
           else if (lee.resultado == "error") {
