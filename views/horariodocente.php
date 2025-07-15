@@ -10,7 +10,7 @@
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
-            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Actividades Docentes</h2>
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docentes</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar Actividad</button>
             </div>

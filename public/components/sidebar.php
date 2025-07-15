@@ -37,11 +37,12 @@ if (!function_exists('tiene_permiso_accion')) {
 
 $gestion_items = [
     'Docentes' => 'docente',
-    'Espacios' => 'espacios',
+    'Espacio' => 'espacios',
     'Seccion' => 'seccion',
     'Año' => 'anio',
     'Unidad Curricular' => 'uc',
-    'Malla Curricular' => 'mallacurricular'
+    'Malla Curricular' => 'mallacurricular',
+    'Horario Docente' => 'horariodocente'
 ];
 
 $reportes_estadisticos_items = [

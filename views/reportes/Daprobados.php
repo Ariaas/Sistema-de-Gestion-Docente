@@ -4,7 +4,6 @@
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Reporte Estadístico</title>
-
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -20,10 +19,12 @@
                         <div class="row align-items-end">
                             <div class="col-lg-3 col-md-6 mb-3">
                                 <label for="anio_reporte" class="form-label fw-bold">Año Académico</label>
-                                <select class="form-select" id="anio_reporte" name="anio_id" required>
+                                <select class="form-select" id="anio_reporte" name="anio_completo" required>
                                     <option value="" selected disabled>Seleccionar...</option>
                                     <?php foreach ($anios as $anio) {
-                                        echo "<option value='{$anio['ani_id']}'>{$anio['ani_anio']}</option>";
+                                        // El valor ahora es 'año|tipo', ej: '2025|2025-1'
+                                        $texto = "{$anio['ani_anio']} - Periodo {$anio['ani_tipo']}";
+                                        echo "<option value='{$anio['anio_completo']}'>{$texto}</option>";
                                     } ?>
                                 </select>
                             </div>
@@ -36,14 +37,14 @@
                                 </select>
                             </div>
                             <div class="col-lg-3 col-md-6 mb-3" id="filtro_seccion_container" style="display: none;">
-                                <label for="seccion_id" class="form-label fw-bold">Sección</label>
-                                <select class="form-select" id="seccion_id" name="seccion_id" disabled>
+                                <label for="seccion_codigo" class="form-label fw-bold">Sección</label>
+                                <select class="form-select" id="seccion_codigo" name="seccion_codigo" disabled>
                                     <option>Seleccione un año</option>
                                 </select>
                             </div>
                             <div class="col-lg-3 col-md-6 mb-3" id="filtro_uc_container" style="display: none;">
-                                <label for="uc_id" class="form-label fw-bold">Unidad Curricular</label>
-                                <select class="form-select" id="uc_id" name="uc_id" disabled>
+                                <label for="uc_codigo" class="form-label fw-bold">Unidad Curricular</label>
+                                <select class="form-select" id="uc_codigo" name="uc_codigo" disabled>
                                     <option>Seleccione un año</option>
                                 </select>
                             </div>

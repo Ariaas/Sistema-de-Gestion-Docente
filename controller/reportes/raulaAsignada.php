@@ -10,7 +10,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Cell\Coordinate; // NUEVO: Se importa la clase Coordinate
 
 if (isset($_POST['generar_asignacion_aulas_report'])) {
     $oAsignacionAulas = new AsignacionAulasReport();
@@ -24,7 +23,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
 
     if ($aulasData) {
         foreach ($aulasData as $row) {
-            $dia = ucfirst(strtolower($row['hor_dia'])); 
+            $dia = ucfirst(strtolower(trim($row['hor_dia'])));
             if (isset($dataPorDia[$dia])) {
                 if (!in_array($row['esp_codigo'], $dataPorDia[$dia])) {
                     $dataPorDia[$dia][] = $row['esp_codigo'];
@@ -37,14 +36,14 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("Asignación de Aulas");
 
-    $styleHeader = ['font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F81BD']]];
-    $styleCell = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    $styleHeader = ['font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F81BD']]];
+    $styleCell = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
 
     $col = 'A';
     foreach ($ordenDias as $dia) {
         $sheet->setCellValue($col . '1', mb_strtoupper($dia, 'UTF-8'));
         $sheet->getStyle($col . '1')->applyFromArray($styleHeader);
-        $sheet->getColumnDimension($col)->setWidth(15);
+        $sheet->getColumnDimension($col)->setWidth(20);
         $col++;
     }
 
@@ -55,24 +54,21 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
         }
     }
 
-    for ($i = 0; $i < $maxRows; $i++) {
-        $colIndex = 1; // El índice de columna empieza en 1 para Coordinate
-        foreach ($dataPorDia as $dia => $aulas) {
-            $cellValue = isset($aulas[$i]) ? $aulas[$i] : '';
-            
-            // MODIFICADO: Se usa un método alternativo para establecer el valor de la celda
-            $coordinate = Coordinate::stringFromColumnIndex($colIndex) . ($i + 2);
-            $sheet->setCellValue($coordinate, $cellValue);
-            
-            $colIndex++;
-        }
-    }
-
     if ($maxRows > 0) {
+        for ($i = 0; $i < $maxRows; $i++) {
+            $colChar = 'A';
+            foreach ($dataPorDia as $aulas) {
+                $cellValue = isset($aulas[$i]) ? $aulas[$i] : '';
+                $sheet->setCellValue($colChar . ($i + 2), $cellValue);
+                $colChar++;
+            }
+        }
         $range = 'A1:' . $sheet->getHighestColumn() . ($maxRows + 1);
         $sheet->getStyle($range)->applyFromArray($styleCell);
     } else {
         $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->applyFromArray($styleCell);
+        $sheet->mergeCells('A2:F2')->setCellValue('A2', 'No se encontraron aulas asignadas.');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     }
 
     $writer = new Xlsx($spreadsheet);
@@ -87,4 +83,3 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
 } else {
     require_once("views/reportes/raulaAsignada.php");
 }
-?>

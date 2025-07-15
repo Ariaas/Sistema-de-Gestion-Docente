@@ -54,7 +54,7 @@ class HorarioDocente extends Connection
 
     public function Existe($cedula, $lapso, $actividad)
     {
-        $r = array();
+        $r = array('resultado' => 'no_existe');
         try {
             $co = $this->Con();
             $stmt = $co->prepare("SELECT * FROM tbl_horario_docente WHERE doc_cedula = :cedula AND hdo_lapso = :lapso AND hdo_tipoactividad = :actividad AND hdo_estado = 1");
@@ -94,7 +94,7 @@ class HorarioDocente extends Connection
             $stmt->bindParam(':horas', $this->hdo_horas, PDO::PARAM_INT);
             $stmt->execute();
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>La actividad se registró correctamente.';
+            $r['mensaje'] = '¡Registro Incluido! La actividad se registró correctamente.';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
@@ -121,7 +121,7 @@ class HorarioDocente extends Connection
             $stmt->bindParam(':original_actividad', $original_actividad);
             $stmt->execute();
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'Registro Modificado!<br/>La actividad se modificó correctamente.';
+            $r['mensaje'] = '¡Registro Modificado! La actividad se modificó correctamente.';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
@@ -141,7 +141,7 @@ class HorarioDocente extends Connection
             $stmt->bindParam(':actividad', $this->hdo_tipoactividad);
             $stmt->execute();
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'Registro Eliminado!<br/>La actividad se eliminó correctamente.';
+            $r['mensaje'] = '¡Registro Eliminado! La actividad se eliminó correctamente.';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
@@ -179,14 +179,48 @@ class HorarioDocente extends Connection
         $stmt = $co->query("SELECT doc_cedula, doc_prefijo, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1 ORDER BY doc_apellido, doc_nombre");
         return ['success' => true, 'teachers' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
+
     public function obtenerHorarioCompletoPorDocente($doc_cedula)
     {
         $co = $this->Con();
-        $sql = "SELECT uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, uc.uc_codigo, uc.uc_nombre, esp.esp_codigo, sec.sec_codigo FROM docente_horario dh JOIN tbl_seccion sec ON dh.sec_codigo = sec.sec_codigo JOIN uc_horario uh ON sec.sec_codigo = uh.sec_codigo JOIN tbl_uc uc ON uh.uc_codigo = uc.uc_codigo JOIN tbl_horario hor ON sec.sec_codigo = hor.sec_codigo JOIN tbl_espacio esp ON hor.esp_codigo = esp.esp_codigo JOIN tbl_anio anio ON sec.ani_anio = anio.ani_anio AND sec.ani_tipo = anio.ani_tipo WHERE dh.doc_cedula = :doc_cedula AND anio.ani_activo = 1 ORDER BY FIELD(uh.hor_dia, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'), uh.hor_horainicio";
+        // --- CONSULTA CORREGIDA ---
+        $sql = "
+            SELECT 
+                CASE 
+                    WHEN LOWER(uh.hor_dia) = 'lunes' THEN 'Lunes'
+                    WHEN LOWER(uh.hor_dia) = 'martes' THEN 'Martes'
+                    WHEN LOWER(uh.hor_dia) IN ('miercoles', 'miércoles') THEN 'Miércoles'
+                    WHEN LOWER(uh.hor_dia) = 'jueves' THEN 'Jueves'
+                    WHEN LOWER(uh.hor_dia) = 'viernes' THEN 'Viernes'
+                    WHEN LOWER(uh.hor_dia) IN ('sabado', 'sábado') THEN 'Sábado'
+                    ELSE uh.hor_dia 
+                END AS hor_dia,
+                uh.hor_horainicio, 
+                uh.hor_horafin, 
+                uc.uc_codigo, 
+                uc.uc_nombre, 
+                esp.esp_codigo, 
+                sec.sec_codigo 
+            FROM uc_docente ud
+            JOIN uc_horario uh ON ud.uc_codigo = uh.uc_codigo
+            JOIN tbl_uc uc ON ud.uc_codigo = uc.uc_codigo
+            JOIN tbl_seccion sec ON uh.sec_codigo = sec.sec_codigo
+            LEFT JOIN tbl_espacio esp ON uh.esp_codigo = esp.esp_codigo
+            JOIN tbl_anio anio ON sec.ani_anio = anio.ani_anio AND sec.ani_tipo = anio.ani_tipo
+            WHERE ud.doc_cedula = :doc_cedula 
+              AND anio.ani_activo = 1 
+              AND ud.uc_doc_estado = 1
+            ORDER BY FIELD(LOWER(uh.hor_dia), 'lunes', 'martes', 'miercoles', 'miércoles', 'jueves', 'viernes', 'sabado', 'sábado'), uh.hor_horainicio
+        ";
+
         $stmt = $co->prepare($sql);
         $stmt->execute([':doc_cedula' => $doc_cedula]);
         $horario_docente = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if (empty($horario_docente)) return ['resultado' => 'vacio', 'mensaje' => "El docente no tiene un horario de clases asignado."];
+        
+        if (empty($horario_docente)) {
+            return ['resultado' => 'vacio', 'mensaje' => "El docente no tiene un horario de clases asignado para el año académico activo."];
+        }
+        
         $franjas_obj = [];
         foreach ($horario_docente as $clase) {
             $franja_key = $clase['hor_horainicio'] . '-' . $clase['hor_horafin'];
@@ -195,6 +229,7 @@ class HorarioDocente extends Connection
             }
         }
         usort($franjas_obj, fn($a, $b) => strcmp($a['inicio'], $b['inicio']));
+        
         return ['resultado' => 'ok', 'horario' => $horario_docente, 'franjas' => array_values($franjas_obj)];
     }
 }

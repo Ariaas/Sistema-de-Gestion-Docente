@@ -9,13 +9,16 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Font;
 
 $oReporte = new Rod();
 
 if (isset($_POST['generar_reporte_rod'])) {
 
     $faseId = $_POST['fase_id'] ?? null;
+    if (empty($faseId)) {
+        die("Error: Debe seleccionar una fase y año para generar el reporte.");
+    }
+    
     $oReporte->set_fase_y_anio($faseId);
     
     $partesFase = explode('-', $faseId);
@@ -24,7 +27,6 @@ if (isset($_POST['generar_reporte_rod'])) {
 
     $queryData = $oReporte->obtenerDatosReporte();
 
-    // --- Agrupar datos por docente ---
     $reportData = [];
     if (!empty($queryData)) {
         foreach ($queryData as $row) {
@@ -46,7 +48,6 @@ if (isset($_POST['generar_reporte_rod'])) {
                     'asignaciones' => []
                 ];
             }
-
             if ($row['uc_nombre']) {
                 $reportData[$docenteId]['asignaciones'][] = [
                     'uc_nombre' => $row['uc_nombre'],
@@ -57,7 +58,6 @@ if (isset($_POST['generar_reporte_rod'])) {
         }
     }
 
-    // --- Creación del archivo Excel ---
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("ORGANIZACION DOCENTE");
@@ -71,9 +71,9 @@ if (isset($_POST['generar_reporte_rod'])) {
     $summaryValueStyle = ['font' => ['size' => 8], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     
     // Cabecera del Reporte
-    $sheet->mergeCells('A2:M2')->setCellValue('A2', 'CUADRO RESUMEN ORGANIZACIÓN DOCENTE')->getStyle('A2:M2')->applyFromArray($headerStyle);
+    $sheet->mergeCells('A2:N2')->setCellValue('A2', 'CUADRO RESUMEN ORGANIZACIÓN DOCENTE')->getStyle('A2:N2')->applyFromArray($headerStyle);
     $sheet->mergeCells('A3:C3')->setCellValue('A3', 'PNF: Informática');
-    $sheet->mergeCells('J3:L3')->setCellValue('J3', 'LAPSO: ' . $faseNumero . '-' . $faseAnio);
+    $sheet->mergeCells('J3:M3')->setCellValue('J3', 'LAPSO: ' . $faseNumero . '-' . $faseAnio);
     
     // Cabecera de las Columnas
     $columnas = ['N°', 'APELLIDOS Y NOMBRES', 'C.I.', 'FECHA DE INGRESO', 'PERFIL PROFESIONAL', 'DEDICACION', 'HORAS ACADEMICAS', 'HORAS ASIGNADAS', 'HORAS DESCARGA', 'FALTA HORAS ACAD', 'UNIDAD CURRICULAR', 'AÑO DE CONCURSO', 'SECCIÓN', 'OBSERVACION'];
@@ -86,13 +86,7 @@ if (isset($_POST['generar_reporte_rod'])) {
     $totalHorasAsignadas = 0;
     $totalHorasDescarga = 0;
     $totalHorasFaltantes = 0;
-    
-    $resumenDedicacion = [
-        'Exclusivo' => ['total_docentes' => 0, 'total_horas' => 0],
-        'Tiempo Completo' => ['total_docentes' => 0, 'total_horas' => 0],
-        'Medio Tiempo' => ['total_docentes' => 0, 'total_horas' => 0],
-        'Tiempo Convencional' => ['total_docentes' => 0, 'total_horas' => 0],
-    ];
+    $resumenDedicacion = ['Exclusivo' => ['total_docentes' => 0, 'total_horas' => 0], 'Tiempo Completo' => ['total_docentes' => 0, 'total_horas' => 0], 'Medio Tiempo' => ['total_docentes' => 0, 'total_horas' => 0], 'Tiempo Convencional' => ['total_docentes' => 0, 'total_horas' => 0]];
 
     if (!empty($reportData)) {
         foreach ($reportData as $docente) {
@@ -108,6 +102,7 @@ if (isset($_POST['generar_reporte_rod'])) {
                 $resumenDedicacion[$dedicacion]['total_horas'] += $docente['horas_asignadas'];
             }
 
+            // Combinar celdas de la información del docente
             $celdasACombinar = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'L', 'N'];
             if ($rowCount > 1) {
                 foreach ($celdasACombinar as $col) {
@@ -115,8 +110,10 @@ if (isset($_POST['generar_reporte_rod'])) {
                 }
             }
             
+            // Escribir información del docente
             $sheet->setCellValue("A{$filaActual}", $itemNumber);
             $sheet->setCellValue("B{$filaActual}", $docente['nombre_completo']);
+            // ... (resto de la información del docente) ...
             $sheet->setCellValue("C{$filaActual}", $docente['doc_cedula']);
             $sheet->setCellValue("D{$filaActual}", $docente['doc_fecha_ingreso'] ? date('d/m/Y', strtotime($docente['doc_fecha_ingreso'])) : '');
             $sheet->setCellValue("E{$filaActual}", $docente['doc_perfil_profesional']);
@@ -134,29 +131,26 @@ if (isset($_POST['generar_reporte_rod'])) {
             $observaciones = [];
             if (!empty($docente['doc_observacion'])) { $observaciones[] = $docente['doc_observacion']; }
             if (!empty($docente['coordinaciones'])) { $observaciones[] = 'Coordinaciones: ' . $docente['coordinaciones']; }
-            $observacionDisplay = implode('; ', $observaciones);
-            $sheet->setCellValue("N{$filaActual}", $observacionDisplay);
+            $sheet->setCellValue("N{$filaActual}", implode('; ', $observaciones));
             
+            // CORRECCIÓN: Escribir cada asignación en su propia fila
             if (!empty($docente['asignaciones'])) {
-                $ucText = [];
-                $secText = [];
+                $tempFila = $filaActual;
                 foreach ($docente['asignaciones'] as $asig) {
-                    $ucText[] = $asig['uc_nombre'];
-                    $secText[] = $asig['sec_codigo'];
+                    $sheet->setCellValue("K{$tempFila}", $asig['uc_nombre']);
+                    $sheet->setCellValue("M{$tempFila}", $asig['sec_codigo']);
+                    $tempFila++;
                 }
-                $sheet->setCellValue("K{$filaActual}", implode("\n", $ucText));
-                $sheet->setCellValue("M{$filaActual}", implode("\n", $secText));
             }
 
             $filaActual += $rowCount;
             $itemNumber++;
         }
     }
-
-    $finDeDatos = $filaActual - 1;
-    if ($finDeDatos < 6) $finDeDatos = 6;
     
+    $finDeDatos = $filaActual > 6 ? $filaActual - 1 : 6;
     $sheet->getStyle('A6:N' . $finDeDatos)->applyFromArray($cellStyle);
+    // ... (resto de estilos y resúmenes sin cambios)
     $sheet->getStyle("K6:K{$finDeDatos}")->getAlignment()->setWrapText(true);
     $sheet->getStyle("M6:M{$finDeDatos}")->getAlignment()->setWrapText(true);
     $sheet->getStyle("E6:E{$finDeDatos}")->getAlignment()->setWrapText(true);
@@ -165,13 +159,9 @@ if (isset($_POST['generar_reporte_rod'])) {
     $sheet->getStyle("F6:J{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     $sheet->getStyle("L6:M{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-    // --- SECCIÓN DE RESÚMENES (LADO A LADO) ---
-    $filaInicioResumen = $finDeDatos + 3;
-
-    // Bloque 1: Resumen por Dedicación
+    $filaInicioResumen = $filaActual + 2;
     $fila = $filaInicioResumen;
-    $sheet->mergeCells("B{$fila}:D{$fila}")->setCellValue("B{$fila}", 'RESUMEN POR DEDICACIÓN');
-    $sheet->getStyle("B{$fila}")->getFont()->setBold(true);
+    $sheet->mergeCells("B{$fila}:D{$fila}")->setCellValue("B{$fila}", 'RESUMEN POR DEDICACIÓN')->getStyle("B{$fila}")->getFont()->setBold(true);
     $fila++;
     $sheet->setCellValue("B{$fila}", 'DEDICACIÓN')->getStyle("B{$fila}")->applyFromArray($summaryStyle);
     $sheet->setCellValue("C{$fila}", 'TOTAL DOCENTES')->getStyle("C{$fila}")->applyFromArray($summaryStyle);
@@ -189,7 +179,6 @@ if (isset($_POST['generar_reporte_rod'])) {
     $sheet->setCellValue("C{$fila}", $totalGeneralDocentes)->getStyle("C{$fila}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     $sheet->setCellValue("D{$fila}", $totalHorasAsignadas)->getStyle("D{$fila}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-    // Bloque 2: Resumen de Horas
     $fila = $filaInicioResumen;
     $sheet->mergeCells("H{$fila}:I{$fila}")->setCellValue("H{$fila}", 'HORAS ACADEMICAS ASIGNADAS:')->getStyle("H{$fila}")->applyFromArray($summaryLabelStyle);
     $sheet->setCellValue("J{$fila}", $totalHorasAsignadas)->getStyle("J{$fila}")->applyFromArray($summaryValueStyle);
@@ -200,7 +189,6 @@ if (isset($_POST['generar_reporte_rod'])) {
     $sheet->mergeCells("H{$fila}:I{$fila}")->setCellValue("H{$fila}", 'DESCARGAS:')->getStyle("H{$fila}")->applyFromArray($summaryLabelStyle);
     $sheet->setCellValue("J{$fila}", $totalHorasDescarga)->getStyle("J{$fila}")->applyFromArray($summaryValueStyle);
 
-    // Anchos de columna
     $anchos = ['A'=>4, 'B'=>22, 'C'=>10, 'D'=>10, 'E'=>22, 'F'=>10, 'G'=>10, 'H'=>10, 'I'=>10, 'J'=>10, 'K'=>28, 'L'=>15, 'M'=>15, 'N'=>25];
     foreach($anchos as $col => $ancho) { $sheet->getColumnDimension($col)->setWidth($ancho); }
 
@@ -217,4 +205,3 @@ if (isset($_POST['generar_reporte_rod'])) {
     $listaFases = $oReporte->obtenerFasesActivas();
     require_once("views/reportes/rod.php");
 }
-?>

@@ -2,62 +2,53 @@ $(document).ready(function() {
     let myChart = null;
     const ctx = document.getElementById('reporteChart').getContext('2d');
 
-    function renderChart(chartData, chartType = 'bar') {
+    const colorPalette = [
+        'rgba(255, 99, 132, 0.7)', 'rgba(255, 159, 64, 0.7)',
+        'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)',
+        'rgba(54, 162, 235, 0.7)', 'rgba(153, 102, 255, 0.7)',
+        'rgba(201, 203, 207, 0.7)', 'rgba(100, 220, 150, 0.7)'
+    ];
+
+    function renderChart(chartData, chartType = 'bar', chartTitle = 'Resultados Estudiantiles') {
         if (myChart) {
             myChart.destroy();
         }
+        const backgroundColors = chartData.data.map((_, index) => colorPalette[index % colorPalette.length]);
+        const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
 
         myChart = new Chart(ctx, {
             type: chartType,
             data: {
                 labels: chartData.labels,
                 datasets: [{
-                    label: 'Cantidad de Estudiantes',
+                    label: 'Estudiantes en PER',
                     data: chartData.data,
-                   
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)' 
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)'
-                    ],
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
                     borderWidth: 1
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        display: chartType === 'bar', 
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                },
+                responsive: true, maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, display: true, ticks: { precision: 0 } } },
                 plugins: {
-                    legend: {
-                        position: chartType === 'bar' ? 'top' : 'right',
-                        display: chartType !== 'bar' 
-                    },
-                    title: {
-                        display: true,
-                        text: 'Resultados Estudiantes (Con Per)',
-                        font: {
-                            size: 16
-                        }
-                    }
+                    legend: { display: false },
+                    title: { display: true, text: chartTitle, font: { size: 16 } }
                 }
             }
         });
     }
 
-    function updateChart() {
-        $('#formReporte').trigger('submit');
+    function updateChartOnTypeChange() {
+        if (myChart && myChart.data.labels.length > 0) {
+             renderChart({
+                labels: myChart.data.labels,
+                data: myChart.data.datasets[0].data
+            }, $('#tipo_grafico').val(), myChart.options.plugins.title.text);
+        }
     }
 
-    $('#tipo_grafico').change(updateChart);
+    $('#tipo_grafico').change(updateChartOnTypeChange);
 
     $('#tipo_reporte').change(function() {
         const tipo = $(this).val();
@@ -66,25 +57,24 @@ $(document).ready(function() {
     });
 
     $('#anio_reporte').change(function() {
-        const anio_id = $(this).val();
-        const seccionSelect = $('#seccion_id');
-        const ucSelect = $('#uc_id');
+        const anio_completo = $(this).val();
+        const seccionSelect = $('#seccion_codigo');
+        const ucSelect = $('#uc_codigo');
 
-        if (!anio_id) {
+        if (!anio_completo) {
             seccionSelect.html('<option>Seleccione un año</option>').prop('disabled', true);
             ucSelect.html('<option>Seleccione un año</option>').prop('disabled', true);
             return;
         }
 
-        
         seccionSelect.html('<option>Cargando...</option>').prop('disabled', true);
-        $.post('?pagina=reporte', {
+        $.post('?pagina=rPer', {
             accion: 'obtener_secciones',
-            anio_id: anio_id
+            anio_completo: anio_completo
         }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
             if (data.length > 0) {
-                data.forEach(item => options += `<option value="${item.sec_id}">${item.sec_codigo}</option>`);
+                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo}</option>`);
                 seccionSelect.prop('disabled', false);
             } else {
                 options = '<option value="">No hay secciones</option>';
@@ -92,15 +82,14 @@ $(document).ready(function() {
             seccionSelect.html(options);
         }, 'json');
 
-        
         ucSelect.html('<option>Cargando...</option>').prop('disabled', true);
-        $.post('?pagina=reporte', {
+        $.post('?pagina=rPer', {
             accion: 'obtener_uc',
-            anio_id: anio_id
+            anio_completo: anio_completo
         }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
             if (data.length > 0) {
-                data.forEach(item => options += `<option value="${item.uc_id}">${item.uc_nombre}</option>`);
+                data.forEach(item => options += `<option value="${item.uc_codigo}">${item.uc_nombre}</option>`);
                 ucSelect.prop('disabled', false);
             } else {
                 options = '<option value="">No hay U.C.</option>';
@@ -111,12 +100,11 @@ $(document).ready(function() {
 
     $('#formReporte').submit(function(e) {
         e.preventDefault();
-
         const formData = new FormData(this);
         formData.append('accion', 'generar_reporte');
 
         $.ajax({
-            url: '?pagina=reporte',
+            url: '?pagina=rPer',
             type: 'POST',
             data: formData,
             processData: false,
@@ -124,19 +112,30 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    const datos = response.datos;
+                    const responseData = response.datos;
+                    const tipoReporte = $('#tipo_reporte').val();
+                    let chartData = { labels: [], data: [] };
+                    let chartTitle = 'Estudiantes que van a PER';
 
-                    const enPer = parseInt(datos.total_en_per);
-
-                    const chartData = {
-                        
-                        labels: ['Estudiantes que van a PER'],
-                        
-                        data: [enPer]
-                    };
-                    
-
-                    renderChart(chartData, $('#tipo_grafico').val());
+                    if (tipoReporte === 'general') {
+                        const totalEnPer = parseInt(responseData.total_en_per, 10);
+                        chartData.labels.push('Total del Periodo Académico');
+                        chartData.data.push(totalEnPer);
+                        chartTitle = 'Total de Estudiantes en PER';
+                    } else if (tipoReporte === 'seccion') {
+                        chartTitle = 'Estudiantes en PER por Unidad Curricular';
+                        responseData.forEach(item => {
+                            chartData.labels.push(item.uc_nombre);
+                            chartData.data.push(parseInt(item.per_cantidad, 10));
+                        });
+                    } else if (tipoReporte === 'uc') {
+                        chartTitle = 'Estudiantes en PER por Sección';
+                        responseData.forEach(item => {
+                            chartData.labels.push('Sección ' + item.sec_codigo);
+                            chartData.data.push(parseInt(item.per_cantidad, 10));
+                        });
+                    }
+                    renderChart(chartData, $('#tipo_grafico').val(), chartTitle);
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -155,9 +154,5 @@ $(document).ready(function() {
         });
     });
 
-
-    renderChart({
-        labels: [],
-        data: []
-    });
+    renderChart({ labels: [], data: [] }, 'bar', 'Seleccione los filtros para generar un reporte');
 });

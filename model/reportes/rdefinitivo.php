@@ -31,9 +31,6 @@ class DefinitivoEmit extends Connection
     {
         $co = $this->con();
         try {
-            // --- INICIO: LÓGICA DE FILTROS CORREGIDA ---
-
-            // 1. Se define la consulta base sin filtros.
             $sqlBase = "SELECT
                             d.doc_cedula AS IDDocente,
                             CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS NombreCompletoDocente,
@@ -41,9 +38,9 @@ class DefinitivoEmit extends Connection
                             u.uc_nombre AS NombreUnidadCurricular,
                             s.sec_codigo AS NombreSeccion
                         FROM
-                            tbl_docente d
+                            uc_docente ud
                         INNER JOIN
-                            uc_docente ud ON d.doc_cedula = ud.doc_cedula
+                            tbl_docente d ON d.doc_cedula = ud.doc_cedula
                         INNER JOIN
                             tbl_uc u ON ud.uc_codigo = u.uc_codigo
                         INNER JOIN
@@ -55,7 +52,6 @@ class DefinitivoEmit extends Connection
 
             $params = [];
 
-            // 2. Se añaden los filtros a la consulta SOLO si tienen un valor.
             if (!empty($this->docente_id)) {
                 $sqlBase .= " AND d.doc_cedula = :doc_cedula";
                 $params[':doc_cedula'] = $this->docente_id;
@@ -66,15 +62,24 @@ class DefinitivoEmit extends Connection
                 $params[':sec_codigo'] = $this->seccion_id;
             }
 
-            if ($this->fase !== '' && $this->fase !== null) {
-                $sqlBase .= " AND SUBSTRING_INDEX(s.ani_tipo, '-', -1) = :fase";
-                $params[':fase'] = $this->fase;
+            // --- ▼▼▼ LÓGICA DE FILTRO POR FASE CORREGIDA ▼▼▼ ---
+            if (!empty($this->fase)) {
+                if ($this->fase == '1') {
+                    // Si se selecciona Fase I, se incluyen también las anuales
+                    $sqlBase .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual')";
+                } elseif ($this->fase == '2') {
+                    // Si se selecciona Fase II, se incluyen también las anuales
+                    $sqlBase .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
+                } elseif ($this->fase == 'anual') {
+                    // Si se selecciona Anual, se muestran solo las anuales
+                    $sqlBase .= " AND u.uc_periodo = :fase_periodo";
+                    $params[':fase_periodo'] = 'Anual';
+                }
             }
-
+            
+            $sqlBase .= " GROUP BY d.doc_cedula, u.uc_codigo, s.sec_codigo";
             $sqlBase .= " ORDER BY NombreCompletoDocente, NombreSeccion";
             
-            // --- FIN: LÓGICA DE FILTROS CORREGIDA ---
-
             $resultado = $co->prepare($sqlBase);
             $resultado->execute($params);
             return $resultado->fetchAll(PDO::FETCH_ASSOC);
@@ -102,7 +107,10 @@ class DefinitivoEmit extends Connection
     {
         $co = $this->con();
         try {
-            $p = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE sec_estado = 1 ORDER BY sec_codigo");
+            $p = $co->prepare("SELECT sec_codigo FROM tbl_seccion s
+                               JOIN tbl_anio a ON s.ani_anio = a.ani_anio AND s.ani_tipo = a.ani_tipo
+                               WHERE s.sec_estado = 1 AND a.ani_activo = 1 
+                               ORDER BY sec_codigo");
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -111,4 +119,3 @@ class DefinitivoEmit extends Connection
         }
     }
 }
-?>

@@ -1,14 +1,16 @@
-<?php 
+<?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!is_file("model/reportes/reporte.php")) {
-    echo "Falta definir la clase del modelo: reporte.php";
+// Asegúrate de que la ruta al modelo sea correcta y el nombre del archivo coincida.
+if (!is_file("model/reportes/Daprobados.php")) {
+    echo "Falta definir la clase del modelo: Daprobadosm.php";
     exit;
 }
-require_once("model/reportes/reporte.php");
+require_once("model/reportes/Daprobados.php");
 
+// Asegúrate de que la ruta a la vista sea correcta.
 if (is_file("views/reportes/Daprobados.php")) {
 
     $reporteModel = new Reporte();
@@ -17,40 +19,45 @@ if (is_file("views/reportes/Daprobados.php")) {
         header('Content-Type: application/json');
         $accion = $_POST['accion'];
 
+        // Manejo del periodo académico combinado
+        $anio_completo = $_POST['anio_completo'] ?? '';
+        $anio_parts = explode('|', $anio_completo);
+        $anio = $anio_parts[0] ?? 0;
+        $tipo = $anio_parts[1] ?? '';
+
         switch ($accion) {
             case 'generar_reporte':
                 $tipo_reporte = $_POST['tipo_reporte'] ?? 'general';
-                $anio_id = $_POST['anio_id'] ?? 0;
                 $datos = null;
 
-                if (empty($anio_id)) {
-                    echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione un año académico.']);
+                if (empty($anio) || empty($tipo)) {
+                    echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione un año académico válido.']);
                     exit;
                 }
 
                 switch ($tipo_reporte) {
                     case 'seccion':
-                        $seccion_id = $_POST['seccion_id'] ?? 0;
-                        if (empty($seccion_id)) {
+                        $seccion_codigo = $_POST['seccion_codigo'] ?? 0;
+                        if (empty($seccion_codigo)) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_id);
+                        $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo);
                         break;
                     case 'uc':
-                        $uc_id = $_POST['uc_id'] ?? 0;
-                        if (empty($uc_id)) {
+                        $uc_codigo = $_POST['uc_codigo'] ?? '';
+                        if (empty($uc_codigo)) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una Unidad Curricular.']);
                             exit;
                         }
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorUC($uc_id, $anio_id);
+                        $datos = $reporteModel->obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo);
                         break;
-                    default: 
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio_id);
+                    default:
+                        $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio, $tipo);
                         break;
                 }
-
-                if ($datos && $datos['total_estudiantes'] > 0) {
+ 
+                if ($datos) {
                     echo json_encode(['success' => true, 'datos' => $datos]);
                 } else {
                     echo json_encode(['success' => false, 'mensaje' => 'No se encontraron datos para los filtros seleccionados.']);
@@ -58,15 +65,21 @@ if (is_file("views/reportes/Daprobados.php")) {
                 break;
 
             case 'obtener_secciones':
-                $anio_id = $_POST['anio_id'] ?? 0;
-                $secciones = $reporteModel->obtenerSeccionesPorAnio($anio_id);
-                echo json_encode($secciones);
+                if (!empty($anio) && !empty($tipo)) {
+                    $secciones = $reporteModel->obtenerSeccionesPorAnio($anio, $tipo);
+                    echo json_encode($secciones);
+                } else {
+                    echo json_encode([]);
+                }
                 break;
 
             case 'obtener_uc':
-                $anio_id = $_POST['anio_id'] ?? 0;
-                $ucs = $reporteModel->obtenerUCPorAnio($anio_id);
-                echo json_encode($ucs);
+                if (!empty($anio) && !empty($tipo)) {
+                    $ucs = $reporteModel->obtenerUCPorAnio($anio, $tipo);
+                    echo json_encode($ucs);
+                } else {
+                    echo json_encode([]);
+                }
                 break;
         }
         exit;
@@ -75,5 +88,5 @@ if (is_file("views/reportes/Daprobados.php")) {
     $anios = $reporteModel->obtenerAnios();
     require_once("views/reportes/Daprobados.php");
 } else {
-    echo "Página en construcción: Daprobados.php";
+    echo "Página en construcción: Daprobadosv.php";
 }

@@ -45,7 +45,7 @@
                                     <?php
                                     if (!empty($secciones)) {
                                         foreach ($secciones as $Seccion) {
-                                            echo "<option value='" . htmlspecialchars($Seccion['sec_id']) . "'>" . htmlspecialchars($Seccion['sec_codigo']) . "</option>";
+                                            echo "<option value='" . htmlspecialchars($Seccion['sec_codigo']) . "'>" . htmlspecialchars($Seccion['sec_codigo']) . "</option>";
                                         }
                                     }
                                     ?>

@@ -30,7 +30,7 @@ $permisos = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
             </div>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
                 <div class="col">
-                    <a href="?pagina=#" class="dashboard-card">
+                    <a href="?pagina=rseccion" class="dashboard-card">
                         <div class="icon-circle">
                             <img src="public/assets/icons/user-graduate-solid.svg" alt="Reportes horarios por seccion">
                         </div>

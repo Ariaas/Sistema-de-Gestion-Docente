@@ -1,5 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 
 
@@ -10,27 +12,28 @@ if (!is_file("model/" . $pagina . ".php")) {
 require_once("model/" . $pagina . ".php");
 
 $acciones_json_validas = [
-    'obtener_datos_selects', 
-    'consultar_agrupado',            
-    'consultar_detalles',  
-    'modificar',                
-    'obtener_uc_por_docente', 
+    'obtener_datos_selects',
+    'consultar_agrupado',
+    'consultar_detalles',
+    'modificar',
+    'obtener_uc_por_docente',
     'registrar_seccion',
     'eliminar_seccion_y_horario',
     'validar_clase_en_vivo',
     'unir_horarios'
 ];
+// Controlador seccion
 
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
     $o = new Seccion();
-    
-   
+
+
     $countDocentes = $o->contarDocentes();
     $countEspacios = $o->contarEspacios();
     $countTurnos = $o->contarTurnos();
     $countAnios = $o->contarAniosActivos();
     $countMallas = $o->contarMallasActivas();
-  
+
 
     $reporte_promocion = $o->EjecutarPromocionAutomatica();
     if ($reporte_promocion !== null) {
@@ -45,33 +48,40 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
     }
 } else {
     $accion = $_POST['accion'] ?? '';
-    $respuesta = ['resultado' => 'error', 'mensaje' => 'Acción no reconocida o faltante.']; 
+    $respuesta = ['resultado' => 'error', 'mensaje' => 'Acción no reconocida o faltante.'];
 
     try {
-        $o = new Seccion(); 
+        $o = new Seccion();
 
         switch ($accion) {
-  
+
             case 'obtener_datos_selects':
                 $respuesta = [
-                    'resultado' => 'ok', 
+                    'resultado' => 'ok',
                     'ucs' => $o->obtenerUnidadesCurriculares(),
                     'espacios' => $o->obtenerEspacios(),
                     'docentes' => $o->obtenerDocentes(),
                     'turnos' => $o->obtenerTurnos(),
-                    'cohortes' => $o->obtenerCohortesMalla() 
+                    'cohortes' => $o->obtenerCohortesMalla()
                 ];
                 break;
             case 'registrar_seccion':
                 $anioCompuesto = $_POST['anioId'] ?? null;
                 list($anio_anio, $anio_tipo) = explode('|', $anioCompuesto . '|');
-                
+                $codigoSeccion = $_POST['codigoSeccion'] ?? null;
+                $cantidadSeccion = $_POST['cantidadSeccion'] ?? null;
+                $trayecto = is_string($codigoSeccion) ? substr($codigoSeccion, 0, 1) : null;
                 $respuesta = $o->RegistrarSeccion(
-                    $_POST['codigoSeccion'] ?? null, 
-                    $_POST['cantidadSeccion'] ?? null, 
+                    $codigoSeccion,
+                    $cantidadSeccion,
                     $anio_anio,
                     $anio_tipo
                 );
+                // Si la sección se registró correctamente, generar el horario aleatorio
+                if ($respuesta['resultado'] === 'registrar_seccion_ok' && $codigoSeccion && $trayecto) {
+                    $resultado_horario = $o->CrearHorarioAleatorio($codigoSeccion, $trayecto);
+                    $respuesta['horario_aleatorio'] = $resultado_horario;
+                }
                 break;
 
             case 'consultar_agrupado':
@@ -84,16 +94,16 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
 
             case 'obtener_uc_por_docente':
                 $doc_cedula = $_POST['doc_cedula'] ?? null;
-                $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null; 
+                $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null;
                 $trayecto_seccion = null;
-                
+
                 if ($sec_codigo_actual) {
                     $trayecto_seccion = substr($sec_codigo_actual, 0, 1);
                 }
-                
+
                 $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion);
                 $respuesta = [
-                    'resultado' => 'ok', 
+                    'resultado' => 'ok',
                     'ucs_docente' => $resultado_uc['data'],
                     'mensaje_uc' => $resultado_uc['mensaje']
                 ];
@@ -106,7 +116,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
             case 'eliminar_seccion_y_horario':
                 $respuesta = $o->EliminarSeccionYHorario($_POST['sec_codigo'] ?? null);
                 break;
-            
+
             case 'validar_clase_en_vivo':
                 $respuesta = $o->ValidarClaseEnVivo(
                     $_POST['doc_cedula'] ?? null,
@@ -116,7 +126,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     $_POST['sec_codigo'] ?? null
                 );
                 break;
-            
+
             case 'unir_horarios':
                 $respuesta = $o->UnirHorarios(
                     $_POST['id_seccion_origen'] ?? null,
@@ -125,14 +135,14 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
         }
     } catch (Exception $e) {
-        error_log("Error en seccionC.php: " . $e->getMessage()); 
+        error_log("Error en seccionC.php: " . $e->getMessage());
         $respuesta = ['resultado' => 'error', 'mensaje' => "Error del servidor: " . $e->getMessage()];
     }
-    
+
     header('Content-Type: application/json; charset=utf-8');
-    
-    array_walk_recursive($respuesta, function(&$item, $key){
-        if(is_string($item)){ 
+
+    array_walk_recursive($respuesta, function (&$item, $key) {
+        if (is_string($item)) {
             if (!mb_check_encoding($item, 'UTF-8')) {
                 $item = mb_convert_encoding($item, 'UTF-8', mb_detect_encoding($item, 'UTF-8, ISO-8859-1', true));
             }
@@ -147,6 +157,5 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
     }
 
     echo $json_respuesta;
-    exit; 
+    exit;
 }
-?>

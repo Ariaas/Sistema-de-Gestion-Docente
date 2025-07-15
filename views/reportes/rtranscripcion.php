@@ -26,7 +26,7 @@
                                     <option value="" disabled selected>-- Seleccione un Año --</option>
                                     <?php if (!empty($listaAnios)): ?>
                                         <?php foreach ($listaAnios as $anio): ?>
-                                            <option value="<?= htmlspecialchars($anio['ani_id']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
+                                            <option value="<?= htmlspecialchars($anio['ani_anio']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>
@@ -37,7 +37,7 @@
                                     <option value="">-- Todas las Fases --</option>
                                     <option value="1">Fase I</option>
                                     <option value="2">Fase II</option>
-                                    <option value="anual">Anual</option>
+                                    <option value="Anual">Anual</option>
                                 </select>
                             </div>
                         </div>

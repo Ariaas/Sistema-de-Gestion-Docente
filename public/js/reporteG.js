@@ -2,66 +2,40 @@ $(document).ready(function() {
     let myChart = null;
     const ctx = document.getElementById('reporteChart').getContext('2d');
 
-    function renderChart(chartData, chartType = 'bar') {
+    function renderChart(chartData, chartType = 'bar', chartTitle = 'Resultados Estudiantiles') {
         if (myChart) {
             myChart.destroy();
+        }
+
+        if ((chartType === 'pie' || chartType === 'doughnut') && chartData.datasets.length > 1) {
+            chartData.datasets = [chartData.datasets[0]];
         }
 
         myChart = new Chart(ctx, {
             type: chartType,
             data: {
                 labels: chartData.labels,
-                datasets: [{
-                    label: 'Cantidad de Estudiantes',
-                    data: chartData.data,
-                    backgroundColor: [
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)'
-                    ],
-                    borderColor: [
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)'
-                    ],
-                    borderWidth: 1
-                }]
+                datasets: chartData.datasets
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        display: chartType === 'bar', // Solo mostrar eje Y para barras
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                },
+                responsive: true, maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, display: true, ticks: { precision: 0 } } },
                 plugins: {
-                    legend: {
-                        position: chartType === 'bar' ? 'top' : 'right',
-                        display: chartType !== 'bar' // Mostrar leyenda para pie y doughnut
-                    },
-                    title: {
-                        display: true,
-                        text: 'Resultados del Proceso de Remedial (PER)',
-                        font: {
-                            size: 16
-                        }
-                    }
+                    legend: { display: true, position: 'top' },
+                    title: { display: true, text: chartTitle, font: { size: 16 } }
                 }
             }
         });
     }
 
-    function updateChart() {
-        $('#formReporte').trigger('submit');
+    function updateChartOnTypeChange() {
+        if (myChart) {
+            myChart.config.type = $('#tipo_grafico').val();
+            myChart.update();
+        }
     }
 
-    $('#tipo_grafico').change(updateChart);
-
+    $('#tipo_grafico').change(updateChartOnTypeChange);
     $('#tipo_reporte').change(function() {
         const tipo = $(this).val();
         $('#filtro_seccion_container').toggle(tipo === 'seccion');
@@ -69,98 +43,106 @@ $(document).ready(function() {
     });
 
     $('#anio_reporte').change(function() {
-        const anio_id = $(this).val();
-        const seccionSelect = $('#seccion_id');
-        const ucSelect = $('#uc_id');
+        const anio_completo = $(this).val();
+        const seccionSelect = $('#seccion_codigo');
+        const ucSelect = $('#uc_codigo');
 
-        if (!anio_id) {
+        if (!anio_completo) {
             seccionSelect.html('<option>Seleccione un año</option>').prop('disabled', true);
             ucSelect.html('<option>Seleccione un año</option>').prop('disabled', true);
             return;
         }
 
-        // Cargar Secciones
         seccionSelect.html('<option>Cargando...</option>').prop('disabled', true);
-        $.post('?pagina=reporte', {
-            accion: 'obtener_secciones',
-            anio_id: anio_id
-        }, function(data) {
+        $.post('?pagina=reporteG', { accion: 'obtener_secciones', anio_completo: anio_completo }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
             if (data.length > 0) {
-                data.forEach(item => options += `<option value="${item.sec_id}">${item.sec_codigo}</option>`);
+                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo}</option>`);
                 seccionSelect.prop('disabled', false);
-            } else {
-                options = '<option value="">No hay secciones</option>';
-            }
+            } else { options = '<option value="">No hay secciones</option>'; }
             seccionSelect.html(options);
         }, 'json');
 
-        // Cargar Unidades Curriculares
         ucSelect.html('<option>Cargando...</option>').prop('disabled', true);
-        $.post('?pagina=reporte', {
-            accion: 'obtener_uc',
-            anio_id: anio_id
-        }, function(data) {
+        $.post('?pagina=reporteG', { accion: 'obtener_uc', anio_completo: anio_completo }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
             if (data.length > 0) {
-                data.forEach(item => options += `<option value="${item.uc_id}">${item.uc_nombre}</option>`);
+                data.forEach(item => options += `<option value="${item.uc_codigo}">${item.uc_nombre}</option>`);
                 ucSelect.prop('disabled', false);
-            } else {
-                options = '<option value="">No hay U.C.</option>';
-            }
+            } else { options = '<option value="">No hay U.C.</option>'; }
             ucSelect.html(options);
         }, 'json');
     });
 
     $('#formReporte').submit(function(e) {
         e.preventDefault();
-
         const formData = new FormData(this);
         formData.append('accion', 'generar_reporte');
 
         $.ajax({
-            url: '?pagina=reporte',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
+            url: '?pagina=reporteG', type: 'POST', data: formData,
+            processData: false, contentType: false, dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    const datos = response.datos;
-                    const totalEstudiantes = parseInt(datos.total_estudiantes);
-                    const enPer = parseInt(datos.total_en_per);
-                    const aprobadosPer = parseInt(datos.total_aprobados_per);
+                    const responseData = response.datos;
+                    const tipoReporte = $('#tipo_reporte').val();
+                    let chartData = { labels: [], datasets: [] };
+                    let chartTitle = 'Resultados del Proceso de Remedial (PER)';
 
-                    const aprobadosDirecto = totalEstudiantes - enPer;
-                    const reprobaronPer = enPer - aprobadosPer;
+                    if (tipoReporte === 'general') {
+                        // **MODIFICADO**: Se usa el dato directo del servidor
+                        const aprobadosDirecto = parseInt(responseData.total_aprobados_directo, 10);
+                        const enPer = parseInt(responseData.total_en_per, 10);
+                        const aprobadosPer = parseInt(responseData.total_aprobados_per, 10);
+                        
+                        chartData.labels = ['Resultados Generales'];
+                        chartData.datasets = [
+                            { label: 'Aprobados Directo', data: [aprobadosDirecto], backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+                            { label: 'Reprobaron PER', data: [enPer - aprobadosPer], backgroundColor: 'rgba(255, 99, 132, 0.7)' },
+                            { label: 'Aprobaron PER', data: [aprobadosPer], backgroundColor: 'rgba(54, 162, 235, 0.7)' }
+                        ];
 
-                    const chartData = {
-                        labels: ['Aprobados Directo', 'Reprobaron PER', 'Aprobaron PER'],
-                        data: [aprobadosDirecto, reprobaronPer, aprobadosPer]
-                    };
+                    } else { // Para reportes detallados
+                        chartTitle = (tipoReporte === 'seccion') ? 'Resultados por Unidad Curricular' : 'Resultados por Sección';
+                        
+                        const labels = [];
+                        const directosData = [];
+                        const reprobadosPerData = [];
+                        const aprobadosPerData = [];
 
-                    renderChart(chartData, $('#tipo_grafico').val());
+                        responseData.forEach(item => {
+                            const label = (tipoReporte === 'seccion') ? item.uc_nombre : 'Sección ' + item.sec_codigo;
+                            labels.push(label);
+                            
+                            // **MODIFICADO**: Se usa el dato directo del servidor
+                            const aprobadosDir = parseInt(item.aprobados_directo, 10);
+                            const enPer = parseInt(item.per_cantidad, 10);
+                            const aprobadosPer = parseInt(item.per_aprobados, 10);
+                            
+                            directosData.push(aprobadosDir);
+                            reprobadosPerData.push(enPer - aprobadosPer);
+                            aprobadosPerData.push(aprobadosPer);
+                        });
+
+                        chartData.labels = labels;
+                        chartData.datasets = [
+                            { label: 'Aprobados Directo', data: directosData, backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+                            { label: 'Reprobaron PER', data: reprobadosPerData, backgroundColor: 'rgba(255, 99, 132, 0.7)' },
+                            { label: 'Aprobaron PER', data: aprobadosPerData, backgroundColor: 'rgba(54, 162, 235, 0.7)' }
+                        ];
+                    }
+                    
+                    renderChart(chartData, $('#tipo_grafico').val(), chartTitle);
+
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: response.mensaje || 'No se pudo generar el reporte.'
-                    });
+                    Swal.fire({ icon: 'error', title: 'Error', text: response.mensaje || 'No se pudo generar el reporte.' });
                 }
             },
             error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de Conexión',
-                    text: 'Hubo un problema al contactar con el servidor.'
-                });
+                Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'Hubo un problema al contactar con el servidor.' });
             }
         });
     });
 
-    renderChart({
-        labels: [],
-        data: []
-    });
+    renderChart({ labels: [], datasets: [] }, 'bar', 'Seleccione los filtros para generar un reporte');
 });

@@ -204,7 +204,7 @@ function Listar() {
           dias.forEach(dia => {
               const key = `${franja.inicio}-${dia}`;
               const clase = horarioMap.get(key);
-              const cell = clase ? `<strong>${clase.uc_nombre}</strong><br><small>${clase.esp_codigo}</small>` : "";
+              const cell = clase ? `<strong>${clase.uc_nombre}</strong><br><small>${clase.sec_codigo}</small><br><small>${clase.esp_codigo}</small>` : "";
               row.append($("<td>").html(cell));
           });
           tbody.append(row);

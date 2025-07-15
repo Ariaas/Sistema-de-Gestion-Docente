@@ -24,46 +24,47 @@ class Transcripcion extends Connection
         $co = $this->con();
         try {
             
-            // --- CORRECCIÓN DEFINITIVA DE LA CONSULTA ---
-            // Se construye la consulta dinámicamente para aplicar los filtros
-            // en la cláusula ON de los LEFT JOIN, lo que asegura que no se pierdan datos.
-
-            $params = [];
-            $sqlSelect = "SELECT
-                            d.doc_id AS `IDDocente`,
+            $sqlBase = "SELECT
+                            d.doc_cedula AS `IDDocente`,
                             d.doc_cedula AS `CedulaDocente`,
                             CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS `NombreCompletoDocente`,
                             u.uc_nombre AS `NombreUnidadCurricular`,
-                            s.sec_codigo AS `NombreSeccion`";
+                            -- ▼▼▼ CAMBIO PARA FORMATEAR LA SECCIÓN ▼▼▼
+                            CASE
+                                WHEN LEFT(s.sec_codigo, 1) IN ('1', '2') THEN CONCAT('IN', s.sec_codigo)
+                                WHEN LEFT(s.sec_codigo, 1) IN ('3', '4') THEN CONCAT('IIN', s.sec_codigo)
+                                ELSE CAST(s.sec_codigo AS CHAR)
+                            END AS `NombreSeccion`
+                        FROM
+                            uc_docente ud
+                        INNER JOIN
+                            tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                        INNER JOIN
+                            tbl_uc u ON ud.uc_codigo = u.uc_codigo
+                        INNER JOIN
+                            uc_horario uh ON u.uc_codigo = uh.uc_codigo
+                        INNER JOIN
+                            tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                        ";
+            
+            $conditions = ["ud.uc_doc_estado = 1"];
+            $params = [];
 
-            $sqlJoins = " FROM tbl_docente d
-                        LEFT JOIN uc_docente ud ON d.doc_id = ud.doc_id AND ud.uc_doc_estado = '1'
-                        LEFT JOIN tbl_uc u ON ud.uc_id = u.uc_id";
-
-            // Se añade el filtro de FASE directamente al JOIN de tbl_uc
-            if ($this->fase !== '') {
-                $sqlJoins .= " AND u.uc_periodo = :fase";
-                $params[':fase'] = $this->fase;
-            }
-
-            $sqlJoins .= " LEFT JOIN uc_horario uh ON u.uc_id = uh.uc_id
-                         LEFT JOIN tbl_horario h ON uh.hor_id = h.hor_id
-                         LEFT JOIN seccion_horario sh ON h.hor_id = sh.hor_id
-                         LEFT JOIN tbl_seccion s ON sh.sec_id = s.sec_id";
-
-            // Se añade el filtro de AÑO directamente al JOIN de tbl_seccion
             if (!empty($this->anio_id)) {
-                $sqlJoins .= " AND s.ani_id = :anio_id";
+                $conditions[] = "s.ani_anio = :anio_id";
                 $params[':anio_id'] = $this->anio_id;
             }
 
-            $sqlWhere = " WHERE u.uc_id IS NOT NULL";
+            if ($this->fase !== '') {
+                $conditions[] = "u.uc_periodo = :fase";
+                $params[':fase'] = $this->fase;
+            }
+
+            if (!empty($conditions)) {
+                $sqlBase .= " WHERE " . implode(" AND ", $conditions);
+            }
             
-            $sqlOrder = " ORDER BY `NombreCompletoDocente`, u.uc_nombre, s.sec_codigo";
-
-            // Se arma la consulta final
-            $sqlBase = $sqlSelect . $sqlJoins . $sqlWhere . $sqlOrder;
-
+            $sqlBase .= " ORDER BY `NombreCompletoDocente`, u.uc_nombre, s.sec_codigo";
 
             $resultado = $co->prepare($sqlBase);
             $resultado->execute($params);
@@ -75,11 +76,55 @@ class Transcripcion extends Connection
         }
     }
 
+    /**
+     * NUEVA FUNCIÓN: Obtiene las U.C. que tienen horario pero no docente.
+     */
+    public function obtenerCursosSinDocente() {
+        $co = $this->con();
+        try {
+            $sqlBase = "SELECT DISTINCT
+                            u.uc_nombre AS `NombreUnidadCurricular`
+                        FROM
+                            uc_horario uh
+                        INNER JOIN
+                            tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                        INNER JOIN
+                            tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                        LEFT JOIN
+                            uc_docente ud ON uh.uc_codigo = ud.uc_codigo AND ud.uc_doc_estado = 1
+                        ";
+
+            $conditions = ["ud.doc_cedula IS NULL"]; // La clave es buscar donde el docente es NULO
+            $params = [];
+
+            if (!empty($this->anio_id)) {
+                $conditions[] = "s.ani_anio = :anio_id";
+                $params[':anio_id'] = $this->anio_id;
+            }
+
+            if ($this->fase !== '') {
+                $conditions[] = "u.uc_periodo = :fase";
+                $params[':fase'] = $this->fase;
+            }
+
+            $sqlBase .= " WHERE " . implode(" AND ", $conditions);
+            $sqlBase .= " ORDER BY u.uc_nombre";
+            
+            $resultado = $co->prepare($sqlBase);
+            $resultado->execute($params);
+            return $resultado->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch(PDOException $e) {
+            error_log("Error en Transcripcion::obtenerCursosSinDocente: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function obtenerAnios()
     {
         $co = $this->con();
         try {
-            $p = $co->prepare("SELECT ani_id, ani_anio FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC");
+            $p = $co->prepare("SELECT * FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC");
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -88,4 +133,3 @@ class Transcripcion extends Connection
         }
     }
 }
-?>

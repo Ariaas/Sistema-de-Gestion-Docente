@@ -2,6 +2,12 @@ const language_es = {
     "decimal": "", "emptyTable": "No hay datos disponibles en la tabla", "info": "Mostrando _START_ a _END_ de _TOTAL_ registros", "infoEmpty": "Mostrando 0 a 0 de 0 registros", "infoFiltered": "(filtrado de _MAX_ registros totales)", "infoPostFix": "", "thousands": ",", "lengthMenu": "Mostrar _MENU_ registros", "loadingRecords": "Cargando...", "processing": "Procesando...", "search": "Buscar:", "zeroRecords": "No se encontraron registros coincidentes", "paginate": { "first": "Primero", "last": "Último", "next": "Siguiente", "previous": "Anterior" }, "aria": { "sortAscending": ": activar para ordenar la columna de manera ascendente", "sortDescending": ": activar para ordenar la columna de manera descendente" }
 };
 
+function validarInputNumerico(input) {
+    input.value = input.value.replace(/[^0-9]/g, '');
+    if (input.value.length > 2) {
+        input.value = input.value.slice(0, 2);
+    }
+}
 function enviaAjax(datos, successCallback) {
     $.ajax({
         async: true, url: "?pagina=archivo", type: "POST", contentType: false, data: datos, processData: false, cache: false, timeout: 10000,
@@ -10,66 +16,91 @@ function enviaAjax(datos, successCallback) {
                 var lee = JSON.parse(respuesta); 
                 successCallback(lee); 
             } catch (e) { 
-                console.error("Error en análisis JSON:", e, respuesta); 
-                muestraMensaje("error", 5000, "Error", "Respuesta inválida del servidor."); 
+                console.error("Error en análisis JSON:", e, respuesta);
+                alert("Error: La respuesta del servidor no es válida.");
             }
         },
         error: function (request, status, err) { 
-            console.error("Error de petición AJAX:", status, err); 
-            muestraMensaje("error", 5000, "Error", "Hubo un problema de conexión con el servidor."); 
+            console.error("Error de petición AJAX:", status, err);
+            alert("Error de conexión con el servidor.");
         },
     });
 }
 
-function validarInputNumerico(input) {
-    input.value = input.value.replace(/[^0-9]/g, '');
-    if (input.value.length > 2) { input.value = input.value.slice(0, 2); }
+/**
+ * NUEVO: Valida en tiempo real que la suma de aprobados y estudiantes 
+ * para PER no exceda el total de estudiantes de la sección.
+ */
+function validarSumaAprobados() {
+    const totalEstudiantes = parseInt($('#seccion option:selected').data('cantidad')) || 0;
+    const cantAprobadosInput = $('#cantidad_aprobados');
+    const cantPerInput = $('#cantidad_per');
+    const feedbackDiv = $('#feedback-aprobados');
+
+    if (totalEstudiantes === 0) return true;
+
+    const aprobados = parseInt(cantAprobadosInput.val() || 0);
+    const per = parseInt(cantPerInput.val() || 0);
+    const suma = aprobados + per;
+
+    if (suma > totalEstudiantes) {
+        cantAprobadosInput.addClass('is-invalid');
+        cantPerInput.addClass('is-invalid');
+        feedbackDiv.text(`La suma (${suma}) no puede exceder el total de estudiantes (${totalEstudiantes}).`).addClass('d-block');
+        return false;
+    } else {
+        cantAprobadosInput.removeClass('is-invalid');
+        cantPerInput.removeClass('is-invalid');
+        feedbackDiv.text('El campo es obligatorio.').removeClass('d-block');
+        return true;
+    }
 }
 
+/**
+ * MODIFICADO: Valida el formulario de registro antes de enviarlo.
+ * Se eliminó la validación del archivo y se añadió la de la suma.
+ */
 function validarFormularioRegistro() {
     let isValid = true;
     $('.is-invalid').removeClass('is-invalid');
 
-    const anio = $('#anio');
-    if (!anio.val()) { anio.addClass('is-invalid'); isValid = false; }
+    if (!$('#anio').val()) { $('#anio').addClass('is-invalid'); isValid = false; }
+    if (!$('#seccion').val()) { $('#seccion').addClass('is-invalid'); isValid = false; }
+    if (!$('#ucurricular').val()) { $('#ucurricular').addClass('is-invalid'); isValid = false; }
+    if ($('#cantidad_aprobados').val() === '') { $('#cantidad_aprobados').addClass('is-invalid'); isValid = false; }
+    if ($('#cantidad_per').val() === '') { $('#cantidad_per').addClass('is-invalid'); isValid = false; }
 
-    const seccion = $('#seccion');
-    if (!seccion.val()) { seccion.addClass('is-invalid'); isValid = false; }
-    
-    const ucurricular = $('#ucurricular');
-    if (!ucurricular.val()) { ucurricular.addClass('is-invalid'); isValid = false; }
-
-    const cantAprobados = $('#cantidad_aprobados');
-    if (cantAprobados.val() === '') { cantAprobados.addClass('is-invalid'); isValid = false; }
-    
-    const cantPer = $('#cantidad_per');
-    if (cantPer.val() === '') { cantPer.addClass('is-invalid'); isValid = false; }
-
-    // --- CÁLCULO DE VALIDACIÓN MEJORADO ---
-    const totalEstudiantes = parseInt($('#seccion option:selected').data('cantidad')) || 0;
-    const sumaAprobados = (parseInt(cantAprobados.val() || 0) + parseInt(cantPer.val() || 0));
-    
-    if (totalEstudiantes > 0 && sumaAprobados > totalEstudiantes) {
-        cantAprobados.addClass('is-invalid');
-        cantPer.addClass('is-invalid');
-        $('#feedback-aprobados').text('La suma de aprobados y para PER excede el total de estudiantes.');
+    if (!validarSumaAprobados()) {
         isValid = false;
-    } else {
-         $('#feedback-aprobados').text('El campo es obligatorio.');
     }
-
     const archivo = $('#archivo_notas');
-    if (archivo.get(0).files.length === 0) { archivo.addClass('is-invalid'); isValid = false; }
+if (archivo.get(0).files.length === 0) {
+    archivo.addClass('is-invalid');
+    isValid = false;
+}
 
     return isValid;
 }
 
+/**
+ * MODIFICADO: Obtiene la lista de registros y envía el estado
+ * del filtro del administrador si existe.
+ */
 function listarRegistros() {
     const datos = new FormData();
     datos.append("accion", "listar_registros");
+
+    const filtroCheckbox = document.getElementById('filtroMisRegistros');
+    if (filtroCheckbox) {
+        datos.append("filtrar_propios", filtroCheckbox.checked);
+    }
+
     enviaAjax(datos, function (response) {
-        if ($.fn.DataTable.isDataTable("#tablaRegistros")) { $("#tablaRegistros").DataTable().destroy(); }
+        if ($.fn.DataTable.isDataTable("#tablaRegistros")) { 
+            $("#tablaRegistros").DataTable().destroy(); 
+        }
         $("#resultadosRegistros").empty();
+
         if (response.resultado === 'ok_registros' && Array.isArray(response.datos)) {
             response.datos.forEach(item => {
                 const totalEst = parseInt(item.sec_cantidad) || 0;
@@ -77,22 +108,41 @@ function listarRegistros() {
                 const paraPer = parseInt(item.per_cantidad) || 0;
                 const aprobadosPer = parseInt(item.per_aprobados) || 0;
                 const aprobadosTotales = aprobadosDir + aprobadosPer;
-                
-                // --- CÁLCULO DE REPROBADOS CORREGIDO ---
-                // El número de reprobados es simplemente el total de estudiantes menos el total de aprobados (directos + per).
+                // --- CÁLCULO CORREGIDO DE REPROBADOS ---
                 const reprobadosTotales = totalEst - aprobadosTotales;
-                
                 const esPerCero = paraPer === 0;
 
-                let archivoDefinitivoHtml = item.archivo_definitivo ? `<a href="archivos_subidos/${encodeURIComponent(item.archivo_definitivo)}" download class="btn btn-sm btn-secondary" title="Descargar Acta Final"><img src="public/assets/icons/people.svg" alt="Descargar" style="width:18px; height:18px;"></a>` : '';
-                let archivoPerHtml = item.archivo_per ? `<a href="archivos_per/${encodeURIComponent(item.archivo_per)}" download class="btn btn-sm btn-secondary text-primary" title="Descargar Acta PER"><img src="public/assets/icons/people.svg" alt="Descargar PER" style="width:18px; height:18px;"></a>` : `<span class="btn btn-sm disabled" style="opacity: 0.3;"><img src="public/iconos/descargar_per.svg" alt="Descargar PER" style="width:18px; height:18px;"></span>`;
-                const btnRegistrarPer = `<button class="btn btn-sm btn-info" title="Registrar Notas del PER" onclick="abrirModalPer('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}', '${paraPer}', '${aprobadosPer}', '${item.ani_anio}', '${item.ani_tipo}')" ${esPerCero ? 'disabled' : ''}><img src="public/assets/icons/people.svg" alt="Registrar" style="width:16px; height:16px;"></button>`;
-                const btnEliminarRegistro = `<button class="btn btn-sm btn-danger" title="Eliminar Registro" onclick="eliminarRegistro('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}')"><img src="public/assets/icons/people.svg" alt="Eliminar" style="width:16px; height:16px;"></button>`;
+                let archivoDefinitivoHtml = `
+    <a href="archivos_subidos/${encodeURIComponent(item.archivo_definitivo || '')}" 
+       class="btn btn-sm btn-outline-secondary ${!item.archivo_definitivo ? 'disabled' : ''}" 
+       title="Descargar Acta Final" 
+       ${item.archivo_definitivo ? 'download' : ''}>
+       <i class="fas fa-file-download"></i>
+    </a>`;
+
+// Botón para el acta de PER
+let archivoPerHtml = `
+    <a href="archivos_per/${encodeURIComponent(item.archivo_per || '')}" 
+       class="btn btn-sm btn-outline-info ${!item.archivo_per ? 'disabled' : ''}" 
+       title="Descargar Acta PER" 
+       ${item.archivo_per ? 'download' : ''}>
+       <i class="fas fa-file-download"></i>
+    </a>`;
+
+
+
+
+                const perHabilitado = !esPerCero && item.per_abierto;
+                const tituloBoton = perHabilitado ? "Registrar Notas del PER" : "El período de registro para PER no está activo";
                 
+                // Se pasa fase_numero en el onclick
+const btnRegistrarPer = `<button class="btn btn-sm btn-info" title="${tituloBoton}" onclick="abrirModalPer('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}', '${paraPer}', '${aprobadosPer}', '${item.ani_anio}', '${item.ani_tipo}', '${item.fase_numero}')" ${!perHabilitado ? 'disabled' : ''}><i class="fas fa-edit"></i></button>`;                
+                const btnEliminarRegistro = `<button class="btn btn-sm btn-danger btn-eliminar" title="Eliminar Registro" data-uc-codigo="${item.uc_codigo}" data-sec-codigo="${item.sec_codigo}" data-uc-nombre="${item.uc_nombre}" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}" data-fase="${item.fase_numero}"><i class="fas fa-trash"></i></button>`;
+
                 const accionesHtml = `<div class="d-flex justify-content-start align-items-center gap-2">${archivoDefinitivoHtml}${archivoPerHtml}${btnRegistrarPer}${btnEliminarRegistro}</div>`;
 
                 $("#resultadosRegistros").append(`<tr>
-                    <td>${item.ani_anio} (${item.ani_tipo})</td>
+                    <td>${item.ani_anio} (${item.ani_tipo})<br><b>Fase: ${item.fase_numero}</b></td>
                     <td>${item.sec_codigo}</td>
                     <td>${item.uc_nombre}</td>
                     <td class="text-center">${totalEst}</td>
@@ -109,35 +159,60 @@ function listarRegistros() {
     });
 }
 
-function abrirModalPer(uc_codigo, sec_codigo, uc_nombre, cantidad_per, aprobados_actuales, anio, tipo) {
+
+
+function abrirModalPer(uc_codigo, sec_codigo, uc_nombre, cantidad_per, aprobados_actuales, anio, tipo, fase_numero) {
     $('#formAprobadosPer')[0].reset();
     $('#per_uc_codigo').val(uc_codigo);
     $('#per_sec_codigo').val(sec_codigo);
     $('#per_uc_nombre').val(uc_nombre);
     $('#per_anio_anio').val(anio);
     $('#per_anio_tipo').val(tipo);
+    $('#per_fase_numero').val(fase_numero);
     $('#per_seccion').text(sec_codigo);
     $('#per_uc').text(uc_nombre);
     $('#per_cantidad_en_remedial').text(cantidad_per);
     $('#cantidad_aprobados_per').val(aprobados_actuales || '0').attr('max', cantidad_per);
     $('#modalAprobadosPer').modal('show');
 }
-
 $(document).ready(function () {
     listarRegistros();
+
     $('#btnNuevoRegistro').click(() => $('#modalRegistroNotas').modal('show'));
-    $('#ucurricular').change(function () { $('#uc_nombre').val($(this).find('option:selected').text()); });
-    $('#seccion').change(function () {
-        const selected = $(this).find('option:selected');
-        const cantidad = selected.data('cantidad');
-        $('#scantidad').text(cantidad ? `Total de estudiantes: ${cantidad}` : '');
+    
+    // NUEVO: Evento para el filtro del Administrador.
+    $('#filtroMisRegistros').change(listarRegistros);
+
+    $('#ucurricular').change(function () { 
+        $('#uc_nombre').val($(this).find('option:selected').text()); 
     });
+   $('#tablaRegistros').on('click', '.btn-eliminar', function() {
+        // Se obtienen los datos desde los atributos data-* del botón que se presionó
+        const uc_codigo = $(this).data('uc-codigo');
+        const sec_codigo = $(this).data('sec-codigo');
+        const uc_nombre = $(this).data('uc-nombre');
+        const anio = $(this).data('anio');
+        const tipo = $(this).data('tipo');
+        const fase = $(this).data('fase');
+
+        // Se llama a la función eliminarRegistro, que ahora puede estar DENTRO o FUERA del document.ready
+        eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo, fase);
+    });
+    // MODIFICADO: Carga las secciones asignadas al docente al cambiar el año.
     $('#anio').change(function () {
         const anio_compuesto = $(this).val();
         const seccionSelect = $('#seccion');
+        const ucSelect = $('#ucurricular');
+
         seccionSelect.prop('disabled', true).html('<option value="">Cargando...</option>');
+        ucSelect.prop('disabled', true).html('<option value="">Seleccione una sección primero</option>');
         $('#scantidad').text('');
-        if (!anio_compuesto) { seccionSelect.html('<option value="">Seleccione un año primero</option>'); return; }
+
+        if (!anio_compuesto) { 
+            seccionSelect.html('<option value="">Seleccione un año primero</option>'); 
+            return; 
+        }
+
         const datos = new FormData();
         datos.append("accion", "obtener_secciones");
         datos.append("anio_compuesto", anio_compuesto);
@@ -146,42 +221,145 @@ $(document).ready(function () {
             if (Array.isArray(secciones) && secciones.length > 0) {
                 secciones.forEach(sec => { options += `<option value="${sec.sec_codigo}" data-cantidad="${sec.sec_cantidad}">${sec.sec_codigo}</option>`; });
                 seccionSelect.prop('disabled', false);
-            } else { options = '<option value="">No hay secciones asignadas</option>'; }
+            } else { 
+                options = '<option value="">No hay secciones asignadas</option>'; 
+            }
             seccionSelect.html(options);
         });
     }).trigger('change');
+
+    // NUEVO: Carga las unidades curriculares al cambiar la sección.
+    $('#seccion').change(function() {
+        const seccion_codigo = $(this).val();
+        const ucSelect = $('#ucurricular');
+
+        const selected = $(this).find('option:selected');
+        const cantidad = selected.data('cantidad');
+        $('#scantidad').text(cantidad ? `Total de estudiantes: ${cantidad}` : '');
+        validarSumaAprobados();
+
+        if (!seccion_codigo) {
+            ucSelect.prop('disabled', true).html('<option value="">Seleccione una sección primero</option>');
+            return;
+        }
+
+        ucSelect.prop('disabled', true).html('<option value="">Cargando U.C....</option>');
+        const datos = new FormData();
+        datos.append("accion", "obtener_uc_por_seccion");
+        datos.append("sec_codigo", seccion_codigo);
+        enviaAjax(datos, function(unidades) {
+            let options = '<option value="" selected disabled>Seleccione una U.C.</option>';
+            if (Array.isArray(unidades) && unidades.length > 0) {
+                unidades.forEach(uc => { options += `<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`; });
+                ucSelect.prop('disabled', false);
+            } else {
+                options = '<option value="">No hay U.C. para esta sección</option>';
+            }
+            ucSelect.html(options);
+        });
+    });
+
+    // NUEVO: Evento para la validación en tiempo real.
+    $('#cantidad_aprobados, #cantidad_per').on('input', validarSumaAprobados);
+
     $('#formRegistro').submit(function (e) {
-        e.preventDefault();
-        if (validarFormularioRegistro()) {
-            enviaAjax(new FormData(this), function (response) {
-                if (response.success) { muestraMensaje('success', 3500, 'Éxito', response.mensaje); $('#modalRegistroNotas').modal('hide'); listarRegistros(); } else { muestraMensaje('error', 4000, 'Error', response.mensaje); }
+    e.preventDefault();
+
+    // Se vuelve a añadir la validación del archivo
+    const archivo = $('#archivo_notas');
+    if (archivo.get(0).files.length === 0) {
+        $('#archivo_notas').addClass('is-invalid');
+        return; // Detiene el envío si no hay archivo
+    }
+
+    if (validarFormularioRegistro()) { // Asumiendo que esta función ya existe y es correcta
+        enviaAjax(new FormData(this), function (response) {
+            if (response.success) {
+                $('#modalRegistroNotas').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Registrado!',
+                    text: response.mensaje,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    listarRegistros();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.mensaje
+                });
+            }
+        });
+    }
+});
+
+// 2. FUNCIÓN DE SUBMIT DEL FORMULARIO PER
+$('#formAprobadosPer').submit(function (e) {
+    e.preventDefault();
+    // ... tu lógica de validación para este form ...
+    enviaAjax(new FormData(this), function (response) {
+        if (response.success) {
+            $('#modalAprobadosPer').modal('hide');
+            Swal.fire({
+                icon: 'success',
+                title: '¡Actualizado!',
+                text: response.mensaje,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                listarRegistros();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.mensaje
             });
         }
     });
-    $('#formAprobadosPer').submit(function (e) {
-        e.preventDefault();
-        const totalEnPer = parseInt($('#cantidad_aprobados_per').attr('max')) || 0;
-        let cantidadAprobados = parseInt($('#cantidad_aprobados_per').val()) || 0;
-        if (cantidadAprobados > totalEnPer) { muestraMensaje('error', 3500, 'Cantidad Excedida', `Aprobados (${cantidadAprobados}) no puede superar el total en PER (${totalEnPer}).`); return; }
-        if ($('#archivo_per').get(0).files.length === 0) { muestraMensaje("error", 4000, "ERROR", "Debe adjuntar el acta de notas del PER."); return; }
-        enviaAjax(new FormData(this), function (response) {
-            if (response.success) { muestraMensaje('success', 4000, 'Éxito', response.mensaje); $('#modalAprobadosPer').modal('hide'); listarRegistros(); } else { muestraMensaje('error', 4000, 'Error', response.mensaje, 4000); }
-        });
-    });
 });
 
-function eliminarRegistro(uc_codigo, sec_codigo, uc_nombre) {
+// 3. FUNCIÓN PARA ELIMINAR
+function eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo, fase) {
     Swal.fire({
-        title: "¿Está seguro?", html: `Se eliminará el registro de notas y archivos de:<br><b>Sección:</b> ${sec_codigo}<br><b>U.C.:</b> ${uc_nombre}.<br>¡Esta acción no se puede deshacer!`, icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", cancelButtonText: "Cancelar", confirmButtonText: "Sí, eliminar",
+        title: '¿Estás seguro?',
+        html: `Se eliminará el registro de notas de:<br><b>Sección:</b> ${sec_codigo}<br><b>U.C.:</b> ${uc_nombre}<br><b>Año:</b> ${anio} (${tipo})`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Sí, eliminar'
     }).then((result) => {
         if (result.isConfirmed) {
             const datos = new FormData();
             datos.append("accion", "eliminar_registro");
             datos.append("uc_codigo", uc_codigo);
             datos.append("sec_codigo", sec_codigo);
+            datos.append("ani_anio", anio);
+            datos.append("ani_tipo", tipo);
+            datos.append("fase_numero", fase);
+            
             enviaAjax(datos, function(response) {
-                if (response.success) { muestraMensaje('success', 4000, 'Eliminado', response.mensaje); listarRegistros(); } else { muestraMensaje('error', 4000, 'Error', response.mensaje); }
+                if (response.success) {
+                    Swal.fire(
+                        '¡Eliminado!',
+                        response.mensaje,
+                        'success'
+                    ).then(() => {
+                        listarRegistros();
+                    });
+                } else {
+                    Swal.fire(
+                        'Error',
+                        response.mensaje,
+                        'error'
+                    );
+                }
             });
         }
     });
 }
+});

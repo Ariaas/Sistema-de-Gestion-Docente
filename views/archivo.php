@@ -4,30 +4,33 @@ if (!isset($_SESSION['name'])) {
     exit();
 }
 
-
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Gestión de Notas y Remediales</title>
+    <title>Resguardar Notas</title>
     <style>
         .table-compact {
             font-size: 0.9rem;
         }
+
         .actions-column .btn {
             width: 100%;
             margin-bottom: 0.25rem;
             text-align: left;
         }
+
         .btn.download-link {
-            color: #6c757d; /* Color de ícono secundario */
+            color: #6c757d;
             box-shadow: none;
         }
+
         .btn.download-link:hover {
             background-color: transparent !important;
-            color: #212529; /* Color de ícono más oscuro al pasar el ratón */
+            color: #212529;
         }
     </style>
 </head>
@@ -39,10 +42,21 @@ if (!isset($_SESSION['name'])) {
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestión de Notas y Remediales</h2>
 
-            <?php if (!empty($alerta_datos)) { echo $alerta_datos; } ?>
+            <?php if (!empty($alerta_datos)) {
+                echo $alerta_datos;
+            } ?>
 
-            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1200px;">
-                <button class="btn btn-success px-4" id="btnNuevoRegistro">
+            <div class="w-100 d-flex justify-content-between align-items-center mb-3" style="max-width: 1200px;">
+                <?php if (isset($_SESSION['rol_nombre']) && $_SESSION['rol_nombre'] == 'Administrador'): ?>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="filtroMisRegistros">
+                        <label class="form-check-label" for="filtroMisRegistros">Ver solo mis registros</label>
+                    </div>
+                <?php endif; ?>
+
+                <button class="btn btn-success px-4 ms-auto" id="btnNuevoRegistro" <?php if (!$puede_registrar) {
+                                                                                        echo 'disabled title="No tiene permiso o no hay una fase activa"';
+                                                                                    } ?>>
                     <i class="fas fa-plus me-2"></i> Crear Nuevo Registro
                 </button>
             </div>
@@ -82,8 +96,8 @@ if (!isset($_SESSION['name'])) {
                         <form id="formRegistro" enctype="multipart/form-data" novalidate>
                             <input type="hidden" name="accion" value="registrar_notas">
                             <input type="hidden" id="uc_nombre" name="uc_nombre">
-                            
-                            
+
+
 
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-3">
@@ -112,20 +126,13 @@ if (!isset($_SESSION['name'])) {
                             <div class="row mb-3">
                                 <div class="col-12 mb-3">
                                     <label for="ucurricular" class="form-label">Unidad Curricular</label>
-                                    <select class="form-select" name="ucurricular" id="ucurricular" required>
-                                        <option value="" disabled selected>Seleccione una U.C.</option>
-                                        <?php if (!empty($unidadesCurriculares)) {
-                                            foreach ($unidadesCurriculares as $unidad) {
-                                                echo "<option value='{$unidad['uc_codigo']}'>{$unidad['uc_nombre']}</option>";
-                                            }
-                                        } else {
-                                             echo "<option value='' disabled>No hay U.C. disponibles para remedial</option>";
-                                        }?>
+                                    <select class="form-select" name="ucurricular" id="ucurricular" required disabled>
+                                        <option value="" disabled selected>Seleccione una sección primero</option>
                                     </select>
                                     <div class="invalid-feedback">Por favor, seleccione una unidad curricular.</div>
                                 </div>
                             </div>
-                            
+
                             <div class="row mb-3 bg-light py-3 px-2 rounded">
                                 <div class="col-md-6 mb-3">
                                     <label for="cantidad_aprobados" class="form-label">Aprobados Directos</label>
@@ -141,7 +148,7 @@ if (!isset($_SESSION['name'])) {
 
                             <div class="row mb-3">
                                 <div class="col-12">
-                                    <label for="archivo_notas" class="form-label">Acta de Notas Finales</label>
+                                    <label for="archivo_notas" class="form-label">Acta de Notas Finales (Opcional)</label>
                                     <input type="file" class="form-control" name="archivo_notas" id="archivo_notas" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
                                     <div class="invalid-feedback">Por favor, adjunte el acta de notas.</div>
                                 </div>
@@ -171,7 +178,8 @@ if (!isset($_SESSION['name'])) {
                             <input type="hidden" id="per_sec_codigo" name="sec_codigo">
                             <input type="hidden" id="per_uc_nombre" name="uc_nombre">
                             <input type="hidden" id="per_anio_anio" name="anio_anio">
-                            <input type="hidden" id="per_anio_tipo" name="anio_tipo">
+                            <input type="hidden" id="per_anio_tipo" name="ani_tipo">
+                            <input type="hidden" id="per_fase_numero" name="fase_numero">
 
                             <p>Sección: <strong id="per_seccion"></strong> | U. Curricular: <strong id="per_uc"></strong></p>
                             <p>Estudiantes en PER: <strong id="per_cantidad_en_remedial"></strong></p>
@@ -203,4 +211,5 @@ if (!isset($_SESSION['name'])) {
     <script src="public/js/archivo.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
+
 </html>

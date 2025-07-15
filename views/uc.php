@@ -153,8 +153,8 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                         <select class="form-select" name="periodoUC" id="periodoUC">
                                             <option value="" disabled selected>Seleccione un Periodo</option>
                                             <option value="anual">Anual</option>
-                                            <option value="1">Fase 1</option>
-                                            <option value="2">Fase 2</option>
+                                            <option value="Fase I">Fase 1</option>
+                                            <option value="Fase II">Fase 2</option>
                                         </select>
                                         <span id="speriodoUC"></span>
                                     </div>

@@ -12,19 +12,18 @@ class AsignacionAulasReport extends Connection
     {
         $co = $this->con();
         try {
-            $sql = "SELECT
+            // Consulta simple para obtener las aulas usadas por día
+            $sql = "SELECT DISTINCT
                         e.esp_codigo,
                         uh.hor_dia
                     FROM
                         tbl_espacio e
                     INNER JOIN
-                        tbl_horario h ON e.esp_id = h.esp_id
-                    INNER JOIN
-                        uc_horario uh ON h.hor_id = uh.hor_id
+                        uc_horario uh ON e.esp_codigo = uh.esp_codigo
                     WHERE
-                        e.esp_estado = 1
+                        e.esp_estado = 1 AND uh.esp_codigo IS NOT NULL
                     ORDER BY
-                        FIELD(uh.hor_dia, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'),
+                        FIELD(uh.hor_dia, 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'),
                         e.esp_codigo ASC";
             
             $stmt = $co->prepare($sql);
@@ -37,4 +36,3 @@ class AsignacionAulasReport extends Connection
         }
     }
 }
-?>
