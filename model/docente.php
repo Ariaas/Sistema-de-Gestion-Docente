@@ -208,12 +208,20 @@ class Docente extends Connection
 
         if ($this->existe($this->doc_cedula)) {
             try {
+                $co->beginTransaction();
+
+                $stmt_uc = $co->prepare("DELETE FROM uc_docente WHERE doc_cedula = :doc_cedula");
+                $stmt_uc->execute([':doc_cedula' => $this->doc_cedula]);
+
                 $stmt = $co->prepare("UPDATE tbl_docente SET doc_estado = 0 WHERE doc_cedula = :doc_cedula");
                 $stmt->execute([':doc_cedula' => $this->doc_cedula]);
+
+                $co->commit();
 
                 $r['resultado'] = 'eliminar';
                 $r['mensaje'] = '¡Registro Eliminado!<br/> Se eliminó el docente correctamente';
             } catch (Exception $e) {
+                $co->rollBack();
                 $r['resultado'] = 'error';
                 $r['mensaje'] = 'No se puede eliminar este registro.<br/> Está asociado a otro registro existente.';
             }

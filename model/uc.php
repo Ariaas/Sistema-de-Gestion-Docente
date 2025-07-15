@@ -484,7 +484,7 @@ class UC extends Connection
         try {
             $uc_codigo = $_POST['uc_codigo'];
             $doc_cedula = $_POST['doc_cedula'];
-            $stmt = $co->prepare("UPDATE uc_docente SET uc_doc_estado = 0 WHERE uc_codigo = :uc_codigo AND doc_cedula = :doc_cedula AND uc_doc_estado = 1");
+            $stmt = $co->prepare("DELETE FROM uc_docente WHERE uc_codigo = :uc_codigo AND doc_cedula = :doc_cedula");
             $stmt->bindParam(':uc_codigo', $uc_codigo, PDO::PARAM_STR);
             $stmt->bindParam(':doc_cedula', $doc_cedula, PDO::PARAM_INT);
             $stmt->execute();

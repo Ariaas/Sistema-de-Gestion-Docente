@@ -6,7 +6,7 @@ class Notificaciones extends Connection
     public function RegistrarNotificacion($notificacion, $fin)
     {
         $co = $this->Con();
-        $stmt = $co->prepare("INSERT INTO tbl_notificacion (not_notificacion, not_fecha, not_fin) VALUES (?, NOW(), ?)");
+        $stmt = $co->prepare("INSERT INTO tbl_notificacion (not_notificacion, not_fecha, not_fin, not_activo) VALUES (?, NOW(), ?, 1)");
         return $stmt->execute([$notificacion, $fin]);
     }
 

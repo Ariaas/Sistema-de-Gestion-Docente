@@ -74,44 +74,89 @@ class Anio extends Connection
             return $r;
         }
 
-        if (!$this->Existe($this->aniAnio, $this->aniTipo)) {
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            try {
-                $co->beginTransaction();
-
-                $stmtAnio = $co->prepare("INSERT INTO tbl_anio (ani_anio, ani_tipo, ani_activo, ani_estado) VALUES (:aniAnio, :aniTipo, 1, 1)");
-                $stmtAnio->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
-                $stmtAnio->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
-                $stmtAnio->execute();
-
-                $stmtFase = $co->prepare("INSERT INTO tbl_fase (ani_anio, ani_tipo, fase_numero, fase_apertura, fase_cierre) VALUES (:aniAnio, :aniTipo, :faseNumero, :faseApertura, :faseCierre)");
-                $fechasFases = [];
-                foreach ($this->fases as $fase) {
-                    $stmtFase->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
-                    $stmtFase->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
-                    $stmtFase->bindParam(':faseNumero', $fase['numero'], PDO::PARAM_INT);
-                    $stmtFase->bindParam(':faseApertura', $fase['apertura'], PDO::PARAM_STR);
-                    $stmtFase->bindParam(':faseCierre', $fase['cierre'], PDO::PARAM_STR);
-                    $stmtFase->execute();
-                    $fechasFases[$fase['numero']] = $fase['apertura'];
-                }
-
-                $this->Per($co, $this->aniAnio, $this->aniTipo, $fechasFases);
-
-                $co->commit();
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
-            } catch (Exception $e) {
-                $co->rollBack();
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-            $co = null;
-        } else {
+        if ($this->Existe($this->aniAnio, $this->aniTipo)) {
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'ERROR! <br/> El AÑO colocado YA existe!';
+            return $r;
         }
+
+        if ($this->ExisteInactivo($this->aniAnio, $this->aniTipo)) {
+            return $this->Reactivar();
+        }
+
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $co->beginTransaction();
+
+            $stmtAnio = $co->prepare("INSERT INTO tbl_anio (ani_anio, ani_tipo, ani_activo, ani_estado) VALUES (:aniAnio, :aniTipo, 1, 1)");
+            $stmtAnio->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+            $stmtAnio->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+            $stmtAnio->execute();
+
+            $stmtFase = $co->prepare("INSERT INTO tbl_fase (ani_anio, ani_tipo, fase_numero, fase_apertura, fase_cierre) VALUES (:aniAnio, :aniTipo, :faseNumero, :faseApertura, :faseCierre)");
+            $fechasFases = [];
+            foreach ($this->fases as $fase) {
+                $stmtFase->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+                $stmtFase->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+                $stmtFase->bindParam(':faseNumero', $fase['numero'], PDO::PARAM_INT);
+                $stmtFase->bindParam(':faseApertura', $fase['apertura'], PDO::PARAM_STR);
+                $stmtFase->bindParam(':faseCierre', $fase['cierre'], PDO::PARAM_STR);
+                $stmtFase->execute();
+                $fechasFases[$fase['numero']] = $fase['apertura'];
+            }
+
+            $this->Per($co, $this->aniAnio, $this->aniTipo, $fechasFases);
+
+            $co->commit();
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
+        } catch (Exception $e) {
+            $co->rollBack();
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        $co = null;
+
+        return $r;
+    }
+
+    private function Reactivar()
+    {
+        $r = array();
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $co->beginTransaction();
+
+            $stmtAnio = $co->prepare("UPDATE tbl_anio SET ani_estado = 1, ani_activo = 1 WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo");
+            $stmtAnio->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+            $stmtAnio->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+            $stmtAnio->execute();
+
+            $stmtFase = $co->prepare("UPDATE tbl_fase SET fase_apertura = :faseApertura, fase_cierre = :faseCierre WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo AND fase_numero = :faseNumero");
+            $fechasFases = [];
+            foreach ($this->fases as $fase) {
+                $stmtFase->bindParam(':faseApertura', $fase['apertura'], PDO::PARAM_STR);
+                $stmtFase->bindParam(':faseCierre', $fase['cierre'], PDO::PARAM_STR);
+                $stmtFase->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+                $stmtFase->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+                $stmtFase->bindParam(':faseNumero', $fase['numero'], PDO::PARAM_INT);
+                $stmtFase->execute();
+                $fechasFases[$fase['numero']] = $fase['apertura'];
+            }
+
+            $this->Per($co, $this->aniAnio, $this->aniTipo, $fechasFases);
+
+            $co->commit();
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
+        } catch (Exception $e) {
+            $co->rollBack();
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        $co = null;
         return $r;
     }
 
@@ -231,8 +276,25 @@ class Anio extends Connection
         return $r;
     }
 
+    private function ExisteInactivo($aniAnio, $aniTipo)
+    {
+        $co = $this->Con();
+        try {
+            $stmt = $co->prepare("SELECT 1 FROM tbl_anio WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo AND ani_estado = 0");
+            $stmt->bindParam(':aniAnio', $aniAnio, PDO::PARAM_INT);
+            $stmt->bindParam(':aniTipo', $aniTipo, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            return false;
+        } finally {
+            $co = null;
+        }
+    }
+
     public function Listar()
     {
+        $this->Notificaciones();
         $this->DesactivarAnios();
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -248,10 +310,10 @@ class Anio extends Connection
                     MAX(CASE WHEN f.fase_numero = 2 THEN DATE_FORMAT(f.fase_apertura, '%d/%m/%Y') ELSE NULL END) AS ani_apertura_fase2,
                     MAX(CASE WHEN f.fase_numero = 2 THEN DATE_FORMAT(f.fase_cierre, '%d/%m/%Y') ELSE NULL END) AS ani_cierra_fase2
                 FROM tbl_anio a
-                JOIN tbl_fase f ON a.ani_anio = f.ani_anio AND a.ani_tipo = f.ani_tipo
+                LEFT JOIN tbl_fase f ON a.ani_anio = f.ani_anio AND a.ani_tipo = f.ani_tipo
                 WHERE a.ani_estado = 1
                 GROUP BY a.ani_anio, a.ani_tipo, a.ani_activo
-                ORDER BY a.ani_anio DESC
+                ORDER BY a.ani_anio DESC, a.ani_tipo ASC
             ");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
@@ -284,15 +346,12 @@ class Anio extends Connection
             $stmt->execute();
             $fila = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($fila) {
-                $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El AÑO colocada YA existe!';
+                return true;
             }
         } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
         }
         $co = null;
-        return $r;
+        return false;
     }
 
     public function DesactivarAnios()
@@ -335,60 +394,42 @@ class Anio extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $stmt = $co->query("SELECT ani_id, ani_anio, ani_tipo, ani_cierra_fase1, ani_cierra_fase2 FROM tbl_anio WHERE ani_estado = 1");
-        $anios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $co->query("SELECT a.ani_anio, a.ani_tipo, f.fase_numero, f.fase_cierre 
+                            FROM tbl_anio a 
+                            JOIN tbl_fase f ON a.ani_anio = f.ani_anio AND a.ani_tipo = f.ani_tipo 
+                            WHERE a.ani_estado = 1 AND a.ani_tipo != 'per'");
+        $fases = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $hoy = new DateTime();
-        $hoy = new DateTime($hoy->format('Y-m-d'));
+        $hoy->setTime(0, 0, 0);
 
-        foreach ($anios as $anio) {
-            if ($anio['ani_tipo'] === 'per') {
+        foreach ($fases as $fase) {
+            if (empty($fase['fase_cierre'])) {
                 continue;
             }
 
-            $cierreFase1 = new DateTime($anio['ani_cierra_fase1']);
-            $cierreFase1 = new DateTime($cierreFase1->format('Y-m-d'));
+            $cierre = new DateTime($fase['fase_cierre']);
+            $cierre->setTime(0, 0, 0);
 
-            $diasFase1 = (int)$hoy->diff($cierreFase1)->format('%r%a');
-
-            $tipoAnioTitle = ucfirst($anio['ani_tipo']);
-
-            if ($diasFase1 === 20) {
-                $mensaje = "La fase 1 del año {$anio['ani_anio']} ({$tipoAnioTitle}) está a punto de cerrarse: faltan 20 días.";
-                $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
-                if (!$n->existeNotificacion($mensaje, $fin)) {
-                    $n->RegistrarNotificacion($mensaje, $fin);
-                }
+            if ($hoy > $cierre) {
+                continue;
             }
 
-            if ($diasFase1 === 0) {
-                $mensaje = "Hoy es el cierre de la fase 1 del año {$anio['ani_anio']} ({$tipoAnioTitle}).";
-                $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
-                if (!$n->existeNotificacion($mensaje, $fin)) {
-                    $n->RegistrarNotificacion($mensaje, $fin);
-                }
-            }
+            $diferencia = $hoy->diff($cierre);
+            $dias_restantes = (int)$diferencia->format('%r%a');
 
-            if ($anio['ani_cierra_fase2']) {
-                $cierreFase2 = new DateTime($anio['ani_cierra_fase2']);
-                $cierreFase2 = new DateTime($cierreFase2->format('Y-m-d'));
+            $tipoAnioTitle = ucfirst($fase['ani_tipo']);
+            $finNotificacion = (new DateTime())->modify('+20 days')->format('Y-m-d H:i:s');
 
-                $diasFase2 = (int)$hoy->diff($cierreFase2)->format('%r%a');
-
-                if ($diasFase2 === 20) {
-                    $mensaje = "La fase 2 del año {$anio['ani_anio']} ({$tipoAnioTitle}) está a punto de cerrarse: faltan 20 días.";
-                    $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
-                    if (!$n->existeNotificacion($mensaje, $fin)) {
-                        $n->RegistrarNotificacion($mensaje, $fin);
-                    }
+            if ($dias_restantes <= 20) {
+                if ($dias_restantes == 0) {
+                    $mensaje = "Hoy es el cierre de la fase {$fase['fase_numero']} del año {$fase['ani_anio']} ({$tipoAnioTitle}).";
+                } else {
+                    $mensaje = "La fase {$fase['fase_numero']} del año {$fase['ani_anio']} ({$tipoAnioTitle}) está a punto de cerrarse: faltan {$dias_restantes} días.";
                 }
 
-                if ($diasFase2 === 0) {
-                    $mensaje = "Hoy es el cierre de la fase 2 del año {$anio['ani_anio']} ({$tipoAnioTitle}).";
-                    $fin = (new DateTime())->modify('+20 days')->format('Y-m-d');
-                    if (!$n->existeNotificacion($mensaje, $fin)) {
-                        $n->RegistrarNotificacion($mensaje, $fin);
-                    }
+                if (!$n->existeNotificacion($mensaje, $finNotificacion)) {
+                    $n->RegistrarNotificacion($mensaje, $finNotificacion);
                 }
             }
         }
