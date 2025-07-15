@@ -189,6 +189,9 @@ $(document).ready(function() {
         if (accion === "incluir" || accion === "modificar") {
             if (validarenvio()) {
                 const datos = new FormData($('#f')[0]);
+                if (accion === "modificar") {
+                    datos.append('cedulaDocente', $('#cedulaDocente').val());
+                }
                 enviaAjax(datos);
             }
         } else if (accion === "eliminar") {
@@ -336,7 +339,7 @@ $(document).ready(function() {
         if (accion === 'modificar') {
             $("#proceso").text("MODIFICAR").removeClass("btn-danger").addClass("btn-primary");
             $("#modal1 .modal-title").text("Formulario de Modificación de Docente");
-            $("#prefijoCedula, #cedulaDocente").prop('disabled', true);
+            $("#cedulaDocente").prop('disabled', true);
             $("#proceso").prop('disabled', true);
             $(".modal-footer").prepend('<div id="modification_tip_wrapper" class="w-100 text-center mb-2"><small class="form-text text-danger">Realice un cambio para poder modificar.</small></div>');
             
@@ -389,9 +392,9 @@ $(document).ready(function() {
                         destruyeDT();
                         $("#resultadoconsulta").empty();
                         lee.mensaje.forEach(item => {
-                             const btnModificar = `<button class="btn btn-warning btn-sm modificar-btn" onclick='pone(this,0)'  ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-                             const btnEliminar = `<button class="btn btn-danger btn-sm eliminar-btn" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                             const btnHoras = `<button class="btn btn-info btn-sm ver-horas-btn" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>Ver horas</svg></button>`;
+                             const btnModificar = `<button class="btn btn-warning btn-sm modificar-btn" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                             const btnEliminar = `<button class="btn btn-danger btn-sm eliminar-btn" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                             const btnHoras = `<button class="btn btn-info btn-sm ver-horas-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>Ver horas</svg></button>`;
                             $("#resultadoconsulta").append(`
                                 <tr data-doc-cedula="${item.doc_cedula}" data-titulos-ids="${item.titulos_ids || ''}" data-coordinaciones-ids="${item.coordinaciones_ids || ''}" data-observacion="${item.doc_observacion || ''}">
                                     <td>${item.doc_prefijo}</td>
@@ -412,8 +415,6 @@ $(document).ready(function() {
                                             ${btnModificar}
                                           ${btnEliminar}
                                            ${btnHoras}
-                                    
-                                        <button class="btn btn-info btn-sm ver-horas-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>Ver horas</svg></button>
                                     </td>
                                 </tr>`);
                         });
