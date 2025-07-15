@@ -329,8 +329,8 @@ function enviaAjax(datos) {
                 <td data-rol="${item.rol_id}">${item.rol_nombre || 'Usuario sin rol' }</td>
                 <td data-cedula="${item.usu_cedula || ''}">${item.usu_docente || 'Usuario no es un docente'}</td>
                 <td>
-                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Modificar</button>
-                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}">Eliminar</button>
+                  <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
+                  <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.usu_id}" data-nombre="${item.usu_nombre}" data-correo="${item.usu_correo}" data-rol="${item.rol_id}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
                 </td>
               </tr>
             `);

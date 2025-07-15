@@ -327,15 +327,32 @@ class Usuario extends Connection
         return $r;
     }
 
-    public function obtenerDocentesDisponibles()
+    public function obtenerDocentesDisponibles($cedula_actual = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT d.doc_cedula, d.doc_nombre, d.doc_apellido 
-                                FROM tbl_docente d 
-                                WHERE d.doc_estado = 1 ORDER BY d.doc_nombre ASC, d.doc_apellido ASC");
+            $sql = "SELECT d.doc_cedula, d.doc_nombre, d.doc_apellido 
+                    FROM tbl_docente d 
+                    WHERE d.doc_estado = 1 
+                    AND (
+                        d.doc_cedula NOT IN (SELECT usu_cedula FROM tbl_usuario WHERE usu_cedula IS NOT NULL AND usu_cedula != '' AND usu_estado = 1)";
+
+            if ($cedula_actual) {
+                $sql .= " OR d.doc_cedula = :cedula_actual";
+            }
+
+            $sql .= ") ORDER BY d.doc_nombre ASC, d.doc_apellido ASC";
+
+            $stmt = $co->prepare($sql);
+
+            if ($cedula_actual) {
+                $stmt->bindParam(':cedula_actual', $cedula_actual, PDO::PARAM_STR);
+            }
+
+            $stmt->execute();
+
             $r['resultado'] = 'ok';
             $r['mensaje'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {

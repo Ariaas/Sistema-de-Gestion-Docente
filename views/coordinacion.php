@@ -22,9 +22,9 @@ if (!function_exists('tiene_permiso_accion')) {
     }
 }
 
-$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
-$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
-$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
+$puede_registrar = tiene_permiso_accion('coordinacion', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('coordinacion', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('coordinacion', 'eliminar', $permisos);
 ?>
 
 
@@ -44,7 +44,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Coordinaciones</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar Coordinación</button>
+                <button class="btn btn-success px-4" id="registrar" <?php if (!$puede_registrar) echo 'disabled'; ?>>Registrar Coordinación</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
@@ -56,7 +56,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                             </tr>
                         </thead>
                         <tbody id="resultadoconsulta">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -72,7 +72,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                     <div class="modal-body">
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
                             <input type="hidden" name="coordinacionOriginalNombre" id="coordinacionOriginalNombre">
-                            
+
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label for="coordinacionNombre" class="form-label">Nombre de la Coordinación</label>
@@ -90,7 +90,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
             </div>
         </div>
     </main>
- <script>
+    <script>
         const PERMISOS = {
             modificar: <?php echo json_encode($puede_modificar); ?>,
             eliminar: <?php echo json_encode($puede_eliminar); ?>

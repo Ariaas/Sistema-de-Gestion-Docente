@@ -42,8 +42,8 @@ function Listar() {
                   <td style="display: none;">${item.hdo_observacion}</td>
                   <td>
                     <button class="btn btn-info btn-sm" onclick='poneVerHorario(this)'>Ver Horario</button>
-                    <button class="btn btn-warning btn-sm" onclick='pone(this,0)'>Modificar</button>
-                    <button class="btn btn-danger btn-sm" onclick='pone(this,1)'>Eliminar</button>
+                    <button class="btn btn-warning btn-sm" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
+                    <button class="btn btn-danger btn-sm" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
                   </td>
                 </tr>`);
             });
@@ -71,12 +71,10 @@ function Listar() {
     let linea = $(pos).closest("tr");
     limpia();
   
-    // Guardar valores originales en campos ocultos
     $("#original_cedula").val($(linea).find("td:eq(0)").text());
     $("#original_lapso").val($(linea).find("td:eq(2)").text());
     $("#original_actividad").val($(linea).find("td:eq(3)").text());
   
-    // Llenar formulario
     $("#docente").val($(linea).find("td:eq(0)").text());
     $("#lapso").val($(linea).find("td:eq(2)").text());
     $("#actividad").val($(linea).find("td:eq(3)").text());
@@ -85,10 +83,10 @@ function Listar() {
     $("#horas").val($(linea).find("td:eq(6)").text());
     $("#observacion").val($(linea).find("td:eq(7)").text());
     
-    if (accion == 0) { // Modificar
+    if (accion == 0) { 
       $("#proceso").text("MODIFICAR");
       $("#f .form-control, #f .form-select").prop("disabled", false);
-    } else { // Eliminar
+    } else { 
       $("#proceso").text("ELIMINAR");
       $("#f .form-control, #f .form-select").prop("disabled", true);
     }
@@ -157,7 +155,6 @@ function Listar() {
     });
   });
   
-  // --- FUNCIONES AUXILIARES PARA CARGAR SELECTS Y VER HORARIO ---
   function cargarSelects() {
       $.post("", { accion: 'load_docentes' }, function(respuesta) {
           if (respuesta.success) {

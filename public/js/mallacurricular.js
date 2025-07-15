@@ -425,12 +425,15 @@ function enviaAjax(datos) {
                 if (datos.get('accion') === 'verificar_condiciones') {
                     const registrarBtn = $("#registrar");
                     const mensajeSpan = $("#mensaje-validacion");
-                    if (lee.puede_registrar) {
-                        registrarBtn.prop('disabled', false);
-                        mensajeSpan.text('');
-                    } else {
-                        registrarBtn.prop('disabled', true);
-                        mensajeSpan.text(lee.mensaje);
+                    
+                    if (registrarBtn.is(':not(:disabled)')) {
+                        if (lee.puede_registrar) {
+                            registrarBtn.prop('disabled', false);
+                            mensajeSpan.text('');
+                        } else {
+                            registrarBtn.prop('disabled', true);
+                            mensajeSpan.text(lee.mensaje);
+                        }
                     }
                     return;
                 }
@@ -441,7 +444,11 @@ function enviaAjax(datos) {
                         $("#resultadoconsulta").empty();
                         $.each(lee.mensaje, function (index, item) {
                             let estadoActiva = (item.mal_activa == 1) ? '<span class="badge bg-success">Activa</span>' : '<button class="btn btn-xs btn-secondary btn-activar">Activar</button>';
-                            let botonesAccion = `<td class="acciones-cell"><button class="btn btn-info btn-sm" onclick='pone(this,2)'>Ver Malla</button> <button class="btn btn-warning btn-sm" onclick='pone(this,0)'>Modificar</button> <button class="btn btn-danger btn-sm" onclick='pone(this,1)'>Eliminar</button></td>`;
+                            let botonesAccion = `<td class="acciones-cell">
+                                <button class="btn btn-info btn-sm" onclick='pone(this,2)'>Ver Malla</button> 
+                                <button class="btn btn-warning btn-sm" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button> 
+                                <button class="btn btn-danger btn-sm" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
+                            </td>`;
                             $("#resultadoconsulta").append(`<tr><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.mal_cohorte}</td><td>${item.mal_descripcion}</td><td>${estadoActiva}</td>${botonesAccion}</tr>`);
                         });
                         crearDT("#tablamalla");

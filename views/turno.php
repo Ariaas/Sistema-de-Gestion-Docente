@@ -22,25 +22,27 @@ if (!function_exists('tiene_permiso_accion')) {
     }
 }
 
-$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
-$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
-$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
+$puede_registrar = tiene_permiso_accion('turno', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('turno', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('turno', 'eliminar', $permisos);
 ?>
 
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Gestionar Turno</title>
 </head>
+
 <body class="d-flex flex-column min-vh-100">
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Turno</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar Turno</button>
+                <button class="btn btn-success px-4" id="registrar" <?php if (!$puede_registrar) echo 'disabled'; ?>>Registrar Turno</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
@@ -86,7 +88,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                                         <input class="form-control" type="time" id="horaInicio" name="horaInicio" required>
                                         <span class="text-danger" id="shoraInicio"></span>
                                     </div>
-                                     <div class="col-md-6">
+                                    <div class="col-md-6">
                                         <label for="horafin" class="form-label">Hora de fin</label>
                                         <input class="form-control" type="time" id="horafin" name="horafin" required>
                                         <span class="text-danger" id="shorafin"></span>
@@ -114,7 +116,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        
+
                         <input type="hidden" id="turnoid_eliminar">
                         <div class="row g-3">
                             <div class="col-12"><label class="form-label">Nombre</label><input class="form-control" type="text" id="turnonombre_eliminar" disabled></div>
@@ -130,7 +132,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
             </div>
         </div>
     </main>
-     <script>
+    <script>
         const PERMISOS = {
             modificar: <?php echo json_encode($puede_modificar); ?>,
             eliminar: <?php echo json_encode($puede_eliminar); ?>
@@ -140,4 +142,5 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
     <script type="text/javascript" src="public/js/turno.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
+
 </html>

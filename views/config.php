@@ -28,6 +28,8 @@ if (!function_exists('tiene_permiso_accion')) {
         return false;
     }
 }
+
+$docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedula']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -113,7 +115,7 @@ if (!function_exists('tiene_permiso_accion')) {
                     </div>
                 <?php endif; ?>
 
-                <?php if (tiene_permiso('Notas', $permisos)) : ?>
+                <?php if ($docente_asignado): ?>
                     <div class="col">
                         <a href="?pagina=archivo" class="dashboard-card">
                             <div class="icon-circle">
@@ -155,18 +157,6 @@ if (!function_exists('tiene_permiso_accion')) {
                         </a>
                     </div>
                 <?php endif; ?>
-            
-                    <div class="col">
-                        <a href="?pagina=turno" class="dashboard-card">
-                            <div class="icon-circle">
-                                <img src="public/assets/icons/turno.svg" alt="Gestionar Turno">
-                            </div>
-                            <h5>Gestionar Turno</h5>
-                        </a>
-                    </div>
-               
-              
-                    
             </div>
         </section>
     </main>

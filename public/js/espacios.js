@@ -287,10 +287,10 @@ function enviaAjax(datos, tipo_accion_local = null) {
                 <td>${item.esp_codigo}</td>
                 <td>${item.esp_tipo}</td>
                 <td>${nombreEdificio}</td> <td class="text-center">
-                    <button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar">
+                    <button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}>
                         <img src="public/assets/icons/edit.svg" alt="Modificar">
                     </button>
-                    <button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar">
+                    <button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}>
                         <img src="public/assets/icons/trash.svg" alt="Eliminar">
                     </button>
                 </td>

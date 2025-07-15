@@ -22,9 +22,9 @@ if (!function_exists('tiene_permiso_accion')) {
     }
 }
 
-$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
-$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
-$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
+$puede_registrar = tiene_permiso_accion('docentes', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('docentes', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
 ?>
 
 <!DOCTYPE html>
@@ -39,15 +39,15 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
 
     <?php require_once("public/components/sidebar.php"); ?>
 
-    <main class="main-content flex-shrink-0" 
-          data-count-titulos="<?= count($titulos) ?>" 
-          data-count-categorias="<?= count($categorias) ?>" 
-          data-count-coordinaciones="<?= count($coordinaciones) ?>">
+    <main class="main-content flex-shrink-0"
+        data-count-titulos="<?= count($titulos) ?>"
+        data-count-categorias="<?= count($categorias) ?>"
+        data-count-coordinaciones="<?= count($coordinaciones) ?>">
 
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1200px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar Docente</button>
+                <button class="btn btn-success px-4" id="registrar" <?php if (!$puede_registrar) echo 'disabled'; ?>>Registrar Docente</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1200px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
@@ -142,7 +142,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                                     </select>
                                     <span id="sdedicacion" class="text-danger"></span>
                                 </div>
-                                 <div class="col-md-4">
+                                <div class="col-md-4">
                                     <label for="condicion" class="form-label">Condición (Relación Laboral)</label>
                                     <select class="form-select" name="condicion" id="condicion" required>
                                         <option value="" disabled selected>Seleccione...</option>
@@ -156,7 +156,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                             </div>
 
                             <hr class="my-4">
-                            
+
                             <div id="concurso-fields-wrapper" style="display: none;">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -176,7 +176,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                                 <div class="col-md-6">
                                     <label class="form-label">Títulos <span class="text-danger">*</span></label>
                                     <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
-                                        <?php foreach ($titulos as $titulo): 
+                                        <?php foreach ($titulos as $titulo):
                                             $value = htmlspecialchars($titulo['tit_prefijo'] . '::' . $titulo['tit_nombre']);
                                             $id = "titulo_" . htmlspecialchars($titulo['tit_prefijo'] . '_' . $titulo['tit_nombre']);
                                         ?>
@@ -192,7 +192,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                                 <div class="col-md-6">
                                     <label class="form-label">Coordinaciones</label>
                                     <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
-                                        <?php foreach ($coordinaciones as $coordinacion): 
+                                        <?php foreach ($coordinaciones as $coordinacion):
                                             $value = htmlspecialchars($coordinacion['cor_nombre']);
                                             $id = "coordinacion_" . str_replace(' ', '_', $value);
                                         ?>
@@ -267,7 +267,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
         </div>
 
     </main>
-   <script>
+    <script>
         const PERMISOS = {
             modificar: <?php echo json_encode($puede_modificar); ?>,
             eliminar: <?php echo json_encode($puede_eliminar); ?>

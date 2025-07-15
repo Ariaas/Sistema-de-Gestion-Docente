@@ -31,7 +31,8 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($u->Listar());
         } elseif ($accion == 'consultar_docentes') {
-            echo json_encode($u->obtenerDocentesDisponibles());
+            $cedula_actual = $_POST['cedula_actual'] ?? null;
+            echo json_encode($u->obtenerDocentesDisponibles($cedula_actual));
         } elseif ($accion == 'eliminar') {
             $u->set_usuarioId($_POST['usuarioId']);
             echo  json_encode($u->Eliminar());

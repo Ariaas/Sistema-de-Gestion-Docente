@@ -154,7 +154,7 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                         <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes', 'archivo'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                             <?php if ($docente_asignado): ?>
-                                <li><a class="dropdown-item <?php echo is_active('archivo', $pagina_actual); ?>" href="?pagina=archivo">Resguardar Notas</a></li>
+                                <!-- <li><a class="dropdown-item <?php echo is_active('archivo', $pagina_actual); ?>" href="?pagina=archivo">Resguardar Notas</a></li> -->
                             <?php endif; ?>
                             <?php if ($tiene_permiso_config_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
