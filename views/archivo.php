@@ -24,13 +24,13 @@ if (!isset($_SESSION['name'])) {
         }
 
         .btn.download-link {
-            color: #6c757d; 
+            color: #6c757d;
             box-shadow: none;
         }
 
         .btn.download-link:hover {
             background-color: transparent !important;
-            color: #212529; 
+            color: #212529;
         }
     </style>
 </head>
