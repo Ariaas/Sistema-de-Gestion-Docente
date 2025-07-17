@@ -46,25 +46,27 @@ $(document).ready(function () {
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
-  $("#codigoEspacio").on("keypress", function (e) {
+  $("#numeroEspacio").on("keypress", function (e) {
     validarkeypress(/^[0-9\b]*$/, e);
   });
 
-  $("#codigoEspacio").on("keyup keydown", function () {
-    validarkeyup(
-      /^[0-9]{1,4}$/,
+  $("#numeroEspacio").on("keyup", function () {
+    const esValido = validarkeyup(
+      /^[0-9]{1,2}$/,
       $(this),
-      $("#scodigoEspacio"),
-      "El formato permite de 1 a 4 dígitos numéricos."
+      $("#snumeroEspacio"),
+      "El formato permite de 1 a 2 dígitos numéricos."
     );
 
-    if ($(this).val().length >= 1 && $("#edificio").val() !== "") {
-      var prefijo = getPrefijoEdificio($("#edificio").val());
-      var codigoCompleto = prefijo + $(this).val();
+    if (esValido && $(this).val().length >= 1 && $("#edificio").val() !== "") {
       var datos = new FormData();
       datos.append("accion", "existe");
-      datos.append("codigoEspacio", codigoCompleto);
+      datos.append("numeroEspacio", $(this).val());
+      datos.append("edificioEspacio", $("#edificio").val());
       enviaAjax(datos, 'existe');
+    } else if (!esValido) {
+      $("#snumeroEspacio").text('');
+      $("#proceso").prop("disabled", false);
     }
   });
 
@@ -73,15 +75,14 @@ $(document).ready(function () {
   });
 
   $("#edificio").on("change", function () {
-    if ($("#codigoEspacio").val().length >= 1) {
-      var prefijo = getPrefijoEdificio($(this).val());
-      var codigoCompleto = prefijo + $("#codigoEspacio").val();
+    if ($("#numeroEspacio").val().length >= 1) {
       var datos = new FormData();
       datos.append("accion", "existe");
-      datos.append("codigoEspacio", codigoCompleto);
+      datos.append("numeroEspacio", $("#numeroEspacio").val());
+      datos.append("edificioEspacio", $(this).val());
       enviaAjax(datos, 'existe');
     }
-    $("#scodigoEspacio").text('');
+    $("#snumeroEspacio").text('');
     $("#proceso").prop("disabled", false);
   });
 
@@ -91,24 +92,25 @@ $(document).ready(function () {
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
         if (validarenvio()) {
-            var prefijo = getPrefijoEdificio($("#edificio").val());
-            var codigoFinal = prefijo + $("#codigoEspacio").val();
-
             var datos = new FormData();
             datos.append("accion", "registrar");
-            datos.append("codigoEspacio", codigoFinal);
+            datos.append("numeroEspacio", $("#numeroEspacio").val());
+            datos.append("edificioEspacio", $("#edificio").val());
             datos.append("tipoEspacio", $("#tipoEspacio").val());
 
             enviaAjax(datos);
         }
     } else if ($(this).text() == "MODIFICAR") {
         if ($("#tipoEspacio").val()) {
-            var prefijo = getPrefijoEdificio($("#edificio").val());
-            var codigoFinal = prefijo + $("#codigoEspacio").val();
-
             var datos = new FormData();
             datos.append("accion", "modificar");
-            datos.append("codigoEspacio", codigoFinal);
+
+            datos.append("original_numeroEspacio", $("#modal1").data("original-numero"));
+            datos.append("original_edificioEspacio", $("#modal1").data("original-edificio"));
+
+       
+            datos.append("numeroEspacio", $("#numeroEspacio").val());
+            datos.append("edificioEspacio", $("#edificio").val());
             datos.append("tipoEspacio", $("#tipoEspacio").val());
 
             enviaAjax(datos);
@@ -131,15 +133,8 @@ $(document).ready(function () {
             if (result.isConfirmed) {
                 var datos = new FormData();
                 datos.append("accion", "eliminar");
-
-            
-                var prefijo = getPrefijoEdificio($("#edificio").val());
-                var codigoNumerico = $("#codigoEspacio").val();
-                var codigoCompleto = prefijo + codigoNumerico;
-
-           
-                datos.append("codigoEspacio", codigoCompleto);
-
+                datos.append("numeroEspacio", $("#numeroEspacio").val());
+                datos.append("edificioEspacio", $("#edificio").val());
                 enviaAjax(datos);
                 
             } else {
@@ -160,8 +155,8 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
-    $("#scodigoEspacio").text('');
-    $("#tipoEspacio, #codigoEspacio, #edificio").prop("disabled", false);
+    $("#snumeroEspacio").text('');
+    $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
     $("#edificio").val("");
   });
 
@@ -170,7 +165,7 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-  var codigoEspacio = $("#codigoEspacio").val();
+  var numeroEspacio = $("#numeroEspacio").val();
   var tipoEspacio = $("#tipoEspacio").val();
   var edificio = $("#edificio").val();
 
@@ -180,13 +175,13 @@ function validarenvio() {
   }
   if (
     validarkeyup(
-      /^[0-9]{1,4}$/,
-      $("#codigoEspacio"),
-      $("#scodigoEspacio"),
-      "El formato permite de 1 a 4 dígitos numéricos."
+      /^[0-9]{1,2}$/,
+      $("#numeroEspacio"),
+      $("#snumeroEspacio"),
+      "El formato permite de 1 a 2 dígitos numéricos."
     ) == 0
   ) {
-    muestraMensaje("error", 4000, "ERROR!", "El código numérico del espacio <br/> No debe estar vacío y debe contener entre 1 a 4 dígitos.");
+    muestraMensaje("error", 4000, "ERROR!", "El código numérico del espacio <br/> No debe estar vacío y debe contener entre 1 a 2 dígitos.");
     return false;
   }
   if (tipoEspacio === null || tipoEspacio === "") {
@@ -203,61 +198,54 @@ function validarenvio() {
 
 
 function getPrefijoEdificio(nombreEdificio) {
-  if (nombreEdificio === "Hilandera") {
-    return "H";
-  } else if (nombreEdificio === "Giraluna") {
-    return "G";
-  } else if (nombreEdificio === "Rio 7 Estrellas") {
-    return "R";
-  }
-  return "";
+    if (!nombreEdificio) return '';
+    return nombreEdificio.charAt(0).toUpperCase();
 }
-
 
 function separarCodigoEdificio(codigoCompleto) {
-  if (codigoCompleto.length > 0) {
+    if (!codigoCompleto || codigoCompleto.length < 2) {
+        return { prefijo: '', codigoNumerico: codigoCompleto, nombreEdificio: 'Desconocido' };
+    }
     const prefijo = codigoCompleto.charAt(0);
     const codigoNumerico = codigoCompleto.substring(1);
-    let nombreEdificio = "";
-    if (prefijo === "H") {
-      nombreEdificio = "Hilandera";
-    } else if (prefijo === "G") {
-      nombreEdificio = "Giraluna";
-    } else if (prefijo === "R") {
-      nombreEdificio = "Rio 7 Estrellas";
-    }
-    return { prefijo: prefijo, codigoNumerico: codigoNumerico, nombreEdificio: nombreEdificio };
-  }
-  return { prefijo: "", codigoNumerico: "", nombreEdificio: "" };
+    
+    let nombreEdificio = 'Desconocido';
+    if (prefijo === 'P') nombreEdificio = 'Principal';
+    else if (prefijo === 'A') nombreEdificio = 'Anexo';
+    else if (prefijo === 'L') nombreEdificio = 'Laboratorios';
+
+    return { prefijo, codigoNumerico, nombreEdificio };
 }
+
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
 
-  const codigoCompleto = $(linea).find("td:eq(0)").text().trim();
-  const tipo = $(linea).find("td:eq(1)").text().trim();
-  const edificio = $(linea).find("td:eq(2)").text().trim();
-
-  const { codigoNumerico } = separarCodigoEdificio(codigoCompleto);
+  const numero = $(linea).data("numero");
+  const edificio = $(linea).data("edificio");
+  const tipo = $(linea).data("tipo");
 
   if (accion == 0) { 
     $("#proceso").text("MODIFICAR");
    
-    $("#tipoEspacio").prop("disabled", false);
-    $("#codigoEspacio, #edificio").prop("disabled", true);
+
+    $("#modal1").data("original-numero", numero);
+    $("#modal1").data("original-edificio", edificio);
+
+    $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
-    $("#tipoEspacio, #codigoEspacio, #edificio").prop("disabled", true);
+    $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", true);
   }
 
  
-  $("#codigoEspacio").val(codigoNumerico);
+  $("#numeroEspacio").val(numero);
   $("#tipoEspacio").val(tipo.toLowerCase());
   $("#edificio").val(edificio);
 
 
   $("#modal1").modal("show");
-  $("#scodigoEspacio").text('');
+  $("#snumeroEspacio").text('');
 }
 
 
@@ -281,12 +269,12 @@ function enviaAjax(datos, tipo_accion_local = null) {
           $("#resultadoconsulta").empty();
           let tabla = "";
           lee.mensaje.forEach(item => {
-            const { prefijo, codigoNumerico, nombreEdificio } = separarCodigoEdificio(item.esp_codigo);
             tabla += `
-            <tr>
+            <tr data-numero="${item.esp_numero}" data-edificio="${item.esp_edificio}" data-tipo="${item.esp_tipo}">
                 <td>${item.esp_codigo}</td>
                 <td>${item.esp_tipo}</td>
-                <td>${nombreEdificio}</td> <td class="text-center">
+                <td>${item.esp_edificio}</td>
+                <td class="text-center">
                     <button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}>
                         <img src="public/assets/icons/edit.svg" alt="Modificar">
                     </button>
@@ -318,13 +306,13 @@ function enviaAjax(datos, tipo_accion_local = null) {
             $("#modal1").modal("hide");
             Listar();
           }
-        } else if (lee.resultado == "existe") {
+        } else if (lee.resultado == "existe" || lee.resultado == "no_existe") {
 
-          if (tipo_accion_local === 'existe' && lee.mensaje === 'El ESPACIO colocado YA existe!') {
-            $("#scodigoEspacio").text('El espacio ya existe con este prefijo de edificio y código.').css('color', 'red');
+          if (tipo_accion_local === 'existe' && lee.resultado === 'existe') {
+            $("#snumeroEspacio").text('El espacio ya existe con este prefijo de edificio y código.').css('color', 'red');
             $("#proceso").prop("disabled", true);
           } else {
-            $("#scodigoEspacio").text('').css('color', '');
+            $("#snumeroEspacio").text('').css('color', '');
             $("#proceso").prop("disabled", false);
           }
         }
@@ -359,8 +347,8 @@ function enviaAjax(datos, tipo_accion_local = null) {
 
 function limpia() {
   $("#tipoEspacio").val("");
-  $("#codigoEspacio").val("");
+  $("#numeroEspacio").val("");
   $("#edificio").val("");
-  $("#scodigoEspacio").text('');
+  $("#snumeroEspacio").text('');
   $("#proceso").prop("disabled", false);
 }

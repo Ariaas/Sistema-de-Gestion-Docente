@@ -4,32 +4,42 @@ require_once('model/dbconnection.php');
 class Espacio extends Connection
 {
 
-    private $codigoEspacio;
+    private $numeroEspacio;
+    private $edificioEspacio;
     private $tipoEspacio;
 
 
 
-    public function __construct($codigoEspacio = null, $tipoEspacio = null)
+    public function __construct($numeroEspacio = null, $edificioEspacio = null, $tipoEspacio = null)
     {
         parent::__construct();
 
-        $this->codigoEspacio = $codigoEspacio;
+        $this->numeroEspacio = $numeroEspacio;
+        $this->edificioEspacio = $edificioEspacio;
         $this->tipoEspacio = $tipoEspacio;
     }
 
 
-    public function getCodigo()
+    public function getNumero()
     {
-        return $this->codigoEspacio;
+        return $this->numeroEspacio;
+    }
+    public function getEdificio()
+    {
+        return $this->edificioEspacio;
     }
     public function getTipo()
     {
         return $this->tipoEspacio;
     }
-    
-    public function setCodigo($codigoEspacio)
+
+    public function setNumero($numeroEspacio)
     {
-        $this->codigoEspacio = $codigoEspacio;
+        $this->numeroEspacio = $numeroEspacio;
+    }
+    public function setEdificio($edificioEspacio)
+    {
+        $this->edificioEspacio = $edificioEspacio;
     }
     public function setTipo($tipoEspacio)
     {
@@ -42,35 +52,38 @@ class Espacio extends Connection
     {
         $r = array();
 
-  
-        if ($this->existeDirecto($this->codigoEspacio)) { 
-            $r['resultado'] = 'error'; 
+
+        if ($this->existeDirecto($this->numeroEspacio, $this->edificioEspacio)) {
+            $r['resultado'] = 'error';
             $r['mensaje'] = 'ERROR! <br/> El ESPACIO colocado YA existe!';
             return $r;
         }
 
-      
-        if ($this->existeInactivo($this->codigoEspacio)) {
-         
+
+        if ($this->existeInactivo($this->numeroEspacio, $this->edificioEspacio)) {
+
             return $this->Reactivar();
         }
-        
-       
+
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         try {
             $stmt = $co->prepare("INSERT INTO tbl_espacio (
-                esp_codigo,
+                esp_numero,
+                esp_edificio,
                 esp_tipo,
                 esp_estado
             ) VALUES (
-                :codigoEspacio,
+                :numeroEspacio,
+                :edificioEspacio,
                 :tipoEspacio,
                 1
             )");
 
-            $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
             $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
             $stmt->execute();
 
@@ -84,22 +97,24 @@ class Espacio extends Connection
         $co = null;
         return $r;
     }
-    
-    
-    function Reactivar() {
+
+
+    function Reactivar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
             $stmt = $co->prepare("UPDATE tbl_espacio
             SET esp_tipo = :tipoEspacio, esp_estado = 1
-            WHERE esp_codigo = :codigoEspacio"); 
+            WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio");
 
             $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
             $stmt->execute();
 
-            $r['resultado'] = 'registrar'; 
+            $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
@@ -109,19 +124,30 @@ class Espacio extends Connection
     }
 
 
-    function Modificar()
+    function Modificar($originalNumero, $originalEdificio)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        
+
+        if (($originalNumero != $this->numeroEspacio || $originalEdificio != $this->edificioEspacio) && $this->existeDirecto($this->numeroEspacio, $this->edificioEspacio)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'ERROR! <br/> Ya existe un espacio con el nuevo número y edificio.';
+            return $r;
+        }
+
         try {
             $stmt = $co->prepare("UPDATE tbl_espacio
-            SET esp_tipo = :tipoEspacio
-            WHERE esp_codigo = :codigoEspacio AND esp_estado = 1"); 
+            SET esp_numero = :numeroEspacio,
+                esp_edificio = :edificioEspacio,
+                esp_tipo = :tipoEspacio
+            WHERE esp_numero = :originalNumero AND esp_edificio = :originalEdificio AND esp_estado = 1");
 
             $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':originalNumero', $originalNumero, PDO::PARAM_STR);
+            $stmt->bindParam(':originalEdificio', $originalEdificio, PDO::PARAM_STR);
 
             $stmt->execute();
 
@@ -129,7 +155,7 @@ class Espacio extends Connection
                 $r['resultado'] = 'modificar';
                 $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el espacio correctamente!';
             } else {
-                $r['resultado'] = 'error'; 
+                $r['resultado'] = 'error';
                 $r['mensaje'] = 'ERROR! <br/> El ESPACIO a modificar NO existe o no hubo cambios.';
             }
         } catch (Exception $e) {
@@ -145,14 +171,15 @@ class Espacio extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-      
-        if ($this->existeDirecto($this->codigoEspacio)) { 
+
+        if ($this->existeDirecto($this->numeroEspacio, $this->edificioEspacio)) {
             try {
                 $stmt = $co->prepare("UPDATE tbl_espacio
                 SET esp_estado = 0
-                WHERE esp_codigo = :codigoEspacio");
+                WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio");
 
-                $stmt->bindParam(':codigoEspacio', $this->codigoEspacio, PDO::PARAM_STR);
+                $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
+                $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
 
                 $stmt->execute();
 
@@ -163,7 +190,7 @@ class Espacio extends Connection
                 $r['mensaje'] = $e->getMessage();
             }
         } else {
-            $r['resultado'] = 'eliminar'; 
+            $r['resultado'] = 'eliminar';
             $r['mensaje'] = 'ERROR! <br/> El ESPACIO a eliminar NO existe!';
         }
         return $r;
@@ -175,8 +202,8 @@ class Espacio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-          
-            $stmt = $co->query("SELECT esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1");
+
+            $stmt = $co->query("SELECT CONCAT(CASE WHEN LOWER(esp_tipo) = 'laboratorio' THEN 'L' ELSE SUBSTRING(esp_edificio, 1, 1) END, '-', esp_numero) AS esp_codigo, esp_numero, esp_edificio, esp_tipo FROM tbl_espacio WHERE esp_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
@@ -189,22 +216,23 @@ class Espacio extends Connection
     }
 
 
-    public function Existe($codigoEspacio)
+    public function Existe($numeroEspacio, $edificioEspacio)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_codigo = :codigoEspacio AND esp_estado = 1");
-            $stmt->bindParam(':codigoEspacio', $codigoEspacio, PDO::PARAM_STR);
+            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_estado = 1");
+            $stmt->bindParam(':numeroEspacio', $numeroEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':edificioEspacio', $edificioEspacio, PDO::PARAM_STR);
             $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC); 
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($fila) {
                 $r['resultado'] = 'existe';
                 $r['mensaje'] = 'El ESPACIO colocado YA existe!';
             } else {
-                $r['resultado'] = 'no_existe'; 
+                $r['resultado'] = 'no_existe';
                 $r['mensaje'] = 'El espacio no existe.';
             }
         } catch (Exception $e) {
@@ -215,12 +243,14 @@ class Espacio extends Connection
         return $r;
     }
 
-   
-    private function existeDirecto($codigoEspacio) {
+
+    private function existeDirecto($numeroEspacio, $edificioEspacio)
+    {
         try {
             $co = $this->Con();
-            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_codigo = :codigoEspacio AND esp_estado = 1");
-            $stmt->bindParam(':codigoEspacio', $codigoEspacio, PDO::PARAM_STR);
+            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_estado = 1");
+            $stmt->bindParam(':numeroEspacio', $numeroEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':edificioEspacio', $edificioEspacio, PDO::PARAM_STR);
             $stmt->execute();
             return $stmt->fetchColumn() > 0;
         } catch (Exception $e) {
@@ -228,13 +258,15 @@ class Espacio extends Connection
             return false;
         }
     }
-    
 
-    private function existeInactivo($codigoEspacio) {
+
+    private function existeInactivo($numeroEspacio, $edificioEspacio)
+    {
         try {
             $co = $this->Con();
-            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_codigo = :codigoEspacio AND esp_estado = 0");
-            $stmt->bindParam(':codigoEspacio', $codigoEspacio, PDO::PARAM_STR);
+            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_estado = 0");
+            $stmt->bindParam(':numeroEspacio', $numeroEspacio, PDO::PARAM_STR);
+            $stmt->bindParam(':edificioEspacio', $edificioEspacio, PDO::PARAM_STR);
             $stmt->execute();
             return $stmt->fetchColumn() > 0;
         } catch (Exception $e) {
@@ -243,4 +275,3 @@ class Espacio extends Connection
         }
     }
 }
-?>

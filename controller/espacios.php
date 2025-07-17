@@ -28,28 +28,30 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($e->Listar());
         } elseif ($accion == 'eliminar') {
-            $e->setCodigo($_POST['codigoEspacio']);
+            $e->setNumero($_POST['numeroEspacio']);
+            $e->setEdificio($_POST['edificioEspacio']);
             echo  json_encode($e->eliminar());
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'espacios');
-
         } elseif ($accion == 'existe') {
-            $e->setCodigo($_POST['codigoEspacio']);
-            $resultado = $e->Existe($_POST['codigoEspacio']);
+            $resultado = $e->Existe($_POST['numeroEspacio'], $_POST['edificioEspacio']);
             echo json_encode($resultado);
         } else {
-            $e->setCodigo($_POST['codigoEspacio']);
+            $e->setNumero($_POST['numeroEspacio']);
+            $e->setEdificio($_POST['edificioEspacio']);
             $e->setTipo($_POST['tipoEspacio']);
             if ($accion == 'registrar') {
                 echo  json_encode($e->Registrar());
 
                 $bitacora->registrarAccion($usu_id, 'registrar', 'espacios');
-
             } elseif ($accion == 'modificar') {
 
                 $bitacora->registrarAccion($usu_id, 'modificar', 'espacios');
-                
-                echo  json_encode($e->modificar());
+
+                echo  json_encode($e->modificar(
+                    $_POST['original_numeroEspacio'],
+                    $_POST['original_edificioEspacio']
+                ));
             }
         }
         exit;
