@@ -216,7 +216,6 @@ class Rol extends Connection
 
             $stmtDisponibles = $co->query("SELECT per_id, per_modulo FROM tbl_permisos WHERE per_estado = 1 ORDER BY per_modulo ASC");
             $respuesta['modulosDisponibles'] = $stmtDisponibles->fetchAll(PDO::FETCH_ASSOC);
-
         } catch (Exception $e) {
         }
         $co = null;
@@ -228,7 +227,7 @@ class Rol extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
-            $stmt = $co->prepare("UPDATE rol_permisos SET rol_per_estado = 0 WHERE rol_id = :rolId");
+            $stmt = $co->prepare("DELETE FROM rol_permisos WHERE rol_id = :rolId");
             $stmt->bindParam(':rolId', $rolId, PDO::PARAM_INT);
             $stmt->execute();
 
@@ -247,6 +246,4 @@ class Rol extends Connection
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
     }
-
-   
 }

@@ -240,7 +240,7 @@ function pone(pos, accion) {
 
  
   $("#numeroEspacio").val(numero);
-  $("#tipoEspacio").val(tipo.toLowerCase());
+  $("#tipoEspacio").val(tipo);
   $("#edificio").val(edificio);
 
 
