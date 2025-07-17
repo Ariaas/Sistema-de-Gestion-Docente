@@ -47,7 +47,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4">Gestionar Sección</h2>
             <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
-                <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button>
+               
                 <button class="btn btn-success px-4" id="btnIniciarRegistro">Registrar</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 900px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">

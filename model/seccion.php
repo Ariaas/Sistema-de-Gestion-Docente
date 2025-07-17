@@ -481,7 +481,8 @@ class Seccion extends Connection
     private function validarConflictos($items_horario, $sec_codigo, $co)
     {
 
-        $stmt_docente = $co->prepare("
+            $stmt_docente = $co->prepare("
+
             SELECT s.sec_codigo, d.doc_nombre, d.doc_apellido
             FROM uc_horario uh
             JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo
@@ -654,7 +655,7 @@ class Seccion extends Connection
         if (!$sec_codigo) return ['resultado' => 'error', 'mensaje' => 'Falta el código de la sección.'];
 
         try {
-            // Esta es la versión correcta, que lee el aula desde "uh.esp_codigo"
+      
             $sql = "SELECT 
                     uh.uc_codigo, 
                     ud.doc_cedula, 
@@ -758,13 +759,12 @@ class Seccion extends Connection
                 $sql .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
             }
 
-            // ▼▼▼ INICIO DE LA LÓGICA DE FILTRADO ESTRICTO ▼▼▼
-            // Esta condición ahora busca una coincidencia exacta de trayecto.
+           
             if ($trayecto_seccion !== null && is_numeric($trayecto_seccion)) {
                 $sql .= " AND u.uc_trayecto = :trayecto_seccion";
                 $params[':trayecto_seccion'] = (int)$trayecto_seccion;
             }
-            // ▲▲▲ FIN DE LA LÓGICA DE FILTRADO ESTRICTO ▲▲▲
+         
 
             $sql .= " ORDER BY u.uc_nombre";
             $stmt = $this->Con()->prepare($sql);
