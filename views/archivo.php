@@ -1,10 +1,10 @@
 <?php
-if (!isset($_SESSION['name'])) {
-    header('Location: .');
-    exit();
-}
+        if (!isset($_SESSION['name'])) {
+            header('Location: .');
+            exit();
+        }
 
-?>
+        ?>
 
 <!DOCTYPE html>
 <html lang="es">
@@ -54,9 +54,7 @@ if (!isset($_SESSION['name'])) {
                     </div>
                 <?php endif; ?>
 
-                <button class="btn btn-success px-4 ms-auto" id="btnNuevoRegistro" <?php if (!$puede_registrar) {
-                                                                                        echo 'disabled title="No tiene permiso o no hay una fase activa"';
-                                                                                    } ?>>
+                <button class="btn btn-success px-4 ms-auto" id="btnNuevoRegistro" 
                     <i class="fas fa-plus me-2"></i> Crear Nuevo Registro
                 </button>
             </div>

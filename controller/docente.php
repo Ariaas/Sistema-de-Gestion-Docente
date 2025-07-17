@@ -6,23 +6,23 @@ if (session_status() === PHP_SESSION_NONE) {
 $pagina = 'docente';
 
 if (!is_file("model/" . $pagina . ".php")) {
-    echo "Falta definir la clase " . $pagina;
+    echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina]);
     exit;
 }
 
 require_once("model/" . $pagina . ".php");
 
 if (is_file("views/" . $pagina . ".php")) {
+
     if (!empty($_POST)) {
         $p = new Docente();
         $accion = $_POST['accion'] ?? '';
 
-        if ($accion !== 'consultar' && $accion !== 'Existe') {
+        if ($accion !== 'consultar' && $accion !== 'Existe' && $accion !== 'consultar_paso2' && $accion !== 'consultar_datos_adicionales') {
             require_once("model/bitacora.php");
             $usu_id = $_SESSION['usu_id'] ?? null;
-
             if ($usu_id === null) {
-                echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado para realizar esta acción.']);
+                echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado.']);
                 exit;
             }
             $bitacora = new Bitacora();
@@ -31,21 +31,35 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'consultar') {
             echo json_encode($p->Listar());
 
-        } elseif ($accion == 'consultar_horas') {
+        } elseif ($accion == 'consultar_paso2') {
             $doc_cedula = $_POST['doc_cedula'] ?? 0;
-            echo json_encode($p->ObtenerHorasActividad($doc_cedula));
+            $horas = $p->ObtenerHorasActividad($doc_cedula);
+            $preferencias = $p->ObtenerPreferenciasHorario($doc_cedula);
+            echo json_encode([
+                'resultado' => 'ok_paso2',
+                'horas' => $horas['mensaje'],
+                'preferencias' => $preferencias['mensaje']
+            ]);
+
+        } elseif ($accion == 'consultar_datos_adicionales') {
+            $doc_cedula = $_POST['doc_cedula'] ?? 0;
+            $horas = $p->ObtenerHorasActividad($doc_cedula);
+            $preferencias = $p->ObtenerPreferenciasHorario($doc_cedula);
+            echo json_encode([
+                'resultado' => 'ok_datos_adicionales',
+                'horas' => $horas['mensaje'],
+                'preferencias' => $preferencias['mensaje']
+            ]);
 
         } elseif ($accion == 'eliminar') {
             $p->setCedula($_POST['cedulaDocente']);
-            $resultado = $p->Eliminar();
-            echo json_encode($resultado);
+            echo json_encode($p->Eliminar());
             if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
 
         } elseif ($accion == 'Existe') {
-            $resultado = $p->Existe($_POST['cedulaDocente']);
-            echo json_encode(['existe' => $resultado]);
-        } else {
-          
+            echo json_encode(['existe' => $p->Existe($_POST['cedulaDocente'])]);
+
+        } elseif ($accion == 'incluir' || $accion == 'modificar') {
             $p->setCategoriaNombre($_POST['categoria']);
             $p->setPrefijo($_POST['prefijoCedula']);
             $p->setCedula($_POST['cedulaDocente']);
@@ -58,19 +72,13 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setIngreso($_POST['fechaIngreso']);
             $p->setAnioConcurso($_POST['anioConcurso'] ?? '');
             $p->setObservacion($_POST['observacionesDocente']);
-            
-
-            if (isset($_POST['titulos']) && is_array($_POST['titulos'])) {
-                $p->setTitulos($_POST['titulos']);
-            } else {
-                $p->setTitulos(array());
-            }
-
-            if (isset($_POST['coordinaciones']) && is_array($_POST['coordinaciones'])) {
-                $p->setCoordinaciones($_POST['coordinaciones']);
-            } else {
-                $p->setCoordinaciones(array());
-            }
+            $p->setTitulos($_POST['titulos'] ?? []);
+            $p->setCoordinaciones($_POST['coordinaciones'] ?? []);
+            $p->setCreacionIntelectual((int)($_POST['actCreacion'] ?? 0));
+            $p->setIntegracionComunidad((int)($_POST['actIntegracion'] ?? 0));
+            $p->setGestionAcademica((int)($_POST['actGestion'] ?? 0));
+            $p->setOtras((int)($_POST['actOtras'] ?? 0));
+            $p->setPreferencias($_POST['preferencia'] ?? []);
 
             if ($accion == 'incluir') {
                 echo json_encode($p->Registrar());
