@@ -47,7 +47,7 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1200px;">
-                <button class="btn btn-success px-4" id="registrar" <?php if (!$puede_registrar) echo 'disabled'; ?>>Registrar Docente</button>
+                <button class="btn btn-success px-4" id="registrar" <?php if (!isset($puede_registrar) || !$puede_registrar) echo 'disabled'; ?>>Registrar Docente</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1200px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
@@ -176,7 +176,9 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Títulos <span class="text-danger">*</span></label>
-                                        <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                        <input type="text" id="filtroTitulos" class="form-control mb-2" placeholder="Buscar título...">
+                                        
+                                        <div id="titulos-container" class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
                                             <?php foreach ($titulos as $titulo):
                                                 $value = htmlspecialchars($titulo['tit_prefijo'] . '::' . $titulo['tit_nombre']);
                                                 $id = "titulo_" . htmlspecialchars($titulo['tit_prefijo'] . '_' . $titulo['tit_nombre']);
@@ -192,7 +194,9 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
 
                                     <div class="col-md-6">
                                         <label class="form-label">Coordinaciones</label>
-                                        <div class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                        <input type="text" id="filtroCoordinaciones" class="form-control mb-2" placeholder="Buscar coordinación...">
+                                        
+                                        <div id="coordinaciones-container" class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
                                             <?php foreach ($coordinaciones as $coordinacion):
                                                 $value = htmlspecialchars($coordinacion['cor_nombre']);
                                                 $id = "coordinacion_" . str_replace(' ', '_', $value);
@@ -227,29 +231,32 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                             <form id="form-paso2" onsubmit="return false;">
                                 <p><strong>Docente:</strong> <span id="nombreDocenteHoras" class="fw-bold"></span></p>
                                 <hr>
-                                <h5>Horas de Actividad</h5>
+                                <h5>Carga Horaria Semanal</h5>
                                 <div class="row g-3">
                                     <div class="col-md-6">
+                                        <label for="actAcademicas" class="form-label">Horas Académicas (Clase)</label>
+                                        <input class="form-control horas-input" type="number" id="actAcademicas" name="actAcademicas" required min="0" value="0">
+                                        <span id="sactAcademicas" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label for="actCreacion" class="form-label">Horas de Creación Intelectual</label>
-                                        <input class="form-control horas-actividad" type="number" id="actCreacion" name="actCreacion" required min="0" value="0">
-                                        <span id="sactCreacion" class="text-danger"></span>
+                                        <input class="form-control horas-input" type="number" id="actCreacion" name="actCreacion" required min="0" value="0">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actIntegracion" class="form-label">Horas de Integración a la Comunidad</label>
-                                        <input class="form-control horas-actividad" type="number" id="actIntegracion" name="actIntegracion" required min="0" value="0">
-                                        <span id="sactIntegracion" class="text-danger"></span>
+                                        <input class="form-control horas-input" type="number" id="actIntegracion" name="actIntegracion" required min="0" value="0">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actGestion" class="form-label">Horas de Gestión Académica</label>
-                                        <input class="form-control horas-actividad" type="number" id="actGestion" name="actGestion" required min="0" value="0">
-                                        <span id="sactGestion" class="text-danger"></span>
+                                        <input class="form-control horas-input" type="number" id="actGestion" name="actGestion" required min="0" value="0">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actOtras" class="form-label">Otras Horas de Actividad (Opcional)</label>
-                                        <input class="form-control horas-actividad" type="number" id="actOtras" name="actOtras" required min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actOtras" name="actOtras" required min="0" value="0">
                                     </div>
                                     <div class="col-12 text-center mt-3">
-                                        <span id="sHorasTotales" class="text-danger fw-bold"></span>
+                                        <span id="sHorasActividad" class="text-danger fw-bold d-block"></span>
+                                        <span id="sHorasTotales" class="text-danger fw-bold d-block"></span>
                                     </div>
                                 </div>
                                 
@@ -274,6 +281,9 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                                         <div class="col-sm-4 col-md-5">
                                             <label for="fin-<?= $dia ?>" class="form-label visually-hidden">Hasta:</label>
                                             <input type="time" class="form-control hora-preferencia" id="fin-<?= $dia ?>" name="preferencia[<?= $dia ?>][fin]" disabled>
+                                        </div>
+                                        <div class="col-12">
+                                            <span class="text-danger error-hora-preferencia d-block text-center small"></span>
                                         </div>
                                     </div>
                                     <?php endforeach; ?>
@@ -300,6 +310,10 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                         
                         <h6 class="text-primary">Horas de Actividad Semanales</h6>
                         <ul class="list-group mb-4">
+                             <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Horas Académicas (Clase)
+                                <span class="badge bg-dark rounded-pill fs-6" id="verHorasAcademicas">0</span>
+                            </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 Creación Intelectual
                                 <span class="badge bg-primary rounded-pill fs-6" id="verHorasCreacion">0</span>

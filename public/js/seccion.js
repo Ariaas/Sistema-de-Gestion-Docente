@@ -1,4 +1,3 @@
-
 function muestraMensaje(tipo, tiempo, titulo, mensaje) {
     if (typeof Swal !== 'undefined' && Swal.fire) {
         Swal.fire({
@@ -125,11 +124,10 @@ function validarEntradaHorario() {
     const ucId = $("#modalSeleccionarUc").val();
     const docId = $("#modalSeleccionarDocente").val();
     const espId = $("#modalSeleccionarEspacio").val();
-    const dia = normalizeDayKey($("#modalDia").val());
+    const dia = $("#modalDia").val(); // Usar el valor directo, la normalización se hace en el backend
     const secId = $("#sec_codigo_hidden").val();
     
     if (!currentClickedCell) return;
-
   
     if (ucId) {
         let ucDuplicada = false;
@@ -137,7 +135,6 @@ function validarEntradaHorario() {
         if (!turnoCompleto) return; 
         const diaKeyActual = normalizeDayKey(currentClickedCell.data('dia-nombre'));
         const keyActual = `${turnoCompleto.tur_horainicio.substring(0, 5)}-${turnoCompleto.tur_horafin.substring(0, 5)}-${diaKeyActual}`;
-
         
         horarioContenidoGuardado.forEach((valor, key) => {
             if (valor.data.uc_codigo === ucId && key !== keyActual) {
@@ -154,7 +151,7 @@ function validarEntradaHorario() {
         }
     }
    
-    if ((!docId && !espId) || !dia || !secId) {
+    if (!docId || !ucId) { // No validar si falta el docente o la UC
         return; 
     }
     
@@ -169,6 +166,7 @@ function validarEntradaHorario() {
     datos.append("dia", dia);
     datos.append("hora_inicio", horaInicio.substring(0, 5));
     datos.append("sec_codigo", secId);
+    datos.append("uc_codigo", ucId); // <-- Añadido para la validación de horas
 
     $.ajax({
         url: "", type: "POST", data: datos, contentType: false, processData: false,
@@ -551,7 +549,6 @@ $(document).ready(function() {
                         }
                     });
                     const prefijo = getPrefijoSeccion(seccionData.sec_codigo);
-                    // ▼▼▼ MODIFICADO para mostrar solo el año ▼▼▼
                     const seccionTexto = `${prefijo}${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio})`;
                     if (isDelete) {
                         $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> ${prefijo}${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio}</p>`);
@@ -662,7 +659,8 @@ $(document).ready(function() {
         const horarioData = {
             doc_cedula: $("#modalSeleccionarDocente").val(), uc_codigo: $("#modalSeleccionarUc").val(),
             esp_codigo: $("#modalSeleccionarEspacio").val(), dia: $("#modalDia").val(),
-            hora_inicio: turnoCompleto.tur_horainicio.substring(0, 5), hora_fin: turnoCompleto.tur_horafin.substring(0, 5)
+            hora_inicio: turnoCompleto.tur_horainicio,
+            hora_fin: turnoCompleto.tur_horafin
         };
         if (!horarioData.doc_cedula || !horarioData.uc_codigo || !horarioData.esp_codigo) {
             muestraMensaje("error", 3000, "Datos Incompletos", "Debe seleccionar docente, UC y espacio.");
@@ -670,9 +668,11 @@ $(document).ready(function() {
         }
         const cellContent = generarCellContent(horarioData);
         const dia_key = normalizeDayKey(horarioData.dia);
-        const key = `${horarioData.hora_inicio}-${horarioData.hora_fin}-${dia_key}`;
+        const key = `${horarioData.hora_inicio.substring(0, 5)}-${horarioData.hora_fin.substring(0, 5)}-${dia_key}`;
+        
         currentClickedCell.html(cellContent).data("horario-data", horarioData);
         horarioContenidoGuardado.set(key, { html: cellContent, data: horarioData });
+        
         $("#modalEntradaHorario").modal("hide");
     });
 
@@ -680,7 +680,9 @@ $(document).ready(function() {
         if (currentClickedCell) {
             const data = currentClickedCell.data("horario-data");
             const dia_key = normalizeDayKey(data.dia);
-            const key = `${data.hora_inicio}-${data.hora_fin}-${dia_key}`;
+            
+            const key = `${data.hora_inicio.substring(0, 5)}-${data.hora_fin.substring(0, 5)}-${dia_key}`;
+            
             horarioContenidoGuardado.delete(key);
             currentClickedCell.empty().removeData("horario-data");
             $("#modalEntradaHorario").modal("hide");
@@ -709,7 +711,12 @@ $(document).ready(function() {
         const datos = new FormData();
         datos.append("accion", accion);
         datos.append("sec_codigo", $("#sec_codigo_hidden").val());
-        const clasesAEnviar = Array.from(horarioContenidoGuardado.values()).map(v => v.data);
+        const clasesAEnviar = Array.from(horarioContenidoGuardado.values()).map(v => {
+            let item = {...v.data};
+            item.hora_inicio = item.hora_inicio.substring(0, 5);
+            item.hora_fin = item.hora_fin.substring(0, 5);
+            return item;
+        });
         datos.append("items_horario", JSON.stringify(clasesAEnviar));
         enviaAjax(datos, $(this));
     });

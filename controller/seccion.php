@@ -123,7 +123,8 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     $_POST['esp_codigo'] ?? null,
                     $_POST['dia'] ?? null,
                     $_POST['hora_inicio'] ?? null,
-                    $_POST['sec_codigo'] ?? null
+                    $_POST['sec_codigo'] ?? null,
+                    $_POST['uc_codigo'] ?? null 
                 );
                 break;
 

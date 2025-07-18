@@ -36,7 +36,7 @@ $(document).ready(function() {
                 mostrarErroresPaso2();
             });
 
-            validarHorasActividad();
+            validarCargaHoraria();
         }
     }
 
@@ -61,13 +61,12 @@ $(document).ready(function() {
 
     $(document).on('click', '#btn-final-submit', function() {
         formPaso2Interacted = true;
-        mostrarErroresPaso2();
         if (validarPaso2()) {
             if ($('#accion').val() === 'modificar') {
                 cachedTeacherData.append('cedulaDocente', $('#cedulaDocente').val());
             }
 
-            $('#step2-actividad').find('input.horas-actividad').each(function() {
+            $('#step2-actividad').find('input.horas-input').each(function() {
                 cachedTeacherData.append($(this).attr('name'), $(this).val());
             });
 
@@ -97,7 +96,7 @@ $(document).ready(function() {
 
         $('#verNombreDocente').text(nombre);
 
-        $('#verHorasCreacion, #verHorasIntegracion, #verHorasGestion, #verHorasOtras').text('0');
+        $('#verHorasAcademicas, #verHorasCreacion, #verHorasIntegracion, #verHorasGestion, #verHorasOtras').text('0');
         $('#verPreferenciasContainer').html('<p class="text-muted">No hay preferencias registradas.</p>');
 
         const datos = new FormData();
@@ -112,6 +111,7 @@ $(document).ready(function() {
         row.find('.hora-preferencia').prop('disabled', !isChecked);
         if(!isChecked) {
             row.find('.hora-preferencia').val('');
+            validarFilaHorario(row); // Limpiar error si se desactiva
         }
         if (formPaso2Interacted) {
              mostrarErroresPaso2();
@@ -155,10 +155,12 @@ $(document).ready(function() {
     }
     
     function mostrarErroresPaso2() {
-        if (!$("#actCreacion").val() || parseInt($('#actCreacion').val(), 10) <= 0) { $('#sactCreacion').text('Campo obligatorio.'); } else { $('#sactCreacion').text(''); }
-        if (!$("#actIntegracion").val() || parseInt($('#actIntegracion').val(), 10) <= 0) { $('#sactIntegracion').text('Campo obligatorio.'); } else { $('#sactIntegracion').text(''); }
-        if (!$("#actGestion").val() || parseInt($('#actGestion').val(), 10) <= 0) { $('#sactGestion').text('Campo obligatorio.'); } else { $('#sactGestion').text(''); }
-        if ($('.dia-preferencia-check:checked').length === 0) { $('#spreferencias').text('Debe seleccionar al menos un día.'); } else { $('#spreferencias').text(''); }
+        validarCargaHoraria();
+        if ($('.dia-preferencia-check:checked').length === 0) { 
+            $('#spreferencias').text('Debe seleccionar al menos un día.'); 
+        } else { 
+            $('#spreferencias').text(''); 
+        }
     }
 
     $('#condicion').on('change', function() {
@@ -249,40 +251,49 @@ $(document).ready(function() {
         });
     });
     
-    function validarHorasActividad() {
+    function validarCargaHoraria() {
         const dedicacion = $('#dedicacion').val();
-        const spanError = $("#sHorasTotales");
+        const spanTotal = $("#sHorasTotales");
         const botonFinal = $("#btn-final-submit");
+    
+        $("#sactAcademicas, #sHorasActividad").text('');
+        spanTotal.text('');
+        botonFinal.prop('disabled', false);
+    
         if (!dedicacion) {
-            spanError.text("");
-            if(botonFinal) botonFinal.prop('disabled', true);
+            botonFinal.prop('disabled', true);
             return;
         }
+    
+        let totalCarga = 0;
+        $('.horas-input').each(function() {
+            let valor = parseInt($(this).val());
+            if (isNaN(valor) || valor < 0) {
+                valor = 0;
+                $(this).val(0);
+            }
+            totalCarga += valor;
+        });
+    
         let maxHoras = 0;
         switch (String(dedicacion).toLowerCase()) {
-            case 'exclusiva': maxHoras = 29; break;
-            case 'tiempo completo': maxHoras = 23; break;
-            case 'medio tiempo': maxHoras = 13; break;
-            case 'tiempo convencional': maxHoras = 0; break;
+            case 'exclusiva': maxHoras = 42; break;
+            case 'tiempo completo': maxHoras = 36; break;
+            case 'medio tiempo': maxHoras = 21; break;
+            case 'tiempo convencional': maxHoras = 7; break;
         }
-        let totalActual = 0;
-        $('.horas-actividad').each(function() { totalActual += parseInt($(this).val()) || 0; });
-        if (totalActual > maxHoras) {
-            spanError.text(`Error: El total de horas (${totalActual}) supera el límite de ${maxHoras}.`);
-            if(botonFinal) botonFinal.prop('disabled', true);
+    
+        if (maxHoras > 0 && totalCarga > maxHoras) {
+            spanTotal.text(`Error: El total de horas (${totalCarga}) supera el límite de ${maxHoras} para esta dedicación.`);
+            botonFinal.prop('disabled', true);
         } else {
-            spanError.text("");
-            if(botonFinal) botonFinal.prop('disabled', false);
+            spanTotal.text('');
+            botonFinal.prop('disabled', false);
         }
     }
 
-    $('.horas-actividad').on('input', function() {
-        validarHorasActividad();
-        if (formPaso2Interacted) {
-             mostrarErroresPaso2();
-        }
-    });
-    $('#dedicacion').on('change', validarHorasActividad);
+    $('.horas-input').on('input', validarCargaHoraria);
+    $('#dedicacion').on('change', validarCargaHoraria);
     
     $("#cedulaDocente, #nombreDocente, #apellidoDocente, #correoDocente").on("keyup", function() {
         const id = $(this).attr('id');
@@ -367,7 +378,7 @@ $(document).ready(function() {
 
     function limpia() {
         $("form#f")[0].reset();
-        $('#step2-actividad input.horas-actividad').val(0);
+        $('#step2-actividad input.horas-input').val(0);
         $('#step2-actividad .text-danger').text('');
         $('.dia-preferencia-check').prop('checked', false);
         $('.hora-preferencia').val('').prop('disabled', true);
@@ -384,42 +395,79 @@ $(document).ready(function() {
         Swal.fire({ icon: tipo, title: titulo, html: mensaje, timer: duracion, timerProgressBar: true });
     }
 
+    function validarFilaHorario(rowElement) {
+        const errorSpan = rowElement.find('.error-hora-preferencia');
+        const inicioInput = rowElement.find('input[id^="inicio-"]');
+        const finInput = rowElement.find('input[id^="fin-"]');
+        const inicio = inicioInput.val();
+        const fin = finInput.val();
+        
+        errorSpan.text(''); // Limpiar error previo
+
+        if (!inicio || !fin) {
+            // No validar si uno de los campos está vacío, pero es inválido para guardar
+            return false;
+        }
+
+        const horaMinima = '07:00';
+        const horaMaxima = '23:00';
+
+        if (inicio >= fin) {
+            errorSpan.text('La hora de inicio debe ser anterior a la de fin.');
+            return false;
+        }
+
+        if (inicio < horaMinima || fin > horaMaxima || inicio > horaMaxima || fin < horaMinima) {
+            errorSpan.text('El horario debe ser entre 07:00 AM y 11:00 PM.');
+            return false;
+        }
+
+        return true; // Es válido
+    }
+
+    $(document).on('change', '.hora-preferencia', function() {
+        const row = $(this).closest('.row');
+        validarFilaHorario(row);
+    });
+
     function validarPaso2() {
+        let esValido = true;
         const errores = [];
-        if (!$("#actCreacion").val() || parseInt($('#actCreacion').val(), 10) <= 0) {
-            errores.push('Las horas de Creación Intelectual son obligatorias.');
+
+        validarCargaHoraria();
+        if ($('#btn-final-submit').is(':disabled')) {
+            errores.push('La carga horaria no cumple con las reglas de la dedicación seleccionada.');
+            esValido = false;
         }
-        if (!$("#actIntegracion").val() || parseInt($('#actIntegracion').val(), 10) <= 0) {
-            errores.push('Las horas de Integración a la Comunidad son obligatorias.');
-        }
-        if (!$("#actGestion").val() || parseInt($('#actGestion').val(), 10) <= 0) {
-            errores.push('Las horas de Gestión Académica son obligatorias.');
-        }
+
         const diasSeleccionados = $('.dia-preferencia-check:checked');
         if (diasSeleccionados.length === 0) {
-            errores.push('Debe seleccionar y configurar al menos un día de preferencia de horario.');
+            errores.push('Debe seleccionar y configurar al menos un día de preferencia.');
+            esValido = false;
         } else {
+            let errorDeHorario = false;
             diasSeleccionados.each(function() {
-                const dia = $(this).val();
-                const inicio = $(`#inicio-${dia}`).val();
-                const fin = $(`#fin-${dia}`).val();
-                if (!inicio || !fin) {
-                    errores.push(`Debe especificar la hora de inicio y fin para el día ${dia}.`);
-                } else if (inicio >= fin) {
-                    errores.push(`En el día ${dia}, la hora de inicio debe ser anterior a la hora de fin.`);
+                const row = $(this).closest('.row');
+                if (!validarFilaHorario(row)) {
+                    errorDeHorario = true;
                 }
             });
+
+            if(errorDeHorario){
+                errores.push('Revise las horas de preferencia, hay valores incorrectos.');
+                esValido = false;
+            }
         }
-        if (errores.length > 0) {
+        
+        if (!esValido) {
             let mensajeHtml = "Por favor, corrija los siguientes errores:<br><br><ul class='list-unstyled text-start ps-4'>";
             errores.forEach(error => {
                 mensajeHtml += `<li><i class="fas fa-times-circle text-danger me-2"></i>${error}</li>`;
             });
             mensajeHtml += "</ul>";
             muestraMensaje('error', 8000, 'Error de Validación - Paso 2', mensajeHtml);
-            return false;
         }
-        return true;
+        return esValido;
     }
 
     function enviaAjax(datos) {
@@ -454,6 +502,7 @@ $(document).ready(function() {
                         crearDT();
                     } else if (lee.resultado === 'ok_paso2') {
                         const horas = lee.horas;
+                        $("#actAcademicas").val(horas.act_academicas || 0);
                         $("#actCreacion").val(horas.act_creacion_intelectual || 0);
                         $("#actIntegracion").val(horas.act_integracion_comunidad || 0);
                         $("#actGestion").val(horas.act_gestion_academica || 0);
@@ -471,6 +520,7 @@ $(document).ready(function() {
                         setModalStep(2);
                     } else if (lee.resultado === 'ok_datos_adicionales') {
                         const horas = lee.horas;
+                        $('#verHorasAcademicas').text(horas.act_academicas || '0');
                         $('#verHorasCreacion').text(horas.act_creacion_intelectual || '0');
                         $('#verHorasIntegracion').text(horas.act_integracion_comunidad || '0');
                         $('#verHorasGestion').text(horas.act_gestion_academica || '0');
@@ -512,4 +562,25 @@ $(document).ready(function() {
         etiquetamensaje.text("");
         return true;
     }
+
+    // --- CÓDIGO PARA FILTRAR ---
+    function setupFilter(inputId, containerId) {
+        $(document).on('keyup', inputId, function() {
+            const filterValue = $(this).val().toLowerCase();
+            const items = $(containerId).find('.form-check');
+
+            items.each(function() {
+                const labelText = $(this).find('label').text().toLowerCase();
+                if (labelText.includes(filterValue)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+    }
+
+    // Inicializar los filtros
+    setupFilter('#filtroTitulos', '#titulos-container');
+    setupFilter('#filtroCoordinaciones', '#coordinaciones-container');
 });
