@@ -1,76 +1,95 @@
 $(document).ready(function() {
     let formPaso1Interacted = false;
     let formPaso2Interacted = false;
+    let formPaso3Interacted = false;
+    let formPaso4Interacted = false;
     let cachedTeacherData = null;
 
-    // ----- Lógica del Asistente (Wizard) -----
+    // ----- Lógica del Asistente (Wizard) de 4 Pasos -----
 
     function setModalStep(step) {
         const footer = $('#modal-footer');
+        const modalTitle = $('#modal-title');
         footer.empty();
+
+        $('#step1-docente, #step2-academico, #step3-actividad, #step4-preferencias').hide();
+        
+        const nombreDocente = $('#nombreDocente').val() + ' ' + $('#apellidoDocente').val();
 
         if (step === 1) {
             $('#step1-docente').show();
-            $('#step2-actividad').hide();
             const accion = $('#accion').val();
-            const title = (accion === 'incluir') ? "Paso 1: Datos del Docente" : "Paso 1: Modificar Datos del Docente";
-            $('#modal-title').text(title);
-            
+            modalTitle.text(accion === 'incluir' ? "Paso 1: Datos Personales" : "Paso 1: Modificar Datos Personales");
             footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-step">Siguiente</button>');
-
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-1">Siguiente</button>');
         } else if (step === 2) {
-            $('#step1-docente').hide();
-            $('#step2-actividad').show();
-            $('#modal-title').text('Paso 2: Actividades y Preferencias');
-
-            const nombre = cachedTeacherData.get('nombreDocente') + ' ' + cachedTeacherData.get('apellidoDocente');
-            $('#nombreDocenteHoras').text(nombre);
-
+            $('#step2-academico').show();
+            modalTitle.text("Paso 2: Datos Académicos");
+            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-2">Atrás</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-2">Siguiente</button>');
+        } else if (step === 3) {
+            $('#step3-actividad').show();
+            modalTitle.text('Paso 3: Actividades (Carga Horaria)');
+            $('#nombreDocenteHoras').text(nombreDocente);
+            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">Atrás</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-3">Siguiente</button>');
+        } else if (step === 4) {
+            $('#step4-preferencias').show();
+            modalTitle.text('Paso 4: Preferencias de Horario');
+            $('#nombreDocentePreferencias').text(nombreDocente);
             const finalButtonText = ($('#accion').val() === 'incluir') ? "Registrar" : "Modificar";
-            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-step">Atrás</button>');
+            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-4">Atrás</button>');
             footer.append(`<button type="button" class="btn btn-success" id="btn-final-submit">${finalButtonText}</button>`);
-            
-            $('#step2-actividad').one('input change', function() {
-                formPaso2Interacted = true;
-                mostrarErroresPaso2();
-            });
-
-            validarCargaHoraria();
         }
     }
 
-    $(document).on('click', '#btn-next-step', function() {
+    // --- Navegación del Asistente ---
+    $(document).on('click', '#btn-next-1', function() {
         formPaso1Interacted = true;
         mostrarErroresPaso1();
         if (validarenvioPaso1()) {
-            cachedTeacherData = new FormData($('#f')[0]);
-            const datos = new FormData();
-            datos.append("accion", "consultar_paso2");
-            
-            const cedula = $('#cedulaDocente').val();
-            datos.append("doc_cedula", cedula);
-            
-            enviaAjax(datos);
+            setModalStep(2);
+            $('#f').one('input change', () => { formPaso2Interacted = true; mostrarErroresPaso2(); });
         }
     });
 
-    $(document).on('click', '#btn-prev-step', function() {
-        setModalStep(1);
+    $(document).on('click', '#btn-next-2', function() {
+        formPaso2Interacted = true;
+        mostrarErroresPaso2();
+        if (validarenvioPaso2()) {
+            const datos = new FormData();
+            datos.append("accion", "consultar_paso2");
+            datos.append("doc_cedula", $('#cedulaDocente').val());
+            enviaAjax(datos);
+        }
+    });
+    
+    $(document).on('click', '#btn-next-3', function() {
+        formPaso3Interacted = true;
+        if(validarPaso3()){
+            setModalStep(4);
+            $('#step4-preferencias').one('input change', () => { formPaso4Interacted = true; mostrarErroresPaso4(); });
+        }
     });
 
+    $(document).on('click', '#btn-prev-2', function() { setModalStep(1); });
+    $(document).on('click', '#btn-prev-3', function() { setModalStep(2); });
+    $(document).on('click', '#btn-prev-4', function() { setModalStep(3); });
+
     $(document).on('click', '#btn-final-submit', function() {
-        formPaso2Interacted = true;
-        if (validarPaso2()) {
+        formPaso4Interacted = true;
+        if (validarPaso4()) {
+            cachedTeacherData = new FormData($('#f')[0]);
             if ($('#accion').val() === 'modificar') {
                 cachedTeacherData.append('cedulaDocente', $('#cedulaDocente').val());
             }
 
-            $('#step2-actividad').find('input.horas-input').each(function() {
-                cachedTeacherData.append($(this).attr('name'), $(this).val());
+            $('#step3-actividad .horas-input').each(function() {
+                const valor = $(this).val() === '' ? '0' : $(this).val();
+                cachedTeacherData.append($(this).attr('name'), valor);
             });
 
-            $('#step2-actividad').find('.dia-preferencia-check').each(function() {
+            $('#step4-preferencias .dia-preferencia-check').each(function() {
                 if ($(this).is(':checked')) {
                     const dia = $(this).val();
                     cachedTeacherData.append(`preferencia[${dia}][activado]`, 'on');
@@ -82,23 +101,16 @@ $(document).ready(function() {
             enviaAjax(cachedTeacherData);
         }
     });
-
-    $('#modal1').on('hidden.bs.modal', function() {
-        limpia();
-    });
-
-    // ----- Fin Lógica del Asistente -----
+    
+    $('#modal1').on('hidden.bs.modal', function() { limpia(); });
 
     $(document).on('click', '.ver-datos-btn', function() {
         const fila = $(this).closest('tr');
         const cedula = fila.find('td:eq(1)').text();
         const nombre = fila.find('td:eq(2)').text() + ' ' + fila.find('td:eq(3)').text();
-
         $('#verNombreDocente').text(nombre);
-
         $('#verHorasAcademicas, #verHorasCreacion, #verHorasIntegracion, #verHorasGestion, #verHorasOtras').text('0');
         $('#verPreferenciasContainer').html('<p class="text-muted">No hay preferencias registradas.</p>');
-
         const datos = new FormData();
         datos.append('accion', 'consultar_datos_adicionales');
         datos.append('doc_cedula', cedula);
@@ -111,11 +123,9 @@ $(document).ready(function() {
         row.find('.hora-preferencia').prop('disabled', !isChecked);
         if(!isChecked) {
             row.find('.hora-preferencia').val('');
-            validarFilaHorario(row); // Limpiar error si se desactiva
+            validarFilaHorario(row); 
         }
-        if (formPaso2Interacted) {
-             mostrarErroresPaso2();
-        }
+        if (formPaso4Interacted) mostrarErroresPaso4();
     });
 
     function verificarRequisitosIniciales() {
@@ -139,28 +149,141 @@ $(document).ready(function() {
         }
     }
 
+    // --- Funciones de Validación por Paso ---
     function mostrarErroresPaso1() {
         if (!$('#cedulaDocente').val()) { $('#scedulaDocente').text('La cédula es requerida.'); }
         if (!$('#nombreDocente').val()) { $('#snombreDocente').text('El nombre es requerido.'); }
         if (!$('#apellidoDocente').val()) { $('#sapellidoDocente').text('El apellido es requerido.'); }
         if (!$('#correoDocente').val()) { $('#scorreoDocente').text('El correo es requerido.'); }
-        if ($("input[name='titulos[]']:checked").length === 0) { $('#stitulos').text('Debe seleccionar al menos un título.'); }
         if (!$('#categoria').val()) { $('#scategoria').text('Debe seleccionar una categoría.'); }
         if (!$('#dedicacion').val()) { $('#sdedicacion').text('Debe seleccionar una dedicación.'); }
         if (!$('#condicion').val()) { $('#scondicion').text('Debe seleccionar una condición.'); }
-        if (!$('#fechaIngreso').val()) { $('#sfechaIngreso').text('La fecha de ingreso es requerida.'); }
-        if ($('#anioConcurso').prop('required') && !$('#anioConcurso').val()) {
+        const anioConcursoInput = $('#anioConcurso');
+        if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
             $('#sanioConcurso').text('El año de concurso es requerido.');
+        } else if (anioConcursoInput.val()) {
+            const hoy = new Date();
+            const fechaSeleccionada = new Date(anioConcursoInput.val());
+            fechaSeleccionada.setMinutes(fechaSeleccionada.getMinutes() + fechaSeleccionada.getTimezoneOffset());
+            hoy.setHours(0, 0, 0, 0);
+            if (fechaSeleccionada > hoy) { $('#sanioConcurso').text('El año de concurso no puede ser una fecha futura.'); }
+            else { $('#sanioConcurso').text(''); }
         }
     }
-    
+
     function mostrarErroresPaso2() {
+        if ($("input[name='titulos[]']:checked").length === 0) { $('#stitulos').text('Debe seleccionar al menos un título.'); }
+        if (!$('#fechaIngreso').val()) { $('#sfechaIngreso').text('La fecha de ingreso es requerida.'); }
+    }
+    
+    function mostrarErroresPaso3() {
+        validarCamposHoraria();
         validarCargaHoraria();
+    }
+
+    function mostrarErroresPaso4() {
         if ($('.dia-preferencia-check:checked').length === 0) { 
             $('#spreferencias').text('Debe seleccionar al menos un día.'); 
         } else { 
             $('#spreferencias').text(''); 
         }
+    }
+
+    function validarenvioPaso1() {
+        let esValido = true;
+        if (!/^[0-9]{7,8}$/.test($("#cedulaDocente").val())) esValido = false;
+        if (!/^[A-Za-z\u00f1\u00d1\s]{3,30}$/.test($("#nombreDocente").val())) esValido = false;
+        if (!/^[A-Za-z\u00f1\u00d1\s]{3,30}$/.test($("#apellidoDocente").val())) esValido = false;
+        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test($("#correoDocente").val())) esValido = false;
+        if (!$('#categoria').val()) esValido = false;
+        if (!$('#dedicacion').val()) esValido = false;
+        if (!$('#condicion').val()) esValido = false;
+        const anioConcursoInput = $('#anioConcurso');
+        if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
+            esValido = false;
+        } else if (anioConcursoInput.val()) {
+            const hoy = new Date();
+            const fechaSeleccionada = new Date(anioConcursoInput.val());
+            fechaSeleccionada.setMinutes(fechaSeleccionada.getMinutes() + fechaSeleccionada.getTimezoneOffset());
+            hoy.setHours(0, 0, 0, 0);
+            if (fechaSeleccionada > hoy) esValido = false;
+        }
+        if (!esValido && formPaso1Interacted) {
+            muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del Paso 1.");
+        }
+        return esValido;
+    }
+
+    function validarenvioPaso2() {
+        let esValido = true;
+        if (!$('#fechaIngreso').val()) esValido = false;
+        if ($("input[name='titulos[]']:checked").length === 0) esValido = false;
+        if (!esValido && formPaso2Interacted) {
+            muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del Paso 2.");
+        }
+        return esValido;
+    }
+
+    function validarPaso3() {
+        mostrarErroresPaso3(); // Muestra todos los errores del paso 3
+        const camposValidos = validarCamposHoraria();
+        const totalValido = $('#sHorasTotales').text() === '';
+        
+        if (!camposValidos || !totalValido) {
+            muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise la carga horaria.");
+            return false;
+        }
+        return true;
+    }
+
+    function validarPaso4() {
+        let esValido = true;
+        const errores = [];
+        const diasSeleccionados = $('.dia-preferencia-check:checked');
+        if (diasSeleccionados.length === 0) {
+            errores.push('Debe seleccionar y configurar al menos un día de preferencia.');
+            esValido = false;
+        } else {
+            let errorDeHorario = false;
+            diasSeleccionados.each(function() {
+                const row = $(this).closest('.row');
+                if (!validarFilaHorario(row)) {
+                    errorDeHorario = true;
+                }
+            });
+            if (errorDeHorario) {
+                errores.push('Revise las horas de preferencia, hay valores incorrectos.');
+                esValido = false;
+            }
+        }
+        if (!esValido) {
+            let mensajeHtml = "Por favor, corrija los siguientes errores:<br><br><ul class='list-unstyled text-start ps-4'>";
+            errores.forEach(error => {
+                mensajeHtml += `<li><i class="fas fa-times-circle text-danger me-2"></i>${error}</li>`;
+            });
+            mensajeHtml += "</ul>";
+            muestraMensaje('error', 8000, 'Error de Validación - Paso 4', mensajeHtml);
+        }
+        return esValido;
+    }
+
+    function validarCamposHoraria() {
+        let esValido = true;
+        const camposRequeridos = ['#actAcademicas', '#actCreacion', '#actIntegracion', '#actGestion'];
+        
+        camposRequeridos.forEach(function(selector) {
+            const input = $(selector);
+            const errorSpan = $('#s' + input.attr('id'));
+            const valor = input.val();
+            
+            if (valor === '' || valor === null || isNaN(parseInt(valor))) {
+                errorSpan.text('Este campo es requerido.');
+                esValido = false;
+            } else {
+                errorSpan.text('');
+            }
+        });
+        return esValido;
     }
 
     $('#condicion').on('change', function() {
@@ -226,10 +349,7 @@ $(document).ready(function() {
         limpia();
         $("#accion").val("incluir");
         setModalStep(1); 
-        $('#f').one('input change', function() { 
-            formPaso1Interacted = true;
-            mostrarErroresPaso1();
-        });
+        $('#f').one('input change', () => { formPaso1Interacted = true; mostrarErroresPaso1(); });
         $("#modal1").modal("show");
     });
 
@@ -254,25 +374,28 @@ $(document).ready(function() {
     function validarCargaHoraria() {
         const dedicacion = $('#dedicacion').val();
         const spanTotal = $("#sHorasTotales");
-        const botonFinal = $("#btn-final-submit");
+        const botonSiguiente = $("#btn-next-3");
     
-        $("#sactAcademicas, #sHorasActividad").text('');
         spanTotal.text('');
-        botonFinal.prop('disabled', false);
+        botonSiguiente.prop('disabled', false);
     
         if (!dedicacion) {
-            botonFinal.prop('disabled', true);
+            botonSiguiente.prop('disabled', true);
             return;
         }
     
         let totalCarga = 0;
         $('.horas-input').each(function() {
-            let valor = parseInt($(this).val());
-            if (isNaN(valor) || valor < 0) {
-                valor = 0;
-                $(this).val(0);
+            if ($(this).val() !== '') {
+                let valor = parseInt($(this).val());
+                if(valor < 0) { // No permitir negativos
+                    $(this).val(''); 
+                    valor = 0;
+                }
+                if (!isNaN(valor)) {
+                    totalCarga += valor;
+                }
             }
-            totalCarga += valor;
         });
     
         let maxHoras = 0;
@@ -285,14 +408,19 @@ $(document).ready(function() {
     
         if (maxHoras > 0 && totalCarga > maxHoras) {
             spanTotal.text(`Error: El total de horas (${totalCarga}) supera el límite de ${maxHoras} para esta dedicación.`);
-            botonFinal.prop('disabled', true);
+            botonSiguiente.prop('disabled', true);
         } else {
             spanTotal.text('');
-            botonFinal.prop('disabled', false);
+            botonSiguiente.prop('disabled', false);
         }
     }
 
-    $('.horas-input').on('input', validarCargaHoraria);
+    $('.horas-input').on('input', function() {
+        if(formPaso3Interacted) {
+            mostrarErroresPaso3();
+        }
+    });
+    
     $('#dedicacion').on('change', validarCargaHoraria);
     
     $("#cedulaDocente, #nombreDocente, #apellidoDocente, #correoDocente").on("keyup", function() {
@@ -314,37 +442,46 @@ $(document).ready(function() {
         }
     });
     
-    $("#categoria, #dedicacion, #condicion, #fechaIngreso, #anioConcurso").on("change", function() {
+    $("#categoria, #dedicacion, #condicion").on("change", function() {
         const el = $(this);
         const spanId = "#s" + el.attr('id');
         if (formPaso1Interacted && el.prop('required') && !el.val()) { $(spanId).text("Este campo es requerido."); }
         else { $(spanId).text(""); }
     });
+
+    $("#fechaIngreso, #anioConcurso").on("change", function() {
+        const el = $(this);
+        const spanId = "#s" + el.attr('id');
+        let interactedFlag = el.attr('id') === 'fechaIngreso' ? formPaso2Interacted : formPaso1Interacted;
+        if (interactedFlag && el.prop('required') && !el.val()) {
+             $(spanId).text("Este campo es requerido.");
+             return;
+        }
+        
+        if(el.attr('id') === 'anioConcurso' && el.val()){
+            const hoy = new Date();
+            const fechaSeleccionada = new Date(el.val());
+            fechaSeleccionada.setMinutes(fechaSeleccionada.getMinutes() + fechaSeleccionada.getTimezoneOffset());
+            hoy.setHours(0, 0, 0, 0);
+
+            if (fechaSeleccionada > hoy) {
+                $(spanId).text("El año de concurso no puede ser una fecha futura.");
+            } else {
+                $(spanId).text("");
+            }
+        } else {
+             if(el.attr('id') === 'fechaIngreso' || (el.attr('id') === 'anioConcurso' && !el.prop('required')))
+                $(spanId).text("");
+        }
+    });
     
     $("input[name='titulos[]']").on("change", function() {
-        if (formPaso1Interacted && $("input[name='titulos[]']:checked").length === 0) { $("#stitulos").text("Debe seleccionar al menos un título."); }
+        if (formPaso2Interacted && $("input[name='titulos[]']:checked").length === 0) { $("#stitulos").text("Debe seleccionar al menos un título."); }
         else { $("#stitulos").text(""); }
     });
     
     $("input[name='coordinaciones[]']").on("change", function() { $("#scoordinaciones").text(""); });
     
-    function validarenvioPaso1() {
-        let esValido = true;
-        if (!/^[0-9]{7,8}$/.test($("#cedulaDocente").val())) esValido = false;
-        if (!/^[A-Za-z\u00f1\u00d1\s]{3,30}$/.test($("#nombreDocente").val())) esValido = false;
-        if (!/^[A-Za-z\u00f1\u00d1\s]{3,30}$/.test($("#apellidoDocente").val())) esValido = false;
-        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test($("#correoDocente").val())) esValido = false;
-        if (!$('#categoria').val()) esValido = false;
-        if (!$('#dedicacion').val()) esValido = false;
-        if (!$('#condicion').val()) esValido = false;
-        if (!$('#fechaIngreso').val()) esValido = false;
-        if ($("input[name='titulos[]']:checked").length === 0) esValido = false;
-        if ($('#anioConcurso').prop('required') && !$('#anioConcurso').val()) esValido = false;
-        if (!esValido && formPaso1Interacted) {
-            muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del Paso 1.");
-        }
-        return esValido;
-    }
 
     function pone(pos, accion) {
         limpia();
@@ -368,18 +505,15 @@ $(document).ready(function() {
         if (coordinacionesIds) coordinacionesIds.split(',').forEach(id => { if (id) $(`input[name='coordinaciones[]'][value="${id.trim()}"]`).prop('checked', true); });
         $("form#f :input").prop('disabled', false);
         $("#cedulaDocente").prop('disabled', true);
-        $('#f').one('input change', function() { 
-            formPaso1Interacted = true;
-            mostrarErroresPaso1();
-        });
+        $('#f').one('input change', () => { formPaso1Interacted = true; mostrarErroresPaso1(); });
         setModalStep(1);
         $("#modal1").modal("show");
     }
 
     function limpia() {
-        $("form#f")[0].reset();
-        $('#step2-actividad input.horas-input').val(0);
-        $('#step2-actividad .text-danger').text('');
+        $("form#f, #form-paso3, #form-paso4")[0].reset();
+        $('#actAcademicas, #actCreacion, #actIntegracion, #actGestion, #actOtras').val('');
+        $('#step3-actividad .text-danger, #step4-preferencias .text-danger').text('');
         $('.dia-preferencia-check').prop('checked', false);
         $('.hora-preferencia').val('').prop('disabled', true);
         $("form#f :input").prop('disabled', false);
@@ -388,6 +522,8 @@ $(document).ready(function() {
         cachedTeacherData = null;
         formPaso1Interacted = false;
         formPaso2Interacted = false;
+        formPaso3Interacted = false;
+        formPaso4Interacted = false;
         setModalStep(1);
     }
 
@@ -402,10 +538,9 @@ $(document).ready(function() {
         const inicio = inicioInput.val();
         const fin = finInput.val();
         
-        errorSpan.text(''); // Limpiar error previo
+        errorSpan.text('');
 
         if (!inicio || !fin) {
-            // No validar si uno de los campos está vacío, pero es inválido para guardar
             return false;
         }
 
@@ -422,53 +557,13 @@ $(document).ready(function() {
             return false;
         }
 
-        return true; // Es válido
+        return true;
     }
 
     $(document).on('change', '.hora-preferencia', function() {
         const row = $(this).closest('.row');
         validarFilaHorario(row);
     });
-
-    function validarPaso2() {
-        let esValido = true;
-        const errores = [];
-
-        validarCargaHoraria();
-        if ($('#btn-final-submit').is(':disabled')) {
-            errores.push('La carga horaria no cumple con las reglas de la dedicación seleccionada.');
-            esValido = false;
-        }
-
-        const diasSeleccionados = $('.dia-preferencia-check:checked');
-        if (diasSeleccionados.length === 0) {
-            errores.push('Debe seleccionar y configurar al menos un día de preferencia.');
-            esValido = false;
-        } else {
-            let errorDeHorario = false;
-            diasSeleccionados.each(function() {
-                const row = $(this).closest('.row');
-                if (!validarFilaHorario(row)) {
-                    errorDeHorario = true;
-                }
-            });
-
-            if(errorDeHorario){
-                errores.push('Revise las horas de preferencia, hay valores incorrectos.');
-                esValido = false;
-            }
-        }
-        
-        if (!esValido) {
-            let mensajeHtml = "Por favor, corrija los siguientes errores:<br><br><ul class='list-unstyled text-start ps-4'>";
-            errores.forEach(error => {
-                mensajeHtml += `<li><i class="fas fa-times-circle text-danger me-2"></i>${error}</li>`;
-            });
-            mensajeHtml += "</ul>";
-            muestraMensaje('error', 8000, 'Error de Validación - Paso 2', mensajeHtml);
-        }
-        return esValido;
-    }
 
     function enviaAjax(datos) {
         $.ajax({
@@ -502,22 +597,20 @@ $(document).ready(function() {
                         crearDT();
                     } else if (lee.resultado === 'ok_paso2') {
                         const horas = lee.horas;
-                        $("#actAcademicas").val(horas.act_academicas || 0);
-                        $("#actCreacion").val(horas.act_creacion_intelectual || 0);
-                        $("#actIntegracion").val(horas.act_integracion_comunidad || 0);
-                        $("#actGestion").val(horas.act_gestion_academica || 0);
-                        $("#actOtras").val(horas.act_otras || 0);
+                        $('#actAcademicas').val(horas.act_academicas !== '0' ? horas.act_academicas : '');
+                        $('#actCreacion').val(horas.act_creacion_intelectual !== '0' ? horas.act_creacion_intelectual : '');
+                        $('#actIntegracion').val(horas.act_integracion_comunidad !== '0' ? horas.act_integracion_comunidad : '');
+                        $('#actGestion').val(horas.act_gestion_academica !== '0' ? horas.act_gestion_academica : '');
+                        $('#actOtras').val(horas.act_otras !== '0' ? horas.act_otras : '');
+
                         const preferencias = lee.preferencias;
-                        $('.dia-preferencia-check').each(function() {
-                            const dia = $(this).val();
-                            if (preferencias && preferencias[dia]) {
-                                $(this).prop('checked', true);
-                                $(this).closest('.row').find('.hora-preferencia').prop('disabled', false);
-                                $(`#inicio-${dia}`).val(preferencias[dia].inicio);
-                                $(`#fin-${dia}`).val(preferencias[dia].fin);
-                            }
-                        });
-                        setModalStep(2);
+                        $('.dia-preferencia-check').prop('checked', false).trigger('change');
+                        for (const dia in preferencias) {
+                            $(`#check-${dia}`).prop('checked', true).trigger('change');
+                            $(`#inicio-${dia}`).val(preferencias[dia].inicio);
+                            $(`#fin-${dia}`).val(preferencias[dia].fin);
+                        }
+                        setModalStep(3);
                     } else if (lee.resultado === 'ok_datos_adicionales') {
                         const horas = lee.horas;
                         $('#verHorasAcademicas').text(horas.act_academicas || '0');
@@ -563,12 +656,10 @@ $(document).ready(function() {
         return true;
     }
 
-    // --- CÓDIGO PARA FILTRAR ---
     function setupFilter(inputId, containerId) {
         $(document).on('keyup', inputId, function() {
             const filterValue = $(this).val().toLowerCase();
             const items = $(containerId).find('.form-check');
-
             items.each(function() {
                 const labelText = $(this).find('label').text().toLowerCase();
                 if (labelText.includes(filterValue)) {
@@ -580,7 +671,6 @@ $(document).ready(function() {
         });
     }
 
-    // Inicializar los filtros
     setupFilter('#filtroTitulos', '#titulos-container');
     setupFilter('#filtroCoordinaciones', '#coordinaciones-container');
 });

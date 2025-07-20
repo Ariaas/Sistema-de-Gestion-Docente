@@ -131,6 +131,7 @@ class Docente extends Connection
 
         try {
             $co->beginTransaction();
+            $this->_validarFechaConcurso();
             $errorValidacionCarga = $this->ValidarCargaHoraria();
             if ($errorValidacionCarga) {
                 throw new Exception($errorValidacionCarga['mensaje']);
@@ -199,6 +200,7 @@ class Docente extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $co->beginTransaction();
+            $this->_validarFechaConcurso();
             $errorValidacionCarga = $this->ValidarCargaHoraria();
             if ($errorValidacionCarga) {
                 throw new Exception($errorValidacionCarga['mensaje']);
@@ -440,6 +442,23 @@ class Docente extends Connection
         }
 
         return null;
+    }
+
+    /**
+     * Valida que la fecha del concurso no sea una fecha futura.
+     * @throws Exception Si la fecha es futura.
+     */
+    private function _validarFechaConcurso()
+    {
+        if ($this->doc_anio_concurso !== null) {
+            $fechaConcurso = new DateTime($this->doc_anio_concurso);
+            $hoy = new DateTime(); // Fecha y hora actual
+            $hoy->setTime(0, 0, 0); // Ajustar a la medianoche para comparar solo la fecha
+
+            if ($fechaConcurso > $hoy) {
+                throw new Exception("La fecha del concurso no puede ser una fecha futura.");
+            }
+        }
     }
 
     /**

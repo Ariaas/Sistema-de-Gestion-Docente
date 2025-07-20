@@ -81,14 +81,14 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="modal-title">Paso 1: Datos del Docente</h5>
+                        <h5 class="modal-title" id="modal-title"></h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div id="step1-docente">
-                            <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
-                                <input type="hidden" name="accion" id="accion">
+                        <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
+                            <input type="hidden" name="accion" id="accion">
 
+                            <div id="step1-docente" style="display: none;">
                                 <div class="row g-3">
                                     <div class="col-md-2">
                                         <label for="prefijoCedula" class="form-label">Prefijo</label>
@@ -156,9 +156,8 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                                     </div>
                                 </div>
 
-                                <hr class="my-4">
-
                                 <div id="concurso-fields-wrapper" style="display: none;">
+                                    <hr class="my-4">
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label for="tipoConcurso" class="form-label">Tipo de Concurso</label>
@@ -170,9 +169,10 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                                             <span id="sanioConcurso" class="text-danger"></span>
                                         </div>
                                     </div>
-                                    <hr class="my-4">
                                 </div>
-
+                            </div>
+                            
+                            <div id="step2-academico" style="display: none;">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Títulos <span class="text-danger">*</span></label>
@@ -224,44 +224,50 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                                         <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="100" placeholder="Añadir observaciones (máx. 100 caracteres)"></textarea>
                                     </div>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                         
-                        <div id="step2-actividad" style="display: none;">
-                            <form id="form-paso2" onsubmit="return false;">
+                        <div id="step3-actividad" style="display: none;">
+                            <form id="form-paso3" onsubmit="return false;">
                                 <p><strong>Docente:</strong> <span id="nombreDocenteHoras" class="fw-bold"></span></p>
                                 <hr>
                                 <h5>Carga Horaria Semanal</h5>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="actAcademicas" class="form-label">Horas Académicas (Clase)</label>
-                                        <input class="form-control horas-input" type="number" id="actAcademicas" name="actAcademicas" required min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actAcademicas" name="actAcademicas" min="0" value="0">
                                         <span id="sactAcademicas" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actCreacion" class="form-label">Horas de Creación Intelectual</label>
-                                        <input class="form-control horas-input" type="number" id="actCreacion" name="actCreacion" required min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actCreacion" name="actCreacion" min="0" value="0">
+                                        <span id="sactCreacion" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actIntegracion" class="form-label">Horas de Integración a la Comunidad</label>
-                                        <input class="form-control horas-input" type="number" id="actIntegracion" name="actIntegracion" required min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actIntegracion" name="actIntegracion" min="0" value="0">
+                                        <span id="sactIntegracion" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actGestion" class="form-label">Horas de Gestión Académica</label>
-                                        <input class="form-control horas-input" type="number" id="actGestion" name="actGestion" required min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actGestion" name="actGestion" min="0" value="0">
+                                        <span id="sactGestion" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actOtras" class="form-label">Otras Horas de Actividad (Opcional)</label>
-                                        <input class="form-control horas-input" type="number" id="actOtras" name="actOtras" required min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actOtras" name="actOtras" min="0" value="0">
                                     </div>
                                     <div class="col-12 text-center mt-3">
-                                        <span id="sHorasActividad" class="text-danger fw-bold d-block"></span>
                                         <span id="sHorasTotales" class="text-danger fw-bold d-block"></span>
                                     </div>
                                 </div>
-                                
-                                <hr class="my-4">
+                            </form>
+                        </div>
 
+                        <div id="step4-preferencias" style="display: none;">
+                            <form id="form-paso4" onsubmit="return false">
+                                <p><strong>Docente:</strong> <span id="nombreDocentePreferencias" class="fw-bold"></span></p>
+                                <hr>
                                 <h5>Preferencia de Horario para Clases</h5>
                                 <span id="spreferencias" class="text-danger d-block mb-2"></span>
                                 <div id="preferencias-horario-container">
