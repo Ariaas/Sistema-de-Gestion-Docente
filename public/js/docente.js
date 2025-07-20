@@ -21,24 +21,24 @@ $(document).ready(function() {
             const accion = $('#accion').val();
             modalTitle.text(accion === 'incluir' ? "Paso 1: Datos Personales" : "Paso 1: Modificar Datos Personales");
             footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-1">Siguiente</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-1">SIGUIENTE</button>');
         } else if (step === 2) {
             $('#step2-academico').show();
             modalTitle.text("Paso 2: Datos Académicos");
-            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-2">Atrás</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-2">Siguiente</button>');
+            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-2">ATRÁS</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-2">SIGIENTE</button>');
         } else if (step === 3) {
             $('#step3-actividad').show();
-            modalTitle.text('Paso 3: Actividades (Carga Horaria)');
+            modalTitle.text('Paso 3: Actividades');
             $('#nombreDocenteHoras').text(nombreDocente);
-            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">Atrás</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-3">Siguiente</button>');
+            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">ATRÁS</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-3">SIGUIENTE</button>');
         } else if (step === 4) {
             $('#step4-preferencias').show();
             modalTitle.text('Paso 4: Preferencias de Horario');
             $('#nombreDocentePreferencias').text(nombreDocente);
-            const finalButtonText = ($('#accion').val() === 'incluir') ? "Registrar" : "Modificar";
-            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-4">Atrás</button>');
+            const finalButtonText = ($('#accion').val() === 'incluir') ? "REGISTRAR" : "MODIFICAR";
+            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-4">ATRÁS</button>');
             footer.append(`<button type="button" class="btn btn-success" id="btn-final-submit">${finalButtonText}</button>`);
         }
     }

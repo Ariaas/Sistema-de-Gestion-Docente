@@ -219,7 +219,7 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                                         <input class="form-control" type="date" id="fechaIngreso" name="fechaIngreso" required>
                                         <span id="sfechaIngreso" class="text-danger"></span>
                                     </div>
-                                    <div class="col-md-12 mt-3">
+                                    <div class="col-md-6 mt-3">
                                         <label for="observacionesDocente" class="form-label">Observaciones (Opcional)</label>
                                         <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="100" placeholder="Añadir observaciones (máx. 100 caracteres)"></textarea>
                                     </div>
@@ -231,10 +231,10 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                             <form id="form-paso3" onsubmit="return false;">
                                 <p><strong>Docente:</strong> <span id="nombreDocenteHoras" class="fw-bold"></span></p>
                                 <hr>
-                                <h5>Carga Horaria Semanal</h5>
+                                <h5>Carga Horaria</h5>
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <label for="actAcademicas" class="form-label">Horas Académicas (Clase)</label>
+                                        <label for="actAcademicas" class="form-label">Horas Académicas</label>
                                         <input class="form-control horas-input" type="number" id="actAcademicas" name="actAcademicas" min="0" value="0">
                                         <span id="sactAcademicas" class="text-danger"></span>
                                     </div>
@@ -314,10 +314,10 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                         <p><strong>Docente:</strong> <span id="verNombreDocente" class="fw-bold"></span></p>
                         <hr>
                         
-                        <h6 class="text-primary">Horas de Actividad Semanales</h6>
+                        <h6 class="text-primary">Horas de Actividad </h6>
                         <ul class="list-group mb-4">
                              <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Horas Académicas (Clase)
+                                Horas Académicas 
                                 <span class="badge bg-dark rounded-pill fs-6" id="verHorasAcademicas">0</span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -344,7 +344,7 @@ $puede_eliminar = tiene_permiso_accion('docentes', 'eliminar', $permisos);
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CERRAR</button>
                     </div>
                 </div>
             </div>
