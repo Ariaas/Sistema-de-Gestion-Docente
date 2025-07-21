@@ -17,7 +17,7 @@ class Seccion extends Connection
             WHERE ud.doc_cedula = :doc_cedula
               AND s.sec_estado = 1
               AND m.mal_activa = 1
-              AND ud.uc_doc_estado = 1
+             
         ";
         $params = [':doc_cedula' => $doc_cedula];
 
@@ -57,12 +57,13 @@ class Seccion extends Connection
 
 
         $ocupacion_global = [];
-        $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, ud.doc_cedula, uh.esp_codigo FROM uc_horario uh JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1 AND ud.uc_doc_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
+        $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, ud.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio FROM uc_horario uh JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1 ")->fetchAll(PDO::FETCH_ASSOC);
         foreach($horarios_existentes as $h) {
             $key = trim($h['hor_dia']) . '_' . trim($h['hor_horainicio']);
             if(!isset($ocupacion_global[$key])) $ocupacion_global[$key] = ['docentes' => [], 'espacios' => []];
             $ocupacion_global[$key]['docentes'][$h['doc_cedula']] = true;
-            $ocupacion_global[$key]['espacios'][$h['esp_codigo']] = true;
+            $espacio_key = "{$h['esp_numero']}-{$h['esp_tipo']}-{$h['esp_edificio']}";
+            $ocupacion_global[$key]['espacios'][$espacio_key] = true;
         }
 
        
@@ -82,7 +83,7 @@ class Seccion extends Connection
             ];
         }
         
-        $stmt_docentes_por_uc = $co->prepare("SELECT doc_cedula FROM uc_docente WHERE uc_codigo = ? AND uc_doc_estado = 1");
+        $stmt_docentes_por_uc = $co->prepare("SELECT doc_cedula FROM uc_docente WHERE uc_codigo = ? ");
         $horario_generado = [];
         shuffle($ucs_por_asignar);
 
@@ -130,15 +131,25 @@ class Seccion extends Connection
                 $espacio = $espacios[array_rand($espacios)];
                 $hora_corta = substr($bloque['tur_horainicio'], 0, 5);
                 $key_slot = $dia . '_' . $hora_corta;
-
+                $espacio_key = "{$espacio['esp_numero']}-{$espacio['esp_tipo']}-{$espacio['esp_edificio']}";
                 if (($docentes_info[$docente_id]['horas_asignadas'] + $costo_uc) > $docentes_info[$docente_id]['max_horas']) continue;
                 if (isset($ocupacion_global[$key_slot]['docentes'][$docente_id])) continue;
-                if (isset($ocupacion_global[$key_slot]['espacios'][$espacio['esp_codigo']])) continue;
+                if (isset($ocupacion_global[$key_slot]['espacios'][$espacio_key])) continue;
 
-                $horario_generado[] = [ 'uc_codigo' => $uc['uc_codigo'], 'doc_cedula' => $docente_id, 'esp_codigo' => $espacio['esp_codigo'], 'dia' => $dia, 'hora_inicio' => $hora_corta, 'hora_fin' => substr($bloque['tur_horafin'], 0, 5)];
+                // Guardar los 3 campos del espacio en el horario generado
+$horario_generado[] = [ 
+    'uc_codigo' => $uc['uc_codigo'], 
+    'doc_cedula' => $docente_id, 
+    'esp_numero' => $espacio['esp_numero'], // Guardar individualmente
+    'esp_tipo' => $espacio['esp_tipo'],
+    'esp_edificio' => $espacio['esp_edificio'],
+    'dia' => $dia, 
+    'hora_inicio' => $hora_corta, 
+    'hora_fin' => substr($bloque['tur_horafin'], 0, 5)
+];
                 if(!isset($ocupacion_global[$key_slot])) $ocupacion_global[$key_slot] = ['docentes' => [], 'espacios' => []];
                 $ocupacion_global[$key_slot]['docentes'][$docente_id] = true;
-                $ocupacion_global[$key_slot]['espacios'][$espacio['esp_codigo']] = true;
+                $ocupacion_global[$key_slot]['espacios'][$espacio_key] = true;
                 $docentes_info[$docente_id]['horas_asignadas'] += $costo_uc;
                 
                 goto siguiente_uc;
@@ -698,7 +709,7 @@ class Seccion extends Connection
         uh.hor_horainicio as hora_inicio, 
         uh.hor_horafin as hora_fin 
     FROM uc_horario uh 
-    LEFT JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo AND ud.uc_doc_estado = 1 
+    LEFT JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo 
     WHERE uh.sec_codigo = :sec_codigo";
 
 
@@ -785,7 +796,7 @@ class Seccion extends Connection
         }
 
         try {
-            $sql = "SELECT u.uc_codigo, u.uc_nombre, u.uc_trayecto, u.uc_periodo FROM tbl_uc u INNER JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo WHERE ud.doc_cedula = :doc_cedula AND u.uc_estado = 1 AND ud.uc_doc_estado = 1";
+            $sql = "SELECT u.uc_codigo, u.uc_nombre, u.uc_trayecto, u.uc_periodo FROM tbl_uc u INNER JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo WHERE ud.doc_cedula = :doc_cedula AND u.uc_estado = 1";
             $params = [':doc_cedula' => $doc_cedula];
 
             if ($fase_actual === 'fase1') {
