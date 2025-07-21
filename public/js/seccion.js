@@ -162,7 +162,12 @@ function validarEntradaHorario() {
     const datos = new FormData();
     datos.append("accion", "validar_clase_en_vivo");
     datos.append("doc_cedula", docId);
-    datos.append("esp_codigo", espId);
+    if (espId) {
+    const [numero, tipo, edificio] = espId.split('-');
+    datos.append("esp_numero", numero);
+    datos.append("esp_tipo", tipo);
+    datos.append("esp_edificio", edificio);
+}
     datos.append("dia", dia);
     datos.append("hora_inicio", horaInicio.substring(0, 5));
     datos.append("sec_codigo", secId);
@@ -203,7 +208,13 @@ function onCeldaHorarioClick() {
     allDocentes.forEach(doc => $("#modalSeleccionarDocente").append(`<option value="${doc.doc_cedula}">${doc.doc_nombre} ${doc.doc_apellido}</option>`));
     
     $("#modalSeleccionarEspacio").empty().append('<option value="">Seleccionar Espacio</option>').val('');
-    allEspacios.forEach(esp => $("#modalSeleccionarEspacio").append(`<option value="${esp.esp_codigo}">${esp.esp_codigo} (${esp.esp_tipo})</option>`));
+   allEspacios.forEach(esp => {
+    
+    const valorCompuesto = `${esp.esp_numero}-${esp.esp_tipo}-${esp.esp_edificio}`;
+    
+    const textoVisible = `${esp.esp_tipo} ${esp.esp_numero} (${esp.esp_edificio})`;
+    $("#modalSeleccionarEspacio").append(`<option value="${valorCompuesto}">${textoVisible}</option>`);
+});
     
     $("#modalSeleccionarUc").empty().append('<option value="">Seleccione un docente</option>').prop('disabled', true);
 
@@ -212,7 +223,10 @@ function onCeldaHorarioClick() {
         cargarUcPorDocente(data.doc_cedula, () => {
              $("#modalSeleccionarUc").val(data.uc_codigo).trigger('change');
         });
-        $("#modalSeleccionarEspacio").val(data.esp_codigo);
+        if (data.esp_numero) {
+    const valorCompuestoExistente = `${data.esp_numero}-${data.esp_tipo}-${data.esp_edificio}`;
+    $("#modalSeleccionarEspacio").val(valorCompuestoExistente);
+}
         $("#btnEliminarEntrada").show();
     } else {
         $("#btnEliminarEntrada").hide();
@@ -260,10 +274,18 @@ function cargarUcPorDocente(docCedula, callback) {
 
 function generarCellContent(clase) {
     const uc = allUcs.find(u => u.uc_codigo == clase.uc_codigo)?.uc_nombre || 'N/A';
-    const esp = allEspacios.find(e => e.esp_codigo == clase.esp_codigo)?.esp_codigo || 'N/A';
+    
+const esp = allEspacios.find(e => 
+    e.esp_numero == clase.esp_numero && 
+    e.esp_tipo == clase.esp_tipo && 
+    e.esp_edificio == clase.esp_edificio
+);
+
+const espTexto = esp ? `${esp.esp_tipo} ${esp.esp_numero}` : 'N/A';
+
     const doc = allDocentes.find(d => d.doc_cedula == clase.doc_cedula);
     const doc_nombre = doc ? `${doc.doc_nombre} ${doc.doc_apellido}` : 'N/A';
-    return `<p class="m-0" style="font-size:0.8em;"><strong>${uc}</strong></p><small class="text-muted" style="font-size:0.7em;">${esp} / ${doc_nombre}</small>`;
+ return `<p class="m-0" style="font-size:0.8em;"><strong>${uc}</strong></p><small class="text-muted" style="font-size:0.7em;">${espTexto} / ${doc_nombre}</small>`;
 }
 
 function limpiaModalPrincipal() {
@@ -656,16 +678,23 @@ $(document).ready(function() {
     $("#formularioEntradaHorario").on("submit", function(e) {
         e.preventDefault();
         const turnoCompleto = allTurnos.find(t => t.tur_horainicio === currentClickedCell.data("franja-inicio"));
-        const horarioData = {
-            doc_cedula: $("#modalSeleccionarDocente").val(), uc_codigo: $("#modalSeleccionarUc").val(),
-            esp_codigo: $("#modalSeleccionarEspacio").val(), dia: $("#modalDia").val(),
-            hora_inicio: turnoCompleto.tur_horainicio,
-            hora_fin: turnoCompleto.tur_horafin
-        };
-        if (!horarioData.doc_cedula || !horarioData.uc_codigo || !horarioData.esp_codigo) {
-            muestraMensaje("error", 3000, "Datos Incompletos", "Debe seleccionar docente, UC y espacio.");
-            return;
-        }
+       const valorEspacioCompuesto = $("#modalSeleccionarEspacio").val();
+const [esp_numero, esp_tipo, esp_edificio] = valorEspacioCompuesto ? valorEspacioCompuesto.split('-') : [null, null, null];
+
+const horarioData = {
+    doc_cedula: $("#modalSeleccionarDocente").val(),
+     uc_codigo: $("#modalSeleccionarUc").val(),
+    esp_numero: esp_numero,
+    esp_tipo: esp_tipo,
+    esp_edificio: esp_edificio,
+    dia: $("#modalDia").val(),
+    hora_inicio: turnoCompleto.tur_horainicio,
+    hora_fin: turnoCompleto.tur_horafin
+};
+       if (!horarioData.doc_cedula || !horarioData.uc_codigo || !valorEspacioCompuesto) {
+    muestraMensaje("error", 3000, "Datos Incompletos", "Debe seleccionar docente, UC y espacio.");
+    return;
+}
         const cellContent = generarCellContent(horarioData);
         const dia_key = normalizeDayKey(horarioData.dia);
         const key = `${horarioData.hora_inicio.substring(0, 5)}-${horarioData.hora_fin.substring(0, 5)}-${dia_key}`;

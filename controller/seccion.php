@@ -119,13 +119,16 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
 
             case 'validar_clase_en_vivo':
                 $respuesta = $o->ValidarClaseEnVivo(
-                    $_POST['doc_cedula'] ?? null,
-                    $_POST['esp_codigo'] ?? null,
-                    $_POST['dia'] ?? null,
-                    $_POST['hora_inicio'] ?? null,
-                    $_POST['sec_codigo'] ?? null,
-                    $_POST['uc_codigo'] ?? null 
-                );
+    $_POST['doc_cedula'] ?? null,
+    // Recibe los 3 campos desde el JavaScript
+    $_POST['esp_numero'] ?? null,
+    $_POST['esp_tipo'] ?? null,
+    $_POST['esp_edificio'] ?? null,
+    $_POST['dia'] ?? null,
+    $_POST['hora_inicio'] ?? null,
+    $_POST['sec_codigo'] ?? null,
+    $_POST['uc_codigo'] ?? null
+);
                 break;
 
             case 'unir_horarios':
