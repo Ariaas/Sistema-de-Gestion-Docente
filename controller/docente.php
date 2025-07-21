@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// La verificación de sesión se delega a la vista, como estaba originalmente.
+
 
 $pagina = 'docente';
 
@@ -77,7 +77,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setTitulos($_POST['titulos'] ?? []);
             $p->setCoordinaciones($_POST['coordinaciones'] ?? []);
             
-            // Carga horaria
+       
             $p->setHorasAcademicas((int)($_POST['actAcademicas'] ?? 0));
             $p->setCreacionIntelectual((int)($_POST['actCreacion'] ?? 0));
             $p->setIntegracionComunidad((int)($_POST['actIntegracion'] ?? 0));
