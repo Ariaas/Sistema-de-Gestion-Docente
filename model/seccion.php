@@ -4,12 +4,9 @@ require_once('model/dbconnection.php');
 class Seccion extends Connection
 {
 
-  /**
-     * Calcula el total de horas académicas que un docente ya tiene asignadas
-     * en horarios activos, opcionalmente excluyendo una sección específica.
-     */
+  
     private function _obtenerHorasAcademicasActuales($doc_cedula, $co, $seccion_a_excluir = null) {
-        // CORRECCIÓN: Se eliminó el DISTINCT que causaba el conteo incorrecto de horas.
+        
         $sql = "
             SELECT SUM(um.mal_hora_academica)
             FROM uc_horario uh
@@ -40,7 +37,7 @@ class Seccion extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // --- PASO 1: Cargar datos esenciales ---
+
         $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
         $bloques = $this->obtenerTurnos();
         $fase_actual = $this->determinarFaseActual();
@@ -58,7 +55,7 @@ class Seccion extends Connection
             return ['resultado' => 'ok', 'mensaje' => 'No hay suficientes datos (UCs, espacios, etc.) para generar un horario.', 'horario' => []];
         }
 
-        // --- PASO 2: Construir un mapa de todo lo que ya está ocupado en el sistema ---
+
         $ocupacion_global = [];
         $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, ud.doc_cedula, uh.esp_codigo FROM uc_horario uh JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1 AND ud.uc_doc_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
         foreach($horarios_existentes as $h) {
@@ -68,7 +65,7 @@ class Seccion extends Connection
             $ocupacion_global[$key]['espacios'][$h['esp_codigo']] = true;
         }
 
-        // --- PASO 3: Cargar información y estado actual de cada docente ---
+       
         $docentes_info = [];
         $stmt_doc_info = $co->query("SELECT doc_cedula FROM tbl_docente WHERE doc_estado = 1");
         while ($doc = $stmt_doc_info->fetch(PDO::FETCH_ASSOC)) {
@@ -89,7 +86,7 @@ class Seccion extends Connection
         $horario_generado = [];
         shuffle($ucs_por_asignar);
 
-        // --- PASO 4: Asignar cada UC con el algoritmo de distribución ---
+   
         foreach ($ucs_por_asignar as $uc) {
             $stmt_docentes_por_uc->execute([$uc['uc_codigo']]);
             $posibles_docentes = $stmt_docentes_por_uc->fetchAll(PDO::FETCH_COLUMN, 0);
@@ -158,7 +155,7 @@ class Seccion extends Connection
         foreach ($bloques as $b) {
             if ($b['tur_horainicio'] == $hora_inicio) return $b['tur_horafin'];
         }
-        return date('H:i:s', strtotime($hora_inicio) + 40 * 60); // fallback 40 min
+        return date('H:i:s', strtotime($hora_inicio) + 40 * 60); 
     }
     public function __construct()
     {
@@ -444,7 +441,7 @@ class Seccion extends Connection
 
     private function validarConflictos($items_horario, $sec_codigo, $co)
     {
-        // 1. Verificaciones de solapamiento de docente y espacio (lógica existente)
+    
         $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE ud.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
        $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
 
@@ -472,18 +469,18 @@ class Seccion extends Connection
             }
         }
 
-        // 2. NUEVO: Verificación de carga horaria máxima del docente
+     
         $horas_propuestas_por_docente = [];
         $codigos_uc = array_column($items_horario, 'uc_codigo');
-        if (empty($codigos_uc)) return null; // No hay nada que validar si el horario está vacío
+        if (empty($codigos_uc)) return null; 
 
-        // Obtener costos de horas de todas las UCs de una vez
+
         $placeholders = implode(',', array_fill(0, count($codigos_uc), '?'));
         $stmt_costos = $co->prepare("SELECT uc_codigo, mal_hora_academica FROM uc_malla WHERE uc_codigo IN ($placeholders) AND mal_codigo = (SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1)");
         $stmt_costos->execute($codigos_uc);
         $costos_uc = $stmt_costos->fetchAll(PDO::FETCH_KEY_PAIR);
 
-        // Calcular horas propuestas
+    
         foreach ($items_horario as $item) {
             $costo = $costos_uc[$item['uc_codigo']] ?? 0;
             if (!isset($horas_propuestas_por_docente[$item['doc_cedula']])) {
@@ -492,7 +489,7 @@ class Seccion extends Connection
             $horas_propuestas_por_docente[$item['doc_cedula']] += $costo;
         }
 
-        // Validar el total contra el máximo permitido
+   
         foreach ($horas_propuestas_por_docente as $doc_cedula => $horas_propuestas) {
             $horas_actuales = $this->_obtenerHorasAcademicasActuales($doc_cedula, $co, $sec_codigo);
             
@@ -594,17 +591,17 @@ class Seccion extends Connection
             }
 
             $co->beginTransaction();
-            // Primero, se eliminan los registros hijos existentes
+           
             $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo")->execute([':sec_codigo' => $sec_codigo]);
             $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo")->execute([':sec_codigo' => $sec_codigo]);
 
-            // Ahora nos aseguramos de que el registro padre en tbl_horario exista (ya no maneja el aula)
+     
             $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo")->execute([':sec_codigo' => $sec_codigo]);
 
             if (!empty($items_horario)) {
                 $hora_principal_para_turno = $items_horario[0]['hora_inicio'] ?? '08:00:00';
 
-                // Se inserta el registro padre sin información del aula
+               
                 $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, tur_nombre, hor_estado) VALUES (:sec_codigo, :tur_nombre, 1)");
                 $stmt_hor->execute([
                     ':sec_codigo' => $sec_codigo,
@@ -619,7 +616,7 @@ class Seccion extends Connection
 
                 foreach ($items_horario as $item) {
                     if (!empty($item['uc_codigo']) && !empty($item['doc_cedula'])) {
-                        // Ahora se guarda el esp_codigo con CADA clase
+                        
                         $stmt_uh->execute([
     ':uc_codigo' => $item['uc_codigo'],
     ':sec_codigo' => $sec_codigo,

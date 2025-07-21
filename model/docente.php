@@ -444,16 +444,13 @@ class Docente extends Connection
         return null;
     }
 
-    /**
-     * Valida que la fecha del concurso no sea una fecha futura.
-     * @throws Exception Si la fecha es futura.
-     */
+    
     private function _validarFechaConcurso()
     {
         if ($this->doc_anio_concurso !== null) {
             $fechaConcurso = new DateTime($this->doc_anio_concurso);
-            $hoy = new DateTime(); // Fecha y hora actual
-            $hoy->setTime(0, 0, 0); // Ajustar a la medianoche para comparar solo la fecha
+            $hoy = new DateTime(); 
+            $hoy->setTime(0, 0, 0);
 
             if ($fechaConcurso > $hoy) {
                 throw new Exception("La fecha del concurso no puede ser una fecha futura.");
@@ -461,10 +458,7 @@ class Docente extends Connection
         }
     }
 
-    /**
-     * Valida que las horas de preferencia estén dentro del rango permitido.
-     * @throws Exception Si alguna hora está fuera del rango.
-     */
+
     private function _validarPreferenciasHorario()
     {
         if (empty($this->preferencias)) {

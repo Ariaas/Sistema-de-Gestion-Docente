@@ -5,7 +5,7 @@ $(document).ready(function() {
     let formPaso4Interacted = false;
     let cachedTeacherData = null;
 
-    // ----- Lógica del Asistente (Wizard) de 4 Pasos -----
+    
 
     function setModalStep(step) {
         const footer = $('#modal-footer');
@@ -43,7 +43,7 @@ $(document).ready(function() {
         }
     }
 
-    // --- Navegación del Asistente ---
+ 
     $(document).on('click', '#btn-next-1', function() {
         formPaso1Interacted = true;
         mostrarErroresPaso1();
@@ -149,7 +149,7 @@ $(document).ready(function() {
         }
     }
 
-    // --- Funciones de Validación por Paso ---
+   
     function mostrarErroresPaso1() {
         if (!$('#cedulaDocente').val()) { $('#scedulaDocente').text('La cédula es requerida.'); }
         if (!$('#nombreDocente').val()) { $('#snombreDocente').text('El nombre es requerido.'); }
@@ -225,7 +225,7 @@ $(document).ready(function() {
     }
 
     function validarPaso3() {
-        mostrarErroresPaso3(); // Muestra todos los errores del paso 3
+        mostrarErroresPaso3(); 
         const camposValidos = validarCamposHoraria();
         const totalValido = $('#sHorasTotales').text() === '';
         
@@ -388,7 +388,7 @@ $(document).ready(function() {
         $('.horas-input').each(function() {
             if ($(this).val() !== '') {
                 let valor = parseInt($(this).val());
-                if(valor < 0) { // No permitir negativos
+                if(valor < 0) { 
                     $(this).val(''); 
                     valor = 0;
                 }
