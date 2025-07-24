@@ -72,22 +72,32 @@ $(document).ready(function () {
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
   $("#areaNombre").on("keypress", function (e) {
-    validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+    validarkeypress(/^[A-Za-z,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
   });
 
   $("#areaNombre").on("keyup keydown", function () {
-    validarkeyup(
-      /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+    $("#sareaNombre").css("color", "");
+    
+    let formatoValido = validarkeyup(
+      /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
       $(this),
       $("#sareaNombre"),
-      "El nombre debe tener entre 4 y 30 caracteres"
+      "El nombre debe tener entre 5 y 30 caracteres"
     );
-    if ($("#areaNombre").val().length >= 4) {
+
+    if (formatoValido === 1) {
       var datos = new FormData();
       datos.append('accion', 'existe');
       datos.append('areaNombre', $(this).val());
+      if ($("#proceso").text() === "MODIFICAR") {
+          datos.append('areaExcluir', originalNombreArea);
+      }
       enviaAjax(datos, 'existe');
     }
+  });
+
+  $("#areaDescripcion").on("keyup", function() {
+    validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $(this), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.");
   });
 
   //////////////////////////////BOTONES/////////////////////////////////////
@@ -145,23 +155,22 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#sareaNombre").show();
+    $("#sareaDescripcion").show();
   });
 });
 
 function validarenvio() {
-  if (
-    validarkeyup(
-      /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
-      $("#areaNombre"),
-      $("#sareaNombre"),
-      "El nombre debe tener entre 4 y 30 caracteres"
-    )
-  ) {
-    return true;
-  } else {
-    muestraMensaje("error", 4000, "ERROR", "El nombre del área <br/> No debe estar vacío y debe tener entre 4 y 30 caracteres");
-    return false;
-  }
+    let esValido = true;
+    if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,$("#areaNombre"),$("#sareaNombre"),"El nombre debe tener entre 5 y 30 caracteres, Ej: Matemáticas") == 0) {
+      if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre es incorrecto");
+      esValido = false;
+    }
+    if (validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $("#areaDescripcion"), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.") == 0) {
+      if(esValido) muestraMensaje("error",4000,"ERROR!","El formato de la descripción es incorrecto");
+      esValido = false;
+    }
+
+  return esValido;
 }
 
 function pone(pos, accion) {
@@ -181,10 +190,11 @@ function pone(pos, accion) {
   $("#areaDescripcion").val($(linea).find("td:eq(1)").text());
 
   $("#sareaNombre").hide();
+  $("#sareaDescripcion").hide();
   $("#modal1").modal("show");
 }
 
-function enviaAjax(datos) {
+function enviaAjax(datos, accion) {
   $.ajax({
     async: true,
     url: "",
@@ -197,8 +207,16 @@ function enviaAjax(datos) {
     timeout: 10000,
     success: function (respuesta) {
       try {
-        console.log(respuesta)
         var lee = JSON.parse(respuesta);
+        if (accion === 'existe') {
+          if (lee.resultado === 'existe') {
+            $("#sareaNombre").text(lee.mensaje).css("color", "red");
+            $("#proceso").prop("disabled", true);
+          } else {
+            $("#proceso").prop("disabled", false);
+          }
+          return;
+        }
         if (lee.resultado === "consultar") {
           destruyeDT();
           $("#resultadoconsulta").empty();
@@ -274,4 +292,6 @@ function limpia() {
   $("#areaDescripcion").val("");
   $("#areaNombre").prop('disabled', false);
   $("#areaDescripcion").prop('disabled', false);
+  $("#sareaNombre").text("");
+  $("#sareaDescripcion").text("");
 }

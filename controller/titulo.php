@@ -13,8 +13,9 @@ if (!is_file("model/" . $pagina . ".php")) {
 require_once("model/" . $pagina . ".php");
 
 if (is_file("views/" . $pagina . ".php")) {
+
     if (!empty($_POST)) {
-        $obj1 = new Titulo();
+        $t = new Titulo();
         $accion = $_POST['accion'];
 
         require_once("model/bitacora.php");
@@ -26,42 +27,43 @@ if (is_file("views/" . $pagina . ".php")) {
         }
         $bitacora = new Bitacora();
 
-        if ($accion == 'consultar') {
-            echo json_encode($obj1->Consultar());
-        } else if ($accion == 'registrar') {
-            $obj1->set_prefijo($_POST['tituloprefijo']);
-            $obj1->set_nombreTitulo($_POST['titulonombre']);
-            echo  json_encode($obj1->Registrar());
+        if ($accion == 'registrar') {
+            $t->set_prefijo($_POST['tituloprefijo']);
+            $t->set_nombreTitulo($_POST['titulonombre']);
+            echo json_encode($t->Registrar());
             $bitacora->registrarAccion($usu_id, 'registrar', 'titulo');
-        } else if ($accion == 'existe') {
-            $obj1->set_prefijo($_POST['tituloprefijo']);
-            $obj1->set_nombreTitulo($_POST['titulonombre']);
-            $existe = $obj1->Existe();
-            
-            echo json_encode([
-                'resultado' => $existe ? 'existe' : 'no_existe',
-                'mensaje' => $existe ? 'El título colocado ya existe.' : ''
-            ]);
-        } else if ($accion == 'modificar') {
-        
-            $obj1->set_original_prefijo($_POST['tituloprefijo_original']);
-            $obj1->set_original_nombre($_POST['titulonombre_original']);
-            $obj1->set_prefijo($_POST['tituloprefijo']);
-            $obj1->set_nombreTitulo($_POST['titulonombre']);
-            echo  json_encode($obj1->Modificar());
+        } elseif ($accion == 'modificar') {
+            $t->set_original_prefijo($_POST['tituloprefijo_original']);
+            $t->set_original_nombre($_POST['titulonombre_original']);
+            $t->set_prefijo($_POST['tituloprefijo']);
+            $t->set_nombreTitulo($_POST['titulonombre']);
+            echo json_encode($t->Modificar());
             $bitacora->registrarAccion($usu_id, 'modificar', 'titulo');
         } elseif ($accion == 'eliminar') {
-          
-            $obj1->set_prefijo($_POST['tituloprefijo']);
-            $obj1->set_nombreTitulo($_POST['titulonombre']);
-            echo  json_encode($obj1->Eliminar());
+            $t->set_prefijo($_POST['tituloprefijo']);
+            $t->set_nombreTitulo($_POST['titulonombre']);
+            echo json_encode($t->Eliminar());
             $bitacora->registrarAccion($usu_id, 'eliminar', 'titulo');
+        } elseif ($accion == 'consultar') {
+            echo json_encode($t->Consultar());
+        } elseif ($accion == 'existe') {
+            $t->set_prefijo($_POST['tituloprefijo']);
+            $t->set_nombreTitulo($_POST['titulonombre']);
+
+            if (isset($_POST['tituloprefijo_original']) && isset($_POST['titulonombre_original'])) {
+                $t->set_original_prefijo($_POST['tituloprefijo_original']);
+                $t->set_original_nombre($_POST['titulonombre_original']);
+            }
+
+            if ($t->Existe()) {
+                echo json_encode(['resultado' => 'existe', 'mensaje' => 'El Título ya existe.']);
+            } else {
+                echo json_encode(['resultado' => 'no_existe']);
+            }
         }
         exit;
     }
-
     require_once("views/" . $pagina . ".php");
 } else {
     echo "Página en construcción";
 }
-?>

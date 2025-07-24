@@ -51,6 +51,7 @@ $(document).ready(function () {
   });
 
   $("#numeroEspacio").on("keyup", function () {
+    $("#snumeroEspacio").css("color", "");
     const esValido = validarkeyup(
       /^[0-9]{1,2}$/,
       $(this),
@@ -65,16 +66,16 @@ $(document).ready(function () {
       datos.append("edificioEspacio", $("#edificio").val());
       enviaAjax(datos, 'existe');
     } else if (!esValido) {
-      $("#snumeroEspacio").text('');
       $("#proceso").prop("disabled", false);
     }
   });
 
   $("#tipoEspacio").on("change", function () {
-
+    $("#stipoEspacio").text("");
   });
 
   $("#edificio").on("change", function () {
+    $("#sedificio").text("");
     if ($("#numeroEspacio").val().length >= 1) {
       var datos = new FormData();
       datos.append("accion", "existe");
@@ -82,7 +83,7 @@ $(document).ready(function () {
       datos.append("edificioEspacio", $(this).val());
       enviaAjax(datos, 'existe');
     }
-    $("#snumeroEspacio").text('');
+    $("#snumeroEspacio").css("color", "");
     $("#proceso").prop("disabled", false);
   });
 
@@ -165,14 +166,8 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-  var numeroEspacio = $("#numeroEspacio").val();
-  var tipoEspacio = $("#tipoEspacio").val();
-  var edificio = $("#edificio").val();
+  let esValido = true;
 
-  if (edificio === null || edificio === "") {
-    muestraMensaje("error", 4000, "ERROR!", "Por favor, seleccione un edificio.");
-    return false;
-  }
   if (
     validarkeyup(
       /^[0-9]{1,2}$/,
@@ -181,19 +176,27 @@ function validarenvio() {
       "El formato permite de 1 a 2 dígitos numéricos."
     ) == 0
   ) {
-    muestraMensaje("error", 4000, "ERROR!", "El código numérico del espacio <br/> No debe estar vacío y debe contener entre 1 a 2 dígitos.");
-    return false;
+    if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del número de espacio es incorrecto.");
+    esValido = false;
   }
-  if (tipoEspacio === null || tipoEspacio === "") {
-    muestraMensaje(
-      "error",
-      4000,
-      "ERROR!",
-      "Por favor, seleccione un tipo de espacio!"
-    );
-    return false;
+
+  if ($("#edificio").val() === null || $("#edificio").val() === "") {
+    $("#sedificio").text("Debe seleccionar un edificio.");
+    if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un edificio.");
+    esValido = false;
+  } else {
+     $("#sedificio").text("");
   }
-  return true;
+
+  if ($("#tipoEspacio").val() === null || $("#tipoEspacio").val() === "") {
+    $("#stipoEspacio").text("Debe seleccionar un tipo de espacio.");
+    if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un tipo de espacio.");
+    esValido = false;
+  } else {
+    $("#stipoEspacio").text("");
+  }
+  
+  return esValido;
 }
 
 
@@ -245,7 +248,7 @@ function pone(pos, accion) {
 
 
   $("#modal1").modal("show");
-  $("#snumeroEspacio").text('');
+  $("#snumeroEspacio, #sedificio, #stipoEspacio").text('');
 }
 
 
@@ -309,7 +312,7 @@ function enviaAjax(datos, tipo_accion_local = null) {
         } else if (lee.resultado == "existe" || lee.resultado == "no_existe") {
 
           if (tipo_accion_local === 'existe' && lee.resultado === 'existe') {
-            $("#snumeroEspacio").text('El espacio ya existe con este prefijo de edificio y código.').css('color', 'red');
+            $("#snumeroEspacio").text('El espacio ya existe.').css('color', 'red');
             $("#proceso").prop("disabled", true);
           } else {
             $("#snumeroEspacio").text('').css('color', '');
@@ -349,6 +352,6 @@ function limpia() {
   $("#tipoEspacio").val("");
   $("#numeroEspacio").val("");
   $("#edificio").val("");
-  $("#snumeroEspacio").text('');
+  $("#snumeroEspacio, #sedificio, #stipoEspacio").text('');
   $("#proceso").prop("disabled", false);
 }
