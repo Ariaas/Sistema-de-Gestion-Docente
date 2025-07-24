@@ -4,20 +4,23 @@ require_once('model/dbconnection.php');
 class Seccion extends Connection
 {
 
-  
-    private function _obtenerHorasAcademicasActuales($doc_cedula, $co, $seccion_a_excluir = null) {
-        
+
+    private function _obtenerHorasAcademicasActuales($doc_cedula, $co, $seccion_a_excluir = null)
+    {
+
         $sql = "
             SELECT SUM(um.mal_hora_academica)
             FROM uc_horario uh
+            -- Se une uc_horario con uc_docente a través de la uc_codigo para encontrar al docente
             JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo
             JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
             JOIN uc_malla um ON uh.uc_codigo = um.uc_codigo
             JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo
+            -- Se busca el docente correcto en la tabla que une docente con sección
+            JOIN docente_horario dh ON s.sec_codigo = dh.sec_codigo AND ud.doc_cedula = dh.doc_cedula
             WHERE ud.doc_cedula = :doc_cedula
               AND s.sec_estado = 1
               AND m.mal_activa = 1
-              AND ud.uc_doc_estado = 1
         ";
         $params = [':doc_cedula' => $doc_cedula];
 
@@ -42,7 +45,7 @@ class Seccion extends Connection
         $bloques = $this->obtenerTurnos();
         $fase_actual = $this->determinarFaseActual();
         $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
-        
+
         $sql_ucs = "SELECT u.uc_codigo, um.mal_hora_academica FROM tbl_uc u JOIN uc_malla um ON u.uc_codigo = um.uc_codigo WHERE u.uc_trayecto = :trayecto AND um.mal_codigo = :mal_codigo AND u.uc_estado = 1";
         if ($fase_actual === 'fase1') $sql_ucs .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual' OR u.uc_periodo = '0')";
         elseif ($fase_actual === 'fase2') $sql_ucs .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
@@ -57,15 +60,16 @@ class Seccion extends Connection
 
 
         $ocupacion_global = [];
-        $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, ud.doc_cedula, uh.esp_codigo FROM uc_horario uh JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1 AND ud.uc_doc_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
-        foreach($horarios_existentes as $h) {
+        $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, dh.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($horarios_existentes as $h) {
             $key = trim($h['hor_dia']) . '_' . trim($h['hor_horainicio']);
-            if(!isset($ocupacion_global[$key])) $ocupacion_global[$key] = ['docentes' => [], 'espacios' => []];
+            if (!isset($ocupacion_global[$key])) $ocupacion_global[$key] = ['docentes' => [], 'espacios' => []];
             $ocupacion_global[$key]['docentes'][$h['doc_cedula']] = true;
-            $ocupacion_global[$key]['espacios'][$h['esp_codigo']] = true;
+            $espacio_key = $h['esp_numero'] . '|' . $h['esp_tipo'] . '|' . $h['esp_edificio'];
+            $ocupacion_global[$key]['espacios'][$espacio_key] = true;
         }
 
-       
+
         $docentes_info = [];
         $stmt_doc_info = $co->query("SELECT doc_cedula FROM tbl_docente WHERE doc_estado = 1");
         while ($doc = $stmt_doc_info->fetch(PDO::FETCH_ASSOC)) {
@@ -81,19 +85,19 @@ class Seccion extends Connection
                 'preferencias' => $preferencias_stmt->fetchAll(PDO::FETCH_ASSOC)
             ];
         }
-        
-        $stmt_docentes_por_uc = $co->prepare("SELECT doc_cedula FROM uc_docente WHERE uc_codigo = ? AND uc_doc_estado = 1");
+
+        $stmt_docentes_por_uc = $co->prepare("SELECT doc_cedula FROM uc_docente WHERE uc_codigo = ?");
         $horario_generado = [];
         shuffle($ucs_por_asignar);
 
-   
+
         foreach ($ucs_por_asignar as $uc) {
             $stmt_docentes_por_uc->execute([$uc['uc_codigo']]);
             $posibles_docentes = $stmt_docentes_por_uc->fetchAll(PDO::FETCH_COLUMN, 0);
             if (empty($posibles_docentes)) continue;
 
             $costo_uc = (int)$uc['mal_hora_academica'];
-            
+
             $opciones_validas = [];
             foreach ($posibles_docentes as $docente_id) {
                 if (!isset($docentes_info[$docente_id])) continue;
@@ -120,7 +124,7 @@ class Seccion extends Connection
                     }
                 }
             }
-            
+
             shuffle($opciones_validas);
 
             foreach ($opciones_validas as $opcion) {
@@ -130,17 +134,19 @@ class Seccion extends Connection
                 $espacio = $espacios[array_rand($espacios)];
                 $hora_corta = substr($bloque['tur_horainicio'], 0, 5);
                 $key_slot = $dia . '_' . $hora_corta;
+                $espacio_key = $espacio['numero'] . '|' . $espacio['tipo'] . '|' . $espacio['edificio'];
+
 
                 if (($docentes_info[$docente_id]['horas_asignadas'] + $costo_uc) > $docentes_info[$docente_id]['max_horas']) continue;
                 if (isset($ocupacion_global[$key_slot]['docentes'][$docente_id])) continue;
-                if (isset($ocupacion_global[$key_slot]['espacios'][$espacio['esp_codigo']])) continue;
+                if (isset($ocupacion_global[$key_slot]['espacios'][$espacio_key])) continue;
 
-                $horario_generado[] = [ 'uc_codigo' => $uc['uc_codigo'], 'doc_cedula' => $docente_id, 'esp_codigo' => $espacio['esp_codigo'], 'dia' => $dia, 'hora_inicio' => $hora_corta, 'hora_fin' => substr($bloque['tur_horafin'], 0, 5)];
-                if(!isset($ocupacion_global[$key_slot])) $ocupacion_global[$key_slot] = ['docentes' => [], 'espacios' => []];
+                $horario_generado[] = ['uc_codigo' => $uc['uc_codigo'], 'doc_cedula' => $docente_id, 'espacio' => $espacio, 'dia' => $dia, 'hora_inicio' => $hora_corta, 'hora_fin' => substr($bloque['tur_horafin'], 0, 5)];
+                if (!isset($ocupacion_global[$key_slot])) $ocupacion_global[$key_slot] = ['docentes' => [], 'espacios' => []];
                 $ocupacion_global[$key_slot]['docentes'][$docente_id] = true;
-                $ocupacion_global[$key_slot]['espacios'][$espacio['esp_codigo']] = true;
+                $ocupacion_global[$key_slot]['espacios'][$espacio_key] = true;
                 $docentes_info[$docente_id]['horas_asignadas'] += $costo_uc;
-                
+
                 goto siguiente_uc;
             }
             siguiente_uc:;
@@ -148,14 +154,14 @@ class Seccion extends Connection
 
         return ['resultado' => 'ok', 'mensaje' => 'Plantilla de horario generada.', 'horario' => $horario_generado];
     }
-    
-  
+
+
     private function getHoraFin($hora_inicio, $bloques)
     {
         foreach ($bloques as $b) {
             if ($b['tur_horainicio'] == $hora_inicio) return $b['tur_horafin'];
         }
-        return date('H:i:s', strtotime($hora_inicio) + 40 * 60); 
+        return date('H:i:s', strtotime($hora_inicio) + 40 * 60);
     }
     public function __construct()
     {
@@ -165,13 +171,13 @@ class Seccion extends Connection
     private function determinarFaseActual()
     {
         try {
-    
+
             $stmt_anio = $this->Con()->prepare("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 LIMIT 1");
             $stmt_anio->execute();
             $anio_activo = $stmt_anio->fetch(PDO::FETCH_ASSOC);
 
             if ($anio_activo) {
-                
+
                 $stmt_fases = $this->Con()->prepare(
                     "SELECT fase_numero, fase_apertura, fase_cierre FROM tbl_fase WHERE ani_anio = :ani_anio AND ani_tipo = :ani_tipo"
                 );
@@ -186,7 +192,7 @@ class Seccion extends Connection
                     $cierre->setTime(23, 59, 59);
 
                     if ($hoy >= $apertura && $hoy <= $cierre) {
-                        
+
                         return 'fase' . $fase['fase_numero'];
                     }
                 }
@@ -258,7 +264,16 @@ class Seccion extends Connection
                         $resultado_uc_docente = $this->obtenerUcPorDocente($clase['doc_cedula'], $trayecto_destino);
                         $ucs_posibles = $resultado_uc_docente['data'];
                         if (count($ucs_posibles) === 1) {
-                            $nuevas_clases[] = ['uc_codigo' => $ucs_posibles[0]['uc_codigo'], 'doc_cedula' => $clase['doc_cedula'], 'esp_codigo' => $clase['esp_codigo'], 'dia' => $clase['dia'], 'hora_inicio' => $clase['hora_inicio'], 'hora_fin' => $clase['hora_fin']];
+                            // ** INICIO DE CORRECCIÓN **
+                            $nuevas_clases[] = [
+                                'uc_codigo' => $ucs_posibles[0]['uc_codigo'],
+                                'doc_cedula' => $clase['doc_cedula'],
+                                'espacio' => $clase['espacio'], // Se pasa el objeto 'espacio' completo que ya viene en el formato correcto
+                                'dia' => $clase['dia'],
+                                'hora_inicio' => $clase['hora_inicio'],
+                                'hora_fin' => $clase['hora_fin']
+                            ];
+                            // ** FIN DE CORRECCIÓN **
                         } else {
                             $docente_info = array_values(array_filter($docentes, function ($d) use ($clase) {
                                 return $d['doc_cedula'] == $clase['doc_cedula'];
@@ -274,9 +289,21 @@ class Seccion extends Connection
                     $error_conflicto = $this->validarConflictos($nuevas_clases, $sec_codigo_destino, $co);
                     if ($error_conflicto) throw new Exception($error_conflicto);
                     if (!empty($nuevas_clases)) {
-                        $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :dia, :inicio, :fin)");
+                        $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
                         foreach ($nuevas_clases as $item) {
-                            $stmt_uh->execute([':uc_codigo' => $item['uc_codigo'], ':sec_codigo' => $sec_codigo_destino, ':dia' => $item['dia'], ':inicio' => $item['hora_inicio'], ':fin' => $item['hora_fin']]);
+                            // ** INICIO DE CORRECCIÓN **
+                            $espacio = $item['espacio'];
+                            $stmt_uh->execute([
+                                ':uc_codigo' => $item['uc_codigo'],
+                                ':sec_codigo' => $sec_codigo_destino,
+                                ':esp_numero' => $espacio['numero'], // Usar la clave 'numero'
+                                ':esp_tipo' => $espacio['tipo'],     // Usar la clave 'tipo'
+                                ':esp_edificio' => $espacio['edificio'], // Usar la clave 'edificio'
+                                ':dia' => $item['dia'],
+                                ':inicio' => $item['hora_inicio'],
+                                ':fin' => $item['hora_fin']
+                            ]);
+                            // ** FIN DE CORRECCIÓN **
                         }
                     }
                     $co->commit();
@@ -343,10 +370,39 @@ class Seccion extends Connection
             });
             foreach ($codigos_destinos as $codigo_destino) {
                 $this->EliminarPorSeccion($codigo_destino, $co);
+                
                 if (!empty($clases_origen)) {
-                    $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :dia, :inicio, :fin)");
+                    
+                    // ** INICIO DE CORRECCIÓN **
+                    // Se debe reinsertar la fila padre en tbl_horario antes de insertar en las tablas hijas.
+                    $hora_principal_para_turno = $clases_origen[0]['hora_inicio'] ?? '08:00:00';
+                    $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, tur_nombre, hor_estado) VALUES (:sec_codigo, :tur_nombre, 1)");
+                    $stmt_hor->execute([
+                        ':sec_codigo' => $codigo_destino,
+                        ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
+                    ]);
+                    // ** FIN DE CORRECCIÓN **
+                    
+                    $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
+                    $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo) VALUES (:doc_cedula, :sec_codigo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
+                    $docentes_procesados = [];
                     foreach ($clases_origen as $item) {
-                        $stmt_uh->execute([':uc_codigo' => $item['uc_codigo'], ':sec_codigo' => $codigo_destino, ':dia' => $item['dia'], ':inicio' => $item['hora_inicio'], ':fin' => $item['hora_fin']]);
+                        $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
+                        $stmt_uh->execute([
+                            ':uc_codigo' => $item['uc_codigo'],
+                            ':sec_codigo' => $codigo_destino,
+                            ':esp_numero' => $espacio['numero'],
+                            ':esp_tipo' => $espacio['tipo'],
+                            ':esp_edificio' => $espacio['edificio'],
+                            ':dia' => $item['dia'],
+                            ':inicio' => $item['hora_inicio'],
+                            ':fin' => $item['hora_fin']
+                        ]);
+
+                        if (!in_array($item['doc_cedula'], $docentes_procesados)) {
+                            $stmt_doc->execute([':doc_cedula' => $item['doc_cedula'], ':sec_codigo' => $codigo_destino]);
+                            $docentes_procesados[] = $item['doc_cedula'];
+                        }
                     }
                 }
             }
@@ -357,7 +413,7 @@ class Seccion extends Connection
             return ['resultado' => 'error', 'mensaje' => 'Error al unir los horarios: ' . $e->getMessage()];
         }
     }
-
+    
 
     public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo)
     {
@@ -441,30 +497,40 @@ class Seccion extends Connection
 
     private function validarConflictos($items_horario, $sec_codigo, $co)
     {
-    
-        $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE ud.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-        $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_codigo = :esp_codigo AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+
+        $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+        $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
 
         foreach ($items_horario as $item) {
             $dia_normalizado = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
-            
+
             $stmt_docente->execute([':doc_cedula' => $item['doc_cedula'], ':dia' => $dia_normalizado, ':inicio' => $item['hora_inicio'], ':sec_codigo' => $sec_codigo]);
             if ($conflicto = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
                 return "Conflicto: El docente ya tiene una clase a esta hora en la sección IN" . htmlspecialchars($conflicto['sec_codigo']) . ".";
             }
-
-            if (!empty($item['esp_codigo'])) {
-                $stmt_espacio->execute([':esp_codigo' => $item['esp_codigo'], ':dia' => $dia_normalizado, ':inicio' => $item['hora_inicio'], ':sec_codigo' => $sec_codigo]);
+            
+            // ** INICIO DE CORRECCIÓN **
+            $espacio = $item['espacio'] ?? null;
+            if ($espacio && !empty($espacio['numero'])) {
+                $stmt_espacio->execute([
+                    ':esp_numero' => $espacio['numero'],
+                    ':esp_tipo' => $espacio['tipo'],
+                    ':esp_edificio' => $espacio['edificio'],
+                    ':dia' => $dia_normalizado,
+                    ':inicio' => $item['hora_inicio'],
+                    ':sec_codigo' => $sec_codigo
+                ]);
                 if ($conflicto = $stmt_espacio->fetch(PDO::FETCH_ASSOC)) {
-                    return "Conflicto: El espacio " . htmlspecialchars($item['esp_codigo']) . " ya está ocupado a esta hora en la sección IN" . htmlspecialchars($conflicto['sec_codigo']) . ".";
+                    return "Conflicto: El espacio " . htmlspecialchars($espacio['numero']) . " ya está ocupado a esta hora en la sección IN" . htmlspecialchars($conflicto['sec_codigo']) . ".";
                 }
             }
+            // ** FIN DE CORRECCIÓN **
         }
 
-     
+
         $horas_propuestas_por_docente = [];
         $codigos_uc = array_column($items_horario, 'uc_codigo');
-        if (empty($codigos_uc)) return null; 
+        if (empty($codigos_uc)) return null;
 
 
         $placeholders = implode(',', array_fill(0, count($codigos_uc), '?'));
@@ -472,7 +538,7 @@ class Seccion extends Connection
         $stmt_costos->execute($codigos_uc);
         $costos_uc = $stmt_costos->fetchAll(PDO::FETCH_KEY_PAIR);
 
-    
+
         foreach ($items_horario as $item) {
             $costo = $costos_uc[$item['uc_codigo']] ?? 0;
             if (!isset($horas_propuestas_por_docente[$item['doc_cedula']])) {
@@ -481,10 +547,10 @@ class Seccion extends Connection
             $horas_propuestas_por_docente[$item['doc_cedula']] += $costo;
         }
 
-   
+
         foreach ($horas_propuestas_por_docente as $doc_cedula => $horas_propuestas) {
             $horas_actuales = $this->_obtenerHorasAcademicasActuales($doc_cedula, $co, $sec_codigo);
-            
+
             $stmt_max = $co->prepare("SELECT doc_nombre, doc_apellido, act_academicas FROM tbl_actividad JOIN tbl_docente USING(doc_cedula) WHERE doc_cedula = :doc_cedula");
             $stmt_max->execute([':doc_cedula' => $doc_cedula]);
             $doc_info = $stmt_max->fetch(PDO::FETCH_ASSOC);
@@ -496,10 +562,10 @@ class Seccion extends Connection
             }
         }
 
-        return null; 
+        return null;
     }
 
-   public function ValidarClaseEnVivo($doc_cedula, $esp_codigo, $dia, $hora_inicio, $sec_codigo, $uc_codigo = null)
+    public function ValidarClaseEnVivo($doc_cedula, $esp_numero, $esp_tipo, $esp_edificio, $dia, $hora_inicio, $sec_codigo, $uc_codigo = null)
     {
         if (empty($dia) || empty($hora_inicio) || empty($sec_codigo)) {
             return ['conflicto' => false];
@@ -508,22 +574,22 @@ class Seccion extends Connection
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $dia_normalizado = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $dia));
-            
-      
+
+
             if (!empty($doc_cedula)) {
-                $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE ud.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+                $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
                 $stmt_docente->execute([':dia' => $dia_normalizado, ':inicio' => $hora_inicio, ':doc_cedula' => $doc_cedula, ':sec_codigo' => $sec_codigo]);
                 if ($conflicto = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
                     $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
-                    return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "Conflicto: Docente ya asignado en sección <strong>".$prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];
+                    return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "Conflicto: Docente ya asignado en sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];
                 }
             }
-            if (!empty($esp_codigo)) {
-                $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_codigo = :esp_codigo AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-                $stmt_espacio->execute([':dia' => $dia_normalizado, ':inicio' => $hora_inicio, ':esp_codigo' => $esp_codigo, ':sec_codigo' => $sec_codigo]);
+            if (!empty($esp_numero)) {
+                $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+                $stmt_espacio->execute([':dia' => $dia_normalizado, ':inicio' => $hora_inicio, ':esp_numero' => $esp_numero, ':esp_tipo' => $esp_tipo, ':esp_edificio' => $esp_edificio, ':sec_codigo' => $sec_codigo]);
                 if ($conflicto = $stmt_espacio->fetch(PDO::FETCH_ASSOC)) {
                     $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
-                    return ['conflicto' => true, 'tipo' => 'espacio', 'mensaje' => "Conflicto: Espacio ya ocupado en sección <strong>".$prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];
+                    return ['conflicto' => true, 'tipo' => 'espacio', 'mensaje' => "Conflicto: Espacio ya ocupado en sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];
                 }
             }
 
@@ -537,7 +603,7 @@ class Seccion extends Connection
                 }
                 $max_horas = (int)$max_horas;
                 if ($max_horas <= 0) {
-                     return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "<strong>Inválido:</strong> El docente no tiene horas de clase permitidas en su plan de actividades."];
+                    return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "<strong>Inválido:</strong> El docente no tiene horas de clase permitidas en su plan de actividades."];
                 }
 
                 $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
@@ -546,12 +612,12 @@ class Seccion extends Connection
                 $costo_uc = (int)$stmt_costo->fetchColumn();
 
                 $current_horas = $this->_obtenerHorasAcademicasActuales($doc_cedula, $co);
-                
+
                 if (($current_horas + $costo_uc) > $max_horas) {
                     return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "<strong>Límite Excedido:</strong> Asignar esta clase de {$costo_uc}h superaría el máximo de <strong>{$max_horas}h</strong> del docente (ya tiene {$current_horas}h asignadas)."];
                 }
             }
-            
+
             return ['conflicto' => false];
         } catch (Exception $e) {
             error_log("Error en ValidarClaseEnVivo: " . $e->getMessage());
@@ -576,36 +642,37 @@ class Seccion extends Connection
             }
 
             $co->beginTransaction();
-           
-            $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo")->execute([':sec_codigo' => $sec_codigo]);
-            $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo")->execute([':sec_codigo' => $sec_codigo]);
 
-     
-            $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo")->execute([':sec_codigo' => $sec_codigo]);
+            $this->EliminarPorSeccion($sec_codigo, $co);
+
 
             if (!empty($items_horario)) {
                 $hora_principal_para_turno = $items_horario[0]['hora_inicio'] ?? '08:00:00';
 
-               
+
                 $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, tur_nombre, hor_estado) VALUES (:sec_codigo, :tur_nombre, 1)");
                 $stmt_hor->execute([
                     ':sec_codigo' => $sec_codigo,
                     ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
                 ]);
 
-            
-                $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_codigo, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_codigo, :dia, :inicio, :fin)");
+
+                $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
                 $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo) VALUES (:doc_cedula, :sec_codigo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
 
                 $docentes_en_seccion = [];
 
                 foreach ($items_horario as $item) {
                     if (!empty($item['uc_codigo']) && !empty($item['doc_cedula'])) {
-                        
+                        $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
+
                         $stmt_uh->execute([
                             ':uc_codigo' => $item['uc_codigo'],
                             ':sec_codigo' => $sec_codigo,
-                            ':esp_codigo' => $item['esp_codigo'] ?? null, 
+                            ':esp_numero' => $espacio['numero'],
+                            ':esp_tipo' => $espacio['tipo'],
+                            ':esp_edificio' => $espacio['edificio'],
+                            ':dia' => $item['dia'],
                             ':inicio' => $item['hora_inicio'],
                             ':fin' => $item['hora_fin']
                         ]);
@@ -669,21 +736,40 @@ class Seccion extends Connection
         if (!$sec_codigo) return ['resultado' => 'error', 'mensaje' => 'Falta el código de la sección.'];
 
         try {
-      
+
             $sql = "SELECT 
                     uh.uc_codigo, 
-                    ud.doc_cedula, 
-                    uh.esp_codigo, 
+                    uh.esp_numero,
+                    uh.esp_tipo,
+                    uh.esp_edificio,
                     uh.hor_dia as dia, 
                     uh.hor_horainicio as hora_inicio, 
-                    uh.hor_horafin as hora_fin 
+                    uh.hor_horafin as hora_fin,
+                    (
+                        SELECT ud.doc_cedula
+                        FROM uc_docente ud
+                        INNER JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                        WHERE ud.uc_codigo = uh.uc_codigo
+                          AND dh.sec_codigo = uh.sec_codigo
+                        LIMIT 1
+                    ) as doc_cedula
                 FROM uc_horario uh 
-                LEFT JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo AND ud.uc_doc_estado = 1 
                 WHERE uh.sec_codigo = :sec_codigo";
 
             $stmt = $this->Con()->prepare($sql);
             $stmt->execute([':sec_codigo' => $sec_codigo]);
             $schedule_grid_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Combinar los campos del espacio en un solo objeto para el JS
+            foreach ($schedule_grid_items as &$item) {
+                $item['espacio'] = [
+                    'numero' => $item['esp_numero'],
+                    'tipo' => $item['esp_tipo'],
+                    'edificio' => $item['esp_edificio']
+                ];
+                unset($item['esp_numero'], $item['esp_tipo'], $item['esp_edificio']);
+            }
+
 
             return ['resultado' => 'ok', 'mensaje' => $schedule_grid_items];
         } catch (Exception $e) {
@@ -764,7 +850,7 @@ class Seccion extends Connection
         }
 
         try {
-            $sql = "SELECT u.uc_codigo, u.uc_nombre, u.uc_trayecto, u.uc_periodo FROM tbl_uc u INNER JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo WHERE ud.doc_cedula = :doc_cedula AND u.uc_estado = 1 AND ud.uc_doc_estado = 1";
+            $sql = "SELECT u.uc_codigo, u.uc_nombre, u.uc_trayecto, u.uc_periodo FROM tbl_uc u INNER JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo WHERE ud.doc_cedula = :doc_cedula AND u.uc_estado = 1";
             $params = [':doc_cedula' => $doc_cedula];
 
             if ($fase_actual === 'fase1') {
@@ -773,12 +859,12 @@ class Seccion extends Connection
                 $sql .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
             }
 
-           
+
             if ($trayecto_seccion !== null && is_numeric($trayecto_seccion)) {
                 $sql .= " AND u.uc_trayecto = :trayecto_seccion";
                 $params[':trayecto_seccion'] = (int)$trayecto_seccion;
             }
-         
+
 
             $sql .= " ORDER BY u.uc_nombre";
             $stmt = $this->Con()->prepare($sql);
@@ -808,7 +894,8 @@ class Seccion extends Connection
     public function obtenerEspacios()
     {
         try {
-            return $this->Con()->query("SELECT esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
+   
+            return $this->Con()->query("SELECT esp_numero AS numero, esp_tipo AS tipo, esp_edificio AS edificio FROM tbl_espacio WHERE esp_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             error_log("Error: " . $e->getMessage());
             return [];

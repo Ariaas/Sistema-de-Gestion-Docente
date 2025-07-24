@@ -118,13 +118,16 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'validar_clase_en_vivo':
+                // MODIFICADO: Recibir y pasar los 3 campos de la clave del espacio
                 $respuesta = $o->ValidarClaseEnVivo(
                     $_POST['doc_cedula'] ?? null,
-                    $_POST['esp_codigo'] ?? null,
+                    $_POST['esp_numero'] ?? null,
+                    $_POST['esp_tipo'] ?? null,
+                    $_POST['esp_edificio'] ?? null,
                     $_POST['dia'] ?? null,
                     $_POST['hora_inicio'] ?? null,
                     $_POST['sec_codigo'] ?? null,
-                    $_POST['uc_codigo'] ?? null 
+                    $_POST['uc_codigo'] ?? null
                 );
                 break;
 
