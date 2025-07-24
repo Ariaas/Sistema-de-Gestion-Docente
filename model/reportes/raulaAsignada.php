@@ -12,19 +12,22 @@ class AsignacionAulasReport extends Connection
     {
         $co = $this->con();
         try {
-            // Consulta simple para obtener las aulas usadas por día
+            // --- CONSULTA SQL CORREGIDA ---
+            // Se ajusta el SELECT y el JOIN para usar las columnas correctas.
             $sql = "SELECT DISTINCT
-                        e.esp_codigo,
+                        CONCAT(e.esp_tipo, ' ', e.esp_numero, ' (', e.esp_edificio, ')') AS aula_completa,
                         uh.hor_dia
                     FROM
                         tbl_espacio e
                     INNER JOIN
-                        uc_horario uh ON e.esp_codigo = uh.esp_codigo
+                        uc_horario uh ON e.esp_numero = uh.esp_numero 
+                                     AND e.esp_tipo = uh.esp_tipo 
+                                     AND e.esp_edificio = uh.esp_edificio
                     WHERE
-                        e.esp_estado = 1 AND uh.esp_codigo IS NOT NULL
+                        e.esp_estado = 1
                     ORDER BY
                         FIELD(uh.hor_dia, 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'),
-                        e.esp_codigo ASC";
+                        e.esp_edificio, e.esp_numero ASC";
             
             $stmt = $co->prepare($sql);
             $stmt->execute();

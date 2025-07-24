@@ -4,12 +4,19 @@ require_once('model/dbconnection.php');
 
 class Carga extends Connection
 {
+    private $anio_id; // --- NUEVO ---
     private $trayecto;
     private $seccion;
 
     public function __construct()
     {
         parent::__construct();
+    }
+
+    // --- NUEVO ---
+    public function set_anio($valor)
+    {
+        $this->anio_id = $valor;
     }
 
     public function set_trayecto($valor)
@@ -26,28 +33,50 @@ class Carga extends Connection
     {
         $co = $this->con();
         try {
-
+            // --- CONSULTA MODIFICADA ---
             $sqlBase = "SELECT
                             u.uc_trayecto AS 'Número de Trayecto',
                             u.uc_nombre AS 'Nombre de la Unidad Curricular',
-                            s.sec_codigo AS 'Código de Sección',
-                            GROUP_CONCAT(DISTINCT CONCAT(d.doc_nombre, ' ', d.doc_apellido) SEPARATOR '\n') AS 'Nombre Completo del Docente'
+                            -- Formato de sección con IN / IIN
+                            CASE 
+                                WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
+                                WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
+                                ELSE s.sec_codigo
+                            END AS 'Código de Sección',
+                            valid_teacher.NombreCompleto AS 'Nombre Completo del Docente'
                         FROM
-                            tbl_uc u
+                            uc_horario uh
                         INNER JOIN
-                            uc_horario uh ON u.uc_codigo = uh.uc_codigo
+                            tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         INNER JOIN
                             tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                        LEFT JOIN
-                            uc_docente ud ON u.uc_codigo = ud.uc_codigo AND ud.uc_doc_estado = 1
-                        LEFT JOIN
-                            tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                        LEFT JOIN (
+                            SELECT
+                                dh.sec_codigo,
+                                ud.uc_codigo,
+                                GROUP_CONCAT(DISTINCT CONCAT(d.doc_nombre, ' ', d.doc_apellido) SEPARATOR '\n') AS NombreCompleto
+                            FROM
+                                docente_horario dh
+                            INNER JOIN
+                                uc_docente ud ON dh.doc_cedula = ud.doc_cedula
+                            INNER JOIN
+                                tbl_docente d ON dh.doc_cedula = d.doc_cedula
+                            GROUP BY
+                                dh.sec_codigo, ud.uc_codigo
+                        ) AS valid_teacher ON valid_teacher.sec_codigo = s.sec_codigo AND valid_teacher.uc_codigo = u.uc_codigo
                         ";
 
             $conditions = [];
             $params = [];
 
-            // Se usa una validación robusta que acepta el valor '0' para Trayecto Inicial
+            // --- Lógica de filtrado por año ---
+            if (!empty($this->anio_id)) {
+                $conditions[] = "s.ani_anio = :anio_id";
+                $params[':anio_id'] = $this->anio_id;
+            } else {
+                $conditions[] = "s.ani_anio IN (SELECT ani_anio FROM tbl_anio WHERE ani_activo = 1)";
+            }
+            
             if (isset($this->trayecto) && $this->trayecto !== '') {
                 $conditions[] = "u.uc_trayecto = :trayecto_id";
                 $params[':trayecto_id'] = $this->trayecto;
@@ -62,8 +91,6 @@ class Carga extends Connection
                 $sqlBase .= " WHERE " . implode(" AND ", $conditions);
             }
             
-            // Se agrupa por la unidad y la sección para consolidar docentes
-            $sqlBase .= " GROUP BY u.uc_trayecto, s.sec_codigo, u.uc_nombre";
             $sqlBase .= " ORDER BY u.uc_trayecto, s.sec_codigo, u.uc_nombre";
 
             $resultado = $co->prepare($sqlBase);
@@ -76,6 +103,19 @@ class Carga extends Connection
         }
     }
 
+    // --- NUEVA FUNCIÓN ---
+    public function obtenerAnios()
+    {
+        $co = $this->con();
+        try {
+            $p = $co->prepare("SELECT * FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC");
+            $p->execute();
+            return $p->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en Carga::obtenerAnios: " . $e->getMessage());
+            return false;
+        }
+    }
     public function obtenerTrayectos()
     {
         $co = $this->con();

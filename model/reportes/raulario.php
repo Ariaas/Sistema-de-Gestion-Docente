@@ -3,114 +3,101 @@ require_once('model/dbconnection.php');
 
 class AularioReport extends Connection
 {
-    private $espacio_id;
+    private $anio, $fase, $espacio;
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
+    public function __construct() { parent::__construct(); }
 
-    public function set_espacio_id($valor)
-    {
-        $this->espacio_id = trim($valor);
-    }
+    // Setters para los filtros
+    public function setAnio($valor) { $this->anio = trim($valor); }
+    public function setFase($valor) { $this->fase = trim($valor); }
+    public function setEspacio($valor) { $this->espacio = trim($valor); }
+    
+    // --- MÉTODOS PARA POBLAR LOS DROPDOWNS ---
 
-    public function getEspacios()
-    {
-        $co = $this->con();
+    public function getAniosActivos() {
         try {
-            $p = $co->prepare("SELECT esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1 ORDER BY esp_codigo ASC");
-            $p->execute();
-            return $p->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en AularioReport::getEspacios: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    public function getDistinctTimeSlotsForEspacio()
-    {
-        if (empty($this->espacio_id)) {
-            return [];
-        }
-        $co = $this->con();
-        try {
-            // MODIFICACIÓN: Se elimina el JOIN a tbl_horario.
-            $sql = "SELECT DISTINCT
-                        uh.hor_horainicio AS hor_inicio,
-                        uh.hor_horafin AS hor_fin
-                    FROM
-                        uc_horario uh
-                    WHERE
-                        uh.esp_codigo = :espacio_codigo_param
-                    ORDER BY
-                        uh.hor_horainicio ASC";
-            $stmt = $co->prepare($sql);
-            $stmt->bindParam(':espacio_codigo_param', $this->espacio_id, PDO::PARAM_STR);
+            $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
+            $stmt = $this->con()->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en AularioReport::getDistinctTimeSlotsForEspacio: " . $e->getMessage());
-            return [];
-        }
+        } catch (PDOException $e) { return []; }
     }
 
-    public function getHorarioDataByEspacio()
-    {
-        if (empty($this->espacio_id)) {
-            return [];
-        }
-        $co = $this->con();
+    public function getFases() {
         try {
-            // MODIFICACIÓN: Se elimina el JOIN a tbl_horario y el WHERE filtra directamente en uc_horario.
-            $sql = "SELECT
-                        uh.hor_dia,
-                        uh.hor_horainicio AS hor_inicio,
-                        uh.hor_horafin AS hor_fin,
-                        u.uc_nombre AS UnidadDisplay,
-                        u.uc_nombre AS NombreCompletoUC,
-                        s.sec_codigo AS NombreSeccion,
-                        CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS NombreCompletoDocente
-                    FROM
-                        uc_horario uh
-                    JOIN
-                        tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                    JOIN
-                        tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                    LEFT JOIN
-                        uc_docente ud ON u.uc_codigo = ud.uc_codigo AND ud.uc_doc_estado = 1
-                    LEFT JOIN
-                        tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                    WHERE
-                        uh.esp_codigo = :espacio_codigo_param
-                    ORDER BY
-                        uh.hor_horainicio ASC, u.uc_codigo ASC, s.sec_codigo ASC";
-
-            $stmt = $co->prepare($sql);
-            $stmt->bindParam(':espacio_codigo_param', $this->espacio_id, PDO::PARAM_STR);
+            $sql = "SELECT DISTINCT fase_numero FROM tbl_fase ORDER BY fase_numero ASC";
+            $stmt = $this->con()->prepare($sql);
             $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return []; }
+    }
+    
+    public function getEspacios() {
+        try {
+            $sql = "SELECT CONCAT(esp_tipo, ' ', esp_numero, ' (', esp_edificio, ')') as esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1 ORDER BY esp_codigo ASC";
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return []; }
+    }
+
+    // --- MÉTODO PRINCIPAL PARA OBTENER DATOS DEL REPORTE ---
+
+    public function getAulariosFiltrados()
+    {
+        if (empty($this->anio) || empty($this->fase)) return [];
+
+        // ▼▼▼ CORRECCIÓN 1: Ajustado 'Anual' a 'anual' (minúsculas) para que coincida con tu base de datos.
+        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual'] : ['Fase II', 'anual'];
+        
+        try {
+            $params = [':anio_param' => $this->anio];
+            
+            // ▼▼▼ CORRECCIÓN 2: Se simplificó el LEFT JOIN a docente_horario.
+            $sql_base = "SELECT
+                            CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')') AS esp_codigo,
+                            uh.hor_dia,
+                            CONCAT(uh.hor_horainicio, ':00') as hor_horainicio,
+                            CONCAT(uh.hor_horafin, ':00') as hor_horafin,
+                            u.uc_nombre,
+                            uh.sec_codigo,
+                            GROUP_CONCAT(DISTINCT CONCAT(d.doc_nombre, ' ', d.doc_apellido) SEPARATOR '\n') AS NombreCompletoDocente
+                        FROM
+                            uc_horario uh
+                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                        JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                        LEFT JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo
+                        LEFT JOIN tbl_docente d ON dh.doc_cedula = d.doc_cedula AND d.doc_estado = 1
+                        WHERE
+                            s.ani_anio = :anio_param
+                            AND u.uc_estado = 1";
+            
+            $period_placeholders = [];
+            $i = 0;
+            foreach ($allowed_periods as $period) {
+                $key = ":period" . $i++;
+                $period_placeholders[] = $key;
+                $params[$key] = $period;
+            }
+            $in_clause = implode(', ', $period_placeholders);
+            $sql_base .= " AND u.uc_periodo IN ({$in_clause})";
+
+            if (isset($this->espacio) && $this->espacio !== '') {
+                $sql_base .= " AND CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')') = :espacio_param";
+                $params[':espacio_param'] = $this->espacio;
+            }
+            
+            $sql_base .= " GROUP BY esp_codigo, uh.hor_dia, uh.hor_horafin, uh.hor_horainicio, u.uc_nombre, uh.sec_codigo
+                           ORDER BY esp_codigo ASC, uh.hor_horainicio ASC, uh.hor_dia ASC";
+            
+            $stmt = $this->con()->prepare($sql_base);
+            $stmt->execute($params);
+
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
-            error_log("Error en AularioReport::getHorarioDataByEspacio: " . $e->getMessage());
+            error_log("Error en AularioReport::getAulariosFiltrados: " . $e->getMessage());
             return false;
-        }
-    }
-
-     public function getEspacioCodigoByCodigo($codigo)
-    {
-        if (empty($codigo)) return null;
-        $co = $this->con();
-        try {
-            $p = $co->prepare("SELECT esp_codigo FROM tbl_espacio WHERE esp_codigo = :codigo_param");
-            $p->bindParam(':codigo_param', $codigo, PDO::PARAM_STR);
-            $p->execute();
-            $result = $p->fetch(PDO::FETCH_ASSOC);
-            return $result ? $result['esp_codigo'] : null;
-        } catch (PDOException $e) {
-            error_log("Error en AularioReport::getEspacioCodigoByCodigo: " . $e->getMessage());
-            return null;
         }
     }
 }
-?>

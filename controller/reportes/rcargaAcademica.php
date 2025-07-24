@@ -3,14 +3,16 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../model/reportes/rcargaAcademica.php';
+require_once("vendor/autoload.php");
+require_once("model/reportes/rcargaAcademica.php");
+
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-// Función para convertir números a romanos
 function toRoman($number) {
     if ($number == 0) return 'INICIAL';
     $map = ['M' => 1000, 'CM' => 900, 'D' => 500, 'CD' => 400, 'C' => 100, 'XC' => 90, 'L' => 50, 'XL' => 40, 'X' => 10, 'IX' => 9, 'V' => 5, 'IV' => 4, 'I' => 1];
@@ -28,129 +30,200 @@ function toRoman($number) {
 }
 
 $vistaFormularioUc = "views/reportes/rcargaAcademica.php";
-if (!is_file($vistaFormularioUc)) {
-    die("Error crítico: No se encuentra el archivo de la vista.");
-}
-
 $oUc = new Carga();
 
 if (isset($_POST['generar_uc'])) {
 
+    $oUc->set_anio($_POST['anio_id'] ?? '');
     $oUc->set_trayecto($_POST['trayecto'] ?? '');
     $oUc->set_seccion($_POST['seccion'] ?? '');
     $datosReporte = $oUc->obtenerUnidadesCurriculares();
     
     if (empty($datosReporte)) {
-        $errorMessage = "No se encontraron datos de Carga Académica para los filtros seleccionados.";
-        $trayectos = $oUc->obtenerTrayectos();
-        $secciones = $oUc->obtenerSecciones();
-        require_once($vistaFormularioUc);
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Sin Resultados");
+        $sheet->mergeCells('A1:F1');
+        $sheet->setCellValue('A1', 'No hay registros disponibles para los filtros seleccionados.');
+        $style = [
+            'font' => ['bold' => true, 'size' => 12],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+        ];
+        $sheet->getStyle('A1')->applyFromArray($style);
+        $sheet->getRowDimension(1)->setRowHeight(30);
+        foreach (range('A', 'F') as $col) { $sheet->getColumnDimension($col)->setWidth(20); }
+        $writer = new Xlsx($spreadsheet);
+        if (ob_get_length()) ob_end_clean();
+        $fileName = "Reporte_Carga_Academica_Sin_Resultados.xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+        $writer->save('php://output');
         exit;
     }
-
+    
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("CARGA ACADEMICA");
-
-    // --- Estilos ---
-    $styleHeaderPrincipal = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    
+    $styleHeaderPrincipal = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleHeaderColumnas = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]]];
+    $styleBordesDelgados = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleCentrado = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
     $styleIzquierda = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
+    $styleBordeGruesoExterior = ['borders' => ['outline' => ['borderStyle' => Border::BORDER_THICK]]];
+    $styleHeaderInicial = [
+        'font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => 'FF000000']],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF4472C4']],
+    ];
 
-    // --- Lógica de Agrupación de Datos (Nueva) ---
-    $datosFinales = [];
-    $intermediateGroup = [];
-
-    // 1. Crear una estructura intermedia que agrupa las UCs por sección
+    $cargaPorSeccion = [];
     foreach ($datosReporte as $fila) {
-        $trayecto = $fila['Número de Trayecto'];
         $seccion = $fila['Código de Sección'];
-        $uc = $fila['Nombre de la Unidad Curricular'];
+        $trayecto = $fila['Número de Trayecto'];
+        $cargaPorSeccion[$seccion]['trayecto'] = $trayecto;
+        $cargaPorSeccion[$seccion]['unidades'][] = [
+            'uc' => $fila['Nombre de la Unidad Curricular'],
+            'docente' => $fila['Nombre Completo del Docente'] ?? 'S/A'
+        ];
+    }
+
+    $gruposPorCarga = [];
+    foreach ($cargaPorSeccion as $codigoSeccion => $data) {
+        $trayecto = $data['trayecto'];
+        $unidades = $data['unidades'];
+        usort($unidades, function($a, $b) { return strcmp($a['uc'], $b['uc']); });
         
-        $intermediateGroup[$trayecto][$seccion]['uc_list'][] = $uc;
-        $intermediateGroup[$trayecto][$seccion]['data'][] = $fila;
-    }
-
-    // 2. Agrupar las secciones que tienen la misma carga académica
-    foreach ($intermediateGroup as $trayecto => $secciones) {
-        $gruposPorCarga = [];
-        foreach ($secciones as $codSeccion => $data) {
-            $ucList = $data['uc_list'];
-            sort($ucList); // Ordenar para que la firma sea consistente
-            $signature = implode('|', $ucList); // Crear una "firma" única para la carga
-            
-            $gruposPorCarga[$signature]['secciones'][] = $codSeccion;
-            if (!isset($gruposPorCarga[$signature]['unidades'])) {
-                $gruposPorCarga[$signature]['unidades'] = $data['data'];
-            }
+        $firma = [];
+        foreach ($unidades as $unidad) {
+            $firma[] = $unidad['uc'] . '-' . $unidad['docente'];
         }
-        $datosFinales[$trayecto] = array_values($gruposPorCarga);
+        $firmaString = md5(implode('|', $firma));
+
+        $gruposPorCarga[$trayecto][$firmaString]['secciones'][] = $codigoSeccion;
+        if (!isset($gruposPorCarga[$trayecto][$firmaString]['unidades'])) {
+            $gruposPorCarga[$trayecto][$firmaString]['unidades'] = $unidades;
+        }
     }
 
-    // --- Renderizado del Excel ---
+    $datosParaRenderizar = [];
+    foreach ($gruposPorCarga as $trayecto => $grupos) {
+        foreach ($grupos as $grupoData) {
+            $etiquetaSeccion = implode("\n", $grupoData['secciones']);
+            $datosParaRenderizar[$trayecto][$etiquetaSeccion] = $grupoData['unidades'];
+        }
+    }
+    ksort($datosParaRenderizar, SORT_NUMERIC);
     
-    // Título Principal
-    $numTrayectoTitulo = array_key_first($datosFinales);
-    $sheet->mergeCells('A1:D1')->setCellValue('A1', 'TRAYECTO ' . toRoman($numTrayectoTitulo));
-    $sheet->getStyle('A1:D1')->applyFromArray($styleHeaderPrincipal);
+    $rowOffset = 1; $colOffset = 1; $bloquesEnFila = 0; $alturaMaximaFila = 0;
 
-    // Cabeceras de columna
-    $sheet->setCellValue('A3', 'Trayecto');
-    $sheet->setCellValue('B3', 'Seccion');
-    $sheet->setCellValue('C3', 'Unidad curricular');
-    $sheet->setCellValue('D3', 'Docente');
-    $sheet->getStyle('A3:D3')->applyFromArray($styleHeaderColumnas);
+    function renderizarBloque($sheet, $numTrayecto, $secciones, $startRow, $startCol, &$styles) {
+        $filaActual = $startRow;
+        
+        $colTrayecto = Coordinate::stringFromColumnIndex($startCol);
+        $colSeccion  = Coordinate::stringFromColumnIndex($startCol + 1);
+        $colUC       = Coordinate::stringFromColumnIndex($startCol + 2);
+        $colDocente  = Coordinate::stringFromColumnIndex($startCol + 3);
 
-    $filaActual = 4;
-    $startRowTrayecto = $filaActual;
+        $rangeTitulo = "{$colTrayecto}{$filaActual}:{$colDocente}{$filaActual}";
+        $sheet->mergeCells($rangeTitulo)->setCellValue($colTrayecto.$filaActual, 'TRAYECTO ' . toRoman($numTrayecto));
+        
+        if ($numTrayecto == 0) {
+            $sheet->getStyle($rangeTitulo)->applyFromArray($styles['inicial_header']);
+        } else {
+            $sheet->getStyle($rangeTitulo)->applyFromArray($styles['principal']);
+        }
+        
+        $filaActual++;
 
-    foreach ($datosFinales as $numTrayecto => $gruposDeCarga) {
-        foreach ($gruposDeCarga as $grupo) {
-            $startRowSeccion = $filaActual;
-            
-            // Formatear el nombre de las secciones agrupadas
-            $seccionLabel = implode(" - \n", $grupo['secciones']);
-            
-            // Escribir los datos
-            foreach ($grupo['unidades'] as $item) {
-                $sheet->setCellValue('C'.$filaActual, $item['Nombre de la Unidad Curricular']);
-                $sheet->setCellValue('D'.$filaActual, $item['Nombre Completo del Docente']);
+        $headerStartRow = $filaActual;
+        $sheet->setCellValue($colTrayecto.$filaActual, 'Trayecto');
+        $sheet->setCellValue($colSeccion.$filaActual, 'Sección');
+        $sheet->setCellValue($colUC.$filaActual, 'Unidad curricular');
+        $sheet->setCellValue($colDocente.$filaActual, 'Docente');
+        $sheet->getStyle("{$colTrayecto}{$filaActual}:{$colDocente}{$filaActual}")->applyFromArray($styles['columnas']);
+        $filaActual++;
+        
+        $trayectoStartRow = $filaActual;
+        foreach ($secciones as $codSeccion => $unidades) {
+            $seccionStartRow = $filaActual;
+            foreach ($unidades as $item) {
+                $sheet->setCellValue($colUC.$filaActual, $item['uc']);
+                $sheet->setCellValue($colDocente.$filaActual, $item['docente'] ?? 'NO ASIGNADO');
                 $filaActual++;
             }
-            
-            // Escribir y combinar celdas de Trayecto y Sección
             $endRowSeccion = $filaActual - 1;
-            $sheet->setCellValue('B'.$startRowSeccion, $seccionLabel);
-            if ($startRowSeccion < $endRowSeccion) {
-                $sheet->mergeCells('B'.$startRowSeccion.':B'.$endRowSeccion);
-            }
+            $sheet->setCellValue($colSeccion.$seccionStartRow, $codSeccion);
+            if ($seccionStartRow < $endRowSeccion) $sheet->mergeCells("{$colSeccion}{$seccionStartRow}:{$colSeccion}{$endRowSeccion}");
         }
-        
-        // Combinar la celda del Trayecto para todas sus filas
         $endRowTrayecto = $filaActual - 1;
-        $sheet->setCellValue('A'.$startRowTrayecto, toRoman($numTrayecto));
-        if ($startRowTrayecto < $endRowTrayecto) {
-            $sheet->mergeCells('A'.$startRowTrayecto.':A'.$endRowTrayecto);
+        $sheet->setCellValue($colTrayecto.$trayectoStartRow, toRoman($numTrayecto));
+        if ($trayectoStartRow < $endRowTrayecto) $sheet->mergeCells("{$colTrayecto}{$trayectoStartRow}:{$colTrayecto}{$endRowTrayecto}");
+
+        $rangoTabla = "{$colTrayecto}{$headerStartRow}:{$colDocente}".($filaActual - 1);
+        $sheet->getStyle($rangoTabla)->applyFromArray($styles['delgados']);
+        $sheet->getStyle("{$colTrayecto}{$trayectoStartRow}:{$colSeccion}".($filaActual - 1))->applyFromArray($styles['centrado']);
+        $sheet->getStyle("{$colUC}{$trayectoStartRow}:{$colDocente}".($filaActual - 1))->applyFromArray($styles['izquierda']);
+
+        $rangoBloqueCompleto = "{$colTrayecto}{$startRow}:{$colDocente}".($filaActual - 1);
+        $sheet->getStyle($rangoBloqueCompleto)->applyFromArray($styles['grueso']);
+
+        return $filaActual - $startRow;
+    }
+
+    $estilos = [
+        'principal' => $styleHeaderPrincipal, 'columnas' => $styleHeaderColumnas,
+        'delgados' => $styleBordesDelgados, 'grueso' => $styleBordeGruesoExterior,
+        'centrado' => $styleCentrado, 'izquierda' => $styleIzquierda,
+        'inicial_header' => $styleHeaderInicial
+    ];
+
+    foreach ($datosParaRenderizar as $numTrayecto => $secciones) {
+        if ($numTrayecto == 0 || $bloquesEnFila >= 2) {
+            $rowOffset += $alturaMaximaFila + 2;
+            $colOffset = 1;
+            $bloquesEnFila = 0;
+            $alturaMaximaFila = 0;
+        }
+
+        $alturaBloqueActual = renderizarBloque($sheet, $numTrayecto, $secciones, $rowOffset, $colOffset, $estilos);
+
+        $alturaMaximaFila = max($alturaMaximaFila, $alturaBloqueActual);
+        $colOffset += 5;
+        $bloquesEnFila++;
+    }
+
+    // --- CÓDIGO CON ANCHOS AJUSTADOS (MÁS PEQUEÑOS) ---
+    $highestColumn = $sheet->getHighestDataColumn();
+    $lastColIndex = Coordinate::columnIndexFromString($highestColumn);
+
+    for ($i = 1; $i <= $lastColIndex; $i++) {
+        $colLetter = Coordinate::stringFromColumnIndex($i);
+        $mod = ($i - 1) % 5;
+        
+        switch ($mod) {
+            case 0: // Columna de Trayecto
+                $sheet->getColumnDimension($colLetter)->setWidth(10);
+                break;
+            case 1: // Columna de Sección
+                $sheet->getColumnDimension($colLetter)->setWidth(12);
+                break;
+            case 2: // Columna de Unidad Curricular
+                $sheet->getColumnDimension($colLetter)->setWidth(38);
+                break;
+            case 3: // Columna de Docente
+                $sheet->getColumnDimension($colLetter)->setWidth(30);
+                break;
+            case 4: // Columna espaciadora
+                $sheet->getColumnDimension($colLetter)->setWidth(4);
+                break;
         }
     }
     
-    // --- Aplicar estilos finales ---
-    $rangoTabla = 'A3:D' . ($filaActual - 1);
-    $sheet->getStyle($rangoTabla)->applyFromArray($styleBordes);
-    $sheet->getStyle('A4:B' . ($filaActual - 1))->applyFromArray($styleCentrado);
-    $sheet->getStyle('C4:D' . ($filaActual - 1))->applyFromArray($styleIzquierda);
-    
-    $sheet->getColumnDimension('A')->setWidth(12);
-    $sheet->getColumnDimension('B')->setWidth(25);
-    $sheet->getColumnDimension('C')->setWidth(45);
-    $sheet->getColumnDimension('D')->setWidth(45);
-
-    // --- Generar y descargar el archivo ---
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Carga_Academica_por_Trayecto.xlsx";
+    $fileName = "Carga_Academica_Agrupada.xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -158,6 +231,7 @@ if (isset($_POST['generar_uc'])) {
     exit;
 
 } else {
+    $listaAnios = $oUc->obtenerAnios();
     $trayectos = $oUc->obtenerTrayectos();
     $secciones = $oUc->obtenerSecciones();
     require_once($vistaFormularioUc);

@@ -1,17 +1,17 @@
-
-
 document.addEventListener('DOMContentLoaded', function () {
     const generarBtn = document.getElementById("generar_aulario_btn");
-    const espacioSelect = document.getElementById("espacio_aul");
+    const anioSelect = document.getElementById("anio_id");
+    const faseSelect = document.getElementById("fase_id");
 
     if (generarBtn) {
         generarBtn.addEventListener("click", function(event) {
-            if (espacioSelect && espacioSelect.value === "") {
+            // Validar que se haya seleccionado un año y una fase
+            if (!anioSelect || anioSelect.value === "" || !faseSelect || faseSelect.value === "") {
                 event.preventDefault(); 
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Campo Requerido',
-                    text: 'Por favor, seleccione un Aula para generar el reporte.',
+                    title: 'Campos Requeridos',
+                    text: 'Por favor, seleccione un Año Académico y una Fase para generar el reporte.',
                     confirmButtonColor: '#3085d6'
                 });
                 return;

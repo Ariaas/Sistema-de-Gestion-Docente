@@ -44,6 +44,12 @@ class Seccion extends Connection
         $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
         
         $sql_ucs = "SELECT u.uc_codigo, um.mal_hora_academica FROM tbl_uc u JOIN uc_malla um ON u.uc_codigo = um.uc_codigo WHERE u.uc_trayecto = :trayecto AND um.mal_codigo = :mal_codigo AND u.uc_estado = 1";
+
+        if ($trayecto == '0') {
+    // Para el Trayecto Inicial, siempre buscamos las materias de inicio sin importar la fase.
+    $sql_ucs .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual' OR u.uc_periodo = '0')";
+} 
+
         if ($fase_actual === 'fase1') $sql_ucs .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual' OR u.uc_periodo = '0')";
         elseif ($fase_actual === 'fase2') $sql_ucs .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
         $stmt_ucs = $co->prepare($sql_ucs);
@@ -700,17 +706,18 @@ $horario_generado[] = [
         try {
       
             $sql = "SELECT 
-        uh.uc_codigo, 
-        ud.doc_cedula, 
-        uh.esp_numero,      -- CAMBIADO
-        uh.esp_tipo,        -- AÑADIDO
-        uh.esp_edificio,    -- AÑADIDO
-        uh.hor_dia as dia, 
-        uh.hor_horainicio as hora_inicio, 
-        uh.hor_horafin as hora_fin 
-    FROM uc_horario uh 
-    LEFT JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo 
-    WHERE uh.sec_codigo = :sec_codigo";
+            uh.uc_codigo, 
+            dh.doc_cedula, -- <-- Obtiene la cédula desde docente_horario (CORRECTO)
+            uh.esp_numero,
+            uh.esp_tipo,
+            uh.esp_edificio,
+            uh.hor_dia as dia, 
+            uh.hor_horainicio as hora_inicio, 
+            uh.hor_horafin as hora_fin 
+        FROM uc_horario uh 
+        LEFT JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo -- <-- Usa el JOIN correcto
+        WHERE uh.sec_codigo = :sec_codigo
+        GROUP BY uh.uc_codigo, uh.esp_numero, uh.esp_tipo, uh.esp_edificio, uh.hor_dia, uh.hor_horainicio";
 
 
             $stmt = $this->Con()->prepare($sql);

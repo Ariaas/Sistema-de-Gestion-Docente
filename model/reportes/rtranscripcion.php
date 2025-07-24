@@ -18,36 +18,38 @@ class Transcripcion extends Connection
     public function set_fase($valor) {
         $this->fase = trim($valor);
     }
-
-    public function obtenerTranscripciones()
+ public function obtenerTranscripciones()
     {
         $co = $this->con();
         try {
-            
+            // --- CONSULTA MODIFICADA ---
+            // Se ajusta el CASE para que use la lógica de prefijos IN y IIN.
             $sqlBase = "SELECT
                             d.doc_cedula AS `IDDocente`,
                             d.doc_cedula AS `CedulaDocente`,
                             CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS `NombreCompletoDocente`,
                             u.uc_nombre AS `NombreUnidadCurricular`,
-                            -- ▼▼▼ CAMBIO PARA FORMATEAR LA SECCIÓN ▼▼▼
-                            CASE
-                                WHEN LEFT(s.sec_codigo, 1) IN ('1', '2') THEN CONCAT('IN', s.sec_codigo)
-                                WHEN LEFT(s.sec_codigo, 1) IN ('3', '4') THEN CONCAT('IIN', s.sec_codigo)
-                                ELSE CAST(s.sec_codigo AS CHAR)
+                            CASE 
+                                WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
+                                WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
+                                ELSE s.sec_codigo
                             END AS `NombreSeccion`
                         FROM
-                            uc_docente ud
+                            docente_horario dh
                         INNER JOIN
-                            tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                            tbl_docente d ON dh.doc_cedula = d.doc_cedula
                         INNER JOIN
-                            tbl_uc u ON ud.uc_codigo = u.uc_codigo
+                            tbl_seccion s ON dh.sec_codigo = s.sec_codigo
                         INNER JOIN
-                            uc_horario uh ON u.uc_codigo = uh.uc_codigo
+                            uc_horario uh ON s.sec_codigo = uh.sec_codigo
                         INNER JOIN
-                            tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                            tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         ";
             
-            $conditions = ["ud.uc_doc_estado = 1"];
+            $conditions = [
+                "d.doc_estado = 1",
+                "s.sec_estado = 1"
+            ];
             $params = [];
 
             if (!empty($this->anio_id)) {
@@ -55,15 +57,24 @@ class Transcripcion extends Connection
                 $params[':anio_id'] = $this->anio_id;
             }
 
-            if ($this->fase !== '') {
-                $conditions[] = "u.uc_periodo = :fase";
-                $params[':fase'] = $this->fase;
-            }
-
-            if (!empty($conditions)) {
-                $sqlBase .= " WHERE " . implode(" AND ", $conditions);
+            if (!empty($this->fase)) {
+                $fase_condition = '';
+                switch ($this->fase) {
+                    case '1':
+                        $fase_condition = "(u.uc_periodo = 'Fase I' OR LOWER(u.uc_periodo) = 'anual')";
+                        break;
+                    case '2':
+                        $fase_condition = "(u.uc_periodo = 'Fase II' OR LOWER(u.uc_periodo) = 'anual')";
+                        break;
+                    case 'Anual':
+                        break;
+                }
+                if ($fase_condition) {
+                    $conditions[] = $fase_condition;
+                }
             }
             
+            $sqlBase .= " WHERE " . implode(" AND ", $conditions);
             $sqlBase .= " ORDER BY `NombreCompletoDocente`, u.uc_nombre, s.sec_codigo";
 
             $resultado = $co->prepare($sqlBase);
@@ -75,11 +86,7 @@ class Transcripcion extends Connection
             return false;
         }
     }
-
-    /**
-     * NUEVA FUNCIÓN: Obtiene las U.C. que tienen horario pero no docente.
-     */
-    public function obtenerCursosSinDocente() {
+  public function obtenerCursosSinDocente() {
         $co = $this->con();
         try {
             $sqlBase = "SELECT DISTINCT
@@ -90,24 +97,36 @@ class Transcripcion extends Connection
                             tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         INNER JOIN
                             tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                        LEFT JOIN
-                            uc_docente ud ON uh.uc_codigo = ud.uc_codigo AND ud.uc_doc_estado = 1
                         ";
 
-            $conditions = ["ud.doc_cedula IS NULL"]; // La clave es buscar donde el docente es NULO
+            $where_clauses = ["NOT EXISTS (SELECT 1 FROM docente_horario dh WHERE dh.sec_codigo = s.sec_codigo)"];
             $params = [];
 
             if (!empty($this->anio_id)) {
-                $conditions[] = "s.ani_anio = :anio_id";
+                $where_clauses[] = "s.ani_anio = :anio_id";
                 $params[':anio_id'] = $this->anio_id;
             }
 
-            if ($this->fase !== '') {
-                $conditions[] = "u.uc_periodo = :fase";
-                $params[':fase'] = $this->fase;
+            // --- LÓGICA DE FILTRO REQUERIDA ---
+            if (!empty($this->fase)) {
+                switch ($this->fase) {
+                    case '1':
+                        $where_clauses[] = "(u.uc_periodo = 'Fase I' OR LOWER(u.uc_periodo) = 'anual')";
+                        break;
+                    case '2':
+                        $where_clauses[] = "(u.uc_periodo = 'Fase II' OR LOWER(u.uc_periodo) = 'anual')";
+                        break;
+                    case 'Anual':
+                        // Al seleccionar "Anual", no se agrega filtro de fase para mostrar todo.
+                        break;
+                }
+            }
+            // --- FIN DEL BLOQUE ---
+
+            if (!empty($where_clauses)) {
+                $sqlBase .= " WHERE " . implode(" AND ", $where_clauses);
             }
 
-            $sqlBase .= " WHERE " . implode(" AND ", $conditions);
             $sqlBase .= " ORDER BY u.uc_nombre";
             
             $resultado = $co->prepare($sqlBase);
