@@ -1,41 +1,50 @@
 <?php
 require_once('model/dbconnection.php');
 
-class Titulo extends Connection{
+class Titulo extends Connection
+{
     private $prefijoTitulo;
     private $nombreTitulo;
 
-   
+
     private $originalPrefijoTitulo;
     private $originalNombreTitulo;
 
-    public function __construct(){
+    public function __construct()
+    {
         parent::__construct();
     }
 
-  
-    public function set_prefijo($prefijoTitulo){
+
+    public function set_prefijo($prefijoTitulo)
+    {
         $this->prefijoTitulo = $prefijoTitulo;
     }
-    public function get_prefijo(){
+    public function get_prefijo()
+    {
         return $this->prefijoTitulo;
     }
-    public function set_nombreTitulo($nombreTitulo){
+    public function set_nombreTitulo($nombreTitulo)
+    {
         $this->nombreTitulo = $nombreTitulo;
     }
-    public function get_nombreTitulo(){
+    public function get_nombreTitulo()
+    {
         return $this->nombreTitulo;
     }
-    public function set_original_prefijo($originalPrefijoTitulo){
+    public function set_original_prefijo($originalPrefijoTitulo)
+    {
         $this->originalPrefijoTitulo = $originalPrefijoTitulo;
     }
-    public function set_original_nombre($originalNombreTitulo){
+    public function set_original_nombre($originalNombreTitulo)
+    {
         $this->originalNombreTitulo = $originalNombreTitulo;
     }
 
-    public function Registrar(){
+    public function Registrar()
+    {
         $r = array();
-      
+
         if ($this->Existe()) {
             $r['resultado'] = 'error';
             $r['mensaje'] = '¡ERROR! <br/> El título con ese prefijo y nombre ya existe.';
@@ -60,12 +69,13 @@ class Titulo extends Connection{
         return $r;
     }
 
-    public function Consultar(){
+    public function Consultar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-   
+
             $stmt = $co->query("SELECT tit_prefijo, tit_nombre FROM tbl_titulo WHERE tit_estado = 1 ORDER BY tit_prefijo, tit_nombre");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
@@ -78,12 +88,13 @@ class Titulo extends Connection{
         return $r;
     }
 
-    public function Modificar(){
+    public function Modificar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
-     
+
         if ($this->prefijoTitulo !== $this->originalPrefijoTitulo || $this->nombreTitulo !== $this->originalNombreTitulo) {
             if ($this->Existe()) {
                 $r['resultado'] = 'error';
@@ -91,9 +102,9 @@ class Titulo extends Connection{
                 return $r;
             }
         }
-      
+
         try {
-    
+
             $stmt = $co->prepare("UPDATE tbl_titulo
             SET tit_prefijo = :new_prefijo, tit_nombre = :new_nombre
             WHERE tit_prefijo = :old_prefijo AND tit_nombre = :old_nombre");
@@ -108,25 +119,26 @@ class Titulo extends Connection{
             $r['mensaje'] = '¡Registro Modificado!<br/>Se modificó el título correctamente.';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
-       
+
             if ($e->getCode() == '23000') {
-                 $r['mensaje'] = 'No se puede modificar el título porque está siendo utilizado por uno o más docentes.';
+                $r['mensaje'] = 'No se puede modificar el título porque está siendo utilizado por uno o más docentes.';
             } else {
-                 $r['mensaje'] = $e->getMessage();
+                $r['mensaje'] = $e->getMessage();
             }
         }
         return $r;
     }
 
-    public function Eliminar(){
+    public function Eliminar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        
 
-        if ($this->Existe()){ 
+
+        if ($this->Existe()) {
             try {
-            
+
                 $stmt = $co->prepare("UPDATE tbl_titulo SET tit_estado = 0 WHERE tit_prefijo = :prefijotitulo AND tit_nombre = :nombretitulo");
                 $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
                 $stmt->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
@@ -136,7 +148,7 @@ class Titulo extends Connection{
                 $r['mensaje'] = '¡Registro Eliminado!<br/>Se eliminó el título correctamente.';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
-                
+
                 if ($e->getCode() == '23000') {
                     $r['mensaje'] = 'No se puede eliminar el título porque está siendo utilizado por uno o más docentes.';
                 } else {
@@ -150,20 +162,31 @@ class Titulo extends Connection{
         return $r;
     }
 
-    public function Existe(){
+    public function Existe()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
-            $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijotitulo AND tit_nombre = :nombretitulo AND tit_estado = 1");
+            $sql = "SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijotitulo AND tit_nombre = :nombretitulo AND tit_estado = 1";
+
+            if (!empty($this->originalPrefijoTitulo) && !empty($this->originalNombreTitulo)) {
+                $sql .= " AND (tit_prefijo != :original_prefijo OR tit_nombre != :original_nombre)";
+            }
+
+            $stmt = $co->prepare($sql);
             $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
             $stmt->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
+
+            if (!empty($this->originalPrefijoTitulo) && !empty($this->originalNombreTitulo)) {
+                $stmt->bindParam(':original_prefijo', $this->originalPrefijoTitulo, PDO::PARAM_STR);
+                $stmt->bindParam(':original_nombre', $this->originalNombreTitulo, PDO::PARAM_STR);
+            }
+
             $stmt->execute();
             $fila = $stmt->fetch(PDO::FETCH_BOTH);
-            return !empty($fila); 
+            return !empty($fila);
         } catch (Exception $e) {
-           
-            return true; 
+            return true;
         }
     }
 }
-?>

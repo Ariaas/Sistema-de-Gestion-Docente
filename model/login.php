@@ -57,11 +57,11 @@ class Login extends Connection
                     $r['usu_cedula'] = $fila['usu_cedula'];
                 } else {
                     $r['resultado'] = 'noexiste';
-                    $r['mensaje'] = "Error en el usuario o contraseña!!!";
+                    $r['mensaje'] = "Verifique su usuario o contraseña";
                 }
             } else {
                 $r['resultado'] = 'noexiste';
-                $r['mensaje'] = "Error en el usuario o contraseña!!!";
+                $r['mensaje'] = "Verifique su usuario o contraseña";
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';

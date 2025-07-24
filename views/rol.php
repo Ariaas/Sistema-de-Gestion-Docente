@@ -54,10 +54,11 @@ if (!isset($_SESSION['name'])) {
                                 <span id="srolId" class="form-text"></span>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="nombreRol" class="form-label">Nombre del Rol</label>
                                 <input class="form-control" type="text" id="nombreRol" name="nombreRol" min="1">
                                 <span id="snombreRol" class="form-text"></span>
+                                <br>
                             </div>
 
                             <div class="modal-footer justify-content-center">

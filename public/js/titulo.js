@@ -73,28 +73,48 @@ function pone(pos, accion) {
         $("#tituloprefijo, #titulonombre").prop("disabled", true);
     }
     $("#modal1").modal("show");
+    $("#stituloprefijo, #stitulonombre").hide();
 }
 
 function validarenvio() {
-    let prefijo = $("#tituloprefijo").val();
-    if (!prefijo) {
-        muestraMensaje("error", 4000, "¡ERROR!", "Por favor, seleccione un prefijo."); 
-        return false;
+    let esValido = true;
+    
+    if ($("#tituloprefijo").val() == "" || $("#tituloprefijo").val() == null) {
+        $("#stituloprefijo").text("Debe seleccionar un prefijo.").show();
+        if(esValido) muestraMensaje("error", 4000, "¡ERROR!", "Debe seleccionar un prefijo para el título.");
+        esValido = false;
+    } else {
+        $("#stituloprefijo").text("").hide();
     }
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/.test($("#titulonombre").val())) {
-        muestraMensaje("error", 4000, "¡ERROR!", "El nombre del título no es válido.<br/>Debe contener entre 5 y 30 letras.");
-        return false;
+
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 30 letras.") === 0) {
+        if(esValido) muestraMensaje("error", 4000, "¡ERROR!", "El formato del nombre del título es incorrecto.");
+        esValido = false;
     }
-    return true;
+    
+    return esValido;
 }
 
-function enviaAjax(datos) {
+function enviaAjax(datos, accion) {
     $.ajax({
         async: true, url: "", type: "POST", contentType: false,
         data: datos, processData: false, cache: false,
         success: function(respuesta) {
             try {
                 var lee = JSON.parse(respuesta);
+
+                if (accion === 'existe') {
+                    if (lee.resultado === 'existe') {
+                        $("#stitulonombre").text(lee.mensaje).css("color", "red").show();
+                        $("#proceso").prop("disabled", true);
+                    } else {
+                        $("#stitulonombre").text("").css("color", "");
+                        $("#proceso").prop("disabled", false);
+                        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 30 letras.");
+                    }
+                    return;
+                }
+
                 if (lee.resultado === "consultar") {
                     destruyeDT();
                     $("#resultadoconsulta").empty();
@@ -117,10 +137,6 @@ function enviaAjax(datos) {
                     muestraMensaje("success", 4000, "¡ÉXITO!", lee.mensaje);
                     $("#modal1").modal("hide");
                     Listar();
-                } else if (lee.resultado === 'existe') {
-                    $("#stitulonombre").text(lee.mensaje);
-                } else if (lee.resultado === 'no_existe') {
-                    $("#stitulonombre").text('');
                 } else if (lee.resultado === "error") {
                     muestraMensaje("error", 8000, "¡ERROR!", lee.mensaje);
                 }
@@ -138,7 +154,8 @@ function limpia() {
     $("#titulonombre").val("");
     $("#tituloprefijo_original").val("");
     $("#titulonombre_original").val("");
-    $(".text-danger").text("");
+    $("#stituloprefijo").text("").hide();
+    $("#stitulonombre").text("").hide();
     $("#tituloprefijo, #titulonombre").prop("disabled", false);
 }
 
@@ -146,12 +163,27 @@ $(document).ready(function() {
     Listar();
 
     $("#titulonombre, #tituloprefijo").on("keyup change", function () {
-        if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "")) {
+        $("#stitulonombre").css("color", "");
+
+        if ($("#tituloprefijo").val() !== "" && $("#tituloprefijo").val() !== null) {
+            $("#stituloprefijo").text("").hide();
+        }
+
+        let nombreValido = validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 30 letras.");
+        let prefijoValido = $("#tituloprefijo").val() !== "" && $("#tituloprefijo").val() !== null;
+
+        if (nombreValido === 1 && prefijoValido) {
             let datos = new FormData();
             datos.append('accion', 'existe');
             datos.append("tituloprefijo", $("#tituloprefijo").val());
             datos.append("titulonombre", $("#titulonombre").val());
-            enviaAjax(datos);
+            
+            if ($("#proceso").text() === "MODIFICAR") {
+                datos.append('tituloprefijo_original', $("#tituloprefijo_original").val());
+                datos.append('titulonombre_original', $("#titulonombre_original").val());
+            }
+            
+            enviaAjax(datos, 'existe');
         }
     });
 
@@ -159,26 +191,13 @@ $(document).ready(function() {
         limpia();
         $("#proceso").text("REGISTRAR");
         $("#modal1").modal("show");
+        $("#stituloprefijo, #stitulonombre").show();
     });
 
     $("#proceso").on("click", function() {
-        if (!validarenvio()) {
-            return;
-        }
-
         let accion = $(this).text().toLowerCase();
-        let datos = new FormData();
-        datos.append("accion", accion);
 
-        if (accion === "registrar") {
-            datos.append("tituloprefijo", $("#tituloprefijo").val());
-            datos.append("titulonombre", $("#titulonombre").val());
-        } else if (accion === "modificar") {
-            datos.append("tituloprefijo_original", $("#tituloprefijo_original").val());
-            datos.append("titulonombre_original", $("#titulonombre_original").val());
-            datos.append("tituloprefijo", $("#tituloprefijo").val());
-            datos.append("titulonombre", $("#titulonombre").val());
-        } else if (accion === "eliminar") {
+        if (accion === "eliminar") {
             Swal.fire({
                 title: "¿Está seguro de eliminar este título?",
                 text: "Esta acción no se puede deshacer.",
@@ -201,6 +220,21 @@ $(document).ready(function() {
             });
             return; 
         }
+
+        if (!validarenvio()) {
+            return;
+        }
+
+        let datos = new FormData();
+        datos.append("accion", accion);
+        datos.append("tituloprefijo", $("#tituloprefijo").val());
+        datos.append("titulonombre", $("#titulonombre").val());
+
+        if (accion === "modificar") {
+            datos.append("tituloprefijo_original", $("#tituloprefijo_original").val());
+            datos.append("titulonombre_original", $("#titulonombre_original").val());
+        }
+        
         enviaAjax(datos);
     });
 });

@@ -4,7 +4,7 @@ $(document).ready(function(){
         muestraMensaje($("#mensajes").html());
     }
     
-    $("#acceder").on("click",function(){
+    $("#acceder").on("click",function(event){
         event.preventDefault();
         if(validarenvio()){
             
@@ -12,6 +12,14 @@ $(document).ready(function(){
             $("#f").submit();
             
         }
+    });
+
+    $("#nombreUsuario").on("keyup", function() {
+        validarkeyup(/^[A-Za-z0-9\s]{5,30}$/, $(this), $("#snombreUsuario"), "El usuario debe tener entre 5 y 30 caracteres.");
+    });
+
+    $("#contraseniaUsuario").on("keyup", function() {
+        validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/, $(this), $("#scontraseniaUsuario"), "La contraseña debe tener entre 5 y 30 caracteres.");
     });
     
     $("#recuperarBtn").on("click", function(){
@@ -86,8 +94,19 @@ $(document).ready(function(){
 });
    
     function validarenvio(){
-        
-        return true;
+        let esValido = true;
+        if (validarkeyup(/^[A-Za-z0-9\s]{5,30}$/, $("#nombreUsuario"), $("#snombreUsuario"), "El usuario debe tener entre 5 y 30 caracteres.") == 0) {
+            esValido = false;
+        }
+        if (validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/, $("#contraseniaUsuario"), $("#scontraseniaUsuario"), "La contraseña debe tener entre 5 y 30 caracteres.") == 0) {
+            esValido = false;
+        }
+    
+        if (!esValido) {
+            muestraMensaje("error", 4000, "Error!", "Campos con errores en el formato.");
+        }
+    
+        return esValido;
     }
     
     document.addEventListener("DOMContentLoaded", function() {
