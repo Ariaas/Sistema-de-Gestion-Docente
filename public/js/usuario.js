@@ -84,24 +84,37 @@ function crearDT() {
 $(document).ready(function () {
   Listar(); 
 
-    $("#usuarionombre, #correo").on("keyup change", function () {
-      validarExiste();
-    });
-
     $("#usuarionombre").on("keyup keydown", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#usuarionombre"),$("#susuarionombre"),"Este formato permite de 4 a 15 carácteres"); 
+      $("#susuarionombre").css("color", "");
+      let formatoValido = validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$(this),$("#susuarionombre"),"El usuario debe tener entre 5 y 30 caracteres.");
+      if(formatoValido === 1){
+        var datos = new FormData();
+        datos.append('accion', 'existe');
+        datos.append('nombreUsuario', $(this).val());
+        if ($("#proceso").text() === "MODIFICAR") {
+            datos.append('usuarioId', $("#usuarioId").val());
+        }
+        enviaAjax(datos, 'existe_usuario');
+      }
     });
 
     $("#correo").on("keyup keydown", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC-]{3,30}[@]{1}[A-Za-z0-9]{3,8}[.]{1}[A-Za-z]{2,3}$/,$("#correo"),$("#scorreo"),"El formato sólo permite un correo válido!");
+      $("#scorreo").css("color", "");
+      let formatoValido = validarkeyup(/^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,$(this),$("#scorreo"),"El correo debe tener un formato válido (ej: usuario@dominio.com) y entre 5 a 20 caracteres antes del @.");
+      if(formatoValido === 1){
+        var datos = new FormData();
+        datos.append('accion', 'existe');
+        datos.append('correoUsuario', $(this).val());
+        if ($("#proceso").text() === "MODIFICAR") {
+            datos.append('usuarioId', $("#usuarioId").val());
+        }
+        enviaAjax(datos, 'existe_correo');
+      }
     });
 
     $("#contrasenia").on("keyup keydown", function () {
-    const valor = $(this).val();
-    validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#contrasenia"),$("#scontrasenia"),"Solo letras y numeros entre 4 y 15 caracteres");
-
+      $("#scontrasenia").css("color", "");
+      validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,$("#contrasenia"),$("#scontrasenia"),"La contraseña debe tener entre 5 y 30 caracteres.");
     });
  
 
@@ -253,19 +266,31 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-
- 
+  let esValido = true;
   
-   if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,15}$/,$("#usuarionombre"),$("#susuarionombre"),"Este formato permite de 4 a 15 carácteres") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El usuario debe coincidir con el formato <br/>" + 
-			"se permiten de 4 a 15 carácteres");
-          return false;
-  } else if (validarkeyup(/^[A-Za-z0-9_\u00f1\u00d1\u00E0-\u00FC.-]{3,30}@([A-Za-z0-9-]+\.){1,3}[A-Za-z]{2,3}$/, $("#correo"), $("#scorreo"), "El formato sólo permite un correo válido!") == 0) {
-    muestraMensaje("error", 4000, "ERROR!", "El correo del usuario <br/> No debe estar vacío, ni contener más de 30 carácteres");
-    return false;
-}
+  if (validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$("#usuarionombre"),$("#susuarionombre"),"El usuario debe tener entre 5 y 30 caracteres.") == 0) {
+    if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre de usuario es incorrecto.");
+    esValido = false;
+  }
+  
+  if (validarkeyup(/^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $("#correo"), $("#scorreo"), "El formato del correo es incorrecto.") == 0) {
+    if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del correo es incorrecto.");
+    esValido = false;
+  }
 
-    return true;
+  if ($("#proceso").text() === "REGISTRAR" || $("#contrasenia").val().length > 0) {
+    if (validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/, $("#contrasenia"), $("#scontrasenia"), "La contraseña debe tener entre 5 y 30 caracteres.") == 0) {
+      if(esValido) muestraMensaje("error",4000,"ERROR!","El formato de la contraseña es incorrecto.");
+      esValido = false;
+    }
+  }
+
+  if ($("#usuarioRol").val() === "") {
+    if(esValido) muestraMensaje("error",4000,"ERROR!","Debe seleccionar un rol para el usuario.");
+    esValido = false;
+  }
+
+  return esValido;
 }
 
 function pone(pos, accion) {
@@ -296,14 +321,12 @@ function pone(pos, accion) {
   $("#usu_cedula").val(cedulaAsignada);
   $("#docente_asignado_nombre").val(docenteAsignado === 'No asignado' ? '' : docenteAsignado);
 
-  $("#susuarionombre").hide();
-  $("#scontrasenia").hide();
-  $("#scorreo").hide();
+  $("#susuarionombre, #scontrasenia, #scorreo").text("").hide();
 
   $("#modal1").modal("show");
 }
 
-function enviaAjax(datos) {
+function enviaAjax(datos, accion) {
   $.ajax({
     async: true,
     url: "",
@@ -317,6 +340,26 @@ function enviaAjax(datos) {
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
+        if (accion === 'existe_usuario') {
+            if (lee.resultado === 'existe') {
+              $("#susuarionombre").text(lee.mensaje).css("color", "red");
+              $("#proceso").prop("disabled", true);
+            } else {
+              $("#susuarionombre").text("");
+              $("#proceso").prop("disabled", false);
+            }
+            return;
+        }
+        if (accion === 'existe_correo') {
+            if (lee.resultado === 'existe') {
+              $("#scorreo").text(lee.mensaje).css("color", "red");
+              $("#proceso").prop("disabled", true);
+            } else {
+              $("#scorreo").text("");
+              $("#proceso").prop("disabled", false);
+            }
+            return;
+        }
         if (lee.resultado === "consultar") {
           destruyeDT();
           $("#resultadoconsulta").empty();
@@ -396,5 +439,7 @@ function limpia() {
   $("#usu_cedula").val("");
   $("#docente_asignado_nombre").val("");
   $("#rol_asignado_nombre").val("");
+  $("#susuarionombre, #scorreo, #scontrasenia").text("");
+  $("#proceso").prop("disabled", false);
 }
 

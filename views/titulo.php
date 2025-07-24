@@ -29,10 +29,12 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Títulos</title>
 </head>
+
 <body class="d-flex flex-column min-vh-100">
 
     <?php require_once("public/components/sidebar.php"); ?>
@@ -69,7 +71,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
                             <input type="hidden" id="tituloprefijo_original" name="tituloprefijo_original">
                             <input type="hidden" id="titulonombre_original" name="titulonombre_original">
-                            
+
                             <div class="mb-4">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -87,7 +89,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                                     <div class="col-md-6">
                                         <label for="titulonombre" class="form-label">Nombre</label>
                                         <input class="form-control" type="text" id="titulonombre" name="titulonombre" placeholder="Ej: Informática" required>
-                                        <span id="stitulonombre" class="text-danger"></span>
+                                        <span id="stitulonombre"></span>
                                     </div>
                                 </div>
                             </div>
@@ -100,9 +102,9 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                 </div>
             </div>
         </div>
-       
+
     </main>
-     <script>
+    <script>
         const PERMISOS = {
             modificar: <?php echo json_encode($puede_modificar); ?>,
             eliminar: <?php echo json_encode($puede_eliminar); ?>
@@ -112,4 +114,5 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
     <script type="text/javascript" src="public/js/titulo.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
+
 </html>

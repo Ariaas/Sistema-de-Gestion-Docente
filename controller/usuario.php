@@ -39,10 +39,13 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'usuario');
         } elseif ($accion == 'existe') {
-            $u->set_nombreUsuario($_POST['nombreUsuario']);
-            $u->set_correoUsuario($_POST['correoUsuario']);
             $usuarioId = isset($_POST['usuarioId']) ? $_POST['usuarioId'] : null;
-            $resultado = $u->Existe($_POST['nombreUsuario'], $_POST['correoUsuario'], $usuarioId);
+            $resultado = [];
+            if (isset($_POST['nombreUsuario'])) {
+                $resultado = $u->ExisteUsuario($_POST['nombreUsuario'], $usuarioId);
+            } elseif (isset($_POST['correoUsuario'])) {
+                $resultado = $u->ExisteCorreo($_POST['correoUsuario'], $usuarioId);
+            }
             echo json_encode($resultado);
         } else {
             $u->set_nombreUsuario($_POST['nombreUsuario']);

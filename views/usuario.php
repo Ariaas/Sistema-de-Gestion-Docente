@@ -115,7 +115,7 @@ $puede_eliminar = tiene_permiso_accion('usuario', 'eliminar', $permisos);
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <label for="contrasenia" class="form-label">Contraseña</label>
-                                                <input class="form-control" type="password" id="contrasenia" name="contrasenia">
+                                                <input class="form-control" type="password" id="contrasenia" name="contrasenia" autocomplete="new-password">
                                                 <span id="scontrasenia" class="form-text"></span>
                                             </div>
                                             <div class="col-md-6">

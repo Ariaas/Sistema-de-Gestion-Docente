@@ -230,68 +230,84 @@ $("#tipoAnio").on("change", function() {
     const ap2 = $("#aniAperturaFase2").val();
     const c2 = $("#aniCierraFase2").val();
 
+    $("#saniCierraFase1, #saniAperturaFase2, #saniCierraFase2").each(function() {
+        if ($(this).css('color') === 'rgb(255, 0, 0)') {
+            $(this).text("").hide();
+        }
+    });
+
     if (ap1 && c1 && new Date(c1) <= new Date(ap1)) {
-        $("#saniCierraFase1").text("Debe ser posterior a la apertura de la fase 1.").show();
+        $("#saniCierraFase1").text("Debe ser posterior a la apertura de la fase 1.").css("color", "red").show();
         esValido = false;
-    } else {
-        $("#saniCierraFase1").text("");
     }
 
     if (c1 && ap2 && new Date(ap2) <= new Date(c1)) {
-        $("#saniAperturaFase2").text("Debe ser posterior al cierre de la fase 1.").show();
+        $("#saniAperturaFase2").text("Debe ser posterior al cierre de la fase 1.").css("color", "red").show();
         esValido = false;
-    } else {
-        $("#saniAperturaFase2").text("");
     }
 
     if (ap2 && c2 && new Date(c2) <= new Date(ap2)) {
-        $("#saniCierraFase2").text("Debe ser posterior a la apertura de la fase 2.").show();
+        $("#saniCierraFase2").text("Debe ser posterior a la apertura de la fase 2.").css("color", "red").show();
         esValido = false;
-    } else {
-        $("#saniCierraFase2").text("");
     }
     
     return esValido;
   }
 
   function validarenvio() {
+    let esValido = true;
+    let hayErrorRequerido = false;
+    let hayErrorSecuencia = false;
+
+    const tipoAnio = $("#tipoAnio").val();
     const ap1 = $("#aniAperturaFase1").val();
     const c1 = $("#aniCierraFase1").val();
     const ap2 = $("#aniAperturaFase2").val();
     const c2 = $("#aniCierraFase2").val();
 
+    $("#stipoAnio, #saniAperturaFase1, #saniCierraFase1, #saniAperturaFase2, #saniCierraFase2").text("").css("color", "").hide();
+
+    if (!tipoAnio || tipoAnio === "0") {
+        $("#stipoAnio").text("Debe seleccionar un tipo.").show();
+        hayErrorRequerido = true;
+    }
     if (!ap1) {
-        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de apertura de la fase 1!");
-        return false;
+        $("#saniAperturaFase1").text("Debe seleccionar una fecha de apertura fase 1.").show();
+        hayErrorRequerido = true;
     }
     if (!c1) {
-        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de cierre de la fase 1!");
-        return false;
+        $("#saniCierraFase1").text("Debe seleccionar una fecha de cierre fase 1.").show();
+        hayErrorRequerido = true;
     }
     if (!ap2) {
-        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de apertura de la fase 2!");
-        return false;
+        $("#saniAperturaFase2").text("Debe seleccionar una fecha de apertura fase 2.").show();
+        hayErrorRequerido = true;
     }
     if (!c2) {
-        muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar la fecha de cierre de la fase 2!");
-        return false;
+        $("#saniCierraFase2").text("Debe seleccionar una fecha de cierre fase 2.").show();
+        hayErrorRequerido = true;
     }
 
-    if (!validarFechas()) {
-        muestraMensaje("error", 4000, "ERROR!", "Por favor, corrija las fechas!");
-        return false;
+    if (ap1 && c1 && new Date(c1) <= new Date(ap1)) {
+        $("#saniCierraFase1").text("Debe ser posterior a la apertura de la fase 1.").css("color", "red").show();
+        hayErrorSecuencia = true;
     }
-    if (tipoAnio === null || tipoAnio === "0") {
-      muestraMensaje(
-          "error",
-          4000,
-          "ERROR!",
-          "Por favor, seleccione un tipo!"
-      );
-      return false;
-  }
+    if (c1 && ap2 && new Date(ap2) <= new Date(c1)) {
+        $("#saniAperturaFase2").text("Debe ser posterior al cierre de la fase 1.").css("color", "red").show();
+        hayErrorSecuencia = true;
+    }
+    if (ap2 && c2 && new Date(c2) <= new Date(ap2)) {
+        $("#saniCierraFase2").text("Debe ser posterior a la apertura de la fase 2.").css("color", "red").show();
+        hayErrorSecuencia = true;
+    }
+
+    if (hayErrorRequerido || hayErrorSecuencia) {
+        esValido = false;
+        let mensaje = hayErrorRequerido ? "Complete todas las fechas requeridas." : "Corrija las fechas marcadas en rojo.";
+        muestraMensaje("error", 4000, "ERROR!", mensaje);
+    }
     
-    return true;
+    return esValido;
   }
   
   

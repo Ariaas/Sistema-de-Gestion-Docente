@@ -23,17 +23,18 @@ if (is_file("views/" . $pagina . ".php")) {
             exit;
         }
         $bitacora = new Bitacora();
-        
+
         try {
             if ($accion == 'consultar') {
                 echo json_encode($o->Listar());
             } elseif ($accion == 'eliminar') {
-                $o->setArea($_POST['areaNombre'] ?? ''); 
+                $o->setArea($_POST['areaNombre'] ?? '');
                 echo json_encode($o->Eliminar());
                 $bitacora->registrarAccion($usu_id, 'eliminar', 'area');
             } elseif ($accion == 'existe') {
-                $o->setArea($_POST['areaNombre'] ?? '');  
-                echo json_encode($o->Existe($_POST['areaNombre'] ?? ''));
+                $areaNombre = $_POST['areaNombre'] ?? '';
+                $areaExcluir = isset($_POST['areaExcluir']) ? $_POST['areaExcluir'] : null;
+                echo json_encode($o->Existe($areaNombre, $areaExcluir));
             } else {
                 $o->setArea($_POST['areaNombre'] ?? '');
                 $o->setDescripcion($_POST['areaDescripcion'] ?? '');

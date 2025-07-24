@@ -73,18 +73,23 @@ function Listar() {
     //////////////////////////////VALIDACIONES/////////////////////////////////////
   
       $("#nombreRol").on("keypress",function(e){
-      validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
+      validarkeypress(/^[A-Za-z0-9-\b\s]*$/,e);
       });
   
       $("#nombreRol").on("keydown keyup",function(){
-          validarkeyup(/^[A-Za-z0-9]{5,30}$/,$("#nombreRol"),
-          $("#snombreRol"),"El formato permite de 5 a 30 carácteres, Ej:Administrador");
+          $("#snombreRol").css("color", "");
+          let formatoValido = validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$("#nombreRol"),
+          $("#snombreRol"),"El formato permite de 5 a 30 carácteres, Ej: Administrador");
 
+          if(formatoValido === 1){
               var datos = new FormData();
               datos.append('accion', 'existe');
               datos.append('nombreRol', $(this).val());
+              if ($("#proceso").text() === "MODIFICAR") {
+                  datos.append('rolId', $("#rolId").val());
+              }
               enviaAjax(datos, 'existe');
-          
+          }
       });
   
     //////////////////////////////BOTONES/////////////////////////////////////
@@ -119,7 +124,7 @@ function Listar() {
             "error",
             4000,
             "ERROR!",
-            "Seleccionó el eje incorrecto <br/> por favor verifique nuevamente"
+            "Seleccionó el rol incorrecto <br/> por favor verifique nuevamente"
           );
         } else {
           
@@ -168,11 +173,12 @@ function Listar() {
   //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
   
   function validarenvio() {
+      let esValido = true;
       if (validarkeyup( /^[A-Za-z0-9\s]{5,30}$/,$("#nombreRol"),$("#snombreRol"),"El formato permite de 5 a 30 carácteres, Ej:Administrador") == 0) {
-          muestraMensaje("error",4000,"ERROR!","El nombre del ROL <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
-            return false;
-          }
-    return true;
+          if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre del rol es incorrecto.");
+          esValido = false;
+      }
+    return esValido;
   }
   
   
@@ -197,7 +203,7 @@ function Listar() {
   }
   
   
-  function enviaAjax(datos) {
+  function enviaAjax(datos, accion) {
     $.ajax({
       async: true,
       url: "",
@@ -211,6 +217,16 @@ function Listar() {
       success: function (respuesta) {
         try {
           var lee = JSON.parse(respuesta);
+          if (accion === 'existe') {
+            if (lee.resultado === 'existe') {
+              $("#snombreRol").text(lee.mensaje).css("color", "red");
+              $("#proceso").prop("disabled", true);
+            } else {
+              $("#snombreRol").text("");
+              $("#proceso").prop("disabled", false);
+            }
+            return;
+          }
           if (lee.resultado === "consultar") {
             destruyeDT();
             $("#resultadoconsulta").empty();
@@ -249,10 +265,6 @@ function Listar() {
               $("#modal1").modal("hide");
               Listar();
             }
-          }else if (lee.resultado == "existe") {		
-            if (lee.mensaje == 'El ROL colocado YA existe!') {
-              muestraMensaje('info', 4000,'Atención!', lee.mensaje);
-            }	
           }
           else if (lee.resultado == "eliminar") {
             muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
@@ -294,6 +306,8 @@ function Listar() {
   function limpia() {
     $("#rolId").val("");
     $("#nombreRol").val("");
+    $("#snombreRol").text("");
+    $("#proceso").prop("disabled", false);
   }
 
   let carritoPermisos = [];

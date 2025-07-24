@@ -288,6 +288,62 @@ class Usuario extends Connection
         return $r;
     }
 
+    function ExisteUsuario($nombreUsuario, $usuarioIdExcluir = null)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $sql = "SELECT usu_id FROM tbl_usuario WHERE usu_nombre = :nombreUsuario AND usu_estado = 1";
+            if ($usuarioIdExcluir !== null) {
+                $sql .= " AND usu_id != :usuarioIdExcluir";
+            }
+            $stmt = $co->prepare($sql);
+            $stmt->bindParam(':nombreUsuario', $nombreUsuario, PDO::PARAM_STR);
+            if ($usuarioIdExcluir !== null) {
+                $stmt->bindParam(':usuarioIdExcluir', $usuarioIdExcluir, PDO::PARAM_INT);
+            }
+            $stmt->execute();
+            if ($stmt->fetch()) {
+                $r['resultado'] = 'existe';
+                $r['mensaje'] = 'El nombre de usuario ya existe.';
+            }
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        $co = null;
+        return $r;
+    }
+
+    function ExisteCorreo($correoUsuario, $usuarioIdExcluir = null)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            $sql = "SELECT usu_id FROM tbl_usuario WHERE usu_correo = :correoUsuario AND usu_estado = 1";
+            if ($usuarioIdExcluir !== null) {
+                $sql .= " AND usu_id != :usuarioIdExcluir";
+            }
+            $stmt = $co->prepare($sql);
+            $stmt->bindParam(':correoUsuario', $correoUsuario, PDO::PARAM_STR);
+            if ($usuarioIdExcluir !== null) {
+                $stmt->bindParam(':usuarioIdExcluir', $usuarioIdExcluir, PDO::PARAM_INT);
+            }
+            $stmt->execute();
+            if ($stmt->fetch()) {
+                $r['resultado'] = 'existe';
+                $r['mensaje'] = 'El correo electrónico ya está en uso.';
+            }
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        $co = null;
+        return $r;
+    }
+
     function ExisteId($usuarioId)
     {
         $co = $this->Con();

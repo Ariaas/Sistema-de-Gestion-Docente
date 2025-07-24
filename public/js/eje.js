@@ -73,19 +73,29 @@ $(document).ready(function () {
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
     $("#ejeNombre").on("keypress",function(e){
-    validarkeypress(/^[A-Za-z0-9-\b]*$/,e);
-	});
+    validarkeypress(/^[A-Za-z,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+    });
 
-	$("#ejeNombre").on("keydown keyup",function(){
-		validarkeyup(/^[A-Za-z0-9]{5,30}$/,$("#ejeNombre"),
-		$("#sejeNombre"),"El formato permite de 5 a 30 carácteres, Ej:Epistemológico");
-		if ($("#ejeNombre").val().length >= 5) {
-			var datos = new FormData();
-			datos.append('accion', 'existe');
-			datos.append('ejeNombre', $(this).val());
-			enviaAjax(datos, 'existe');
-		}
-	});
+    $("#ejeNombre").on("keydown keyup",function(){
+    $("#sejeNombre").css("color", "");
+
+    let formatoValido = validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$("#ejeNombre"),
+    $("#sejeNombre"),"El formato permite de 5 a 30 carácteres, Ej:Epistemológico");
+    
+    if (formatoValido === 1) {
+        var datos = new FormData();
+        datos.append('accion', 'existe');
+        datos.append('ejeNombre', $(this).val());
+        if ($("#proceso").text() === "MODIFICAR") {
+            datos.append('ejeExcluir', originalNombreEje);
+        }
+        enviaAjax(datos, 'existe');
+    }
+  });
+
+  $("#ejeDescripcion").on("keyup", function() {
+    validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $(this), $("#sejeDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.");
+  });
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
@@ -162,6 +172,7 @@ $(document).ready(function () {
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#sejeNombre").show();
+    $("#sejeDescripcion").show();
     $("#ejeNombre").prop("disabled", false);
   });
 
@@ -171,11 +182,17 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
+    let esValido = true;
     if (validarkeyup( /^[A-Za-z0-9\s]{5,30}$/,$("#ejeNombre"),$("#sejeNombre"),"El formato permite de 5 a 30 carácteres, Ej:Epistemológico") == 0) {
-        muestraMensaje("error",4000,"ERROR!","El nombre del Eje <br/> No debe estar vacío y debe contener entre 5 a 30 carácteres");
-          return false;
-        }
-  return true;
+      if(esValido) muestraMensaje("error",4000,"ERROR!","Error! <br/>El formato del nombre es incorrecto");
+      esValido = false;
+    }
+    if (validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $("#ejeDescripcion"), $("#sejeDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.") == 0) {
+      if(esValido) muestraMensaje("error",4000,"ERROR!","Error! <br/>El formato de la descripción es incorrecto");
+      esValido = false;
+    }
+
+  return esValido;
 }
 
 
@@ -190,10 +207,11 @@ function pone(pos, accion) {
   } else {
     $("#proceso").text("ELIMINAR");
     $(
-      "#ejeId, #ejeNombre"
+      "#ejeId, #ejeNombre, #ejeDescripcion"
     ).prop("disabled", true);
   }
   $("#sejeNombre").hide();
+  $("#sejeDescripcion").hide();
   $("#ejeNombre").val($(linea).find("td:eq(0)").text());
   $("#ejeDescripcion").val($(linea).find("td:eq(1)").text());
 
@@ -201,7 +219,7 @@ function pone(pos, accion) {
 }
 
 
-function enviaAjax(datos) {
+function enviaAjax(datos, accion) {
   $.ajax({
     async: true,
     url: "",
@@ -215,6 +233,15 @@ function enviaAjax(datos) {
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
+        if (accion === 'existe') {
+          if (lee.resultado === 'existe') {
+            $("#sejeNombre").text(lee.mensaje).css("color", "red");
+            $("#proceso").prop("disabled", true);
+          } else {
+            $("#proceso").prop("disabled", false);
+          }
+          return;
+        }
         if (lee.resultado === "consultar") {
           destruyeDT();
           $("#resultadoconsulta").empty();
@@ -293,6 +320,9 @@ function enviaAjax(datos) {
 function limpia() {
   $("#ejeId").val("");
   $("#ejeNombre").val("");
+  $("#ejeDescripcion").val("");
+  $("#sejeNombre").text("");
+  $("#sejeDescripcion").text("");
 }
 
 

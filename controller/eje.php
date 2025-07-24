@@ -32,8 +32,9 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'eje');
         } elseif ($accion == 'existe') {
-            $e->setEje($_POST['ejeNombre']);
-            $resultado = $e->Existe($_POST['ejeNombre'], $_POST['ejeNombre']);
+            $ejeNombre = $_POST['ejeNombre'];
+            $ejeExcluir = isset($_POST['ejeExcluir']) ? $_POST['ejeExcluir'] : null;
+            $resultado = $e->Existe($ejeNombre, $ejeExcluir);
             echo json_encode($resultado);
         } else {
             $e->setEje($_POST['ejeNombre']);
