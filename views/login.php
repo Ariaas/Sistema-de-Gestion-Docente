@@ -28,11 +28,13 @@
                     <div class="mb-3">
                         <label for="nombreUsuario" class="form-label">Usuario</label>
                         <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" required autofocus>
+                        <span id="snombreUsuario" class="form-text text-danger"></span>
                     </div>
 
                     <div class="mb-4">
                         <label for="contraseniaUsuario" class="form-label">Contraseña</label>
                         <input type="password" class="form-control" id="contraseniaUsuario" name="contraseniaUsuario" required>
+                        <span id="scontraseniaUsuario" class="form-text text-danger"></span>
                     </div>
 
                     <div class="mb-3">

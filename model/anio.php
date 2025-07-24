@@ -70,7 +70,7 @@ class Anio extends Connection
 
         if (!$this->MallaActiva()) {
             $r['resultado'] = 'error';
-            $r['mensaje'] = '¡Error!<br/>No se puede registrar un nuevo año si no hay una malla curricular activa.';
+            $r['mensaje'] = 'No se puede registrar un nuevo año si no hay una malla curricular activa.';
             return $r;
         }
 
