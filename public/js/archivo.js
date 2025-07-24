@@ -109,24 +109,24 @@ function listarRegistros() {
                 const aprobadosPer = parseInt(item.per_aprobados) || 0;
                 const aprobadosTotales = aprobadosDir + aprobadosPer;
                 // --- CÁLCULO CORREGIDO DE REPROBADOS ---
-                const reprobadosTotales = totalEst - aprobadosTotales;
+                const reprobadosTotales = paraPer - aprobadosPer;
                 const esPerCero = paraPer === 0;
 
                 let archivoDefinitivoHtml = `
     <a href="archivos_subidos/${encodeURIComponent(item.archivo_definitivo || '')}" 
-       class="btn btn-sm btn-outline-secondary ${!item.archivo_definitivo ? 'disabled' : ''}" 
+       class="btn btn-icon btn-info ${!item.archivo_definitivo ? 'disabled' : ''}" 
        title="Descargar Acta Final" 
        ${item.archivo_definitivo ? 'download' : ''}>
-       <i class="fas fa-file-download"></i>
+       <img src="public/assets/icons/file-earmark-down2.svg">
     </a>`;
 
 // Botón para el acta de PER
 let archivoPerHtml = `
     <a href="archivos_per/${encodeURIComponent(item.archivo_per || '')}" 
-       class="btn btn-sm btn-outline-info ${!item.archivo_per ? 'disabled' : ''}" 
+       class="btn btn-icon btn-edit ${!item.archivo_per ? 'disabled' : ''}" 
        title="Descargar Acta PER" 
        ${item.archivo_per ? 'download' : ''}>
-       <i class="fas fa-file-download"></i>
+      <img src="public/assets/icons/file-earmark-down.svg"></i>
     </a>`;
 
 
@@ -136,8 +136,8 @@ let archivoPerHtml = `
                 const tituloBoton = perHabilitado ? "Registrar Notas del PER" : "El período de registro para PER no está activo";
                 
                 // Se pasa fase_numero en el onclick
-const btnRegistrarPer = `<button class="btn btn-sm btn-info" title="${tituloBoton}" onclick="abrirModalPer('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}', '${paraPer}', '${aprobadosPer}', '${item.ani_anio}', '${item.ani_tipo}', '${item.fase_numero}')" ${!perHabilitado ? 'disabled' : ''}><i class="fas fa-edit"></i></button>`;                
-                const btnEliminarRegistro = `<button class="btn btn-sm btn-danger btn-eliminar" title="Eliminar Registro" data-uc-codigo="${item.uc_codigo}" data-sec-codigo="${item.sec_codigo}" data-uc-nombre="${item.uc_nombre}" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}" data-fase="${item.fase_numero}"><i class="fas fa-trash"></i></button>`;
+                const btnRegistrarPer = `<button class="btn btn-icon btn-success" title="${tituloBoton}" onclick="abrirModalPer('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}', '${paraPer}', '${aprobadosPer}', '${item.ani_anio}', '${item.ani_tipo}', '${item.fase_numero}')" ${!perHabilitado ? 'disabled' : ''}><img src="public/assets/icons/file-earmark-ruled.svg"></button>`;                
+                const btnEliminarRegistro = `<button class="btn btn-icon btn-delete btn-eliminar" title="Eliminar Registro" data-uc-codigo="${item.uc_codigo}" data-sec-codigo="${item.sec_codigo}" data-uc-nombre="${item.uc_nombre}" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}" data-fase="${item.fase_numero}"><img src="public/assets/icons/trash.svg"></button>`;
 
                 const accionesHtml = `<div class="d-flex justify-content-start align-items-center gap-2">${archivoDefinitivoHtml}${archivoPerHtml}${btnRegistrarPer}${btnEliminarRegistro}</div>`;
 
