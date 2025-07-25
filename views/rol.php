@@ -88,9 +88,9 @@ if (!isset($_SESSION['name'])) {
                                             <thead>
                                                 <tr>
                                                     <th>Módulo</th>
-                                                    <th>Registrar</th>
-                                                    <th>Modificar</th>
-                                                    <th>Eliminar</th>
+                                                    <th class="text-center">Registrar</th>
+                                                    <th class="text-center">Modificar</th>
+                                                    <th class="text-center">Eliminar</th>
                                                 </tr>
                                             </thead>
                                             <tbody>

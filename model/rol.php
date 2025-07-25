@@ -214,7 +214,7 @@ class Rol extends Connection
             $stmtAsignados->execute();
             $respuesta['permisosAsignados'] = $stmtAsignados->fetchAll(PDO::FETCH_ASSOC);
 
-            $stmtDisponibles = $co->query("SELECT per_id, per_modulo FROM tbl_permisos WHERE per_estado = 1 ORDER BY per_modulo ASC");
+            $stmtDisponibles = $co->query("SELECT per_id, per_modulo FROM tbl_permisos WHERE per_estado = 1 ORDER BY CASE WHEN per_modulo = 'Reportes' THEN 0 ELSE 1 END, per_modulo ASC");
             $respuesta['modulosDisponibles'] = $stmtDisponibles->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
         }

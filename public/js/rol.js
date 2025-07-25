@@ -380,22 +380,45 @@ $(document).on("click", "#guardarPermisos", function () {
 
 function renderTablaPermisos(modulosDisponibles, permisosAsignados) {
     let tbody = "";
-    const ACCIONES = ["registrar", "modificar", "eliminar"]; 
-    
+    const ACCIONES_ESTANDAR = ["registrar", "modificar", "eliminar"];
+
     modulosDisponibles.forEach(modulo => {
-        tbody += `<tr>
-            <td>${modulo.per_modulo}</td>
-            ${ACCIONES.map(acc => {
+        tbody += `<tr><td>${modulo.per_modulo}</td>`;
+
+        if (modulo.per_modulo.toLowerCase() === 'reportes') {
+            const encontrado = permisosAsignados.find(
+                p => p.per_id == modulo.per_id && p.per_accion == 'registrar'
+            );
+            tbody += `
+                <td class="text-center">
+                    <div class="form-check d-inline-block">
+                        <input type="checkbox" class="form-check-input permiso-check"
+                            id="permiso-ver-${modulo.per_id}"
+                            data-perid="${modulo.per_id}" data-accion="registrar"
+                            ${encontrado ? "checked" : ""}>
+                        <label class="form-check-label" for="permiso-ver-${modulo.per_id}">Ver</label>
+                    </div>
+                </td>
+                <td></td>
+                <td></td>`;
+        } else {
+            tbody += ACCIONES_ESTANDAR.map(acc => {
                 const encontrado = permisosAsignados.find(
                     p => p.per_id == modulo.per_id && p.per_accion == acc
                 );
-                return `<td>
-                    <input type="checkbox" class="permiso-check"
-                        data-perid="${modulo.per_id}" data-accion="${acc}"
-                        ${encontrado ? "checked" : ""}>
+                const idUnico = `permiso-${acc}-${modulo.per_id}`;
+                return `<td class="text-center">
+                    <div class="form-check d-inline-block">
+                        <input type="checkbox" class="form-check-input permiso-check"
+                            id="${idUnico}"
+                            data-perid="${modulo.per_id}" data-accion="${acc}"
+                            ${encontrado ? "checked" : ""}>
+                        <label class="form-check-label" for="${idUnico}" style="visibility: hidden;">Ver</label>
+                    </div>
                 </td>`;
-            }).join("")}
-        </tr>`;
+            }).join("");
+        }
+        tbody += `</tr>`;
     });
     $("#tablaPermisos tbody").html(tbody);
 }
