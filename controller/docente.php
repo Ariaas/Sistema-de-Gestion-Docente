@@ -29,10 +29,9 @@ if (is_file("views/" . $pagina . ".php")) {
             }
             $bitacora = new Bitacora();
         }
-        
+
         if ($accion == 'consultar') {
             echo json_encode($p->Listar());
-
         } elseif ($accion == 'consultar_paso2') {
             $doc_cedula = $_POST['doc_cedula'] ?? 0;
             $horas = $p->ObtenerHorasActividad($doc_cedula);
@@ -42,7 +41,6 @@ if (is_file("views/" . $pagina . ".php")) {
                 'horas' => $horas['mensaje'],
                 'preferencias' => $preferencias['mensaje']
             ]);
-
         } elseif ($accion == 'consultar_datos_adicionales') {
             $doc_cedula = $_POST['doc_cedula'] ?? 0;
             $horas = $p->ObtenerHorasActividad($doc_cedula);
@@ -52,15 +50,16 @@ if (is_file("views/" . $pagina . ".php")) {
                 'horas' => $horas['mensaje'],
                 'preferencias' => $preferencias['mensaje']
             ]);
-
         } elseif ($accion == 'eliminar') {
             $p->setCedula($_POST['cedulaDocente']);
             echo json_encode($p->Eliminar());
-            if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
-
+            if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
         } elseif ($accion == 'Existe') {
             echo json_encode(['existe' => $p->Existe($_POST['cedulaDocente'])]);
-
+            exit;
+        } elseif ($accion == 'existe_correo') {
+            echo json_encode($p->existeCorreo($_POST['correoDocente'], $_POST['cedulaDocente'] ?? null));
+            exit;
         } elseif ($accion == 'incluir' || $accion == 'modificar') {
             $p->setCategoriaNombre($_POST['categoria']);
             $p->setPrefijo($_POST['prefijoCedula']);
@@ -76,8 +75,8 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setObservacion($_POST['observacionesDocente']);
             $p->setTitulos($_POST['titulos'] ?? []);
             $p->setCoordinaciones($_POST['coordinaciones'] ?? []);
-            
-       
+
+
             $p->setHorasAcademicas((int)($_POST['actAcademicas'] ?? 0));
             $p->setCreacionIntelectual((int)($_POST['actCreacion'] ?? 0));
             $p->setIntegracionComunidad((int)($_POST['actIntegracion'] ?? 0));
@@ -87,10 +86,10 @@ if (is_file("views/" . $pagina . ".php")) {
 
             if ($accion == 'incluir') {
                 echo json_encode($p->Registrar());
-                if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'registrar', 'docente');
+                if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'registrar', 'docente');
             } elseif ($accion == 'modificar') {
                 echo json_encode($p->Modificar());
-                if(isset($bitacora)) $bitacora->registrarAccion($usu_id, 'modificar', 'docente');
+                if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'modificar', 'docente');
             }
         }
         exit;
@@ -105,4 +104,3 @@ if (is_file("views/" . $pagina . ".php")) {
 } else {
     echo "Página en construcción";
 }
-?>

@@ -43,10 +43,13 @@ if (is_file("views/" . $pagina . ".php")) {
             $resultado = [];
             if (isset($_POST['nombreUsuario'])) {
                 $resultado = $u->ExisteUsuario($_POST['nombreUsuario'], $usuarioId);
-            } elseif (isset($_POST['correoUsuario'])) {
-                $resultado = $u->ExisteCorreo($_POST['correoUsuario'], $usuarioId);
             }
             echo json_encode($resultado);
+            exit;
+        } elseif ($accion == 'verificar_correo_docente') {
+            $usuarioId = $_POST['usuarioId'] ?? null;
+            echo json_encode($u->verificarCorreoDocente($_POST['correo'], $usuarioId));
+            exit;
         } else {
             $u->set_nombreUsuario($_POST['nombreUsuario']);
             $u->set_correoUsuario($_POST['correoUsuario']);

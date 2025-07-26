@@ -59,6 +59,13 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->set_fotoPerfil($fotoPerfil);
             echo json_encode($p->Modificar());
             $bitacora->registrarAccion($usu_id, 'modificó su perfil', 'perfil');
+        } else if ($_POST['accion'] === 'existe_correo_perfil') {
+            require_once('model/perfil.php');
+            $perfil = new Perfil();
+            $correo = $_POST['correoUsuario'];
+            $usuarioId = $_SESSION['usu_id'];
+            echo json_encode($perfil->existeCorreo($correo, $usuarioId));
+            exit;
         }
         exit;
     }
