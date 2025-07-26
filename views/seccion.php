@@ -47,8 +47,8 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4">Gestionar Sección</h2>
             <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
-               
-                <button class="btn btn-success px-4" id="btnIniciarRegistro">Registrar</button>
+                 <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button>
+                <button class="btn btn-success px-4" id="btnIniciarRegistro">Registrar Sección</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 900px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive">
@@ -98,10 +98,10 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
                                             <?php
                                             if (!empty($anios)) {
                                                 foreach ($anios as $anio) {
-                                                    // El valor interno sigue siendo el mismo (ej: "2025|3")
+                                                   
                                                     $value = htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo'], ENT_QUOTES);
 
-                                                    // El texto visible ahora será solo el año (ej: "2025")
+                                               
                                                     $text = htmlspecialchars($anio['ani_anio'], ENT_QUOTES);
 
                                                     echo "<option value='{$value}'>{$text}</option>";
@@ -211,7 +211,7 @@ $puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
         <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
+                    <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">Confirmar Eliminación</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
