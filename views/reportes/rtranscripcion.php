@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php");  ?>
     <title>Reporte de Transcripción</title>
+     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
+    
 </head>
 
 <body>
@@ -55,6 +58,8 @@
     </main>
     <?php require_once("public/components/footer.php");  ?>
 </body>
+  <script type="text/javascript" src="public/js/validacion.js"></script>
+    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
 <script src="public/js/rtranscripcion.js"></script>
 
 </html>

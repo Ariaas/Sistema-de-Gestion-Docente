@@ -3,121 +3,158 @@ require_once('model/dbconnection.php');
 
 class ReporteHorarioDocente extends Connection 
 {
-    private $cedula_docente;
+    private $cedula_docente, $anio, $fase;
 
     public function __construct() {
         parent::__construct();
     }
 
-    public function set_cedula_docente($valor) {
-        $this->cedula_docente = trim($valor);
+    // Setters
+    public function set_cedula_docente($valor) { $this->cedula_docente = trim($valor); }
+    public function setAnio($valor) { $this->anio = trim($valor); }
+    public function setFase($valor) { $this->fase = trim($valor); }
+
+    // --- Métodos para Poblar Dropdowns ---
+    public function getAniosActivos() {
+        try {
+            $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return []; }
     }
 
-    public function obtenerDocentes() {
-        $co = $this->con();
+    public function getFases() {
         try {
-            $p = $co->prepare("SELECT doc_cedula, CONCAT(doc_apellido, ', ', doc_nombre) as nombreCompleto FROM tbl_docente WHERE doc_estado = 1 ORDER BY doc_apellido ASC, doc_nombre ASC");
-            $p->execute();
-            return $p->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ReporteHorarioDocente::obtenerDocentes: " . $e->getMessage()); 
-            return false;
-        }
+            $sql = "SELECT DISTINCT fase_numero FROM tbl_fase ORDER BY fase_numero ASC";
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return []; }
     }
     
+    public function obtenerDocentes() {
+        try {
+            $p = $this->con()->prepare("SELECT doc_cedula, CONCAT(doc_apellido, ', ', doc_nombre) as nombreCompleto FROM tbl_docente WHERE doc_estado = 1 ORDER BY doc_apellido ASC, doc_nombre ASC");
+            $p->execute();
+            return $p->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return false; }
+    }
+    
+    // --- Métodos de Datos para el Reporte (AHORA CORREGIDOS) ---
     public function obtenerInfoDocente() {
         if (empty($this->cedula_docente)) return false;
-        $co = $this->con();
         try {
-            $sql = "SELECT
-                        d.doc_cedula, CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombreCompleto,
-                        d.doc_dedicacion, d.doc_condicion, cat.cat_nombre AS categoria,
-                        (SELECT GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') FROM titulo_docente td JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre WHERE td.doc_cedula = d.doc_cedula) AS postgrado
-                    FROM tbl_docente d
-                    LEFT JOIN tbl_categoria cat ON d.cat_nombre = cat.cat_nombre
-                    WHERE d.doc_cedula = :cedula_docente";
-            $stmt = $co->prepare($sql);
+            $sql = "SELECT d.doc_cedula, CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombreCompleto, d.doc_dedicacion, d.doc_condicion, d.cat_nombre AS categoria, (SELECT GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') FROM titulo_docente td JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre WHERE td.doc_cedula = d.doc_cedula) AS postgrado FROM tbl_docente d WHERE d.doc_cedula = :cedula_docente";
+            $stmt = $this->con()->prepare($sql);
             $stmt->execute([':cedula_docente' => $this->cedula_docente]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ReporteHorarioDocente::obtenerInfoDocente: " . $e->getMessage());
-            return false;
-        }
+        } catch (PDOException $e) { return false; }
     }
 
     public function obtenerAsignacionesAcademicas() {
-        if (empty($this->cedula_docente)) return [];
-        $co = $this->con();
+        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+        
+        // CORREGIDO: Se incluye el período '0' para el trayecto inicial en Fase 1
+        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', '0'] : ['Fase II', 'anual'];
+        
         try {
-            $sql = "SELECT
-                        u.uc_nombre, u.uc_codigo,
-                        GROUP_CONCAT(DISTINCT s.sec_codigo ORDER BY s.sec_codigo SEPARATOR '\n') as secciones,
-                        e.eje_nombre, u.uc_periodo,
+            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+            
+            // CORREGIDO: La lógica de JOINs fue reconstruida para seguir la ruta correcta de los datos.
+            $sql = "SELECT 
+                        u.uc_nombre, 
+                        u.uc_codigo, 
+                        GROUP_CONCAT(DISTINCT dh.sec_codigo ORDER BY dh.sec_codigo SEPARATOR '\n') as secciones, 
+                        e.eje_nombre, 
+                        u.uc_periodo, 
                         SUM(um.mal_hora_academica) as totalHorasClase
-                    FROM uc_docente ud
-                    JOIN tbl_uc u ON ud.uc_codigo = u.uc_codigo
-                    JOIN uc_horario uh ON u.uc_codigo = uh.uc_codigo
+                    FROM docente_horario dh
+                    JOIN uc_horario uh ON dh.sec_codigo = uh.sec_codigo
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
                     JOIN tbl_eje e ON u.eje_nombre = e.eje_nombre
                     JOIN uc_malla um ON u.uc_codigo = um.uc_codigo
-                    WHERE ud.doc_cedula = :cedula_docente AND ud.uc_doc_estado = 1
-                    GROUP BY u.uc_codigo, u.uc_nombre, e.eje_nombre, u.uc_periodo
-                    ORDER BY u.uc_nombre";
-            $stmt = $co->prepare($sql);
-            $stmt->execute([':cedula_docente' => $this->cedula_docente]);
+                    JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo
+                    WHERE 
+                        dh.doc_cedula = :cedula_docente 
+                        AND s.ani_anio = :anio_param 
+                        AND m.mal_activa = 1";
+
+            $placeholders = [];
+            $i = 0;
+            foreach ($allowed_periods as $period) {
+                $key = ":period" . $i++;
+                $placeholders[] = $key;
+                $params[$key] = $period;
+            }
+            $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
+            $sql .= " GROUP BY u.uc_codigo, u.uc_nombre, e.eje_nombre, u.uc_periodo ORDER BY u.uc_nombre";
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ReporteHorarioDocente::obtenerAsignacionesAcademicas: " . $e->getMessage());
-            return [];
+        } catch (PDOException $e) { 
+            error_log("Error en obtenerAsignacionesAcademicas: " . $e->getMessage());
+            return []; 
         }
     }
 
     public function obtenerOtrasActividades() {
         if (empty($this->cedula_docente)) return false;
-        $co = $this->con();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_actividad WHERE doc_cedula = :cedula_docente");
+            $stmt = $this->con()->prepare("SELECT * FROM tbl_actividad WHERE doc_cedula = :cedula_docente");
             $stmt->execute([':cedula_docente' => $this->cedula_docente]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ReporteHorarioDocente::obtenerOtrasActividades: " . $e->getMessage());
-            return false;
-        }
+        } catch (PDOException $e) { return false; }
     }
 
     public function obtenerDatosParrillaHorario() {
-        if (empty($this->cedula_docente)) return [];
-        $co = $this->con();
+        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+        
+        // CORREGIDO: Se incluye el período '0' para el trayecto inicial en Fase 1
+        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', '0'] : ['Fase II', 'anual'];
+        
         try {
-            $sql = "SELECT uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, uh.esp_codigo, uh.sec_codigo, u.uc_nombre
-                    FROM uc_docente ud
-                    JOIN uc_horario uh ON ud.uc_codigo = uh.uc_codigo
-                    JOIN tbl_uc u ON ud.uc_codigo = u.uc_codigo
-                    WHERE ud.doc_cedula = :cedula_docente AND ud.uc_doc_estado = 1";
-            $stmt = $co->prepare($sql);
-            $stmt->execute([':cedula_docente' => $this->cedula_docente]);
+            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+
+            // CORREGIDO: La lógica de JOINs fue reconstruida aquí también.
+            $sql = "SELECT 
+                        uh.hor_dia, 
+                        uh.hor_horainicio, 
+                        uh.hor_horafin, 
+                        CONCAT(uh.esp_tipo, ' ', uh.esp_numero) as esp_codigo, 
+                        uh.sec_codigo, 
+                        u.uc_nombre
+                    FROM docente_horario dh
+                    JOIN uc_horario uh ON dh.sec_codigo = uh.sec_codigo
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    WHERE 
+                        dh.doc_cedula = :cedula_docente 
+                        AND s.ani_anio = :anio_param";
+            
+            $placeholders = [];
+            $i = 0;
+            foreach ($allowed_periods as $period) {
+                $key = ":period" . $i++;
+                $placeholders[] = $key;
+                $params[$key] = $period;
+            }
+            $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
+
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ReporteHorarioDocente::obtenerDatosParrillaHorario: " . $e->getMessage());
-            return [];
+        } catch (PDOException $e) { 
+            error_log("Error en obtenerDatosParrillaHorario: " . $e->getMessage());
+            return []; 
         }
     }
 
     public function obtenerBloquesDeTiempo() {
-        if (empty($this->cedula_docente)) return [];
-        $co = $this->con();
-        try {
-            $sql = "SELECT DISTINCT uh.hor_horainicio, uh.hor_horafin 
-                    FROM uc_docente ud
-                    JOIN uc_horario uh ON ud.uc_codigo = uh.uc_codigo
-                    WHERE ud.doc_cedula = :cedula_docente AND ud.uc_doc_estado = 1
-                    ORDER BY uh.hor_horainicio";
-            $stmt = $co->prepare($sql);
-            $stmt->execute([':cedula_docente' => $this->cedula_docente]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en ReporteHorarioDocente::obtenerBloquesDeTiempo: " . $e->getMessage());
-            return [];
-        }
+        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+        // Esta función ahora depende de la anterior, por lo que no necesita cambios.
+        return $this->obtenerDatosParrillaHorario();
     }
 }

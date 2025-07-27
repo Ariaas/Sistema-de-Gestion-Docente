@@ -2,40 +2,55 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../model/reportes/rhordocente.php';
+
+
+require_once("vendor/autoload.php");
+require_once("model/reportes/rhordocente.php");
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
 function renderizarFilasHorario($bloques_horarios, $datos_parrilla, $dias) {
     $html_tabla = '';
+   
+    uksort($bloques_horarios, function($a_key, $b_key) use ($bloques_horarios) {
+        return strcmp($bloques_horarios[$a_key], $bloques_horarios[$b_key]);
+    });
+    
     foreach ($bloques_horarios as $rango_hora => $hora_db) {
         $html_tabla .= '<tr><td>' . $rango_hora . '</td>';
         foreach ($dias as $dia) {
             $contenido = $datos_parrilla[$hora_db][$dia] ?? '';
             $html_tabla .= '<td>' . $contenido . '</td>';
         }
-        $html_tabla .= '<td></td></tr>';
+        $html_tabla .= '<td></td></tr>'; 
     }
     return $html_tabla;
 }
 
-$rutaVista = "views/reportes/rhordocente.php"; 
 $oReporteHorario = new ReporteHorarioDocente(); 
 
 if (isset($_POST['generar_rhd_report'])) { 
     
+    // Recibir todos los filtros
+    $anio = $_POST['anio_id'] ?? '';
+    $fase = $_POST['fase_id'] ?? '';
     $cedulaDocenteSeleccionada = $_POST['cedula_docente'] ?? ''; 
-    if (empty($cedulaDocenteSeleccionada)) { die("Error: Debe seleccionar un docente."); }
+    
+    // Validar que todos los campos obligatorios estén presentes
+    if (empty($cedulaDocenteSeleccionada) || empty($anio) || empty($fase)) { 
+        die("Error: Debe seleccionar Año, Fase y Docente."); 
+    }
 
+    // Pasar los filtros al modelo
+    $oReporteHorario->setAnio($anio);
+    $oReporteHorario->setFase($fase);
     $oReporteHorario->set_cedula_docente($cedulaDocenteSeleccionada);
 
     $infoDocente = $oReporteHorario->obtenerInfoDocente();
     $asignacionesAcademicas = $oReporteHorario->obtenerAsignacionesAcademicas();
     $otrasActividades = $oReporteHorario->obtenerOtrasActividades();
     $datosParrillaHorario = $oReporteHorario->obtenerDatosParrillaHorario();
-    $bloquesDeTiempo = $oReporteHorario->obtenerBloquesDeTiempo();
 
     if (!$infoDocente) { die("Error: No se encontró información para el docente seleccionado."); }
     
@@ -43,7 +58,7 @@ if (isset($_POST['generar_rhd_report'])) {
     $diasDeLaSemana = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
     foreach($datosParrillaHorario as $item) {
         $dia = ucfirst(strtolower(trim($item['hor_dia'])));
-        $horaInicio = trim($item['hor_horainicio']);
+        $horaInicio = trim(substr($item['hor_horainicio'], 0, 5));
         $seccion = $item['sec_codigo'];
         $primerDigito = substr($seccion, 0, 1);
         $seccionConFormato = in_array($primerDigito, ['3', '4']) ? 'IIN' . $seccion : 'IN' . $seccion;
@@ -53,11 +68,14 @@ if (isset($_POST['generar_rhd_report'])) {
     }
 
     $horasManana = []; $horasTarde = []; $horasNoche = [];
-    foreach ($bloquesDeTiempo as $bloque) {
-        $inicio = $bloque['hor_horainicio'];
-        $fin = $bloque['hor_horafin'];
+    $bloquesDeTiempo = [];
+    foreach ($datosParrillaHorario as $item) {
+        $bloquesDeTiempo[substr($item['hor_horainicio'], 0, 5)] = substr($item['hor_horafin'], 0, 5);
+    }
+    ksort($bloquesDeTiempo);
+
+    foreach ($bloquesDeTiempo as $inicio => $fin) {
         $rangoVisible = date('g:i', strtotime($inicio)) . ' a ' . date('g:i', strtotime($fin));
-        
         if (strtotime($inicio) < strtotime('13:00:00')) {
             $horasManana[$rangoVisible] = $inicio;
         } elseif (strtotime($inicio) < strtotime('18:00:00')) {
@@ -80,7 +98,7 @@ if (isset($_POST['generar_rhd_report'])) {
     
     $html .= '<div class="titulo-principal">HORARIO DEL PERSONAL DOCENTE</div>';
     $html .= '<table class="sin-borde" style="margin-bottom:0;"><tr><td width="80%" class="sin-borde" style="padding:0;"><table class="tabla-encabezado">
-        <tr><td width="18%">1. PNF/CARRERA:</td><td width="32%">INFORMATICA</td><td width="15%">2. LAPSO:</td><td width="35%">I-2024</td></tr>
+        <tr><td width="18%">1. PNF/CARRERA:</td><td width="32%">INFORMATICA</td><td width="15%">2. LAPSO:</td><td width="35%">'.$anio.'-'.$fase.'</td></tr>
         <tr><td>3. PROFESOR(A):</td><td>'.htmlspecialchars($infoDocente['nombreCompleto']).'</td><td>4. CÉDULA:</td><td>'.htmlspecialchars($infoDocente['doc_cedula']).'</td></tr>
         <tr><td>5. DEDICACIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_dedicacion']).'</td><td>6. CONDICIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_condicion']).'</td></tr>
         <tr><td>8. TITULO DE PREGRADO:</td><td colspan="3">ING EN INFORMATICA</td></tr>
@@ -95,7 +113,7 @@ if (isset($_POST['generar_rhd_report'])) {
         foreach($asignacionesAcademicas as $item) {
             $html .= '<tr><td class="texto-izquierda">'.htmlspecialchars($item['uc_nombre']).'</td><td>'.htmlspecialchars($item['uc_codigo']).'</td><td>'.nl2br(htmlspecialchars($item['secciones'])).'</td><td></td><td>'.htmlspecialchars($item['eje_nombre']).'</td><td>'.htmlspecialchars($item['uc_periodo']).'</td></tr>';
         }
-    } else { $html .= '<tr><td colspan="6">No hay asignaciones académicas.</td></tr>'; }
+    } else { $html .= '<tr><td colspan="6">No hay asignaciones académicas para este período.</td></tr>'; }
     $html .= '</table>';
     
     $html .= '<table><tr><td colspan="3" class="titulo-seccion">CREACIÓN INTELECTUAL, INTEGRACIÓN COMUNIDAD, GESTIÓN ACADÉMICA Y OTRAS ACTIVIDADES</td></tr>
@@ -112,7 +130,7 @@ if (isset($_POST['generar_rhd_report'])) {
         if (!empty($horasManana)) { $html .= '<tr><td colspan="8" class="titulo-seccion" style="font-size: 7px;">Mañana</td></tr>' . renderizarFilasHorario($horasManana, $parrillaHorario, $diasDeLaSemana); }
         if (!empty($horasTarde)) { $html .= '<tr><td colspan="8" class="titulo-seccion" style="font-size: 7px;">Tarde</td></tr>' . renderizarFilasHorario($horasTarde, $parrillaHorario, $diasDeLaSemana); }
         if (!empty($horasNoche)) { $html .= '<tr><td colspan="8" class="titulo-seccion" style="font-size: 7px;">Noche</td></tr>' . renderizarFilasHorario($horasNoche, $parrillaHorario, $diasDeLaSemana); }
-    } else { $html .= '<tr><td colspan="8">No hay horas de clase asignadas en el horario.</td></tr>'; }
+    } else { $html .= '<tr><td colspan="8">No hay horas de clase asignadas en el horario para este período.</td></tr>'; }
     $html .= '</table>';
 
     $html .= '<table class="sin-borde" style="margin-top: 5px; font-size:7px;"><tr><td width="50%" class="sin-borde texto-izquierda" style="vertical-align:top;"><table class="tabla-resumen">
@@ -141,6 +159,9 @@ if (isset($_POST['generar_rhd_report'])) {
     exit;
 
 } else {
+    // Cargar los datos para todos los dropdowns
+    $listaAnios = $oReporteHorario->getAniosActivos();
+    $listaFases = $oReporteHorario->getFases();
     $listaDocentes = $oReporteHorario->obtenerDocentes();
     require_once('views/reportes/rhordocente.php');
 }

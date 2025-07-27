@@ -3,8 +3,9 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../model/reportes/ruc.php';
+require_once("vendor/autoload.php");
+require_once("model/reportes/ruc.php");
+
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -12,122 +13,169 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-if (!is_file("model/reportes/ruc.php")) {
-    die("Error crítico: No se encuentra el archivo del modelo (rucm.php).");
-}
-$vistaFormularioUc = "views/reportes/ruc.php";
-if (!is_file($vistaFormularioUc)) {
-    die("Error crítico: No se encuentra el archivo de la vista del formulario (ruc.php).");
+// ... (La función toRoman no cambia)
+function toRoman($number) {
+    if ($number == 0) return 'INICIAL';
+    $map = ['M' => 1000, 'CM' => 900, 'D' => 500, 'CD' => 400, 'C' => 100, 'XC' => 90, 'L' => 50, 'XL' => 40, 'X' => 10, 'IX' => 9, 'V' => 5, 'IV' => 4, 'I' => 1];
+    $returnValue = '';
+    while ($number > 0) {
+        foreach ($map as $roman => $int) {
+            if($number >= $int) {
+                $number -= $int;
+                $returnValue .= $roman;
+                break;
+            }
+        }
+    }
+    return $returnValue;
 }
 
 $oUc = new Ruc();
+$vistaFormularioUc = "views/reportes/ruc.php";
 
 if (isset($_POST['generar_uc'])) {
 
+    $oUc->set_anio($_POST['anio_id'] ?? '');
     $oUc->set_trayecto($_POST['trayecto'] ?? '');
     $oUc->set_nombreUnidad($_POST['ucurricular'] ?? '');
-
     $datosReporte = $oUc->obtenerUnidadesCurriculares();
-
-    // ▼▼▼ CAMBIO PRINCIPAL: VERIFICAR SI HAY DATOS ▼▼▼
+    
+    // --- CAMBIO PRINCIPAL: GENERAR EXCEL SI NO HAY DATOS ---
     if (empty($datosReporte)) {
-        // Si no hay datos, preparamos un mensaje de error
-        $errorMessage = "No se encontraron datos para los filtros seleccionados. Por favor, intente con otros valores.";
-        
-        // Volvemos a cargar los datos para los filtros del formulario
-        $trayectos = $oUc->obtenerTrayectos();
-        $unidadesc = $oUc->obtenerUc();
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Sin Resultados");
 
-        // Requerimos la vista del formulario para mostrarla de nuevo con el mensaje
-        require_once($vistaFormularioUc);
-        exit; // Detenemos la ejecución para no generar el Excel
-    }
+        $sheet->mergeCells('A1:F1');
+        $sheet->setCellValue('A1', 'No hay registros disponibles para los filtros seleccionados.');
 
-    // --- El resto del código para generar el Excel sigue igual ---
-
-    $datosAgrupados = [];
-    foreach ($datosReporte as $fila) {
-        $trayectoKey = $fila['Número de Trayecto'] == 0 ? 'Inicial' : $fila['Número de Trayecto'];
-        $trayectoLabel = $fila['Número de Trayecto'] == 0 ? "TRAYECTO INICIAL" : "TRAYECTO " . $fila['Número de Trayecto'];
-
-        if (!isset($datosAgrupados[$trayectoKey])) {
-            $datosAgrupados[$trayectoKey] = ['label' => $trayectoLabel, 'data' => []];
+        $style = [
+            'font' => ['bold' => true, 'size' => 12],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+        ];
+        $sheet->getStyle('A1')->applyFromArray($style);
+        $sheet->getRowDimension(1)->setRowHeight(30);
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setWidth(20);
         }
-        $datosAgrupados[$trayectoKey]['data'][] = $fila;
-    }
-    ksort($datosAgrupados);
 
+        $writer = new Xlsx($spreadsheet);
+        if (ob_get_length()) ob_end_clean();
+        $fileName = "Reporte_Sin_Resultados.xlsx";
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+        $writer->save('php://output');
+        exit;
+    }
+
+    // --- El código para generar el reporte con datos sigue aquí (sin cambios) ---
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("UNIDAD CURRICULAR");
-
+    // ... (El resto del código de renderizado no cambia)
     $styleHeaderTrayecto = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleHeaderColumnas = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleHeaderColumnas = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    $styleCentradoVertical = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER]];
+    $styleCentrado = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
 
-    $columnaInicial = 2;
-
-    foreach ($datosAgrupados as $grupo) {
-        $datos = $grupo['data'];
-        $label = $grupo['label'];
-        $filaActual = 2;
-
-        $celdaInicio = Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual;
-        $celdaFin = Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual;
-        $sheet->mergeCells("{$celdaInicio}:{$celdaFin}");
-        $sheet->setCellValue($celdaInicio, $label);
-        $sheet->getStyle("{$celdaInicio}:{$celdaFin}")->applyFromArray($styleHeaderTrayecto);
-        $filaActual++;
-
-        $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual, "SECCION");
-        $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 1) . $filaActual, "UNIDAD CURRICULAR");
-        $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual, "DOCENTE");
-        $rangoEncabezados = Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual . ':' . Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual;
-        $sheet->getStyle($rangoEncabezados)->applyFromArray($styleHeaderColumnas);
-        $filaActual++;
-        $filaInicioDatos = $filaActual;
+    $datosAgrupados = [];
+    foreach ($datosReporte as $fila) {
+        $trayecto = $fila['Número de Trayecto'];
+        $uc = $fila['Nombre de la Unidad Curricular'];
+        $docente = $fila['Nombre Completo del Docente'] ?? 'NO ASIGNADO';
+        $seccion = $fila['Código de Sección'];
         
-        foreach ($datos as $item) {
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial) . $filaActual, $item['Código de Sección']);
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 1) . $filaActual, $item['Nombre de la Unidad Curricular']);
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($columnaInicial + 2) . $filaActual, $item['Nombre Completo del Docente']);
-            $filaActual++;
+        if ($seccion) {
+            $datosAgrupados[$trayecto][$uc][$docente][] = $seccion;
         }
+    }
+    ksort($datosAgrupados, SORT_NUMERIC);
 
-        $unidadesParaMerge = [];
-        foreach ($datos as $index => $item) {
-            $unidad = $item['Nombre de la Unidad Curricular'];
-            if (!$unidad) continue;
-            if (!isset($unidadesParaMerge[$unidad])) {
-                $unidadesParaMerge[$unidad] = ['start_row' => $filaInicioDatos + $index, 'count' => 0];
+    $rowOffset = 1; $colOffset = 1; $bloquesEnFila = 0; $alturaMaximaFila = 0;
+
+    function renderizarBloqueUC($sheet, $numTrayecto, $unidades, $startRow, $startCol, &$styles) {
+        $filaActual = $startRow;
+        $label = "TRAYECTO " . toRoman($numTrayecto);
+
+        $colSeccion = Coordinate::stringFromColumnIndex($startCol);
+        $colUC      = Coordinate::stringFromColumnIndex($startCol + 1);
+        $colDocente = Coordinate::stringFromColumnIndex($startCol + 2);
+
+        $rangeTitulo = "{$colSeccion}{$filaActual}:{$colDocente}{$filaActual}";
+        $sheet->mergeCells($rangeTitulo)->setCellValue($colSeccion.$filaActual, $label);
+        $sheet->getStyle($rangeTitulo)->applyFromArray($styles['header_trayecto']);
+        
+        $filaActual++;
+
+        $filaCabeceras = $filaActual;
+        $sheet->setCellValue($colSeccion.$filaActual, "SECCION");
+        $sheet->setCellValue($colUC.$filaActual, "UNIDAD CURRICULAR");
+        $sheet->setCellValue($colDocente.$filaActual, "DOCENTE");
+        $sheet->getStyle("{$colSeccion}{$filaActual}:{$colDocente}{$filaActual}")->applyFromArray($styles['header_columnas']);
+        $filaActual++;
+        
+        foreach ($unidades as $nombreUC => $docentes) {
+            $filaInicioUC = $filaActual;
+            foreach ($docentes as $nombreDocente => $secciones) {
+                $filaInicioDocente = $filaActual;
+                foreach ($secciones as $codigoSeccion) {
+                    $sheet->setCellValue($colSeccion.$filaActual, $codigoSeccion);
+                    $filaActual++;
+                }
+                $filaFinDocente = $filaActual - 1;
+                $sheet->setCellValue($colDocente.$filaInicioDocente, $nombreDocente);
+                if($filaInicioDocente < $filaFinDocente) {
+                    $sheet->mergeCells("{$colDocente}{$filaInicioDocente}:{$colDocente}{$filaFinDocente}");
+                }
             }
-            $unidadesParaMerge[$unidad]['count']++;
-        }
-
-        foreach ($unidadesParaMerge as $info) {
-            if ($info['count'] > 1) {
-                $start = $info['start_row'];
-                $end = $start + $info['count'] - 1;
-                $columnaCombinar = Coordinate::stringFromColumnIndex($columnaInicial + 1);
-                $sheet->mergeCells($columnaCombinar . $start . ':' . $columnaCombinar . $end);
+            $filaFinUC = $filaActual - 1;
+            $sheet->setCellValue($colUC.$filaInicioUC, $nombreUC);
+            if($filaInicioUC < $filaFinUC) {
+                $sheet->mergeCells("{$colUC}{$filaInicioUC}:{$colUC}{$filaFinUC}");
             }
         }
 
-        $rangoTabla = Coordinate::stringFromColumnIndex($columnaInicial) . ($filaInicioDatos - 1) . ':' . Coordinate::stringFromColumnIndex($columnaInicial + 2) . ($filaActual - 1);
-        $sheet->getStyle($rangoTabla)->applyFromArray($styleBordes);
-        $sheet->getStyle($rangoTabla)->applyFromArray($styleCentradoVertical);
-
-        $columnaInicial += 4;
+        $rangoTabla = "{$colSeccion}{$filaCabeceras}:{$colDocente}".($filaActual - 1);
+        $sheet->getStyle($rangoTabla)->applyFromArray($styles['bordes']);
+        $sheet->getStyle("{$colSeccion}".($filaCabeceras + 1).":{$colDocente}".($filaActual - 1))->applyFromArray($styles['centrado']);
+        
+        return $filaActual - $startRow;
     }
 
-    foreach (range('A', Coordinate::stringFromColumnIndex($columnaInicial)) as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
+    $estilos = [
+        'header_trayecto' => $styleHeaderTrayecto, 'header_columnas' => $styleHeaderColumnas,
+        'bordes' => $styleBordes, 'centrado' => $styleCentrado
+    ];
+    
+    foreach ($datosAgrupados as $numTrayecto => $unidades) {
+        if ($numTrayecto == 0 || $bloquesEnFila >= 2) {
+            $rowOffset += $alturaMaximaFila + 2;
+            $colOffset = 1;
+            $bloquesEnFila = 0;
+            $alturaMaximaFila = 0;
+        }
+
+        $alturaBloqueActual = renderizarBloqueUC($sheet, $numTrayecto, $unidades, $rowOffset, $colOffset, $estilos);
+
+        $alturaMaximaFila = max($alturaMaximaFila, $alturaBloqueActual);
+        $colOffset += 4;
+        $bloquesEnFila++;
     }
+
+    $sheet->getColumnDimension('A')->setWidth(15);
+    $sheet->getColumnDimension('B')->setWidth(45);
+    $sheet->getColumnDimension('C')->setWidth(35);
+    $sheet->getColumnDimension('E')->setWidth(15);
+    $sheet->getColumnDimension('F')->setWidth(45);
+    $sheet->getColumnDimension('G')->setWidth(35);
+    $sheet->getColumnDimension('I')->setWidth(15);
+    $sheet->getColumnDimension('J')->setWidth(45);
+    $sheet->getColumnDimension('K')->setWidth(35);
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Resumen_Unidades_Curriculares_" . date('Y-m-d') . ".xlsx";
+    $fileName = "Reporte_Unidad_Curricular.xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -135,7 +183,8 @@ if (isset($_POST['generar_uc'])) {
     exit;
 
 } else {
+    $listaAnios = $oUc->obtenerAnios();
     $trayectos = $oUc->obtenerTrayectos();
     $unidadesc = $oUc->obtenerUc();
-    require_once($vistaFormularioUc);
+    require_once("views/reportes/ruc.php");
 }

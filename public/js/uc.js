@@ -179,99 +179,63 @@ $(document).ready(function() {
     $("#registrar").on("click", function() {
         limpia();
         $("#proceso").text("REGISTRAR");
-        $("#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC").prop("disabled", false);
+        $("#codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC").prop("disabled", false);
         $("#modal1").modal("show");
-        $("span[id^='s']").show();
     });
+    $(
+        "#codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC, #academicaUC"
+    ).prop("disabled", false);
 
-    $("#codigoUC").on("keyup keydown", function() {
-        $("#scodigoUC").css("color", "");
-        let formatoValido = validarkeyup(/^[A-Za-z0-9-]{5,20}$/, $(this), $("#scodigoUC"), "El código debe tener entre 5 y 20 caracteres.");
-        if (formatoValido === 1) {
-            var datos = new FormData();
-            datos.append('accion', 'existe');
-            datos.append('codigoUC', $(this).val());
-            if ($("#proceso").text() === "MODIFICAR") {
-                datos.append('codigoExcluir', originalCodigoUC);
-            }
-            enviaAjax(datos, 'existe');
-        }
-    });
-
-    $("#nombreUC").on("keyup keydown", function() {
-        $("#snombreUC").css("color", "");
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,50}$/, $(this), $("#snombreUC"), "El nombre debe tener entre 5 y 50 caracteres.");
-    });
-
-    $("#creditosUC").on("keyup keydown", function() {
-        $("#screditosUC").css("color", "");
-        validarkeyup(/^([5-9]|[1-9][0-9])$/, $(this), $("#screditosUC"), "Debe ser un número entre 5 y 99.");
-    });
 });
 
 function validarenvio() {
-    let esValido = true;
-
-    if (validarkeyup(/^[A-Za-z0-9-]{5,20}$/, $("#codigoUC"), $("#scodigoUC"), "El código debe tener entre 5 y 20 caracteres.") === 0) {
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del código es incorrecto.");
-        esValido = false;
+    if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "El código de la unidad curricular es obligatorio.");
+        $("#codigoUC").focus();
+        return false;
     }
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,50}$/, $("#nombreUC"), $("#snombreUC"), "El nombre debe tener entre 5 y 50 caracteres.") === 0) {
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del nombre es incorrecto.");
-        esValido = false;
+    if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "El nombre de la unidad curricular es obligatorio.");
+        $("#nombreUC").focus();
+        return false;
     }
-    if (validarkeyup(/^([5-9]|[1-9][0-9])$/, $("#creditosUC"), $("#screditosUC"), "Debe ser un número entre 5 y 99.") === 0) {
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "Las unidades de crédito deben ser entre 5 y 99.");
-        esValido = false;
+    if ($("#creditosUC").val() == "" || $("#creditosUC").val() == null) {
+        muestraMensaje("error", 4000, "Atención!", "Las unidades de crédito son obligatorias.");
+        $("#creditosUC").focus();
+        return false;
     }
-
     if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
-        $("#strayectoUC").text("Debe seleccionar un trayecto.");
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un trayecto.");
-        esValido = false;
-    } else {
-        $("#strayectoUC").text("");
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
+        $("#trayectoUC").focus();
+        return false;
     }
-
     if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
-        $("#sejeUC").text("Debe seleccionar un eje.");
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un eje.");
-        esValido = false;
-    } else {
-        $("#sejeUC").text("");
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un eje.");
+        $("#ejeUC").focus();
+        return false;
     }
-
     if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
-        $("#sareaUC").text("Debe seleccionar un área.");
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un área.");
-        esValido = false;
-    } else {
-        $("#sareaUC").text("");
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un área.");
+        $("#areaUC").focus();
+        return false;
     }
-
     if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
-        $("#speriodoUC").text("Debe seleccionar un periodo.");
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un periodo.");
-        esValido = false;
-    } else {
-        $("#speriodoUC").text("");
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un periodo.");
+        $("#periodoUC").focus();
+        return false;
     }
-
     if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
-        $("#selectivaUC").text("Debe seleccionar si es electiva.");
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar si la UC es electiva.");
-        esValido = false;
-    } else {
-        $("#selectivaUC").text("");
+        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar si es electiva o no.");
+        $("#electivaUC").focus();
+        return false;
     }
-
     if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
-        $("#speriodoUC").text("No puede ser anual si es electiva.");
-        if(esValido) muestraMensaje("error", 4000, "Atención!", "Una unidad curricular electiva no puede tener periodo anual.");
-        esValido = false;
+        muestraMensaje("error", 4000, "Atención!", "Una unidad curricular electiva no puede tener periodo anual.");
+        $("#periodoUC").focus();
+        return false;
     }
 
-    return esValido;
+    return true;
 }
 
 function pone(pos, accion) {
@@ -296,7 +260,7 @@ function pone(pos, accion) {
     $("#electivaUC").val(linea.data("electiva"));
     
     $("#modal1").modal("show");
-    $("#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #sejeUC, #sareaUC, #speriodoUC, #selectivaUC").hide();
+    $("#scodigoUC, #snombreUC, #strayectoUC, #seje, #sarea, #screditosUC, #speriodoUC, #selectivaUC").hide();
 }
 
 function verDocentes(ucCodigo, ucNombre) {
@@ -351,7 +315,7 @@ function verDocentes(ucCodigo, ucNombre) {
     });
 }
 
-function enviaAjax(datos, accion) {
+function enviaAjax(datos) {
     $.ajax({
         async: true,
         url: "",
@@ -363,16 +327,6 @@ function enviaAjax(datos, accion) {
         success: function(respuesta) {
             try {
                 var lee = JSON.parse(respuesta);
-                if (accion === 'existe') {
-                    if (lee.resultado === 'existe') {
-                        $("#scodigoUC").text(lee.mensaje).css("color", "red");
-                        $("#proceso").prop("disabled", true);
-                    } else {
-                        $("#scodigoUC").text("");
-                        $("#proceso").prop("disabled", false);
-                    }
-                    return;
-                }
                 if (lee.resultado === "consultar") {
                     destruyeDT("#tablauc");
                     $("#resultadoconsulta1").empty();
@@ -408,15 +362,21 @@ function enviaAjax(datos, accion) {
                     crearDT("#tablauc");
                 } else if (lee.resultado == "registrar") {
                     muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
-                    $("#modal1").modal("hide");
+                    if (lee.mensaje.includes("¡Registro Incluido!")) {
+                        $("#modal1").modal("hide");
+                    }
                     Listar();
                 } else if (lee.resultado == "modificar") {
                     muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
-                    $("#modal1").modal("hide");
+                    if (lee.mensaje.includes("modificó la unidad curricular")) {
+                        $("#modal1").modal("hide");
+                    }
                     Listar();
                 } else if (lee.resultado == "eliminar") {
                     muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
-                    $("#modal1").modal("hide");
+                    if (lee.mensaje.includes("eliminó la unidad curricular")) {
+                        $("#modal1").modal("hide");
+                    }
                     Listar();
                 } else if (lee.resultado == 'asignar') {
                     muestraMensaje("info", 4000, "ASIGNACIÓN", lee.mensaje);
@@ -448,12 +408,14 @@ function limpia() {
     $("#codigoUC").val("");
     $("#nombreUC").val("");
     $("#creditosUC").val("");
+    $("#independienteUC").val("");
+    $("#asistidaUC").val("");
+    $("#academicaUC").val("");
     $("#trayectoUC").val(""); 
     $("#ejeUC").val("");      
     $("#areaUC").val("");     
     $("#periodoUC").val("");  
-    $("#electivaUC").val("");
-    $("span[id^='s']").text("").css("color", "");
+    $("#electivaUC").val(""); 
 }
 
 

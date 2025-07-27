@@ -170,9 +170,10 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                 <?php endif; ?>
 
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <?php echo is_active('preguntas', $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Ayuda</a>
+                    <a class="nav-link dropdown-toggle <?php echo is_active(['preguntas', 'manual_usuario'], $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Ayuda</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item <?php echo is_active('preguntas', $pagina_actual); ?>" href="?pagina=preguntas">Preguntas</a></li>
+                        <li><a class="dropdown-item <?php echo is_active('manual_usuario', $pagina_actual); ?>" href="?pagina=manual_usuario">Manual de Usuario</a></li>
                     </ul>
                 </li>
             </ul>

@@ -3,8 +3,7 @@ require_once('model/dbconnection.php');
 
 class DefinitivoEmit extends Connection
 {
-    private $docente_id;
-    private $seccion_id;
+    private $anio_id;
     private $fase;
 
     public function __construct()
@@ -12,14 +11,9 @@ class DefinitivoEmit extends Connection
         parent::__construct();
     }
 
-    public function set_docente($valor)
+    public function set_anio($valor)
     {
-        $this->docente_id = trim($valor);
-    }
-
-    public function set_seccion($valor)
-    {
-        $this->seccion_id = trim($valor);
+        $this->anio_id = trim($valor);
     }
 
     public function set_fase($valor)
@@ -27,7 +21,7 @@ class DefinitivoEmit extends Connection
         $this->fase = trim($valor);
     }
 
-    public function obtenerDatosDefinitivoEmit()
+     public function obtenerDatosDefinitivoEmit()
     {
         $co = $this->con();
         try {
@@ -36,49 +30,52 @@ class DefinitivoEmit extends Connection
                             CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS NombreCompletoDocente,
                             d.doc_cedula AS CedulaDocente,
                             u.uc_nombre AS NombreUnidadCurricular,
-                            s.sec_codigo AS NombreSeccion
+                            CASE 
+                                WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
+                                WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
+                                ELSE s.sec_codigo
+                            END AS NombreSeccion
                         FROM
-                            uc_docente ud
+                            docente_horario dh
                         INNER JOIN
-                            tbl_docente d ON d.doc_cedula = ud.doc_cedula
+                            tbl_docente d ON dh.doc_cedula = d.doc_cedula
                         INNER JOIN
-                            tbl_uc u ON ud.uc_codigo = u.uc_codigo
+                            tbl_seccion s ON dh.sec_codigo = s.sec_codigo
                         INNER JOIN
-                            uc_horario uh ON u.uc_codigo = uh.uc_codigo
+                            uc_horario uh ON s.sec_codigo = uh.sec_codigo
                         INNER JOIN
-                            tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                        WHERE
-                            d.doc_estado = 1 AND ud.uc_doc_estado = 1";
-
+                            tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                        ";
+            
+            $conditions = ["d.doc_estado = 1", "s.sec_estado = 1"];
             $params = [];
 
-            if (!empty($this->docente_id)) {
-                $sqlBase .= " AND d.doc_cedula = :doc_cedula";
-                $params[':doc_cedula'] = $this->docente_id;
+            if (!empty($this->anio_id)) {
+                $conditions[] = "s.ani_anio = :anio_id";
+                $params[':anio_id'] = $this->anio_id;
             }
 
-            if (!empty($this->seccion_id)) {
-                $sqlBase .= " AND s.sec_codigo = :sec_codigo";
-                $params[':sec_codigo'] = $this->seccion_id;
-            }
-
-            // --- ▼▼▼ LÓGICA DE FILTRO POR FASE CORREGIDA ▼▼▼ ---
             if (!empty($this->fase)) {
-                if ($this->fase == '1') {
-                    // Si se selecciona Fase I, se incluyen también las anuales
-                    $sqlBase .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual')";
-                } elseif ($this->fase == '2') {
-                    // Si se selecciona Fase II, se incluyen también las anuales
-                    $sqlBase .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
-                } elseif ($this->fase == 'anual') {
-                    // Si se selecciona Anual, se muestran solo las anuales
-                    $sqlBase .= " AND u.uc_periodo = :fase_periodo";
-                    $params[':fase_periodo'] = 'Anual';
+                $fase_condition = '';
+                switch ($this->fase) {
+                    case '1':
+                        $fase_condition = "(u.uc_periodo = 'Fase I' OR LOWER(u.uc_periodo) = 'anual')";
+                        break;
+                    case '2':
+                        $fase_condition = "(u.uc_periodo = 'Fase II' OR LOWER(u.uc_periodo) = 'anual')";
+                        break;
+                    case 'Anual':
+                        break;
+                }
+                if ($fase_condition) {
+                    $conditions[] = $fase_condition;
                 }
             }
             
-            $sqlBase .= " GROUP BY d.doc_cedula, u.uc_codigo, s.sec_codigo";
-            $sqlBase .= " ORDER BY NombreCompletoDocente, NombreSeccion";
+            $sqlBase .= " WHERE " . implode(" AND ", $conditions);
+            
+            // --- CAMBIO: Se ajusta el ORDEN para agrupar UCs ---
+            $sqlBase .= " ORDER BY NombreCompletoDocente, NombreUnidadCurricular, NombreSeccion";
             
             $resultado = $co->prepare($sqlBase);
             $resultado->execute($params);
@@ -90,31 +87,15 @@ class DefinitivoEmit extends Connection
         }
     }
 
-    public function obtenerDocentes()
+    public function obtenerAnios()
     {
         $co = $this->con();
         try {
-            $p = $co->prepare("SELECT doc_cedula, CONCAT(doc_nombre, ' ', doc_apellido) as NombreCompleto FROM tbl_docente WHERE doc_estado = 1 ORDER BY NombreCompleto");
+            $p = $co->prepare("SELECT * FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC");
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error en DefinitivoEmit::obtenerDocentes: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    public function obtenerSecciones()
-    {
-        $co = $this->con();
-        try {
-            $p = $co->prepare("SELECT sec_codigo FROM tbl_seccion s
-                               JOIN tbl_anio a ON s.ani_anio = a.ani_anio AND s.ani_tipo = a.ani_tipo
-                               WHERE s.sec_estado = 1 AND a.ani_activo = 1 
-                               ORDER BY sec_codigo");
-            $p->execute();
-            return $p->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en DefinitivoEmit::obtenerSecciones: " . $e->getMessage());
+            error_log("Error en DefinitivoEmit::obtenerAnios: " . $e->getMessage());
             return false;
         }
     }

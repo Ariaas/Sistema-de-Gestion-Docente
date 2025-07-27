@@ -95,7 +95,7 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                     </div>
                                     <div class="col-md-4">
                                         <label for="creditosUC" class="form-label">Unidades de Crédito</label>
-                                        <input class="form-control" type="number" id="creditosUC" name="creditosUC" required min="5" max="99" maxlength="2" placeholder="Ej: 5">
+                                        <input class="form-control" type="number" id="creditosUC" name="creditosUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 4">
                                         <span id="screditosUC"></span>
                                     </div>
                                 </div>
@@ -114,7 +114,7 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                             }
                                             ?>
                                         </select>
-                                        <span id="sejeUC"></span>
+                                        <span id="seje"></span>
                                     </div>
 
                                     <div class="col-md-4">
@@ -131,7 +131,7 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                             }
                                             ?>
                                         </select>
-                                        <span id="sareaUC"></span>
+                                        <span id="sarea"></span>
                                     </div>
 
                                     <div class="col-md-4">

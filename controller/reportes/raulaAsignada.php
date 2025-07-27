@@ -2,8 +2,9 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../model/reportes/raulaAsignada.php';
+
+require_once("vendor/autoload.php");
+require_once("model/reportes/raulaAsignada.php");
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -25,8 +26,9 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
         foreach ($aulasData as $row) {
             $dia = ucfirst(strtolower(trim($row['hor_dia'])));
             if (isset($dataPorDia[$dia])) {
-                if (!in_array($row['esp_codigo'], $dataPorDia[$dia])) {
-                    $dataPorDia[$dia][] = $row['esp_codigo'];
+                // --- CAMBIO: Se usa la nueva columna 'aula_completa' ---
+                if (!in_array($row['aula_completa'], $dataPorDia[$dia])) {
+                    $dataPorDia[$dia][] = $row['aula_completa'];
                 }
             }
         }
@@ -37,13 +39,13 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     $sheet->setTitle("Asignación de Aulas");
 
     $styleHeader = ['font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F81BD']]];
-    $styleCell = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleCell = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
 
     $col = 'A';
     foreach ($ordenDias as $dia) {
         $sheet->setCellValue($col . '1', mb_strtoupper($dia, 'UTF-8'));
         $sheet->getStyle($col . '1')->applyFromArray($styleHeader);
-        $sheet->getColumnDimension($col)->setWidth(20);
+        $sheet->getColumnDimension($col)->setWidth(25); // Un poco más de ancho
         $col++;
     }
 
@@ -57,7 +59,8 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     if ($maxRows > 0) {
         for ($i = 0; $i < $maxRows; $i++) {
             $colChar = 'A';
-            foreach ($dataPorDia as $aulas) {
+            foreach ($dataPorDia as $dia => $aulas) {
+                // --- CAMBIO: Se usa la nueva columna 'aula_completa' ---
                 $cellValue = isset($aulas[$i]) ? $aulas[$i] : '';
                 $sheet->setCellValue($colChar . ($i + 2), $cellValue);
                 $colChar++;
