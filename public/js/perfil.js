@@ -5,8 +5,18 @@ function Listar() {
 }
 
 function validarPerfil() {
-    if ($('#correoUsuario').val().trim() === '') {
+    const correo = $('#correoUsuario').val().trim();
+    const regexCorreo = /^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    if (correo === '') {
         muestraMensaje('error', 2000, 'ERROR', 'El correo no puede estar vacío');
+        return false;
+    }
+    if (!regexCorreo.test(correo)) {
+        muestraMensaje('error', 2000, 'ERROR', 'Formato de correo incorrecto. Ej: usuario@dominio.com');
+        return false;
+    }
+    if ($('#correoUsuario').hasClass('is-invalid')) {
+        muestraMensaje('error', 2000, 'ERROR', 'Debe ingresar un correo válido y no repetido');
         return false;
     }
     return true;
@@ -50,6 +60,43 @@ $(document).ready(function () {
             };
             reader.readAsDataURL(this.files[0]);
         }
+    });
+
+    $('#correoUsuario').on('keyup change', function() {
+        const correo = $(this).val();
+        const regexCorreo = /^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        $('#correoUsuario').removeClass('is-invalid');
+        $('#correoUsuario').next('.invalid-feedback').remove();
+        if (correo.trim() === '') {
+            return;
+        }
+        if (!regexCorreo.test(correo)) {
+            $('#correoUsuario').addClass('is-invalid');
+            $('#correoUsuario').after('<div class="invalid-feedback d-block">Formato incorrecto. Ej: usuario@dominio.com</div>');
+            return;
+        }
+        const datos = new FormData();
+        datos.append('accion', 'existe_correo_perfil');
+        datos.append('correoUsuario', correo);
+        $.ajax({
+            url: '',
+            type: 'POST',
+            contentType: false,
+            data: datos,
+            processData: false,
+            cache: false,
+            success: function(respuesta) {
+                try {
+                    const lee = JSON.parse(respuesta);
+                    $('#correoUsuario').removeClass('is-invalid');
+                    $('#correoUsuario').next('.invalid-feedback').remove();
+                    if (lee.resultado === 'existe_usuario' || lee.resultado === 'existe_docente') {
+                        $('#correoUsuario').addClass('is-invalid');
+                        $('#correoUsuario').after('<div class="invalid-feedback d-block">' + lee.mensaje + '</div>');
+                    }
+                } catch (e) {}
+            }
+        });
     });
 });
 

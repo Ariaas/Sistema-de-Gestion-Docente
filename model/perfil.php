@@ -101,4 +101,42 @@ class Perfil extends Connection
         $co = null;
         return $r;
     }
+
+    public function existeCorreo($correo, $usuarioId = null)
+    {
+        $co = $this->Con();
+        try {
+            $sql_usuario = "SELECT usu_id FROM tbl_usuario WHERE usu_correo = :correo AND usu_estado = 1";
+            $stmt_usuario = $co->prepare($sql_usuario);
+            $stmt_usuario->execute([':correo' => $correo]);
+            $usuario = $stmt_usuario->fetch(PDO::FETCH_ASSOC);
+
+            if ($usuario) {
+                if ($usuarioId && $usuario['usu_id'] == $usuarioId) {
+                    return ['resultado' => 'no_existe'];
+                } else {
+                    return [
+                        'resultado' => 'existe_usuario',
+                        'mensaje' => 'Este correo ya está en uso por otro usuario.'
+                    ];
+                }
+            }
+
+            $sql_docente = "SELECT doc_nombre, doc_apellido FROM tbl_docente WHERE doc_correo = :correo AND doc_estado = 1";
+            $stmt_docente = $co->prepare($sql_docente);
+            $stmt_docente->execute([':correo' => $correo]);
+            $docente = $stmt_docente->fetch(PDO::FETCH_ASSOC);
+
+            if ($docente) {
+                return [
+                    'resultado' => 'existe_docente',
+                    'mensaje' => 'El correo ya está asignado al docente (' . $docente['doc_nombre'] . ' ' . $docente['doc_apellido'] . ').'
+                ];
+            }
+
+            return ['resultado' => 'no_existe'];
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        }
+    }
 }

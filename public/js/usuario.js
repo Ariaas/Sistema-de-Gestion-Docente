@@ -98,18 +98,26 @@ $(document).ready(function () {
       }
     });
 
-    $("#correo").on("keyup keydown", function () {
-      $("#scorreo").css("color", "");
-      let formatoValido = validarkeyup(/^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,$(this),$("#scorreo"),"El correo debe tener un formato válido (ej: usuario@dominio.com) y entre 5 a 20 caracteres antes del @.");
-      if(formatoValido === 1){
-        var datos = new FormData();
-        datos.append('accion', 'existe');
-        datos.append('correoUsuario', $(this).val());
-        if ($("#proceso").text() === "MODIFICAR") {
-            datos.append('usuarioId', $("#usuarioId").val());
+    $("#correo").on("keyup", function() {
+        if ($("#usu_cedula").val()) return;
+
+        $("#scorreo").text("").css("color", "red");
+        $("#proceso").prop("disabled", false);
+
+        let formatoValido = validarkeyup(/^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $(this), $("#scorreo"), "El correo debe tener un formato válido, Ej: usuario@dominio.com");
+        
+        if (formatoValido === 1) {
+            const correo = $(this).val();
+            const usuarioId = ($("#proceso").text() === "MODIFICAR") ? $("#usuarioId").val() : null;
+
+            const datos = new FormData();
+            datos.append('accion', 'verificar_correo_docente');
+            datos.append('correo', correo);
+            if (usuarioId) {
+                datos.append('usuarioId', usuarioId);
+            }
+            enviaAjax(datos, 'verificar_correo_docente');
         }
-        enviaAjax(datos, 'existe_correo');
-      }
     });
 
     $("#contrasenia").on("keyup keydown", function () {
@@ -202,7 +210,7 @@ $(document).ready(function () {
                                 <tr>
                                     <td>${docente.doc_cedula}</td>
                                     <td>${docente.doc_nombre} ${docente.doc_apellido}</td>
-                                    <td><button class="btn btn-success btn-sm btn-seleccionar-doc" data-cedula="${docente.doc_cedula}" data-nombre="${docente.doc_nombre} ${docente.doc_apellido}">Seleccionar</button></td>
+                                    <td><button class="btn btn-success btn-sm btn-seleccionar-doc" data-cedula="${docente.doc_cedula}" data-nombre="${docente.doc_nombre} ${docente.doc_apellido}" data-correo="${docente.doc_correo}">Seleccionar</button></td>
                                 </tr>
                             `);
                         });
@@ -223,9 +231,12 @@ $(document).ready(function () {
   $(document).on('click', '.btn-seleccionar-doc', function() {
       const nombre = $(this).data('nombre');
       const cedula = $(this).data('cedula');
+      const correo = $(this).data('correo');
       $('#usu_docente').val(nombre);
       $('#usu_cedula').val(cedula);
       $('#docente_asignado_nombre').val(nombre);
+      $('#correo').val(correo).prop('readonly', true);
+      $('#scorreo').text('');
       $('#modalDocentes').modal('hide');
   });
 
@@ -237,6 +248,7 @@ $(document).ready(function () {
       $('#usu_docente').val('');
       $('#usu_cedula').val('');
       $('#docente_asignado_nombre').val('');
+      $('#correo').val('').prop('readonly', false);
   });
 
   $('#btnSeleccionarRol').on('click', function() {
@@ -273,7 +285,7 @@ function validarenvio() {
     esValido = false;
   }
   
-  if (validarkeyup(/^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $("#correo"), $("#scorreo"), "El formato del correo es incorrecto.") == 0) {
+  if ($("#correo").val().trim() !== '' && validarkeyup(/^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $("#correo"), $("#scorreo"), "Formato incorrecto, Ej: usuario@dominio.com.") == 0) {
     if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del correo es incorrecto.");
     esValido = false;
   }
@@ -286,8 +298,11 @@ function validarenvio() {
   }
 
   if ($("#usuarioRol").val() === "") {
+    $("#susuarioRol").text("Debe seleccionar un rol para el usuario.").css("color", "red");
     if(esValido) muestraMensaje("error",4000,"ERROR!","Debe seleccionar un rol para el usuario.");
     esValido = false;
+  } else {
+    $("#susuarioRol").text("");
   }
 
   return esValido;
@@ -313,15 +328,28 @@ function pone(pos, accion) {
   const rolId = $(linea).find("td:eq(3)").data("rol") || "";
   const rolNombre = $(linea).find("td:eq(3)").text() || "";
   $("#usuarioRol").val(rolId);
-  $("#rol_asignado_nombre").val(rolNombre === 'Usuario sin rol' ? '' : rolNombre);
+  if (rolNombre === 'Usuario sin rol' || !rolId) {
+    $("#rol_asignado_nombre").val('');
+    $("#usuarioRol").val('');
+    $("#susuarioRol").text('').hide();
+  } else {
+    $("#rol_asignado_nombre").val(rolNombre);
+    $("#susuarioRol").text('').hide();
+  }
 
   const docenteAsignado = $(linea).find("td:eq(4)").text() || "";
   const cedulaAsignada = $(linea).find("td:eq(4)").data("cedula") || "";
-  $("#usu_docente").val(docenteAsignado === 'No asignado' ? '' : docenteAsignado);
+  $("#usu_docente").val(docenteAsignado === 'Usuario no es un docente' ? '' : docenteAsignado);
   $("#usu_cedula").val(cedulaAsignada);
-  $("#docente_asignado_nombre").val(docenteAsignado === 'No asignado' ? '' : docenteAsignado);
+  $("#docente_asignado_nombre").val(docenteAsignado === 'Usuario no es un docente' ? '' : docenteAsignado);
 
-  $("#susuarionombre, #scontrasenia, #scorreo").text("").hide();
+  if (cedulaAsignada) {
+    $("#correo").prop("readonly", true);
+  } else {
+    $("#correo").prop("readonly", false);
+  }
+
+  $("#susuarionombre, #scontrasenia, #scorreo, #susuarioRol").text("");
 
   $("#modal1").modal("show");
 }
@@ -357,6 +385,16 @@ function enviaAjax(datos, accion) {
             } else {
               $("#scorreo").text("");
               $("#proceso").prop("disabled", false);
+            }
+            return;
+        }
+        if (accion === 'verificar_correo_docente') {
+            if (lee.resultado === 'existe_docente' || lee.resultado === 'existe_usuario') {
+                $("#scorreo").text(lee.mensaje).css("color", "red").show();
+                $("#proceso").prop("disabled", true);
+            } else {
+                $("#scorreo").text("").hide();
+                $("#proceso").prop("disabled", false);
             }
             return;
         }
@@ -433,13 +471,13 @@ function limpia() {
   $("#usuarioId").val("");
   $("#usuarionombre").val("");
   $("#contrasenia").val("");
-  $("#correo").val("");
+  $("#correo").val("").prop("readonly", false);
   $("#usuarioRol").val("");
   $("#usu_docente").val("");
   $("#usu_cedula").val("");
   $("#docente_asignado_nombre").val("");
   $("#rol_asignado_nombre").val("");
-  $("#susuarionombre, #scorreo, #scontrasenia").text("");
+  $("#susuarionombre, #scorreo, #scontrasenia, #susuarioRol").text("").hide();
   $("#proceso").prop("disabled", false);
 }
 

@@ -39,12 +39,19 @@ if (!isset($_SESSION['name'])) {
         }
 
         .perfil-form {
-            max-width: 400px;
+            max-width: 380px;
+            min-width: 340px;
+            width: 100%;
             margin: 0 auto;
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
             padding: 2rem 2.5rem 1.5rem 2.5rem;
+        }
+
+        .perfil-form .invalid-feedback {
+            white-space: normal;
+            word-break: break-word;
         }
     </style>
 </head>
