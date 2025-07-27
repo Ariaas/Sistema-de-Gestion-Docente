@@ -122,8 +122,10 @@ $puede_eliminar = tiene_permiso_accion('malla curricular', 'eliminar', $permisos
                                         <div class="col-md-9"><label for="select_uc" class="form-label">Unidad Curricular</label><select id="select_uc" class="form-select" style="width: 100%;"></select></div>
                                         <div class="col-md-3"><button type="button" class="btn btn-info w-100" id="btn_agregar_uc">Agregar Unidad</button></div>
                                     </div>
-                                    <div id="contenedorAcordeonUC" class="accordion">
-                                    </div>
+                                    <div id="contenedorAcordeonUC">
+    <ul class="nav nav-tabs" id="mallaTabsMod" role="tablist"></ul>
+    <div class="tab-content" id="mallaTabContentMod"></div>
+</div>
                                 </fieldset>
                             </div>
                             <div id="botones-pagina1" class="modal-footer justify-content-end mt-4"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary" id="btn-siguiente">Siguiente &raquo;</button></div>

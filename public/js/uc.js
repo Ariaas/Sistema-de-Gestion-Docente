@@ -381,9 +381,16 @@ function enviaAjax(datos, accion) {
                         let electivaTexto = item.uc_electiva == 1 ? "Sí" : "No";
                         let periodoTexto = item.uc_periodo === "anual" ? "Anual" : (item.uc_periodo === "1" ? "Fase 1" : (item.uc_periodo === "2" ? "Fase 2" : item.uc_periodo));
                         
-                        const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-                        const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                        const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
+                        const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar"
+                         ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+
+
+                        const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar"
+                         ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+
+                         
+                        const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar"
+                         ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
                         const btnVerDocentes = `<button class="btn btn-icon btn-info" onclick="verDocentes('${item.uc_codigo}', '${item.uc_nombre}')" title="Ver Docentes" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/people.svg" alt="Ver Docentes"></button>`;
 
                         tabla += `

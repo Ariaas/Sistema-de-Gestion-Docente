@@ -138,98 +138,101 @@ $(document).ready(function () {
         $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)");
     });
     
-    $('#btn_agregar_uc').on('click', function() {
-        const select = $('#select_uc');
-        const uc_codigo = select.val();
-        const selectedOption = select.find('option:selected');
-        const uc_nombre = selectedOption.text();
-        const uc_trayecto = selectedOption.data('trayecto');
+   $('#btn_agregar_uc').on('click', function() {
+    const select = $('#select_uc');
+    const uc_codigo = select.val();
+    const selectedOption = select.find('option:selected');
+    const uc_nombre = selectedOption.text();
+    const uc_trayecto = selectedOption.data('trayecto');
 
-        if (!uc_codigo) {
-            muestraMensaje('error', 3000, 'Error', 'Debe seleccionar una unidad curricular.');
-            return;
-        }
+    if (!uc_codigo) {
+        muestraMensaje('error', 3000, 'Error', 'Debe seleccionar una unidad curricular.');
+        return;
+    }
 
-        const nombreTrayecto = uc_trayecto == '0' ? 'Trayecto Inicial' : `Trayecto ${uc_trayecto}`;
-        let acordeonItem = $(`#acordeon-trayecto-${uc_trayecto}`);
-        
-        if (acordeonItem.length === 0) {
-            acordeonItem = $(`
-                <div class="accordion-item" id="acordeon-trayecto-${uc_trayecto}">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-trayecto-${uc_trayecto}">
-                            ${nombreTrayecto}
-                        </button>
-                    </h2>
-                    <div id="collapse-trayecto-${uc_trayecto}" class="accordion-collapse collapse">
-                        <div class="accordion-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered table-striped mb-0">
-                                    <thead class="table-light text-center">
-                                        <tr>
-                                            <th>Unidad Curricular</th>
-                                            <th>H. Indep.</th>
-                                            <th>H. Asist.</th>
-                                            <th>HTE</th>
-                                            <th>H. Acad.</th>
-                                            <th>Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+    const nombreTrayecto = uc_trayecto == '0' ? 'Trayecto Inicial' : `Trayecto ${uc_trayecto}`;
+    // IDs únicos para las pestañas y paneles del modal de edición
+    const tabId = `mod-tab-trayecto-${uc_trayecto}`;
+    const paneId = `mod-pane-trayecto-${uc_trayecto}`;
+
+    let tabPane = $(`#${paneId}`);
+
+    // Si la pestaña para este trayecto no existe, la creamos
+    if (tabPane.length === 0) {
+        // Crear la pestaña de navegación
+        const newTab = `
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="${tabId}-tab" data-bs-toggle="tab" data-bs-target="#${paneId}" type="button" role="tab">${nombreTrayecto}</button>
+            </li>`;
+        $('#mallaTabsMod').append(newTab);
+
+        // Crear el panel de contenido de la pestaña con su tabla
+        const newPane = `
+            <div class="tab-pane fade" id="${paneId}" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped mt-2 mb-0">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th>Unidad Curricular</th>
+                                <th>H. Indep.</th>
+                                <th>H. Asist.</th>
+                                <th>HTE</th>
+                                <th>H. Acad.</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-            `);
-            $('#contenedorAcordeonUC').append(acordeonItem);
-        }
+            </div>`;
+        $('#mallaTabContentMod').append(newPane);
+        tabPane = $(`#${paneId}`); // Re-seleccionamos el panel recién creado
+    }
 
-        const fila = `
-            <tr data-uc_codigo="${uc_codigo}" data-trayecto="${uc_trayecto}">
-                <td class="align-middle text-start">${uc_nombre}</td>
-                <td><input type="text" class="form-control form-control-sm text-center horas-input h-indep" value="0"></td>
-                <td><input type="text" class="form-control form-control-sm text-center horas-input h-asist" value="0"></td>
-                <td><input type="text" class="form-control form-control-sm text-center h-total" value="0" readonly></td>
-                <td><input type="text" class="form-control form-control-sm text-center horas-input h-acad" value="0"></td>
-                <td class="align-middle"><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td>
-            </tr>`;
-        
-        acordeonItem.find('tbody').append(fila);
-        if(!acordeonItem.find('.accordion-collapse').hasClass('show')){
-            acordeonItem.find('.accordion-button').trigger('click');
-        }
-        
-        actualizarSelectUC();
-        gestionarBotonGuardar();
-    });
+    // Crear la fila para la nueva unidad curricular
+    const fila = `
+        <tr data-uc_codigo="${uc_codigo}" data-trayecto="${uc_trayecto}">
+            <td class="align-middle text-start">${uc_nombre}</td>
+            <td><input type="text" class="form-control form-control-sm text-center horas-input h-indep" value="0"></td>
+            <td><input type="text" class="form-control form-control-sm text-center horas-input h-asist" value="0"></td>
+            <td><input type="text" class="form-control form-control-sm text-center h-total" value="0" readonly></td>
+            <td><input type="text" class="form-control form-control-sm text-center horas-input h-acad" value="0"></td>
+            <td class="align-middle"><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td>
+        </tr>`;
+    
+    tabPane.find('tbody').append(fila);
 
-    $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
-        const fila = $(this).closest('tr');
-        const acordeonItem = fila.closest('.accordion-item');
-        fila.remove();
-        
-        if(acordeonItem.find('tbody tr').length === 0){
-            acordeonItem.remove();
-        }
+    // Activar la pestaña recién creada o actualizada
+    new bootstrap.Tab($(`#${tabId}-tab`)).show();
+    
+    actualizarSelectUC();
+    gestionarBotonGuardar();
+});
 
-        actualizarSelectUC();
-        gestionarBotonGuardar();
-    });
 
-    $('#contenedorAcordeonUC').on('input', '.horas-input', function() {
-        this.value = this.value.replace(/[^0-9]/g, ''); 
-        if (this.value.length > 3) {
-            this.value = this.value.slice(0, 3);
-        }
+// ✅ FUNCIÓN MODIFICADA: btn-remover-uc
+$('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
+    const fila = $(this).closest('tr');
+    const tabPane = fila.closest('.tab-pane');
+    const tabId = tabPane.attr('id');
+    
+    fila.remove();
+    
+    // Si la tabla en la pestaña queda vacía, eliminamos la pestaña y su panel
+    if (tabPane.find('tbody tr').length === 0) {
+        // Eliminar el panel de contenido
+        tabPane.remove();
+        // Eliminar la pestaña de navegación usando el atributo data-bs-target
+        $(`button[data-bs-target="#${tabId}"]`).parent().remove();
 
-        const fila = $(this).closest('tr');
-        const hIndep = parseInt(fila.find('.h-indep').val()) || 0;
-        const hAsist = parseInt(fila.find('.h-asist').val()) || 0;
-        fila.find('.h-total').val(hIndep + hAsist);
-        
-        gestionarBotonGuardar();
-    });
+        // Activar la primera pestaña que quede, si existe
+        $('#mallaTabsMod .nav-link').first().tab('show');
+    }
+
+    actualizarSelectUC();
+    gestionarBotonGuardar();
+});
+   
 
     $("#mal_codigo").on("keyup", function () {
         validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $(this), $("#smalcodigo"),"El código permite de 2 a 20 caracteres alfanuméricos, espacios o guiones.");
@@ -320,64 +323,100 @@ function pone(pos, accionBtn) {
     const mal_nombre = $(linea).find("td:eq(1)").text();
     const boton = $(pos);
 
-    if (accionBtn === 2) { // VER MALLA
-        const datos = new FormData();
-        datos.append("accion", "consultar_ucs_por_malla");
-        datos.append("mal_codigo", mal_codigo);
-        
-        $.ajax({
-            async: true, url: "", type: "POST", contentType: false, data: datos,
-            processData: false, cache: false,
-            beforeSend: function() {
-                boton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-            },
-            success: function (respuesta) {
-                try {
-                    const lee = JSON.parse(respuesta);
-                    if(lee.resultado === 'ok'){
-                        const cuerpoModal = $("#cuerpoModalVer");
-                        cuerpoModal.empty();
-                        $("#modalVerMallaTitulo").text("Unidades de: " + mal_nombre);
+   if (accionBtn === 2) { // VER MALLA
+    const mal_nombre = $(linea).find("td:eq(1)").text(); // Asegúrate de tener esta línea si la borraste
+    const boton = $(pos); // Y esta
+    const datos = new FormData();
+    datos.append("accion", "consultar_ucs_por_malla");
+    datos.append("mal_codigo", mal_codigo);
+    
+    $.ajax({
+        async: true, url: "", type: "POST", contentType: false, data: datos,
+        processData: false, cache: false,
+        beforeSend: function() {
+            // ✅ Solo deshabilitamos el botón
+            boton.prop('disabled', true);
+        },
+         success: function(respuesta) {
+            try {
+                const lee = JSON.parse(respuesta);
+                if (lee.resultado === 'ok') {
+                    const cuerpoModal = $("#cuerpoModalVer");
+                    cuerpoModal.empty();
+                    $("#modalVerMallaTitulo").text("Unidades de: " + mal_nombre);
 
-                        if(lee.mensaje.length === 0){
-                            cuerpoModal.html('<p class="text-center text-muted p-3">Esta malla no tiene unidades curriculares asignadas.</p>');
-                        } else {
-                            let gruposVer = {'0':[], '1':[], '2':[], '3':[], '4':[]};
-                            lee.mensaje.forEach(uc => {
-                                if(gruposVer[uc.uc_trayecto] !== undefined) gruposVer[uc.uc_trayecto].push(uc);
-                            });
+                    if (lee.mensaje.length === 0) {
+                        cuerpoModal.html('<p class="text-center text-muted p-3">Esta malla no tiene unidades curriculares asignadas.</p>');
+                    } else {
+                        let gruposVer = { '0': [], '1': [], '2': [], '3': [], '4': [] };
+                        lee.mensaje.forEach(uc => {
+                            if (gruposVer[uc.uc_trayecto] !== undefined) gruposVer[uc.uc_trayecto].push(uc);
+                        });
 
-                            for(const trayecto in gruposVer){
-                                if(gruposVer[trayecto].length > 0){
-                                    const nombreTrayecto = (trayecto == '0') ? 'Trayecto Inicial' : `Trayecto ${trayecto}`;
-                                    cuerpoModal.append(`<h5 class="mt-3">${nombreTrayecto}</h5>`);
-                                    
-                                    const tabla = $('<div class="table-responsive"><table class="table table-sm table-striped table-bordered"><thead><tr><th>Unidad Curricular</th><th>H. Indep.</th><th>H. Asist.</th><th>HTE</th><th>H. Acad.</th></tr></thead><tbody></tbody></table></div>');
-                                    gruposVer[trayecto].forEach(uc => {
-                                        const hte = parseInt(uc.mal_hora_independiente) + parseInt(uc.mal_hora_asistida);
-                                        tabla.find('tbody').append(`<tr><td>${uc.uc_nombre}</td><td>${uc.mal_hora_independiente}</td><td>${uc.mal_hora_asistida}</td><td>${hte}</td><td>${uc.mal_hora_academica}</td></tr>`);
-                                    });
-                                    cuerpoModal.append(tabla);
-                                }
+                        // --- INICIO DE LA LÓGICA PARA TABS ---
+                        
+                        let navTabs = '<ul class="nav nav-tabs" id="mallaTab" role="tablist">';
+                        let tabContent = '<div class="tab-content" id="mallaTabContent">';
+                        let primerItem = true;
+
+                        for (const trayecto in gruposVer) {
+                            if (gruposVer[trayecto].length > 0) {
+                                const nombreTrayecto = (trayecto == '0') ? 'Trayecto Inicial' : `Trayecto ${trayecto}`;
+                                const idTab = `tab-trayecto-${trayecto}`;
+
+                                // Construir la Pestaña de Navegación
+                                navTabs += `
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link ${primerItem ? 'active' : ''}" id="${idTab}-tab" data-bs-toggle="tab" data-bs-target="#${idTab}" type="button" role="tab">${nombreTrayecto}</button>
+                                    </li>`;
+
+                                // Construir el Contenido de la Pestaña
+                                const tabla = $('<div class="table-responsive"><table class="table table-sm table-striped table-bordered mt-3"><thead><tr><th>Unidad Curricular</th><th>H. Indep.</th><th>H. Asist.</th><th>HTE</th><th>H. Acad.</th></tr></thead><tbody></tbody></table></div>');
+                                
+                                gruposVer[trayecto].forEach(uc => {
+                                    const hte = parseInt(uc.mal_hora_independiente) + parseInt(uc.mal_hora_asistida);
+                                    // Usamos .text() para seguridad contra XSS
+                                    const fila = $('<tr>');
+                                    fila.append($('<td>').text(uc.uc_nombre));
+                                    fila.append($('<td>').text(uc.mal_hora_independiente));
+                                    fila.append($('<td>').text(uc.mal_hora_asistida));
+                                    fila.append($('<td>').text(hte));
+                                    fila.append($('<td>').text(uc.mal_hora_academica));
+                                    tabla.find('tbody').append(fila);
+                                });
+
+                                tabContent += `
+                                    <div class="tab-pane fade ${primerItem ? 'show active' : ''}" id="${idTab}" role="tabpanel">
+                                        ${tabla.html()}
+                                    </div>`;
+
+                                primerItem = false;
                             }
                         }
-                        $("#modalVerMalla").modal("show");
-                    } else {
-                        muestraMensaje('error', 5000, 'Error', 'No se pudo cargar la información de la malla.');
+                        navTabs += '</ul>';
+                        tabContent += '</div>';
+
+                        cuerpoModal.html(navTabs + tabContent);
+                        // --- FIN DE LA LÓGICA PARA TABS ---
                     }
-                } catch (e) {
-                     muestraMensaje("error", 10000, "Error de Comunicación", "La respuesta del servidor no es válida.");
+                    $("#modalVerMalla").modal("show");
+                } else {
+                    muestraMensaje('error', 5000, 'Error', 'No se pudo cargar la información de la malla.');
                 }
-            },
-            error: function () {
-                muestraMensaje("error", 5000, "Error de Comunicación", "No se pudo conectar con el servidor.");
-            },
-            complete: function(){
-                boton.prop('disabled', false).text('Ver Malla');
+            } catch (e) {
+                muestraMensaje("error", 10000, "Error de Comunicación", "La respuesta del servidor no es válida.");
             }
-        });
-        return;
-    }
+        },
+        error: function () {
+            muestraMensaje("error", 5000, "Error de Comunicación", "No se pudo conectar con el servidor.");
+        },
+        complete: function(){
+            // ✅ Solo habilitamos el botón
+            boton.prop('disabled', false);
+        }
+    });
+    return;
+}
  
     $("#mal_codigo").val(mal_codigo).prop("disabled", true);
     $("#mal_nombre").val(mal_nombre);
@@ -445,9 +484,9 @@ function enviaAjax(datos) {
                         $.each(lee.mensaje, function (index, item) {
                             let estadoActiva = (item.mal_activa == 1) ? '<span class="badge bg-success">Activa</span>' : '<button class="btn btn-xs btn-secondary btn-activar">Activar</button>';
                             let botonesAccion = `<td class="acciones-cell">
-                                <button class="btn btn-info btn-sm" onclick='pone(this,2)'>Ver Malla</button> 
-                                <button class="btn btn-warning btn-sm" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button> 
-                                <button class="btn btn-danger btn-sm" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
+                                <button class="btn btn-icon btn-info" onclick='pone(this,2)'> <img src="public/assets/icons/people.svg" alt="Ver malla"></button> 
+                                <button class="btn btn-icon btn-edit" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button> 
+                                <button class="btn btn-icon btn-delete" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
                             </td>`;
                             $("#resultadoconsulta").append(`<tr><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.mal_cohorte}</td><td>${item.mal_descripcion}</td><td>${estadoActiva}</td>${botonesAccion}</tr>`);
                         });
@@ -498,17 +537,22 @@ function enviaAjax(datos) {
 }
 
 function limpiaModal1(resetearTodo = true) {
-    if(resetearTodo){
-      $("#f")[0].reset();
-      $(".form-control").removeClass("is-invalid is-valid").prop("disabled", false);
-      $(".validation-span").empty();
+    if (resetearTodo) {
+        $("#f")[0].reset();
+        $(".form-control").removeClass("is-invalid is-valid").prop("disabled", false);
+        $(".validation-span").empty();
     }
     
-    $('#pagina2').hide(); $('#botones-pagina2').hide();
-    $('#pagina1').show(); $('#botones-pagina1').show();
+    $('#pagina2').hide();
+    $('#botones-pagina2').hide();
+    $('#pagina1').show();
+    $('#botones-pagina1').show();
     $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)");
     
-    $('#contenedorAcordeonUC').empty();
+    // Limpiar contenedores de pestañas
+    $('#mallaTabsMod').empty();
+    $('#mallaTabContentMod').empty();
+    
     actualizarSelectUC();
     gestionarBotonGuardar();
 }
