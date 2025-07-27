@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (generarBtn) {
         generarBtn.addEventListener("click", function(event) {
-            // Validar que se haya seleccionado un año y una fase
+         
             if (!anioSelect || anioSelect.value === "" || !faseSelect || faseSelect.value === "") {
                 event.preventDefault(); 
                 Swal.fire({

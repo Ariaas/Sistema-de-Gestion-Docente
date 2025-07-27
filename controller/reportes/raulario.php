@@ -32,9 +32,9 @@ if (isset($_POST['generar_aulario_report'])) {
     $horarioDataRaw = $oAulario->getAulariosFiltrados();
 
     $spreadsheet = new Spreadsheet();
-    $spreadsheet->removeSheetByIndex(0); // Eliminar la hoja por defecto
+    $spreadsheet->removeSheetByIndex(0); 
 
-    // --- Estilos y función de renderizado ---
+    
     $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleSubheaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleTableHeader = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD0E4F5']]];
@@ -71,7 +71,7 @@ if (isset($_POST['generar_aulario_report'])) {
         $currentRow += 2;
     };
 
-    // --- LÓGICA PARA GENERAR HOJAS DE EXCEL ---
+
 
     if (empty($horarioDataRaw)) {
         $sheet = new Worksheet($spreadsheet, "Sin Resultados");
@@ -108,7 +108,7 @@ if (isset($_POST['generar_aulario_report'])) {
                     $cell_content[] = $item['NombreCompletoDocente'];
                 }
 
-                // Agrega el contenido a la celda existente, si ya hay algo
+                
                 if(isset($gridData[$dia][$horaInicioBD])) {
                     $gridData[$dia][$horaInicioBD] .= "\n---\n" . implode("\n\n", $cell_content);
                 } else {
@@ -134,7 +134,7 @@ if (isset($_POST['generar_aulario_report'])) {
         }
     }
 
-    // --- SALIDA DEL ARCHIVO EXCEL ---
+    
     if (ob_get_length()) ob_end_clean();
     $outputFileName = "Reporte_Aulario_" . $anio . ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -145,7 +145,7 @@ if (isset($_POST['generar_aulario_report'])) {
     exit;
 
 } else {
-    // Cargar datos para los dropdowns de la vista
+   
     $listaAnios = $oAulario->getAniosActivos();
     $listaFases = $oAulario->getFases();
     $listaEspacios = $oAulario->getEspacios();

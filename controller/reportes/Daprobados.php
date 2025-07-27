@@ -3,14 +3,14 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Asegúrate de que la ruta al modelo sea correcta y el nombre del archivo coincida.
+
 if (!is_file("model/reportes/Daprobados.php")) {
     echo "Falta definir la clase del modelo: Daprobadosm.php";
     exit;
 }
 require_once("model/reportes/Daprobados.php");
 
-// Asegúrate de que la ruta a la vista sea correcta.
+
 if (is_file("views/reportes/Daprobados.php")) {
 
     $reporteModel = new Reporte();
@@ -19,7 +19,7 @@ if (is_file("views/reportes/Daprobados.php")) {
         header('Content-Type: application/json');
         $accion = $_POST['accion'];
 
-        // Manejo del periodo académico combinado
+   
         $anio_completo = $_POST['anio_completo'] ?? '';
         $anio_parts = explode('|', $anio_completo);
         $anio = $anio_parts[0] ?? 0;

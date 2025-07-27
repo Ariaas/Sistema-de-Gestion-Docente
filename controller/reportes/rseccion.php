@@ -30,9 +30,9 @@ if (isset($_POST['generar_seccion_report'])) {
     $horarioDataRaw = $oReporte->getHorariosFiltrados();
 
     $spreadsheet = new Spreadsheet();
-    $spreadsheet->removeSheetByIndex(0); // Eliminar la hoja por defecto para empezar desde cero
+    $spreadsheet->removeSheetByIndex(0); 
 
-    // --- Estilos y función de renderizado ---
+   
     $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleSubheaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleTableHeader = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD0E4F5']]];
@@ -72,15 +72,14 @@ if (isset($_POST['generar_seccion_report'])) {
         $currentRow += 2;
     };
 
-    // --- LÓGICA PARA GENERAR HOJAS DE EXCEL ---
-
+   
     if (empty($horarioDataRaw)) {
         $sheet = new Worksheet($spreadsheet, "Sin Resultados");
         $spreadsheet->addSheet($sheet, 0);
         $sheet->setCellValue('A1', 'No se encontraron horarios con los criterios seleccionados.');
     } else {
         $dataGrouped = [];
-        // Si se filtró un trayecto, usamos ese ID para agrupar. Si no, usamos el 'uc_trayecto' de cada fila.
+    
         if (!empty($trayecto_filtrado)) {
             $dataGrouped[$trayecto_filtrado] = $horarioDataRaw;
         } else {
@@ -127,7 +126,7 @@ if (isset($_POST['generar_seccion_report'])) {
         }
     }
 
-    // --- SALIDA DEL ARCHIVO EXCEL ---
+ 
     if (ob_get_length()) ob_end_clean();
     $outputFileName = "Reporte_Horarios.xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -138,7 +137,7 @@ if (isset($_POST['generar_seccion_report'])) {
     exit;
 
 } else {
-    // Cargar datos para los dropdowns de la vista
+   
     $listaAnios = $oReporte->getAniosActivos();
     $listaFases = $oReporte->getFases();
     $listaTrayectos = $oReporte->getTrayectos();

@@ -30,12 +30,12 @@ class CuentaCupos extends Connection
         }
     }
 
-    // --- CONSULTA FINAL Y SIMPLIFICADA ---
+
     public function obtenerCuentaCupos()
     {
         $co = $this->con();
         try {
-            // Se extrae el primer dígito del código de sección para determinar el Trayecto.
+          
             $sql = "SELECT
                         LEFT(s.sec_codigo, 1) AS Trayecto,
                         s.sec_codigo AS Seccion,
@@ -43,7 +43,7 @@ class CuentaCupos extends Connection
                     FROM
                         tbl_seccion s
                     WHERE
-                        s.ani_anio = :anio_id
+                        s.ani_anio = :anio_id AND s.sec_estado = 1 
                     ORDER BY
                         Trayecto, s.sec_codigo";
 

@@ -3,7 +3,7 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    // Total de aprobados (Directos + PER) para un año académico.
+    
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT
@@ -24,7 +24,7 @@ class Reporte extends Connection
         return $p->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Lista de UCs con sus aprobados totales para una sección.
+   
     public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
     {
         $sql = "SELECT T.uc_nombre, SUM(T.total_aprobados) as total_aprobados
@@ -48,7 +48,7 @@ class Reporte extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Lista de secciones con sus aprobados totales para una UC.
+   
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT T.sec_codigo, SUM(T.total_aprobados) as total_aprobados

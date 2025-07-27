@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Asegúrate de que las rutas al modelo y la vista sean correctas
+
 if (!is_file("model/reportes/rAprobados.php")) {
     echo "Falta definir la clase del modelo: rAprobadosm.php";
     exit;

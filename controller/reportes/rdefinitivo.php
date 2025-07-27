@@ -19,8 +19,26 @@ if (isset($_POST['generar_definitivo_emit'])) {
     $oDefinitivo->set_fase($_POST['fase'] ?? '');
     $datosReporte = $oDefinitivo->obtenerDatosDefinitivoEmit();
 
-    if (empty($datosReporte)) {
-        // ... (El código para el Excel de "Sin Datos" no cambia)
+     if (empty($datosReporte)) {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Sin Datos");
+        $sheet->mergeCells('A1:E5');
+        $sheet->setCellValue('A1', 'No se encontraron datos para los criterios seleccionados.');
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+        ]);
+        
+        foreach(range('A','E') as $col) { $sheet->getColumnDimension($col)->setAutoSize(true); }
+
+        $writer = new Xlsx($spreadsheet);
+        if (ob_get_length()) ob_end_clean();
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="Reporte_Sin_Datos.xlsx"');
+        header('Cache-Control: max-age=0');
+        $writer->save('php://output');
+        exit;
     }
 
     $groupedData = [];
@@ -48,7 +66,7 @@ if (isset($_POST['generar_definitivo_emit'])) {
     $sheet->mergeCells('A2:D2')->setCellValue('A2', "PNF en Informática");
     $sheet->getStyle('A2:D2')->applyFromArray($styleTitle);
 
-    // --- CAMBIO: Se aplican bordes a los títulos ---
+  
     $sheet->getStyle('A1:D2')->applyFromArray($styleBordesDelgados);
     
     $selectedFase = $_POST['fase'] ?? '';
@@ -72,7 +90,7 @@ if (isset($_POST['generar_definitivo_emit'])) {
         $info = $teacherData['info'];
         $assignments = $teacherData['assignments'];
         
-        // --- NUEVO: Lógica para agrupar Unidades Curriculares idénticas ---
+       
         $ucMergeInfo = [];
         foreach ($assignments as $index => $assignment) {
             $ucName = $assignment['NombreUnidadCurricular'];
@@ -82,14 +100,14 @@ if (isset($_POST['generar_definitivo_emit'])) {
             $ucMergeInfo[$ucName]['count']++;
         }
 
-        // Escribir los datos
+       
         foreach ($assignments as $assignment) {
             $sheet->setCellValue("C{$filaActual}", $assignment['NombreUnidadCurricular']);
             $sheet->setCellValue("D{$filaActual}", $assignment['NombreSeccion']);
             $filaActual++;
         }
         
-        // Combinar celdas de UC
+     
         foreach($ucMergeInfo as $ucName => $infoMerge) {
             if ($infoMerge['count'] > 1) {
                 $start = $infoMerge['start_row'];
@@ -99,7 +117,7 @@ if (isset($_POST['generar_definitivo_emit'])) {
             }
         }
         
-        // Combinar celdas de Docente y Cédula
+       
         $endRowTeacher = $filaActual - 1;
         if ($startRowTeacher <= $endRowTeacher) {
             $sheet->mergeCells("A{$startRowTeacher}:A{$endRowTeacher}");
@@ -113,7 +131,7 @@ if (isset($_POST['generar_definitivo_emit'])) {
     $sheet->getStyle('A5:'. 'D' .($filaActual - 1))->applyFromArray($styleData);
     $sheet->getStyle('B5:B' . ($filaActual - 1))->applyFromArray($styleDataCentered);
     $sheet->getStyle('D5:D' . ($filaActual - 1))->applyFromArray($styleDataCentered);
-    $sheet->getStyle('C5:C' . ($filaActual - 1))->applyFromArray($styleDataCentered); // Centrar también las UC agrupadas
+    $sheet->getStyle('C5:C' . ($filaActual - 1))->applyFromArray($styleDataCentered);  
 
     $sheet->getColumnDimension('A')->setWidth(35);
     $sheet->getColumnDimension('B')->setWidth(18);

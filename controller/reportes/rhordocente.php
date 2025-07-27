@@ -32,17 +32,17 @@ $oReporteHorario = new ReporteHorarioDocente();
 
 if (isset($_POST['generar_rhd_report'])) { 
     
-    // Recibir todos los filtros
+  
     $anio = $_POST['anio_id'] ?? '';
     $fase = $_POST['fase_id'] ?? '';
     $cedulaDocenteSeleccionada = $_POST['cedula_docente'] ?? ''; 
     
-    // Validar que todos los campos obligatorios estén presentes
+   
     if (empty($cedulaDocenteSeleccionada) || empty($anio) || empty($fase)) { 
         die("Error: Debe seleccionar Año, Fase y Docente."); 
     }
 
-    // Pasar los filtros al modelo
+   
     $oReporteHorario->setAnio($anio);
     $oReporteHorario->setFase($fase);
     $oReporteHorario->set_cedula_docente($cedulaDocenteSeleccionada);
@@ -159,7 +159,7 @@ if (isset($_POST['generar_rhd_report'])) {
     exit;
 
 } else {
-    // Cargar los datos para todos los dropdowns
+  
     $listaAnios = $oReporteHorario->getAniosActivos();
     $listaFases = $oReporteHorario->getFases();
     $listaDocentes = $oReporteHorario->obtenerDocentes();

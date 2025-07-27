@@ -4,7 +4,7 @@ require_once('model/dbconnection.php');
 
 class Carga extends Connection
 {
-    private $anio_id; // --- NUEVO ---
+    private $anio_id; 
     private $trayecto;
     private $seccion;
 
@@ -13,7 +13,7 @@ class Carga extends Connection
         parent::__construct();
     }
 
-    // --- NUEVO ---
+   
     public function set_anio($valor)
     {
         $this->anio_id = $valor;
@@ -33,11 +33,11 @@ class Carga extends Connection
     {
         $co = $this->con();
         try {
-            // --- CONSULTA MODIFICADA ---
+          
             $sqlBase = "SELECT
                             u.uc_trayecto AS 'Número de Trayecto',
                             u.uc_nombre AS 'Nombre de la Unidad Curricular',
-                            -- Formato de sección con IN / IIN
+                            
                             CASE 
                                 WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
                                 WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
@@ -69,7 +69,7 @@ class Carga extends Connection
             $conditions = [];
             $params = [];
 
-            // --- Lógica de filtrado por año ---
+
             if (!empty($this->anio_id)) {
                 $conditions[] = "s.ani_anio = :anio_id";
                 $params[':anio_id'] = $this->anio_id;
@@ -103,7 +103,7 @@ class Carga extends Connection
         }
     }
 
-    // --- NUEVA FUNCIÓN ---
+    
     public function obtenerAnios()
     {
         $co = $this->con();

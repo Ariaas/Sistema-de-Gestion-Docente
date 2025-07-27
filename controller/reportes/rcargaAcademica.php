@@ -194,7 +194,7 @@ if (isset($_POST['generar_uc'])) {
         $bloquesEnFila++;
     }
 
-    // --- CÓDIGO CON ANCHOS AJUSTADOS (MÁS PEQUEÑOS) ---
+  
     $highestColumn = $sheet->getHighestDataColumn();
     $lastColIndex = Coordinate::columnIndexFromString($highestColumn);
 
@@ -203,19 +203,19 @@ if (isset($_POST['generar_uc'])) {
         $mod = ($i - 1) % 5;
         
         switch ($mod) {
-            case 0: // Columna de Trayecto
+            case 0: 
                 $sheet->getColumnDimension($colLetter)->setWidth(10);
                 break;
-            case 1: // Columna de Sección
+            case 1: 
                 $sheet->getColumnDimension($colLetter)->setWidth(12);
                 break;
-            case 2: // Columna de Unidad Curricular
+            case 2: 
                 $sheet->getColumnDimension($colLetter)->setWidth(38);
                 break;
-            case 3: // Columna de Docente
+            case 3: 
                 $sheet->getColumnDimension($colLetter)->setWidth(30);
                 break;
-            case 4: // Columna espaciadora
+            case 4: 
                 $sheet->getColumnDimension($colLetter)->setWidth(4);
                 break;
         }

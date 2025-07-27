@@ -198,7 +198,10 @@ $puede_eliminar = tiene_permiso_accion('unidad curricular', 'eliminar', $permiso
                                             <?php
                                             if (!empty($docentes)) {
                                                 foreach ($docentes as $docente) {
-                                                    echo "<option value='" . $docente['doc_cedula'] . "'>" . $docente['doc_nombre'] . " " . $docente['doc_apellido'] . "</option>";
+                                                    $prefijo = isset($docente['doc_prefijo']) ? $docente['doc_prefijo'] : '';
+                                                    $cedula = $docente['doc_cedula'];
+                                                    $nombre = $docente['doc_nombre'] . " " . $docente['doc_apellido'];
+                                                    echo "<option value='" . $cedula . "' data-prefijo='" . $prefijo . "'>" . $prefijo . "-" . $cedula . ", " . $nombre . "</option>";
                                                 }
                                             } else {
                                                 echo "<option value='' disabled>No hay docentes disponibles</option>";

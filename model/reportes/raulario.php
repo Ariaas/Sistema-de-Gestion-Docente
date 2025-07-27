@@ -7,12 +7,12 @@ class AularioReport extends Connection
 
     public function __construct() { parent::__construct(); }
 
-    // Setters para los filtros
+  
     public function setAnio($valor) { $this->anio = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
     public function setEspacio($valor) { $this->espacio = trim($valor); }
     
-    // --- MÉTODOS PARA POBLAR LOS DROPDOWNS ---
+   
 
     public function getAniosActivos() {
         try {
@@ -41,19 +41,19 @@ class AularioReport extends Connection
         } catch (PDOException $e) { return []; }
     }
 
-    // --- MÉTODO PRINCIPAL PARA OBTENER DATOS DEL REPORTE ---
+    
 
     public function getAulariosFiltrados()
     {
         if (empty($this->anio) || empty($this->fase)) return [];
 
-        // ▼▼▼ CORRECCIÓN 1: Ajustado 'Anual' a 'anual' (minúsculas) para que coincida con tu base de datos.
+      
         $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual'] : ['Fase II', 'anual'];
         
         try {
             $params = [':anio_param' => $this->anio];
             
-            // ▼▼▼ CORRECCIÓN 2: Se simplificó el LEFT JOIN a docente_horario.
+           
             $sql_base = "SELECT
                             CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')') AS esp_codigo,
                             uh.hor_dia,

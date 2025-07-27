@@ -31,8 +31,7 @@ class Ruc extends Connection
     {
         $co = $this->con();
         try { 
-            // --- CONSULTA MODIFICADA ---
-            // Se ha añadido un CASE para formatear el código de la sección con los prefijos IN/IIN.
+           
             $sqlBase = "SELECT
                             u.uc_trayecto AS `Número de Trayecto`,
                             u.uc_nombre AS `Nombre de la Unidad Curricular`,
@@ -91,7 +90,7 @@ class Ruc extends Connection
         }
     }
 
-    // --- NUEVA FUNCIÓN ---
+   
     public function obtenerAnios()
     {
         $co = $this->con();
@@ -107,7 +106,7 @@ class Ruc extends Connection
 
     public function obtenerTrayectos()
     {
-        // ... (esta función no cambia)
+      
         $co = $this->con();
         try {
             $p = $co->prepare("SELECT DISTINCT 
@@ -127,7 +126,7 @@ class Ruc extends Connection
 
     public function obtenerUc()
     {
-        // ... (esta función no cambia)
+       
         $co = $this->con();
         try {
             $p = $co->prepare("SELECT uc_codigo AS uc_id, uc_nombre FROM tbl_uc WHERE uc_estado = 1 ORDER BY uc_nombre");

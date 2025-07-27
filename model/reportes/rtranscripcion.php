@@ -22,8 +22,7 @@ class Transcripcion extends Connection
     {
         $co = $this->con();
         try {
-            // --- CONSULTA MODIFICADA ---
-            // Se ajusta el CASE para que use la lógica de prefijos IN y IIN.
+          
             $sqlBase = "SELECT
                             d.doc_cedula AS `IDDocente`,
                             d.doc_cedula AS `CedulaDocente`,
@@ -107,7 +106,7 @@ class Transcripcion extends Connection
                 $params[':anio_id'] = $this->anio_id;
             }
 
-            // --- LÓGICA DE FILTRO REQUERIDA ---
+           
             if (!empty($this->fase)) {
                 switch ($this->fase) {
                     case '1':
@@ -117,12 +116,11 @@ class Transcripcion extends Connection
                         $where_clauses[] = "(u.uc_periodo = 'Fase II' OR LOWER(u.uc_periodo) = 'anual')";
                         break;
                     case 'Anual':
-                        // Al seleccionar "Anual", no se agrega filtro de fase para mostrar todo.
+                       
                         break;
                 }
             }
-            // --- FIN DEL BLOQUE ---
-
+           
             if (!empty($where_clauses)) {
                 $sqlBase .= " WHERE " . implode(" AND ", $where_clauses);
             }

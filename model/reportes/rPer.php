@@ -3,7 +3,7 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    // Total de estudiantes en PER para un año académico.
+    
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT COALESCE(SUM(per_cantidad), 0) as total_en_per
@@ -17,7 +17,7 @@ class Reporte extends Connection
         return $p->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Lista de UCs con su cantidad de estudiantes en PER para una sección.
+   
     public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
     {
         $sql = "SELECT uc.uc_nombre, pa.per_cantidad
@@ -32,7 +32,7 @@ class Reporte extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Lista de secciones con su cantidad de estudiantes en PER para una UC.
+   
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT pa.sec_codigo, pa.per_cantidad

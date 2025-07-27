@@ -1,5 +1,5 @@
 <?php
-// El nombre del archivo es raulario.php
+
 ?>
 <!DOCTYPE html>
 <html lang="es">

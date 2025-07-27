@@ -1,5 +1,5 @@
 <?php
-// El nombre del archivo sigue siendo rseccion.php por consistencia
+
 ?>
 <!DOCTYPE html>
 <html lang="es">

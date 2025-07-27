@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     
-    // Inicializa los menús desplegables con Select2
+
     if (window.jQuery) {
         $(document).ready(function() {
             try {
@@ -18,16 +18,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Lógica del botón para validar el formulario
+   
     const generarBtn = document.getElementById("generar_btn");
     const anioSelect = document.getElementById("anio_id");
 
     if (generarBtn) {
         generarBtn.addEventListener("click", function(event) {
             
-            // VALIDACIÓN: Comprueba si el campo de año está vacío
+           
             if (anioSelect.value === "") {
-                event.preventDefault(); // Detiene el envío del formulario
+                event.preventDefault(); 
                 Swal.fire({
                     icon: 'error',
                     title: 'Campo Requerido',

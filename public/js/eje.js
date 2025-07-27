@@ -73,14 +73,17 @@ $(document).ready(function () {
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
     $("#ejeNombre").on("keypress",function(e){
-    validarkeypress(/^[A-Za-z,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+      validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ,#\b\s-]*$/, e);
     });
 
     $("#ejeNombre").on("keydown keyup",function(){
-    $("#sejeNombre").css("color", "");
+      $("#sejeNombre").css("color", "");
 
-    let formatoValido = validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$("#ejeNombre"),
-    $("#sejeNombre"),"El formato permite de 5 a 30 carácteres, Ej:Epistemológico");
+      let formatoValido = validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s-]{5,30}$/,
+        $("#ejeNombre"),
+        $("#sejeNombre"),
+        "El formato permite de 5 a 30 carácteres, Ej:Epistemológico"
+      );
     
     if (formatoValido === 1) {
         var datos = new FormData();
@@ -94,32 +97,36 @@ $(document).ready(function () {
   });
 
   $("#ejeDescripcion").on("keyup", function() {
-    validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $(this), $("#sejeDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.");
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sejeDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
   });
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
-    let accion = $(this).text();
-    if (accion === "MODIFICAR") {
-      if (validarenvio()) {
-        var datos = new FormData();
-        datos.append("accion", "modificar");
-        datos.append("ejeNombre", $("#ejeNombre").val());
-        datos.append("ejeDescripcion", $("#ejeDescripcion").val());
-        datos.append("ejeNombreOriginal", originalNombreEje); 
-        enviaAjax(datos);
-      }
-    } else if (accion === "REGISTRAR") {
-      if (validarenvio()) {
-        var datos = new FormData();
-        datos.append("accion", "registrar");
-        datos.append("ejeNombre", $("#ejeNombre").val());
-        datos.append("ejeDescripcion", $("#ejeDescripcion").val());
+  let accion = $(this).text();
+  if (accion === "MODIFICAR") {
+    $("#sejeNombre").show();
+    $("#sejeDescripcion").show();
+    if (validarenvio()) {
+      var datos = new FormData();
+      datos.append("accion", "modificar");
+      datos.append("ejeNombre", $("#ejeNombre").val());
+      datos.append("ejeDescripcion", $("#ejeDescripcion").val());
+      datos.append("ejeNombreOriginal", originalNombreEje); 
+      enviaAjax(datos);
+    }
+  } else if (accion === "REGISTRAR") {
+    $("#sejeNombre").show();
+    $("#sejeDescripcion").show();
+    if (validarenvio()) {
+      var datos = new FormData();
+      datos.append("accion", "registrar");
+      datos.append("ejeNombre", $("#ejeNombre").val());
+      datos.append("ejeDescripcion", $("#ejeDescripcion").val());
 
-        enviaAjax(datos);
-      }
-    } else if (accion === "ELIMINAR") {
+      enviaAjax(datos);
+    }
+  } else if (accion === "ELIMINAR") {
       if (
         validarkeyup(
           /^[[A-Za-z0-9,\#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
@@ -182,16 +189,23 @@ $(document).ready(function () {
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
-    let esValido = true;
-    if (validarkeyup( /^[A-Za-z0-9\s]{5,30}$/,$("#ejeNombre"),$("#sejeNombre"),"El formato permite de 5 a 30 carácteres, Ej:Epistemológico") == 0) {
-      if(esValido) muestraMensaje("error",4000,"ERROR!","Error! <br/>El formato del nombre es incorrecto");
-      esValido = false;
-    }
-    if (validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $("#ejeDescripcion"), $("#sejeDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.") == 0) {
-      if(esValido) muestraMensaje("error",4000,"ERROR!","Error! <br/>El formato de la descripción es incorrecto");
-      esValido = false;
-    }
-
+  let esValido = true;
+  if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s-]{5,30}$/,
+    $("#ejeNombre"),
+    $("#sejeNombre"),
+    "El formato permite de 5 a 30 carácteres, Ej:Epistemológico"
+  ) == 0) {
+    if(esValido) muestraMensaje("error",4000,"ERROR!","Error! <br/>El formato del nombre es incorrecto");
+    esValido = false;
+  }
+  if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
+    $("#ejeDescripcion"),
+    $("#sejeDescripcion"),
+    "La descripción debe tener entre 5 y 100 caracteres."
+  ) == 0) {
+    if(esValido) muestraMensaje("error",4000,"ERROR!","Error! <br/>El formato de la descripción es incorrecto");
+    esValido = false;
+  }
   return esValido;
 }
 
@@ -204,14 +218,15 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#ejeNombre").prop("disabled", false);
     $("#ejeDescripcion").prop("disabled", false);
+    // Mostrar los span pero vacíos
+    $("#sejeNombre").text("").show();
+    $("#sejeDescripcion").text("").show();
   } else {
     $("#proceso").text("ELIMINAR");
-    $(
-      "#ejeId, #ejeNombre, #ejeDescripcion"
-    ).prop("disabled", true);
+    $("#ejeId, #ejeNombre, #ejeDescripcion").prop("disabled", true);
+    $("#sejeNombre").hide();
+    $("#sejeDescripcion").hide();
   }
-  $("#sejeNombre").hide();
-  $("#sejeDescripcion").hide();
   $("#ejeNombre").val($(linea).find("td:eq(0)").text());
   $("#ejeDescripcion").val($(linea).find("td:eq(1)").text());
 

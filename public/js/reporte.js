@@ -33,7 +33,7 @@ $(document).ready(function() {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        display: chartType === 'bar', // Solo mostrar eje Y para barras
+                        display: chartType === 'bar', 
                         ticks: {
                             precision: 0
                         }
@@ -42,7 +42,7 @@ $(document).ready(function() {
                 plugins: {
                     legend: {
                         position: chartType === 'bar' ? 'top' : 'right',
-                        display: chartType !== 'bar' // Mostrar leyenda para pie y doughnut
+                        display: chartType !== 'bar' 
                     },
                     title: {
                         display: true,
@@ -79,7 +79,6 @@ $(document).ready(function() {
             return;
         }
 
-        // Cargar Secciones
         seccionSelect.html('<option>Cargando...</option>').prop('disabled', true);
         $.post('?pagina=reporte', {
             accion: 'obtener_secciones',
@@ -95,7 +94,7 @@ $(document).ready(function() {
             seccionSelect.html(options);
         }, 'json');
 
-        // Cargar Unidades Curriculares
+       
         ucSelect.html('<option>Cargando...</option>').prop('disabled', true);
         $.post('?pagina=reporte', {
             accion: 'obtener_uc',

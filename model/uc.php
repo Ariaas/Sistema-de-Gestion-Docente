@@ -311,7 +311,7 @@ class UC extends Connection
                     d.doc_nombre,
                     d.doc_apellido
                 FROM tbl_uc uc
-                LEFT JOIN uc_docente ud ON uc.uc_codigo = ud.uc_codigo /*AND ud.uc_doc_estado = 1*/
+                LEFT JOIN uc_docente ud ON uc.uc_codigo = ud.uc_codigo
                 LEFT JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula AND d.doc_estado = 1
                 WHERE uc.uc_estado = 1";
                 if ($uc_codigo) {
@@ -402,7 +402,7 @@ class UC extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->query("SELECT doc_cedula, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1");
+            $stmt = $co->query("SELECT doc_cedula, doc_prefijo, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_estado = 1");
             $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $r = [];
@@ -431,7 +431,7 @@ class UC extends Connection
 
             foreach ($asignaciones as $asignacion) {
                 $docenteCedula = $asignacion['cedula'];
-                $stmtCheck = $co->prepare("SELECT COUNT(*) FROM uc_docente WHERE doc_cedula = :docCedula AND uc_codigo = :ucCodigo/* AND uc_doc_estado = 1*/");
+                $stmtCheck = $co->prepare("SELECT COUNT(*) FROM uc_docente WHERE doc_cedula = :docCedula AND uc_codigo = :ucCodigo");
                 $stmtCheck->execute([':docCedula' => (int)$docenteCedula, ':ucCodigo' => $ucCodigo]);
 
                 if ($stmtCheck->fetchColumn() > 0) {
@@ -452,7 +452,7 @@ class UC extends Connection
                 throw new Exception($mensaje);
             }
 
-            $stmtInsert = $co->prepare("INSERT INTO uc_docente (doc_cedula,uc_codigo /*, uc_doc_estado*/) VALUES (:docenteCedula, :ucCodigo/*, 1*/)");
+            $stmtInsert = $co->prepare("INSERT INTO uc_docente (doc_cedula, uc_codigo) VALUES (:docenteCedula, :ucCodigo)");
 
             foreach ($asignaciones as $asignacion) {
                 $stmtInsert->execute([
@@ -507,10 +507,10 @@ class UC extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
-            $stmt = $co->prepare("SELECT d.doc_cedula, d.doc_nombre, d.doc_apellido
-                                 FROM uc_docente ud
-                                 JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                                 WHERE ud.uc_codigo = :uc_codigo AND /*ud.uc_doc_estado = 1*/");
+            $stmt = $co->prepare("SELECT d.doc_cedula, d.doc_prefijo, d.doc_nombre, d.doc_apellido
+                     FROM uc_docente ud
+                     JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                     WHERE ud.uc_codigo = :uc_codigo");
             $stmt->bindParam(':uc_codigo', $uc_codigo, PDO::PARAM_STR);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);

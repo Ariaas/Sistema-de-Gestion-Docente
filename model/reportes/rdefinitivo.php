@@ -74,7 +74,7 @@ class DefinitivoEmit extends Connection
             
             $sqlBase .= " WHERE " . implode(" AND ", $conditions);
             
-            // --- CAMBIO: Se ajusta el ORDEN para agrupar UCs ---
+        
             $sqlBase .= " ORDER BY NombreCompletoDocente, NombreUnidadCurricular, NombreSeccion";
             
             $resultado = $co->prepare($sqlBase);

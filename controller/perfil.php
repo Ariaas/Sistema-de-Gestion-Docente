@@ -57,6 +57,7 @@ if (is_file("views/" . $pagina . ".php")) {
                 }
             }
             $p->set_fotoPerfil($fotoPerfil);
+            $_SESSION['usu_foto'] = $fotoPerfil;
             echo json_encode($p->Modificar());
             $bitacora->registrarAccion($usu_id, 'modificó su perfil', 'perfil');
         } else if ($_POST['accion'] === 'existe_correo_perfil') {

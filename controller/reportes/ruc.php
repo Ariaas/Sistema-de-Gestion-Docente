@@ -13,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-// ... (La función toRoman no cambia)
+
 function toRoman($number) {
     if ($number == 0) return 'INICIAL';
     $map = ['M' => 1000, 'CM' => 900, 'D' => 500, 'CD' => 400, 'C' => 100, 'XC' => 90, 'L' => 50, 'XL' => 40, 'X' => 10, 'IX' => 9, 'V' => 5, 'IV' => 4, 'I' => 1];
@@ -40,7 +40,7 @@ if (isset($_POST['generar_uc'])) {
     $oUc->set_nombreUnidad($_POST['ucurricular'] ?? '');
     $datosReporte = $oUc->obtenerUnidadesCurriculares();
     
-    // --- CAMBIO PRINCIPAL: GENERAR EXCEL SI NO HAY DATOS ---
+   
     if (empty($datosReporte)) {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -69,11 +69,11 @@ if (isset($_POST['generar_uc'])) {
         exit;
     }
 
-    // --- El código para generar el reporte con datos sigue aquí (sin cambios) ---
+    
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("UNIDAD CURRICULAR");
-    // ... (El resto del código de renderizado no cambia)
+ 
     $styleHeaderTrayecto = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleHeaderColumnas = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];

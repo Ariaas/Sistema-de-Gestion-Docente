@@ -26,7 +26,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
         foreach ($aulasData as $row) {
             $dia = ucfirst(strtolower(trim($row['hor_dia'])));
             if (isset($dataPorDia[$dia])) {
-                // --- CAMBIO: Se usa la nueva columna 'aula_completa' ---
+             
                 if (!in_array($row['aula_completa'], $dataPorDia[$dia])) {
                     $dataPorDia[$dia][] = $row['aula_completa'];
                 }
@@ -45,7 +45,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     foreach ($ordenDias as $dia) {
         $sheet->setCellValue($col . '1', mb_strtoupper($dia, 'UTF-8'));
         $sheet->getStyle($col . '1')->applyFromArray($styleHeader);
-        $sheet->getColumnDimension($col)->setWidth(25); // Un poco más de ancho
+        $sheet->getColumnDimension($col)->setWidth(25); 
         $col++;
     }
 
@@ -60,7 +60,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
         for ($i = 0; $i < $maxRows; $i++) {
             $colChar = 'A';
             foreach ($dataPorDia as $dia => $aulas) {
-                // --- CAMBIO: Se usa la nueva columna 'aula_completa' ---
+               
                 $cellValue = isset($aulas[$i]) ? $aulas[$i] : '';
                 $sheet->setCellValue($colChar . ($i + 2), $cellValue);
                 $colChar++;

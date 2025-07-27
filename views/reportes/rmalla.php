@@ -1,5 +1,5 @@
 <?php 
-// views/reportes/rmalla.php
+
 ?>
 <!DOCTYPE html>
 <html lang="es">

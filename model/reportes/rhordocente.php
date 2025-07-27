@@ -9,12 +9,11 @@ class ReporteHorarioDocente extends Connection
         parent::__construct();
     }
 
-    // Setters
     public function set_cedula_docente($valor) { $this->cedula_docente = trim($valor); }
     public function setAnio($valor) { $this->anio = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
 
-    // --- Métodos para Poblar Dropdowns ---
+   
     public function getAniosActivos() {
         try {
             $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
@@ -41,7 +40,7 @@ class ReporteHorarioDocente extends Connection
         } catch (PDOException $e) { return false; }
     }
     
-    // --- Métodos de Datos para el Reporte (AHORA CORREGIDOS) ---
+   
     public function obtenerInfoDocente() {
         if (empty($this->cedula_docente)) return false;
         try {
@@ -55,13 +54,13 @@ class ReporteHorarioDocente extends Connection
     public function obtenerAsignacionesAcademicas() {
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
         
-        // CORREGIDO: Se incluye el período '0' para el trayecto inicial en Fase 1
+       
         $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', '0'] : ['Fase II', 'anual'];
         
         try {
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
             
-            // CORREGIDO: La lógica de JOINs fue reconstruida para seguir la ruta correcta de los datos.
+           
             $sql = "SELECT 
                         u.uc_nombre, 
                         u.uc_codigo, 
@@ -112,13 +111,13 @@ class ReporteHorarioDocente extends Connection
     public function obtenerDatosParrillaHorario() {
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
         
-        // CORREGIDO: Se incluye el período '0' para el trayecto inicial en Fase 1
+      
         $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', '0'] : ['Fase II', 'anual'];
         
         try {
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
 
-            // CORREGIDO: La lógica de JOINs fue reconstruida aquí también.
+           
             $sql = "SELECT 
                         uh.hor_dia, 
                         uh.hor_horainicio, 
@@ -154,7 +153,7 @@ class ReporteHorarioDocente extends Connection
 
     public function obtenerBloquesDeTiempo() {
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
-        // Esta función ahora depende de la anterior, por lo que no necesita cambios.
+       
         return $this->obtenerDatosParrillaHorario();
     }
 }

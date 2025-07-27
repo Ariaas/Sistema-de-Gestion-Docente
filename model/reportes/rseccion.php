@@ -7,12 +7,11 @@ class SeccionReport extends Connection
 
     public function __construct() { parent::__construct(); }
 
-    // Setters para los filtros
+   
     public function setAnio($valor) { $this->anio = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
     public function setTrayecto($valor) { $this->trayecto = trim($valor); }
     
-    // --- MÉTODOS PARA POBLAR LOS DROPDOWNS DE LA VISTA ---
 
     public function getAniosActivos() {
         try {
@@ -40,8 +39,6 @@ class SeccionReport extends Connection
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return []; }
     }
-
-    // --- MÉTODO PRINCIPAL PARA OBTENER DATOS DEL REPORTE ---
 
     public function getHorariosFiltrados()
     {

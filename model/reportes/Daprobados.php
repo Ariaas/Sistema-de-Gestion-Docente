@@ -1,10 +1,10 @@
 <?php
-// Asegúrate de que la ruta a tu archivo de conexión sea correcta
+
 require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    // Esta función no cambia, el reporte general sigue siendo un total.
+   
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT COALESCE(SUM(ta.apro_cantidad), 0) as total_aprobados_directo
@@ -19,7 +19,7 @@ class Reporte extends Connection
         return $p->fetch(PDO::FETCH_ASSOC);
     }
 
-    // MODIFICADO: Ahora devuelve una lista de UCs con sus aprobados para la sección dada.
+   
     public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
     {
         $sql = "SELECT uc.uc_nombre, ta.apro_cantidad
@@ -34,7 +34,7 @@ class Reporte extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // MODIFICADO: Ahora devuelve una lista de secciones con sus aprobados para la UC dada.
+  
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT s.sec_codigo, ta.apro_cantidad
@@ -53,7 +53,7 @@ class Reporte extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // --- El resto de los métodos de ayuda no necesitan cambios ---
+  
 
     public function obtenerAnios()
     {

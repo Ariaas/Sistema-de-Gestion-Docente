@@ -4,7 +4,7 @@ require_once('model/dbconnection.php');
 class Reporte extends Connection
 {
 
-    // Obtiene los datos agregados para el reporte general de un año.
+   
     public function obtenerDatosEstadisticosPorAnio($anio_id)
     {
         $sql = "SELECT
@@ -23,7 +23,7 @@ class Reporte extends Connection
         return $p->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Obtiene los datos para una sección específica.
+   
     public function obtenerDatosEstadisticosPorSeccion($seccion_id)
     {
         $sql = "SELECT
@@ -42,7 +42,7 @@ class Reporte extends Connection
         return $p->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Obtiene los datos para una unidad curricular específica en un año.
+  
     public function obtenerDatosEstadisticosPorUC($uc_id, $anio_id)
     {
         $sql = "SELECT
@@ -61,7 +61,6 @@ class Reporte extends Connection
         return $p->fetch(PDO::FETCH_ASSOC);
     }
 
-    // --- Funciones para poblar los selects de los filtros ---
 
     public function obtenerAnios()
     {

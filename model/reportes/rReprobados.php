@@ -3,7 +3,7 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    // Calcula el total de estudiantes que reprobaron el PER en un año.
+   
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT (COALESCE(SUM(per_cantidad), 0) - COALESCE(SUM(per_aprobados), 0)) as total_reprobados_per
@@ -17,7 +17,7 @@ class Reporte extends Connection
         return $p->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Devuelve una lista de UCs con sus reprobados del PER para una sección.
+   
     public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
     {
         $sql = "SELECT uc.uc_nombre, (pa.per_cantidad - pa.per_aprobados) as reprobados_per
@@ -32,7 +32,7 @@ class Reporte extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Devuelve una lista de secciones con sus reprobados del PER para una UC.
+ 
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT pa.sec_codigo, (pa.per_cantidad - pa.per_aprobados) as reprobados_per

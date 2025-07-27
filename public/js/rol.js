@@ -283,6 +283,9 @@ function Listar() {
           else if (lee.resultado === "ok") {
             muestraMensaje("success", 3000, "Permisos", lee.mensaje);
             $("#modal2").modal("hide");
+            setTimeout(() => {
+            location.reload();
+           }, 3100); 
           }
           else if (lee.resultado == "error") {
             muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);

@@ -1,12 +1,10 @@
 <?php
 
-
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../model/reportes/rcuentacupos.php'; 
+require_once("vendor/autoload.php");
+require_once("model/reportes/rcuentacupos.php");
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -14,42 +12,54 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
+
+function convertirTrayectoARomano($numeroTrayecto) {
+    switch ($numeroTrayecto) {
+        case '1': return 'I';
+        case '2': return 'II';
+        case '3': return 'III';
+        case '4': return 'IV';
+        default: return 'INICIAL. '; 
+    }
+}
+
 $oCuentaCupos = new CuentaCupos();
 
 if (isset($_POST['generar_reporte'])) {
 
     $oCuentaCupos->set_anio($_POST['anio'] ?? '');
+   
     $datosReporte = $oCuentaCupos->obtenerCuentaCupos();
 
-    // 1. Agrupar los datos por Trayecto
+  
     $datosAgrupados = [];
     $totalGeneral = 0;
     if ($datosReporte) {
         foreach ($datosReporte as $fila) {
-            $datosAgrupados[$fila['Trayecto']][] = $fila;
+            $trayectoRomano = convertirTrayectoARomano($fila['Trayecto']);
+            $datosAgrupados[$trayectoRomano][] = $fila;
             $totalGeneral += $fila['Cantidad'];
         }
     }
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle("Cuenta de Cupos");
+    $sheet->setTitle("Matricula Trayecto");
 
-    // Estilos
+   
     $styleHeader = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
-    $styleHeaderColumnas = ['font' => ['bold' => true], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD3D3D3']]];
+   $styleHeaderColumnas = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleCentrado = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-
-    $filaActual = 1;
-
-    // Título de la tabla
-    $sheet->mergeCells('A1:C1');
-    $sheet->setCellValue('A1', 'MATRICULA TRAYECTO - UPTAEB'); // Título ajustado
+    
+  
+    $sheet->mergeCells('A1:C1')->setCellValue('A1', 'MATRICULA TRAYECTO ' . htmlspecialchars($_POST['anio'] ?? ''));
     $sheet->getStyle('A1')->applyFromArray($styleHeader);
-    $filaActual += 2;
+    $sheet->mergeCells('A2:C2')->setCellValue('A2', 'UPTAEB');
+    $sheet->getStyle('A2')->applyFromArray($styleHeader);
 
-    // Cabeceras de las columnas
+    
+    $filaActual = 4;
     $filaInicioTabla = $filaActual;
     $sheet->setCellValue('A'.$filaActual, 'TRAYECTO');
     $sheet->setCellValue('B'.$filaActual, 'SECCION');
@@ -57,22 +67,23 @@ if (isset($_POST['generar_reporte'])) {
     $sheet->getStyle('A'.$filaActual.':C'.$filaActual)->applyFromArray($styleHeaderColumnas);
     $filaActual++;
 
-    // 2. Iterar sobre cada Trayecto para construir las filas
+    
     if(!empty($datosAgrupados)){
-        foreach ($datosAgrupados as $numTrayecto => $secciones) {
+        foreach ($datosAgrupados as $trayectoRomano => $seccionesDelTrayecto) {
             $filaInicioTrayecto = $filaActual;
-            $numFilasTrayecto = count($secciones);
+            $numFilas = count($seccionesDelTrayecto);
 
-            // Fusionar celda de Trayecto
-            if ($numFilasTrayecto > 0) {
-                $sheet->mergeCells('A'.$filaInicioTrayecto.':A'.($filaInicioTrayecto + $numFilasTrayecto - 1));
-                $sheet->setCellValue('A'.$filaInicioTrayecto, $numTrayecto);
+            if ($numFilas > 0) {
+                
+                $sheet->mergeCells('A'.$filaInicioTrayecto.':A'.($filaInicioTrayecto + $numFilas - 1));
+                $sheet->setCellValue('A'.$filaInicioTrayecto, $trayectoRomano);
                 $sheet->getStyle('A'.$filaInicioTrayecto)->applyFromArray($styleCentrado);
             }
-
-            // Escribir las secciones y sus cantidades individuales
-            foreach ($secciones as $seccion) {
+            
+          
+            foreach ($seccionesDelTrayecto as $seccion) {
                 $sheet->setCellValue('B'.$filaActual, $seccion['Seccion']);
+                $sheet->getStyle('B'.$filaActual)->applyFromArray($styleCentrado);
                 $sheet->setCellValue('C'.$filaActual, $seccion['Cantidad']);
                 $sheet->getStyle('C'.$filaActual)->applyFromArray($styleCentrado);
                 $filaActual++;
@@ -80,24 +91,27 @@ if (isset($_POST['generar_reporte'])) {
         }
     }
     
-    // Fila de TOTAL
+   
     $sheet->mergeCells('A'.$filaActual.':B'.$filaActual);
     $sheet->setCellValue('A'.$filaActual, 'TOTAL');
-    $sheet->setCellValue('C'.$filaActual, $totalGeneral);
-    $sheet->getStyle('A'.$filaActual.':C'.$filaActual)->getFont()->setBold(true);
+    $sheet->getStyle('A'.$filaActual)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+    $sheet->getStyle('A'.$filaActual)->getFont()->setBold(true);
 
-    // Aplicar bordes a toda la tabla
+    $sheet->setCellValue('C'.$filaActual, $totalGeneral);
+    $sheet->getStyle('C'.$filaActual)->applyFromArray($styleCentrado)->getFont()->setBold(true);
+
+   
     $sheet->getStyle('A'.$filaInicioTabla.':C'.$filaActual)->applyFromArray($styleBordes);
 
-    // Auto-ajustar el ancho de las columnas
-    foreach (range('A', 'C') as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
-    }
+   
+    $sheet->getColumnDimension('A')->setWidth(12);
+    $sheet->getColumnDimension('B')->setWidth(15);
+    $sheet->getColumnDimension('C')->setWidth(12);
     
-    // 3. Enviar el archivo al navegador
+   
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Reporte_Cuenta_Cupos_" . date('Y-m-d') . ".xlsx";
+    $fileName = "Reporte_Cuenta_Cupos" . date('Y-m-d') . ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -105,7 +119,7 @@ if (isset($_POST['generar_reporte'])) {
     exit;
 
 } else {
-    // Si no se envía el formulario, solo muestra la vista
     $anios = $oCuentaCupos->obtenerAnios();
     require_once("views/reportes/rcuentacupos.php");
 }
+?>
