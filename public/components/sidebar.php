@@ -66,7 +66,7 @@ foreach (array_keys($gestion_items) as $permiso) {
     }
 }
 
-$tiene_permiso_reportes_estadisticos = tiene_permiso('Reportes', $permisos);
+$tiene_permiso_reportes_estadisticos = tiene_permiso_accion('reportes', 'registrar', $permisos);
 
 $tiene_permiso_config_subitem = false;
 foreach ($config_permisos as $permiso) {
@@ -87,7 +87,7 @@ foreach ($mantenimiento_permisos as $permiso) {
     }
 }
 
-$tiene_permiso_reportes_subitem = tiene_permiso('Reportes', $permisos);
+$tiene_permiso_reportes_subitem = tiene_permiso_accion('reportes', 'registrar', $permisos);
 
 $tiene_permiso_admin = $tiene_permiso_config_subitem || $tiene_permiso_reportes_subitem || $tiene_permiso_mantenimiento_subitem || $docente_asignado;
 

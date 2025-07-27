@@ -438,7 +438,14 @@ $(document).ready(function() {
             this.value = this.value.replace(/[0-9]/g, '');
             validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{3,30}$/, $(this), $("#s" + id), "Formato inválido.");
         } else if (id === 'correoDocente') {
-            validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $(this), $("#scorreoDocente"), "Correo inválido.");
+            let esValido = validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $(this), $("#scorreoDocente"), "Correo inválido.");
+            if(esValido){
+                const datos = new FormData();
+                datos.append('accion', 'existe_correo');
+                datos.append('correoDocente', $('#correoDocente').val());
+                datos.append('cedulaDocente', $('#cedulaDocente').val()); 
+                enviaAjax(datos);
+            }
         }
     });
     
@@ -575,6 +582,13 @@ $(document).ready(function() {
                     if (lee.resultado === 'Existe') {
                          if (lee.existe) { $("#scedulaDocente").text("Cédula ya registrada."); }
                          else { $("#scedulaDocente").text(""); }
+                    } else if (
+                        (lee.resultado === 'existe' || lee.resultado === 'existe_docente') 
+                        && lee.mensaje
+                    ) {
+                        $("#scorreoDocente").text(lee.mensaje).show();
+                    } else if (lee.resultado === 'no_existe') {
+                        $("#scorreoDocente").text("").hide();
                     } else if (lee.resultado === 'consultar') {
                         destruyeDT();
                         $("#resultadoconsulta").empty();

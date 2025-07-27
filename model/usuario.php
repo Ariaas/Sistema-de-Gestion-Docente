@@ -389,26 +389,20 @@ class Usuario extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $sql = "SELECT d.doc_cedula, d.doc_nombre, d.doc_apellido 
+            $sql = "SELECT d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo 
                     FROM tbl_docente d 
-                    WHERE d.doc_estado = 1 
-                    AND (
-                        d.doc_cedula NOT IN (SELECT usu_cedula FROM tbl_usuario WHERE usu_cedula IS NOT NULL AND usu_cedula != '' AND usu_estado = 1)";
-
+                    LEFT JOIN tbl_usuario u ON d.doc_cedula = u.usu_cedula AND u.usu_estado = 1
+                    WHERE d.doc_estado = 1 AND (u.usu_cedula IS NULL";
             if ($cedula_actual) {
                 $sql .= " OR d.doc_cedula = :cedula_actual";
             }
-
-            $sql .= ") ORDER BY d.doc_nombre ASC, d.doc_apellido ASC";
+            $sql .= ")";
 
             $stmt = $co->prepare($sql);
-
             if ($cedula_actual) {
                 $stmt->bindParam(':cedula_actual', $cedula_actual, PDO::PARAM_STR);
             }
-
             $stmt->execute();
-
             $r['resultado'] = 'ok';
             $r['mensaje'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -417,5 +411,42 @@ class Usuario extends Connection
         }
         $co = null;
         return $r;
+    }
+
+    public function verificarCorreoDocente($correo, $usuarioId_actual = null)
+    {
+        $co = $this->Con();
+        try {
+            $sql_usuario = "SELECT usu_id FROM tbl_usuario WHERE usu_correo = :correo AND usu_estado = 1";
+            if ($usuarioId_actual) {
+                $sql_usuario .= " AND usu_id != :usu_id";
+            }
+            $stmt_usuario = $co->prepare($sql_usuario);
+            $params_usuario = [':correo' => $correo];
+            if ($usuarioId_actual) {
+                $params_usuario[':usu_id'] = $usuarioId_actual;
+            }
+            $stmt_usuario->execute($params_usuario);
+
+            if ($stmt_usuario->fetch()) {
+                return ['resultado' => 'existe_usuario', 'mensaje' => 'Este correo ya está registrado para otro usuario.'];
+            }
+
+            $stmt_docente = $co->prepare("
+                SELECT d.doc_nombre, d.doc_apellido 
+                FROM tbl_docente d
+                LEFT JOIN tbl_usuario u ON d.doc_cedula = u.usu_cedula
+                WHERE d.doc_correo = :correo AND d.doc_estado = 1 AND u.usu_id IS NULL
+            ");
+            $stmt_docente->execute([':correo' => $correo]);
+            
+            if ($docente = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
+                return ['resultado' => 'existe_docente', 'mensaje' => 'El correo pertenece al docente (' . $docente['doc_nombre'] . ' ' . $docente['doc_apellido'] . '). Asigne este docente para usar el correo.'];
+            }
+
+            return ['resultado' => 'no_existe'];
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        }
     }
 }

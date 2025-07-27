@@ -344,6 +344,47 @@ class Docente extends Connection
         }
     }
 
+    public function existeCorreo($correo, $cedula_actual = null)
+    {
+        $co = $this->Con();
+        try {
+            $sql_docente = "SELECT doc_cedula, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_correo = :correo AND doc_estado = 1";
+            $stmt_docente = $co->prepare($sql_docente);
+            $stmt_docente->execute([':correo' => $correo]);
+            $docente = $stmt_docente->fetch(PDO::FETCH_ASSOC);
+
+            if ($docente) {
+                if ($cedula_actual && $docente['doc_cedula'] == $cedula_actual) {
+                    return ['resultado' => 'no_existe'];
+                } else {
+                    return [
+                        'resultado' => 'existe_docente',
+                        'mensaje' => 'El correo ya está asignado al docente (' . $docente['doc_nombre'] . ' ' . $docente['doc_apellido'] . ').'
+                    ];
+                }
+            }
+
+            $sql_usuario = "SELECT usu_id, usu_cedula FROM tbl_usuario WHERE usu_correo = :correo AND usu_estado = 1";
+            $stmt_usuario = $co->prepare($sql_usuario);
+            $stmt_usuario->execute([':correo' => $correo]);
+            $usuario = $stmt_usuario->fetch(PDO::FETCH_ASSOC);
+
+            if ($usuario) {
+                if ($cedula_actual && $usuario['usu_cedula'] == $cedula_actual) {
+                } else {
+                    return [
+                        'resultado' => 'existe',
+                        'mensaje' => 'Este correo ya está en uso por un usuario.'
+                    ];
+                }
+            }
+
+            return ['resultado' => 'no_existe'];
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        }
+    }
+
     public function listacategoria()
     {
         $co = $this->Con();
@@ -444,12 +485,12 @@ class Docente extends Connection
         return null;
     }
 
-    
+
     private function _validarFechaConcurso()
     {
         if ($this->doc_anio_concurso !== null) {
             $fechaConcurso = new DateTime($this->doc_anio_concurso);
-            $hoy = new DateTime(); 
+            $hoy = new DateTime();
             $hoy->setTime(0, 0, 0);
 
             if ($fechaConcurso > $hoy) {
@@ -525,4 +566,3 @@ class Docente extends Connection
         }
     }
 }
-?>
