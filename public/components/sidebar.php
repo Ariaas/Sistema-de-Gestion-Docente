@@ -39,7 +39,6 @@ $gestion_items = [
     'Docentes' => 'docente',
     'Espacio' => 'espacios',
     'Seccion' => 'seccion',
-    'Año' => 'anio',
     'Unidad Curricular' => 'uc',
     'Malla Curricular' => 'mallacurricular',
     'Horario Docente' => 'horariodocente'
@@ -54,7 +53,7 @@ $reportes_estadisticos_items = [
 ];
 
 $mantenimiento_permisos = ['Usuario', 'Rol', 'Bitacora', 'backup'];
-$config_permisos = ['Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad'];
+$config_permisos = ['Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad','año'];
 
 $tiene_permiso_gestion = false;
 $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedula']);

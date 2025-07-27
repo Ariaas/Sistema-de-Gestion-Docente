@@ -31,8 +31,10 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'categoria');
         } elseif ($accion == 'existe') {
-            $c->setCategoria($_POST['categoriaNombre']);
-            $resultado = $c->Existe($_POST['categoriaNombre']);
+            $categoriaNombre = $_POST['categoriaNombre'];
+            $categoriaExcluir = isset($_POST['categoriaExcluir']) ? $_POST['categoriaExcluir'] : null;
+            $c->setCategoria($categoriaNombre);
+            $resultado = $c->Existe($categoriaNombre, $categoriaExcluir);
             echo json_encode($resultado);
         } else {
             $c->setCategoria($_POST['categoriaNombre']);

@@ -136,17 +136,6 @@ $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedu
                         </a>
                     </div>
                 <?php endif; ?>
-
-                <?php if (tiene_permiso('Actividad', $permisos)) : ?>
-                    <div class="col">
-                        <a href="?pagina=actividad" class="dashboard-card">
-                            <div class="icon-circle">
-                                <img src="public/assets/icons/tasks-solid.svg" alt="Gestionar Actividad">
-                            </div>
-                            <h5>Gestionar Actividad</h5>
-                        </a>
-                    </div>
-                <?php endif; ?>
                 <?php if (tiene_permiso('turno', $permisos)) : ?>
                     <div class="col">
                         <a href="?pagina=turno" class="dashboard-card">

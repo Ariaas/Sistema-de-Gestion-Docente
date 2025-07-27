@@ -42,6 +42,15 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'asignarPermisos') {
             $permisos = json_decode($_POST['permisos'], true);
             $res = $r->asignarPermisos($_POST['rolId'], $permisos);
+
+            require_once("model/login.php");
+            $login = new Login();
+            $usuario = $login->getDatosUsuario($_SESSION['usu_id']);
+            if ($usuario && isset($usuario['rol_id']) && $usuario['rol_id'] == $_POST['rolId']) {
+                $_SESSION['permisos'] = $login->get_permisos($_SESSION['usu_id']);
+                $res['permisos_actualizados'] = $_SESSION['permisos'];
+            }
+
             echo json_encode($res);
             exit;
         } else {

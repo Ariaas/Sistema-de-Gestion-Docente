@@ -72,14 +72,14 @@ $(document).ready(function () {
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
   $("#areaNombre").on("keypress", function (e) {
-    validarkeypress(/^[A-Za-z,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+    validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ,#\b\s-]*$/, e);
   });
 
   $("#areaNombre").on("keyup keydown", function () {
     $("#sareaNombre").css("color", "");
     
     let formatoValido = validarkeyup(
-      /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
+      /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/,
       $(this),
       $("#sareaNombre"),
       "El nombre debe tener entre 5 y 30 caracteres"
@@ -97,7 +97,7 @@ $(document).ready(function () {
   });
 
   $("#areaDescripcion").on("keyup", function() {
-    validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $(this), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.");
+    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
   });
 
   //////////////////////////////BOTONES/////////////////////////////////////
@@ -161,11 +161,21 @@ $(document).ready(function () {
 
 function validarenvio() {
     let esValido = true;
-    if (validarkeyup( /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,$("#areaNombre"),$("#sareaNombre"),"El nombre debe tener entre 5 y 30 caracteres, Ej: Matemáticas") == 0) {
+    if (validarkeyup(
+      /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/,
+      $("#areaNombre"),
+      $("#sareaNombre"),
+      "El nombre debe tener entre 5 y 30 caracteres, Ej: Matemáticas"
+    ) == 0) {
       if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre es incorrecto");
       esValido = false;
     }
-    if (validarkeyup(/^[A-Za-z0-9\s.,-]{5,100}$/, $("#areaDescripcion"), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres.") == 0) {
+    if (validarkeyup(
+      /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
+      $("#areaDescripcion"),
+      $("#sareaDescripcion"),
+      "La descripción debe tener entre 5 y 100 caracteres."
+    ) == 0) {
       if(esValido) muestraMensaje("error",4000,"ERROR!","El formato de la descripción es incorrecto");
       esValido = false;
     }
@@ -181,16 +191,18 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#areaNombre").prop("disabled", false);
     $("#areaDescripcion").prop("disabled", false);
+    $("#sareaNombre").text("").show();
+    $("#sareaDescripcion").text("").show();
   } else {
     $("#proceso").text("ELIMINAR");
     $("#areaNombre, #areaDescripcion").prop("disabled", true);
+    $("#sareaNombre").hide();
+    $("#sareaDescripcion").hide();
   }
   
   $("#areaNombre").val($(linea).find("td:eq(0)").text());
   $("#areaDescripcion").val($(linea).find("td:eq(1)").text());
 
-  $("#sareaNombre").hide();
-  $("#sareaDescripcion").hide();
   $("#modal1").modal("show");
 }
 
