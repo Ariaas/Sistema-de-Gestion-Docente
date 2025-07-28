@@ -1,6 +1,33 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['name'])) {
     header('Location: .');
+    exit();
+}
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar = tiene_permiso_accion('usuario', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('usuario', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('usuario', 'eliminar', $permisos);
+
+if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
+    header('Location: ?pagina=principal');
     exit();
 }
 ?>
@@ -20,7 +47,7 @@ if (!isset($_SESSION['name'])) {
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestión de Roles</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
-                <button class="btn btn-success px-4" id="registrar">Registrar Rol</button>
+                <button class="btn btn-success px-4" id="registrar" <?php if (!$puede_registrar) echo 'disabled'; ?>>Registrar Rol</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive" style="overflow-x: hidden;">
@@ -113,6 +140,13 @@ if (!isset($_SESSION['name'])) {
     <?php
     require_once("public/components/footer.php");
     ?>
+    <script>
+        const PERMISOS = {
+            registrar: <?php echo json_encode($puede_registrar); ?>,
+            modificar: <?php echo json_encode($puede_modificar); ?>,
+            eliminar: <?php echo json_encode($puede_eliminar); ?>
+        };
+    </script>
     <script type="text/javascript" src="public/js/rol.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>

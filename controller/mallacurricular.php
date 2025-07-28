@@ -59,11 +59,13 @@ if (is_file("views/mallacurricular.php")) {
             }
             echo json_encode($obj4->ExisteCohorte($is_modificar));
 
-        } else if ($accion == 'activar') {
+         } else if ($accion == 'cambiar_estado_activo') {
             $obj4->setMalCodigo($_POST['mal_codigo']);
-            echo json_encode($obj4->activarMalla());
-            $bitacora->registrarAccion($usu_id, 'activar', 'malla curricular');
-
+            $response = $obj4->cambiarEstadoActivo();
+            if (isset($response['resultado']) && $response['resultado'] === 'ok') {
+                $bitacora->registrarAccion($usu_id, $response['accion_bitacora'], 'malla curricular');
+            }
+            echo json_encode($response);
         } else if ($accion == 'modificar') {
             $unidades = isset($_POST['unidades']) ? json_decode($_POST['unidades'], true) : [];
 

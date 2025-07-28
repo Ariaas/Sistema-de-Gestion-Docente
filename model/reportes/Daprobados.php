@@ -1,33 +1,40 @@
 <?php
-// Asegúrate de que la ruta a tu archivo de conexión sea correcta
+
 require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    // Esta función no cambia, el reporte general sigue siendo un total.
-    // En tu archivo de modelo (ej. Daprobadosm.php)
-
+   
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
-        $sql = "SELECT
-                COALESCE(SUM(apro.apro_cantidad), 0) as total_aprobados_directo
-            FROM tbl_aprobados AS apro
-            WHERE apro.ani_anio = :anio
-              AND apro.ani_tipo = :tipo
-              AND apro.apro_estado = 1"; // <-- Esta es la condición que faltaba
+        $sql = "SELECT COALESCE(SUM(ta.apro_cantidad), 0) as total_aprobados_directo
+                FROM tbl_aprobados ta
+                JOIN tbl_seccion s ON ta.sec_codigo = s.sec_codigo
+                WHERE s.ani_anio = :anio AND s.ani_tipo = :tipo";
 
-        try {
-            $p = $this->Con()->prepare($sql);
-            $p->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $p->bindParam(':tipo', $tipo, PDO::PARAM_STR);
-            $p->execute();
-            return $p->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            // error_log($e->getMessage()); // Opcional: para registrar errores
-            return false;
-        }
+        $p = $this->Con()->prepare($sql);
+        $p->bindParam(':anio', $anio, PDO::PARAM_INT);
+        $p->bindParam(':tipo', $tipo, PDO::PARAM_STR);
+        $p->execute();
+        return $p->fetch(PDO::FETCH_ASSOC);
     }
 
+   
+    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
+    {
+        $sql = "SELECT uc.uc_nombre, ta.apro_cantidad
+                FROM tbl_aprobados ta
+                JOIN tbl_uc uc ON ta.uc_codigo = uc.uc_codigo
+                WHERE ta.sec_codigo = :seccion_codigo
+                ORDER BY uc.uc_nombre";
+
+        $p = $this->Con()->prepare($sql);
+        $p->bindParam(':seccion_codigo', $seccion_codigo, PDO::PARAM_INT);
+        $p->execute();
+        return $p->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+  
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT
@@ -41,53 +48,15 @@ class Reporte extends Connection
             GROUP BY apro.sec_codigo
             ORDER BY apro.sec_codigo";
 
-        try {
-            $p = $this->Con()->prepare($sql);
-            $p->bindParam(':uc_codigo', $uc_codigo, PDO::PARAM_STR);
-            $p->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $p->bindParam(':tipo', $tipo, PDO::PARAM_STR);
-            $p->execute();
-            return $p->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            // error_log($e->getMessage());
-            return false;
-        }
+        $p = $this->Con()->prepare($sql);
+        $p->bindParam(':uc_codigo', $uc_codigo, PDO::PARAM_STR);
+        $p->bindParam(':anio', $anio, PDO::PARAM_INT);
+        $p->bindParam(':tipo', $tipo, PDO::PARAM_STR);
+        $p->execute();
+        return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
-    // En tu archivo de modelo (ej. Daprobadosm.php)
-
-    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo)
-    {
-        $sql = "SELECT
-                uc.uc_nombre,
-                uc.uc_codigo,
-                SUM(apro.apro_cantidad) as apro_cantidad
-            FROM tbl_aprobados AS apro
-            JOIN tbl_uc AS uc ON apro.uc_codigo = uc.uc_codigo
-            WHERE apro.sec_codigo = :seccion_codigo
-              AND apro.ani_anio = :anio
-              AND apro.ani_tipo = :tipo
-              AND apro.apro_estado = 1
-            GROUP BY uc.uc_codigo, uc.uc_nombre
-            ORDER BY uc.uc_nombre";
-
-        try {
-            $p = $this->Con()->prepare($sql);
-            $p->bindParam(':seccion_codigo', $seccion_codigo, PDO::PARAM_STR);
-            $p->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $p->bindParam(':tipo', $tipo, PDO::PARAM_STR);
-            $p->execute();
-            return $p->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            // En caso de un error en la consulta, se retorna false.
-            // Opcional: puedes registrar el error para depuración.
-            // error_log($e->getMessage());
-            return false;
-        }
-    }
-
-    // --- El resto de los métodos de ayuda no necesitan cambios ---
+  
 
     public function obtenerAnios()
     {

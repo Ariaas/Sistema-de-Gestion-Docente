@@ -50,7 +50,7 @@ if (is_file("views/reportes/reporteG.php")) {
                         }
                         $datos = $reporteModel->obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo);
                         break;
-                    default: // general
+                    default: 
                         $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio, $tipo);
                         break;
                 }

@@ -209,11 +209,15 @@ function Listar() {
   //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
   
   function existeAnio() {
-    var datos = new FormData();
-    datos.append('accion', 'existe');
-    datos.append('aniAnio', $("#aniAnio").val());
-    datos.append('tipoAnio',$("#tipoAnio").val());
-    enviaAjax(datos, 'existe');
+  var datos = new FormData();
+  datos.append('accion', 'existe');
+  datos.append('aniAnio', $("#aniAnio").val());
+  datos.append('tipoAnio', $("#tipoAnio").val());
+  if ($("#proceso").text() === "MODIFICAR") {
+    datos.append('anioOriginal', $("#anioOriginal").val());
+    datos.append('tipoOriginal', $("#tipoOriginal").val());
+  }
+  enviaAjax(datos, 'existe');
 }
 
 $("#aniAnio").on("change", function() {
@@ -340,7 +344,7 @@ $("#tipoAnio").on("change", function() {
 }
   
   
-  function enviaAjax(datos) {
+  function enviaAjax(datos, accion) {
     $.ajax({
       async: true,
       url: "",
@@ -354,6 +358,16 @@ $("#tipoAnio").on("change", function() {
       success: function (respuesta) {
         try {
           var lee = JSON.parse(respuesta);
+          if (accion === 'existe') {
+            if (lee.resultado === 'existe') {
+              $("#saniAnio").text(lee.mensaje).css("color", "red").show();
+              $("#proceso").prop("disabled", true);
+            } else {
+              $("#saniAnio").text("").hide();
+              $("#proceso").prop("disabled", false);
+            }
+            return;
+          }
           if (lee.resultado === "consultar") {
             destruyeDT();
             $("#resultadoconsulta").empty();

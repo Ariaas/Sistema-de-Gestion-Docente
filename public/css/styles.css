@@ -765,6 +765,8 @@ footer {
     filter: brightness(0) invert(1); /* Iconos blancos */
 }
 
+
+
 .btn-icon.btn-edit {
     background-color: #ffc107; /* Amarillo de Bootstrap */
 }
@@ -783,6 +785,11 @@ footer {
     transform: scale(1.1);
 }
 
+
+.btn-icon.btn-info:hover {
+    
+    transform: scale(1.1);
+}
 /* --- Estilo compacto y moderno para DataTable --- */
 
 /* Contenedor principal de la tabla */

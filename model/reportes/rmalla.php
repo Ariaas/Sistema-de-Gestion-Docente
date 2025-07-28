@@ -10,9 +10,7 @@ class MallaReport extends Connection
         parent::__construct();
     }
 
-    /**
-     * Obtiene una lista de todas las mallas curriculares activas.
-     */
+   
     public function getMallasActivas()
     {
         $co = $this->con();
@@ -27,14 +25,12 @@ class MallaReport extends Connection
         }
     }
 
-    /**
-     * Obtiene los detalles y unidades curriculares de una malla específica.
-     */
+    
     public function getMallaConUnidades($mallaCodigo)
     {
         $co = $this->con();
         try {
-            // Consulta ajustada para traer las horas como las necesita el controlador
+           
             $sql = "SELECT 
                         m.mal_codigo, m.mal_nombre, m.mal_cohorte,
                         u.uc_codigo, u.uc_nombre, u.uc_trayecto,
@@ -59,13 +55,12 @@ class MallaReport extends Connection
                         m.mal_nombre, u.uc_trayecto, u.uc_nombre";
             
             $stmt = $co->prepare($sql);
-            // --- ¡AQUÍ ESTABA EL ERROR! ---
-            // Se cambió PDO::PARAM_INT por PDO::PARAM_STR para que coincida con el tipo de dato.
+           
             $stmt->bindParam(':mal_codigo', $mallaCodigo, PDO::PARAM_STR);
             $stmt->execute();
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // La lógica para agrupar los datos está bien, se mantiene.
+            
             $mallasAgrupadas = [];
             if ($results) {
                 $mallaKey = $results[0]['mal_codigo'];

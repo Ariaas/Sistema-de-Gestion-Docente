@@ -1,5 +1,9 @@
 <?php
+<<<<<<< HEAD
 // El nombre del archivo sigue siendo rseccion.php por consistencia
+=======
+
+>>>>>>> e49ad21f436d00715071ce8c78621385678fa505
 ?>
 <!DOCTYPE html>
 <html lang="es">

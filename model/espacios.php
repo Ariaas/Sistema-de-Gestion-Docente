@@ -216,15 +216,23 @@ class Espacio extends Connection
     }
 
 
-    public function Existe($numeroEspacio, $edificioEspacio)
+    public function Existe($numeroEspacio, $edificioEspacio, $numeroEspacioExcluir = null, $edificioEspacioExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT 1 FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_estado = 1");
+            $sql = "SELECT 1 FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_estado = 1";
+            if ($numeroEspacioExcluir !== null && $edificioEspacioExcluir !== null) {
+                $sql .= " AND NOT (esp_numero = :numeroEspacioExcluir AND esp_edificio = :edificioEspacioExcluir)";
+            }
+            $stmt = $co->prepare($sql);
             $stmt->bindParam(':numeroEspacio', $numeroEspacio, PDO::PARAM_STR);
             $stmt->bindParam(':edificioEspacio', $edificioEspacio, PDO::PARAM_STR);
+            if ($numeroEspacioExcluir !== null && $edificioEspacioExcluir !== null) {
+                $stmt->bindParam(':numeroEspacioExcluir', $numeroEspacioExcluir, PDO::PARAM_STR);
+                $stmt->bindParam(':edificioEspacioExcluir', $edificioEspacioExcluir, PDO::PARAM_STR);
+            }
             $stmt->execute();
             $fila = $stmt->fetch(PDO::FETCH_ASSOC);
 

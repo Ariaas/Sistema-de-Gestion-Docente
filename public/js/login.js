@@ -19,7 +19,7 @@ $(document).ready(function(){
     });
 
     $("#contraseniaUsuario").on("keyup", function() {
-        validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/, $(this), $("#scontraseniaUsuario"), "La contraseña debe tener entre 5 y 30 caracteres.");
+        validarkeyup(/^.{5,30}$/, $(this), $("#scontraseniaUsuario"), "La contraseña debe tener entre 5 y 30 caracteres.");
     });
     
     $("#recuperarBtn").on("click", function(){
@@ -98,7 +98,7 @@ $(document).ready(function(){
         if (validarkeyup(/^[A-Za-z0-9\s]{5,30}$/, $("#nombreUsuario"), $("#snombreUsuario"), "El usuario debe tener entre 5 y 30 caracteres.") == 0) {
             esValido = false;
         }
-        if (validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/, $("#contraseniaUsuario"), $("#scontraseniaUsuario"), "La contraseña debe tener entre 5 y 30 caracteres.") == 0) {
+        if (validarkeyup(/^.{5,30}$/, $("#contraseniaUsuario"), $("#scontraseniaUsuario"), "La contraseña debe tener entre 5 y 30 caracteres.") == 0) {
             esValido = false;
         }
     

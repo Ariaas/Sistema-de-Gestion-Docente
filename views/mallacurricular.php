@@ -25,6 +25,11 @@ if (!function_exists('tiene_permiso_accion')) {
 $puede_registrar = tiene_permiso_accion('malla curricular', 'registrar', $permisos);
 $puede_modificar = tiene_permiso_accion('malla curricular', 'modificar', $permisos);
 $puede_eliminar = tiene_permiso_accion('malla curricular', 'eliminar', $permisos);
+
+if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
+    header('Location: ?pagina=principal');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -37,23 +42,12 @@ $puede_eliminar = tiene_permiso_accion('malla curricular', 'eliminar', $permisos
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <style>
-        .btn-xs {
-            --bs-btn-padding-y: .1rem;
-            --bs-btn-padding-x: .5rem;
-            --bs-btn-font-size: .75rem;
+ .validation-span {
+            color: #6c757d  /* Color gris secundario de Bootstrap */
         }
 
-        .horas-input {
-            min-width: 60px;
-        }
-
-        .nav-link {
-            font-size: 0.9rem;
-        }
-
-        .form-control[readonly] {
-            background-color: #e9ecef;
-            opacity: 1;
+         .bg-readonly-darker {
+            background-color: #dfdfdfff  !important; /* Este es el gris estándar de Bootstrap para campos deshabilitados */
         }
     </style>
 </head>
@@ -122,8 +116,10 @@ $puede_eliminar = tiene_permiso_accion('malla curricular', 'eliminar', $permisos
                                         <div class="col-md-9"><label for="select_uc" class="form-label">Unidad Curricular</label><select id="select_uc" class="form-select" style="width: 100%;"></select></div>
                                         <div class="col-md-3"><button type="button" class="btn btn-info w-100" id="btn_agregar_uc">Agregar Unidad</button></div>
                                     </div>
-                                    <div id="contenedorAcordeonUC" class="accordion">
-                                    </div>
+                                    <div id="contenedorAcordeonUC">
+    <ul class="nav nav-tabs" id="mallaTabsMod" role="tablist"></ul>
+    <div class="tab-content" id="mallaTabContentMod"></div>
+</div>
                                 </fieldset>
                             </div>
                             <div id="botones-pagina1" class="modal-footer justify-content-end mt-4"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary" id="btn-siguiente">Siguiente &raquo;</button></div>

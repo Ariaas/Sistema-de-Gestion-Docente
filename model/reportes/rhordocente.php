@@ -9,12 +9,11 @@ class ReporteHorarioDocente extends Connection
         parent::__construct();
     }
 
-    // Setters
     public function set_cedula_docente($valor) { $this->cedula_docente = trim($valor); }
     public function setAnio($valor) { $this->anio = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
 
-    // --- Métodos para Poblar Dropdowns ---
+    // Las funciones getAniosActivos, getFases, obtenerDocentes y obtenerInfoDocente no necesitan cambios.
     public function getAniosActivos() {
         try {
             $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
@@ -45,7 +44,7 @@ class ReporteHorarioDocente extends Connection
     public function obtenerInfoDocente() {
         if (empty($this->cedula_docente)) return false;
         try {
-            $sql = "SELECT d.doc_cedula, CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombreCompleto, d.doc_dedicacion, d.doc_condicion, d.cat_nombre AS categoria, (SELECT GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') FROM titulo_docente td JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre WHERE td.doc_cedula = d.doc_cedula) AS postgrado FROM tbl_docente d WHERE d.doc_cedula = :cedula_docente";
+            $sql = "SELECT d.doc_cedula, CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombreCompleto, d.doc_dedicacion, d.doc_condicion, d.cat_nombre AS categoria, (SELECT GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') FROM titulo_docente td JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre WHERE td.doc_cedula = d.doc_cedula) AS pregrado_titulo FROM tbl_docente d WHERE d.doc_cedula = :cedula_docente";
             $stmt = $this->con()->prepare($sql);
             $stmt->execute([':cedula_docente' => $this->cedula_docente]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -55,31 +54,34 @@ class ReporteHorarioDocente extends Connection
     public function obtenerAsignacionesAcademicas() {
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
         
-        // CORREGIDO: Se incluye el período '0' para el trayecto inicial en Fase 1
-        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', '0'] : ['Fase II', 'anual'];
+        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'Anual', 'anual', '0'] : ['Fase II', 'Anual', 'anual'];
         
         try {
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
             
-            // CORREGIDO: La lógica de JOINs fue reconstruida para seguir la ruta correcta de los datos.
+            // --- CONSULTA CORREGIDA APLICANDO LA LÓGICA DEL MÓDULO DE SECCIÓN ---
             $sql = "SELECT 
                         u.uc_nombre, 
                         u.uc_codigo, 
-                        GROUP_CONCAT(DISTINCT dh.sec_codigo ORDER BY dh.sec_codigo SEPARATOR '\n') as secciones, 
+                        GROUP_CONCAT(DISTINCT s.sec_codigo ORDER BY s.sec_codigo SEPARATOR '\n') as secciones,
+                        GROUP_CONCAT(DISTINCT CONCAT(uh.esp_edificio, ' - ', uh.esp_numero) ORDER BY uh.esp_edificio, uh.esp_numero SEPARATOR '\n') as ambientes,
                         e.eje_nombre, 
-                        u.uc_periodo, 
-                        SUM(um.mal_hora_academica) as totalHorasClase
-                    FROM docente_horario dh
-                    JOIN uc_horario uh ON dh.sec_codigo = uh.sec_codigo
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                        u.uc_periodo,
+                        (SELECT um.mal_hora_academica FROM uc_malla um JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo WHERE um.uc_codigo = u.uc_codigo AND m.mal_activa = 1 LIMIT 1) as totalHorasClase
+                    FROM uc_horario uh
                     JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     JOIN tbl_eje e ON u.eje_nombre = e.eje_nombre
-                    JOIN uc_malla um ON u.uc_codigo = um.uc_codigo
-                    JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo
                     WHERE 
-                        dh.doc_cedula = :cedula_docente 
-                        AND s.ani_anio = :anio_param 
-                        AND m.mal_activa = 1";
+                        s.ani_anio = :anio_param
+                        AND EXISTS (
+                            SELECT 1
+                            FROM uc_docente ud
+                            JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                            WHERE ud.uc_codigo = uh.uc_codigo
+                              AND dh.sec_codigo = uh.sec_codigo
+                              AND ud.doc_cedula = :cedula_docente
+                        )";
 
             $placeholders = [];
             $i = 0;
@@ -112,27 +114,32 @@ class ReporteHorarioDocente extends Connection
     public function obtenerDatosParrillaHorario() {
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
         
-        // CORREGIDO: Se incluye el período '0' para el trayecto inicial en Fase 1
-        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', '0'] : ['Fase II', 'anual'];
+        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'Anual', 'anual', '0'] : ['Fase II', 'Anual', 'anual'];
         
         try {
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
-
-            // CORREGIDO: La lógica de JOINs fue reconstruida aquí también.
+            
+            // --- CONSULTA CORREGIDA APLICANDO LA LÓGICA DEL MÓDULO DE SECCIÓN ---
             $sql = "SELECT 
                         uh.hor_dia, 
                         uh.hor_horainicio, 
                         uh.hor_horafin, 
-                        CONCAT(uh.esp_tipo, ' ', uh.esp_numero) as esp_codigo, 
+                        CONCAT(uh.esp_edificio, ' - ', uh.esp_numero) as esp_codigo, 
                         uh.sec_codigo, 
                         u.uc_nombre
-                    FROM docente_horario dh
-                    JOIN uc_horario uh ON dh.sec_codigo = uh.sec_codigo
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    FROM uc_horario uh
                     JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE 
-                        dh.doc_cedula = :cedula_docente 
-                        AND s.ani_anio = :anio_param";
+                        s.ani_anio = :anio_param
+                        AND EXISTS (
+                            SELECT 1
+                            FROM uc_docente ud
+                            JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                            WHERE ud.uc_codigo = uh.uc_codigo
+                              AND dh.sec_codigo = uh.sec_codigo
+                              AND ud.doc_cedula = :cedula_docente
+                        )";
             
             $placeholders = [];
             $i = 0;
@@ -150,11 +157,5 @@ class ReporteHorarioDocente extends Connection
             error_log("Error en obtenerDatosParrillaHorario: " . $e->getMessage());
             return []; 
         }
-    }
-
-    public function obtenerBloquesDeTiempo() {
-        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
-        // Esta función ahora depende de la anterior, por lo que no necesita cambios.
-        return $this->obtenerDatosParrillaHorario();
     }
 }

@@ -12,8 +12,7 @@ class AsignacionAulasReport extends Connection
     {
         $co = $this->con();
         try {
-            // --- CONSULTA SQL CORREGIDA ---
-            // Se ajusta el SELECT y el JOIN para usar las columnas correctas.
+          
             $sql = "SELECT DISTINCT
                         CONCAT(e.esp_tipo, ' ', e.esp_numero, ' (', e.esp_edificio, ')') AS aula_completa,
                         uh.hor_dia

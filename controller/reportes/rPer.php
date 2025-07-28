@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Asegúrate de que las rutas al modelo y la vista sean correctas
+
 if (!is_file("model/reportes/rPer.php")) {
     echo "Falta definir la clase del modelo: rPerm.php";
     exit;
@@ -51,7 +51,7 @@ if (is_file("views/reportes/rPer.php")) {
                         }
                         $datos = $reporteModel->obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo);
                         break;
-                    default: // general
+                    default: 
                         $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio, $tipo);
                         break;
                 }

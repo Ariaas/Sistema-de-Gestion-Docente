@@ -48,12 +48,12 @@ if (isset($_POST['generar_transcripcion'])) {
     $styleData = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_LEFT, 'wrapText' => true]];
     $styleDataCenter = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true]];
  
-    // --- Cabeceras ---
+  
     $sheet->mergeCells('A1:E1')->setCellValue('A1', "ASIGNACION DE SECCIONES");
     $sheet->getStyle('A1:E1')->applyFromArray($styleTitle)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
     $sheet->getRowDimension(1)->setRowHeight(20);
 
-    // --- CAMBIO: Las cabeceras ahora empiezan en la fila 2 ---
+   
     $sheet->setCellValue('A2', 'N°');
     $sheet->setCellValue('B2', 'CEDULA');
     $sheet->setCellValue('C2', 'NOMBRE Y APELLIDO');
@@ -61,7 +61,7 @@ if (isset($_POST['generar_transcripcion'])) {
     $sheet->setCellValue('E2', 'SECCION COMPLETA');
     $sheet->getStyle('A2:E2')->applyFromArray($styleHeader);
 
-    // --- CAMBIO: Los datos ahora empiezan en la fila 3 ---
+ 
     $filaActual = 3;
     $itemNumber = 1;
 

@@ -183,24 +183,23 @@ function Listar() {
   
   
   function pone(pos, accion) {
-    linea = $(pos).closest("tr");
-  
-    if (accion == 0) {
-      $("#proceso").text("MODIFICAR");
-      $("#rolId").prop("disabled", false);
-      $("#nombreRol").prop("disabled", false);
-    } else {
-      $("#proceso").text("ELIMINAR");
-      $(
-        "#rolId, #nombreRol"
-      ).prop("disabled", true);
-    }
+  linea = $(pos).closest("tr");
+
+  if (accion == 0) {
+    $("#proceso").text("MODIFICAR");
+    $("#rolId").prop("disabled", false);
+    $("#nombreRol").prop("disabled", false);
+    $("#snombreRol").text("").show();
+  } else {
+    $("#proceso").text("ELIMINAR");
+    $("#rolId, #nombreRol").prop("disabled", true);
     $("#snombreRol").hide();
-    $("#rolId").val($(linea).find("td:eq(0)").text());
-    $("#nombreRol").val($(linea).find("td:eq(1)").text());
-  
-    $("#modal1").modal("show");
   }
+  $("#rolId").val($(linea).find("td:eq(0)").text());
+  $("#nombreRol").val($(linea).find("td:eq(1)").text());
+
+  $("#modal1").modal("show");
+}
   
   
   function enviaAjax(datos, accion) {
@@ -236,9 +235,9 @@ function Listar() {
                   <td style="display: none;">${item.rol_id}</td>
                   <td>${item.rol_nombre}</td>
                   <td>
-                    <button class="btn btn-warning btn-sm agregarPermiso" data-codigo="${item.rol_id}">Permisos</button>
-                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.rol_id}" data-tipo="${item.rol_nombre}">Modificar</button>
-                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.rol_id}" data-tipo="${item.rol_nombre}">Eliminar</button>
+                    <button class="btn btn-warning btn-sm agregarPermiso" data-codigo="${item.rol_id}" ${!PERMISOS.registrar ? 'disabled' : ''}>Permisos</button>
+                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.rol_id}" data-nombre="${item.rol_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
+                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.rol_id}" data-nombre="${item.rol_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
                   </td>
                 </tr>
               `);

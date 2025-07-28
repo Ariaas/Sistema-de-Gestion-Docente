@@ -65,15 +65,18 @@ function pone(pos, accion) {
     if (accion === 0) {
         $("#proceso").text("MODIFICAR");
         $("#tituloprefijo, #titulonombre").prop("disabled", false);
-       
+
         $("#tituloprefijo_original").val(prefijo);
         $("#titulonombre_original").val(nombre);
+
+        $("#stituloprefijo").text("").show();
+        $("#stitulonombre").text("").show();
     } else { 
         $("#proceso").text("ELIMINAR");
         $("#tituloprefijo, #titulonombre").prop("disabled", true);
+        $("#stituloprefijo, #stitulonombre").hide();
     }
     $("#modal1").modal("show");
-    $("#stituloprefijo, #stitulonombre").hide();
 }
 
 function validarenvio() {

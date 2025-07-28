@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     
-    // --- AÑADIDO: Lógica para inicializar Select2 ---
+  
     if (window.jQuery) {
         $(document).ready(function() {
             try {
@@ -22,17 +22,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- Lógica de validación y limpieza ---
+
     const generarBtnUc = document.getElementById("generar_uc");
     const anioSelect = document.getElementById("anio_id");
     const trayectoSelect = document.getElementById("trayecto");
     const seccionSelect = document.getElementById("seccion"); 
 
     function limpiaFormulario() {
-        // --- MODIFICADO: para que funcione con Select2 ---
+         
         if (anioSelect) {
             anioSelect.value = ""; 
-            if (window.jQuery) $(anioSelect).trigger('change'); // Notifica a Select2 del cambio
+            if (window.jQuery) $(anioSelect).trigger('change'); 
         }
         if (trayectoSelect) {
             trayectoSelect.value = ""; 
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Esta función ahora solo es útil si generas el reporte en una nueva pestaña (target="_blank")
+           
             setTimeout(function() {
                 limpiaFormulario();
             }, 1800); 

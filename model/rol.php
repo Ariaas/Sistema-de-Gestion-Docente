@@ -156,14 +156,21 @@ class Rol extends Connection
         return $r;
     }
 
-    public function Existe($nombreRol)
+    public function Existe($nombreRol, $rolIdExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_rol WHERE rol_nombre=:nombreRol AND rol_estado = 1");
+            $sql = "SELECT * FROM tbl_rol WHERE rol_nombre=:nombreRol AND rol_estado = 1";
+            if ($rolIdExcluir !== null) {
+                $sql .= " AND rol_id != :rolIdExcluir";
+            }
+            $stmt = $co->prepare($sql);
             $stmt->bindParam(':nombreRol', $nombreRol, PDO::PARAM_STR);
+            if ($rolIdExcluir !== null) {
+                $stmt->bindParam(':rolIdExcluir', $rolIdExcluir, PDO::PARAM_INT);
+            }
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {

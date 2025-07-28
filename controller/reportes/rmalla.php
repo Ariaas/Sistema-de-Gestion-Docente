@@ -1,29 +1,29 @@
 <?php
-// controller/reportes/rmalla.php
+
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Asegúrate que la ruta a tu autoload de vendor sea correcta
+
 require_once ('vendor/autoload.php'); 
 require_once ('model/reportes/rmalla.php');
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Lógica para generar el reporte en PDF
+
 if (isset($_POST['generar_rmalla_report'])) {
     
-    // Se verifica la variable correcta que viene del formulario ('malla_codigo')
+   
     if (isset($_POST['malla_codigo']) && !empty($_POST['malla_codigo'])) {
-        $mallaCodigo = $_POST['malla_codigo']; // Usar la variable correcta
+        $mallaCodigo = $_POST['malla_codigo']; 
         $oMallaReport = new MallaReport();
         $mallasData = $oMallaReport->getMallaConUnidades($mallaCodigo);
 
         $reportTitle = "Plan de Estudio";
 
-        // --- Estilos CSS para el PDF ---
+     
         $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
         $html .= '<title>' . htmlspecialchars($reportTitle) . '</title>';
         $html .= '<style>
@@ -41,7 +41,7 @@ if (isset($_POST['generar_rmalla_report'])) {
         </style>';
         $html .= '</head><body>';
 
-        // --- Contenido del PDF ---
+        
         if ($mallasData && count($mallasData) > 0) {
             foreach ($mallasData as $malla) {
                 $html .= '<div class="header">';
@@ -70,7 +70,7 @@ if (isset($_POST['generar_rmalla_report'])) {
                         $html .= '<td>' . htmlspecialchars($uc['uc_creditos']) . '</td>';
                         $html .= '<td class="text-left">' . htmlspecialchars($uc['eje_nombre']) . '</td>';
                         $html .= '<td>' . htmlspecialchars($uc['uc_periodo']) . '</td>';
-                        $html .= '<td>' . htmlspecialchars($uc['mal_hora_academica']) . '</td>'; // Usar el dato correcto
+                        $html .= '<td>' . htmlspecialchars($uc['mal_hora_academica']) . '</td>'; 
                         $html .= '</tr>';
 
                         $subtotalHte += $uc['hte']; $subtotalHta += $uc['hta'];
@@ -94,7 +94,7 @@ if (isset($_POST['generar_rmalla_report'])) {
         
         $html .= '</body></html>';
         
-        // --- Renderizado del PDF con DomPDF ---
+      
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true);
@@ -108,13 +108,13 @@ if (isset($_POST['generar_rmalla_report'])) {
         $dompdf->stream($outputFileName, array("Attachment" => false));
         exit;
     } else {
-        // Redirigir si no se seleccionó una malla
-        header('Location: ?pagina=rmalla'); // Redirige a la página del formulario
+      
+        header('Location: ?pagina=rmalla'); 
         exit;
     }
 
 } else {
-    // Lógica para mostrar la página del formulario
+  
     $oMallaReport = new MallaReport();
     $listaMallas = $oMallaReport->getMallasActivas();
     require_once('views/reportes/rmalla.php');

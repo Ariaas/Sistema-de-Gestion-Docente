@@ -22,7 +22,7 @@
                                 <select class="form-select" id="anio_reporte" name="anio_completo" required>
                                     <option value="" selected disabled>Seleccionar...</option>
                                     <?php foreach ($anios as $anio) {
-                                        // El valor ahora es 'año|tipo', ej: '2025|2025-1'
+                                       
                                         $texto = "{$anio['ani_anio']} - Periodo {$anio['ani_tipo']}";
                                         echo "<option value='{$anio['anio_completo']}'>{$texto}</option>";
                                     } ?>

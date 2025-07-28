@@ -12,7 +12,7 @@ use Dompdf\Options;
 
 function renderizarFilasHorario($bloques_horarios, $datos_parrilla, $dias) {
     $html_tabla = '';
-   
+    
     uksort($bloques_horarios, function($a_key, $b_key) use ($bloques_horarios) {
         return strcmp($bloques_horarios[$a_key], $bloques_horarios[$b_key]);
     });
@@ -32,17 +32,14 @@ $oReporteHorario = new ReporteHorarioDocente();
 
 if (isset($_POST['generar_rhd_report'])) { 
     
-    // Recibir todos los filtros
     $anio = $_POST['anio_id'] ?? '';
     $fase = $_POST['fase_id'] ?? '';
     $cedulaDocenteSeleccionada = $_POST['cedula_docente'] ?? ''; 
     
-    // Validar que todos los campos obligatorios estén presentes
     if (empty($cedulaDocenteSeleccionada) || empty($anio) || empty($fase)) { 
         die("Error: Debe seleccionar Año, Fase y Docente."); 
     }
 
-    // Pasar los filtros al modelo
     $oReporteHorario->setAnio($anio);
     $oReporteHorario->setFase($fase);
     $oReporteHorario->set_cedula_docente($cedulaDocenteSeleccionada);
@@ -63,7 +60,7 @@ if (isset($_POST['generar_rhd_report'])) {
         $primerDigito = substr($seccion, 0, 1);
         $seccionConFormato = in_array($primerDigito, ['3', '4']) ? 'IIN' . $seccion : 'IN' . $seccion;
         
-        $contenidoCelda = htmlspecialchars($item['uc_nombre']) . "<br>" . $seccionConFormato;
+        $contenidoCelda = htmlspecialchars($item['uc_nombre']) . "<br>" . $seccionConFormato . "<br>" . htmlspecialchars($item['esp_codigo']);
         $parrillaHorario[$horaInicio][$dia] = $contenidoCelda;
     }
 
@@ -101,17 +98,21 @@ if (isset($_POST['generar_rhd_report'])) {
         <tr><td width="18%">1. PNF/CARRERA:</td><td width="32%">INFORMATICA</td><td width="15%">2. LAPSO:</td><td width="35%">'.$anio.'-'.$fase.'</td></tr>
         <tr><td>3. PROFESOR(A):</td><td>'.htmlspecialchars($infoDocente['nombreCompleto']).'</td><td>4. CÉDULA:</td><td>'.htmlspecialchars($infoDocente['doc_cedula']).'</td></tr>
         <tr><td>5. DEDICACIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_dedicacion']).'</td><td>6. CONDICIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_condicion']).'</td></tr>
-        <tr><td>8. TITULO DE PREGRADO:</td><td colspan="3">ING EN INFORMATICA</td></tr>
+        
+        <tr><td>8. TITULO DE PREGRADO:</td><td colspan="3">'.htmlspecialchars($infoDocente['pregrado_titulo']).'</td></tr>
+        
         </table></td><td width="20%" class="sin-borde texto-centro"><img src="https://i.imgur.com/35i612p.png" width="80px"></td></tr>
         <tr><td colspan="2" class="sin-borde" style="padding:0;"><table class="tabla-encabezado">
-        <tr><td width="15%">7. CATEGORIA:</td><td width="28%">'.htmlspecialchars($infoDocente['categoria']).'</td><td width="15%">9. POSTGRADO:</td><td width="42%">'.htmlspecialchars($infoDocente['postgrado']).'</td></tr>
+        
+        <tr><td width="15%">7. CATEGORIA:</td><td width="28%">'.htmlspecialchars($infoDocente['categoria']).'</td><td width="15%">9. POSTGRADO:</td><td width="42%"></td></tr>
+        
         </table></td></tr></table>';
 
     $html .= '<table><tr><td colspan="6" class="titulo-seccion">ACTIVIDADES ACADÉMICAS</td></tr>
         <tr style="font-size:7px; font-weight:bold;"><td width="38%">10. Unidad Curricular</td><td width="12%">11. Código</td><td width="15%">12. Sección</td><td width="10%">13. Ambiente</td><td width="15%">14. Eje</td><td width="10%">15. FASE</td></tr>';
     if (!empty($asignacionesAcademicas)) {
         foreach($asignacionesAcademicas as $item) {
-            $html .= '<tr><td class="texto-izquierda">'.htmlspecialchars($item['uc_nombre']).'</td><td>'.htmlspecialchars($item['uc_codigo']).'</td><td>'.nl2br(htmlspecialchars($item['secciones'])).'</td><td></td><td>'.htmlspecialchars($item['eje_nombre']).'</td><td>'.htmlspecialchars($item['uc_periodo']).'</td></tr>';
+            $html .= '<tr><td class="texto-izquierda">'.htmlspecialchars($item['uc_nombre']).'</td><td>'.htmlspecialchars($item['uc_codigo']).'</td><td>'.nl2br(htmlspecialchars($item['secciones'])).'</td><td>'.nl2br(htmlspecialchars($item['ambientes'])).'</td><td>'.htmlspecialchars($item['eje_nombre']).'</td><td>'.htmlspecialchars($item['uc_periodo']).'</td></tr>';
         }
     } else { $html .= '<tr><td colspan="6">No hay asignaciones académicas para este período.</td></tr>'; }
     $html .= '</table>';
@@ -159,7 +160,7 @@ if (isset($_POST['generar_rhd_report'])) {
     exit;
 
 } else {
-    // Cargar los datos para todos los dropdowns
+ 
     $listaAnios = $oReporteHorario->getAniosActivos();
     $listaFases = $oReporteHorario->getFases();
     $listaDocentes = $oReporteHorario->obtenerDocentes();

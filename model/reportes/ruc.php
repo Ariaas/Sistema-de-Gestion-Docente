@@ -31,8 +31,8 @@ class Ruc extends Connection
     {
         $co = $this->con();
         try { 
-            // --- CONSULTA MODIFICADA ---
-            // Se ha añadido un CASE para formatear el código de la sección con los prefijos IN/IIN.
+            
+            // --- CONSULTA CORREGIDA: Se aplica la misma lógica de "triple validación" de los otros reportes ---
             $sqlBase = "SELECT
                             u.uc_trayecto AS `Número de Trayecto`,
                             u.uc_nombre AS `Nombre de la Unidad Curricular`,
@@ -41,18 +41,21 @@ class Ruc extends Connection
                                 WHEN LEFT(s.sec_codigo, 1) IN ('3', '4') THEN CONCAT('IIN', s.sec_codigo)
                                 ELSE s.sec_codigo
                             END AS `Código de Sección`,
-                            CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS `Nombre Completo del Docente`
+                            -- Esta subconsulta busca al único docente que cumple la triple validación para este bloque horario
+                            (
+                                SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
+                                FROM docente_horario dh
+                                JOIN uc_docente ud ON dh.doc_cedula = ud.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE dh.sec_codigo = uh.sec_codigo AND ud.uc_codigo = uh.uc_codigo
+                                LIMIT 1
+                            ) AS `Nombre Completo del Docente`
                         FROM
                             uc_horario uh
                         INNER JOIN
                             tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         INNER JOIN
                             tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                        LEFT JOIN (
-                            docente_horario dh
-                            INNER JOIN uc_docente ud ON dh.doc_cedula = ud.doc_cedula
-                            INNER JOIN tbl_docente d ON dh.doc_cedula = d.doc_cedula
-                        ) ON dh.sec_codigo = s.sec_codigo AND ud.uc_codigo = u.uc_codigo
                         ";
             
             $conditions = [];
@@ -91,7 +94,7 @@ class Ruc extends Connection
         }
     }
 
-    // --- NUEVA FUNCIÓN ---
+    
     public function obtenerAnios()
     {
         $co = $this->con();
@@ -107,7 +110,7 @@ class Ruc extends Connection
 
     public function obtenerTrayectos()
     {
-        // ... (esta función no cambia)
+       
         $co = $this->con();
         try {
             $p = $co->prepare("SELECT DISTINCT 
@@ -127,7 +130,7 @@ class Ruc extends Connection
 
     public function obtenerUc()
     {
-        // ... (esta función no cambia)
+       
         $co = $this->con();
         try {
             $p = $co->prepare("SELECT uc_codigo AS uc_id, uc_nombre FROM tbl_uc WHERE uc_estado = 1 ORDER BY uc_nombre");

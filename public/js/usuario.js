@@ -86,7 +86,12 @@ $(document).ready(function () {
 
     $("#usuarionombre").on("keyup keydown", function () {
       $("#susuarionombre").css("color", "");
-      let formatoValido = validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$(this),$("#susuarionombre"),"El usuario debe tener entre 5 y 30 caracteres.");
+      let formatoValido = validarkeyup(
+        /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s]{5,30}$/,
+        $(this),
+        $("#susuarionombre"),
+        "El usuario debe tener entre 5 y 30 caracteres y no puede contener caracteres especiales."
+      );
       if(formatoValido === 1){
         var datos = new FormData();
         datos.append('accion', 'existe');
@@ -122,7 +127,7 @@ $(document).ready(function () {
 
     $("#contrasenia").on("keyup keydown", function () {
       $("#scontrasenia").css("color", "");
-      validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,$("#contrasenia"),$("#scontrasenia"),"La contraseña debe tener entre 5 y 30 caracteres.");
+      validarkeyup(/^.{5,30}$/, $("#contrasenia"), $("#scontrasenia"), "La contraseña debe tener entre 5 y 30 caracteres.");
     });
  
 
@@ -291,7 +296,7 @@ function validarenvio() {
   }
 
   if ($("#proceso").text() === "REGISTRAR" || $("#contrasenia").val().length > 0) {
-    if (validarkeyup(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/, $("#contrasenia"), $("#scontrasenia"), "La contraseña debe tener entre 5 y 30 caracteres.") == 0) {
+    if (validarkeyup(/^.{5,30}$/, $("#contrasenia"), $("#scontrasenia"), "La contraseña debe tener entre 5 y 30 caracteres.") == 0) {
       if(esValido) muestraMensaje("error",4000,"ERROR!","El formato de la contraseña es incorrecto.");
       esValido = false;
     }
@@ -315,10 +320,15 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#usuarionombre, #correo, #contrasenia, #btnSeleccionarDocente, #btnQuitarDocente, #btnSeleccionarRol, #btnQuitarRol").prop("disabled", false);
     $(".grupo-modificar").show();
+    $("#susuarionombre").text("").show();
+    $("#scorreo").text("").show();
+    $("#scontrasenia").text("").show();
+    $("#susuarioRol").text("").show();
   } else {
     $("#proceso").text("ELIMINAR");
     $("#usuarionombre, #correo, #contrasenia, #btnSeleccionarDocente, #btnQuitarDocente, #btnSeleccionarRol, #btnQuitarRol").prop("disabled", true);
     $(".grupo-modificar").hide();
+    $("#susuarionombre, #scorreo, #scontrasenia, #susuarioRol").hide();
   }
 
   $("#usuarioId").val($(linea).find("td:eq(0)").text());
@@ -477,7 +487,10 @@ function limpia() {
   $("#usu_cedula").val("");
   $("#docente_asignado_nombre").val("");
   $("#rol_asignado_nombre").val("");
-  $("#susuarionombre, #scorreo, #scontrasenia, #susuarioRol").text("").hide();
+  $("#susuarionombre").text("").show();
+  $("#scorreo").text("").show();
+  $("#scontrasenia").text("").show();
+  $("#susuarioRol").text("").show();
   $("#proceso").prop("disabled", false);
 }
 

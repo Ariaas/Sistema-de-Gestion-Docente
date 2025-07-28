@@ -3,7 +3,7 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    // Obtiene los 3 componentes desde la BD para el reporte general.
+   
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT
@@ -21,8 +21,8 @@ class Reporte extends Connection
         }
     }
 
-    // Devuelve los componentes para cada UC de una sección.
-    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo)
+    
+    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
     {
         $sql = "SELECT
                     uc.uc_nombre,
@@ -54,7 +54,7 @@ class Reporte extends Connection
         }
     }
 
-    // Devuelve los componentes para cada sección de una UC.
+    
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT
@@ -86,6 +86,7 @@ class Reporte extends Connection
         }
     }
 
+    
     public function obtenerAnios()
     {
         $p = $this->Con()->prepare("SELECT ani_anio, ani_tipo, CONCAT(ani_anio, '|', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo DESC");

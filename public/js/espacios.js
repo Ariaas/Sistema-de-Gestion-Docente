@@ -64,6 +64,10 @@ $(document).ready(function () {
       datos.append("accion", "existe");
       datos.append("numeroEspacio", $(this).val());
       datos.append("edificioEspacio", $("#edificio").val());
+      if ($("#proceso").text() === "MODIFICAR") {
+        datos.append("numeroEspacioExcluir", $("#modal1").data("original-numero"));
+        datos.append("edificioEspacioExcluir", $("#modal1").data("original-edificio"));
+      }
       enviaAjax(datos, 'existe');
     } else if (!esValido) {
       $("#proceso").prop("disabled", false);

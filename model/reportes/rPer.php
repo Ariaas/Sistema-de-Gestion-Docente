@@ -3,7 +3,7 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    // Total de estudiantes en PER para un año académico.
+    
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT COALESCE(SUM(per_cantidad), 0) as total_en_per
@@ -21,8 +21,8 @@ class Reporte extends Connection
         }
     }
 
-    // Lista de UCs con su cantidad de estudiantes en PER para una sección.
-    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo)
+   
+    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
     {
         $sql = "SELECT uc.uc_nombre, SUM(pa.per_cantidad) as per_cantidad
                 FROM per_aprobados pa
@@ -46,7 +46,7 @@ class Reporte extends Connection
         }
     }
 
-    // Lista de secciones con su cantidad de estudiantes en PER para una UC.
+   
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT pa.sec_codigo, SUM(pa.per_cantidad) as per_cantidad
