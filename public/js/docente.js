@@ -30,7 +30,7 @@ $(document).ready(function() {
             $('#step2-academico').show();
             modalTitle.text("Paso 2: Datos Académicos");
             footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-2">ATRÁS</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-2">SIGIENTE</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-2">SIGUIENTE</button>');
         } else if (step === 3) {
             $('#step3-actividad').show();
             modalTitle.text('Paso 3: Actividades');

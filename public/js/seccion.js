@@ -321,7 +321,7 @@ function limpiaModalPrincipal() {
     $("#form-horario")[0].reset();
     $("#accion, #sec_codigo_hidden").val("");
     $("#seccion_principal_id").prop('disabled', true).val("");
-    $("#filtro_turno").val("todos").prop('disabled', false);
+    $("#filtro_turno").val("mañana").prop('disabled', false);
     $("#proceso").show().removeClass("btn-danger btn-primary btn-success").text('');
 }
 
@@ -347,6 +347,7 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, an
     const prefijo = getPrefijoSeccion(secCodigo);
     const textoSeccion = `${prefijo}${secCodigo} (${secCantidad} Est.) (Año ${anioTexto})`;
     $("#seccion_principal_id").empty().append(`<option value="${secCodigo}" selected>${textoSeccion}</option>`).prop('disabled', true);
+    $("#cantidadSeccionModificar").val(secCantidad);
     $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
 
     $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario para la sección ${prefijo}${secCodigo}`);
@@ -495,6 +496,15 @@ $(document).ready(function() {
             isCohorteValid = false;
         }
 
+        // Muestra u oculta el mensaje de error para la cantidad de estudiantes
+        const cantidadInput = document.getElementById('cantidadSeccion');
+        const cantidadError = $('#cantidad-seccion-error');
+        if (cantidadInput.validity.rangeOverflow || cantidadInput.validity.rangeUnderflow) {
+            cantidadError.show();
+        } else {
+            cantidadError.hide();
+        }
+        
         const isFormValid = form.checkValidity();
 
         if (isCohorteValid && isFormValid) {
@@ -553,15 +563,42 @@ $(document).ready(function() {
         validarFormularioRegistro();
     });
 
+    $('#cantidadSeccionModificar').on('input', function() {
+        const input = $(this);
+        const errorDiv = $('#cantidad-seccion-modificar-error');
+        const cantidad = parseInt(input.val(), 10);
+        const isValid = !isNaN(cantidad) && cantidad >= 0 && cantidad <= 99;
+
+        if (!isValid && input.val() !== '') {
+            errorDiv.show();
+        } else {
+            errorDiv.hide();
+        }
+    });
+
     $('#btnAbrirModalUnir').on('click', function() {
         const container = $("#unirSeccionesContainer");
         container.empty();
         const gruposCompatibles = allSecciones.reduce((acc, seccion) => {
-            const trayecto = seccion.sec_codigo.toString().charAt(0);
-            const key = `${seccion.ani_anio}-${seccion.ani_tipo}-${trayecto}`;
+            const codigoStr = seccion.sec_codigo.toString();
+            const trayecto = codigoStr.charAt(0);
+            const turno = codigoStr.charAt(1);
+            // ELIMINADO: Ya no se obtiene la cohorte para agrupar
+            // const cohorte = codigoStr.charAt(3);
+
+            const turnosNombres = {
+                '1': 'Mañana',
+                '2': 'Tarde',
+                '3': 'Noche'
+            };
+            const turnoNombre = turnosNombres[turno] || 'Desconocido';
+
+            // CAMBIO: Se eliminó la cohorte de la clave de agrupación y del nombre del grupo
+            const key = `${seccion.ani_anio}-${seccion.ani_tipo}-${trayecto}-${turno}`;
+
             if (!acc[key]) {
                 acc[key] = {
-                    nombre: `Año ${seccion.ani_anio} - Trayecto ${trayecto}`,
+                    nombre: `Año ${seccion.ani_anio} / Trayecto ${trayecto} / Turno ${turnoNombre}`,
                     secciones: []
                 };
             }
@@ -643,6 +680,7 @@ $(document).ready(function() {
                         limpiaModalPrincipal();
                         $("#sec_codigo_hidden").val(sec_codigo);
                         $("#seccion_principal_id").html(`<option value="${sec_codigo}">${seccionTexto}</option>`).prop('disabled', true);
+                        $("#cantidadSeccionModificar").val(seccionData.sec_cantidad);
                         $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
                         $("#modalHorarioGlobalTitle").text(`Modificar Horario: ${prefijo}${seccionData.sec_codigo}`);
                         $("#accion").val("modificar");
@@ -797,6 +835,16 @@ $(document).ready(function() {
 
     $("#proceso").on("click", function() {
 
+        const cantidadInput = $('#cantidadSeccionModificar');
+        const cantidad = parseInt(cantidadInput.val(), 10);
+        if (isNaN(cantidad) || cantidad < 0 || cantidad > 99) {
+            muestraMensaje("error", 5000, "Error de Validación", `La cantidad de estudiantes debe ser un número entre 0 y 99.`);
+            $('#cantidad-seccion-modificar-error').show();
+            return;
+        } else {
+             $('#cantidad-seccion-modificar-error').hide();
+        }
+
         const ucsEnHorario = new Set();
         let ucDuplicada = null;
         Array.from(horarioContenidoGuardado.values()).forEach(v => {
@@ -817,6 +865,11 @@ $(document).ready(function() {
         const datos = new FormData();
         datos.append("accion", accion);
         datos.append("sec_codigo", $("#sec_codigo_hidden").val());
+
+        if (accion === 'modificar') {
+            datos.append("cantidadSeccion", $("#cantidadSeccionModificar").val());
+        }
+
         const clasesAEnviar = Array.from(horarioContenidoGuardado.values()).map(v => {
             let item = { ...v.data
             };
