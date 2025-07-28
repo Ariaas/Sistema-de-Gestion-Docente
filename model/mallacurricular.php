@@ -273,7 +273,7 @@ class Malla extends Connection
             $stmt->execute();
             if ($stmt->fetch()) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = '¡Atención!<br>El código de la malla ya existe.';
+                $r['mensaje'] = '¡Atención! Este codigo ya existe.';
             } else {
                 $r['resultado'] = 'ok';
             }
@@ -303,7 +303,7 @@ class Malla extends Connection
             $stmt->execute();
             if ($stmt->fetch()) {
                 $r['resultado'] = 'existe';
-                $r['mensaje'] = '¡Atención!<br>La cohorte de la malla ya existe.';
+                $r['mensaje'] = '¡Atención!, Esta cohorte ya existe.';
             } else {
                 $r['resultado'] = 'ok';
             }

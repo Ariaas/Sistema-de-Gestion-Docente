@@ -38,7 +38,7 @@ $puede_eliminar = tiene_permiso_accion('malla curricular', 'eliminar', $permisos
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <style>
  .validation-span {
-            color: #6c757d !important; /* Color gris secundario de Bootstrap */
+            color: #6c757d  /* Color gris secundario de Bootstrap */
         }
 
          .bg-readonly-darker {

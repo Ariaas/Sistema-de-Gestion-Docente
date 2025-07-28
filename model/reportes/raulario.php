@@ -7,12 +7,10 @@ class AularioReport extends Connection
 
     public function __construct() { parent::__construct(); }
 
-  
     public function setAnio($valor) { $this->anio = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
     public function setEspacio($valor) { $this->espacio = trim($valor); }
     
-   
 
     public function getAniosActivos() {
         try {
@@ -41,19 +39,16 @@ class AularioReport extends Connection
         } catch (PDOException $e) { return []; }
     }
 
-    
-
     public function getAulariosFiltrados()
     {
         if (empty($this->anio) || empty($this->fase)) return [];
 
-      
-        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual'] : ['Fase II', 'anual'];
+        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', 'Anual', '0'] : ['Fase II', 'anual', 'Anual'];
         
         try {
             $params = [':anio_param' => $this->anio];
             
-           
+            // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" ---
             $sql_base = "SELECT
                             CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')') AS esp_codigo,
                             uh.hor_dia,
@@ -61,16 +56,22 @@ class AularioReport extends Connection
                             CONCAT(uh.hor_horafin, ':00') as hor_horafin,
                             u.uc_nombre,
                             uh.sec_codigo,
-                            GROUP_CONCAT(DISTINCT CONCAT(d.doc_nombre, ' ', d.doc_apellido) SEPARATOR '\n') AS NombreCompletoDocente
+                            (
+                                SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
+                                FROM docente_horario dh
+                                JOIN uc_docente ud ON dh.doc_cedula = ud.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE dh.sec_codigo = uh.sec_codigo AND ud.uc_codigo = uh.uc_codigo
+                                LIMIT 1
+                            ) AS NombreCompletoDocente
                         FROM
                             uc_horario uh
                         JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        LEFT JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo
-                        LEFT JOIN tbl_docente d ON dh.doc_cedula = d.doc_cedula AND d.doc_estado = 1
                         WHERE
                             s.ani_anio = :anio_param
-                            AND u.uc_estado = 1";
+                            AND u.uc_estado = 1
+                            AND s.sec_estado = 1";
             
             $period_placeholders = [];
             $i = 0;
@@ -87,8 +88,7 @@ class AularioReport extends Connection
                 $params[':espacio_param'] = $this->espacio;
             }
             
-            $sql_base .= " GROUP BY esp_codigo, uh.hor_dia, uh.hor_horafin, uh.hor_horainicio, u.uc_nombre, uh.sec_codigo
-                           ORDER BY esp_codigo ASC, uh.hor_horainicio ASC, uh.hor_dia ASC";
+            $sql_base .= " ORDER BY esp_codigo ASC, uh.hor_horainicio ASC, uh.hor_dia ASC";
             
             $stmt = $this->con()->prepare($sql_base);
             $stmt->execute($params);

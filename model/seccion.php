@@ -4,7 +4,6 @@ require_once('model/dbconnection.php');
 class Seccion extends Connection
 {
 
-
     private function _obtenerHorasAcademicasActuales($doc_cedula, $co, $seccion_a_excluir = null)
     {
 

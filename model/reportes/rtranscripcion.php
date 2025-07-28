@@ -1,6 +1,5 @@
 <?php
 require_once('model/dbconnection.php');
-
 class Transcripcion extends Connection
 {
     private $anio_id;
@@ -18,11 +17,13 @@ class Transcripcion extends Connection
     public function set_fase($valor) {
         $this->fase = trim($valor);
     }
- public function obtenerTranscripciones()
+
+    public function obtenerTranscripciones()
     {
         $co = $this->con();
         try {
-          
+            
+            // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" DE TRIPLE VALIDACIÓN ---
             $sqlBase = "SELECT
                             d.doc_cedula AS `IDDocente`,
                             d.doc_cedula AS `CedulaDocente`,
@@ -35,14 +36,12 @@ class Transcripcion extends Connection
                             END AS `NombreSeccion`
                         FROM
                             docente_horario dh
-                        INNER JOIN
-                            tbl_docente d ON dh.doc_cedula = d.doc_cedula
-                        INNER JOIN
-                            tbl_seccion s ON dh.sec_codigo = s.sec_codigo
-                        INNER JOIN
-                            uc_horario uh ON s.sec_codigo = uh.sec_codigo
-                        INNER JOIN
-                            tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                        JOIN tbl_docente d ON dh.doc_cedula = d.doc_cedula
+                        JOIN tbl_seccion s ON dh.sec_codigo = s.sec_codigo
+                        JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo
+                        JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                        -- Esta es la validación clave que faltaba
+                        JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo AND dh.doc_cedula = ud.doc_cedula
                         ";
             
             $conditions = [
@@ -60,12 +59,10 @@ class Transcripcion extends Connection
                 $fase_condition = '';
                 switch ($this->fase) {
                     case '1':
-                        $fase_condition = "(u.uc_periodo = 'Fase I' OR LOWER(u.uc_periodo) = 'anual')";
+                        $fase_condition = "(u.uc_periodo = 'Fase I' OR u.uc_periodo LIKE '%anual%')";
                         break;
                     case '2':
-                        $fase_condition = "(u.uc_periodo = 'Fase II' OR LOWER(u.uc_periodo) = 'anual')";
-                        break;
-                    case 'Anual':
+                        $fase_condition = "(u.uc_periodo = 'Fase II' OR u.uc_periodo LIKE '%anual%')";
                         break;
                 }
                 if ($fase_condition) {
@@ -85,6 +82,7 @@ class Transcripcion extends Connection
             return false;
         }
     }
+
   public function obtenerCursosSinDocente() {
         $co = $this->con();
         try {

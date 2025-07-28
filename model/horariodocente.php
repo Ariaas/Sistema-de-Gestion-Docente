@@ -182,54 +182,64 @@ class HorarioDocente extends Connection
 
     public function obtenerHorarioCompletoPorDocente($doc_cedula)
     {
-        $co = $this->Con();
-        // --- CONSULTA CORREGIDA ---
-        $sql = "
-            SELECT 
-                CASE 
-                    WHEN LOWER(uh.hor_dia) = 'lunes' THEN 'Lunes'
-                    WHEN LOWER(uh.hor_dia) = 'martes' THEN 'Martes'
-                    WHEN LOWER(uh.hor_dia) IN ('miercoles', 'miércoles') THEN 'Miércoles'
-                    WHEN LOWER(uh.hor_dia) = 'jueves' THEN 'Jueves'
-                    WHEN LOWER(uh.hor_dia) = 'viernes' THEN 'Viernes'
-                    WHEN LOWER(uh.hor_dia) IN ('sabado', 'sábado') THEN 'Sábado'
-                    ELSE uh.hor_dia 
-                END AS hor_dia,
-                uh.hor_horainicio, 
-                uh.hor_horafin, 
-                uc.uc_codigo, 
-                uc.uc_nombre, 
-                esp.esp_codigo, 
-                sec.sec_codigo 
-            FROM uc_docente ud
-            JOIN uc_horario uh ON ud.uc_codigo = uh.uc_codigo
-            JOIN tbl_uc uc ON ud.uc_codigo = uc.uc_codigo
-            JOIN tbl_seccion sec ON uh.sec_codigo = sec.sec_codigo
-            LEFT JOIN tbl_espacio esp ON uh.esp_codigo = esp.esp_codigo
-            JOIN tbl_anio anio ON sec.ani_anio = anio.ani_anio AND sec.ani_tipo = anio.ani_tipo
-            WHERE ud.doc_cedula = :doc_cedula 
-              AND anio.ani_activo = 1 
-              AND ud.uc_doc_estado = 1
-            ORDER BY FIELD(LOWER(uh.hor_dia), 'lunes', 'martes', 'miercoles', 'miércoles', 'jueves', 'viernes', 'sabado', 'sábado'), uh.hor_horainicio
-        ";
+        try {
+            $co = $this->Con();
+            // --- CONSULTA CORREGIDA ---
+            $sql = "
+                SELECT 
+                    CASE 
+                        WHEN LOWER(uh.hor_dia) = 'lunes' THEN 'Lunes'
+                        WHEN LOWER(uh.hor_dia) = 'martes' THEN 'Martes'
+                        WHEN LOWER(uh.hor_dia) IN ('miercoles', 'miércoles') THEN 'Miércoles'
+                        WHEN LOWER(uh.hor_dia) = 'jueves' THEN 'Jueves'
+                        WHEN LOWER(uh.hor_dia) = 'viernes' THEN 'Viernes'
+                        WHEN LOWER(uh.hor_dia) IN ('sabado', 'sábado') THEN 'Sábado'
+                        ELSE uh.hor_dia 
+                    END AS hor_dia,
+                    uh.hor_horainicio, 
+                    uh.hor_horafin, 
+                    uc.uc_codigo, 
+                    uc.uc_nombre, 
+                    -- Se crea un código de espacio compuesto para mostrar, ya que no existe uno en la BD
+                    CONCAT(uh.esp_edificio, ' - ', uh.esp_numero, ' (', uh.esp_tipo, ')') AS esp_codigo,
+                    uh.sec_codigo
+                FROM uc_docente ud
+                -- Se une con uc_horario para obtener los detalles del horario
+                JOIN uc_horario uh ON ud.uc_codigo = uh.uc_codigo
+                JOIN tbl_uc uc ON ud.uc_codigo = uc.uc_codigo
+                JOIN tbl_seccion sec ON uh.sec_codigo = sec.sec_codigo
+                -- Se corrige el JOIN con tbl_espacio usando la clave compuesta
+                JOIN tbl_espacio esp ON uh.esp_numero = esp.esp_numero AND uh.esp_tipo = esp.esp_tipo AND uh.esp_edificio = esp.esp_edificio
+                JOIN tbl_anio anio ON sec.ani_anio = anio.ani_anio AND sec.ani_tipo = anio.ani_tipo
+                WHERE ud.doc_cedula = :doc_cedula 
+                  AND anio.ani_activo = 1
+                -- Se elimina el filtro por 'uc_doc_estado' ya que no existe en la tabla uc_docente
+                ORDER BY FIELD(LOWER(uh.hor_dia), 'lunes', 'martes', 'miercoles', 'miércoles', 'jueves', 'viernes', 'sabado', 'sábado'), uh.hor_horainicio
+            ";
 
-        $stmt = $co->prepare($sql);
-        $stmt->execute([':doc_cedula' => $doc_cedula]);
-        $horario_docente = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        if (empty($horario_docente)) {
-            return ['resultado' => 'vacio', 'mensaje' => "El docente no tiene un horario de clases asignado para el año académico activo."];
-        }
-        
-        $franjas_obj = [];
-        foreach ($horario_docente as $clase) {
-            $franja_key = $clase['hor_horainicio'] . '-' . $clase['hor_horafin'];
-            if (!isset($franjas_obj[$franja_key])) {
-                $franjas_obj[$franja_key] = ['inicio' => $clase['hor_horainicio'], 'fin' => $clase['hor_horafin']];
+            $stmt = $co->prepare($sql);
+            $stmt->execute([':doc_cedula' => $doc_cedula]);
+            $horario_docente = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($horario_docente)) {
+                return ['resultado' => 'vacio', 'mensaje' => "El docente no tiene un horario de clases asignado para el año académico activo."];
             }
+
+            $franjas_obj = [];
+            foreach ($horario_docente as $clase) {
+                // Genera una clave única para cada franja horaria (ej: '08:00-08:40')
+                $franja_key = $clase['hor_horainicio'] . '-' . $clase['hor_horafin'];
+                if (!isset($franjas_obj[$franja_key])) {
+                    $franjas_obj[$franja_key] = ['inicio' => $clase['hor_horainicio'], 'fin' => $clase['hor_horafin']];
+                }
+            }
+            // Ordena las franjas horarias por su hora de inicio
+            usort($franjas_obj, fn($a, $b) => strcmp($a['inicio'], $b['inicio']));
+
+            return ['resultado' => 'ok', 'horario' => $horario_docente, 'franjas' => array_values($franjas_obj)];
+
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => 'Error al consultar el horario: ' . $e->getMessage()];
         }
-        usort($franjas_obj, fn($a, $b) => strcmp($a['inicio'], $b['inicio']));
-        
-        return ['resultado' => 'ok', 'horario' => $horario_docente, 'franjas' => array_values($franjas_obj)];
     }
 }

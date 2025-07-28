@@ -29,7 +29,15 @@ class Rod extends Connection
 
         $co = $this->con();
         try {
-            $fase_nombre = ($this->fase_numero == 1) ? 'Fase I' : 'Fase II';
+            $periodos_permitidos = ($this->fase_numero == 1) ? ['FASE I', 'ANUAL', '0'] : ['FASE II', 'ANUAL'];
+            
+            $params = [':anio_anio' => $this->anio_id];
+            $placeholders = [];
+            foreach ($periodos_permitidos as $index => $periodo) {
+                $key = ":periodo_" . $index;
+                $placeholders[] = $key;
+                $params[strval($key)] = $periodo;
+            }
 
             $sql = "SELECT
                         d.doc_cedula,
@@ -59,28 +67,38 @@ class Rod extends Connection
                         SELECT doc_cedula, GROUP_CONCAT(cor_nombre SEPARATOR ', ') as coordinaciones
                         FROM coordinacion_docente GROUP BY doc_cedula
                     ) AS coords ON d.doc_cedula = coords.doc_cedula
+                    
+                    /* --- CORRECCIÓN DEFINITIVA: Consulta 'asig' reconstruida para ser más directa y precisa --- */
                     LEFT JOIN (
                         SELECT
                             dh.doc_cedula,
                             u.uc_nombre,
-                            um.mal_hora_academica AS uc_horas,
+                            (SELECT um.mal_hora_academica FROM uc_malla um JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo WHERE um.uc_codigo = u.uc_codigo AND m.mal_activa = 1 LIMIT 1) AS uc_horas,
                             CASE
                                 WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
                                 WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
                                 ELSE s.sec_codigo
                             END AS sec_codigo_formateado
-                        FROM docente_horario dh
-                        INNER JOIN tbl_seccion s ON dh.sec_codigo = s.sec_codigo AND s.sec_estado = 1
-                        INNER JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo
-                        INNER JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        INNER JOIN uc_malla um ON u.uc_codigo = um.uc_codigo AND um.mal_codigo IN (SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1)
-                        WHERE s.ani_anio = :anio_anio AND (u.uc_periodo = :fase_nombre OR u.uc_periodo = 'Anual')
+                        FROM
+                            docente_horario dh
+                        JOIN tbl_seccion s ON dh.sec_codigo = s.sec_codigo
+                        JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo
+                        JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                        -- Se asegura que el docente de la sección (dh) coincida con el docente de la UC (ud)
+                        JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo AND dh.doc_cedula = ud.doc_cedula
+                        
+                        WHERE 
+                            s.ani_anio = :anio_anio AND s.sec_estado = 1
+                            AND UPPER(u.uc_periodo) IN (".implode(', ', $placeholders).")
+
                     ) AS asig ON d.doc_cedula = asig.doc_cedula
+                    
                     WHERE d.doc_estado = 1
                     ORDER BY d.doc_apellido, d.doc_nombre, asig.uc_nombre";
             
             $resultado = $co->prepare($sql);
-            $resultado->execute([':anio_anio' => $this->anio_id, ':fase_nombre' => $fase_nombre]);
+            $resultado->execute($params);
+            
             return $resultado->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
