@@ -34,7 +34,11 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'espacios');
         } elseif ($accion == 'existe') {
-            $resultado = $e->Existe($_POST['numeroEspacio'], $_POST['edificioEspacio']);
+            $numeroEspacio = $_POST['numeroEspacio'];
+            $edificioEspacio = $_POST['edificioEspacio'];
+            $numeroEspacioExcluir = isset($_POST['numeroEspacioExcluir']) ? $_POST['numeroEspacioExcluir'] : null;
+            $edificioEspacioExcluir = isset($_POST['edificioEspacioExcluir']) ? $_POST['edificioEspacioExcluir'] : null;
+            $resultado = $e->Existe($numeroEspacio, $edificioEspacio, $numeroEspacioExcluir, $edificioEspacioExcluir);
             echo json_encode($resultado);
         } else {
             $e->setNumero($_POST['numeroEspacio']);

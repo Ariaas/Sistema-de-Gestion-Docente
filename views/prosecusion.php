@@ -25,6 +25,7 @@ if (!function_exists('tiene_permiso_accion')) {
 $puede_registrar_seccion = tiene_permiso_accion('seccion', 'registrar', $permisos);
 $puede_modificar_seccion = tiene_permiso_accion('seccion', 'modificar', $permisos);
 $puede_realizar_prosecusion = $puede_registrar_seccion && $puede_modificar_seccion;
+
 ?>
 
 <!DOCTYPE html>

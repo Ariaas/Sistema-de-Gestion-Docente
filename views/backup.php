@@ -1,6 +1,33 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['name'])) {
     header('Location: .');
+    exit();
+}
+
+$permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
+$permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
+
+if (!function_exists('tiene_permiso_accion')) {
+    function tiene_permiso_accion($modulo, $accion, $permisos_array)
+    {
+        $modulo = strtolower($modulo);
+        if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
+            return in_array($accion, $permisos_array[$modulo]);
+        }
+        return false;
+    }
+}
+
+$puede_registrar = tiene_permiso_accion('usuario', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('usuario', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('usuario', 'eliminar', $permisos);
+
+if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
+    header('Location: ?pagina=principal');
     exit();
 }
 ?>
@@ -11,7 +38,7 @@ if (!isset($_SESSION['name'])) {
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Gestionar Mantenimiento del Sistema</title>
-   
+
     <style>
         .mantenimiento-container {
             max-width: 600px;
