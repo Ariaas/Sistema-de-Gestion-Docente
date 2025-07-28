@@ -33,7 +33,8 @@ if (is_file("views/" . $pagina . ".php")) {
             $bitacora->registrarAccion($usu_id, 'eliminar', 'rol');
         } elseif ($accion == 'existe') {
             $r->setNombre($_POST['nombreRol']);
-            $resultado = $r->Existe($_POST['nombreRol']);
+            $rolIdExcluir = isset($_POST['rolId']) ? $_POST['rolId'] : null;
+            $resultado = $r->Existe($_POST['nombreRol'], $rolIdExcluir);
             echo json_encode($resultado);
         } elseif ($accion == 'listarPermisos') {
             $data = $r->listarPermisos($_POST['rolId']);

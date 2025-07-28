@@ -39,7 +39,9 @@ if (is_file("views/" . $pagina . ".php")) {
             echo  json_encode($c->Eliminar());
             $bitacora->registrarAccion($usu_id, 'eliminar', 'anio');
         } elseif ($accion == 'existe') {
-            $existe = $c->Existe($_POST['aniAnio'], $_POST['tipoAnio']);
+            $anioOriginal = isset($_POST['anioOriginal']) ? $_POST['anioOriginal'] : null;
+            $tipoOriginal = isset($_POST['tipoOriginal']) ? $_POST['tipoOriginal'] : null;
+            $existe = $c->Existe($_POST['aniAnio'], $_POST['tipoAnio'], $anioOriginal, $tipoOriginal);
             if ($existe) {
                 echo json_encode(['resultado' => 'existe', 'mensaje' => 'El AÑO colocado YA existe!']);
             } else {

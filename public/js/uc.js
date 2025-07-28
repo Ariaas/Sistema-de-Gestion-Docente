@@ -287,9 +287,18 @@ function pone(pos, accion) {
     if (accion == 0) {
         $("#proceso").text("MODIFICAR");
         $("#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC").prop("disabled", false);
+        $("#scodigoUC").text("").show();
+        $("#snombreUC").text("").show();
+        $("#screditosUC").text("").show();
+        $("#strayectoUC").text("").show();
+        $("#sejeUC").text("").show();
+        $("#sareaUC").text("").show();
+        $("#speriodoUC").text("").show();
+        $("#selectivaUC").text("").show();
     } else {
         $("#proceso").text("ELIMINAR");
         $("#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC").prop("disabled", true);
+        $("#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #sejeUC, #sareaUC, #speriodoUC, #selectivaUC").hide();
     }
 
     $("#codigoUC").val(linea.data("codigo"));
@@ -302,7 +311,6 @@ function pone(pos, accion) {
     $("#electivaUC").val(linea.data("electiva"));
     
     $("#modal1").modal("show");
-    $("#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #sejeUC, #sareaUC, #speriodoUC, #selectivaUC").hide();
 }
 
 function verDocentes(ucCodigo, ucNombre) {

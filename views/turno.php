@@ -25,6 +25,11 @@ if (!function_exists('tiene_permiso_accion')) {
 $puede_registrar = tiene_permiso_accion('turno', 'registrar', $permisos);
 $puede_modificar = tiene_permiso_accion('turno', 'modificar', $permisos);
 $puede_eliminar = tiene_permiso_accion('turno', 'eliminar', $permisos);
+
+if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
+    header('Location: ?pagina=principal');
+    exit();
+}
 ?>
 
 

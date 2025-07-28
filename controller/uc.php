@@ -51,8 +51,10 @@ if (is_file("views/" . $pagina . ".php")) {
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'Unidad Curricular');
         } elseif ($accion == 'existe') {
-            $u->setcodigoUC($_POST['codigoUC']);
-            $resultado = $u->Existe($_POST['codigoUC']);
+            $codigoUC = $_POST['codigoUC'];
+            $codigoExcluir = isset($_POST['codigoExcluir']) ? $_POST['codigoExcluir'] : null;
+            $u->setcodigoUC($codigoUC);
+            $resultado = $u->Existe($codigoUC, $codigoExcluir);
             echo json_encode($resultado);
         } elseif ($accion == 'verificar_horario') {
             if (isset($_POST['uc_codigo'])) {

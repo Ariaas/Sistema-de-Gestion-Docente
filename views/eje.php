@@ -23,6 +23,10 @@ $puede_registrar = tiene_permiso_accion('eje', 'registrar', $permisos);
 $puede_modificar = tiene_permiso_accion('eje', 'modificar', $permisos);
 $puede_eliminar = tiene_permiso_accion('eje', 'eliminar', $permisos);
 
+if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
+    header('Location: ?pagina=principal');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
