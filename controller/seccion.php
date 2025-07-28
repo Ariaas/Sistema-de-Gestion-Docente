@@ -110,7 +110,11 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'modificar':
-                $respuesta = $o->Modificar($_POST['sec_codigo'] ?? null, $_POST['items_horario'] ?? '[]');
+                $respuesta = $o->Modificar(
+                    $_POST['sec_codigo'] ?? null,
+                    $_POST['items_horario'] ?? '[]',
+                    $_POST['cantidadSeccion'] ?? null
+                );
                 break;
 
             case 'eliminar_seccion_y_horario':
