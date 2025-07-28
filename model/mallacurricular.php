@@ -99,10 +99,9 @@ class Malla extends Connection
         try {
             $co->beginTransaction();
             
-            $stmt_desactivar = $co->prepare("UPDATE tbl_malla SET mal_activa = 0 WHERE mal_activa = 1");
-            $stmt_desactivar->execute();
+           
             
-            $stmt = $co->prepare("INSERT INTO tbl_malla( mal_codigo, mal_nombre, mal_descripcion, mal_cohorte, mal_estado, mal_activa) VALUES (:mal_codigo, :mal_nombre, :mal_descripcion, :mal_cohorte, 1, 1)");
+          $stmt = $co->prepare("INSERT INTO tbl_malla( mal_codigo, mal_nombre, mal_descripcion, mal_cohorte, mal_estado, mal_activa) VALUES (:mal_codigo, :mal_nombre, :mal_descripcion, :mal_cohorte, 1, 0)");
             $stmt->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
             $stmt->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
             $stmt->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
@@ -197,22 +196,44 @@ class Malla extends Connection
         return $r;
     }
 
-    public function activarMalla() {
-        $co = $this->Con();
+    public function cambiarEstadoActivo() {
+         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
+        
         try {
             $co->beginTransaction();
-            $stmt_desactivar = $co->prepare("UPDATE tbl_malla SET mal_activa = 0 WHERE mal_activa = 1");
-            $stmt_desactivar->execute();
+            
+          
+            $stmt_current = $co->prepare("SELECT mal_activa FROM tbl_malla WHERE mal_codigo = :mal_codigo");
+            $stmt_current->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+            $stmt_current->execute();
+            $estado_actual = $stmt_current->fetchColumn();
 
-            $stmt_activar = $co->prepare("UPDATE tbl_malla SET mal_activa = 1 WHERE mal_codigo = :mal_codigo");
-            $stmt_activar->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-            $stmt_activar->execute();
+            if ($estado_actual == 1) { 
+             
+                $nuevo_estado = 0;
+                $accion_bitacora = 'desactivar';
+                $mensaje_exito = '¡Malla desactivada correctamente!';
+            } else { 
+               
+                $nuevo_estado = 1;
+                $accion_bitacora = 'activar';
+                $mensaje_exito = '¡Malla activada correctamente!';
+                
+            
+            }
+
+           
+            $stmt_cambiar = $co->prepare("UPDATE tbl_malla SET mal_activa = :nuevo_estado WHERE mal_codigo = :mal_codigo");
+            $stmt_cambiar->bindParam(':nuevo_estado', $nuevo_estado, PDO::PARAM_INT);
+            $stmt_cambiar->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+            $stmt_cambiar->execute();
 
             $co->commit();
-            $r['resultado'] = 'activar';
-            $r['mensaje'] = '¡Malla activada correctamente!';
+            $r['resultado'] = 'ok';
+            $r['mensaje'] = $mensaje_exito;
+            $r['accion_bitacora'] = $accion_bitacora; 
 
         } catch (Exception $e) {
             $co->rollBack();

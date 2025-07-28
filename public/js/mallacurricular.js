@@ -73,9 +73,29 @@ $(document).ready(function () {
     datos.append("accion", "consultar_ucs");
     enviaAjax(datos);
 
+
+    $('#contenedorAcordeonUC').on('input', '.horas-input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (this.value.length > 2) {
+            this.value = this.value.slice(0, 2);
+        }
+      
+        gestionarBotonGuardar(); 
+    });
+
     $('#modal1').on('hidden.bs.modal', function () { limpiaModal1(); });
     $('#modalVerMalla').on('hidden.bs.modal', function () { $('#cuerpoModalVer').empty(); });
     $('#select_uc').select2({ theme: "bootstrap-5", dropdownParent: $('#modal1') });
+
+      $('#contenedorAcordeonUC').on('input', '.h-indep, .h-asist', function() {
+        const fila = $(this).closest('tr'); 
+        const horasIndep = parseInt(fila.find('.h-indep').val()) || 0;
+        const horasAsist = parseInt(fila.find('.h-asist').val()) || 0; 
+        
+        const total = horasIndep + horasAsist; 
+        
+        fila.find('.h-total').val(total); 
+    });
 
     $('#btn-siguiente').on('click', function () {
         if (!validarPagina1()) {
@@ -83,6 +103,7 @@ $(document).ready(function () {
             return;
         };
 
+        
         const boton = $(this);
         const accion = $("#accion").val();
 
@@ -151,22 +172,21 @@ $(document).ready(function () {
     }
 
     const nombreTrayecto = uc_trayecto == '0' ? 'Trayecto Inicial' : `Trayecto ${uc_trayecto}`;
-    // IDs únicos para las pestañas y paneles del modal de edición
+  
     const tabId = `mod-tab-trayecto-${uc_trayecto}`;
     const paneId = `mod-pane-trayecto-${uc_trayecto}`;
 
     let tabPane = $(`#${paneId}`);
 
-    // Si la pestaña para este trayecto no existe, la creamos
+    
     if (tabPane.length === 0) {
-        // Crear la pestaña de navegación
+     
         const newTab = `
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="${tabId}-tab" data-bs-toggle="tab" data-bs-target="#${paneId}" type="button" role="tab">${nombreTrayecto}</button>
             </li>`;
         $('#mallaTabsMod').append(newTab);
 
-        // Crear el panel de contenido de la pestaña con su tabla
         const newPane = `
             <div class="tab-pane fade" id="${paneId}" role="tabpanel">
                 <div class="table-responsive">
@@ -186,23 +206,22 @@ $(document).ready(function () {
                 </div>
             </div>`;
         $('#mallaTabContentMod').append(newPane);
-        tabPane = $(`#${paneId}`); // Re-seleccionamos el panel recién creado
+        tabPane = $(`#${paneId}`);
     }
 
-    // Crear la fila para la nueva unidad curricular
+  
     const fila = `
         <tr data-uc_codigo="${uc_codigo}" data-trayecto="${uc_trayecto}">
             <td class="align-middle text-start">${uc_nombre}</td>
             <td><input type="text" class="form-control form-control-sm text-center horas-input h-indep" value="0"></td>
             <td><input type="text" class="form-control form-control-sm text-center horas-input h-asist" value="0"></td>
-            <td><input type="text" class="form-control form-control-sm text-center h-total" value="0" readonly></td>
+           <td><input type="text" class="form-control form-control-sm text-center h-total bg-readonly-darker" value="0" readonly></td>
             <td><input type="text" class="form-control form-control-sm text-center horas-input h-acad" value="0"></td>
             <td class="align-middle"><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td>
         </tr>`;
     
     tabPane.find('tbody').append(fila);
-
-    // Activar la pestaña recién creada o actualizada
+   
     new bootstrap.Tab($(`#${tabId}-tab`)).show();
     
     actualizarSelectUC();
@@ -210,7 +229,7 @@ $(document).ready(function () {
 });
 
 
-// ✅ FUNCIÓN MODIFICADA: btn-remover-uc
+
 $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
     const fila = $(this).closest('tr');
     const tabPane = fila.closest('.tab-pane');
@@ -218,14 +237,14 @@ $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
     
     fila.remove();
     
-    // Si la tabla en la pestaña queda vacía, eliminamos la pestaña y su panel
+  
     if (tabPane.find('tbody tr').length === 0) {
-        // Eliminar el panel de contenido
+       
         tabPane.remove();
-        // Eliminar la pestaña de navegación usando el atributo data-bs-target
+       
         $(`button[data-bs-target="#${tabId}"]`).parent().remove();
 
-        // Activar la primera pestaña que quede, si existe
+      
         $('#mallaTabsMod .nav-link').first().tab('show');
     }
 
@@ -233,16 +252,16 @@ $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
     gestionarBotonGuardar();
 });
    
-
-    $("#mal_codigo").on("keyup", function () {
+//
+    $("#mal_codigo").on("keyup keydown", function () {
         validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $(this), $("#smalcodigo"),"El código permite de 2 a 20 caracteres alfanuméricos, espacios o guiones.");
     });
 
-    $("#mal_nombre").on("keyup", function () {
+    $("#mal_nombre").on("keyup keydown", function () {
        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/,$(this),$("#smalnombre"),"El formato permite de 5 a 30 caracteres. Ej: Malla 2024");
     });
     
-    $("#mal_descripcion").on("keyup", function () {
+    $("#mal_descripcion keydown").on("keyup", function () {
         validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $(this), $("#smaldescripcion"),"El formato permite de 5 a 30 caracteres, una breve descripcion.");
     });
 
@@ -251,7 +270,7 @@ $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
         if (this.value.length > 3) this.value = this.value.slice(0, 3);
     });
 
-    $("#mal_cohorte").on("keyup", function () {
+    $("#mal_cohorte").on("keyup keydown", function () {
         validarkeyup(/^[1-9][0-9]{0,3}$/,$(this),$("#smalcohorte"),"El formato permite de 1 a 3 caracteres, solo numeros enteros EJ:4");
     });
     
@@ -284,21 +303,31 @@ $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
         $("#modal1").modal("show");
     });
 
-    $('#resultadoconsulta').on('click', '.btn-activar', function() {
-        const mal_codigo = $(this).closest('tr').find('td:eq(0)').text();
+      $('#resultadoconsulta').on('click', '.btn-activar', function() {
+        const boton = $(this);
+        const mal_codigo = boton.data('codigo');
+        const estado_actual = boton.data('estado');
+        
+       
+        const accionTexto = estado_actual === 1 ? 'desactivar' : 'activar';
+        const confirmButtonText = estado_actual === 1 ? 'Sí, desactivar' : 'Sí, activar';
+        let title = `¿Desea ${accionTexto} esta malla?`;
+        let text = "";
+
         Swal.fire({
-            title: '¿Desea activar esta malla?',
-            text: "Se desactivará cualquier otra malla que esté activa.",
+            title: title,
+            text: text,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, activar',
+            confirmButtonText: confirmButtonText,
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
                 const datos = new FormData();
-                datos.append('accion', 'activar');
+               
+                datos.append('accion', 'cambiar_estado_activo'); 
                 datos.append('mal_codigo', mal_codigo);
                 enviaAjax(datos);
             }
@@ -323,9 +352,9 @@ function pone(pos, accionBtn) {
     const mal_nombre = $(linea).find("td:eq(1)").text();
     const boton = $(pos);
 
-   if (accionBtn === 2) { // VER MALLA
-    const mal_nombre = $(linea).find("td:eq(1)").text(); // Asegúrate de tener esta línea si la borraste
-    const boton = $(pos); // Y esta
+   if (accionBtn === 2) { 
+    const mal_nombre = $(linea).find("td:eq(1)").text(); 
+    const boton = $(pos);
     const datos = new FormData();
     datos.append("accion", "consultar_ucs_por_malla");
     datos.append("mal_codigo", mal_codigo);
@@ -334,7 +363,7 @@ function pone(pos, accionBtn) {
         async: true, url: "", type: "POST", contentType: false, data: datos,
         processData: false, cache: false,
         beforeSend: function() {
-            // ✅ Solo deshabilitamos el botón
+          
             boton.prop('disabled', true);
         },
          success: function(respuesta) {
@@ -353,7 +382,7 @@ function pone(pos, accionBtn) {
                             if (gruposVer[uc.uc_trayecto] !== undefined) gruposVer[uc.uc_trayecto].push(uc);
                         });
 
-                        // --- INICIO DE LA LÓGICA PARA TABS ---
+                        
                         
                         let navTabs = '<ul class="nav nav-tabs" id="mallaTab" role="tablist">';
                         let tabContent = '<div class="tab-content" id="mallaTabContent">';
@@ -364,18 +393,18 @@ function pone(pos, accionBtn) {
                                 const nombreTrayecto = (trayecto == '0') ? 'Trayecto Inicial' : `Trayecto ${trayecto}`;
                                 const idTab = `tab-trayecto-${trayecto}`;
 
-                                // Construir la Pestaña de Navegación
+                         
                                 navTabs += `
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link ${primerItem ? 'active' : ''}" id="${idTab}-tab" data-bs-toggle="tab" data-bs-target="#${idTab}" type="button" role="tab">${nombreTrayecto}</button>
                                     </li>`;
 
-                                // Construir el Contenido de la Pestaña
+                               
                                 const tabla = $('<div class="table-responsive"><table class="table table-sm table-striped table-bordered mt-3"><thead><tr><th>Unidad Curricular</th><th>H. Indep.</th><th>H. Asist.</th><th>HTE</th><th>H. Acad.</th></tr></thead><tbody></tbody></table></div>');
                                 
                                 gruposVer[trayecto].forEach(uc => {
-                                    const hte = parseInt(uc.mal_hora_independiente) + parseInt(uc.mal_hora_asistida);
-                                    // Usamos .text() para seguridad contra XSS
+                                    const hte = (parseInt(uc.mal_hora_independiente) || 0) + (parseInt(uc.mal_hora_asistida) || 0);
+                                 
                                     const fila = $('<tr>');
                                     fila.append($('<td>').text(uc.uc_nombre));
                                     fila.append($('<td>').text(uc.mal_hora_independiente));
@@ -397,7 +426,7 @@ function pone(pos, accionBtn) {
                         tabContent += '</div>';
 
                         cuerpoModal.html(navTabs + tabContent);
-                        // --- FIN DE LA LÓGICA PARA TABS ---
+                      
                     }
                     $("#modalVerMalla").modal("show");
                 } else {
@@ -411,7 +440,7 @@ function pone(pos, accionBtn) {
             muestraMensaje("error", 5000, "Error de Comunicación", "No se pudo conectar con el servidor.");
         },
         complete: function(){
-            // ✅ Solo habilitamos el botón
+            
             boton.prop('disabled', false);
         }
     });
@@ -423,7 +452,7 @@ function pone(pos, accionBtn) {
     $("#mal_cohorte").val($(linea).find("td:eq(2)").text());
     $("#mal_descripcion").val($(linea).find("td:eq(3)").text());
 
-    if (accionBtn === 0) { // MODIFICAR
+    if (accionBtn === 0) { 
         $("#accion").val("modificar");
         $("#modal1Titulo").text("Modificar Malla (Paso 1 de 2)");
         $("#proceso").text("MODIFICAR");
@@ -436,7 +465,7 @@ function pone(pos, accionBtn) {
             enviaAjax(datos);
         });
 
-    } else if (accionBtn === 1) { // ELIMINAR
+    } else if (accionBtn === 1) { 
         Swal.fire({
             title: "¿Está seguro de eliminar esta malla?", text: "Esta acción no se puede deshacer.",
             icon: "warning", showCancelButton: true, confirmButtonColor: "#d33",
@@ -478,11 +507,23 @@ function enviaAjax(datos) {
                 }
                 
                 switch (lee.resultado) {
+                   
+                    
                     case 'consultar':
                         destruyeDT("#tablamalla");
                         $("#resultadoconsulta").empty();
                         $.each(lee.mensaje, function (index, item) {
-                            let estadoActiva = (item.mal_activa == 1) ? '<span class="badge bg-success">Activa</span>' : '<button class="btn btn-xs btn-secondary btn-activar">Activar</button>';
+                            let estadoActiva;
+                            
+                            // Si la malla está activa (1), crea un botón rojo para "Desactivar"
+                            if (item.mal_activa == 1) {
+                                estadoActiva = `<button class="btn btn-xs btn-danger btn-activar" data-codigo="${item.mal_codigo}" data-estado="1">Desactivar</button>`;
+                            
+                            // Si está inactiva (0), crea un botón gris para "Activar"
+                            } else {
+                                estadoActiva = `<button class="btn btn-xs btn-secondary btn-activar" data-codigo="${item.mal_codigo}" data-estado="0">Activar</button>`;
+                            }
+
                             let botonesAccion = `<td class="acciones-cell">
                                 <button class="btn btn-icon btn-info" onclick='pone(this,2)'> <img src="public/assets/icons/people.svg" alt="Ver malla"></button> 
                                 <button class="btn btn-icon btn-edit" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button> 
@@ -492,8 +533,9 @@ function enviaAjax(datos) {
                         });
                         crearDT("#tablamalla");
                         break;
-                    case 'ok':
-                        if (lee.accion === 'consultar_ucs') {
+
+                       case 'ok':
+                         if (lee.accion === 'consultar_ucs') {
                             ucsDisponibles = lee.mensaje;
                             actualizarSelectUC();
                         } else if (lee.accion === 'consultar_ucs_por_malla') {
@@ -510,11 +552,15 @@ function enviaAjax(datos) {
                                 });
                                 gestionarBotonGuardar();
                             }
+                        } else {
+                            muestraMensaje("success", 4000, "ÉXITO", lee.mensaje);
+                            Listar();
+                            verificarCondicionesIniciales();
                         }
                         break;
-                    case 'registrar': case 'modificar': case 'eliminar': case 'activar':
+                    case 'registrar': case 'modificar': case 'eliminar':
                         muestraMensaje("success", 4000, lee.resultado.toUpperCase(), lee.mensaje);
-                        if (lee.resultado !== 'activar') $("#modal1").modal("hide");
+                        $("#modal1").modal("hide");
                         Listar();
                         verificarCondicionesIniciales();
                         break;
@@ -574,9 +620,6 @@ function validarPagina1() {
     return esValido;
 }
 
-function muestraMensaje(icono, tiempo, titulo, mensaje) {
-    Swal.fire({ icon: icono, timer: tiempo, title: titulo, html: mensaje, showConfirmButton: false });
-}
 
 function validarkeyup(er, etiqueta, etiquetamensaje, mensaje = "") {
     if (etiqueta.prop('disabled')) return 1;

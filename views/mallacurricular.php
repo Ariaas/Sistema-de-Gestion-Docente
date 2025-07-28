@@ -37,23 +37,12 @@ $puede_eliminar = tiene_permiso_accion('malla curricular', 'eliminar', $permisos
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <style>
-        .btn-xs {
-            --bs-btn-padding-y: .1rem;
-            --bs-btn-padding-x: .5rem;
-            --bs-btn-font-size: .75rem;
+ .validation-span {
+            color: #6c757d !important; /* Color gris secundario de Bootstrap */
         }
 
-        .horas-input {
-            min-width: 60px;
-        }
-
-        .nav-link {
-            font-size: 0.9rem;
-        }
-
-        .form-control[readonly] {
-            background-color: #e9ecef;
-            opacity: 1;
+         .bg-readonly-darker {
+            background-color: #dfdfdfff  !important; /* Este es el gris estándar de Bootstrap para campos deshabilitados */
         }
     </style>
 </head>
