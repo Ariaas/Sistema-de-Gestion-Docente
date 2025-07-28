@@ -123,6 +123,8 @@ function enviaAjax(datos) {
                 } else if (lee.resultado === 'modificar') {
                     muestraMensaje('info', 4000, 'PERFIL', lee.mensaje);
                     Listar();
+                    let nuevaFoto = $('#fotoPerfil').attr('src');
+                    $('.navbar-nav img[alt="Foto de perfil"]').attr('src', nuevaFoto);
                 } else if (lee.resultado === 'error') {
                     muestraMensaje('error', 4000, 'ERROR', lee.mensaje);
                 }

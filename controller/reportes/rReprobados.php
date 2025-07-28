@@ -39,7 +39,8 @@ if (is_file("views/reportes/rReprobados.php")) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo);
+                        // Se pasan los filtros de año y tipo para mayor precisión
+                        $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':
                         $uc_codigo = $_POST['uc_codigo'] ?? '';
@@ -54,7 +55,7 @@ if (is_file("views/reportes/rReprobados.php")) {
                         break;
                 }
 
-                if ($datos !== null) {
+                if ($datos !== null && $datos !== false) {
                     echo json_encode(['success' => true, 'datos' => $datos]);
                 } else {
                     echo json_encode(['success' => false, 'mensaje' => 'No se encontraron datos para los filtros seleccionados.']);

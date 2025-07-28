@@ -40,7 +40,7 @@
 
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
-            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestión de Notas y Remediales</h2>
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Resguardar Notas</h2>
 
             <?php if (!empty($alerta_datos)) {
                 echo $alerta_datos;

@@ -6,8 +6,16 @@ class Notificaciones extends Connection
     public function RegistrarNotificacion($notificacion, $fin)
     {
         $co = $this->Con();
-        $stmt = $co->prepare("INSERT INTO tbl_notificacion (not_notificacion, not_fecha, not_fin, not_activo) VALUES (?, NOW(), ?, 1)");
-        return $stmt->execute([$notificacion, $fin]);
+        $stmt = $co->prepare("SELECT not_id FROM tbl_notificacion WHERE not_notificacion = ? AND not_estado = 1");
+        $stmt->execute([$notificacion]);
+        $id = $stmt->fetchColumn();
+        if ($id) {
+            $stmt = $co->prepare("UPDATE tbl_notificacion SET not_fin = ? WHERE not_id = ?");
+            return $stmt->execute([$fin, $id]);
+        } else {
+            $stmt = $co->prepare("INSERT INTO tbl_notificacion (not_notificacion, not_fecha, not_fin, not_activo) VALUES (?, NOW(), ?, 1)");
+            return $stmt->execute([$notificacion, $fin]);
+        }
     }
 
     public function Listar()
@@ -82,11 +90,11 @@ class Notificaciones extends Connection
         $co = null;
     }
 
-    public function existeNotificacion($mensaje, $fin)
+    public function existeNotificacion($mensaje)
     {
         $co = $this->Con();
-        $stmt = $co->prepare("SELECT COUNT(*) FROM tbl_notificacion WHERE not_notificacion = ? AND not_fin = ? AND not_estado = 1");
-        $stmt->execute([$mensaje, $fin]);
+        $stmt = $co->prepare("SELECT COUNT(*) FROM tbl_notificacion WHERE not_notificacion = ? AND not_estado = 1");
+        $stmt->execute([$mensaje]);
         return $stmt->fetchColumn() > 0;
     }
 }

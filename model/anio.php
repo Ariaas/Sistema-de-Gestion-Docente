@@ -428,7 +428,7 @@ class Anio extends Connection
                     $mensaje = "La fase {$fase['fase_numero']} del año {$fase['ani_anio']} ({$tipoAnioTitle}) está a punto de cerrarse: faltan {$dias_restantes} días.";
                 }
 
-                if (!$n->existeNotificacion($mensaje, $finNotificacion)) {
+                if (!$n->existeNotificacion($mensaje)) {
                     $n->RegistrarNotificacion($mensaje, $finNotificacion);
                 }
             }

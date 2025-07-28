@@ -356,10 +356,21 @@ class Seccion extends Connection
             $primer_anio = $seccion_origen_data['ani_anio'];
             $primer_tipo = $seccion_origen_data['ani_tipo'];
             $primer_trayecto = substr($seccion_origen_data['sec_codigo'], 0, 1);
+            $primer_turno = substr($seccion_origen_data['sec_codigo'], 1, 1);
+            // ELIMINADO: Ya no se obtiene la cohorte para la validación
+            // $primer_cohorte = substr($seccion_origen_data['sec_codigo'], -1);
+
 
             foreach ($secciones as $seccion) {
-                if ($seccion['ani_anio'] !== $primer_anio || $seccion['ani_tipo'] !== $primer_tipo || substr($seccion['sec_codigo'], 0, 1) !== $primer_trayecto) {
-                    return ['resultado' => 'error', 'mensaje' => 'Acción no permitida: Solo se pueden unir horarios de secciones del mismo año, tipo y trayecto.'];
+                $codigo_actual_str = (string)$seccion['sec_codigo'];
+                // CAMBIO: Se eliminó la validación por cohorte (último dígito) y se actualizó el mensaje de error.
+                if (
+                    $seccion['ani_anio'] !== $primer_anio ||
+                    $seccion['ani_tipo'] !== $primer_tipo ||
+                    substr($codigo_actual_str, 0, 1) !== $primer_trayecto ||
+                    substr($codigo_actual_str, 1, 1) !== $primer_turno
+                ) {
+                    return ['resultado' => 'error', 'mensaje' => 'Acción no permitida: Solo se pueden unir horarios de secciones del mismo año, tipo, trayecto y turno.'];
                 }
             }
         } catch (Exception $e) {
@@ -631,12 +642,21 @@ class Seccion extends Connection
         }
     }
 
-    public function Modificar($sec_codigo, $items_horario_json)
+    public function Modificar($sec_codigo, $items_horario_json, $cantidadSeccion = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $items_horario = json_decode($items_horario_json, true);
+
+            $cantidadInt = null;
+            if ($cantidadSeccion !== null) {
+                $cantidadInt = filter_var($cantidadSeccion, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 99]]);
+                if ($cantidadInt === false) {
+                    return ['resultado' => 'error', 'mensaje' => 'La cantidad de estudiantes debe ser un número entero válido entre 0 y 99.'];
+                }
+            }
+
             foreach ($items_horario as &$item) {
                 $item['dia'] = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
             }
@@ -648,6 +668,11 @@ class Seccion extends Connection
             }
 
             $co->beginTransaction();
+
+            if ($cantidadInt !== null) {
+                $stmt_update_cantidad = $co->prepare("UPDATE tbl_seccion SET sec_cantidad = :cantidad WHERE sec_codigo = :codigo");
+                $stmt_update_cantidad->execute([':cantidad' => $cantidadInt, ':codigo' => $sec_codigo]);
+            }
 
             $this->EliminarPorSeccion($sec_codigo, $co);
 
@@ -691,7 +716,7 @@ class Seccion extends Connection
                 }
             }
             $co->commit();
-            return ['resultado' => 'modificar_ok', 'mensaje' => '¡Horario guardado correctamente!'];
+            return ['resultado' => 'modificar_ok', 'mensaje' => '¡Horario y cantidad de estudiantes guardados correctamente!'];
         } catch (Exception $e) {
             if ($co->inTransaction()) $co->rollBack();
             return ['resultado' => 'error', 'mensaje' => "¡ERROR DE BASE DE DATOS!<br/>" . $e->getMessage()];

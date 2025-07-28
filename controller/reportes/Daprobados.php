@@ -36,13 +36,16 @@ if (is_file("views/reportes/Daprobados.php")) {
                 }
 
                 switch ($tipo_reporte) {
+                    // En Daprobadosc.php, dentro del case 'generar_reporte' y el switch de 'tipo_reporte'
+
                     case 'seccion':
                         $seccion_codigo = $_POST['seccion_codigo'] ?? 0;
                         if (empty($seccion_codigo)) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo);
+                        // Pasa las variables $anio y $tipo a la función del modelo
+                        $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':
                         $uc_codigo = $_POST['uc_codigo'] ?? '';
@@ -56,11 +59,11 @@ if (is_file("views/reportes/Daprobados.php")) {
                         $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio, $tipo);
                         break;
                 }
- 
-                if ($datos) {
+
+                if ($datos !== false) { // Cambia la condición para que verifique si $datos no es 'false'
                     echo json_encode(['success' => true, 'datos' => $datos]);
                 } else {
-                    echo json_encode(['success' => false, 'mensaje' => 'No se encontraron datos para los filtros seleccionados.']);
+                    echo json_encode(['success' => false, 'mensaje' => 'No se encontraron datos o hubo un error al consultar la base de datos.']);
                 }
                 break;
 

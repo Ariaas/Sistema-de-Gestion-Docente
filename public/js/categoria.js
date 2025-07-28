@@ -73,14 +73,14 @@ $(document).ready(function () {
   Listar();
 
  $("#categoriaNombre").on("keypress",function(e){
-    validarkeypress(/^[A-Za-z0-9-\b\s]*$/,e);
+    validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]*$/,e);
     });
 
 
 $("#categoriaNombre").on("keydown keyup", function () {
   $("#scategoriaNombre").css("color", "");
   let formatoValido = validarkeyup(
-    /^[A-Za-z0-9\s]{5,30}$/,
+    /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s-]{5,30}$/,
     $("#categoriaNombre"),
     $("#scategoriaNombre"),
     "El formato permite de 5 a 30 carácteres. Ej: Instructor"
@@ -90,19 +90,19 @@ $("#categoriaNombre").on("keydown keyup", function () {
     datos.append('accion', 'existe');
     datos.append('categoriaNombre', $("#categoriaNombre").val());
     if ($("#proceso").text() === "MODIFICAR") {
-        datos.append("categoriaNombreOriginal", originalNombreCategoria);
-    }
-    enviaAjax(datos, 'existe');
+    datos.append("categoriaExcluir", originalNombreCategoria); 
+}
+enviaAjax(datos, 'existe');
   }
 });
 
 $("#categoriaDescripcion").on("keypress", function(e){
-  validarkeypress(/^[A-Za-z0-9-\b\s]*$/, e);
+  validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]*$/, e);
 });
 
 $("#categoriaDescripcion").on("keydown keyup", function () {
   validarkeyup(
-    /^[A-Za-z0-9\s]{5,100}$/,
+    /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
     $("#categoriaDescripcion"),
     $("#scategoriaDescripcion"),
     "El formato permite de 5 a 100 carácteres. Ej:Esta categoría..."
@@ -196,15 +196,23 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
 function validarenvio() {
   let esValido = true;
 
-  if (validarkeyup( /^[A-Za-z0-9\s]{5,30}$/,$("#categoriaNombre"),
-  $("#scategoriaNombre"),"El formato permite de 5 a 30 carácteres. Ej:Instructor") == 0) {
-        if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre de la categoría es incorrecto.");
-        esValido = false;
+  if (validarkeyup(
+    /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s-]{5,30}$/,
+    $("#categoriaNombre"),
+    $("#scategoriaNombre"),
+    "El formato permite de 5 a 30 carácteres. Ej:Instructor"
+  ) == 0) {
+    if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre de la categoría es incorrecto.");
+    esValido = false;
   }
-  if (validarkeyup( /^[A-Za-z0-9\s]{5,100}$/,$("#categoriaDescripcion"),
-  $("#scategoriaDescripcion"),"La descripción debe tener entre 5 y 100 caracteres.") == 0) {
-        if(esValido) muestraMensaje("error",4000,"ERROR!","El formato de la descripción es incorrecto.");
-        esValido = false;
+  if (validarkeyup(
+    /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
+    $("#categoriaDescripcion"),
+    $("#scategoriaDescripcion"),
+    "La descripción debe tener entre 5 y 100 caracteres."
+  ) == 0) {
+    if(esValido) muestraMensaje("error",4000,"ERROR!","El formato de la descripción es incorrecto.");
+    esValido = false;
   }
   return esValido;
 }
@@ -218,11 +226,13 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#categoriaNombre").prop("disabled", false);
     $("#categoriaDescripcion").prop("disabled", false);
+    $("#scategoriaNombre").text("").show();
+    $("#scategoriaDescripcion").text("").show();
   } else {
     $("#proceso").text("ELIMINAR");
     $("#categoriaNombre, #categoriaDescripcion").prop("disabled", true);
+    $("#scategoriaNombre, #scategoriaDescripcion").hide();
   }
-  $("#scategoriaNombre, #scategoriaDescripcion").hide();
   $("#categoriaNombre").val($(linea).find("td:eq(0)").text());
   $("#categoriaDescripcion").val($(linea).find("td:eq(1)").text());
 
