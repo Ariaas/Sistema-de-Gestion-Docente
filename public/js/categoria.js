@@ -2,7 +2,7 @@ function Listar() {
   var datos = new FormData();
   datos.append("accion", "consultar");
   enviaAjax(datos);
-}
+} 
 
 function destruyeDT() {
  
@@ -259,8 +259,8 @@ function enviaAjax(datos, accion) {
           $("#resultadoconsulta").empty();
           let tabla = "";
           $.each(lee.mensaje, function (index, item) {
-            const btnModificar = `<button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>`;
-            const btnEliminar = `<button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>`;
+            const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
             
             tabla += `
               <tr>

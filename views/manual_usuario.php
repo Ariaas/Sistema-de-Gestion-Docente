@@ -1,4 +1,5 @@
 <?php include_once("public/components/head.php"); ?>
+
 <body>
     <?php include_once("public/components/sidebar.php"); ?>
     <div class="container py-5">
@@ -81,8 +82,8 @@
                             <div class="alert alert-secondary">
                                 <strong>Botón Modificar:</strong> El ícono de lápiz te permite modificar la información de un docente existente. Al hacer clic, se abrirá el mismo formulario modal que para agregar, pero con los datos del docente ya cargados. Realiza los cambios necesarios y guarda para actualizar la información.<br><br>
                                 <strong>Botón Eliminar:</strong> El ícono de papelera te permite borrar un docente del sistema. Al hacer clic, se te pedirá una confirmación para evitar eliminaciones accidentales. Una vez confirmado, el docente será eliminado de la lista y no podrá recuperarse.
-                           </div>
-                           <div class="alert alert-info">
+                            </div>
+                            <div class="alert alert-info">
                                 <strong>Botón Ver Datos Adicionales:</strong> El ícono del ojo te permite consultar información complementaria del docente. Al hacer clic, se abrirá una ventana que muestra:
                                 <ul>
                                     <li><strong>Horas de Actividad:</strong> Un resumen de las horas del docente distribuidas en diferentes categorías (Académicas, Creación Intelectual, etc.).</li>
@@ -91,7 +92,7 @@
                                 <div class="text-center mt-3">
                                     <img src="/Sistema-de-Gestion-Docente/public/assets/img/manual-imagenes/docente-modal-2.png" alt="Modal Datos Adicionales" class="img-fluid rounded shadow" style="max-width:600px;width:100%;height:auto;border:2px solid #e0e0e0;">
                                 </div>
-                           </div>
+                            </div>
                         </div>
                     </div>
                     <hr class="my-5">
@@ -124,4 +125,5 @@
         </div>
     </div>
 </body>
+
 </html>

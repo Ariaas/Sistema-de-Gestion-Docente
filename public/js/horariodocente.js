@@ -41,9 +41,9 @@ function Listar() {
                   <td>${item.hdo_horas}</td>
                   <td style="display: none;">${item.hdo_observacion}</td>
                   <td>
-                    <button class="btn btn-info btn-sm" onclick='poneVerHorario(this)'>Ver Horario</button>
-                    <button class="btn btn-warning btn-sm" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
-                    <button class="btn btn-danger btn-sm" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
+                    <button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Horario Docente"><img src="public/assets/icons/eye.svg" alt="Ver Horario Docente"></button>
+                    <button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+                    <button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
                   </td>
                 </tr>`);
             });

@@ -377,9 +377,9 @@ $("#tipoAnio").on("change", function() {
                     </button>
                   </td>
                   <td class="text-nowrap">
-                    ${item.ani_tipo !== 'intensivo' ? `<button class="btn btn-info btn-sm ver-per-btn" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}">Ver PER</button>` : ''}
-                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
-                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
+                    ${item.ani_tipo !== 'intensivo' ? `<button class="btn btn-icon btn-info ver-per-btn" title="Ver PER" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}"><img src="public/assets/icons/eye.svg" alt="Ver PER"></button>` : ''}
+                    <button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+                    <button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
                   </td>
                 </tr>
               `);
