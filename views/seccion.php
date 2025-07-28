@@ -75,7 +75,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         <div class="modal fade" tabindex="-1" role="dialog" id="modalRegistroSeccion">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
+                    <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">Paso 1: Registrar Nueva Sección</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -88,11 +88,12 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
                                         <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4" pattern="\d{4}" title="El código debe contener exactamente 4 números." oninput="this.value = this.value.replace(/[^0-9]/g, '')">
 
-                                        <div id="alerta-cohorte" class="alert alert-danger p-1 mt-2 text-center" role="alert" style="display:none; font-size: 0.85em;"></div>
+                                        <div id="alerta-cohorte" class="form-text text-muted p-1 mt-2 text-center"  style="display:none; font-size: 0.85em;"></div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
                                         <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required min="0" max="99" value="0">
+                                        <div id="cantidad-seccion-error" class="form-text text-muted" style="display: none;">La cantidad debe ser un número entre 0 y 99.</div>
                                     </div>
                                 </div>
                                 <div class="row mt-3">
@@ -138,17 +139,21 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <form method="post" id="form-horario" autocomplete="off">
                             <input type="hidden" name="accion" id="accion">
                             <input type="hidden" name="sec_codigo" id="sec_codigo_hidden">
-                            <div class="row">
-                                <div class="col-md-7 mb-3">
+                            <div class="row align-items-end">
+                                <div class="col-md-5 mb-3">
                                     <label for="seccion_principal_id" class="form-label">Sección</label>
                                     <select class="form-select" id="seccion_principal_id" name="seccion_id_display" disabled>
                                         <option value=""></option>
                                     </select>
                                 </div>
-                                <div class="col-md-5 mb-3">
+                                <div class="col-md-3 mb-3">
+                                    <label for="cantidadSeccionModificar" class="form-label">Estudiantes <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="cantidadSeccionModificar" name="cantidadSeccion" required min="0" max="99">
+                                    <div id="cantidad-seccion-modificar-error" class="form-text text-muted" style="display: none;">La cantidad debe ser un número entre 0 y 99.</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
                                     <label for="filtro_turno" class="form-label">Turno de la Sección</label>
-                                    <select class="form-select" id="filtro_turno">
-                                        <option value="todos">Todos los Turnos</option>
+                                    <select class="form-select" id="filtro_turno" disabled>
                                         <option value="mañana">Turno Mañana</option>
                                         <option value="tarde">Turno Tarde</option>
                                         <option value="noche">Turno Noche</option>
@@ -336,12 +341,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
         </div>
     </main>
-    <script>
-        const PERMISOS = {
-            modificar: <?php echo json_encode($puede_modificar); ?>,
-            eliminar: <?php echo json_encode($puede_eliminar); ?>
-        };
-    </script>
     <script>
         const PERMISOS = {
             modificar: <?php echo json_encode($puede_modificar); ?>,

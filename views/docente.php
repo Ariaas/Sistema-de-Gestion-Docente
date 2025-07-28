@@ -59,7 +59,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                     <table class="table table-striped table-hover w-100" id="tabladocente">
                         <thead>
                             <tr>
-                                <th>Prefijo</th>
                                 <th>Cédula</th>
                                 <th>Nombre</th>
                                 <th>Apellido</th>
@@ -67,12 +66,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <th>Categoría</th>
                                 <th>Dedicación</th>
                                 <th>Condición</th>
-                                <th>Tipo Concurso</th>
-                                <th>Año Concurso</th>
-                                <th>Títulos</th>
-                                <th>Coordinaciones</th>
-                                <th>Fecha Ingreso</th>
-                                <th>Observaciones</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -190,7 +183,9 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             ?>
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="checkbox" name="titulos[]" id="<?= $id ?>" value="<?= $value ?>">
-                                                    <label class="form-check-label" for="<?= $id ?>"><?= htmlspecialchars($titulo['tit_nombre']) ?></label>
+                                                    <label class="form-check-label" for="<?= $id ?>">
+                                                        <?= htmlspecialchars($titulo['tit_prefijo'] . ' ' . $titulo['tit_nombre']) ?>
+                                                    </label>
                                                 </div>
                                             <?php endforeach; ?>
                                         </div>
@@ -319,30 +314,62 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <p><strong>Docente:</strong> <span id="verNombreDocente" class="fw-bold"></span></p>
                         <hr>
                         
-                        <h6 class="text-primary">Horas de Actividad </h6>
-                        <ul class="list-group mb-4">
-                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Horas Académicas 
-                                <span class="badge bg-dark rounded-pill fs-6" id="verHorasAcademicas">0</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Creación Intelectual
-                                <span class="badge bg-primary rounded-pill fs-6" id="verHorasCreacion">0</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Integración con la Comunidad
-                                <span class="badge bg-success rounded-pill fs-6" id="verHorasIntegracion">0</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Gestión Académica
-                                <span class="badge bg-warning text-dark rounded-pill fs-6" id="verHorasGestion">0</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Otras Actividades
-                                <span class="badge bg-secondary rounded-pill fs-6" id="verHorasOtras">0</span>
-                            </li>
-                        </ul>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Datos del Concurso</h6>
+                                <p class="mb-1"><strong>Tipo:</strong> <span id="verTipoConcurso"></span></p>
+                                <p class="mb-1"><strong>Año:</strong> <span id="verAnioConcurso"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Datos de Ingreso</h6>
+                                <p class="mb-1"><strong>Fecha:</strong> <span id="verFechaIngreso"></span></p>
+                                <p class="mb-1"><strong>Observaciones:</strong> <span id="verObservaciones"></span></p>
+                            </div>
+                        </div>
 
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Títulos:</strong>
+                                <p class="border rounded p-2 mb-0" id="verTitulos" style="min-height: 40px;"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Coordinaciones:</strong>
+                                <p class="border rounded p-2 mb-0" id="verCoordinaciones" style="min-height: 40px;"></p>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6 class="text-primary">Horas de Actividad</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-group mb-3 mb-md-0">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Horas Académicas
+                                        <span class="badge bg-dark rounded-pill fs-6" id="verHorasAcademicas">0</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Creación Intelectual
+                                        <span class="badge bg-primary rounded-pill fs-6" id="verHorasCreacion">0</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Integración Comunidad
+                                        <span class="badge bg-success rounded-pill fs-6" id="verHorasIntegracion">0</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-group">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Gestión Académica
+                                        <span class="badge bg-warning text-dark rounded-pill fs-6" id="verHorasGestion">0</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Otras Actividades
+                                        <span class="badge bg-secondary rounded-pill fs-6" id="verHorasOtras">0</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <hr>
                         <h6 class="text-primary">Preferencia de Horario para Clases</h6>
                         <div id="verPreferenciasContainer">
                             <p class="text-muted">No hay preferencias registradas.</p>

@@ -1,11 +1,15 @@
 $(document).ready(function() {
-    let formPaso1Interacted = false;
-    let formPaso2Interacted = false;
-    let formPaso3Interacted = false;
-    let formPaso4Interacted = false;
     let cachedTeacherData = null;
 
-    
+    // --- Helper Function para mostrar errores en gris ---
+    function setErrorText(spanElement, message) {
+        if (message) {
+            // Usa text-secondary de Bootstrap para un color gris
+            spanElement.text(message).removeClass('text-danger').addClass('text-secondary');
+        } else {
+            spanElement.text("").removeClass('text-secondary');
+        }
+    }
 
     function setModalStep(step) {
         const footer = $('#modal-footer');
@@ -26,7 +30,7 @@ $(document).ready(function() {
             $('#step2-academico').show();
             modalTitle.text("Paso 2: Datos Académicos");
             footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-2">ATRÁS</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-2">SIGIENTE</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-2">SIGUIENTE</button>');
         } else if (step === 3) {
             $('#step3-actividad').show();
             modalTitle.text('Paso 3: Actividades');
@@ -45,16 +49,13 @@ $(document).ready(function() {
 
  
     $(document).on('click', '#btn-next-1', function() {
-        formPaso1Interacted = true;
         mostrarErroresPaso1();
         if (validarenvioPaso1()) {
             setModalStep(2);
-            $('#f').one('input change', () => { formPaso2Interacted = true; mostrarErroresPaso2(); });
         }
     });
 
     $(document).on('click', '#btn-next-2', function() {
-        formPaso2Interacted = true;
         mostrarErroresPaso2();
         if (validarenvioPaso2()) {
             const datos = new FormData();
@@ -65,10 +66,8 @@ $(document).ready(function() {
     });
     
     $(document).on('click', '#btn-next-3', function() {
-        formPaso3Interacted = true;
         if(validarPaso3()){
             setModalStep(4);
-            $('#step4-preferencias').one('input change', () => { formPaso4Interacted = true; mostrarErroresPaso4(); });
         }
     });
 
@@ -77,7 +76,6 @@ $(document).ready(function() {
     $(document).on('click', '#btn-prev-4', function() { setModalStep(3); });
 
     $(document).on('click', '#btn-final-submit', function() {
-        formPaso4Interacted = true;
         if (validarPaso4()) {
             cachedTeacherData = new FormData($('#f')[0]);
             if ($('#accion').val() === 'modificar') {
@@ -106,9 +104,19 @@ $(document).ready(function() {
 
     $(document).on('click', '.ver-datos-btn', function() {
         const fila = $(this).closest('tr');
-        const cedula = fila.find('td:eq(1)').text();
-        const nombre = fila.find('td:eq(2)').text() + ' ' + fila.find('td:eq(3)').text();
+        const cedula = fila.data('cedula');
+        const nombre = fila.find('td:eq(1)').text() + ' ' + fila.find('td:eq(2)').text();
+        
+        // Cargar datos desde los atributos data-* de la fila
         $('#verNombreDocente').text(nombre);
+        $('#verTipoConcurso').text(fila.data('tipo-concurso') || 'N/A');
+        $('#verAnioConcurso').text(fila.data('anio-concurso') || 'N/A');
+        $('#verFechaIngreso').text(fila.data('fecha-ingreso') || 'N/A');
+        $('#verTitulos').text(fila.data('titulos-texto') || 'Sin títulos');
+        $('#verCoordinaciones').text(fila.data('coordinaciones-texto') || 'Sin coordinaciones');
+        $('#verObservaciones').text(fila.data('observacion') || 'Sin observaciones');
+
+        // Limpiar datos anteriores y realizar la llamada AJAX para horas y preferencias
         $('#verHorasAcademicas, #verHorasCreacion, #verHorasIntegracion, #verHorasGestion, #verHorasOtras').text('0');
         $('#verPreferenciasContainer').html('<p class="text-muted">No hay preferencias registradas.</p>');
         const datos = new FormData();
@@ -125,7 +133,7 @@ $(document).ready(function() {
             row.find('.hora-preferencia').val('');
             validarFilaHorario(row); 
         }
-        if (formPaso4Interacted) mostrarErroresPaso4();
+        mostrarErroresPaso4();
     });
 
     function verificarRequisitosIniciales() {
@@ -151,29 +159,29 @@ $(document).ready(function() {
 
    
     function mostrarErroresPaso1() {
-        if (!$('#cedulaDocente').val()) { $('#scedulaDocente').text('La cédula es requerida.'); }
-        if (!$('#nombreDocente').val()) { $('#snombreDocente').text('El nombre es requerido.'); }
-        if (!$('#apellidoDocente').val()) { $('#sapellidoDocente').text('El apellido es requerido.'); }
-        if (!$('#correoDocente').val()) { $('#scorreoDocente').text('El correo es requerido.'); }
-        if (!$('#categoria').val()) { $('#scategoria').text('Debe seleccionar una categoría.'); }
-        if (!$('#dedicacion').val()) { $('#sdedicacion').text('Debe seleccionar una dedicación.'); }
-        if (!$('#condicion').val()) { $('#scondicion').text('Debe seleccionar una condición.'); }
+        if (!$('#cedulaDocente').val()) { setErrorText($('#scedulaDocente'), 'La cédula es requerida.'); }
+        if (!$('#nombreDocente').val()) { setErrorText($('#snombreDocente'), 'El nombre es requerido.'); }
+        if (!$('#apellidoDocente').val()) { setErrorText($('#sapellidoDocente'), 'El apellido es requerido.'); }
+        if (!$('#correoDocente').val()) { setErrorText($('#scorreoDocente'), 'El correo es requerido.'); }
+        if (!$('#categoria').val()) { setErrorText($('#scategoria'), 'Debe seleccionar una categoría.'); }
+        if (!$('#dedicacion').val()) { setErrorText($('#sdedicacion'), 'Debe seleccionar una dedicación.'); }
+        if (!$('#condicion').val()) { setErrorText($('#scondicion'), 'Debe seleccionar una condición.'); }
         const anioConcursoInput = $('#anioConcurso');
         if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
-            $('#sanioConcurso').text('El año de concurso es requerido.');
+            setErrorText($('#sanioConcurso'), 'El año de concurso es requerido.');
         } else if (anioConcursoInput.val()) {
             const hoy = new Date();
             const fechaSeleccionada = new Date(anioConcursoInput.val());
             fechaSeleccionada.setMinutes(fechaSeleccionada.getMinutes() + fechaSeleccionada.getTimezoneOffset());
             hoy.setHours(0, 0, 0, 0);
-            if (fechaSeleccionada > hoy) { $('#sanioConcurso').text('El año de concurso no puede ser una fecha futura.'); }
-            else { $('#sanioConcurso').text(''); }
+            if (fechaSeleccionada > hoy) { setErrorText($('#sanioConcurso'),'El año de concurso no puede ser una fecha futura.'); }
+            else { setErrorText($('#sanioConcurso'),''); }
         }
     }
 
     function mostrarErroresPaso2() {
-        if ($("input[name='titulos[]']:checked").length === 0) { $('#stitulos').text('Debe seleccionar al menos un título.'); }
-        if (!$('#fechaIngreso').val()) { $('#sfechaIngreso').text('La fecha de ingreso es requerida.'); }
+        if ($("input[name='titulos[]']:checked").length === 0) { setErrorText($('#stitulos'), 'Debe seleccionar al menos un título.'); }
+        if (!$('#fechaIngreso').val()) { setErrorText($('#sfechaIngreso'), 'La fecha de ingreso es requerida.'); }
     }
     
     function mostrarErroresPaso3() {
@@ -183,9 +191,9 @@ $(document).ready(function() {
 
     function mostrarErroresPaso4() {
         if ($('.dia-preferencia-check:checked').length === 0) { 
-            $('#spreferencias').text('Debe seleccionar al menos un día.'); 
+            setErrorText($('#spreferencias'), 'Debe seleccionar al menos un día.'); 
         } else { 
-            $('#spreferencias').text(''); 
+            setErrorText($('#spreferencias'),''); 
         }
     }
 
@@ -208,7 +216,7 @@ $(document).ready(function() {
             hoy.setHours(0, 0, 0, 0);
             if (fechaSeleccionada > hoy) esValido = false;
         }
-        if (!esValido && formPaso1Interacted) {
+        if (!esValido) {
             muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del Paso 1.");
         }
         return esValido;
@@ -218,7 +226,7 @@ $(document).ready(function() {
         let esValido = true;
         if (!$('#fechaIngreso').val()) esValido = false;
         if ($("input[name='titulos[]']:checked").length === 0) esValido = false;
-        if (!esValido && formPaso2Interacted) {
+        if (!esValido) {
             muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del Paso 2.");
         }
         return esValido;
@@ -277,22 +285,28 @@ $(document).ready(function() {
             const valor = input.val();
             
             if (valor === '' || valor === null || isNaN(parseInt(valor))) {
-                errorSpan.text('Este campo es requerido.');
+                setErrorText(errorSpan, 'Este campo es requerido.');
                 esValido = false;
             } else {
-                errorSpan.text('');
+                setErrorText(errorSpan, '');
             }
         });
         return esValido;
     }
 
     $('#condicion').on('change', function() {
-        if (formPaso1Interacted && !$(this).val()) { $('#scondicion').text('Debe seleccionar una condición.'); }
-        else { $('#scondicion').text(''); }
         const seleccion = $(this).val();
         const concursoWrapper = $('#concurso-fields-wrapper');
         const tipoConcursoInput = $('#tipoConcurso');
         const anioConcursoInput = $('#anioConcurso');
+        
+        // Validacion
+        if (!seleccion) { 
+            setErrorText($('#scondicion'), 'Debe seleccionar una condición.');
+        } else { 
+            setErrorText($('#scondicion'), ''); 
+        }
+
         switch(seleccion) {
             case 'Ordinario':
                 tipoConcursoInput.val('Oposición');
@@ -308,7 +322,7 @@ $(document).ready(function() {
                 concursoWrapper.slideUp();
                 tipoConcursoInput.val('');
                 anioConcursoInput.val('').prop('required', false);
-                $('#sanioConcurso').text('');
+                setErrorText($('#sanioConcurso'),'');
                 break;
         }
     });
@@ -349,14 +363,14 @@ $(document).ready(function() {
         limpia();
         $("#accion").val("incluir");
         setModalStep(1); 
-        $('#f').one('input change', () => { formPaso1Interacted = true; mostrarErroresPaso1(); });
         $("#modal1").modal("show");
     });
 
     $(document).on('click', '.modificar-btn', function() { pone(this, 'modificar'); });
+    
     $(document).on('click', '.eliminar-btn', function() {
         const fila = $(this).closest("tr");
-        const cedula = fila.find("td:eq(1)").text();
+        const cedula = fila.data("cedula"); // Obtener cédula desde data-attribute
         Swal.fire({
             title: "¿Está seguro de eliminar este docente?", text: "Esta acción no se puede deshacer.", icon: "warning",
             showCancelButton: true, confirmButtonColor: "#d33", cancelButtonColor: "#3085d6",
@@ -416,19 +430,30 @@ $(document).ready(function() {
     }
 
     $('.horas-input').on('input', function() {
-        if(formPaso3Interacted) {
-            mostrarErroresPaso3();
-        }
+        mostrarErroresPaso3();
     });
     
     $('#dedicacion').on('change', validarCargaHoraria);
     
+    // --- SECCION DE VALIDACION INDIVIDUAL ---
+
+    function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
+        if (etiqueta.val() && !er.test(etiqueta.val())) {
+            setErrorText(etiquetamensaje, mensaje);
+            return false;
+        }
+        setErrorText(etiquetamensaje, ""); // Limpia si es válido o está vacío
+        return true;
+    }
+
+    // Validación para campos de texto y correo
     $("#cedulaDocente, #nombreDocente, #apellidoDocente, #correoDocente").on("keyup", function() {
         const id = $(this).attr('id');
+        const el = $(this);
         if (id === 'cedulaDocente') {
             this.value = this.value.replace(/[^0-9]/g, '');
-            validarkeyup(/^[0-9]{7,8}$/, $(this), $("#scedulaDocente"), "Cédula inválida (7-8 dígitos).");
-            if ($("#accion").val() === "incluir" && /^[0-9]{7,8}$/.test(this.value)) {
+            let esValido = validarkeyup(/^[0-9]{7,8}$/, el, $("#scedulaDocente"), "Cédula inválida (7-8 dígitos).");
+            if (esValido && $("#accion").val() === "incluir" && /^[0-9]{7,8}$/.test(this.value)) {
                 const datos = new FormData();
                 datos.append('accion', 'Existe');
                 datos.append('cedulaDocente', $(this).val());
@@ -436,10 +461,10 @@ $(document).ready(function() {
             }
         } else if (id === 'nombreDocente' || id === 'apellidoDocente') {
             this.value = this.value.replace(/[0-9]/g, '');
-            validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{3,30}$/, $(this), $("#s" + id), "Formato inválido.");
+            validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{3,30}$/, el, $("#s" + id), "Formato inválido.");
         } else if (id === 'correoDocente') {
-            let esValido = validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, $(this), $("#scorreoDocente"), "Correo inválido.");
-            if(esValido){
+            let esValido = validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, el, $("#scorreoDocente"), "Correo inválido.");
+            if(esValido && el.val()){
                 const datos = new FormData();
                 datos.append('accion', 'existe_correo');
                 datos.append('correoDocente', $('#correoDocente').val());
@@ -447,21 +472,30 @@ $(document).ready(function() {
                 enviaAjax(datos);
             }
         }
+    }).on("blur", function() {
+        const el = $(this);
+        if (!el.val()) {
+            setErrorText($("#s" + el.attr('id')), "Este campo es requerido.");
+        }
     });
     
-    $("#categoria, #dedicacion, #condicion").on("change", function() {
+    // Validación para campos de selección
+    $("#categoria, #dedicacion").on("change", function() {
         const el = $(this);
-        const spanId = "#s" + el.attr('id');
-        if (formPaso1Interacted && el.prop('required') && !el.val()) { $(spanId).text("Este campo es requerido."); }
-        else { $(spanId).text(""); }
+        if (!el.val()) {
+             setErrorText($("#s" + el.attr('id')), "Debe seleccionar una opción.");
+        } else {
+            setErrorText($("#s" + el.attr('id')), "");
+        }
     });
 
+    // Validación para campos de fecha
     $("#fechaIngreso, #anioConcurso").on("change", function() {
         const el = $(this);
-        const spanId = "#s" + el.attr('id');
-        let interactedFlag = el.attr('id') === 'fechaIngreso' ? formPaso2Interacted : formPaso1Interacted;
-        if (interactedFlag && el.prop('required') && !el.val()) {
-             $(spanId).text("Este campo es requerido.");
+        const spanEl = $("#s" + el.attr('id'));
+        
+        if (el.prop('required') && !el.val()) {
+             setErrorText(spanEl, "Este campo es requerido.");
              return;
         }
         
@@ -472,47 +506,57 @@ $(document).ready(function() {
             hoy.setHours(0, 0, 0, 0);
 
             if (fechaSeleccionada > hoy) {
-                $(spanId).text("El año de concurso no puede ser una fecha futura.");
+                setErrorText(spanEl, "El año de concurso no puede ser una fecha futura.");
             } else {
-                $(spanId).text("");
+                setErrorText(spanEl, "");
             }
         } else {
-             if(el.attr('id') === 'fechaIngreso' || (el.attr('id') === 'anioConcurso' && !el.prop('required')))
-                $(spanId).text("");
+             setErrorText(spanEl, "");
         }
     });
     
+    // Validación para checkboxes de títulos
     $("input[name='titulos[]']").on("change", function() {
-        if (formPaso2Interacted && $("input[name='titulos[]']:checked").length === 0) { $("#stitulos").text("Debe seleccionar al menos un título."); }
-        else { $("#stitulos").text(""); }
+        if ($("input[name='titulos[]']:checked").length === 0) {
+            setErrorText($("#stitulos"), "Debe seleccionar al menos un título.");
+        } else {
+            setErrorText($("#stitulos"), "");
+        }
     });
     
-    $("input[name='coordinaciones[]']").on("change", function() { $("#scoordinaciones").text(""); });
+    $("input[name='coordinaciones[]']").on("change", function() { setErrorText($("#scoordinaciones"), ""); });
     
+    // --- FIN DE LA SECCION DE VALIDACION ---
 
     function pone(pos, accion) {
         limpia();
         $("#accion").val(accion);
         const fila = $(pos).closest("tr");
-        $("#prefijoCedula").val(fila.find("td:eq(0)").text());
-        $("#cedulaDocente").val(fila.find("td:eq(1)").text());
-        $("#nombreDocente").val(fila.find("td:eq(2)").text());
-        $("#apellidoDocente").val(fila.find("td:eq(3)").text());
-        $("#correoDocente").val(fila.find("td:eq(4)").text());
-        $('#categoria').val(fila.find("td:eq(5)").text());
-        $('#dedicacion').val(fila.find("td:eq(6)").text());
-        $('#condicion').val(fila.find("td:eq(7)").text()).trigger('change');
-        $("#fechaIngreso").val(fila.find("td:eq(12)").text());
-        $("#observacionesDocente").val(fila.attr('data-observacion'));
-        const anioConcurso = fila.find("td:eq(9)").text();
-        if (anioConcurso !== 'N/A') $("#anioConcurso").val(anioConcurso);
-        const titulosIds = fila.attr('data-titulos-ids');
-        const coordinacionesIds = fila.attr('data-coordinaciones-ids');
+
+        const cedulaCompleta = fila.find("td:eq(0)").text().trim();
+        const [prefijo, cedula] = cedulaCompleta.split('-');
+        
+        $("#prefijoCedula").val(prefijo);
+        $("#cedulaDocente").val(cedula);
+        
+        $("#nombreDocente").val(fila.find("td:eq(1)").text().trim());
+        $("#apellidoDocente").val(fila.find("td:eq(2)").text().trim());
+        $("#correoDocente").val(fila.find("td:eq(3)").text().trim());
+        $('#categoria').val(fila.find("td:eq(4)").text().trim());
+        $('#dedicacion').val(fila.find("td:eq(5)").text().trim());
+        
+        $('#condicion').val(fila.data('condicion')).trigger('change');
+        $('#anioConcurso').val(fila.data('anio-concurso'));
+        $('#fechaIngreso').val(fila.data('fecha-ingreso'));
+        $("#observacionesDocente").val(fila.data('observacion'));
+
+        const titulosIds = fila.data('titulos-ids');
+        const coordinacionesIds = fila.data('coordinaciones-ids');
         if (titulosIds) titulosIds.split(',').forEach(id => { if (id) $(`input[name='titulos[]'][value="${id.trim()}"]`).prop('checked', true); });
         if (coordinacionesIds) coordinacionesIds.split(',').forEach(id => { if (id) $(`input[name='coordinaciones[]'][value="${id.trim()}"]`).prop('checked', true); });
+        
         $("form#f :input").prop('disabled', false);
         $("#cedulaDocente").prop('disabled', true);
-        $('#f').one('input change', () => { formPaso1Interacted = true; mostrarErroresPaso1(); });
         setModalStep(1);
         $("#modal1").modal("show");
     }
@@ -524,13 +568,9 @@ $(document).ready(function() {
         $('.dia-preferencia-check').prop('checked', false);
         $('.hora-preferencia').val('').prop('disabled', true);
         $("form#f :input").prop('disabled', false);
-        $(".text-danger").text("");
+        $(".text-danger, .text-secondary").text("").removeClass('text-danger text-secondary');
         $('#concurso-fields-wrapper').hide();
         cachedTeacherData = null;
-        formPaso1Interacted = false;
-        formPaso2Interacted = false;
-        formPaso3Interacted = false;
-        formPaso4Interacted = false;
         setModalStep(1);
     }
 
@@ -580,31 +620,40 @@ $(document).ready(function() {
                 try {
                     const lee = JSON.parse(respuesta);
                     if (lee.resultado === 'Existe') {
-                         if (lee.existe) { $("#scedulaDocente").text("Cédula ya registrada."); }
-                         else { $("#scedulaDocente").text(""); }
-                    } else if (
-                        (lee.resultado === 'existe' || lee.resultado === 'existe_docente') 
-                        && lee.mensaje
-                    ) {
-                        $("#scorreoDocente").text(lee.mensaje).show();
+                         if (lee.existe) { setErrorText($("#scedulaDocente"), "Cédula ya registrada."); }
+                         else { setErrorText($("#scedulaDocente"), ""); }
+                    } else if ((lee.resultado === 'existe' || lee.resultado === 'existe_docente') && lee.mensaje) {
+                        setErrorText($("#scorreoDocente"), lee.mensaje);
                     } else if (lee.resultado === 'no_existe') {
-                        $("#scorreoDocente").text("").hide();
+                        setErrorText($("#scorreoDocente"), "");
                     } else if (lee.resultado === 'consultar') {
                         destruyeDT();
                         $("#resultadoconsulta").empty();
                         lee.mensaje.forEach(item => {
-                             const btnModificar = `<button class="btn btn-warning btn-sm modificar-btn" title="Modificar Docente"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-                             const btnEliminar = `<button class="btn btn-danger btn-sm eliminar-btn" title="Eliminar Docente"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                             const btnVerDatos = `<button class="btn btn-info btn-sm ver-datos-btn" title="Ver Datos Adicionales"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></button>`;
+                            const btnModificar = `<button class="btn btn-warning btn-sm modificar-btn" title="Modificar Docente"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                            const btnEliminar = `<button class="btn btn-danger btn-sm eliminar-btn" title="Eliminar Docente"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                            const btnVerDatos = `<button class="btn btn-info btn-sm ver-datos-btn" title="Ver Datos Adicionales"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></button>`;
+                            
                             $("#resultadoconsulta").append(`
-                                <tr data-titulos-ids="${item.titulos_ids || ''}" data-coordinaciones-ids="${item.coordinaciones_ids || ''}" data-observacion="${item.doc_observacion || ''}">
-                                    <td>${item.doc_prefijo}</td><td>${item.doc_cedula}</td>
-                                    <td>${item.doc_nombre}</td><td>${item.doc_apellido}</td>
-                                    <td>${item.doc_correo}</td><td>${item.cat_nombre}</td>
-                                    <td>${item.doc_dedicacion || 'N/A'}</td><td>${item.doc_condicion || 'N/A'}</td>
-                                    <td>${item.doc_tipo_concurso || 'N/A'}</td><td>${item.doc_anio_concurso || 'N/A'}</td>
-                                    <td>${item.titulos || 'Sin títulos'}</td><td>${item.coordinaciones || 'Sin coordinaciones'}</td>
-                                    <td>${item.doc_ingreso}</td><td>${item.doc_observacion || 'Sin observaciones'}</td>
+                                <tr 
+                                    data-cedula="${item.doc_cedula}"
+                                    data-condicion="${item.doc_condicion || ''}"
+                                    data-titulos-ids="${item.titulos_ids || ''}" 
+                                    data-coordinaciones-ids="${item.coordinaciones_ids || ''}"
+                                    data-titulos-texto="${item.titulos || ''}"
+                                    data-coordinaciones-texto="${item.coordinaciones || ''}"
+                                    data-observacion="${item.doc_observacion || ''}" 
+                                    data-anio-concurso="${item.doc_anio_concurso || ''}"
+                                    data-tipo-concurso="${item.doc_tipo_concurso || ''}"
+                                    data-fecha-ingreso="${item.doc_ingreso || ''}"
+                                >
+                                    <td>${item.doc_prefijo}-${item.doc_cedula}</td>
+                                    <td>${item.doc_nombre}</td>
+                                    <td>${item.doc_apellido}</td>
+                                    <td>${item.doc_correo}</td>
+                                    <td>${item.cat_nombre}</td>
+                                    <td>${item.doc_dedicacion || 'N/A'}</td>
+                                    <td>${item.doc_condicion || 'N/A'}</td>
                                     <td class="text-nowrap"> ${btnModificar} ${btnEliminar} ${btnVerDatos} </td>
                                 </tr>`);
                         });
@@ -659,15 +708,6 @@ $(document).ready(function() {
             },
             error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${status} - ${err}`)
         });
-    }
-
-    function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
-        if (!etiqueta.val() || !er.test(etiqueta.val())) {
-            etiquetamensaje.text(mensaje);
-            return false;
-        }
-        etiquetamensaje.text("");
-        return true;
     }
 
     function setupFilter(inputId, containerId) {
