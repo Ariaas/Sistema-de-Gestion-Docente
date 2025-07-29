@@ -77,12 +77,39 @@ class HorarioDocente extends Connection
     {
         $r = array();
         try {
-            if ($this->Existe($this->doc_cedula, $this->hdo_lapso, $this->hdo_tipoactividad)['resultado'] == 'existe') {
+            $co = $this->Con();
+            $stmtActivo = $co->prepare("SELECT * FROM tbl_horario_docente WHERE doc_cedula = :cedula AND hdo_lapso = :lapso AND hdo_tipoactividad = :actividad AND hdo_estado = 1");
+            $stmtActivo->bindParam(':cedula', $this->doc_cedula);
+            $stmtActivo->bindParam(':lapso', $this->hdo_lapso);
+            $stmtActivo->bindParam(':actividad', $this->hdo_tipoactividad);
+            $stmtActivo->execute();
+            if ($stmtActivo->rowCount() > 0) {
                 $r['resultado'] = 'existe';
                 $r['mensaje'] = 'Esta actividad ya se encuentra registrada.';
                 return $r;
             }
-            $co = $this->Con();
+
+            $stmtInactivo = $co->prepare("SELECT * FROM tbl_horario_docente WHERE doc_cedula = :cedula AND hdo_lapso = :lapso AND hdo_tipoactividad = :actividad AND hdo_estado = 0");
+            $stmtInactivo->bindParam(':cedula', $this->doc_cedula);
+            $stmtInactivo->bindParam(':lapso', $this->hdo_lapso);
+            $stmtInactivo->bindParam(':actividad', $this->hdo_tipoactividad);
+            $stmtInactivo->execute();
+            if ($stmtInactivo->rowCount() > 0) {
+                $sql = "UPDATE tbl_horario_docente SET hdo_descripcion = :descripcion, hdo_dependencia = :dependencia, hdo_observacion = :observacion, hdo_horas = :horas, hdo_estado = 1 WHERE doc_cedula = :cedula AND hdo_lapso = :lapso AND hdo_tipoactividad = :actividad";
+                $stmtReactivar = $co->prepare($sql);
+                $stmtReactivar->bindParam(':cedula', $this->doc_cedula);
+                $stmtReactivar->bindParam(':lapso', $this->hdo_lapso);
+                $stmtReactivar->bindParam(':actividad', $this->hdo_tipoactividad);
+                $stmtReactivar->bindParam(':descripcion', $this->hdo_descripcion);
+                $stmtReactivar->bindParam(':dependencia', $this->hdo_dependencia);
+                $stmtReactivar->bindParam(':observacion', $this->hdo_observacion);
+                $stmtReactivar->bindParam(':horas', $this->hdo_horas, PDO::PARAM_INT);
+                $stmtReactivar->execute();
+                $r['resultado'] = 'registrar';
+                $r['mensaje'] = '¡Registro Incluido! La actividad se registró correctamente.';
+                return $r;
+            }
+
             $sql = "INSERT INTO tbl_horario_docente(doc_cedula, hdo_lapso, hdo_tipoactividad, hdo_descripcion, hdo_dependencia, hdo_observacion, hdo_horas, hdo_estado) VALUES (:cedula, :lapso, :actividad, :descripcion, :dependencia, :observacion, :horas, 1)";
             $stmt = $co->prepare($sql);
             $stmt->bindParam(':cedula', $this->doc_cedula);
@@ -237,7 +264,6 @@ class HorarioDocente extends Connection
             usort($franjas_obj, fn($a, $b) => strcmp($a['inicio'], $b['inicio']));
 
             return ['resultado' => 'ok', 'horario' => $horario_docente, 'franjas' => array_values($franjas_obj)];
-
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => 'Error al consultar el horario: ' . $e->getMessage()];
         }

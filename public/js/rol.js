@@ -78,7 +78,7 @@ function Listar() {
   
       $("#nombreRol").on("keydown keyup",function(){
           $("#snombreRol").css("color", "");
-          let formatoValido = validarkeyup(/^[A-Za-z0-9\s]{5,30}$/,$("#nombreRol"),
+          let formatoValido = validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s]{5,30}$/,$("#nombreRol"),
           $("#snombreRol"),"El formato permite de 5 a 30 carácteres, Ej: Administrador");
 
           if(formatoValido === 1){
@@ -167,14 +167,18 @@ function Listar() {
       $("#nombreRol").prop("disabled", false);
     });
   
-    
+    $('#modal1').on('hidden.bs.modal', function () {
+      $("#proceso").prop("disabled", false);
+      $("#snombreRol").text("").css("color", "");
+    });
+  
   });
   
   //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
   
   function validarenvio() {
       let esValido = true;
-      if (validarkeyup( /^[A-Za-z0-9\s]{5,30}$/,$("#nombreRol"),$("#snombreRol"),"El formato permite de 5 a 30 carácteres, Ej:Administrador") == 0) {
+      if (validarkeyup( /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s]{5,30}$/,$("#nombreRol"),$("#snombreRol"),"El formato permite de 5 a 30 carácteres, Ej:Administrador") == 0) {
           if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre del rol es incorrecto.");
           esValido = false;
       }

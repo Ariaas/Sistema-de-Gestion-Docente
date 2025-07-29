@@ -59,14 +59,16 @@ $(document).ready(function () {
       "El formato permite de 1 a 2 dígitos numéricos."
     );
 
-    if (esValido && $(this).val().length >= 1 && $("#edificio").val() !== "") {
+    if (esValido && $(this).val().length >= 1 && $("#edificio").val() !== "" && $("#tipoEspacio").val() !== "") {
       var datos = new FormData();
       datos.append("accion", "existe");
       datos.append("numeroEspacio", $(this).val());
       datos.append("edificioEspacio", $("#edificio").val());
+      datos.append("tipoEspacio", $("#tipoEspacio").val());
       if ($("#proceso").text() === "MODIFICAR") {
         datos.append("numeroEspacioExcluir", $("#modal1").data("original-numero"));
         datos.append("edificioEspacioExcluir", $("#modal1").data("original-edificio"));
+        datos.append("tipoEspacioExcluir", $("#modal1").data("original-tipo"));
       }
       enviaAjax(datos, 'existe');
     } else if (!esValido) {
@@ -76,15 +78,26 @@ $(document).ready(function () {
 
   $("#tipoEspacio").on("change", function () {
     $("#stipoEspacio").text("");
+    if ($("#numeroEspacio").val().length >= 1 && $("#edificio").val() !== "") {
+      var datos = new FormData();
+      datos.append("accion", "existe");
+      datos.append("numeroEspacio", $("#numeroEspacio").val());
+      datos.append("edificioEspacio", $("#edificio").val());
+      datos.append("tipoEspacio", $(this).val());
+      enviaAjax(datos, 'existe');
+    }
+    $("#snumeroEspacio").css("color", "");
+    $("#proceso").prop("disabled", false);
   });
 
   $("#edificio").on("change", function () {
     $("#sedificio").text("");
-    if ($("#numeroEspacio").val().length >= 1) {
+    if ($("#numeroEspacio").val().length >= 1 && $("#tipoEspacio").val() !== "") {
       var datos = new FormData();
       datos.append("accion", "existe");
       datos.append("numeroEspacio", $("#numeroEspacio").val());
       datos.append("edificioEspacio", $(this).val());
+      datos.append("tipoEspacio", $("#tipoEspacio").val());
       enviaAjax(datos, 'existe');
     }
     $("#snumeroEspacio").css("color", "");
@@ -238,22 +251,18 @@ function pone(pos, accion) {
 
   if (accion == 0) { 
     $("#proceso").text("MODIFICAR");
-   
-
     $("#modal1").data("original-numero", numero);
     $("#modal1").data("original-edificio", edificio);
-
+    $("#modal1").data("original-tipo", tipo);
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", true);
   }
 
- 
   $("#numeroEspacio").val(numero);
   $("#tipoEspacio").val(tipo);
   $("#edificio").val(edificio);
-
 
   $("#modal1").modal("show");
   $("#snumeroEspacio, #sedificio, #stipoEspacio").text('');
