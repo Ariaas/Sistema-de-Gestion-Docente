@@ -13,7 +13,7 @@ class ReporteHorarioDocente extends Connection
     public function setAnio($valor) { $this->anio = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
 
-    // Las funciones getAniosActivos, getFases, obtenerDocentes y obtenerInfoDocente no necesitan cambios.
+    // Las funciones getAnios, getFases, etc., no necesitan cambios.
     public function getAniosActivos() {
         try {
             $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
@@ -22,7 +22,6 @@ class ReporteHorarioDocente extends Connection
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return []; }
     }
-
     public function getFases() {
         try {
             $sql = "SELECT DISTINCT fase_numero FROM tbl_fase ORDER BY fase_numero ASC";
@@ -31,7 +30,6 @@ class ReporteHorarioDocente extends Connection
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return []; }
     }
-    
     public function obtenerDocentes() {
         try {
             $p = $this->con()->prepare("SELECT doc_cedula, CONCAT(doc_apellido, ', ', doc_nombre) as nombreCompleto FROM tbl_docente WHERE doc_estado = 1 ORDER BY doc_apellido ASC, doc_nombre ASC");
@@ -39,8 +37,6 @@ class ReporteHorarioDocente extends Connection
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return false; }
     }
-    
-    // --- Métodos de Datos para el Reporte (AHORA CORREGIDOS) ---
     public function obtenerInfoDocente() {
         if (empty($this->cedula_docente)) return false;
         try {
@@ -50,16 +46,31 @@ class ReporteHorarioDocente extends Connection
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return false; }
     }
+    public function obtenerOtrasActividades() {
+        if (empty($this->cedula_docente)) return false;
+        try {
+            $stmt = $this->con()->prepare("SELECT * FROM tbl_actividad WHERE doc_cedula = :cedula_docente");
+            $stmt->execute([':cedula_docente' => $this->cedula_docente]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return false; }
+    }
+
+    private function get_allowed_periods() {
+        if ($this->fase == 1) {
+            return ['Fase I', 'Anual', 'anual', '0'];
+        } elseif ($this->fase == 2) {
+            return ['Fase II', 'Anual', 'anual'];
+        }
+        return [];
+    }
 
     public function obtenerAsignacionesAcademicas() {
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
         
-        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'Anual', 'anual', '0'] : ['Fase II', 'Anual', 'anual'];
-        
         try {
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+            $allowed_periods = $this->get_allowed_periods();
             
-            // --- CONSULTA CORREGIDA APLICANDO LA LÓGICA DEL MÓDULO DE SECCIÓN ---
             $sql = "SELECT 
                         u.uc_nombre, 
                         u.uc_codigo, 
@@ -74,13 +85,12 @@ class ReporteHorarioDocente extends Connection
                     JOIN tbl_eje e ON u.eje_nombre = e.eje_nombre
                     WHERE 
                         s.ani_anio = :anio_param
-                        AND EXISTS (
-                            SELECT 1
+                        AND :cedula_docente = (
+                            SELECT ud.doc_cedula
                             FROM uc_docente ud
                             JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                            WHERE ud.uc_codigo = uh.uc_codigo
-                              AND dh.sec_codigo = uh.sec_codigo
-                              AND ud.doc_cedula = :cedula_docente
+                            WHERE ud.uc_codigo = uh.uc_codigo AND dh.sec_codigo = uh.sec_codigo
+                            LIMIT 1
                         )";
 
             $placeholders = [];
@@ -102,24 +112,13 @@ class ReporteHorarioDocente extends Connection
         }
     }
 
-    public function obtenerOtrasActividades() {
-        if (empty($this->cedula_docente)) return false;
-        try {
-            $stmt = $this->con()->prepare("SELECT * FROM tbl_actividad WHERE doc_cedula = :cedula_docente");
-            $stmt->execute([':cedula_docente' => $this->cedula_docente]);
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) { return false; }
-    }
-
     public function obtenerDatosParrillaHorario() {
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
         
-        $allowed_periods = ($this->fase == 1) ? ['Fase I', 'Anual', 'anual', '0'] : ['Fase II', 'Anual', 'anual'];
-        
         try {
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+            $allowed_periods = $this->get_allowed_periods();
             
-            // --- CONSULTA CORREGIDA APLICANDO LA LÓGICA DEL MÓDULO DE SECCIÓN ---
             $sql = "SELECT 
                         uh.hor_dia, 
                         uh.hor_horainicio, 
@@ -132,13 +131,12 @@ class ReporteHorarioDocente extends Connection
                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE 
                         s.ani_anio = :anio_param
-                        AND EXISTS (
-                            SELECT 1
+                        AND :cedula_docente = (
+                            SELECT ud.doc_cedula
                             FROM uc_docente ud
                             JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                            WHERE ud.uc_codigo = uh.uc_codigo
-                              AND dh.sec_codigo = uh.sec_codigo
-                              AND ud.doc_cedula = :cedula_docente
+                            WHERE ud.uc_codigo = uh.uc_codigo AND dh.sec_codigo = uh.sec_codigo
+                            LIMIT 1
                         )";
             
             $placeholders = [];

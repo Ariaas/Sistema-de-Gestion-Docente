@@ -130,6 +130,14 @@ if (!$puede_registrar) {
                         <h5>Reporte de OD</h5>
                     </a>
                 </div>
+                <div class="col">
+                    <a href="?pagina=rcuentacupos" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/map-solid.svg" alt="Reporte de malla curricular">
+                        </div>
+                        <h5>Reporte de cuenta cupos</h5>
+                    </a>
+                </div>
             </div>
         </section>
     </main>

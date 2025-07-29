@@ -1,5 +1,6 @@
 <?php
 require_once('model/dbconnection.php');
+
 class Transcripcion extends Connection
 {
     private $anio_id;
@@ -17,16 +18,41 @@ class Transcripcion extends Connection
     public function set_fase($valor) {
         $this->fase = trim($valor);
     }
- public function obtenerTranscripciones()
+
+    public function obtenerTranscripciones()
     {
         $co = $this->con();
         try {
             
-            // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" DE TRIPLE VALIDACIÓN ---
+            // --- CONSULTA CORREGIDA CON LA LÓGICA FINAL Y DEFINITIVA ---
             $sqlBase = "SELECT
-                            d.doc_cedula AS `IDDocente`,
-                            d.doc_cedula AS `CedulaDocente`,
-                            CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS `NombreCompletoDocente`,
+                            (
+                                SELECT d.doc_cedula
+                                FROM uc_docente ud
+                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                ORDER BY d.doc_ingreso ASC
+                                LIMIT 1
+                            ) AS IDDocente,
+                            (
+                                SELECT d.doc_cedula
+                                FROM uc_docente ud
+                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                ORDER BY d.doc_ingreso ASC
+                                LIMIT 1
+                            ) AS CedulaDocente,
+                            (
+                                SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
+                                FROM uc_docente ud
+                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                ORDER BY d.doc_ingreso ASC
+                                LIMIT 1
+                            ) AS NombreCompletoDocente,
                             u.uc_nombre AS `NombreUnidadCurricular`,
                             CASE 
                                 WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
@@ -34,19 +60,11 @@ class Transcripcion extends Connection
                                 ELSE s.sec_codigo
                             END AS `NombreSeccion`
                         FROM
-                            docente_horario dh
-                        JOIN tbl_docente d ON dh.doc_cedula = d.doc_cedula
-                        JOIN tbl_seccion s ON dh.sec_codigo = s.sec_codigo
-                        JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo
+                            uc_horario uh
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        -- Esta es la validación clave que faltaba
-                        JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo AND dh.doc_cedula = ud.doc_cedula
-                        ";
+                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo";
             
-            $conditions = [
-                "d.doc_estado = 1",
-                "s.sec_estado = 1"
-            ];
+            $conditions = [ "s.sec_estado = 1" ];
             $params = [];
 
             if (!empty($this->anio_id)) {
@@ -58,7 +76,7 @@ class Transcripcion extends Connection
                 $fase_condition = '';
                 switch ($this->fase) {
                     case '1':
-                        $fase_condition = "(u.uc_periodo = 'Fase I' OR u.uc_periodo LIKE '%anual%')";
+                        $fase_condition = "(u.uc_periodo = 'Fase I' OR u.uc_periodo LIKE '%anual%' OR u.uc_periodo = '0')";
                         break;
                     case '2':
                         $fase_condition = "(u.uc_periodo = 'Fase II' OR u.uc_periodo LIKE '%anual%')";
@@ -70,6 +88,8 @@ class Transcripcion extends Connection
             }
             
             $sqlBase .= " WHERE " . implode(" AND ", $conditions);
+            // Se usa HAVING para filtrar solo las filas donde se encontró un docente válido
+            $sqlBase .= " HAVING IDDocente IS NOT NULL";
             $sqlBase .= " ORDER BY `NombreCompletoDocente`, u.uc_nombre, s.sec_codigo";
 
             $resultado = $co->prepare($sqlBase);
@@ -82,7 +102,8 @@ class Transcripcion extends Connection
         }
     }
 
-  public function obtenerCursosSinDocente() {
+    // El resto de las funciones no necesitan cambios.
+    public function obtenerCursosSinDocente() {
         $co = $this->con();
         try {
             $sqlBase = "SELECT DISTINCT
@@ -103,21 +124,17 @@ class Transcripcion extends Connection
                 $params[':anio_id'] = $this->anio_id;
             }
 
-           
             if (!empty($this->fase)) {
                 switch ($this->fase) {
                     case '1':
-                        $where_clauses[] = "(u.uc_periodo = 'Fase I' OR LOWER(u.uc_periodo) = 'anual')";
+                        $where_clauses[] = "(u.uc_periodo = 'Fase I' OR u.uc_periodo LIKE '%anual%')";
                         break;
                     case '2':
-                        $where_clauses[] = "(u.uc_periodo = 'Fase II' OR LOWER(u.uc_periodo) = 'anual')";
-                        break;
-                    case 'Anual':
-                       
+                        $where_clauses[] = "(u.uc_periodo = 'Fase II' OR u.uc_periodo LIKE '%anual%')";
                         break;
                 }
             }
-           
+            
             if (!empty($where_clauses)) {
                 $sqlBase .= " WHERE " . implode(" AND ", $where_clauses);
             }
