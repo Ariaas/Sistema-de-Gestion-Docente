@@ -172,10 +172,17 @@ class Anio extends Connection
 
         if (isset($fechasFases[2])) {
             $aperturaFase2 = new DateTime($fechasFases[2]);
-            $aperturaPerFase1 = $aperturaFase2->modify('+2 weeks')->format('Y-m-d');
+            $aperturaPerFase1 = (new DateTime($fechasFases[2]))->modify('+2 weeks')->format('Y-m-d');
 
-            $stmtPer1 = $co->prepare("INSERT INTO tbl_per (ani_anio, ani_tipo, per_fase, per_apertura) VALUES (?, ?, 1, ?)");
-            $stmtPer1->execute([$anio, $tipo, $aperturaPerFase1]);
+            $stmtCheck = $co->prepare("SELECT COUNT(*) FROM tbl_per WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 1");
+            $stmtCheck->execute([$anio, $tipo]);
+            if ($stmtCheck->fetchColumn() > 0) {
+                $stmtUpdate = $co->prepare("UPDATE tbl_per SET per_apertura = ? WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 1");
+                $stmtUpdate->execute([$aperturaPerFase1, $anio, $tipo]);
+            } else {
+                $stmtPer1 = $co->prepare("INSERT INTO tbl_per (ani_anio, ani_tipo, per_fase, per_apertura) VALUES (?, ?, 1, ?)");
+                $stmtPer1->execute([$anio, $tipo, $aperturaPerFase1]);
+            }
 
             $mensaje1 = "En 2 semanas abrirá PER fase 1 del año {$anio}.";
             if (!$n->existeNotificacion($mensaje1, $finNotificacion)) {
@@ -232,6 +239,51 @@ class Anio extends Connection
                     $stmtFase->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
                     $stmtFase->bindParam(':faseNumero', $fase['numero'], PDO::PARAM_INT);
                     $stmtFase->execute();
+                }
+
+                $fase2Actual = null;
+                foreach ($this->fases as $fase) {
+                    if ($fase['numero'] == 2) {
+                        $fase2Actual = $fase['apertura'];
+                        break;
+                    }
+                }
+                if ($fase2Actual) {
+                    $aperturaPerFase1 = (new DateTime($fase2Actual))->modify('+2 weeks')->format('Y-m-d');
+                    $stmtCheckPer1 = $co->prepare("SELECT COUNT(*) FROM tbl_per WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 1");
+                    $stmtCheckPer1->execute([$this->aniAnio, $this->aniTipo]);
+                    if ($stmtCheckPer1->fetchColumn() > 0) {
+                        $stmtUpdatePer1 = $co->prepare("UPDATE tbl_per SET per_apertura = ? WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 1");
+                        $stmtUpdatePer1->execute([$aperturaPerFase1, $this->aniAnio, $this->aniTipo]);
+                    } else {
+                        $stmtInsertPer1 = $co->prepare("INSERT INTO tbl_per (ani_anio, ani_tipo, per_fase, per_apertura) VALUES (?, ?, 1, ?)");
+                        $stmtInsertPer1->execute([$this->aniAnio, $this->aniTipo, $aperturaPerFase1]);
+                    }
+                }
+
+                $anioAnterior = $this->aniAnio - 1;
+                $aperturaFase1Actual = null;
+                foreach ($this->fases as $fase) {
+                    if ($fase['numero'] == 1) {
+                        $aperturaFase1Actual = $fase['apertura'];
+                        break;
+                    }
+                }
+                if ($aperturaFase1Actual) {
+                    $stmtAnioAnt = $co->prepare("SELECT 1 FROM tbl_anio WHERE ani_anio = ? AND ani_tipo = ? AND ani_estado = 1");
+                    $stmtAnioAnt->execute([$anioAnterior, $this->aniTipo]);
+                    if ($stmtAnioAnt->fetchColumn()) {
+                        $aperturaPerFase2Anterior = (new DateTime($aperturaFase1Actual))->modify('+2 weeks')->format('Y-m-d');
+                        $stmtCheckPer2 = $co->prepare("SELECT COUNT(*) FROM tbl_per WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 2");
+                        $stmtCheckPer2->execute([$anioAnterior, $this->aniTipo]);
+                        if ($stmtCheckPer2->fetchColumn() > 0) {
+                            $stmtUpdatePer2 = $co->prepare("UPDATE tbl_per SET per_apertura = ? WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 2");
+                            $stmtUpdatePer2->execute([$aperturaPerFase2Anterior, $anioAnterior, $this->aniTipo]);
+                        } else {
+                            $stmtInsertPer2 = $co->prepare("INSERT INTO tbl_per (ani_anio, ani_tipo, per_fase, per_apertura) VALUES (?, ?, 2, ?)");
+                            $stmtInsertPer2->execute([$anioAnterior, $this->aniTipo, $aperturaPerFase2Anterior]);
+                        }
+                    }
                 }
 
                 $co->commit();
@@ -361,22 +413,25 @@ class Anio extends Connection
         try {
             $fechaActual = date('Y-m-d');
 
-            $sqlDesactivar = "UPDATE tbl_anio a 
-                             JOIN tbl_fase f ON a.ani_anio = f.ani_anio AND a.ani_tipo = f.ani_tipo
-                             SET a.ani_activo = 0 
-                             WHERE f.fase_numero = 2 
-                               AND f.fase_cierre < :fechaActual 
-                               AND a.ani_activo = 1";
+            $sqlDesactivar = "UPDATE tbl_anio a
+                JOIN tbl_fase f1 ON a.ani_anio = f1.ani_anio AND a.ani_tipo = f1.ani_tipo AND f1.fase_numero = 1
+                JOIN tbl_fase f2 ON a.ani_anio = f2.ani_anio AND a.ani_tipo = f2.ani_tipo AND f2.fase_numero = 2
+                SET a.ani_activo = 0
+                WHERE a.ani_activo = 1
+                  AND ( :fechaActual < f1.fase_apertura OR :fechaActual > f2.fase_cierre )";
+
             $stmt = $co->prepare($sqlDesactivar);
             $stmt->bindParam(':fechaActual', $fechaActual, PDO::PARAM_STR);
             $stmt->execute();
 
-            $sqlActivar = "UPDATE tbl_anio a 
-                           JOIN tbl_fase f ON a.ani_anio = f.ani_anio AND a.ani_tipo = f.ani_tipo
-                           SET a.ani_activo = 1 
-                           WHERE f.fase_numero = 2 
-                             AND f.fase_cierre >= :fechaActual 
-                             AND a.ani_activo = 0";
+            $sqlActivar = "UPDATE tbl_anio a
+                JOIN tbl_fase f1 ON a.ani_anio = f1.ani_anio AND a.ani_tipo = f1.ani_tipo AND f1.fase_numero = 1
+                JOIN tbl_fase f2 ON a.ani_anio = f2.ani_anio AND a.ani_tipo = f2.ani_tipo AND f2.fase_numero = 2
+                SET a.ani_activo = 1
+                WHERE a.ani_activo = 0
+                  AND :fechaActual >= f1.fase_apertura
+                  AND :fechaActual <= f2.fase_cierre";
+
             $stmt2 = $co->prepare($sqlActivar);
             $stmt2->bindParam(':fechaActual', $fechaActual, PDO::PARAM_STR);
             $stmt2->execute();
