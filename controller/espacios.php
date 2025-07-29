@@ -56,7 +56,8 @@ if (is_file("views/" . $pagina . ".php")) {
 
                 echo  json_encode($e->modificar(
                     $_POST['original_numeroEspacio'],
-                    $_POST['original_edificioEspacio']
+                    $_POST['original_edificioEspacio'],
+                    $_POST['original_tipoEspacio'] 
                 ));
             }
         }

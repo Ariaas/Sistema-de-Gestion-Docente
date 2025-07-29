@@ -123,15 +123,20 @@ class Espacio extends Connection
     }
 
 
-    function Modificar($originalNumero, $originalEdificio)
+    function Modificar($originalNumero, $originalEdificio, $originalTipo)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
-        if (($originalNumero != $this->numeroEspacio || $originalEdificio != $this->edificioEspacio) && $this->existeDirecto($this->numeroEspacio, $this->edificioEspacio, $this->tipoEspacio)) {
+        if (
+            ($originalNumero != $this->numeroEspacio ||
+                $originalEdificio != $this->edificioEspacio ||
+                $originalTipo != $this->tipoEspacio) &&
+            $this->existeDirecto($this->numeroEspacio, $this->edificioEspacio, $this->tipoEspacio)
+        ) {
             $r['resultado'] = 'error';
-            $r['mensaje'] = 'ERROR! <br/> Ya existe un espacio con el nuevo número y edificio.';
+            $r['mensaje'] = 'ERROR! <br/> Ya existe un espacio con el nuevo número, edificio y tipo.';
             return $r;
         }
 
@@ -140,13 +145,14 @@ class Espacio extends Connection
             SET esp_numero = :numeroEspacio,
                 esp_edificio = :edificioEspacio,
                 esp_tipo = :tipoEspacio
-            WHERE esp_numero = :originalNumero AND esp_edificio = :originalEdificio AND esp_estado = 1");
+            WHERE esp_numero = :originalNumero AND esp_edificio = :originalEdificio AND esp_tipo = :originalTipo AND esp_estado = 1");
 
             $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
             $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
             $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
             $stmt->bindParam(':originalNumero', $originalNumero, PDO::PARAM_STR);
             $stmt->bindParam(':originalEdificio', $originalEdificio, PDO::PARAM_STR);
+            $stmt->bindParam(':originalTipo', $originalTipo, PDO::PARAM_STR);
 
             $stmt->execute();
 
@@ -221,6 +227,19 @@ class Espacio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
+            if (
+                $numeroEspacioExcluir !== null &&
+                $edificioEspacioExcluir !== null &&
+                $tipoEspacioExcluir !== null &&
+                $numeroEspacio == $numeroEspacioExcluir &&
+                $edificioEspacio == $edificioEspacioExcluir &&
+                $tipoEspacio == $tipoEspacioExcluir
+            ) {
+                $r['resultado'] = 'no_existe';
+                $r['mensaje'] = 'El espacio no existe.';
+                return $r;
+            }
+
             $sql = "SELECT 1 FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio AND esp_estado = 1";
             if ($numeroEspacioExcluir !== null && $edificioEspacioExcluir !== null && $tipoEspacioExcluir !== null) {
                 $sql .= " AND NOT (esp_numero = :numeroEspacioExcluir AND esp_edificio = :edificioEspacioExcluir AND esp_tipo = :tipoEspacioExcluir)";

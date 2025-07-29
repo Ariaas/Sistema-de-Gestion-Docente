@@ -47,22 +47,47 @@ $(document).ready(function () {
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
   $("#numeroEspacio").on("keypress", function (e) {
-    validarkeypress(/^[0-9\b]*$/, e);
+    validarkeypress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\b]*$/, e);
   });
 
   $("#numeroEspacio").on("keyup", function () {
     $("#snumeroEspacio").css("color", "");
-    const esValido = validarkeyup(
-      /^[0-9]{1,2}$/,
-      $(this),
-      $("#snumeroEspacio"),
-      "El formato permite de 1 a 2 dígitos numéricos."
-    );
+    let valor = $(this).val();
+    let tipo = $("#tipoEspacio").val();
+    let esValido = false;
 
-    if (esValido && $(this).val().length >= 1 && $("#edificio").val() !== "" && $("#tipoEspacio").val() !== "") {
+    if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{5,20}$/.test(valor)) {
+      let prefijo = "";
+      if (tipo === "Laboratorio") prefijo = "Lab. ";
+      else if (tipo === "Aula") prefijo = "Aul. ";
+
+      if (new RegExp("^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]{5,20}$").test(valor)) {
+        esValido = true;
+        $("#snumeroEspacio").text('');
+      } else {
+        esValido = false;
+        $("#snumeroEspacio").text("Solo se permiten nombres como 'Software'.").css("color", "");
+      }
+    } else if (/^\d{1,2}$/.test(valor)) {
+      esValido = true;
+      $("#snumeroEspacio").text('');
+    } else if (valor === "") {
+      $("#snumeroEspacio")
+        .text("El formato permite de 1 a 2 dígitos numéricos o de 5 a 20 letras.")
+        .css("color", "");
+    } else {
+      esValido = false;
+      if (/[0-9]/.test(valor)) {
+        $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos.").css("color", "");
+      } else {
+        $("#snumeroEspacio").text("El formato permite de 5 a 20 letras.").css("color", "");
+      }
+    }
+
+    if (esValido && valor.length >= 1 && $("#edificio").val() !== "" && $("#tipoEspacio").val() !== "") {
       var datos = new FormData();
       datos.append("accion", "existe");
-      datos.append("numeroEspacio", $(this).val());
+      datos.append("numeroEspacio", valor);
       datos.append("edificioEspacio", $("#edificio").val());
       datos.append("tipoEspacio", $("#tipoEspacio").val());
       if ($("#proceso").text() === "MODIFICAR") {
@@ -77,65 +102,76 @@ $(document).ready(function () {
   });
 
   $("#tipoEspacio").on("change", function () {
-    $("#stipoEspacio").text("");
-    if ($("#numeroEspacio").val().length >= 1 && $("#edificio").val() !== "") {
-      var datos = new FormData();
-      datos.append("accion", "existe");
-      datos.append("numeroEspacio", $("#numeroEspacio").val());
-      datos.append("edificioEspacio", $("#edificio").val());
-      datos.append("tipoEspacio", $(this).val());
-      enviaAjax(datos, 'existe');
-    }
     $("#snumeroEspacio").css("color", "");
     $("#proceso").prop("disabled", false);
+    let valor = $("#numeroEspacio").val();
+    let tipo = $(this).val();
+    let edificio = $("#edificio").val();
+    if (valor.length >= 1 && tipo !== "" && edificio !== "") {
+      var datos = new FormData();
+      datos.append("accion", "existe");
+      datos.append("numeroEspacio", valor);
+      datos.append("edificioEspacio", edificio);
+      datos.append("tipoEspacio", tipo);
+      if ($("#proceso").text() === "MODIFICAR") {
+        datos.append("numeroEspacioExcluir", $("#modal1").data("original-numero"));
+        datos.append("edificioEspacioExcluir", $("#modal1").data("original-edificio"));
+        datos.append("tipoEspacioExcluir", $("#modal1").data("original-tipo"));
+      }
+      enviaAjax(datos, 'existe');
+    }
   });
 
   $("#edificio").on("change", function () {
     $("#sedificio").text("");
-    if ($("#numeroEspacio").val().length >= 1 && $("#tipoEspacio").val() !== "") {
-      var datos = new FormData();
-      datos.append("accion", "existe");
-      datos.append("numeroEspacio", $("#numeroEspacio").val());
-      datos.append("edificioEspacio", $(this).val());
-      datos.append("tipoEspacio", $("#tipoEspacio").val());
-      enviaAjax(datos, 'existe');
-    }
     $("#snumeroEspacio").css("color", "");
     $("#proceso").prop("disabled", false);
+    let valor = $("#numeroEspacio").val();
+    let tipo = $("#tipoEspacio").val();
+    let edificio = $(this).val();
+    if (valor.length >= 1 && tipo !== "" && edificio !== "") {
+      var datos = new FormData();
+      datos.append("accion", "existe");
+      datos.append("numeroEspacio", valor);
+      datos.append("edificioEspacio", edificio);
+      datos.append("tipoEspacio", tipo);
+      if ($("#proceso").text() === "MODIFICAR") {
+        datos.append("numeroEspacioExcluir", $("#modal1").data("original-numero"));
+        datos.append("edificioEspacioExcluir", $("#modal1").data("original-edificio"));
+        datos.append("tipoEspacioExcluir", $("#modal1").data("original-tipo"));
+      }
+      enviaAjax(datos, 'existe');
+    }
   });
 
 
   //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
+    if ($(this).prop("disabled")) return; 
     if ($(this).text() == "REGISTRAR") {
-        if (validarenvio()) {
-            var datos = new FormData();
-            datos.append("accion", "registrar");
-            datos.append("numeroEspacio", $("#numeroEspacio").val());
-            datos.append("edificioEspacio", $("#edificio").val());
-            datos.append("tipoEspacio", $("#tipoEspacio").val());
-
-            enviaAjax(datos);
-        }
+      if ($("#snumeroEspacio").text() === "El espacio ya existe.") {
+        $("#snumeroEspacio").css("color", "red");
+        return;
+      }
+      if (validarenvio()) {
+        var datos = new FormData();
+        datos.append("accion", "registrar");
+        datos.append("numeroEspacio", $("#numeroEspacio").val());
+        datos.append("edificioEspacio", $("#edificio").val());
+        datos.append("tipoEspacio", $("#tipoEspacio").val());
+        enviaAjax(datos, 'registrar');
+      }
     } else if ($(this).text() == "MODIFICAR") {
-        if ($("#tipoEspacio").val()) {
-            var datos = new FormData();
-            datos.append("accion", "modificar");
-
-            datos.append("original_numeroEspacio", $("#modal1").data("original-numero"));
-            datos.append("original_edificioEspacio", $("#modal1").data("original-edificio"));
-
-       
-            datos.append("numeroEspacio", $("#numeroEspacio").val());
-            datos.append("edificioEspacio", $("#edificio").val());
-            datos.append("tipoEspacio", $("#tipoEspacio").val());
-
-            enviaAjax(datos);
-        } else {
-            muestraMensaje("error", 4000, "ERROR!", "Por favor, seleccione un tipo de espacio!");
-        }
-
+        var datos = new FormData();
+        datos.append("accion", "modificar");
+        datos.append("original_numeroEspacio", $("#modal1").data("original-numero"));
+        datos.append("original_edificioEspacio", $("#modal1").data("original-edificio"));
+        datos.append("original_tipoEspacio", $("#modal1").data("original-tipo")); 
+        datos.append("numeroEspacio", $("#numeroEspacio").val());
+        datos.append("edificioEspacio", $("#edificio").val());
+        datos.append("tipoEspacio", $("#tipoEspacio").val());
+        enviaAjax(datos, 'modificar');
     } else if ($(this).text() == "ELIMINAR") {
 
         Swal.fire({
@@ -173,7 +209,7 @@ $(document).ready(function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
-    $("#snumeroEspacio").text('');
+    $("#snumeroEspacio").text('').css('color', '');
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
     $("#edificio").val("");
   });
@@ -188,17 +224,23 @@ $(document).ready(function () {
 
 function validarenvio() {
   let esValido = true;
+  let valor = $("#numeroEspacio").val();
 
-  if (
-    validarkeyup(
-      /^[0-9]{1,2}$/,
-      $("#numeroEspacio"),
-      $("#snumeroEspacio"),
-      "El formato permite de 1 a 2 dígitos numéricos."
-    ) == 0
-  ) {
-    if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del número de espacio es incorrecto.");
+  if (/^\d{1,2}$/.test(valor)) {
+    $("#snumeroEspacio").text('');
+  } else if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{5,20}$/.test(valor)) {
+    $("#snumeroEspacio").text('');
+  } else {
     esValido = false;
+    if (/[0-9]/.test(valor)) {
+      if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del número de espacio es incorrecto.");
+      $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos.").css("color", "");
+    } else if (valor === "") {
+      $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos o de 5 a 20 letras.").css("color", "");
+    } else {
+      if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del número de espacio es incorrecto.");
+      $("#snumeroEspacio").text("El formato permite de 5 a 20 letras.").css("color", "");
+    }
   }
 
   if ($("#edificio").val() === null || $("#edificio").val() === "") {
@@ -249,11 +291,12 @@ function pone(pos, accion) {
   const edificio = $(linea).data("edificio");
   const tipo = $(linea).data("tipo");
 
+  $("#modal1").data("original-numero", numero);
+  $("#modal1").data("original-edificio", edificio);
+  $("#modal1").data("original-tipo", tipo);
+
   if (accion == 0) { 
     $("#proceso").text("MODIFICAR");
-    $("#modal1").data("original-numero", numero);
-    $("#modal1").data("original-edificio", edificio);
-    $("#modal1").data("original-tipo", tipo);
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
   } else {
     $("#proceso").text("ELIMINAR");
@@ -289,9 +332,24 @@ function enviaAjax(datos, tipo_accion_local = null) {
           $("#resultadoconsulta").empty();
           let tabla = "";
           lee.mensaje.forEach(item => {
+            let numeroMostrado = item.esp_numero;
+            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{5,20}$/.test(numeroMostrado)) {
+              if (item.esp_tipo === "Laboratorio" && !numeroMostrado.startsWith("Lab. ")) {
+                numeroMostrado = "Lab. " + numeroMostrado.trim();
+              } else if (item.esp_tipo === "Aula" && !numeroMostrado.startsWith("Aul. ")) {
+                numeroMostrado = "Aul. " + numeroMostrado.trim();
+              }
+            } else if (/^\d{1,2}$/.test(numeroMostrado)) {
+              if (item.esp_tipo === "Laboratorio" && !numeroMostrado.startsWith("L-")) {
+                numeroMostrado = "L-" + numeroMostrado;
+              } else if (item.esp_tipo === "Aula" && !numeroMostrado.startsWith("A-")) {
+                numeroMostrado = "A-" + numeroMostrado;
+              }
+            }
+
             tabla += `
             <tr data-numero="${item.esp_numero}" data-edificio="${item.esp_edificio}" data-tipo="${item.esp_tipo}">
-                <td>${item.esp_codigo}</td>
+                <td>${numeroMostrado}</td>
                 <td>${item.esp_tipo}</td>
                 <td>${item.esp_edificio}</td>
                 <td class="text-center">
@@ -327,12 +385,12 @@ function enviaAjax(datos, tipo_accion_local = null) {
             Listar();
           }
         } else if (lee.resultado == "existe" || lee.resultado == "no_existe") {
-
-          if (tipo_accion_local === 'existe' && lee.resultado === 'existe') {
+          if (lee.resultado === 'existe') {
             $("#snumeroEspacio").text('El espacio ya existe.').css('color', 'red');
             $("#proceso").prop("disabled", true);
-          } else {
-            $("#snumeroEspacio").text('').css('color', '');
+          } else if (lee.resultado == "no_existe") {
+            $("#snumeroEspacio").text('');
+            $("#snumeroEspacio").css('color', '');
             $("#proceso").prop("disabled", false);
           }
         }
