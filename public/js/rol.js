@@ -167,7 +167,11 @@ function Listar() {
       $("#nombreRol").prop("disabled", false);
     });
   
-    
+    $('#modal1').on('hidden.bs.modal', function () {
+      $("#proceso").prop("disabled", false);
+      $("#snombreRol").text("").css("color", "");
+    });
+  
   });
   
   //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////

@@ -36,9 +36,11 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'existe') {
             $numeroEspacio = $_POST['numeroEspacio'];
             $edificioEspacio = $_POST['edificioEspacio'];
+            $tipoEspacio = $_POST['tipoEspacio'];
             $numeroEspacioExcluir = isset($_POST['numeroEspacioExcluir']) ? $_POST['numeroEspacioExcluir'] : null;
             $edificioEspacioExcluir = isset($_POST['edificioEspacioExcluir']) ? $_POST['edificioEspacioExcluir'] : null;
-            $resultado = $e->Existe($numeroEspacio, $edificioEspacio, $numeroEspacioExcluir, $edificioEspacioExcluir);
+            $tipoEspacioExcluir = isset($_POST['tipoEspacioExcluir']) ? $_POST['tipoEspacioExcluir'] : null;
+            $resultado = $e->Existe($numeroEspacio, $edificioEspacio, $tipoEspacio, $numeroEspacioExcluir, $edificioEspacioExcluir, $tipoEspacioExcluir);
             echo json_encode($resultado);
         } else {
             $e->setNumero($_POST['numeroEspacio']);
