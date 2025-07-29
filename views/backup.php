@@ -116,16 +116,16 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
             <div class="mantenimiento-container">
                 <div class="mantenimiento-section">
-                    <h3>Respaldo de Bases de Datos</h3>
-                    <p>Se generará un respaldo completo de las bases de datos del sistema (principal y bitácora).</p>
+                   <h3>Respaldo de la Base de Datos</h3>
+                    <p>Se generará un respaldo completo de la base de datos del sistema (db_orgdocente).</p>
                     <button class="btn btn-success" id="guardarRespaldo">Generar Nuevo Respaldo</button>
                 </div>
 
                 <hr>
 
                 <div class="mantenimiento-section">
-                    <h3>Restaurar Sistema desde Respaldo</h3>
-                    <p>Seleccione un archivo ZIP de respaldo para restaurar ambas bases de datos.</p> <label for="selectArchivoRespaldo" class="form-label">Seleccione un archivo de respaldo (.zip):</label>
+                   <h3>Restaurar Sistema desde Respaldo</h3>
+<p>Seleccione un archivo ZIP de respaldo para restaurar la base de datos.</p> <label for="selectArchivoRespaldo" class="form-label">Seleccione un archivo de respaldo (.zip):</label>
                     <select class="form-select" id="selectArchivoRespaldo">
                         <option value="">Cargando respaldos...</option>
                     </select>

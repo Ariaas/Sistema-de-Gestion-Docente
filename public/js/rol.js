@@ -240,8 +240,8 @@ function Listar() {
                   <td>${item.rol_nombre}</td>
                   <td>
                     <button class="btn btn-warning btn-sm agregarPermiso" data-codigo="${item.rol_id}" ${!PERMISOS.registrar ? 'disabled' : ''}>Permisos</button>
-                    <button class="btn btn-warning btn-sm modificar" onclick='pone(this,0)' data-id="${item.rol_id}" data-nombre="${item.rol_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}>Modificar</button>
-                    <button class="btn btn-danger btn-sm eliminar" onclick='pone(this,1)' data-id="${item.rol_id}" data-nombre="${item.rol_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}>Eliminar</button>
+                    <button class="btn btn-icon btn-edit" onclick='pone(this,0)' data-id="${item.rol_id}" data-nombre="${item.rol_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+                    <button class="btn btn-icon btn-delete" onclick='pone(this,1)' data-id="${item.rol_id}" data-nombre="${item.rol_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
                   </td>
                 </tr>
               `);
