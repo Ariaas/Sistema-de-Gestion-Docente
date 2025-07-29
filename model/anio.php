@@ -233,6 +233,25 @@ class Anio extends Connection
                     $stmtFase->bindParam(':faseNumero', $fase['numero'], PDO::PARAM_INT);
                     $stmtFase->execute();
                 }
+                if ($this->aniTipo === 'regular') {
+                    $anioAnterior = $this->aniAnio - 1;
+                    $fase1Actual = null;
+                    foreach ($this->fases as $fase) {
+                        if ($fase['numero'] == 1) {
+                            $fase1Actual = $fase['apertura'];
+                            break;
+                        }
+                    }
+                    if ($fase1Actual) {
+                        $aperturaPerFase2Anterior = (new DateTime($fase1Actual))->modify('+2 weeks')->format('Y-m-d');
+                        $stmtCheck = $co->prepare("SELECT COUNT(*) FROM tbl_per WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 2");
+                        $stmtCheck->execute([$anioAnterior, $this->aniTipo]);
+                        if ($stmtCheck->fetchColumn() > 0) {
+                            $stmtUpdatePer = $co->prepare("UPDATE tbl_per SET per_apertura = ? WHERE ani_anio = ? AND ani_tipo = ? AND per_fase = 2");
+                            $stmtUpdatePer->execute([$aperturaPerFase2Anterior, $anioAnterior, $this->aniTipo]);
+                        }
+                    }
+                }
 
                 $co->commit();
                 $r['resultado'] = 'modificar';
@@ -361,22 +380,25 @@ class Anio extends Connection
         try {
             $fechaActual = date('Y-m-d');
 
-            $sqlDesactivar = "UPDATE tbl_anio a 
-                             JOIN tbl_fase f ON a.ani_anio = f.ani_anio AND a.ani_tipo = f.ani_tipo
-                             SET a.ani_activo = 0 
-                             WHERE f.fase_numero = 2 
-                               AND f.fase_cierre < :fechaActual 
-                               AND a.ani_activo = 1";
+            $sqlDesactivar = "UPDATE tbl_anio a
+                JOIN tbl_fase f1 ON a.ani_anio = f1.ani_anio AND a.ani_tipo = f1.ani_tipo AND f1.fase_numero = 1
+                JOIN tbl_fase f2 ON a.ani_anio = f2.ani_anio AND a.ani_tipo = f2.ani_tipo AND f2.fase_numero = 2
+                SET a.ani_activo = 0
+                WHERE a.ani_activo = 1
+                  AND ( :fechaActual < f1.fase_apertura OR :fechaActual > f2.fase_cierre )";
+
             $stmt = $co->prepare($sqlDesactivar);
             $stmt->bindParam(':fechaActual', $fechaActual, PDO::PARAM_STR);
             $stmt->execute();
 
-            $sqlActivar = "UPDATE tbl_anio a 
-                           JOIN tbl_fase f ON a.ani_anio = f.ani_anio AND a.ani_tipo = f.ani_tipo
-                           SET a.ani_activo = 1 
-                           WHERE f.fase_numero = 2 
-                             AND f.fase_cierre >= :fechaActual 
-                             AND a.ani_activo = 0";
+            $sqlActivar = "UPDATE tbl_anio a
+                JOIN tbl_fase f1 ON a.ani_anio = f1.ani_anio AND a.ani_tipo = f1.ani_tipo AND f1.fase_numero = 1
+                JOIN tbl_fase f2 ON a.ani_anio = f2.ani_anio AND a.ani_tipo = f2.ani_tipo AND f2.fase_numero = 2
+                SET a.ani_activo = 1
+                WHERE a.ani_activo = 0
+                  AND :fechaActual >= f1.fase_apertura
+                  AND :fechaActual <= f2.fase_cierre";
+
             $stmt2 = $co->prepare($sqlActivar);
             $stmt2->bindParam(':fechaActual', $fechaActual, PDO::PARAM_STR);
             $stmt2->execute();
