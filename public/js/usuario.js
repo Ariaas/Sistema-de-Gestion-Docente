@@ -278,6 +278,13 @@ $(document).ready(function () {
       $('#rol_asignado_nombre').val('');
   });
   
+  $('#modal1').on('hidden.bs.modal', function () {
+    $("#proceso").prop("disabled", false);
+    $("#susuarionombre").text("").css("color", "");
+    $("#scorreo").text("").css("color", "");
+    $("#scontrasenia").text("").css("color", "");
+    $("#susuarioRol").text("").css("color", "");
+  });
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////

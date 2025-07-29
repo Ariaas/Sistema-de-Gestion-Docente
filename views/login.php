@@ -60,8 +60,7 @@
                     <div class="modal-body">
                         <label for="usuarioRecuperar" class="form-label">Nombre de usuario</label>
                         <input type="text" class="form-control" id="usuarioRecuperar" name="usuarioRecuperar" required>
-                    </div>
-                    <div class="mb-3">
+                        <br>
                         <div class="g-recaptcha" data-sitekey="6LeahHErAAAAAApcnm06Lpp53VDd_m2_CsXJGTTV"></div>
                     </div>
                     <div class="modal-footer">

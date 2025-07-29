@@ -165,6 +165,10 @@ $(document).ready(function () {
     $("#edificio").val("");
   });
 
+  $('#modal1').on('hidden.bs.modal', function () {
+    $("#proceso").prop("disabled", false);
+    $("#snumeroEspacio").text('').css('color', '');
+  });
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////

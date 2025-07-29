@@ -213,6 +213,11 @@ $(document).ready(function() {
         $("#screditosUC").css("color", "");
         validarkeyup(/^([3-9]|[1-9][0-9])$/, $(this), $("#screditosUC"), "Debe ser un número entre 3 y 99.");
     });
+
+    $('#modal1').on('hidden.bs.modal', function () {
+        $("#proceso").prop("disabled", false);
+        $("#scodigoUC").text(""); 
+    });
 });
 
 function validarenvio() {
@@ -448,8 +453,8 @@ function enviaAjax(datos, accion = "") {
                     crearDT("#tablauc");
                 } else if (lee.resultado == "registrar") {
                     muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
-                    if (lee.mensaje.includes("¡Registro Incluido!")) {
-                        $("#modal1").modal("hide");
+                    if (lee.mensaje.includes("¡Registro Incluido!") || lee.mensaje.includes("registró la unidad de curricular correctamente")) {
+                        $("#modal1").modal("hide"); 
                     }
                     Listar();
                 } else if (lee.resultado == "modificar") {

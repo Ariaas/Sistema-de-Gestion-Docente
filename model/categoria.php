@@ -39,42 +39,62 @@ class Categoria extends Connection
     {
         $r = array();
 
-        if (!$this->Existe($this->categoriaNombre)) {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $stmt = $co->prepare("SELECT * FROM tbl_categoria WHERE cat_nombre = :categoriaNombre AND cat_estado = 1");
+        $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+        $stmt->execute();
+        $existeActiva = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            try {
-
-                $stmt = $co->prepare("INSERT INTO tbl_categoria (
-                    cat_nombre,
-                    cat_descripcion,
-                    cat_estado
-                ) VALUES (
-                    :categoriaNombre,
-                    :categoriaDescripcion,
-                    1
-                )");
-
-                $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
-                $stmt->bindParam(':categoriaDescripcion', $this->categoriaDescripcion, PDO::PARAM_STR);
-
-                $stmt->execute();
-
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró la CATEGORÍA correctamente!';
-            } catch (Exception $e) {
-
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-
-            $co = null;
-        } else {
+        if ($existeActiva) {
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'ERROR! <br/> La CATEGORÍA colocada ya existe!';
+            $co = null;
+            return $r;
         }
 
+        $stmt = $co->prepare("SELECT * FROM tbl_categoria WHERE cat_nombre = :categoriaNombre AND cat_estado = 0");
+        $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+        $stmt->execute();
+        $existeInactiva = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existeInactiva) {
+            $stmtReactivar = $co->prepare("UPDATE tbl_categoria SET cat_descripcion = :categoriaDescripcion, cat_estado = 1 WHERE cat_nombre = :categoriaNombre");
+            $stmtReactivar->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':categoriaDescripcion', $this->categoriaDescripcion, PDO::PARAM_STR);
+            $stmtReactivar->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró la CATEGORÍA correctamente!';
+            $co = null;
+            return $r;
+        }
+
+        try {
+            $stmt = $co->prepare("INSERT INTO tbl_categoria (
+                cat_nombre,
+                cat_descripcion,
+                cat_estado
+            ) VALUES (
+                :categoriaNombre,
+                :categoriaDescripcion,
+                1
+            )");
+
+            $stmt->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+            $stmt->bindParam(':categoriaDescripcion', $this->categoriaDescripcion, PDO::PARAM_STR);
+
+            $stmt->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró la CATEGORÍA correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+
+        $co = null;
         return $r;
     }
 

@@ -34,39 +34,61 @@ class Area extends Connection
     function Registrar()
     {
         $r = array();
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        if (!$this->Existe($this->areaNombre)) {
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $stmt = $co->prepare("SELECT * FROM tbl_area WHERE area_nombre = :areaNombre AND area_estado = 1");
+        $stmt->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
+        $stmt->execute();
+        $existeActiva = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            try {
-                $stmt = $co->prepare("INSERT INTO tbl_area (
-                    area_nombre,
-                    area_descripcion,
-                    area_estado
-                ) VALUES (
-                    :areaNombre,
-                    :areaDescripcion,
-                    1
-                )");
-
-                $stmt->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
-                $stmt->bindParam(':areaDescripcion', $this->areaDescripcion, PDO::PARAM_STR);
-                $stmt->execute();
-
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el área correctamente!';
-            } catch (Exception $e) {
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-
-            $co = null;
-        } else {
+        if ($existeActiva) {
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'ERROR! <br/> El Área ya existe!';
+            $co = null;
+            return $r;
         }
 
+        $stmt = $co->prepare("SELECT * FROM tbl_area WHERE area_nombre = :areaNombre AND area_estado = 0");
+        $stmt->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
+        $stmt->execute();
+        $existeInactiva = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existeInactiva) {
+            $stmtReactivar = $co->prepare("UPDATE tbl_area SET area_descripcion = :areaDescripcion, area_estado = 1 WHERE area_nombre = :areaNombre");
+            $stmtReactivar->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':areaDescripcion', $this->areaDescripcion, PDO::PARAM_STR);
+            $stmtReactivar->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el área correctamente!';
+            $co = null;
+            return $r;
+        }
+
+        try {
+            $stmt = $co->prepare("INSERT INTO tbl_area (
+                area_nombre,
+                area_descripcion,
+                area_estado
+            ) VALUES (
+                :areaNombre,
+                :areaDescripcion,
+                1
+            )");
+
+            $stmt->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
+            $stmt->bindParam(':areaDescripcion', $this->areaDescripcion, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el área correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+
+        $co = null;
         return $r;
     }
 
@@ -75,7 +97,7 @@ class Area extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        
+
         if (!$this->Existe($this->areaNombre, $areaOriginal)) {
             try {
                 $stmt = $co->prepare("UPDATE tbl_area
@@ -101,40 +123,40 @@ class Area extends Connection
     }
 
     function Eliminar()
-{
-    $co = $this->Con();
-    $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $r = array();
-    
-    if ($this->Existe($this->areaNombre, NULL)) {
-        try {
-            $stmt = $co->prepare("UPDATE tbl_area
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+
+        if ($this->Existe($this->areaNombre, NULL)) {
+            try {
+                $stmt = $co->prepare("UPDATE tbl_area
             SET area_estado = 0
             WHERE area_nombre = :areaNombre");
 
-            $stmt->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
-            $stmt->execute();
+                $stmt->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
+                $stmt->execute();
 
+                $r['resultado'] = 'eliminar';
+                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el área correctamente!';
+            } catch (Exception $e) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = $e->getMessage();
+            }
+        } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el área correctamente!';
-        } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            $r['mensaje'] = 'ERROR! <br/> El Área no existe!';
         }
-    } else {
-        $r['resultado'] = 'eliminar';
-        $r['mensaje'] = 'ERROR! <br/> El Área no existe!';
+
+        return $r;
     }
-    
-    return $r;
-}
 
     public function Listar()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        
+
         try {
             $stmt = $co->query("SELECT area_nombre, area_descripcion FROM tbl_area WHERE area_estado = 1");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -144,7 +166,7 @@ class Area extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        
+
         $co = null;
         return $r;
     }
@@ -154,7 +176,7 @@ class Area extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        
+
         try {
             $sql = "SELECT * FROM tbl_area WHERE area_nombre=:areaNombre AND area_estado = 1";
             if ($areaExcluir !== null) {
@@ -167,7 +189,7 @@ class Area extends Connection
             }
             $stmt->execute();
             $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
-            
+
             if ($fila) {
                 $r['resultado'] = 'existe';
                 $r['mensaje'] = 'El Área ya existe!';
@@ -176,7 +198,7 @@ class Area extends Connection
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-        
+
         $co = null;
         return $r;
     }

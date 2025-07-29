@@ -95,12 +95,12 @@ class Login extends Connection
                     $mail->isSMTP();
                     $mail->Host = 'smtp.gmail.com';
                     $mail->SMTPAuth = true;
-                    $mail->Username = 'chicuelomorrilloballena@gmail.com';
-                    $mail->Password = 'rwzg ndcd uoam ybox';
+                    $mail->Username = 'orgdocenteuptaeb@gmail.com';
+                    $mail->Password = 'wjji tmdw gxti klye';
                     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                     $mail->Port = 587;
 
-                    $mail->setFrom('chicuelomorrilloballena@gmail.com', 'Sistema Docente');
+                    $mail->setFrom('orgdocenteuptaeb@gmail.com', 'Sistema Docente');
                     $mail->addAddress($user['usu_correo']);
 
                     $mail->isHTML(true);

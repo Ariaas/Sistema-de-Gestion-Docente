@@ -127,21 +127,21 @@ $(document).ready(function () {
       enviaAjax(datos);
     }
   } else if (accion === "ELIMINAR") {
-      if (
-        validarkeyup(
-          /^[[A-Za-z0-9,\#\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
-          $("#ejeNombre"),
-          $("#sejeNombre"),
-          "Formato incorrecto"
-        ) == 0
-      ) {
-        muestraMensaje(
-          "error",
-          4000,
-          "ERROR!",
-          "Seleccionó el eje incorrecto <br/> por favor verifique nuevamente"
-        );
-      } else {
+    if (
+      validarkeyup(
+        /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s-]{5,30}$/, 
+        $("#ejeNombre"),
+        $("#sejeNombre"),
+        "Formato incorrecto"
+      ) == 0
+    ) {
+      muestraMensaje(
+        "error",
+        4000,
+        "ERROR!",
+        "Seleccionó el eje incorrecto <br/> por favor verifique nuevamente"
+      );
+    } else {
         
         Swal.fire({
           title: "¿Está seguro de eliminar este espacio?",
@@ -183,7 +183,9 @@ $(document).ready(function () {
     $("#ejeNombre").prop("disabled", false);
   });
 
-  
+  $('#modal1').on('hidden.bs.modal', function () {
+    $("#proceso").prop("disabled", false);
+  });
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
@@ -218,7 +220,6 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#ejeNombre").prop("disabled", false);
     $("#ejeDescripcion").prop("disabled", false);
-    // Mostrar los span pero vacíos
     $("#sejeNombre").text("").show();
     $("#sejeDescripcion").text("").show();
   } else {
@@ -310,6 +311,8 @@ function enviaAjax(datos, accion) {
             "Registro Eliminado!<br/>Se eliminó el EJE correctamente!"
           ) {
             $("#modal1").modal("hide");
+            $("#ejeNombre").prop("disabled", false);
+            $("#ejeDescripcion").prop("disabled", false);
             Listar();
           }
         }
