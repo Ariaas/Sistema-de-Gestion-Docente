@@ -188,7 +188,11 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
     ).prop("disabled", false);
   });
 
-  
+  $('#modal1').on('hidden.bs.modal', function () {
+    $("#proceso").prop("disabled", false);
+    $("#scategoriaNombre").text("").css("color", "");
+    $("#scategoriaDescripcion").text("").css("color", "");
+  });
 });
 
 //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////

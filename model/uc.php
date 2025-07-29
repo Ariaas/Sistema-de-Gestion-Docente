@@ -159,56 +159,94 @@ class UC extends Connection
     {
         $r = array();
 
-        if (!$this->Existe($this->codigoUC)) {
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            try {
-                $stmt = $co->prepare("INSERT INTO tbl_uc (
-                    eje_nombre,
-                    area_nombre,
-                    uc_codigo,
-                    uc_nombre,
-                    uc_creditos,
-                    uc_trayecto,
-                    uc_periodo,
-                    uc_electiva,
-                    uc_estado
-                ) VALUES (
-                    :ejeNombre,
-                    :areaNombre,
-                    :codigoUC,
-                    :nombreUC,
-                    :creditosUC,
-                    :trayectoUC,
-                    :periodoUC,
-                    :electivaUC,
-                    1
-                )");
-                $stmt->bindParam(':ejeNombre', $this->ejeUC, PDO::PARAM_STR);
-                $stmt->bindParam(':areaNombre', $this->areaUC, PDO::PARAM_STR);
-                $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
-                $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
-                $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
-                $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_INT);
+        $stmt = $co->prepare("SELECT * FROM tbl_uc WHERE uc_codigo = :codigoUC AND uc_estado = 1");
+        $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
+        $stmt->execute();
+        $existeActiva = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt->execute();
-
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró la unidad de curricular correctamente!';
-            } catch (Exception $e) {
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-
-            $co = null;
-        } else {
+        if ($existeActiva) {
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'ERROR! <br/> El código de la UC ya existe!';
+            $co = null;
+            return $r;
         }
 
+        $stmt = $co->prepare("SELECT * FROM tbl_uc WHERE uc_codigo = :codigoUC AND uc_estado = 0");
+        $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
+        $stmt->execute();
+        $existeInactiva = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existeInactiva) {
+            $stmtReactivar = $co->prepare("UPDATE tbl_uc SET 
+                uc_nombre = :nombreUC,
+                uc_creditos = :creditosUC,
+                uc_trayecto = :trayectoUC,
+                uc_periodo = :periodoUC,
+                uc_electiva = :electivaUC,
+                eje_nombre = :ejeNombre,
+                area_nombre = :areaNombre,
+                uc_estado = 1
+                WHERE uc_codigo = :codigoUC");
+            $stmtReactivar->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_INT);
+            $stmtReactivar->bindParam(':ejeNombre', $this->ejeUC, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':areaNombre', $this->areaUC, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
+            $stmtReactivar->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró la unidad de curricular correctamente!';
+            $co = null;
+            return $r;
+        }
+
+        try {
+            $stmt = $co->prepare("INSERT INTO tbl_uc (
+                eje_nombre,
+                area_nombre,
+                uc_codigo,
+                uc_nombre,
+                uc_creditos,
+                uc_trayecto,
+                uc_periodo,
+                uc_electiva,
+                uc_estado
+            ) VALUES (
+                :ejeNombre,
+                :areaNombre,
+                :codigoUC,
+                :nombreUC,
+                :creditosUC,
+                :trayectoUC,
+                :periodoUC,
+                :electivaUC,
+                1
+            )");
+            $stmt->bindParam(':ejeNombre', $this->ejeUC, PDO::PARAM_STR);
+            $stmt->bindParam(':areaNombre', $this->areaUC, PDO::PARAM_STR);
+            $stmt->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
+            $stmt->bindParam(':nombreUC', $this->nombreUC, PDO::PARAM_STR);
+            $stmt->bindParam(':creditosUC', $this->creditosUC, PDO::PARAM_STR);
+            $stmt->bindParam(':trayectoUC', $this->trayectoUC, PDO::PARAM_STR);
+            $stmt->bindParam(':periodoUC', $this->periodoUC, PDO::PARAM_STR);
+            $stmt->bindParam(':electivaUC', $this->electivaUC, PDO::PARAM_INT);
+
+            $stmt->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró la unidad de curricular correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+
+        $co = null;
         return $r;
     }
 

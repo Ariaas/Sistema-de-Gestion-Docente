@@ -157,6 +157,10 @@ $(document).ready(function () {
     $("#sareaNombre").show();
     $("#sareaDescripcion").show();
   });
+
+  $('#modal1').on('hidden.bs.modal', function () {
+    $("#proceso").prop("disabled", false);
+  });
 });
 
 function validarenvio() {

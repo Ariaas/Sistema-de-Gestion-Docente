@@ -21,15 +21,39 @@ class DefinitivoEmit extends Connection
         $this->fase = trim($valor);
     }
 
-     public function obtenerDatosDefinitivoEmit()
+    public function obtenerDatosDefinitivoEmit()
     {
         $co = $this->con();
         try {
-            // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" DE TRIPLE VALIDACIÓN ---
+            // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" FINAL Y PERFECCIONADA ---
             $sqlBase = "SELECT
-                            d.doc_cedula AS IDDocente,
-                            CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS NombreCompletoDocente,
-                            d.doc_cedula AS CedulaDocente,
+                            (
+                                SELECT d.doc_cedula
+                                FROM uc_docente ud
+                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                ORDER BY d.doc_ingreso ASC
+                                LIMIT 1
+                            ) AS IDDocente,
+                             (
+                                SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
+                                FROM uc_docente ud
+                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                ORDER BY d.doc_ingreso ASC
+                                LIMIT 1
+                            ) AS NombreCompletoDocente,
+                            (
+                                SELECT d.doc_cedula
+                                FROM uc_docente ud
+                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
+                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                ORDER BY d.doc_ingreso ASC
+                                LIMIT 1
+                            ) AS CedulaDocente,
                             u.uc_nombre AS NombreUnidadCurricular,
                             CASE 
                                 WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
@@ -37,16 +61,12 @@ class DefinitivoEmit extends Connection
                                 ELSE s.sec_codigo
                             END AS NombreSeccion
                         FROM
-                            docente_horario dh
-                        JOIN tbl_docente d ON dh.doc_cedula = d.doc_cedula
-                        JOIN tbl_seccion s ON dh.sec_codigo = s.sec_codigo
-                        JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo
+                            uc_horario uh
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        -- Esta es la validación clave que faltaba
-                        JOIN uc_docente ud ON u.uc_codigo = ud.uc_codigo AND dh.doc_cedula = ud.doc_cedula
+                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
                         ";
             
-            $conditions = ["d.doc_estado = 1", "s.sec_estado = 1"];
+            $conditions = ["s.sec_estado = 1"];
             $params = [];
 
             if (!empty($this->anio_id)) {
@@ -56,7 +76,6 @@ class DefinitivoEmit extends Connection
 
             if (!empty($this->fase)) {
                 $fase_condition = '';
-                // Usamos LIKE para incluir 'Anual' y 'anual' sin importar mayúsculas/minúsculas
                 switch ($this->fase) {
                     case '1':
                         $fase_condition = "(u.uc_periodo = 'Fase I' OR u.uc_periodo LIKE '%anual%' OR u.uc_periodo = '0')";
@@ -71,6 +90,7 @@ class DefinitivoEmit extends Connection
             }
             
             $sqlBase .= " WHERE " . implode(" AND ", $conditions);
+            $sqlBase .= " HAVING IDDocente IS NOT NULL"; // Solo mostrar filas con docentes asignados
             $sqlBase .= " ORDER BY NombreCompletoDocente, NombreUnidadCurricular, NombreSeccion";
             
             $resultado = $co->prepare($sqlBase);

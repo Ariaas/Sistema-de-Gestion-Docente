@@ -41,42 +41,57 @@ class Eje extends Connection
     {
         $r = array();
 
-        if (!$this->Existe($this->ejeNombre)) {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            try {
-
-                $stmt = $co->prepare("INSERT INTO tbl_eje (
-                    eje_nombre,
-                    eje_descripcion,
-                    eje_estado
-                ) VALUES (
-                    :ejeNombre,
-                    :ejeDescripcion,
-                    1
-                )");
-
-                $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
-                $stmt->bindParam(':ejeDescripcion', $this->ejeDescripcion, PDO::PARAM_STR);
-
-                $stmt->execute();
-
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/>Se registró el EJE correctamente!';
-            } catch (Exception $e) {
-
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-
-            $co = null;
-        } else {
+        if ($this->Existe($this->ejeNombre)) {
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'ERROR! <br/> El EJE colocado YA existe!';
+            $co = null;
+            return $r;
         }
 
+        $stmt = $co->prepare("SELECT eje_nombre FROM tbl_eje WHERE eje_nombre = :ejeNombre AND eje_estado = 0");
+        $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
+        $stmt->execute();
+        $existeInactivo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existeInactivo) {
+            $stmtReactivar = $co->prepare("UPDATE tbl_eje SET eje_descripcion = :ejeDescripcion, eje_estado = 1 WHERE eje_nombre = :ejeNombre");
+            $stmtReactivar->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
+            $stmtReactivar->bindParam(':ejeDescripcion', $this->ejeDescripcion, PDO::PARAM_STR);
+            $stmtReactivar->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el EJE correctamente!';
+            $co = null;
+            return $r;
+        }
+
+        try {
+            $stmt = $co->prepare("INSERT INTO tbl_eje (
+                eje_nombre,
+                eje_descripcion,
+                eje_estado
+            ) VALUES (
+                :ejeNombre,
+                :ejeDescripcion,
+                1
+            )");
+
+            $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
+            $stmt->bindParam(':ejeDescripcion', $this->ejeDescripcion, PDO::PARAM_STR);
+
+            $stmt->execute();
+
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el EJE correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+
+        $co = null;
         return $r;
     }
 
