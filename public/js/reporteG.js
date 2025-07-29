@@ -1,25 +1,101 @@
 $(document).ready(function() {
     let myChart = null;
+    let currentResponseData = null; // Variable para guardar los datos actuales
     const ctx = document.getElementById('reporteChart').getContext('2d');
 
-    function renderChart(chartData, chartType = 'bar', chartTitle = 'Resultados Estudiantiles') {
+    // Función que procesa los datos y renderiza el gráfico
+    function displayChart(chartType) {
+        if (!currentResponseData) {
+            renderChart({ labels: [], datasets: [] }, 'bar', 'Seleccione los filtros para generar un reporte');
+            return;
+        }
+
+        const tipoReporte = $('#tipo_reporte').val();
+        let chartData = { labels: [], datasets: [] };
+        let chartTitle = 'Resultados del Proceso de Remedial (PER)';
+
+        // 1. Prepara los datos en formato de barras (múltiples datasets)
+        if (tipoReporte === 'general') {
+            const aprobadosDirecto = parseInt(currentResponseData.total_aprobados_directo, 10);
+            const enPer = parseInt(currentResponseData.total_en_per, 10);
+            const aprobadosPer = parseInt(currentResponseData.total_aprobados_per, 10);
+            
+            chartData.labels = ['Resultados Generales'];
+            chartData.datasets = [
+                { label: 'Aprobados Directo', data: [aprobadosDirecto], backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+                { label: 'Reprobaron PER', data: [enPer - aprobadosPer], backgroundColor: 'rgba(255, 99, 132, 0.7)' },
+                { label: 'Aprobaron PER', data: [aprobadosPer], backgroundColor: 'rgba(54, 162, 235, 0.7)' }
+            ];
+
+        } else { // Para reportes detallados
+            chartTitle = (tipoReporte === 'seccion') ? 'Resultados por Unidad Curricular' : 'Resultados por Sección';
+            
+            const labels = [];
+            const directosData = [];
+            const reprobadosPerData = [];
+            const aprobadosPerData = [];
+
+            currentResponseData.forEach(item => {
+                const label = (tipoReporte === 'seccion') ? item.uc_nombre : 'Sección ' + item.sec_codigo;
+                labels.push(label);
+                
+                const aprobadosDir = parseInt(item.aprobados_directo, 10);
+                const enPer = parseInt(item.per_cantidad, 10);
+                const aprobadosPer = parseInt(item.per_aprobados, 10);
+                
+                directosData.push(aprobadosDir);
+                reprobadosPerData.push(enPer - aprobadosPer);
+                aprobadosPerData.push(aprobadosPer);
+            });
+
+            chartData.labels = labels;
+            chartData.datasets = [
+                { label: 'Aprobados Directo', data: directosData, backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+                { label: 'Reprobaron PER', data: reprobadosPerData, backgroundColor: 'rgba(255, 99, 132, 0.7)' },
+                { label: 'Aprobaron PER', data: aprobadosPerData, backgroundColor: 'rgba(54, 162, 235, 0.7)' }
+            ];
+        }
+
+        // 2. Si es Torta o Anillo, transforma los datos a un solo dataset
+        if ((chartType === 'pie' || chartType === 'doughnut') && tipoReporte === 'general') {
+            const transformedData = {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: []
+                }]
+            };
+
+            chartData.datasets.forEach(dataset => {
+                transformedData.labels.push(dataset.label);
+                transformedData.datasets[0].data.push(dataset.data[0]);
+                transformedData.datasets[0].backgroundColor.push(dataset.backgroundColor);
+            });
+            chartData = transformedData; // Usa los datos transformados
+        }
+        
+        renderChart(chartData, chartType, chartTitle);
+    }
+
+    // Función que dibuja/actualiza el canvas del gráfico
+    function renderChart(chartData, chartType, chartTitle) {
         if (myChart) {
             myChart.destroy();
         }
 
-        if ((chartType === 'pie' || chartType === 'doughnut') && chartData.datasets.length > 1) {
-            chartData.datasets = [chartData.datasets[0]];
-        }
+        // Para los gráficos de torta/anillo detallados, las barras agrupadas no se traducen bien.
+        // Se podría implementar una lógica para mostrar solo un dataset si se desea.
+        const isGrouped = chartData.datasets.length > 1;
 
         myChart = new Chart(ctx, {
             type: chartType,
-            data: {
-                labels: chartData.labels,
-                datasets: chartData.datasets
-            },
+            data: chartData,
             options: {
                 responsive: true, maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, display: true, ticks: { precision: 0 } } },
+                scales: { 
+                    x: { stacked: chartType === 'bar' && !isGrouped }, // Apilado si no es agrupado
+                    y: { beginAtZero: true, display: true, ticks: { precision: 0 }, stacked: chartType === 'bar' && !isGrouped } 
+                },
                 plugins: {
                     legend: { display: true, position: 'top' },
                     title: { display: true, text: chartTitle, font: { size: 16 } }
@@ -28,14 +104,11 @@ $(document).ready(function() {
         });
     }
 
-    function updateChartOnTypeChange() {
-        if (myChart) {
-            myChart.config.type = $('#tipo_grafico').val();
-            myChart.update();
-        }
-    }
-
-    $('#tipo_grafico').change(updateChartOnTypeChange);
+    // Eventos de los filtros
+    $('#tipo_grafico').change(function() {
+        displayChart($(this).val());
+    });
+    
     $('#tipo_reporte').change(function() {
         const tipo = $(this).val();
         $('#filtro_seccion_container').toggle(tipo === 'seccion');
@@ -53,6 +126,7 @@ $(document).ready(function() {
             return;
         }
 
+        // Lógica para cargar secciones y UCs...
         seccionSelect.html('<option>Cargando...</option>').prop('disabled', true);
         $.post('?pagina=reporteG', { accion: 'obtener_secciones', anio_completo: anio_completo }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
@@ -84,65 +158,21 @@ $(document).ready(function() {
             processData: false, contentType: false, dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    const responseData = response.datos;
-                    const tipoReporte = $('#tipo_reporte').val();
-                    let chartData = { labels: [], datasets: [] };
-                    let chartTitle = 'Resultados del Proceso de Remedial (PER)';
-
-                    if (tipoReporte === 'general') {
-                        // **MODIFICADO**: Se usa el dato directo del servidor
-                        const aprobadosDirecto = parseInt(responseData.total_aprobados_directo, 10);
-                        const enPer = parseInt(responseData.total_en_per, 10);
-                        const aprobadosPer = parseInt(responseData.total_aprobados_per, 10);
-                        
-                        chartData.labels = ['Resultados Generales'];
-                        chartData.datasets = [
-                            { label: 'Aprobados Directo', data: [aprobadosDirecto], backgroundColor: 'rgba(75, 192, 192, 0.7)' },
-                            { label: 'Reprobaron PER', data: [enPer - aprobadosPer], backgroundColor: 'rgba(255, 99, 132, 0.7)' },
-                            { label: 'Aprobaron PER', data: [aprobadosPer], backgroundColor: 'rgba(54, 162, 235, 0.7)' }
-                        ];
-
-                    } else { // Para reportes detallados
-                        chartTitle = (tipoReporte === 'seccion') ? 'Resultados por Unidad Curricular' : 'Resultados por Sección';
-                        
-                        const labels = [];
-                        const directosData = [];
-                        const reprobadosPerData = [];
-                        const aprobadosPerData = [];
-
-                        responseData.forEach(item => {
-                            const label = (tipoReporte === 'seccion') ? item.uc_nombre : 'Sección ' + item.sec_codigo;
-                            labels.push(label);
-                            
-                            // **MODIFICADO**: Se usa el dato directo del servidor
-                            const aprobadosDir = parseInt(item.aprobados_directo, 10);
-                            const enPer = parseInt(item.per_cantidad, 10);
-                            const aprobadosPer = parseInt(item.per_aprobados, 10);
-                            
-                            directosData.push(aprobadosDir);
-                            reprobadosPerData.push(enPer - aprobadosPer);
-                            aprobadosPerData.push(aprobadosPer);
-                        });
-
-                        chartData.labels = labels;
-                        chartData.datasets = [
-                            { label: 'Aprobados Directo', data: directosData, backgroundColor: 'rgba(75, 192, 192, 0.7)' },
-                            { label: 'Reprobaron PER', data: reprobadosPerData, backgroundColor: 'rgba(255, 99, 132, 0.7)' },
-                            { label: 'Aprobaron PER', data: aprobadosPerData, backgroundColor: 'rgba(54, 162, 235, 0.7)' }
-                        ];
-                    }
-                    
-                    renderChart(chartData, $('#tipo_grafico').val(), chartTitle);
-
+                    currentResponseData = response.datos; // Guarda los datos
+                    displayChart($('#tipo_grafico').val()); // Llama a la función principal para mostrar el gráfico
                 } else {
+                    currentResponseData = null;
                     Swal.fire({ icon: 'error', title: 'Error', text: response.mensaje || 'No se pudo generar el reporte.' });
+                    displayChart('bar'); // Limpia el gráfico
                 }
             },
             error: function() {
+                currentResponseData = null;
                 Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'Hubo un problema al contactar con el servidor.' });
+                displayChart('bar'); // Limpia el gráfico
             }
         });
     });
 
-    renderChart({ labels: [], datasets: [] }, 'bar', 'Seleccione los filtros para generar un reporte');
+    displayChart('bar'); // Renderiza el gráfico vacío al iniciar
 });
