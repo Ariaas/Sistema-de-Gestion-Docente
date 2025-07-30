@@ -103,11 +103,9 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
             <span style="font-weight: 600;">Sistema Docente</span>
         </a>
 
-        <div class="d-flex align-items-center d-lg-none ms-auto">
-            <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarNavbar" aria-controls="sidebarNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-        </div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarNavbar" aria-controls="sidebarNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
         <div class="collapse navbar-collapse" id="sidebarNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
@@ -153,8 +151,7 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                         <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes', 'archivo'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                             <?php if ($docente_asignado): ?>
-                                <!-- <li><a class="dropdown-item <?php echo is_active('archivo', $pagina_actual); ?>" href="?pagina=archivo">Resguardar Notas</a></li> -->
-                            <?php endif; ?>
+                                <?php endif; ?>
                             <?php if ($tiene_permiso_config_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
                             <?php endif; ?>
@@ -177,34 +174,32 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                 </li>
             </ul>
 
-            <div class="d-none d-lg-flex align-items-center ms-auto">
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a href="#" class="nav-link <?php echo is_active('notificaciones', $pagina_actual); ?>" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificacionesBadge" style="display: none;"></span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdown" id="notificacionesPanel" style="width: 350px; max-height: 400px; overflow-y: auto;">
-                            <li><a class="dropdown-item text-center" href="#">Cargando...</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <?php
-                            $foto_perfil = $_SESSION['usu_foto'] ?? 'public/assets/icons/user-circle.svg';
-                            $estilo_filtro = str_contains($foto_perfil, 'user-circle.svg') ? 'filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);' : '';
-                            ?>
-                            <img src="<?php echo $foto_perfil; ?>?v=<?php echo time(); ?>" alt="Foto de perfil" width="24" height="24" class="rounded-circle me-2" style="object-fit: cover; <?php echo $estilo_filtro; ?>">
-                            <strong><?php echo $_SESSION['name'] ?? 'Usuario'; ?></strong>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="?pagina=perfil">Perfil</a></li>
-                            <li><a class="dropdown-item" href="?pagina=fin">Cerrar Sesión</a></li>
-                        </ul>
-                    </li>
-                </ul>
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link <?php echo is_active('notificaciones', $pagina_actual); ?>" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="public/assets/icons/bell.svg" alt="Notificaciones" width="24" height="24" style="filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);">
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificacionesBadge" style="display: none;"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificacionesDropdown" id="notificacionesPanel" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                        <li><a class="dropdown-item text-center" href="#">Cargando...</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <?php
+                        $foto_perfil = $_SESSION['usu_foto'] ?? 'public/assets/icons/user-circle.svg';
+                        $estilo_filtro = str_contains($foto_perfil, 'user-circle.svg') ? 'filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);' : '';
+                        ?>
+                        <img src="<?php echo $foto_perfil; ?>?v=<?php echo time(); ?>" alt="Foto de perfil" width="24" height="24" class="rounded-circle me-2" style="object-fit: cover; <?php echo $estilo_filtro; ?>">
+                        <strong><?php echo $_SESSION['name'] ?? 'Usuario'; ?></strong>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="?pagina=perfil">Perfil</a></li>
+                        <li><a class="dropdown-item" href="?pagina=fin">Cerrar Sesión</a></li>
+                    </ul>
+                </li>
+            </ul>
             </div>
-        </div>
     </div>
 </nav>
 
