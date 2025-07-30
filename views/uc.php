@@ -62,11 +62,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Trayecto</th>
-                                <th>Eje</th>
                                 <th>Área</th>
-                                <th>Créditos</th>
                                 <th>Periodo</th>
-                                <th>Electiva</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -228,7 +225,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     </div>
                                 </div>
                                 <div class="modal-footer justify-content-center">
-                                    <button type="button" class="btn btn-success" id="asignarDocentes">Procesar</button>
+                                    <button type="button" class="btn btn-success" id="asignarDocentes">PROCESAR</button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                                 </div>
                             </div>

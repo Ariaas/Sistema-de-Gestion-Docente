@@ -439,9 +439,16 @@ function enviaAjax(datos, boton) {
                         respuesta.mensaje.forEach(item => {
                             const prefijo = getPrefijoSeccion(item.sec_codigo);
                             const botones_accion = `
-                              <button class="btn btn-info btn-sm ver-horario" data-sec-codigo="${item.sec_codigo}" title="Ver"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg></button>
-                              <button class="btn btn-warning btn-sm modificar-horario" data-sec-codigo="${item.sec_codigo}" title="Modificar"> <img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-                              <button class="btn btn-danger btn-sm eliminar-horario" data-sec-codigo="${item.sec_codigo}" title="Eliminar"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                               <button class="btn btn-icon btn-info ver-horario" data-sec-codigo="${item.sec_codigo}" title="Ver Horario">
+                                 <img src="public/assets/icons/eye.svg" alt="Ver Horario">
+                               </button>
+                               <button class="btn btn-icon btn-warning modificar-horario" data-sec-codigo="${item.sec_codigo}" title="Modificar Horario"> 
+                                 <img src="public/assets/icons/edit.svg" alt="Modificar">
+                               </button>
+                               <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" title="Eliminar Horario">
+                                 <img src="public/assets/icons/trash.svg" alt="Eliminar">
+                               </button>`;
+                            
                             $("#resultadoconsulta").append(`<tr><td>${prefijo}${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
                     }
@@ -583,8 +590,6 @@ $(document).ready(function() {
             const codigoStr = seccion.sec_codigo.toString();
             const trayecto = codigoStr.charAt(0);
             const turno = codigoStr.charAt(1);
-            // ELIMINADO: Ya no se obtiene la cohorte para agrupar
-            // const cohorte = codigoStr.charAt(3);
 
             const turnosNombres = {
                 '1': 'Mañana',
@@ -593,7 +598,6 @@ $(document).ready(function() {
             };
             const turnoNombre = turnosNombres[turno] || 'Desconocido';
 
-            // CAMBIO: Se eliminó la cohorte de la clave de agrupación y del nombre del grupo
             const key = `${seccion.ani_anio}-${seccion.ani_tipo}-${trayecto}-${turno}`;
 
             if (!acc[key]) {

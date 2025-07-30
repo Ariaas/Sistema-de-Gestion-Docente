@@ -98,26 +98,26 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="actividad" class="form-label">Tipo de Actividad</label>
-                                    <input class="form-control" type="text" id="actividad" name="actividad">
+                                    <input class="form-control" type="text" id="actividad" name="actividad" placeholder="Ej: Creación intelectual">
                                     <span id="sactividad"></span>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="descripcion" class="form-label">Descripción</label>
-                                    <input class="form-control" type="text" id="descripcion" name="descripcion">
+                                    <input class="form-control" type="text" id="descripcion" name="descripcion" placeholder="Descripción de la actividad">
                                     <span id="sdescripcion"></span>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="dependencia" class="form-label">Dependencia</label>
-                                    <input class="form-control" type="text" id="dependencia" name="dependencia">
+                                    <input class="form-control" type="text" id="dependencia" name="dependencia" placeholder="Ej: Dependencia de la actividad docente">
                                     <span id="sdependencia"></span>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-8">
                                     <label for="observacion" class="form-label">Observación</label>
-                                    <input class="form-control" type="text" id="observacion" name="observacion">
+                                    <input class="form-control" type="text" id="observacion" name="observacion" placeholder="Observación adicional sobre la actividad">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="horas" class="form-label">Horas</label>
