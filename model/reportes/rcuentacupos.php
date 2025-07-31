@@ -35,17 +35,24 @@ class CuentaCupos extends Connection
     {
         $co = $this->con();
         try {
-          
-            $sql = "SELECT
-                        LEFT(s.sec_codigo, 1) AS Trayecto,
-                        s.sec_codigo AS Seccion,
-                        s.sec_cantidad AS Cantidad
-                    FROM
-                        tbl_seccion s
-                    WHERE
-                        s.ani_anio = :anio_id AND s.sec_estado = 1 
-                    ORDER BY
-                        Trayecto, s.sec_codigo";
+            // --- CONSULTA SIMPLIFICADA PARA EVITAR ERRORES ---
+            // Trae todas las secciones con sus datos de horario (si los tienen)
+            $sql = "
+                SELECT
+                    s.sec_codigo,
+                    s.sec_cantidad,
+                    uh.uc_codigo,
+                    uh.hor_dia,
+                    uh.hor_horainicio
+                FROM
+                    tbl_seccion s
+                LEFT JOIN
+                    uc_horario uh ON s.sec_codigo = uh.sec_codigo
+                WHERE
+                    s.ani_anio = :anio_id AND s.sec_estado = 1
+                ORDER BY
+                    s.sec_codigo;
+            ";
 
             $resultado = $co->prepare($sql);
             $resultado->execute([':anio_id' => $this->anio_id]);

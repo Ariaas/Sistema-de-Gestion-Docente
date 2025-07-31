@@ -428,5 +428,3 @@ function renderTablaPermisos(modulosDisponibles, permisosAsignados) {
     });
     $("#tablaPermisos tbody").html(tbody);
 }
-
-

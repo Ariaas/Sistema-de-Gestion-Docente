@@ -29,6 +29,26 @@ function toRoman($number) {
     return $returnValue;
 }
 
+// ==================================================================
+// --- 1. AQUÍ AÑADIMOS LA FUNCIÓN AUXILIAR ---
+// ==================================================================
+function formatSectionsFromArray($sectionsArray, $wrapAfter = 2) {
+    sort($sectionsArray); // Asegura un orden consistente
+    $total = count($sectionsArray);
+    $output = '';
+    foreach ($sectionsArray as $index => $section) {
+        $output .= $section;
+        if ($index < $total - 1) { // Si no es el último elemento
+            if (($index + 1) % $wrapAfter === 0) { // Si es el 2do, 4to, etc.
+                $output .= "\n"; // Añade un salto de línea
+            } else {
+                $output .= ' - '; // Añade el separador de guion
+            }
+        }
+    }
+    return $output;
+}
+
 $vistaFormularioUc = "views/reportes/rcargaAcademica.php";
 $oUc = new Carga();
 
@@ -73,7 +93,7 @@ if (isset($_POST['generar_uc'])) {
     $styleIzquierda = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
     $styleBordeGruesoExterior = ['borders' => ['outline' => ['borderStyle' => Border::BORDER_THICK]]];
     $styleHeaderInicial = [
-        'font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => 'FF000000']],
+        'font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => 'FFFFFFFF']],
         'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF4472C4']],
     ];
@@ -110,7 +130,12 @@ if (isset($_POST['generar_uc'])) {
     $datosParaRenderizar = [];
     foreach ($gruposPorCarga as $trayecto => $grupos) {
         foreach ($grupos as $grupoData) {
-            $etiquetaSeccion = implode("\n", $grupoData['secciones']);
+            // ==================================================================
+            // --- 2. AQUÍ REEMPLAZAMOS LA LÍNEA ORIGINAL POR LA NUEVA FUNCIÓN ---
+            // ==================================================================
+            // Línea anterior: $etiquetaSeccion = implode("\n", $grupoData['secciones']);
+            $etiquetaSeccion = formatSectionsFromArray($grupoData['secciones'], 2); // El 2 indica que hará un salto de línea cada 2 secciones
+            
             $datosParaRenderizar[$trayecto][$etiquetaSeccion] = $grupoData['unidades'];
         }
     }
@@ -180,7 +205,7 @@ if (isset($_POST['generar_uc'])) {
     ];
 
     foreach ($datosParaRenderizar as $numTrayecto => $secciones) {
-        if ($numTrayecto == 0 || $bloquesEnFila >= 2) {
+        if ($numTrayecto > 0 && $bloquesEnFila >= 2) {
             $rowOffset += $alturaMaximaFila + 2;
             $colOffset = 1;
             $bloquesEnFila = 0;
@@ -193,8 +218,7 @@ if (isset($_POST['generar_uc'])) {
         $colOffset += 5;
         $bloquesEnFila++;
     }
-
-  
+ 
     $highestColumn = $sheet->getHighestDataColumn();
     $lastColIndex = Coordinate::columnIndexFromString($highestColumn);
 
@@ -203,21 +227,11 @@ if (isset($_POST['generar_uc'])) {
         $mod = ($i - 1) % 5;
         
         switch ($mod) {
-            case 0: 
-                $sheet->getColumnDimension($colLetter)->setWidth(10);
-                break;
-            case 1: 
-                $sheet->getColumnDimension($colLetter)->setWidth(12);
-                break;
-            case 2: 
-                $sheet->getColumnDimension($colLetter)->setWidth(38);
-                break;
-            case 3: 
-                $sheet->getColumnDimension($colLetter)->setWidth(30);
-                break;
-            case 4: 
-                $sheet->getColumnDimension($colLetter)->setWidth(4);
-                break;
+            case 0: $sheet->getColumnDimension($colLetter)->setWidth(10); break;
+            case 1: $sheet->getColumnDimension($colLetter)->setWidth(18); break;
+            case 2: $sheet->getColumnDimension($colLetter)->setWidth(38); break;
+            case 3: $sheet->getColumnDimension($colLetter)->setWidth(30); break;
+            case 4: $sheet->getColumnDimension($colLetter)->setWidth(4); break;
         }
     }
     

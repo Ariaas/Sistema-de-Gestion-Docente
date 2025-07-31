@@ -24,47 +24,33 @@ class Transcripcion extends Connection
         $co = $this->con();
         try {
             
-            // --- CONSULTA CORREGIDA CON LA LÓGICA FINAL Y DEFINITIVA ---
+            // --- CONSULTA AJUSTADA: Usa una coma como separador para procesarlo en PHP ---
             $sqlBase = "SELECT
-                            (
-                                SELECT d.doc_cedula
-                                FROM uc_docente ud
-                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
-                                ORDER BY d.doc_ingreso ASC
-                                LIMIT 1
-                            ) AS IDDocente,
-                            (
-                                SELECT d.doc_cedula
-                                FROM uc_docente ud
-                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
-                                ORDER BY d.doc_ingreso ASC
-                                LIMIT 1
-                            ) AS CedulaDocente,
-                            (
-                                SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
-                                FROM uc_docente ud
-                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
-                                ORDER BY d.doc_ingreso ASC
-                                LIMIT 1
-                            ) AS NombreCompletoDocente,
-                            u.uc_nombre AS `NombreUnidadCurricular`,
-                            CASE 
-                                WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
-                                WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
-                                ELSE s.sec_codigo
-                            END AS `NombreSeccion`
-                        FROM
-                            uc_horario uh
-                        JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo";
+                d.doc_cedula AS CedulaDocente,
+                CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS NombreCompletoDocente,
+                u.uc_nombre AS `NombreUnidadCurricular`,
+                GROUP_CONCAT(
+                    DISTINCT CASE 
+                        WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
+                        WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
+                        ELSE s.sec_codigo
+                    END ORDER BY s.sec_codigo SEPARATOR ','
+                ) AS `NombreSeccion`
+            FROM
+                uc_docente ud
+            INNER JOIN
+                tbl_docente d ON ud.doc_cedula = d.doc_cedula
+            INNER JOIN
+                tbl_uc u ON ud.uc_codigo = u.uc_codigo
+            INNER JOIN
+                uc_horario uh ON u.uc_codigo = uh.uc_codigo
+            INNER JOIN
+                tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+            INNER JOIN
+                docente_horario dh ON s.sec_codigo = dh.sec_codigo AND d.doc_cedula = dh.doc_cedula
+            ";
             
-            $conditions = [ "s.sec_estado = 1" ];
+            $conditions = [ "s.sec_estado = 1", "d.doc_estado = 1" ];
             $params = [];
 
             if (!empty($this->anio_id)) {
@@ -88,13 +74,19 @@ class Transcripcion extends Connection
             }
             
             $sqlBase .= " WHERE " . implode(" AND ", $conditions);
-            // Se usa HAVING para filtrar solo las filas donde se encontró un docente válido
-            $sqlBase .= " HAVING IDDocente IS NOT NULL";
-            $sqlBase .= " ORDER BY `NombreCompletoDocente`, u.uc_nombre, s.sec_codigo";
+            
+            $sqlBase .= " GROUP BY d.doc_cedula, u.uc_codigo";
+            $sqlBase .= " ORDER BY NombreCompletoDocente, u.uc_nombre";
 
             $resultado = $co->prepare($sqlBase);
             $resultado->execute($params);
-            return $resultado->fetchAll(PDO::FETCH_ASSOC);
+            
+            $data = $resultado->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($data as &$row) {
+                $row['IDDocente'] = $row['CedulaDocente'];
+            }
+
+            return $data;
 
         } catch (PDOException $e) {
             error_log("Error en Transcripcion::obtenerTranscripciones: " . $e->getMessage());

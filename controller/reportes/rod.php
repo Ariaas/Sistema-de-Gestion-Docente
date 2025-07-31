@@ -10,6 +10,29 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
+// --- FUNCIÓN AÑADIDA PARA NÚMEROS ROMANOS ---
+function toRoman($number) {
+    $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V']; // Suficiente para las fases
+    return $map[$number] ?? $number;
+}
+
+function formatSectionsFromArray($sectionsArray, $wrapAfter = 2) {
+    sort($sectionsArray);
+    $total = count($sectionsArray);
+    $output = '';
+    foreach ($sectionsArray as $index => $section) {
+        $output .= $section;
+        if ($index < $total - 1) {
+            if (($index + 1) % $wrapAfter === 0) {
+                $output .= "\n";
+            } else {
+                $output .= ' - ';
+            }
+        }
+    }
+    return $output;
+}
+
 $oReporte = new Rod();
 $vistaFormulario = "views/reportes/rod.php";
 
@@ -27,28 +50,34 @@ if (isset($_POST['generar_reporte_rod'])) {
     $queryData = $oReporte->obtenerDatosReporte();
 
     if (empty($queryData)) {
-        // ... (código para reporte sin resultados, no cambia)
+        // Código para reporte sin resultados (sin cambios)
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Sin Datos");
+        $sheet->mergeCells('A1:N5');
+        $sheet->setCellValue('A1', 'No se encontraron datos para los criterios seleccionados.');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $writer = new Xlsx($spreadsheet);
+        if(ob_get_length()) ob_end_clean();
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="Reporte_Sin_Datos.xlsx"');
+        header('Cache-Control: max-age=0');
+        $writer->save('php://output');
+        exit;
     }
 
+    // Agrupación de datos (sin cambios en la lógica)
     $reportData = [];
     foreach ($queryData as $row) {
         $docenteId = $row['doc_cedula'];
         if (!isset($reportData[$docenteId])) {
-            
-            // --- CORRECCIÓN APLICADA: Se implementa la lógica de horas del reporte de ejemplo ---
             $dedicacion = $row['doc_dedicacion'];
-            $horas_max = 0; // Valor por defecto
-
-            if ($dedicacion === 'Exclusiva') {
-                $horas_max = 16;
-            } elseif ($dedicacion === 'Tiempo Completo') {
-                $horas_max = 16;
-            } elseif ($dedicacion === 'Medio Tiempo') {
-                $horas_max = 8; // Valor asumido de la lógica anterior
-            } elseif ($dedicacion === 'Tiempo Convencional') {
-                $horas_max = 12; // Valor asumido de la lógica anterior
-            }
-            // --- FIN DE LA CORRECCIÓN ---
+            $horas_max = 0;
+            if ($dedicacion === 'Exclusiva') $horas_max = 16;
+            elseif ($dedicacion === 'Tiempo Completo') $horas_max = 16;
+            elseif ($dedicacion === 'Medio Tiempo') $horas_max = 8;
+            elseif ($dedicacion === 'Tiempo Convencional') $horas_max = 12;
 
             $reportData[$docenteId] = [
                 'nombre_completo' => $row['nombre_completo'],
@@ -58,7 +87,7 @@ if (isset($_POST['generar_reporte_rod'])) {
                 'doc_dedicacion' => $row['doc_dedicacion'],
                 'doc_anio_concurso' => $row['doc_anio_concurso'],
                 'doc_tipo_concurso' => $row['doc_tipo_concurso'],
-                'doc_horas_max' => $horas_max, // Esta es la columna "HORAS ACADEMICAS"
+                'doc_horas_max' => $horas_max,
                 'doc_horas_descarga' => (int)($row['doc_horas_descarga'] ?? 0),
                 'doc_observacion' => $row['doc_observacion'],
                 'coordinaciones' => $row['coordinaciones'],
@@ -79,14 +108,27 @@ if (isset($_POST['generar_reporte_rod'])) {
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("ORGANIZACION DOCENTE");
 
+    // Estilos
     $headerStyle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $columnHeaderStyle = ['font' => ['bold' => true, 'size' => 8], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $cellStyle = ['font' => ['size' => 8], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     
+    // --- NUEVO ESTILO PARA EL BORDE INFERIOR ---
+    $bottomBorderStyle = [
+        'borders' => [
+            'bottom' => ['borderStyle' => Border::BORDER_THICK, 'color' => ['argb' => 'FF000000']],
+        ]
+    ];
+    
+    // Encabezados del documento
     $sheet->mergeCells('A2:N2')->setCellValue('A2', 'CUADRO RESUMEN ORGANIZACIÓN DOCENTE')->getStyle('A2:N2')->applyFromArray($headerStyle);
     $sheet->mergeCells('A3:C3')->setCellValue('A3', 'PNF: Informática');
-    $sheet->mergeCells('J3:M3')->setCellValue('J3', 'LAPSO: ' . $faseNumero . '-' . $anioId);
     
+    // --- CAMBIO: APLICAR ESTILO DE BORDE Y USAR NÚMEROS ROMANOS ---
+    $sheet->getStyle('A3:C3')->applyFromArray($bottomBorderStyle);
+    $sheet->mergeCells('J3:M3')->setCellValue('J3', 'LAPSO: ' . toRoman($faseNumero) . '-' . $anioId);
+    $sheet->getStyle('J3:M3')->applyFromArray($bottomBorderStyle);
+
     $columnas = ['N°', 'APELLIDOS Y NOMBRES', 'C.I.', 'FECHA DE INGRESO', 'PERFIL PROFESIONAL', 'DEDICACION', 'HORAS ACADEMICAS', 'HORAS ASIGNADAS', 'HORAS DESCARGA', 'FALTA HORAS ACAD', 'UNIDAD CURRICULAR', 'AÑO DE CONCURSO', 'SECCIÓN', 'OBSERVACION'];
     $sheet->fromArray($columnas, NULL, 'A5');
     $sheet->getStyle('A5:N5')->applyFromArray($columnHeaderStyle);
@@ -96,19 +138,30 @@ if (isset($_POST['generar_reporte_rod'])) {
     $itemNumber = 1;
 
     foreach ($reportData as $docente) {
-        $rowCount = max(1, count($docente['asignaciones']));
+        
+        $ucToSectionsMap = [];
+        foreach ($docente['asignaciones'] as $asig) {
+            $ucToSectionsMap[$asig['uc_nombre']][] = $asig['sec_codigo'];
+        }
+
+        $rowCount = max(1, count($ucToSectionsMap));
         $startRowTeacher = $filaActual;
 
+        // Escribir datos principales del docente
         $sheet->setCellValue("A{$startRowTeacher}", $itemNumber);
         $sheet->setCellValue("B{$startRowTeacher}", $docente['nombre_completo']);
         $sheet->setCellValue("C{$startRowTeacher}", $docente['doc_cedula']);
-        $sheet->setCellValue("D{$startRowTeacher}", $docente['doc_fecha_ingreso'] ? date('d/m/Y', strtotime($docente['doc_fecha_ingreso'])) : '');
+        
+        // --- CAMBIO: FORMATO DE FECHA A DD-MM-YYYY ---
+        $sheet->setCellValue("D{$startRowTeacher}", $docente['doc_fecha_ingreso'] ? date('d-m-Y', strtotime($docente['doc_fecha_ingreso'])) : '');
+        
         $sheet->setCellValue("E{$startRowTeacher}", $docente['doc_perfil_profesional']);
         $sheet->setCellValue("F{$startRowTeacher}", $docente['doc_dedicacion']);
         $sheet->setCellValue("G{$startRowTeacher}", $docente['doc_horas_max']);
         $sheet->setCellValue("H{$startRowTeacher}", $docente['horas_asignadas'] > 0 ? $docente['horas_asignadas'] : '0');
         $sheet->setCellValue("I{$startRowTeacher}", $docente['doc_horas_descarga'] > 0 ? $docente['doc_horas_descarga'] : '0');
         
+        // El cálculo de horas faltantes es correcto
         $horasFaltantes = $docente['doc_horas_max'] - $docente['horas_asignadas'] - $docente['doc_horas_descarga'];
         $sheet->setCellValue("J{$startRowTeacher}", $horasFaltantes);
 
@@ -116,21 +169,24 @@ if (isset($_POST['generar_reporte_rod'])) {
         $tipoConcurso = $docente['doc_tipo_concurso'];
         $concursoDisplay = ($anioConcurso && $anioConcurso !== '0000-00-00') ? date('Y', strtotime($anioConcurso)) . ' - ' . $tipoConcurso : '';
         $sheet->setCellValue("L{$startRowTeacher}", $concursoDisplay);
-
         $observaciones = [];
         if (!empty($docente['doc_observacion'])) { $observaciones[] = $docente['doc_observacion']; }
         if (!empty($docente['coordinaciones'])) { $observaciones[] = 'Coordinaciones: ' . $docente['coordinaciones']; }
         $sheet->setCellValue("N{$startRowTeacher}", implode('; ', $observaciones));
         
-        if (!empty($docente['asignaciones'])) {
+        // Renderizar asignaciones agrupadas
+        if (!empty($ucToSectionsMap)) {
             $tempFila = $startRowTeacher;
-            foreach ($docente['asignaciones'] as $asig) {
-                $sheet->setCellValue("K{$tempFila}", $asig['uc_nombre']);
-                $sheet->setCellValue("M{$tempFila}", $asig['sec_codigo']);
+            foreach ($ucToSectionsMap as $ucName => $sectionsArray) {
+                $seccionesFormateadas = formatSectionsFromArray($sectionsArray, 2);
+
+                $sheet->setCellValue("K{$tempFila}", $ucName);
+                $sheet->setCellValue("M{$tempFila}", $seccionesFormateadas);
                 $tempFila++;
             }
         }
 
+        // Combinar celdas del docente
         $endRowTeacher = $startRowTeacher + $rowCount - 1;
         $celdasACombinar = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'L', 'N'];
         if ($rowCount > 1) {
@@ -143,15 +199,17 @@ if (isset($_POST['generar_reporte_rod'])) {
         $itemNumber++;
     }
     
+    // Aplicar estilos y anchos
     $finDeDatos = $filaActual - 1;
     if ($finDeDatos >= 6) {
         $sheet->getStyle('A6:N' . $finDeDatos)->applyFromArray($cellStyle);
         $sheet->getStyle("A6:D{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("F6:J{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle("L6:M{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("K6:K{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle("N6:N{$finDeDatos}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
     }
-    
-    $anchos = ['A'=>4, 'B'=>22, 'C'=>10, 'D'=>10, 'E'=>22, 'F'=>10, 'G'=>10, 'H'=>10, 'I'=>10, 'J'=>10, 'K'=>28, 'L'=>15, 'M'=>15, 'N'=>25];
+    $anchos = ['A'=>4, 'B'=>22, 'C'=>10, 'D'=>10, 'E'=>22, 'F'=>10, 'G'=>10, 'H'=>10, 'I'=>10, 'J'=>10, 'K'=>28, 'L'=>15, 'M'=>18, 'N'=>25];
     foreach($anchos as $col => $ancho) { $sheet->getColumnDimension($col)->setWidth($ancho); }
 
     $writer = new Xlsx($spreadsheet);
@@ -166,4 +224,7 @@ if (isset($_POST['generar_reporte_rod'])) {
 } else {
     $listaAnios = $oReporte->obtenerAnios();
     require_once($vistaFormulario);
-}
+} 
+
+
+//quita eso de la suma para calcular las horas  de descarga, y dime como estas calculando las horas de asignadas

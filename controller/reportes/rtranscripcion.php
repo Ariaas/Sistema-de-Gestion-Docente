@@ -38,6 +38,29 @@ if (isset($_POST['generar_transcripcion'])) {
         }
     }
 
+    // --- FUNCIÓN AUXILIAR PARA FORMATEAR LAS SECCIONES ---
+    // Esta función añade un salto de línea cada N secciones.
+    function formatSectionsWithWrapping($sectionString, $wrapAfter = 3) {
+        if (empty($sectionString)) {
+            return '';
+        }
+        $sections = explode(',', $sectionString);
+        $total = count($sections);
+        $output = '';
+        foreach ($sections as $index => $section) {
+            $output .= $section;
+            if ($index < $total - 1) { // Si no es el último elemento
+                if (($index + 1) % $wrapAfter === 0) { // Si es el 3ro, 6to, etc.
+                    $output .= "\n"; // Añade un salto de línea
+                } else {
+                    $output .= ' - '; // Añade el separador de guion
+                }
+            }
+        }
+        return $output;
+    }
+
+
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("TRANSCRIPCION");
@@ -47,13 +70,12 @@ if (isset($_POST['generar_transcripcion'])) {
     $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleData = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_LEFT, 'wrapText' => true]];
     $styleDataCenter = ['alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true]];
- 
-  
+
     $sheet->mergeCells('A1:E1')->setCellValue('A1', "ASIGNACION DE SECCIONES");
     $sheet->getStyle('A1:E1')->applyFromArray($styleTitle)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
     $sheet->getRowDimension(1)->setRowHeight(20);
 
-   
+    
     $sheet->setCellValue('A2', 'N°');
     $sheet->setCellValue('B2', 'CEDULA');
     $sheet->setCellValue('C2', 'NOMBRE Y APELLIDO');
@@ -61,7 +83,6 @@ if (isset($_POST['generar_transcripcion'])) {
     $sheet->setCellValue('E2', 'SECCION COMPLETA');
     $sheet->getStyle('A2:E2')->applyFromArray($styleHeader);
 
- 
     $filaActual = 3;
     $itemNumber = 1;
 
@@ -76,7 +97,12 @@ if (isset($_POST['generar_transcripcion'])) {
                 
                 foreach ($assignments as $assignment) {
                     $sheet->setCellValue("D{$filaActual}", $assignment['NombreUnidadCurricular']);
-                    $sheet->setCellValue("E{$filaActual}", $assignment['NombreSeccion']);
+                    
+                    // --- AQUÍ SE USA LA NUEVA FUNCIÓN ---
+                    // Formateamos las secciones antes de escribirlas en la celda.
+                    $seccionesFormateadas = formatSectionsWithWrapping($assignment['NombreSeccion'], 3);
+                    $sheet->setCellValue("E{$filaActual}", $seccionesFormateadas);
+
                     $filaActual++;
                 }
                 
@@ -106,7 +132,7 @@ if (isset($_POST['generar_transcripcion'])) {
     $sheet->getColumnDimension('B')->setWidth(15);
     $sheet->getColumnDimension('C')->setWidth(40);
     $sheet->getColumnDimension('D')->setWidth(50);
-    $sheet->getColumnDimension('E')->setWidth(20);
+    $sheet->getColumnDimension('E')->setWidth(25); // Un poco más ancho para que quepan 3 secciones
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
