@@ -109,8 +109,6 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
   );
 });
 
-//////////////////////////////BOTONES/////////////////////////////////////
-
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
       if (validarenvio()) {
@@ -194,8 +192,6 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
     $("#scategoriaDescripcion").text("").css("color", "");
   });
 });
-
-//////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
   let esValido = true;

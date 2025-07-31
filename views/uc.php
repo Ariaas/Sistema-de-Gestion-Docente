@@ -140,7 +140,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             }
                                             if (!empty($areasEliminadas)) {
                                                 foreach ($areasEliminadas as $areaEliminada) {
-                                                    // Evita duplicados
+                                               
                                                     if (!in_array($areaEliminada, $areasActivas)) {
                                                         echo "<option value='" . htmlspecialchars($areaEliminada) . "'>" . htmlspecialchars($areaEliminada) . " (eliminado)</option>";
                                                     }

@@ -1,7 +1,6 @@
 <?php include_once("public/components/head.php"); ?>
 
 <style>
-    /* Estilos para el botón "Volver Arriba" */
     #btnVolverArriba {
         display: none;
         position: fixed;
@@ -24,7 +23,6 @@
         background-color: #0a58ca;
     }
 
-    /* Estilos para el acordeón y el contenido */
     .accordion-button:not(.collapsed) {
         color: #0c63e4;
         background-color: #e7f1ff;
@@ -224,7 +222,6 @@
                                 }
                                 echo '</ul>';
 
-                                // Lógica especial para módulos con contenido extra (como Docentes o Espacios)
                                 if (isset($module['modal_img_1'])) {
                                     echo '<div class="text-center mb-4">';
                                     echo '<img src="/Sistema-de-Gestion-Docente/Sistema-de-Gestion-Docente/public/assets/img/manual-imagenes/' . $module['modal_img_1'] . '.png" alt="Modal ' . $module['title'] . '" class="img-fluid rounded shadow" style="max-width:800px;width:100%;height:auto;border:2px solid #e0e0e0;">';
@@ -232,7 +229,6 @@
                                 }
 
                                 if ($module['id'] === 'modulo-docentes') {
-                                    // Contenido específico del Módulo Docentes
                                     echo '<div class="row justify-content-center">
                                             <div class="col-md-8">
                                                 <div class="alert alert-secondary">
@@ -254,7 +250,6 @@
                                 }
 
                                 if ($module['id'] === 'modulo-espacios') {
-                                    // Contenido específico del Módulo Espacios
                                     echo '<div class="row justify-content-center">
                                             <div class="col-md-6">
                                                 <div class="alert alert-secondary">
@@ -279,10 +274,8 @@
     <button onclick="topFunction()" id="btnVolverArriba" title="Ir arriba">&uarr;</button>
 
     <script>
-        // Script para el botón "Volver Arriba"
         let mybutton = document.getElementById("btnVolverArriba");
 
-        // Cuando el usuario se desplaza 100px desde la parte superior, muestra el botón
         window.onscroll = function() {
             scrollFunction()
         };
@@ -295,7 +288,6 @@
             }
         }
 
-        // Cuando el usuario hace clic en el botón, se desplaza a la parte superior de la página
         function topFunction() {
             window.scrollTo({
                 top: 0,
@@ -303,19 +295,15 @@
             });
         }
 
-        // Script para permitir que los enlaces del índice abran el acordeón correspondiente
         document.querySelectorAll('.card-body a').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
-                // No previene el comportamiento por defecto del ancla (el salto a la sección)
-                // e.preventDefault();
 
-                const targetId = this.getAttribute('href'); // e.g., #modulo-docentes
+                const targetId = this.getAttribute('href');
                 const accordionItem = document.querySelector(targetId);
 
                 if (accordionItem) {
                     const collapseElement = accordionItem.querySelector('.accordion-collapse');
                     if (collapseElement) {
-                        // Usar la instancia de Bootstrap si ya existe, o crear una nueva
                         const bsCollapse = bootstrap.Collapse.getInstance(collapseElement) || new bootstrap.Collapse(collapseElement, {
                             toggle: false
                         });

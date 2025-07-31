@@ -22,7 +22,6 @@ $acciones_json_validas = [
     'validar_clase_en_vivo',
     'unir_horarios'
 ];
-// Controlador seccion
 
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
     $o = new Seccion();
@@ -77,7 +76,6 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     $anio_anio,
                     $anio_tipo
                 );
-                // Si la sección se registró correctamente, generar el horario aleatorio
                 if ($respuesta['resultado'] === 'registrar_seccion_ok' && $codigoSeccion && $trayecto) {
                     $resultado_horario = $o->CrearHorarioAleatorio($codigoSeccion, $trayecto);
                     $respuesta['horario_aleatorio'] = $resultado_horario;
@@ -122,7 +120,6 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'validar_clase_en_vivo':
-                // MODIFICADO: Recibir y pasar los 3 campos de la clave del espacio
                 $respuesta = $o->ValidarClaseEnVivo(
                     $_POST['doc_cedula'] ?? null,
                     $_POST['esp_numero'] ?? null,

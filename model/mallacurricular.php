@@ -22,7 +22,6 @@ class Malla extends Connection
         $this->mal_activa = $mal_activa;
     }
 
-    // GETTERS Y SETTERS (VITALES PARA QUE EL CONTROLADOR FUNCIONE)
     public function getMalCodigo()
     {
         return $this->mal_codigo;

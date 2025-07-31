@@ -192,7 +192,6 @@ class HorarioDocente extends Connection
         return $r;
     }
 
-    // --- Funciones auxiliares ---
     public function obtenerLapsosActivos()
     {
         $co = $this->Con();
@@ -211,7 +210,6 @@ class HorarioDocente extends Connection
     {
         try {
             $co = $this->Con();
-            // --- CONSULTA CORREGIDA ---
             $sql = "
                 SELECT 
                     CASE 
@@ -254,13 +252,11 @@ class HorarioDocente extends Connection
 
             $franjas_obj = [];
             foreach ($horario_docente as $clase) {
-                // Genera una clave única para cada franja horaria (ej: '08:00-08:40')
                 $franja_key = $clase['hor_horainicio'] . '-' . $clase['hor_horafin'];
                 if (!isset($franjas_obj[$franja_key])) {
                     $franjas_obj[$franja_key] = ['inicio' => $clase['hor_horainicio'], 'fin' => $clase['hor_horafin']];
                 }
             }
-            // Ordena las franjas horarias por su hora de inicio
             usort($franjas_obj, fn($a, $b) => strcmp($a['inicio'], $b['inicio']));
 
             return ['resultado' => 'ok', 'horario' => $horario_docente, 'franjas' => array_values($franjas_obj)];

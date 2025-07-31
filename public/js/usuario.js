@@ -287,8 +287,6 @@ $(document).ready(function () {
   });
 });
 
-//////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
-
 function validarenvio() {
   let esValido = true;
   

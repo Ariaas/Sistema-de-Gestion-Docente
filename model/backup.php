@@ -36,10 +36,8 @@ class Mantenimiento  extends Connection
         $fecha_actual = date('Ymd_His');
         $sql_files_to_zip = [];
         
-        // Conexión a la única base de datos
         $pdo_connection = new Connection();
 
-        // Llamamos directamente a la función que usa PHP puro
         $resultado_alternativo = $this->GuardarRespaldoAlternativoUnico(
             $pdo_connection->Con(),
             'orgdocente',
@@ -55,7 +53,6 @@ class Mantenimiento  extends Connection
         $sql_files_to_zip[] = $resultado_alternativo['filepath_sql'];
         $pdo_connection = null;
 
-        // El resto del código para comprimir en ZIP sigue igual
         $zip_file_base_name = 'respaldo_completo_' . $fecha_actual . '.zip';
         $zip_file_path = $directorio_respaldos . $zip_file_base_name;
         $zip = new ZipArchive();
@@ -66,7 +63,6 @@ class Mantenimiento  extends Connection
             }
             $zip->close();
 
-            // Borra el archivo .sql temporal
             foreach ($sql_files_to_zip as $sql_file) {
                 if (file_exists($sql_file)) {
                     unlink($sql_file);
@@ -90,20 +86,16 @@ class Mantenimiento  extends Connection
  private function RestaurarDesdeSQL($pdo, $sql_file_path)
 {
     try {
-        // Lee el contenido completo del archivo SQL
         $sql_content = file_get_contents($sql_file_path);
         if ($sql_content === false) {
             throw new Exception("No se pudo leer el archivo de respaldo SQL.");
         }
 
-        // Simplemente ejecuta todo el contenido del archivo.
-        // PDO es capaz de manejar múltiples sentencias contenidas en un string.
         $pdo->exec($sql_content);
 
         return true;
 
     } catch (Exception $e) {
-        // Lanza la excepción para que la función principal la capture y muestre el error.
         throw new Exception("Error durante la restauración SQL: " . $e->getMessage());
     }
 }
@@ -189,7 +181,6 @@ class Mantenimiento  extends Connection
             throw new Exception("El archivo de respaldo ZIP '$archivo_zip_nombre' no existe.");
         }
 
-        // Descomprime el archivo en un directorio temporal
         $zip = new ZipArchive;
         $temp_dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'restore_' . uniqid() . DIRECTORY_SEPARATOR;
         if (!mkdir($temp_dir, 0777, true) && !is_dir($temp_dir)) {
@@ -201,23 +192,18 @@ class Mantenimiento  extends Connection
         $zip->extractTo($temp_dir);
         $zip->close();
 
-        // Busca el archivo .sql dentro de lo que se descomprimió
         $archivos_sql_extraidos = glob($temp_dir . '*.sql');
         if (empty($archivos_sql_extraidos)) {
             $this->limpiarDirectorioTemporal($temp_dir);
             throw new Exception("No se encontraron archivos .sql dentro del ZIP.");
         }
 
-        // Obtiene la conexión a la base de datos
         $pdo_connection = new Connection();
         $pdo = $pdo_connection->Con();
 
-        // Llama a la nueva función de restauración con PHP
         $this->RestaurarDesdeSQL($pdo, $archivos_sql_extraidos[0]);
         
-        $pdo_connection = null; // Cierra la conexión
-
-        // Limpia el directorio temporal
+        $pdo_connection = null; 
         $this->limpiarDirectorioTemporal($temp_dir);
 
         return ["status" => "success", "message" => "La base de datos se ha restaurado exitosamente desde: " . $archivo_zip_nombre];

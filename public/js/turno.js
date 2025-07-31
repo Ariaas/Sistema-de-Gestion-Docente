@@ -94,8 +94,6 @@ function procesarModificacion() {
     }
 }
 
-// --- FUNCIÓN ACTUALIZADA ---
-// Ahora el mensaje de la alerta es igual al de la imagen.
 function procesarEliminacion() {
     Swal.fire({
         title: "¿Está seguro que quieres Eliminar este turno?",

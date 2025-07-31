@@ -116,7 +116,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         <div class="modal fade" tabindex="-1" role="dialog" id="modalEliminar">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
+                    <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">Confirmar Eliminación</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -130,7 +130,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         </div>
                     </div>
                     <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+                        <button type="button" class="btn btn-primary" id="btnConfirmarEliminar">Eliminar</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     </div>
                 </div>

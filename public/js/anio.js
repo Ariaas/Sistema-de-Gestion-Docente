@@ -205,9 +205,7 @@ function Listar() {
     });
     
   });
-  
-  //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
-  
+ 
   function existeAnio() {
   var datos = new FormData();
   datos.append('accion', 'existe');

@@ -21,7 +21,6 @@ if (is_file("views/horariodocente.php")) {
         if ($accion == 'consultar') {
             $resultado = $e->Listar();
         } elseif ($accion == 'eliminar') {
-            // Usamos los campos originales que siempre se envían y no están deshabilitados
             $e->setDocCedula($_POST['original_cedula']);
             $e->setHdoLapso($_POST['original_lapso']);
             $e->setHdoTipoactividad($_POST['original_actividad']);

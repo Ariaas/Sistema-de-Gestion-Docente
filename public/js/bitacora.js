@@ -71,9 +71,6 @@ function Listar() {
     
   });
   
-  //////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
-  
- 
   function enviaAjax(datos) {
     $.ajax({
       async: true,
