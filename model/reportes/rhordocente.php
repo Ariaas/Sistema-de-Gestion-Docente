@@ -119,11 +119,14 @@ class ReporteHorarioDocente extends Connection
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
             $allowed_periods = $this->get_allowed_periods();
             
+            // --- AJUSTE: Seleccionar los datos del espacio por separado ---
             $sql = "SELECT 
                         uh.hor_dia, 
                         uh.hor_horainicio, 
                         uh.hor_horafin, 
-                        CONCAT(uh.esp_edificio, ' - ', uh.esp_numero) as esp_codigo, 
+                        uh.esp_edificio,
+                        uh.esp_numero,
+                        uh.esp_tipo,
                         uh.sec_codigo, 
                         u.uc_nombre
                     FROM uc_horario uh
@@ -155,5 +158,14 @@ class ReporteHorarioDocente extends Connection
             error_log("Error en obtenerDatosParrillaHorario: " . $e->getMessage());
             return []; 
         }
+    }
+    // Añade esta función a tu archivo de modelo
+    public function getTurnos() {
+        try {
+            $sql = "SELECT tur_nombre, tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_estado = 1";
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return []; }
     }
 }

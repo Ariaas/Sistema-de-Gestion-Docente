@@ -7,7 +7,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-
 function getTrayectoFromCode($sec_codigo) {
     $primerDigito = substr($sec_codigo, 0, 1);
     switch ($primerDigito) {
@@ -20,7 +19,6 @@ function getTrayectoFromCode($sec_codigo) {
     }
 }
 
-
 function formatSeccionCode($sec_codigo) {
     $primerDigito = substr($sec_codigo, 0, 1);
     if (in_array($primerDigito, ['0', '1', '2'])) {
@@ -31,6 +29,57 @@ function formatSeccionCode($sec_codigo) {
     return $sec_codigo; 
 }
 
+// --- NUEVA FUNCIÓN DE AGRUPACIÓN ---
+function procesarYAgruparDatos($datosCrudos) {
+    $gruposPorDestino = [];
+
+    // Paso 1: Agrupar las secciones de origen por su destino común
+    foreach ($datosCrudos as $fila) {
+        // Usamos el código de promoción como clave. Si no hay, se tratan individualmente.
+        $claveDestino = $fila['promocion_codigo'] ?? 'SIN_PROMOCION_' . $fila['origen_codigo'];
+
+        if (!isset($gruposPorDestino[$claveDestino])) {
+            $gruposPorDestino[$claveDestino] = [
+                'origenes' => [],
+                'origen_cantidad_total' => 0,
+                'info_promocion' => $fila // Guardamos la info del primer registro del grupo
+            ];
+        }
+        
+        $gruposPorDestino[$claveDestino]['origenes'][] = $fila['origen_codigo'];
+        $gruposPorDestino[$claveDestino]['origen_cantidad_total'] += (int)$fila['origen_cantidad'];
+    }
+
+    // Paso 2: Construir la estructura final de datos procesados a partir de los grupos
+    $datosProcesados = [];
+    foreach ($gruposPorDestino as $grupo) {
+        $primerOrigen = $grupo['origenes'][0];
+        $trayectoActual = getTrayectoFromCode($primerOrigen);
+        
+        // Unir los códigos de origen con un guion
+        sort($grupo['origenes']);
+        $codigoOrigenAgrupado = implode('-', $grupo['origenes']);
+
+        // Añadir la fila agrupada al lado "actual" del reporte
+        $datosProcesados[$trayectoActual]['actuales'][] = [
+            'codigo' => $codigoOrigenAgrupado,
+            'cantidad' => $grupo['origen_cantidad_total']
+        ];
+        
+        // Añadir la información de promoción (si existe) al lado "siguiente"
+        $infoPromocion = $grupo['info_promocion'];
+        if ($infoPromocion['promocion_codigo']) {
+            $trayectoSiguiente = getTrayectoFromCode($infoPromocion['promocion_codigo']);
+            // Usar la clave de promoción para evitar duplicados en la columna de destino
+            $datosProcesados[$trayectoActual]['siguientes'][$infoPromocion['promocion_codigo']] = [
+                'trayecto' => $trayectoSiguiente,
+                'codigo' => $infoPromocion['promocion_codigo'],
+                'cantidad' => $infoPromocion['promocion_cantidad']
+            ];
+        }
+    }
+    return $datosProcesados;
+}
 
 
 $oProsecucion = new ProsecucionReport();
@@ -42,39 +91,22 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
         die("Error: Debe seleccionar un año académico.");
     }
 
-    
     $datosCrudos = $oProsecucion->obtenerDatosProsecucion($selectedAnio);
-    $datosProcesados = [];
-    foreach ($datosCrudos as $fila) {
-        $trayectoActual = getTrayectoFromCode($fila['origen_codigo']);
-        
-        $datosProcesados[$trayectoActual]['actuales'][] = [
-            'codigo' => $fila['origen_codigo'],
-            'cantidad' => $fila['origen_cantidad']
-        ];
-        
-        if ($fila['promocion_codigo']) {
-            $trayectoSiguiente = getTrayectoFromCode($fila['promocion_codigo']);
-            $datosProcesados[$trayectoActual]['siguientes'][$fila['promocion_codigo']] = [
-                'trayecto' => $trayectoSiguiente,
-                'codigo' => $fila['promocion_codigo'],
-                'cantidad' => $fila['promocion_cantidad']
-            ];
-        }
-    }
-
     
+    // --- Llamada a la nueva función de agrupación ---
+    $datosProcesados = procesarYAgruparDatos($datosCrudos);
+
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("Prosecución " . $selectedAnio);
 
-    
+    // --- Estilos ---
     $styleHeader = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $styleColHeader = ['font' => ['bold' => true], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleCenter = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleBorders = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]]];
 
-    
+    // --- Cabeceras del Excel ---
     $sheet->mergeCells('A1:G1')->setCellValue('A1', 'UPTAEB - PNF INFORMATICA');
     $sheet->getStyle('A1')->applyFromArray($styleHeader);
     $sheet->setCellValue('A3', 'Trayecto')->setCellValue('B3', 'Secciones')->setCellValue('C3', 'Cantidad')
@@ -82,7 +114,7 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
           ->setCellValue('G3', 'Carga Académica');
     $sheet->getStyle('A3:G3')->applyFromArray($styleColHeader);
 
-    
+    // --- Llenado de datos en el Excel ---
     $filaActual = 4;
     $ordenTrayectos = ['Inicial', 'I', 'II', 'III', 'IV'];
 
@@ -93,20 +125,16 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
         $numFilasActual = count($seccionesActuales);
         $filaInicioBloque = $filaActual;
 
-        
         $sheet->mergeCells("A{$filaInicioBloque}:A" . ($filaInicioBloque + $numFilasActual - 1));
         $sheet->setCellValue("A{$filaInicioBloque}", $trayectoActual)->getStyle("A{$filaInicioBloque}")->applyFromArray($styleCenter);
 
-       
         foreach ($seccionesActuales as $sec) {
-          
             $codigoFormateado = formatSeccionCode($sec['codigo']);
             $sheet->setCellValue("B{$filaActual}", $codigoFormateado)->getStyle("B{$filaActual}")->applyFromArray($styleCenter);
             $sheet->setCellValue("C{$filaActual}", $sec['cantidad'])->getStyle("C{$filaActual}")->applyFromArray($styleCenter);
             $filaActual++;
         }
 
-     
         $seccionesSiguientes = $datosProcesados[$trayectoActual]['siguientes'] ?? [];
         
         $sheet->mergeCells("D{$filaInicioBloque}:D" . ($filaInicioBloque + $numFilasActual - 1));
@@ -116,11 +144,8 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
 
         if (!empty($seccionesSiguientes)) {
             $trayectosDestino = array_unique(array_column($seccionesSiguientes, 'trayecto'));
-            
-           
             $seccionesDestinoCodigos = array_column($seccionesSiguientes, 'codigo');
             $seccionesDestinoFormateadas = array_map('formatSeccionCode', $seccionesDestinoCodigos);
-
             $cantidadTotalSiguiente = array_sum(array_column($seccionesSiguientes, 'cantidad'));
             $numTotalSeccionesSiguiente = count($seccionesSiguientes);
             
@@ -133,12 +158,11 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
         }
     }
     
-    
+    // --- Formato y Salida ---
     $sheet->getStyle('A3:G' . ($filaActual - 1))->applyFromArray($styleBorders);
     foreach(range('A','G') as $col) { $sheet->getColumnDimension($col)->setAutoSize(true); }
     $sheet->getColumnDimension('G')->setWidth(20);
 
-   
     $writer = new Xlsx($spreadsheet);
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="Reporte_Prosecucion_' . $selectedAnio . '.xlsx"');

@@ -13,6 +13,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
+// Objeto creado fuera del if/else para que esté disponible en ambos casos
 $oAulario = new AularioReport();
 
 if (isset($_POST['generar_aulario_report'])) {
@@ -29,19 +30,43 @@ if (isset($_POST['generar_aulario_report'])) {
     $oAulario->setFase($fase);
     $oAulario->setEspacio($espacio_filtrado);
 
+    // --- Generar Plantilla de Horarios ---
+    $turnos = $oAulario->getTurnosCompletos();
+    $slot_duration_minutes = 40; // Duración de cada bloque de clase en minutos
+    $todas_las_franjas = [];
+
+    foreach ($turnos as $turno) {
+        $nombre_turno = ucfirst(strtolower($turno['tur_nombre']));
+        $todas_las_franjas[$nombre_turno] = [];
+        $hora_actual = new DateTime($turno['tur_horaInicio']);
+        $hora_fin_turno = new DateTime($turno['tur_horaFin']);
+
+        while ($hora_actual < $hora_fin_turno) {
+            $franja_inicio = clone $hora_actual;
+            $hora_actual->modify('+' . $slot_duration_minutes . ' minutes');
+            $franja_fin = ($hora_actual > $hora_fin_turno) ? $hora_fin_turno : clone $hora_actual;
+
+            $db_start_time_key = $franja_inicio->format('H:i:00');
+            $display_string = $franja_inicio->format('H:i') . ' a ' . $franja_fin->format('H:i');
+            
+            $todas_las_franjas[$nombre_turno][$display_string] = $db_start_time_key;
+        }
+    }
+
     $horarioDataRaw = $oAulario->getAulariosFiltrados();
 
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0); 
-
     
+    // --- Estilos y Definiciones ---
     $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleSubheaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleTableHeader = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD0E4F5']]];
     $styleTimeSlot = ['font' => ['bold' => true, 'size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true]];
-    $days_of_week = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sábado"];
+    $days_of_week = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
+    // --- Función para renderizar la tabla de horario ---
     $renderScheduleTable = function(Worksheet $sheet, $title_suffix, $slots_to_render, &$currentRow, $gridData) use ($days_of_week, $styleSubheaderTitle, $styleTableHeader, $styleTimeSlot, $styleScheduleCell) {
         if (empty($slots_to_render)) return;
         $startRow = $currentRow;
@@ -71,8 +96,6 @@ if (isset($_POST['generar_aulario_report'])) {
         $currentRow += 2;
     };
 
-
-
     if (empty($horarioDataRaw)) {
         $sheet = new Worksheet($spreadsheet, "Sin Resultados");
         $spreadsheet->addSheet($sheet, 0);
@@ -94,10 +117,28 @@ if (isset($_POST['generar_aulario_report'])) {
             $sheet->getStyle("A{$currentRow}")->applyFromArray($styleHeaderTitle);
             $currentRow+=2;
 
-            $gridData = [];
-            $distinctDbTimeSlots = [];
+            // --- 1. Lógica para agrupar secciones ---
+            $horarioProcesado = [];
             foreach ($horarioData as $item) {
+                $clave = $item['hor_dia'] . '|' . $item['hor_horainicio'] . '|' . $item['hor_horafin'] . '|' . $item['uc_nombre'] . '|' . $item['NombreCompletoDocente'];
+                if (!isset($horarioProcesado[$clave])) {
+                    $horarioProcesado[$clave] = $item;
+                    $horarioProcesado[$clave]['sec_codigo'] = [];
+                }
+                $horarioProcesado[$clave]['sec_codigo'][] = $item['sec_codigo'];
+            }
+            foreach ($horarioProcesado as $clave => $item) {
+                sort($item['sec_codigo']);
+                $horarioProcesado[$clave]['sec_codigo'] = implode('-', array_unique($item['sec_codigo']));
+            }
+            
+            // --- 2. Llenar la parrilla $gridData con la información ---
+            $gridData = [];
+            foreach ($horarioProcesado as $item) {
                 $dia = ucfirst(strtolower(trim($item['hor_dia'])));
+                if ($dia == 'Miercoles') $dia = 'Miércoles';
+                if ($dia == 'Sabado') $dia = 'Sábado';
+                
                 $horaInicioBD = trim($item['hor_horainicio']);
                 
                 $cell_content = [
@@ -108,33 +149,23 @@ if (isset($_POST['generar_aulario_report'])) {
                     $cell_content[] = $item['NombreCompletoDocente'];
                 }
 
-                
                 if(isset($gridData[$dia][$horaInicioBD])) {
                     $gridData[$dia][$horaInicioBD] .= "\n---\n" . implode("\n\n", $cell_content);
                 } else {
                     $gridData[$dia][$horaInicioBD] = implode("\n\n", $cell_content);
                 }
-                
-                $distinctDbTimeSlots[$horaInicioBD] = $item['hor_horafin'];
             }
-            
-            $morning_slots_render = [];
-            $afternoon_slots_render = [];
-            foreach ($distinctDbTimeSlots as $inicio => $fin) {
-                $display_string = substr($inicio, 0, 5) . " a " . substr($fin, 0, 5);
-                if (strcmp($inicio, "13:00:00") < 0) {
-                    $morning_slots_render[$display_string] = $inicio;
-                } else {
-                    $afternoon_slots_render[$display_string] = $inicio;
+
+            // --- 3. Renderizar la tabla usando la plantilla y los datos de $gridData ---
+            foreach($todas_las_franjas as $nombreTurno => $franjas) {
+                if (!empty($franjas)) {
+                    $renderScheduleTable($sheet, mb_strtoupper($nombreTurno, 'UTF-8'), $franjas, $currentRow, $gridData);
                 }
             }
-
-            $renderScheduleTable($sheet, "MAÑANA", $morning_slots_render, $currentRow, $gridData);
-            $renderScheduleTable($sheet, "TARDE", $afternoon_slots_render, $currentRow, $gridData);
         }
     }
-
     
+    // --- Salida del archivo Excel ---
     if (ob_get_length()) ob_end_clean();
     $outputFileName = "Reporte_Aulario_" . $anio . ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -145,7 +176,7 @@ if (isset($_POST['generar_aulario_report'])) {
     exit;
 
 } else {
-   
+    // --- Carga de la vista inicial con los filtros ---
     $listaAnios = $oAulario->getAniosActivos();
     $listaFases = $oAulario->getFases();
     $listaEspacios = $oAulario->getEspacios();

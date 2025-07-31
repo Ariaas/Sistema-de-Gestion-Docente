@@ -32,7 +32,14 @@ class AularioReport extends Connection
     
     public function getEspacios() {
         try {
-            $sql = "SELECT CONCAT(esp_tipo, ' ', esp_numero, ' (', esp_edificio, ')') as esp_codigo, esp_tipo FROM tbl_espacio WHERE esp_estado = 1 ORDER BY esp_codigo ASC";
+           $sql = "SELECT
+            CASE
+                WHEN esp_tipo = 'Laboratorio' THEN CONCAT('Lab. ', esp_numero, ' - ', esp_edificio)
+                ELSE CONCAT(esp_tipo, ' ', esp_numero, ' (', esp_edificio, ')')
+            END as esp_codigo,
+            esp_tipo
+        FROM tbl_espacio
+        WHERE esp_estado = 1 ORDER BY esp_codigo ASC";
             $stmt = $this->con()->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -50,7 +57,10 @@ class AularioReport extends Connection
             
             // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" ---
             $sql_base = "SELECT
-                            CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')') AS esp_codigo,
+                           CASE
+    WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('Lab. ', uh.esp_numero, ' - ', uh.esp_edificio)
+    ELSE CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')')
+END AS esp_codigo,
                             uh.hor_dia,
                             CONCAT(uh.hor_horainicio, ':00') as hor_horainicio,
                             CONCAT(uh.hor_horafin, ':00') as hor_horafin,
@@ -83,10 +93,13 @@ class AularioReport extends Connection
             $in_clause = implode(', ', $period_placeholders);
             $sql_base .= " AND u.uc_periodo IN ({$in_clause})";
 
-            if (isset($this->espacio) && $this->espacio !== '') {
-                $sql_base .= " AND CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')') = :espacio_param";
-                $params[':espacio_param'] = $this->espacio;
-            }
+          if (isset($this->espacio) && $this->espacio !== '') {
+    $sql_base .= " AND CASE
+                        WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('Lab. ', uh.esp_numero, ' - ', uh.esp_edificio)
+                        ELSE CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')')
+                      END = :espacio_param";
+    $params[':espacio_param'] = $this->espacio;
+}
             
             $sql_base .= " ORDER BY esp_codigo ASC, uh.hor_horainicio ASC, uh.hor_dia ASC";
             
@@ -99,5 +112,14 @@ class AularioReport extends Connection
             error_log("Error en AularioReport::getAulariosFiltrados: " . $e->getMessage());
             return false;
         }
+    }
+
+     public function getTurnosCompletos() {
+        try {
+            $sql = "SELECT tur_nombre, tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_estado = 1 ORDER BY tur_horaInicio ASC";
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { return []; }
     }
 }

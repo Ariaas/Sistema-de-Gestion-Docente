@@ -11,63 +11,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-function formatAndSortSections($sectionsArray, $wrapAfter = 3) {
-    // ... (esta función no cambia)
-    if (empty($sectionsArray)) return '';
-    $formattedSections = [];
-    foreach($sectionsArray as $sec_codigo){
-        $trayectoNum = substr($sec_codigo, 0, 1);
-        if (in_array($trayectoNum, ['0', '1', '2'])) {
-            $formattedSections[] = 'IN' . $sec_codigo;
-        } elseif (in_array($trayectoNum, ['3', '4'])) {
-            $formattedSections[] = 'IIN' . $sec_codigo;
-        } else {
-            $formattedSections[] = $sec_codigo;
-        }
-    }
-    sort($formattedSections);
-    $total = count($formattedSections);
-    $output = '';
-    foreach ($formattedSections as $index => $section) {
-        $output .= $section;
-        if ($index < $total - 1) {
-            if (($index + 1) % $wrapAfter === 0) { $output .= "\n"; } 
-            else { $output .= ' - '; }
-        }
-    }
-    return $output;
-}
-
 $oReporte = new SeccionReport();
-
-// Lógica para generar bloques de horario dinámicamente (no cambia)
-$turnos_db = $oReporte->getTurnos();
-$TODOS_LOS_BLOQUES_MANANA = [];
-$TODOS_LOS_BLOQUES_TARDE = [];
-function generarBloques($horaInicio, $horaFin) {
-    $bloques = [];
-    try {
-        $tiempoActual = new DateTime($horaInicio);
-        $tiempoFin = new DateTime($horaFin);
-        while ($tiempoActual < $tiempoFin) {
-            $inicioBloque = clone $tiempoActual;
-            $tiempoActual->add(new DateInterval('PT40M'));
-            if ($tiempoActual > $tiempoFin) { $finBloque = $tiempoFin; }
-            else { $finBloque = clone $tiempoActual; }
-            $formatoDisplay = $inicioBloque->format('h:i a') . " a " . $finBloque->format('h:i a');
-            $formatoDBKey = $inicioBloque->format('H:i:s');
-            $bloques[$formatoDisplay] = $formatoDBKey;
-        }
-    } catch (Exception $e) {}
-    return $bloques;
-}
-foreach ($turnos_db as $turno) {
-    if (stripos($turno['tur_nombre'], 'mañana') !== false) {
-        $TODOS_LOS_BLOQUES_MANANA = generarBloques($turno['tur_horaInicio'], $turno['tur_horaFin']);
-    } elseif (stripos($turno['tur_nombre'], 'tarde') !== false) {
-        $TODOS_LOS_BLOQUES_TARDE = generarBloques($turno['tur_horaInicio'], $turno['tur_horaFin']);
-    }
-}
 
 if (isset($_POST['generar_seccion_report'])) {
     
@@ -81,27 +25,44 @@ if (isset($_POST['generar_seccion_report'])) {
     $oReporte->setFase($fase);
     $oReporte->setTrayecto($trayecto_filtrado);
 
+    // --- 1. Generar la Plantilla de Horarios completa ---
+    $turnos = $oReporte->getTurnosCompletos();
+    $slot_duration_minutes = 40;
+    $todas_las_franjas = [];
+    foreach ($turnos as $turno) {
+        $nombre_turno = ucfirst(strtolower($turno['tur_nombre']));
+        $todas_las_franjas[$nombre_turno] = [];
+        $hora_actual = new DateTime($turno['tur_horaInicio']);
+        $hora_fin_turno = new DateTime($turno['tur_horaFin']);
+
+        while ($hora_actual < $hora_fin_turno) {
+            $franja_inicio = clone $hora_actual;
+            $hora_actual->modify('+' . $slot_duration_minutes . ' minutes');
+            $franja_fin = ($hora_actual > $hora_fin_turno) ? $hora_fin_turno : clone $hora_actual;
+            
+            $db_start_time_key = $franja_inicio->format('H:i:00');
+            $display_string = $franja_inicio->format('H:i') . ' a ' . $franja_fin->format('H:i');
+            $todas_las_franjas[$nombre_turno][$display_string] = $db_start_time_key;
+        }
+    }
+
     $horarioDataRaw = $oReporte->getHorariosFiltrados();
 
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0); 
 
-    // --- ESTILOS MÁS COMPACTOS ---
-    $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleSubheaderTitle = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleTableHeader = ['font' => ['bold' => true, 'size' => 8], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD0E4F5']]];
-    $styleTimeSlot = ['font' => ['bold' => true, 'size' => 7], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleScheduleCell = ['font' => ['size' => 7], 'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true]];
-    $days_of_week = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sábado"];
+    // --- Estilos y Definiciones ---
+    $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleSubheaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleTableHeader = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD0E4F5']]];
+    $styleTimeSlot = ['font' => ['bold' => true, 'size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true]];
+    $days_of_week = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-    $renderScheduleTable = function(Worksheet $sheet, $title_suffix, $slots_to_render, &$currentRow, $seccionTitulo, $gridData) use ($days_of_week, $styleHeaderTitle, $styleSubheaderTitle, $styleTableHeader, $styleTimeSlot, $styleScheduleCell) {
-        if (empty($slots_to_render)) return;
-        $startRow = $currentRow;
-        $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", "Horario: " . $seccionTitulo);
-        $sheet->getStyle("A{$currentRow}")->applyFromArray($styleHeaderTitle)->getAlignment()->setWrapText(true);
-        $sheet->getRowDimension($currentRow)->setRowHeight(-1);
-        $currentRow++;
-        $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", $title_suffix);
+    // --- Función para renderizar UN SOLO TURNO de la tabla de horario ---
+    $renderScheduleTable = function(Worksheet $sheet, $turnoNombre, $franjas, &$currentRow, $gridData) use ($days_of_week, $styleSubheaderTitle, $styleTableHeader, $styleTimeSlot, $styleScheduleCell) {
+        $startRowForTurno = $currentRow;
+        $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", mb_strtoupper($turnoNombre, 'UTF-8'));
         $sheet->getStyle("A{$currentRow}")->applyFromArray($styleSubheaderTitle);
         $currentRow++;
         $sheet->setCellValue('A'.$currentRow, 'Hora');
@@ -110,8 +71,9 @@ if (isset($_POST['generar_seccion_report'])) {
         $sheet->getStyle("A{$currentRow}:G{$currentRow}")->applyFromArray($styleTableHeader);
         $currentRow++;
 
-        foreach ($slots_to_render as $displaySlot => $dbStartTimeKey) {
-            $sheet->getRowDimension($currentRow)->setRowHeight(48); // Altura de fila reducida
+        uksort($franjas, 'strnatcmp');
+        foreach ($franjas as $displaySlot => $dbStartTimeKey) {
+            $sheet->getRowDimension($currentRow)->setRowHeight(65);
             $sheet->setCellValue('A'.$currentRow, $displaySlot)->getStyle('A'.$currentRow)->applyFromArray($styleTimeSlot);
             $colNum = 1;
             foreach ($days_of_week as $day) {
@@ -122,96 +84,78 @@ if (isset($_POST['generar_seccion_report'])) {
             $sheet->getStyle("B{$currentRow}:G{$currentRow}")->applyFromArray($styleScheduleCell);
             $currentRow++;
         }
-        $sheet->getStyle("A".($startRow+2).":G".($currentRow-1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-        $currentRow += 2;
+        $sheet->getStyle("A".($startRowForTurno+1).":G".($currentRow-1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $currentRow++; 
     };
     
     if (empty($horarioDataRaw)) {
-        // ...
+        $sheet = new Worksheet($spreadsheet, "Sin Resultados");
+        $spreadsheet->addSheet($sheet, 0);
+        $sheet->setCellValue('A1', 'No se encontraron horarios con los criterios seleccionados.');
     } else {
         $dataGroupedByTrayecto = [];
         foreach ($horarioDataRaw as $item) {
             $dataGroupedByTrayecto[$item['uc_trayecto']][] = $item;
         }
+        ksort($dataGroupedByTrayecto);
 
         foreach($dataGroupedByTrayecto as $trayecto_id => $data_for_trayecto) {
             $sheet = new Worksheet($spreadsheet, "Trayecto " . $trayecto_id);
             $spreadsheet->addSheet($sheet);
-            // --- ANCHO DE CELDAS REDUCIDO ---
-            $sheet->getColumnDimension('A')->setWidth(14);
-            foreach (range('B', 'G') as $col) { $sheet->getColumnDimension($col)->setWidth(20); }
+            $sheet->getColumnDimension('A')->setWidth(18);
+            foreach (range('B', 'G') as $col) { $sheet->getColumnDimension($col)->setWidth(30); }
             $currentRow = 1;
-            
-            $seccionesConFirma = []; // ... (lógica de agrupación sin cambios)
+
+            $horariosPorSeccion = [];
             foreach ($data_for_trayecto as $item) {
-                $sec_codigo = $item['sec_codigo'];
-                if (!isset($seccionesConFirma[$sec_codigo])) {
-                    $seccionesConFirma[$sec_codigo] = ['horario_items' => [], 'firma' => ''];
-                }
-                $seccionesConFirma[$sec_codigo]['horario_items'][] = $item;
-                $firma_part = $item['uc_nombre'].'-'.$item['hor_dia'].'-'.$item['hor_horainicio'];
-                $seccionesConFirma[$sec_codigo]['firma_parts'][] = $firma_part;
+                $horariosPorSeccion[$item['sec_codigo']][] = $item;
             }
-            foreach ($seccionesConFirma as &$data) {
-                sort($data['firma_parts']);
-                $data['firma'] = implode('|', $data['firma_parts']);
-            }
-            unset($data);
-            $gruposPorFirma = [];
-            foreach ($seccionesConFirma as $sec_codigo => $data) {
-                $key = $data['firma'];
-                if ($key === '') { $key = 'no-unida-'.$sec_codigo; }
-                $gruposPorFirma[$key]['secciones'][] = $sec_codigo;
-                if (!isset($gruposPorFirma[$key]['horario_data'])) {
-                    $gruposPorFirma[$key]['horario_data'] = $data['horario_items'];
-                }
-            }
+            ksort($horariosPorSeccion);
             
-            foreach($gruposPorFirma as $grupo) {
-                $horarioData = $grupo['horario_data'];
-                $seccionTitulo = formatAndSortSections($grupo['secciones']);
+            foreach($horariosPorSeccion as $seccionCodigo => $horarioData) {
+                
+                $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", "Horario de la Sección: " . $seccionCodigo);
+                $sheet->getStyle("A{$currentRow}")->applyFromArray($styleHeaderTitle);
+                $currentRow += 2;
+
+                $turnosActivos = [];
+                foreach ($horarioData as $item) {
+                    $horaClase = new DateTime($item['hor_horainicio']);
+                    foreach ($turnos as $turno) {
+                        if ($horaClase >= new DateTime($turno['tur_horaInicio']) && $horaClase < new DateTime($turno['tur_horaFin'])) {
+                            $turnosActivos[ucfirst(strtolower($turno['tur_nombre']))] = true;
+                        }
+                    }
+                }
 
                 $gridData = [];
-                $tieneClasesManana = false;
-                $tieneClasesTarde = false;
-
                 foreach ($horarioData as $item) {
                     $dia = ucfirst(strtolower(trim($item['hor_dia'])));
+                    if ($dia == 'Miercoles') $dia = 'Miércoles';
+                    if ($dia == 'Sabado') $dia = 'Sábado';
                     $horaInicioBD = trim($item['hor_horainicio']);
-                    
-                    // --- NUEVA LÓGICA PARA FORMATEAR EL ESPACIO ---
-                    $tipo_espacio = ($item['esp_tipo'] === 'Laboratorio') ? 'Lab:' : 'Aula:';
-                    $esp_codigo = ($item['esp_tipo'] === 'Laboratorio') 
-                                ? $item['esp_numero'] . ' - ' . $item['esp_edificio'] 
-                                : $item['esp_edificio'] . ' - ' . $item['esp_numero'];
-                    
-                    $cell_content = [$item['uc_nombre'], $tipo_espacio . " " . $esp_codigo];
+                    $cell_content = [$item['uc_nombre'], "Aula: " . $item['esp_codigo']];
                     if (!empty($item['NombreCompletoDocente'])) { $cell_content[] = $item['NombreCompletoDocente']; }
-                    $gridData[$dia][$horaInicioBD] = implode("\n\n", $cell_content);
-                    
-                    if (strcmp($horaInicioBD, "13:00:00") < 0) {
-                        $tieneClasesManana = true;
+                    if(isset($gridData[$dia][$horaInicioBD])) {
+                        $gridData[$dia][$horaInicioBD] .= "\n---\n" . implode("\n\n", $cell_content);
                     } else {
-                        $tieneClasesTarde = true;
+                        $gridData[$dia][$horaInicioBD] = implode("\n\n", $cell_content);
                     }
                 }
                 
-                if ($tieneClasesManana) {
-                    $renderScheduleTable($sheet, "MAÑANA", $TODOS_LOS_BLOQUES_MANANA, $currentRow, $seccionTitulo, $gridData);
+                foreach (array_keys($turnosActivos) as $nombreTurno) {
+                    $franjasDelTurno = $todas_las_franjas[$nombreTurno] ?? [];
+                    if (!empty($franjasDelTurno)) {
+                        $renderScheduleTable($sheet, $nombreTurno, $franjasDelTurno, $currentRow, $gridData);
+                    }
                 }
-                if ($tieneClasesTarde) {
-                    $renderScheduleTable($sheet, "TARDE", $TODOS_LOS_BLOQUES_TARDE, $currentRow, $seccionTitulo, $gridData);
-                }
-                if (!$tieneClasesManana && !$tieneClasesTarde && !empty($grupo['secciones'])) {
-                    $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", "La sección " . $seccionTitulo . " no tiene horario asignado.");
-                    $currentRow += 2;
-                }
+                $currentRow++; 
             }
         }
     }
-    
+
     if (ob_get_length()) ob_end_clean();
-    $outputFileName = "Reporte_Horarios.xlsx";
+    $outputFileName = "Reporte_Horarios_Seccion.xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $outputFileName . '"');
     header('Cache-Control: max-age=0');
@@ -220,9 +164,9 @@ if (isset($_POST['generar_seccion_report'])) {
     exit;
 
 } else {
+    
     $listaAnios = $oReporte->getAniosActivos();
     $listaFases = $oReporte->getFases();
     $listaTrayectos = $oReporte->getTrayectos();
     require_once("views/reportes/rseccion.php");
 }
-?>
