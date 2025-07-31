@@ -503,7 +503,6 @@ $(document).ready(function() {
             isCohorteValid = false;
         }
 
-        // Muestra u oculta el mensaje de error para la cantidad de estudiantes
         const cantidadInput = document.getElementById('cantidadSeccion');
         const cantidadError = $('#cantidad-seccion-error');
         if (cantidadInput.validity.rangeOverflow || cantidadInput.validity.rangeUnderflow) {
@@ -536,7 +535,7 @@ $(document).ready(function() {
             allUcs = respuesta.ucs.map(u => ({ ...u,
                 uc_id: u.uc_codigo
             })) || [];
-            allEspacios = respuesta.espacios || []; // Se recibe el formato {numero, tipo, edificio}
+            allEspacios = respuesta.espacios || []; 
             allDocentes = respuesta.docentes.map(d => ({ ...d,
                 doc_id: d.doc_cedula
             })) || [];

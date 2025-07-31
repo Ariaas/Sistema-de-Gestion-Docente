@@ -1,5 +1,3 @@
-
-
 function Listar() {
   var datos = new FormData();
   datos.append("accion", "consultar");
@@ -58,10 +56,10 @@ $(document).ready(function () {
 
    
     const formatoValido = validarkeyup(
-      /^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]{4,30}$/,
+      /^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
       $(this),
       $("#scoordinacionNombre"),
-      "El nombre debe tener entre 4 y 30 caracteres."
+      "El nombre debe tener entre 5 y 30 caracteres."
     );
 
     if (!formatoValido) {
@@ -158,8 +156,6 @@ function pone(pos, accion) {
   if (accion === 0) { 
     modalTitle.text("Formulario de Modificación de Coordinación");
     procesoBtn.text("MODIFICAR");
-    
-    modalHeader.removeClass("bg-danger").addClass("bg-primary");
     procesoBtn.removeClass("btn-danger").addClass("btn-primary");
 
     $("#coordinacionNombre").prop("disabled", false);
@@ -170,9 +166,6 @@ function pone(pos, accion) {
   } else { 
     modalTitle.text("Confirmar Eliminación de Coordinación");
     procesoBtn.text("ELIMINAR");
-    
-    modalHeader.removeClass("bg-primary").addClass("bg-danger");
-    procesoBtn.removeClass("btn-primary").addClass("btn-danger");
     
     $("#coordinacionNombre").prop("disabled", true);
     procesoBtn.prop("disabled", false);

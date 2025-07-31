@@ -64,19 +64,16 @@ function actualizarSelectUC() {
 }
 
 $(document).ready(function () {
-    // --- LLAMADAS INICIALES ---
     Listar();
     verificarCondicionesIniciales();
     var datos = new FormData();
     datos.append("accion", "consultar_ucs");
     enviaAjax(datos);
 
-    // --- CONFIGURACIÓN DE MODALES Y SELECTS ---
     $('#modal1').on('hidden.bs.modal', function () { limpiaModal1(); });
     $('#modalVerMalla').on('hidden.bs.modal', function () { $('#cuerpoModalVer').empty(); });
     $('#select_uc').select2({ theme: "bootstrap-5", dropdownParent: $('#modal1') });
 
-    // --- VALIDACIONES DE FORMATO EN TIEMPO REAL ---
     $("#mal_nombre").on("keyup down", function () {
         validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $(this), $("#smalnombre"), "El formato permite de 5 a 30 caracteres.");
     });
@@ -84,16 +81,14 @@ $(document).ready(function () {
         validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $(this), $("#smaldescripcion"), "El formato permite de 5 a 30 caracteres.");
     });
 
-    // --- VALIDACIONES DE FORMATO Y EXISTENCIA EN TIEMPO REAL ---
 
-    // VALIDACIÓN PARA CÓDIGO DE LA MALLA
     $("#mal_codigo").on("input", function () {
         const input = $(this);
         const span = $("#smalcodigo");
         const btn = $("#btn-siguiente");
         if ($("#accion").val() === 'modificar') return;
 
-        span.css('color', ''); // Resetea a color gris para mensajes de formato
+        span.css('color', ''); 
         if (validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, input, span, "El código debe tener entre 2 y 20 caracteres.") === 0) {
             btn.prop("disabled", true);
         } else {
@@ -112,7 +107,6 @@ $(document).ready(function () {
         enviaAjax(datos, 'existe_codigo');
     });
 
-    // VALIDACIÓN PARA COHORTE
     $("#mal_cohorte").on("input", function () {
         this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, '');
         if (this.value.length > 3) this.value = this.value.slice(0, 3);
@@ -121,7 +115,7 @@ $(document).ready(function () {
         const span = $("#smalcohorte");
         const btn = $("#btn-siguiente");
 
-        span.css('color', ''); // Resetea a color gris para mensajes de formato
+        span.css('color', '');
         if (validarkeyup(/^[1-9][0-9]{0,3}$/, input, span, "Debe ser un número entre 1 y 999.") === 0) {
             btn.prop("disabled", true);
         } else {
@@ -142,8 +136,6 @@ $(document).ready(function () {
         }
         enviaAjax(datos, 'existe_cohorte');
     });
-
-    // --- MANEJADORES DE EVENTOS DEL MODAL (PÁGINA 2) ---
 
     $('#contenedorAcordeonUC').on('input', '.horas-input', function() {
         this.value = this.value.replace(/[^0-9]/g, '');
@@ -219,8 +211,6 @@ $(document).ready(function () {
         actualizarSelectUC();
         gestionarBotonGuardar();
     });
-    
-    // --- BOTONES PRINCIPALES ---
 
     $('#btn-siguiente').on('click', function () {
         if (!validarPagina1()) {
@@ -290,8 +280,6 @@ $(document).ready(function () {
         });
     });
 });
-
-// --- FUNCIONES GENERALES ---
 
 function enviaAjax(datos, tipoLlamada = '') {
     $.ajax({
@@ -419,7 +407,7 @@ function pone(pos, accionBtn) {
     const mal_codigo = $(linea).find("td:eq(0)").text();
     const mal_nombre = $(linea).find("td:eq(1)").text();
     
-    if (accionBtn === 0) { // MODIFICAR
+    if (accionBtn === 0) { 
         limpiaModal1();
         originalCohorte = $(linea).find("td:eq(2)").text();
         $("#mal_codigo").val(mal_codigo).prop("disabled", true);
@@ -429,7 +417,7 @@ function pone(pos, accionBtn) {
         $("#accion").val("modificar");
         $("#modal1Titulo").text("Modificar Malla (Paso 1 de 2)");
         $("#proceso").text("MODIFICAR");
-         $("#btn-siguiente").prop("disabled", false); // Reactiva el botón
+         $("#btn-siguiente").prop("disabled", false); 
         $("#modal1").modal("show");
         $('#modal1').off('shown.bs.modal').on('shown.bs.modal', function () {
             var datos = new FormData();
@@ -437,7 +425,7 @@ function pone(pos, accionBtn) {
             datos.append("mal_codigo", mal_codigo);
             enviaAjax(datos);
         });
-    } else if (accionBtn === 1) { // ELIMINAR
+    } else if (accionBtn === 1) {
         Swal.fire({
             title: "¿Está seguro de eliminar esta malla?", text: "Esta acción no se puede deshacer.",
             icon: "warning", showCancelButton: true, confirmButtonColor: "#d33",
@@ -451,7 +439,7 @@ function pone(pos, accionBtn) {
                 enviaAjax(datos);
             }
         });
-    } else if (accionBtn === 2) { // VER MALLA
+    } else if (accionBtn === 2) { 
         const boton = $(pos);
         const datos = new FormData();
         datos.append("accion", "consultar_ucs_por_malla");

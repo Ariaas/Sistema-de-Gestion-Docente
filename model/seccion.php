@@ -48,7 +48,6 @@ class Seccion extends Connection
         $sql_ucs = "SELECT u.uc_codigo, um.mal_hora_academica FROM tbl_uc u JOIN uc_malla um ON u.uc_codigo = um.uc_codigo WHERE u.uc_trayecto = :trayecto AND um.mal_codigo = :mal_codigo AND u.uc_estado = 1";
 
         if ($trayecto == '0') {
-    // Para el Trayecto Inicial, siempre buscamos las materias de inicio sin importar la fase.
     $sql_ucs .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual' OR u.uc_periodo = '0')";
 } 
 
@@ -269,16 +268,16 @@ class Seccion extends Connection
                         $resultado_uc_docente = $this->obtenerUcPorDocente($clase['doc_cedula'], $trayecto_destino);
                         $ucs_posibles = $resultado_uc_docente['data'];
                         if (count($ucs_posibles) === 1) {
-                            // ** INICIO DE CORRECCIÓN **
+
                             $nuevas_clases[] = [
                                 'uc_codigo' => $ucs_posibles[0]['uc_codigo'],
                                 'doc_cedula' => $clase['doc_cedula'],
-                                'espacio' => $clase['espacio'], // Se pasa el objeto 'espacio' completo que ya viene en el formato correcto
+                                'espacio' => $clase['espacio'],
                                 'dia' => $clase['dia'],
                                 'hora_inicio' => $clase['hora_inicio'],
                                 'hora_fin' => $clase['hora_fin']
                             ];
-                            // ** FIN DE CORRECCIÓN **
+    
                         } else {
                             $docente_info = array_values(array_filter($docentes, function ($d) use ($clase) {
                                 return $d['doc_cedula'] == $clase['doc_cedula'];
@@ -296,19 +295,19 @@ class Seccion extends Connection
                     if (!empty($nuevas_clases)) {
                         $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
                         foreach ($nuevas_clases as $item) {
-                            // ** INICIO DE CORRECCIÓN **
+
                             $espacio = $item['espacio'];
                             $stmt_uh->execute([
                                 ':uc_codigo' => $item['uc_codigo'],
                                 ':sec_codigo' => $sec_codigo_destino,
-                                ':esp_numero' => $espacio['numero'], // Usar la clave 'numero'
-                                ':esp_tipo' => $espacio['tipo'],     // Usar la clave 'tipo'
-                                ':esp_edificio' => $espacio['edificio'], // Usar la clave 'edificio'
+                                ':esp_numero' => $espacio['numero'], 
+                                ':esp_tipo' => $espacio['tipo'],     
+                                ':esp_edificio' => $espacio['edificio'], 
                                 ':dia' => $item['dia'],
                                 ':inicio' => $item['hora_inicio'],
                                 ':fin' => $item['hora_fin']
                             ]);
-                            // ** FIN DE CORRECCIÓN **
+     
                         }
                     }
                     $co->commit();
@@ -356,13 +355,12 @@ class Seccion extends Connection
             $primer_tipo = $seccion_origen_data['ani_tipo'];
             $primer_trayecto = substr($seccion_origen_data['sec_codigo'], 0, 1);
             $primer_turno = substr($seccion_origen_data['sec_codigo'], 1, 1);
-            // ELIMINADO: Ya no se obtiene la cohorte para la validación
-            // $primer_cohorte = substr($seccion_origen_data['sec_codigo'], -1);
+
 
 
             foreach ($secciones as $seccion) {
                 $codigo_actual_str = (string)$seccion['sec_codigo'];
-                // CAMBIO: Se eliminó la validación por cohorte (último dígito) y se actualizó el mensaje de error.
+
                 if (
                     $seccion['ani_anio'] !== $primer_anio ||
                     $seccion['ani_tipo'] !== $primer_tipo ||
@@ -389,16 +387,14 @@ class Seccion extends Connection
                 
                 if (!empty($clases_origen)) {
                     
-                    // ** INICIO DE CORRECCIÓN **
-                    // Se debe reinsertar la fila padre en tbl_horario antes de insertar en las tablas hijas.
+
                     $hora_principal_para_turno = $clases_origen[0]['hora_inicio'] ?? '08:00:00';
                     $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, tur_nombre, hor_estado) VALUES (:sec_codigo, :tur_nombre, 1)");
                     $stmt_hor->execute([
                         ':sec_codigo' => $codigo_destino,
                         ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
                     ]);
-                    // ** FIN DE CORRECCIÓN **
-                    
+
                     $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
                     $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo) VALUES (:doc_cedula, :sec_codigo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
                     $docentes_procesados = [];
@@ -525,7 +521,6 @@ class Seccion extends Connection
                 return "Conflicto: El docente ya tiene una clase a esta hora en la sección IN" . htmlspecialchars($conflicto['sec_codigo']) . ".";
             }
             
-            // ** INICIO DE CORRECCIÓN **
             $espacio = $item['espacio'] ?? null;
             if ($espacio && !empty($espacio['numero'])) {
                 $stmt_espacio->execute([
@@ -540,7 +535,6 @@ class Seccion extends Connection
                     return "Conflicto: El espacio " . htmlspecialchars($espacio['numero']) . " ya está ocupado a esta hora en la sección IN" . htmlspecialchars($conflicto['sec_codigo']) . ".";
                 }
             }
-            // ** FIN DE CORRECCIÓN **
         }
 
 
@@ -790,7 +784,6 @@ class Seccion extends Connection
             $stmt->execute([':sec_codigo' => $sec_codigo]);
             $schedule_grid_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Combinar los campos del espacio en un solo objeto para el JS
             foreach ($schedule_grid_items as &$item) {
                 $item['espacio'] = [
                     'numero' => $item['esp_numero'],

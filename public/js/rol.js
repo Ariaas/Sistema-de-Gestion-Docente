@@ -70,8 +70,6 @@ function Listar() {
   $(document).ready(function () {
     Listar();
   
-    //////////////////////////////VALIDACIONES/////////////////////////////////////
-  
       $("#nombreRol").on("keypress",function(e){
       validarkeypress(/^[A-Za-z0-9-\b\s]*$/,e);
       });
@@ -91,8 +89,6 @@ function Listar() {
               enviaAjax(datos, 'existe');
           }
       });
-  
-    //////////////////////////////BOTONES/////////////////////////////////////
   
     $("#proceso").on("click", function () {
       if ($(this).text() == "REGISTRAR") {

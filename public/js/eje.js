@@ -70,8 +70,6 @@ function crearDT() {
 $(document).ready(function () {
   Listar();
 
-  //////////////////////////////VALIDACIONES/////////////////////////////////////
-
     $("#ejeNombre").on("keypress",function(e){
       validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ,#\b\s-]*$/, e);
     });
@@ -99,8 +97,6 @@ $(document).ready(function () {
   $("#ejeDescripcion").on("keyup", function() {
     validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sejeDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
   });
-
-  //////////////////////////////BOTONES/////////////////////////////////////
 
   $("#proceso").on("click", function () {
   let accion = $(this).text();
@@ -187,8 +183,6 @@ $(document).ready(function () {
     $("#proceso").prop("disabled", false);
   });
 });
-
-//////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
 
 function validarenvio() {
   let esValido = true;

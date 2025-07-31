@@ -247,6 +247,10 @@ $(document).ready(function() {
         $("#proceso").prop("disabled", false);
         $("#scodigoUC").text(""); 
     });
+
+    $("#modal1").on("show.bs.modal", function () {
+        $("#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC, #selectivaUC").text("").hide();
+    });
 });
 
 function validarenvio() {
@@ -284,12 +288,20 @@ function validarenvio() {
         $("#strayectoUC").text("").hide();
     }
 
+    const proceso = $("#proceso").text().trim();
+
     if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
         let opcionEliminada = $("#ejeUC option:selected");
-        if (opcionEliminada.length && opcionEliminada.prop("disabled")) {
+        if (opcionEliminada.length && opcionEliminada.prop("disabled") && proceso === "REGISTRAR") {
+            $("#seje").text("Debe seleccionar un eje.").css("color", "").show();
+            $("#ejeUC").focus();
+            esValido = false;
+        }
+        else if (opcionEliminada.length && opcionEliminada.prop("disabled")) {
             $("#seje").text("").hide();
-        } else {
-            $("#seje").text("Debe seleccionar un eje.").css("color", "");
+        }
+        else {
+            $("#seje").text("Debe seleccionar un eje.").css("color", "").show();
             $("#ejeUC").focus();
             esValido = false;
         }
@@ -299,10 +311,16 @@ function validarenvio() {
 
     if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
         let opcionEliminadaArea = $("#areaUC option:selected");
-        if (opcionEliminadaArea.length && opcionEliminadaArea.prop("disabled")) {
+        if (opcionEliminadaArea.length && opcionEliminadaArea.prop("disabled") && proceso === "REGISTRAR") {
+            $("#sarea").text("Debe seleccionar un área.").css("color", "").show();
+            $("#areaUC").focus();
+            esValido = false;
+        }
+        else if (opcionEliminadaArea.length && opcionEliminadaArea.prop("disabled")) {
             $("#sarea").text("").hide();
-        } else {
-            $("#sarea").text("Debe seleccionar un área.").css("color", "");
+        }
+        else {
+            $("#sarea").text("Debe seleccionar un área.").css("color", "").show();
             $("#areaUC").focus();
             esValido = false;
         }
@@ -629,6 +647,8 @@ function limpia() {
     $("#areaUC").val("");     
     $("#periodoUC").val("");  
     $("#electivaUC").val(""); 
+
+    $("#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC, #selectivaUC").text("").hide();
 }
 
 

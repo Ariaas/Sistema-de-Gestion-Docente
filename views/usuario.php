@@ -145,9 +145,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                 </div>
             </div>
         </div>
-        <!-- Fin del Modal -->
 
-        <!-- Modal Docentes -->
         <div class="modal fade" id="modalDocentes" tabindex="-1" aria-labelledby="modalDocentesLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content" style="border: 1px solid #000;">
@@ -173,9 +171,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                 </div>
             </div>
         </div>
-        <!-- Fin del Modal Docentes -->
 
-        <!-- Modal Roles -->
         <div class="modal fade" id="modalRoles" tabindex="-1" aria-labelledby="modalRolesLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content" style="border: 1px solid #000;">

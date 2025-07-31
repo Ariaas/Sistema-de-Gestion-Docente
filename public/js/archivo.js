@@ -27,10 +27,6 @@ function enviaAjax(datos, successCallback) {
     });
 }
 
-/**
- * NUEVO: Valida en tiempo real que la suma de aprobados y estudiantes 
- * para PER no exceda el total de estudiantes de la sección.
- */
 function validarSumaAprobados() {
     const totalEstudiantes = parseInt($('#seccion option:selected').data('cantidad')) || 0;
     const cantAprobadosInput = $('#cantidad_aprobados');
@@ -56,10 +52,6 @@ function validarSumaAprobados() {
     }
 }
 
-/**
- * MODIFICADO: Valida el formulario de registro antes de enviarlo.
- * Se eliminó la validación del archivo y se añadió la de la suma.
- */
 function validarFormularioRegistro() {
     let isValid = true;
     $('.is-invalid').removeClass('is-invalid');
@@ -82,10 +74,6 @@ if (archivo.get(0).files.length === 0) {
     return isValid;
 }
 
-/**
- * MODIFICADO: Obtiene la lista de registros y envía el estado
- * del filtro del administrador si existe.
- */
 function listarRegistros() {
     const datos = new FormData();
     datos.append("accion", "listar_registros");
@@ -108,7 +96,6 @@ function listarRegistros() {
                 const paraPer = parseInt(item.per_cantidad) || 0;
                 const aprobadosPer = parseInt(item.per_aprobados) || 0;
                 const aprobadosTotales = aprobadosDir + aprobadosPer;
-                // --- CÁLCULO CORREGIDO DE REPROBADOS ---
                 const reprobadosTotales = paraPer - aprobadosPer;
                 const esPerCero = paraPer === 0;
 
@@ -120,7 +107,6 @@ function listarRegistros() {
        <img src="public/assets/icons/file-earmark-down2.svg">
     </a>`;
 
-// Botón para el acta de PER
 let archivoPerHtml = `
     <a href="archivos_per/${encodeURIComponent(item.archivo_per || '')}" 
        class="btn btn-icon btn-edit ${!item.archivo_per ? 'disabled' : ''}" 
@@ -135,7 +121,6 @@ let archivoPerHtml = `
                 const perHabilitado = !esPerCero && item.per_abierto;
                 const tituloBoton = perHabilitado ? "Registrar Notas del PER" : "El período de registro para PER no está activo";
                 
-                // Se pasa fase_numero en el onclick
                 const btnRegistrarPer = `<button class="btn btn-icon btn-success" title="${tituloBoton}" onclick="abrirModalPer('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}', '${paraPer}', '${aprobadosPer}', '${item.ani_anio}', '${item.ani_tipo}', '${item.fase_numero}')" ${!perHabilitado ? 'disabled' : ''}><img src="public/assets/icons/file-earmark-ruled.svg"></button>`;                
                 const btnEliminarRegistro = `<button class="btn btn-icon btn-delete btn-eliminar" title="Eliminar Registro" data-uc-codigo="${item.uc_codigo}" data-sec-codigo="${item.sec_codigo}" data-uc-nombre="${item.uc_nombre}" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}" data-fase="${item.fase_numero}"><img src="public/assets/icons/trash.svg"></button>`;
 
@@ -180,14 +165,12 @@ $(document).ready(function () {
 
     $('#btnNuevoRegistro').click(() => $('#modalRegistroNotas').modal('show'));
     
-    // NUEVO: Evento para el filtro del Administrador.
     $('#filtroMisRegistros').change(listarRegistros);
 
     $('#ucurricular').change(function () { 
         $('#uc_nombre').val($(this).find('option:selected').text()); 
     });
    $('#tablaRegistros').on('click', '.btn-eliminar', function() {
-        // Se obtienen los datos desde los atributos data-* del botón que se presionó
         const uc_codigo = $(this).data('uc-codigo');
         const sec_codigo = $(this).data('sec-codigo');
         const uc_nombre = $(this).data('uc-nombre');
@@ -195,10 +178,8 @@ $(document).ready(function () {
         const tipo = $(this).data('tipo');
         const fase = $(this).data('fase');
 
-        // Se llama a la función eliminarRegistro, que ahora puede estar DENTRO o FUERA del document.ready
         eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo, fase);
     });
-    // MODIFICADO: Carga las secciones asignadas al docente al cambiar el año.
     $('#anio').change(function () {
         const anio_compuesto = $(this).val();
         const seccionSelect = $('#seccion');
@@ -228,7 +209,6 @@ $(document).ready(function () {
         });
     }).trigger('change');
 
-    // NUEVO: Carga las unidades curriculares al cambiar la sección.
     $('#seccion').change(function() {
         const seccion_codigo = $(this).val();
         const ucSelect = $('#ucurricular');
@@ -259,20 +239,18 @@ $(document).ready(function () {
         });
     });
 
-    // NUEVO: Evento para la validación en tiempo real.
     $('#cantidad_aprobados, #cantidad_per').on('input', validarSumaAprobados);
 
     $('#formRegistro').submit(function (e) {
     e.preventDefault();
 
-    // Se vuelve a añadir la validación del archivo
     const archivo = $('#archivo_notas');
     if (archivo.get(0).files.length === 0) {
         $('#archivo_notas').addClass('is-invalid');
-        return; // Detiene el envío si no hay archivo
+        return; 
     }
 
-    if (validarFormularioRegistro()) { // Asumiendo que esta función ya existe y es correcta
+    if (validarFormularioRegistro()) { 
         enviaAjax(new FormData(this), function (response) {
             if (response.success) {
                 $('#modalRegistroNotas').modal('hide');
@@ -296,10 +274,8 @@ $(document).ready(function () {
     }
 });
 
-// 2. FUNCIÓN DE SUBMIT DEL FORMULARIO PER
 $('#formAprobadosPer').submit(function (e) {
     e.preventDefault();
-    // ... tu lógica de validación para este form ...
     enviaAjax(new FormData(this), function (response) {
         if (response.success) {
             $('#modalAprobadosPer').modal('hide');
@@ -322,7 +298,6 @@ $('#formAprobadosPer').submit(function (e) {
     });
 });
 
-// 3. FUNCIÓN PARA ELIMINAR
 function eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo, fase) {
     Swal.fire({
         title: '¿Estás seguro?',
