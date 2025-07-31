@@ -91,17 +91,17 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div class="col-md-4">
                                         <label for="codigoUC" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoUC" name="codigoUC" required placeholder="Ej: MAT101">
-                                        <span id="scodigoUC"></span>
+                                        <span id="scodigoUC" class="form-text"></span>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="nombreUC" class="form-label">Nombre</label>
                                         <input class="form-control" type="text" id="nombreUC" name="nombreUC" required placeholder="Ej: Matemáticas Básicas">
-                                        <span id="snombreUC"></span>
+                                        <span id="snombreUC" class="form-text"></span>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="creditosUC" class="form-label">Unidades de Crédito</label>
                                         <input class="form-control" type="number" id="creditosUC" name="creditosUC" required oninput="this.value = this.value.replace(/[^0-9]/g, '');" placeholder="Ej: 4">
-                                        <span id="screditosUC"></span>
+                                        <span id="screditosUC" class="form-text"></span>
                                     </div>
                                 </div>
                                 <div class="row g-3">
@@ -124,7 +124,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             }
                                             ?>
                                         </select>
-                                        <span id="seje"></span>
+                                        <span id="seje" class="form-text"></span>
                                     </div>
 
                                     <div class="col-md-4">
@@ -148,7 +148,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             }
                                             ?>
                                         </select>
-                                        <span id="sarea"></span>
+                                        <span id="sarea" class="form-text"></span>
                                     </div>
 
                                     <div class="col-md-4">
@@ -161,7 +161,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <option value="3">Trayecto 3</option>
                                             <option value="4">Trayecto 4</option>
                                         </select>
-                                        <span id="strayectoUC"></span>
+                                        <span id="strayectoUC" class="form-text"></span>
                                     </div>
                                 </div>
                                 <div class="row g-3">
@@ -173,7 +173,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <option value="Fase I">Fase 1</option>
                                             <option value="Fase II">Fase 2</option>
                                         </select>
-                                        <span id="speriodoUC"></span>
+                                        <span id="speriodoUC" class="form-text"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="electivaUC" class="form-label">Electiva</label>
@@ -182,7 +182,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <option value="0">No Electiva</option>
                                             <option value="1">Electiva</option>
                                         </select>
-                                        <span id="selectivaUC"></span>
+                                        <span id="selectivaUC" class="form-text"></span>
                                     </div>
 
                                 </div>
@@ -225,7 +225,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             }
                                             ?>
                                         </select>
-                                        <span id="sdocente"></span>
+                                        <span id="sdocente" class="form-text"></span>
                                     </div>
                                 </div>
                                 <div class="row g-3 mt-3">
