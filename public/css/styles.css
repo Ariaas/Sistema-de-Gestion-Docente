@@ -736,15 +736,6 @@ footer {
     border-radius: .5rem;
 }
 
-/* 
-  Media query para cuando la barra de navegación NO está colapsada (escritorio)
-  Aquí podemos añadir estilos específicos para la vista de escritorio si es necesario.
-*/
-@media (min-width: 992px) {
-    body {
-        /* No se necesita padding aquí */
-    }
-}
 
 /* Estilos para los nuevos botones con iconos */
 .btn-icon {
@@ -771,9 +762,22 @@ footer {
     background-color: #ffc107; /* Amarillo de Bootstrap */
 }
 
+.btn-icon.btn-asignar {
+    background-color: #356e0f; /* Amarillo de Bootstrap */
+}
+
 .btn-icon.btn-delete {
     background-color: #dc3545; /* Rojo de Bootstrap */
 }
+
+.btn-icon.btn-info {
+    background-color: #0d6efd; /* Azul de Bootstrap */
+}
+
+.btn-icon.btn-asignar:hover {
+    transform: scale(1.1);
+}
+
 
 .btn-icon.btn-edit:hover {
     background-color: #e0a800;
@@ -975,4 +979,79 @@ footer {
 
 .page-header .btn {
     margin-top: 1rem;
+}
+
+/* Estilos base para todos los botones de icono (asegura que son pequeños y centrados) */
+.btn-icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;           
+    height: 30px;          
+    padding: 0;            
+    border: none;          
+    border-radius: 50%;    
+    cursor: pointer;
+    font-size: 0;          
+    text-decoration: none; 
+    transition: background-color 0.2s ease, transform 0.1s ease; 
+}
+
+/* Estilos para las imágenes SVG/PNG dentro de los botones de icono */
+.btn-icon img,
+.btn-icon svg {
+    width: 16px;  
+    height: 16px; 
+    display: block; 
+}
+
+/* Estilos de color y hover para cada tipo de botón */
+
+/* Botón de Información/Ver Horario (azul) - Más oscuro */
+.btn-icon.btn-info {
+    background-color: #0d6efd; /* Un azul más profundo que el #17a2b8 original */
+    color: #fff;
+}
+.btn-icon.btn-info:hover {
+    background-color: #0b5ed7; /* Versión aún más oscura para el hover */
+    transform: translateY(-1px);
+}
+
+/* Botón de Modificar (amarillo) - Más oscuro */
+.btn-icon.btn-warning {
+    background-color: #ffc107; /* Mantengo este color ya que es el amarillo estándar de Bootstrap. Podrías probar #d6a100 para más oscuro si este no es suficiente */
+    color: #fff; 
+}
+.btn-icon.btn-warning:hover {
+    background-color: #e0a800; /* Versión aún más oscura para el hover */
+    transform: translateY(-1px); 
+}
+
+/* Botón de Eliminar (rojo) - Más oscuro */
+.btn-icon.btn-danger {
+    background-color: #dc3545; /* Mantengo este color ya que es el rojo estándar de Bootstrap. Podrías probar #a71d2a para más oscuro si este no es suficiente */
+    color: #fff;
+}
+.btn-icon.btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+/* Botón de Asignar (si lo implementas y usas la clase 'btn-asignar') */
+.btn-icon.btn-asignar {
+    background-color: #28a745; 
+    color: #fff;
+}
+.btn-icon.btn-asignar:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+/* Estilos para botones deshabilitados (si usas la lógica de PERMISOS) */
+.btn-icon[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    background-color: #6c757d !important; 
+    transform: none !important;
 }

@@ -364,6 +364,14 @@ $(document).on("click", ".agregarPermiso", function () {
     enviaAjax(datos);
 });
 
+$(document).on("click", ".btn-info[data-codigo]", function () {
+    rolSeleccionado = $(this).data("codigo");
+    var datos = new FormData();
+    datos.append("accion", "listarPermisos");
+    datos.append("rolId", rolSeleccionado);
+    enviaAjax(datos);
+});
+
 $(document).on("click", "#guardarPermisos", function () {
     if (!rolSeleccionado) {
         alert("Seleccione un rol.");

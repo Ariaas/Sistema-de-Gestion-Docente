@@ -189,8 +189,8 @@ $(document).ready(function () {
                 datos.append("accion", "eliminar");
                 datos.append("numeroEspacio", $("#numeroEspacio").val());
                 datos.append("edificioEspacio", $("#edificio").val());
+                datos.append("tipoEspacio", $("#tipoEspacio").val()); 
                 enviaAjax(datos);
-                
             } else {
                 muestraMensaje(
                     "error",

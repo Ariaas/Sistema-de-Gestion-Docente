@@ -1,10 +1,8 @@
 $(document).ready(function() {
     let cachedTeacherData = null;
 
-    // --- Helper Function para mostrar errores en gris ---
     function setErrorText(spanElement, message) {
         if (message) {
-            // Usa text-secondary de Bootstrap para un color gris
             spanElement.text(message).removeClass('text-danger').addClass('text-secondary');
         } else {
             spanElement.text("").removeClass('text-secondary');
@@ -102,12 +100,12 @@ $(document).ready(function() {
     
     $('#modal1').on('hidden.bs.modal', function() { limpia(); });
 
-    $(document).on('click', '.ver-datos-btn', function() {
+    $(document).on('click', '.btn-info', function() { 
+
         const fila = $(this).closest('tr');
         const cedula = fila.data('cedula');
         const nombre = fila.find('td:eq(1)').text() + ' ' + fila.find('td:eq(2)').text();
         
-        // Cargar datos desde los atributos data-* de la fila
         $('#verNombreDocente').text(nombre);
         $('#verTipoConcurso').text(fila.data('tipo-concurso') || 'N/A');
         $('#verAnioConcurso').text(fila.data('anio-concurso') || 'N/A');
@@ -116,7 +114,6 @@ $(document).ready(function() {
         $('#verCoordinaciones').text(fila.data('coordinaciones-texto') || 'Sin coordinaciones');
         $('#verObservaciones').text(fila.data('observacion') || 'Sin observaciones');
 
-        // Limpiar datos anteriores y realizar la llamada AJAX para horas y preferencias
         $('#verHorasAcademicas, #verHorasCreacion, #verHorasIntegracion, #verHorasGestion, #verHorasOtras').text('0');
         $('#verPreferenciasContainer').html('<p class="text-muted">No hay preferencias registradas.</p>');
         const datos = new FormData();
@@ -300,7 +297,6 @@ $(document).ready(function() {
         const tipoConcursoInput = $('#tipoConcurso');
         const anioConcursoInput = $('#anioConcurso');
         
-        // Validacion
         if (!seleccion) { 
             setErrorText($('#scondicion'), 'Debe seleccionar una condición.');
         } else { 
@@ -366,11 +362,11 @@ $(document).ready(function() {
         $("#modal1").modal("show");
     });
 
-    $(document).on('click', '.modificar-btn', function() { pone(this, 'modificar'); });
+    $(document).on('click', '.btn-edit', function() { pone(this, 'modificar'); });
     
-    $(document).on('click', '.eliminar-btn', function() {
+    $(document).on('click', '.btn-delete', function() {
         const fila = $(this).closest("tr");
-        const cedula = fila.data("cedula"); // Obtener cédula desde data-attribute
+        const cedula = fila.data("cedula"); 
         Swal.fire({
             title: "¿Está seguro de eliminar este docente?", text: "Esta acción no se puede deshacer.", icon: "warning",
             showCancelButton: true, confirmButtonColor: "#d33", cancelButtonColor: "#3085d6",
@@ -435,18 +431,16 @@ $(document).ready(function() {
     
     $('#dedicacion').on('change', validarCargaHoraria);
     
-    // --- SECCION DE VALIDACION INDIVIDUAL ---
 
     function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
         if (etiqueta.val() && !er.test(etiqueta.val())) {
             setErrorText(etiquetamensaje, mensaje);
             return false;
         }
-        setErrorText(etiquetamensaje, ""); // Limpia si es válido o está vacío
+        setErrorText(etiquetamensaje, ""); 
         return true;
     }
 
-    // Validación para campos de texto y correo
     $("#cedulaDocente, #nombreDocente, #apellidoDocente, #correoDocente").on("keyup", function() {
         const id = $(this).attr('id');
         const el = $(this);
@@ -479,7 +473,6 @@ $(document).ready(function() {
         }
     });
     
-    // Validación para campos de selección
     $("#categoria, #dedicacion").on("change", function() {
         const el = $(this);
         if (!el.val()) {
@@ -489,7 +482,6 @@ $(document).ready(function() {
         }
     });
 
-    // Validación para campos de fecha
     $("#fechaIngreso, #anioConcurso").on("change", function() {
         const el = $(this);
         const spanEl = $("#s" + el.attr('id'));
@@ -515,7 +507,6 @@ $(document).ready(function() {
         }
     });
     
-    // Validación para checkboxes de títulos
     $("input[name='titulos[]']").on("change", function() {
         if ($("input[name='titulos[]']:checked").length === 0) {
             setErrorText($("#stitulos"), "Debe seleccionar al menos un título.");
@@ -526,7 +517,6 @@ $(document).ready(function() {
     
     $("input[name='coordinaciones[]']").on("change", function() { setErrorText($("#scoordinaciones"), ""); });
     
-    // --- FIN DE LA SECCION DE VALIDACION ---
 
     function pone(pos, accion) {
         limpia();
@@ -630,9 +620,21 @@ $(document).ready(function() {
                         destruyeDT();
                         $("#resultadoconsulta").empty();
                         lee.mensaje.forEach(item => {
-                            const btnModificar = `<button class="btn btn-warning btn-sm modificar-btn" title="Modificar Docente"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-                            const btnEliminar = `<button class="btn btn-danger btn-sm eliminar-btn" title="Eliminar Docente"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                            const btnVerDatos = `<button class="btn btn-info btn-sm ver-datos-btn" title="Ver Datos Adicionales"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg></button>`;
+
+
+
+const btnModificar = `<button class="btn btn-icon btn-edit" title="Modificar Docente" ${!PERMISOS.modificar ? 'disabled' : ''}>
+                          <img src="public/assets/icons/edit.svg" alt="Modificar">
+                      </button>`;
+
+const btnEliminar = `<button class="btn btn-icon btn-delete" title="Eliminar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}>
+                         <img src="public/assets/icons/trash.svg" alt="Eliminar">
+                     </button>`;
+
+const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Horario Docente">
+                         <img src="public/assets/icons/eye.svg" alt="Ver Horario Docente">
+                     </button>`;
+
                             
                             $("#resultadoconsulta").append(`
                                 <tr 

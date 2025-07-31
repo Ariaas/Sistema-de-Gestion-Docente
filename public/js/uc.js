@@ -221,52 +221,79 @@ $(document).ready(function() {
 });
 
 function validarenvio() {
+    let esValido = true;
+
     if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "El código de la unidad curricular es obligatorio.");
+        $("#scodigoUC").text("El código debe tener entre 5 y 20 caracteres.").css("color", "");
         $("#codigoUC").focus();
-        return false;
-    }
-    if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "El nombre de la unidad curricular es obligatorio.");
-        $("#nombreUC").focus();
-        return false;
-    }
-    if (validarkeyup(/^([3-9]|[1-9][0-9])$/, $("#creditosUC"), $("#screditosUC"), "Debe ser un número entre 3 y 99.") === 0) {
-        if(esValido) muestraMensaje("error", 4000, "ERROR!", "Las unidades de crédito deben ser entre 3 y 99.");
         esValido = false;
-    }
-    if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un trayecto.");
-        $("#trayectoUC").focus();
-        return false;
-    }
-    if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un eje.");
-        $("#ejeUC").focus();
-        return false;
-    }
-    if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un área.");
-        $("#areaUC").focus();
-        return false;
-    }
-    if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar un periodo.");
-        $("#periodoUC").focus();
-        return false;
-    }
-    if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
-        muestraMensaje("error", 4000, "Atención!", "Debe seleccionar si es electiva o no.");
-        $("#electivaUC").focus();
-        return false;
-    }
-    if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
-        muestraMensaje("error", 4000, "Atención!", "Una unidad curricular electiva no puede tener periodo anual.");
-        $("#periodoUC").focus();
-        return false;
+    } else {
+        $("#scodigoUC").text("").hide();
     }
 
-    return true;
+    if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
+        $("#snombreUC").text("El nombre debe tener entre 5 y 50 caracteres.").css("color", "");
+        $("#nombreUC").focus();
+        esValido = false;
+    } else {
+        $("#snombreUC").text("").hide();
+    }
+
+    if (validarkeyup(/^([3-9]|[1-9][0-9])$/, $("#creditosUC"), $("#screditosUC"), "Debe ser un número entre 3 y 99.") === 0) {
+        $("#screditosUC").text("Las unidades de crédito deben ser entre 3 y 99.").css("color", "");
+        $("#creditosUC").focus();
+        esValido = false;
+    } else {
+        $("#screditosUC").text("").hide();
+    }
+
+    if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
+        $("#strayectoUC").text("Debe seleccionar un trayecto.").css("color", "");
+        $("#trayectoUC").focus();
+        esValido = false;
+    } else {
+        $("#strayectoUC").text("").hide();
+    }
+
+    if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
+        $("#seje").text("Debe seleccionar un eje.").css("color", "");
+        $("#ejeUC").focus();
+        esValido = false;
+    } else {
+        $("#seje").text("").hide();
+    }
+
+    if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
+        $("#sarea").text("Debe seleccionar un área.").css("color", "");
+        $("#areaUC").focus();
+        esValido = false;
+    } else {
+        $("#sarea").text("").hide();
+    }
+
+    if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
+        $("#speriodoUC").text("Debe seleccionar un periodo.").css("color", "");
+        $("#periodoUC").focus();
+        esValido = false;
+    } else {
+        $("#speriodoUC").text("").hide();
+    }
+
+    if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
+        $("#selectivaUC").text("Debe seleccionar si es electiva.").css("color", "");
+        $("#electivaUC").focus();
+        esValido = false;
+    } else {
+        $("#selectivaUC").text("").hide();
+    }
+
+    if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
+        $("#speriodoUC").text("Una unidad curricular electiva no puede tener periodo anual.").css("color", "");
+        $("#periodoUC").focus();
+        esValido = false;
+    }
+
+    return esValido;
 }
 
 function pone(pos, accion) {

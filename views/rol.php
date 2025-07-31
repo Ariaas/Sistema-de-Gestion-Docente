@@ -83,7 +83,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                             <div class="col-md-12">
                                 <label for="nombreRol" class="form-label">Nombre del Rol</label>
-                                <input class="form-control" type="text" id="nombreRol" name="nombreRol" min="1">
+                                <input class="form-control" type="text" id="nombreRol" name="nombreRol" min="1" placeholder="Ej: Administrador, Docente, etc" required>
                                 <span id="snombreRol" class="form-text"></span>
                                 <br>
                             </div>

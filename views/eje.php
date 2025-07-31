@@ -11,7 +11,8 @@ if (!isset($_SESSION['name'])) {
 $permisos_sesion = isset($_SESSION['permisos']) ? $_SESSION['permisos'] : [];
 $permisos = array_change_key_case($permisos_sesion, CASE_LOWER);
 
-function tiene_permiso_accion($modulo, $accion, $permisos_array) {
+function tiene_permiso_accion($modulo, $accion, $permisos_array)
+{
     $modulo = strtolower($modulo);
     if (isset($permisos_array[$modulo]) && is_array($permisos_array[$modulo])) {
         return in_array($accion, $permisos_array[$modulo]);
@@ -76,7 +77,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label for="ejeNombre" class="form-label">Nombre del Eje</label>
-                                        <input class="form-control" type="text" id="ejeNombre" name="ejeNombre" required>
+                                        <input class="form-control" type="text" id="ejeNombre" name="ejeNombre" required placeholder="Ej: Epistemológico">
                                         <span id="sejeNombre" class="form-text"></span>
                                     </div>
                                 </div>
@@ -85,7 +86,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label for="ejeDescripcion" class="form-label">Descripcion del Eje</label>
-                                        <input class="form-control" type="text" id="ejeDescripcion" name="ejeDescripcion" required>
+                                        <input class="form-control" type="text" id="ejeDescripcion" name="ejeDescripcion" required placeholder="Ej: Eje relacionado con la epistemología y teorías del conocimiento">
                                         <span id="sejeDescripcion" class="form-text"></span>
                                     </div>
                                 </div>

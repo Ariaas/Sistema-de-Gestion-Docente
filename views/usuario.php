@@ -92,13 +92,13 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     </div>
                                     <div class="col-md-6">
                                         <label for="usuarionombre" class="form-label">Nombre</label>
-                                        <input class="form-control" type="text" id="usuarionombre" name="usuarionombre">
+                                        <input class="form-control" type="text" id="usuarionombre" name="usuarionombre" placeholder="Ej: Juan Pérez" required>
                                         <span id="susuarionombre" class="form-text"></span>
                                     </div>
 
                                     <div class="col-md-6">
                                         <label for="correo" class="form-label">Correo</label>
-                                        <input class="form-control" type="text" id="correo" name="correo">
+                                        <input class="form-control" type="text" id="correo" name="correo" placeholder="Ej: correo@correo.com" required>
                                         <span id="scorreo" class="form-text"></span>
                                     </div>
 

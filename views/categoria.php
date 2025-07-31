@@ -80,7 +80,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label for="categoriaNombre" class="form-label">Nombre de la Categoría</label>
-                                        <input class="form-control" type="text" id="categoriaNombre" name="categoriaNombre" required>
+                                        <input class="form-control" type="text" id="categoriaNombre" name="categoriaNombre" required placeholder="Ej: Instructor">
                                         <span id="scategoriaNombre" class="form-text"></span>
                                     </div>
                                 </div>
@@ -89,7 +89,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label for="categoriaDescripcion" class="form-label">Descripción de la Categoría</label>
-                                        <input class="form-control" type="text" id="categoriaDescripcion" name="categoriaDescripcion" required>
+                                        <input class="form-control" type="text" id="categoriaDescripcion" name="categoriaDescripcion" required placeholder="Ej: Categoría de instructor que se encarga de la enseñanza teórica y práctica">
                                         <span id="scategoriaDescripcion" class="form-text"></span>
                                     </div>
                                 </div>
