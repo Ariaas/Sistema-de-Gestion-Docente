@@ -10,9 +10,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-// --- FUNCIÓN AÑADIDA PARA NÚMEROS ROMANOS ---
 function toRoman($number) {
-    $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V']; // Suficiente para las fases
+    $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];
     return $map[$number] ?? $number;
 }
 
@@ -50,7 +49,7 @@ if (isset($_POST['generar_reporte_rod'])) {
     $queryData = $oReporte->obtenerDatosReporte();
 
     if (empty($queryData)) {
-        // Código para reporte sin resultados (sin cambios)
+        // Código para reporte sin resultados
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle("Sin Datos");
@@ -67,7 +66,6 @@ if (isset($_POST['generar_reporte_rod'])) {
         exit;
     }
 
-    // Agrupación de datos (sin cambios en la lógica)
     $reportData = [];
     foreach ($queryData as $row) {
         $docenteId = $row['doc_cedula'];
@@ -88,6 +86,7 @@ if (isset($_POST['generar_reporte_rod'])) {
                 'doc_anio_concurso' => $row['doc_anio_concurso'],
                 'doc_tipo_concurso' => $row['doc_tipo_concurso'],
                 'doc_horas_max' => $horas_max,
+                // --- AJUSTE RESTAURADO: Usamos el valor que viene de la base de datos ---
                 'doc_horas_descarga' => (int)($row['doc_horas_descarga'] ?? 0),
                 'doc_observacion' => $row['doc_observacion'],
                 'coordinaciones' => $row['coordinaciones'],
@@ -108,23 +107,18 @@ if (isset($_POST['generar_reporte_rod'])) {
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("ORGANIZACION DOCENTE");
 
-    // Estilos
+    // Estilos y encabezados
     $headerStyle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $columnHeaderStyle = ['font' => ['bold' => true, 'size' => 8], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $cellStyle = ['font' => ['size' => 8], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    
-    // --- NUEVO ESTILO PARA EL BORDE INFERIOR ---
     $bottomBorderStyle = [
         'borders' => [
             'bottom' => ['borderStyle' => Border::BORDER_THICK, 'color' => ['argb' => 'FF000000']],
         ]
     ];
     
-    // Encabezados del documento
     $sheet->mergeCells('A2:N2')->setCellValue('A2', 'CUADRO RESUMEN ORGANIZACIÓN DOCENTE')->getStyle('A2:N2')->applyFromArray($headerStyle);
     $sheet->mergeCells('A3:C3')->setCellValue('A3', 'PNF: Informática');
-    
-    // --- CAMBIO: APLICAR ESTILO DE BORDE Y USAR NÚMEROS ROMANOS ---
     $sheet->getStyle('A3:C3')->applyFromArray($bottomBorderStyle);
     $sheet->mergeCells('J3:M3')->setCellValue('J3', 'LAPSO: ' . toRoman($faseNumero) . '-' . $anioId);
     $sheet->getStyle('J3:M3')->applyFromArray($bottomBorderStyle);
@@ -151,20 +145,14 @@ if (isset($_POST['generar_reporte_rod'])) {
         $sheet->setCellValue("A{$startRowTeacher}", $itemNumber);
         $sheet->setCellValue("B{$startRowTeacher}", $docente['nombre_completo']);
         $sheet->setCellValue("C{$startRowTeacher}", $docente['doc_cedula']);
-        
-        // --- CAMBIO: FORMATO DE FECHA A DD-MM-YYYY ---
         $sheet->setCellValue("D{$startRowTeacher}", $docente['doc_fecha_ingreso'] ? date('d-m-Y', strtotime($docente['doc_fecha_ingreso'])) : '');
-        
         $sheet->setCellValue("E{$startRowTeacher}", $docente['doc_perfil_profesional']);
         $sheet->setCellValue("F{$startRowTeacher}", $docente['doc_dedicacion']);
         $sheet->setCellValue("G{$startRowTeacher}", $docente['doc_horas_max']);
         $sheet->setCellValue("H{$startRowTeacher}", $docente['horas_asignadas'] > 0 ? $docente['horas_asignadas'] : '0');
         $sheet->setCellValue("I{$startRowTeacher}", $docente['doc_horas_descarga'] > 0 ? $docente['doc_horas_descarga'] : '0');
-        
-        // El cálculo de horas faltantes es correcto
         $horasFaltantes = $docente['doc_horas_max'] - $docente['horas_asignadas'] - $docente['doc_horas_descarga'];
         $sheet->setCellValue("J{$startRowTeacher}", $horasFaltantes);
-
         $anioConcurso = $docente['doc_anio_concurso'];
         $tipoConcurso = $docente['doc_tipo_concurso'];
         $concursoDisplay = ($anioConcurso && $anioConcurso !== '0000-00-00') ? date('Y', strtotime($anioConcurso)) . ' - ' . $tipoConcurso : '';
@@ -174,19 +162,16 @@ if (isset($_POST['generar_reporte_rod'])) {
         if (!empty($docente['coordinaciones'])) { $observaciones[] = 'Coordinaciones: ' . $docente['coordinaciones']; }
         $sheet->setCellValue("N{$startRowTeacher}", implode('; ', $observaciones));
         
-        // Renderizar asignaciones agrupadas
         if (!empty($ucToSectionsMap)) {
             $tempFila = $startRowTeacher;
             foreach ($ucToSectionsMap as $ucName => $sectionsArray) {
                 $seccionesFormateadas = formatSectionsFromArray($sectionsArray, 2);
-
                 $sheet->setCellValue("K{$tempFila}", $ucName);
                 $sheet->setCellValue("M{$tempFila}", $seccionesFormateadas);
                 $tempFila++;
             }
         }
 
-        // Combinar celdas del docente
         $endRowTeacher = $startRowTeacher + $rowCount - 1;
         $celdasACombinar = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'L', 'N'];
         if ($rowCount > 1) {
@@ -199,7 +184,6 @@ if (isset($_POST['generar_reporte_rod'])) {
         $itemNumber++;
     }
     
-    // Aplicar estilos y anchos
     $finDeDatos = $filaActual - 1;
     if ($finDeDatos >= 6) {
         $sheet->getStyle('A6:N' . $finDeDatos)->applyFromArray($cellStyle);
@@ -224,7 +208,4 @@ if (isset($_POST['generar_reporte_rod'])) {
 } else {
     $listaAnios = $oReporte->obtenerAnios();
     require_once($vistaFormulario);
-} 
-
-
-//quita eso de la suma para calcular las horas  de descarga, y dime como estas calculando las horas de asignadas
+}

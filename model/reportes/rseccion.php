@@ -40,7 +40,7 @@ class SeccionReport extends Connection
     }
 
 
-    public function getHorariosFiltrados()
+   public function getHorariosFiltrados()
     {
         if (empty($this->anio) || empty($this->fase)) return [];
 
@@ -56,7 +56,7 @@ class SeccionReport extends Connection
         try {
             $params = [':anio_param' => $this->anio];
             
-            // --- SOLUCIÓN DEFINITIVA: Se adapta la consulta del módulo "Ver Horario" que sí funciona ---
+            // --- CAMBIO: Seleccionar edificio y número por separado ---
             $sql_base = "SELECT
                             uh.sec_codigo,
                             u.uc_trayecto,
@@ -64,7 +64,9 @@ class SeccionReport extends Connection
                             CONCAT(uh.hor_horainicio, ':00') as hor_horainicio,
                             CONCAT(uh.hor_horafin, ':00') as hor_horafin,
                             u.uc_nombre,
-                            CONCAT(uh.esp_edificio, ' - ', uh.esp_numero) AS esp_codigo,
+                            uh.esp_edificio, -- SELECCIONADO
+                            uh.esp_numero,   -- SELECCIONADO
+                            uh.esp_tipo,
                             (
                                 SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
                                 FROM uc_docente ud
@@ -110,4 +112,13 @@ class SeccionReport extends Connection
             return false;
         }
     }
+
+    public function getTurnos() {
+    try {
+        $sql = "SELECT tur_nombre, tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_estado = 1";
+        $stmt = $this->con()->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) { return []; }
+}
 }
