@@ -22,7 +22,7 @@ class Reporte extends Connection
     }
 
     
-    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
+    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo)
     {
         $sql = "SELECT
                     uc.uc_nombre,

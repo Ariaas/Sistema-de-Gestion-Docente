@@ -3,7 +3,7 @@
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Reporte Estadístico</title>
+    <title>Reporte Estadístico de Aprobados</title>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -22,7 +22,6 @@
                                 <select class="form-select" id="anio_reporte" name="anio_completo" required>
                                     <option value="" selected disabled>Seleccionar...</option>
                                     <?php foreach ($anios as $anio) {
-                                       
                                         $texto = "{$anio['ani_anio']} - Periodo {$anio['ani_tipo']}";
                                         echo "<option value='{$anio['anio_completo']}'>{$texto}</option>";
                                     } ?>

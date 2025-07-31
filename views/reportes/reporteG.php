@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"> 
+<html lang="es">
 
 <head>
     <?php require_once("public/components/head.php"); ?>
@@ -45,6 +45,11 @@
                                 <label for="uc_codigo" class="form-label fw-bold">Unidad Curricular</label>
                                 <select class="form-select" id="uc_codigo" name="uc_codigo" disabled>
                                     <option>Seleccione un año</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3" id="filtro_detalle_container" style="display: none;">
+                                <label for="filtro_detalle" class="form-label fw-bold">Ver Detalle de</label>
+                                <select class="form-select" id="filtro_detalle" name="filtro_detalle">
                                 </select>
                             </div>
                             <div class="col-lg-3 col-md-6 mb-3">

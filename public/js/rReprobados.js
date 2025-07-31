@@ -1,5 +1,6 @@
 $(document).ready(function() {
     let myChart = null;
+    let currentResponseData = null; // Variable para guardar los datos de la última consulta
     const ctx = document.getElementById('reporteChart').getContext('2d');
 
     const colorPalette = [
@@ -9,46 +10,104 @@ $(document).ready(function() {
         'rgba(201, 203, 207, 0.7)', 'rgba(100, 220, 150, 0.7)'
     ];
 
-    function renderChart(chartData, chartType = 'bar', chartTitle = 'Resultados Estudiantiles') {
+    /**
+     * Renderiza o actualiza el gráfico en el canvas.
+     */
+    function renderChart(chartData, chartType, chartTitle) {
         if (myChart) {
             myChart.destroy();
         }
-        const backgroundColors = chartData.data.map((_, index) => colorPalette[index % colorPalette.length]);
-        const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
+
+        const isHorizontal = chartType === 'bar';
 
         myChart = new Chart(ctx, {
             type: chartType,
-            data: {
-                labels: chartData.labels,
-                datasets: [{
-                    label: 'Estudiantes Reprobados en PER',
-                    data: chartData.data,
-                    backgroundColor: backgroundColors,
-                    borderColor: borderColors,
-                    borderWidth: 1
-                }]
-            },
+            data: chartData,
             options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, display: true, ticks: { precision: 0 } } },
+                // Eje 'y' para barras horizontales
+                indexAxis: isHorizontal ? 'y' : 'x',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    // Para barras horizontales, el eje de valores es 'x'
+                    x: { beginAtZero: true, ticks: { precision: 0 } },
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                },
                 plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: chartTitle, font: { size: 16 } }
+                    legend: {
+                        display: !isHorizontal // Oculta leyenda para barras, la muestra para otros
+                    },
+                    title: {
+                        display: true,
+                        text: chartTitle,
+                        font: { size: 16 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                const datasetLabel = tooltipItem.dataset.label || '';
+                                const label = `${datasetLabel}: ${tooltipItem.formattedValue}`;
+                                return " " + label;
+                            }
+                        }
+                    }
                 }
             }
         });
     }
 
-    function updateChartOnTypeChange() {
-        if (myChart && myChart.data.labels.length > 0) {
-             renderChart({
-                labels: myChart.data.labels,
-                data: myChart.data.datasets[0].data
-            }, $('#tipo_grafico').val(), myChart.options.plugins.title.text);
+    /**
+     * Procesa los datos del servidor y los prepara para el gráfico.
+     */
+    function processAndRenderData(responseData) {
+        const tipoReporte = $('#tipo_reporte').val();
+        let labels = [];
+        let data = [];
+        let chartTitle = 'Estudiantes Reprobados en PER';
+
+        if (tipoReporte === 'general') {
+            const totalReprobados = parseInt(responseData.total_reprobados_per, 10);
+            labels.push('Total del Periodo Académico');
+            data.push(totalReprobados);
+            chartTitle = 'Total de Estudiantes Reprobados en PER';
+        } else if (tipoReporte === 'seccion') {
+            chartTitle = 'Reprobados en PER por Unidad Curricular';
+            responseData.forEach(item => {
+                labels.push(item.uc_nombre);
+                data.push(parseInt(item.reprobados_per, 10));
+            });
+        } else if (tipoReporte === 'uc') {
+            chartTitle = 'Reprobados en PER por Sección';
+            responseData.forEach(item => {
+                labels.push('Sección ' + item.sec_codigo);
+                data.push(parseInt(item.reprobados_per, 10));
+            });
         }
+
+        const backgroundColors = data.map((_, index) => colorPalette[index % colorPalette.length]);
+        const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
+
+        const finalChartData = {
+            labels: labels,
+            datasets: [{
+                label: 'Estudiantes Reprobados en PER',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 1
+            }]
+        };
+
+        renderChart(finalChartData, $('#tipo_grafico').val(), chartTitle);
     }
 
-    $('#tipo_grafico').change(updateChartOnTypeChange);
+    // --- MANEJO DE EVENTOS ---
+
+    $('#tipo_grafico').change(function() {
+        if (currentResponseData) {
+            processAndRenderData(currentResponseData);
+        }
+    });
 
     $('#tipo_reporte').change(function() {
         const tipo = $(this).val();
@@ -60,6 +119,9 @@ $(document).ready(function() {
         const anio_completo = $(this).val();
         const seccionSelect = $('#seccion_codigo');
         const ucSelect = $('#uc_codigo');
+
+        $('#tipo_reporte').val('general');
+        $('#filtro_seccion_container, #filtro_uc_container').hide();
 
         if (!anio_completo) {
             seccionSelect.html('<option>Seleccione un año</option>').prop('disabled', true);
@@ -112,39 +174,20 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    const responseData = response.datos;
-                    const tipoReporte = $('#tipo_reporte').val();
-                    let chartData = { labels: [], data: [] };
-                    let chartTitle = 'Estudiantes Reprobados en PER';
-
-                    if (tipoReporte === 'general') {
-                        const totalReprobadosPer = parseInt(responseData.total_reprobados_per, 10);
-                        chartData.labels.push('Total del Periodo Académico');
-                        chartData.data.push(totalReprobadosPer);
-                        chartTitle = 'Total de Estudiantes Reprobados en PER';
-                    } else if (tipoReporte === 'seccion') {
-                        chartTitle = 'Reprobados en PER por Unidad Curricular';
-                        responseData.forEach(item => {
-                            chartData.labels.push(item.uc_nombre);
-                            chartData.data.push(parseInt(item.reprobados_per, 10));
-                        });
-                    } else if (tipoReporte === 'uc') {
-                        chartTitle = 'Reprobados en PER por Sección';
-                        responseData.forEach(item => {
-                            chartData.labels.push('Sección ' + item.sec_codigo);
-                            chartData.data.push(parseInt(item.reprobados_per, 10));
-                        });
-                    }
-                    renderChart(chartData, $('#tipo_grafico').val(), chartTitle);
+                    currentResponseData = response.datos;
+                    processAndRenderData(currentResponseData);
                 } else {
+                    currentResponseData = null;
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
+                        icon: 'info',
+                        title: 'Sin Datos',
                         text: response.mensaje || 'No se pudo generar el reporte.'
                     });
+                    renderChart({ labels: [], datasets: [{ data: [] }] }, 'bar', 'Seleccione los filtros para generar un reporte');
                 }
             },
             error: function() {
+                currentResponseData = null;
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de Conexión',
@@ -154,5 +197,6 @@ $(document).ready(function() {
         });
     });
 
-    renderChart({ labels: [], data: [] }, 'bar', 'Seleccione los filtros para generar un reporte');
+    // Carga el gráfico vacío al iniciar la página
+    renderChart({ labels: [], datasets: [{ data: [] }] }, 'bar', 'Seleccione los filtros para generar un reporte');
 });

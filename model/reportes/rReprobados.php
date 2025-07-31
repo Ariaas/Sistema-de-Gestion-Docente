@@ -21,8 +21,8 @@ class Reporte extends Connection
         }
     }
 
-   
-    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo)
+    // Devuelve una lista de UCs con sus reprobados del PER para una sección.
+    public function obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo)
     {
         $sql = "SELECT uc.uc_nombre, (SUM(pa.per_cantidad) - SUM(pa.per_aprobados)) as reprobados_per
                 FROM per_aprobados pa
@@ -46,7 +46,7 @@ class Reporte extends Connection
         }
     }
 
- 
+    // Devuelve una lista de secciones con sus reprobados del PER para una UC.
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT pa.sec_codigo, (SUM(pa.per_cantidad) - SUM(pa.per_aprobados)) as reprobados_per
@@ -69,7 +69,6 @@ class Reporte extends Connection
             return false;
         }
     }
-
     public function obtenerAnios()
     {
         $p = $this->Con()->prepare("SELECT ani_anio, ani_tipo, CONCAT(ani_anio, '|', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo DESC");
