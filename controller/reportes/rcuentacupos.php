@@ -194,4 +194,3 @@ if (isset($_POST['generar_reporte'])) {
 }
 ?>
 
-//bueno ya funciona gracias, ahora te acuerdas del reporte de resumen OD, busque el reglamento y necesito que lo analises para averiguar como se calculan o que son las horas de descarga
