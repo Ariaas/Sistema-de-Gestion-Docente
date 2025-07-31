@@ -21,8 +21,6 @@ class Reporte extends Connection
         }
     }
 
-
-    // Lista de UCs con su cantidad de estudiantes en PER para una sección.
     public function obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo)
     {
         $sql = "SELECT uc.uc_nombre, SUM(pa.per_cantidad) as per_cantidad

@@ -149,7 +149,6 @@ $(document).ready(function() {
         }
     }
 
-    // --- Eventos de los filtros (CORREGIDOS) ---
     $('#tipo_grafico, #filtro_detalle').change(function() {
         if (currentResponseData) displayChart($('#tipo_grafico').val());
     });
@@ -166,7 +165,6 @@ $(document).ready(function() {
         const seccionSelect = $('#seccion_codigo');
         const ucSelect = $('#uc_codigo');
 
-        // Resetea los filtros al cambiar el año
         $('#tipo_reporte').val('general');
         $('#filtro_seccion_container').hide();
         $('#filtro_uc_container').hide();

@@ -21,7 +21,6 @@ class Reporte extends Connection
         }
     }
 
-    // Devuelve una lista de UCs con sus reprobados del PER para una sección.
     public function obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo)
     {
         $sql = "SELECT uc.uc_nombre, (SUM(pa.per_cantidad) - SUM(pa.per_aprobados)) as reprobados_per
@@ -46,7 +45,6 @@ class Reporte extends Connection
         }
     }
 
-    // Devuelve una lista de secciones con sus reprobados del PER para una UC.
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql = "SELECT pa.sec_codigo, (SUM(pa.per_cantidad) - SUM(pa.per_aprobados)) as reprobados_per

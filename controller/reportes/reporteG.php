@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!is_file("model/reportes/reporteG.php")) {
-    echo "Falta definir la clase del modelo: reporteGm.php";
+    echo "Falta definir la clase del modelo: reporteG.php";
     exit;
 }
 require_once("model/reportes/reporteG.php");
@@ -39,7 +39,7 @@ if (is_file("views/reportes/reporteG.php")) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        // Se pasan los filtros de año y tipo para mayor precisión
+                        
                         $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':

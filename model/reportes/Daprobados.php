@@ -5,8 +5,6 @@ require_once('model/dbconnection.php');
 class Reporte extends Connection
 {
 
-    // En tu archivo de modelo (ej. Daprobadosm.php)
-
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT
@@ -14,7 +12,7 @@ class Reporte extends Connection
             FROM tbl_aprobados AS apro
             WHERE apro.ani_anio = :anio
               AND apro.ani_tipo = :tipo
-              AND apro.apro_estado = 1"; // <-- Esta es la condición que faltaba
+              AND apro.apro_estado = 1";
 
         try {
             $p = $this->Con()->prepare($sql);
@@ -23,7 +21,7 @@ class Reporte extends Connection
             $p->execute();
             return $p->fetch(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            // error_log($e->getMessage()); // Opcional: para registrar errores
+            
             return false;
         }
     }

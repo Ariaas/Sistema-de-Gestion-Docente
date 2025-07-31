@@ -1,6 +1,6 @@
 $(document).ready(function() {
     let myChart = null;
-    let currentResponseData = null; // Variable para guardar los datos de la última consulta
+    let currentResponseData = null; 
     const ctx = document.getElementById('reporteChart').getContext('2d');
 
     const colorPalette = [
@@ -10,9 +10,6 @@ $(document).ready(function() {
         'rgba(201, 203, 207, 0.7)', 'rgba(100, 220, 150, 0.7)'
     ];
 
-    /**
-     * Renderiza o actualiza el gráfico en el canvas.
-     */
     function renderChart(chartData, chartType, chartTitle) {
         if (myChart) {
             myChart.destroy();
@@ -24,18 +21,18 @@ $(document).ready(function() {
             type: chartType,
             data: chartData,
             options: {
-                // Eje 'y' para barras horizontales
+                
                 indexAxis: isHorizontal ? 'y' : 'x',
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    // Para barras horizontales, el eje de valores es 'x'
+                    
                     x: { beginAtZero: true, ticks: { precision: 0 } },
                     y: { beginAtZero: true, ticks: { precision: 0 } }
                 },
                 plugins: {
                     legend: {
-                        display: !isHorizontal // Oculta leyenda para barras, la muestra para otros
+                        display: !isHorizontal 
                     },
                     title: {
                         display: true,
@@ -56,9 +53,7 @@ $(document).ready(function() {
         });
     }
 
-    /**
-     * Procesa los datos del servidor y los prepara para el gráfico.
-     */
+
     function processAndRenderData(responseData) {
         const tipoReporte = $('#tipo_reporte').val();
         let labels = [];
@@ -101,7 +96,6 @@ $(document).ready(function() {
         renderChart(finalChartData, $('#tipo_grafico').val(), chartTitle);
     }
 
-    // --- MANEJO DE EVENTOS ---
 
     $('#tipo_grafico').change(function() {
         if (currentResponseData) {
@@ -197,6 +191,5 @@ $(document).ready(function() {
         });
     });
 
-    // Carga el gráfico vacío al iniciar la página
     renderChart({ labels: [], datasets: [{ data: [] }] }, 'bar', 'Seleccione los filtros para generar un reporte');
 });

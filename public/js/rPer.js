@@ -1,6 +1,6 @@
 $(document).ready(function() {
     let myChart = null;
-    let currentResponseData = null; // Se usará para cambiar entre tipos de gráfico sin recargar
+    let currentResponseData = null; 
     const ctx = document.getElementById('reporteChart').getContext('2d');
 
     const colorPalette = [
@@ -10,33 +10,30 @@ $(document).ready(function() {
         'rgba(201, 203, 207, 0.7)', 'rgba(100, 220, 150, 0.7)'
     ];
 
-    /**
-     * Renderiza el gráfico en el canvas con las nuevas opciones.
-     */
     function renderChart(chartData, chartType, chartTitle) {
         if (myChart) {
             myChart.destroy();
         }
 
-        // Determina si el gráfico de barras será horizontal
+        
         const isHorizontal = chartType === 'bar';
 
         myChart = new Chart(ctx, {
             type: chartType,
             data: chartData,
             options: {
-                // Eje 'y' para barras horizontales, 'x' para verticales
+                
                 indexAxis: isHorizontal ? 'y' : 'x',
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    // Para barras horizontales, el eje de valores es 'x'
+                    
                     x: { beginAtZero: true, ticks: { precision: 0 } },
                     y: { beginAtZero: true, ticks: { precision: 0 } }
                 },
                 plugins: {
                     legend: {
-                        display: !isHorizontal // Oculta la leyenda para barras, la muestra para torta/anillo
+                        display: !isHorizontal 
                     },
                     title: {
                         display: true,
@@ -57,9 +54,6 @@ $(document).ready(function() {
         });
     }
 
-    /**
-     * Procesa los datos del servidor y los prepara para el gráfico.
-     */
     function processChartData(responseData) {
         const tipoReporte = $('#tipo_reporte').val();
         let labels = [];
@@ -174,8 +168,8 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    currentResponseData = response.datos; // Guardamos los datos
-                    processChartData(currentResponseData); // Procesamos y renderizamos
+                    currentResponseData = response.datos; 
+                    processChartData(currentResponseData); 
                 } else {
                     currentResponseData = null;
                     Swal.fire({
@@ -183,7 +177,7 @@ $(document).ready(function() {
                         title: 'Sin Datos',
                         text: response.mensaje || 'No se encontraron datos para generar el reporte.'
                     });
-                    // Limpiamos el gráfico
+                    
                     renderChart({ labels: [], datasets: [{ data:[] }] }, 'bar', 'Seleccione los filtros para generar un reporte');
                 }
             },
@@ -198,6 +192,6 @@ $(document).ready(function() {
         });
     });
 
-    // Estado inicial del gráfico
+   
     renderChart({ labels: [], datasets: [{ data:[] }] }, 'bar', 'Seleccione los filtros para generar un reporte');
 });

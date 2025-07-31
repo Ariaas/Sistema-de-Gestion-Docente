@@ -67,7 +67,6 @@ $(document).ready(function() {
             data: {
                 labels: barData.labels,
                 datasets: [{
-                    // El label del dataset se usará en el tooltip.
                     label: 'Aprobados Totales',
                     data: barData.datasets[0].data,
                     backgroundColor: barData.datasets[0].backgroundColor,
@@ -98,22 +97,18 @@ $(document).ready(function() {
                         display: !isHorizontal 
                     },
                     title: { display: true, text: chartTitle, font: { size: 16 } },
-                    /**
-                     * INICIO: CONFIGURACIÓN DEL TOOLTIP
-                     * Esta sección personaliza el texto emergente para que coincida con tu imagen.
-                     */
+
                     tooltip: {
                         callbacks: {
                             label: function(tooltipItem) {
-                                // Obtiene la etiqueta del dataset (Ej: "Aprobados Totales")
+                                
                                 const datasetLabel = tooltipItem.dataset.label || '';
-                                // Formatea el texto como "Etiqueta: Valor"
+                               
                                 const label = `${datasetLabel}: ${tooltipItem.formattedValue}`;
                                 return " " + label;
                             }
                         }
                     }
-                    // FIN: CONFIGURACIÓN DEL TOOLTIP
                 }
             }
         });

@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 
 if (!is_file("model/reportes/rPer.php")) {
-    echo "Falta definir la clase del modelo: rPerm.php";
+    echo "Falta definir la clase del modelo: rPer.php";
     exit;
 }
 require_once("model/reportes/rPer.php");
@@ -40,7 +40,7 @@ if (is_file("views/reportes/rPer.php")) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        // Se pasan los filtros de año y tipo para mayor precisión
+                        
                         $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':

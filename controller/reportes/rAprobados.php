@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 
 if (!is_file("model/reportes/rAprobados.php")) {
-    echo "Falta definir la clase del modelo: rAprobadosm.php";
+    echo "Falta definir la clase del modelo: rAprobados.php";
     exit;
 }
 require_once("model/reportes/rAprobados.php");
@@ -40,7 +40,7 @@ if (is_file("views/reportes/rAprobados.php")) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        // Se pasan los filtros de año y tipo para mayor precisión
+                        
                         $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':
@@ -51,7 +51,7 @@ if (is_file("views/reportes/rAprobados.php")) {
                         }
                         $datos = $reporteModel->obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo);
                         break;
-                    default: // general
+                    default: 
                         $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio, $tipo);
                         break;
                 }
@@ -87,5 +87,5 @@ if (is_file("views/reportes/rAprobados.php")) {
     $anios = $reporteModel->obtenerAnios();
     require_once("views/reportes/rAprobados.php");
 } else {
-    echo "Página en construcción: rAprobadosv.php";
+    echo "Página en construcción: rAprobados.php";
 }

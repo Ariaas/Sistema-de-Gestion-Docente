@@ -343,8 +343,9 @@ function enviaAjax(datos, tipo_accion_local = null) {
               if (item.esp_tipo === "Laboratorio" && !numeroMostrado.startsWith("L-")) {
                 numeroMostrado = "L-" + numeroMostrado;
               } else if (item.esp_tipo === "Aula" && !numeroMostrado.startsWith("A-")) {
-                numeroMostrado = "A-" + numeroMostrado;
-              }
+    const letraEdificio = item.esp_edificio ? item.esp_edificio.charAt(0).toUpperCase() : '';
+    numeroMostrado = letraEdificio + "-" + numeroMostrado;
+  }
             }
 
             tabla += `

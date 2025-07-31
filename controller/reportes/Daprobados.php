@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 
 if (!is_file("model/reportes/Daprobados.php")) {
-    echo "Falta definir la clase del modelo: Daprobadosm.php";
+    echo "Falta definir la clase del modelo: Daprobados.php";
     exit;
 }
 require_once("model/reportes/Daprobados.php");
@@ -36,15 +36,14 @@ if (is_file("views/reportes/Daprobados.php")) {
                 }
 
                 switch ($tipo_reporte) {
-                    // En Daprobadosc.php, dentro del case 'generar_reporte' y el switch de 'tipo_reporte'
-
+                    
                     case 'seccion':
                         $seccion_codigo = $_POST['seccion_codigo'] ?? 0;
                         if (empty($seccion_codigo)) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        // Pasa las variables $anio y $tipo a la función del modelo
+                        
                         $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':
@@ -60,7 +59,7 @@ if (is_file("views/reportes/Daprobados.php")) {
                         break;
                 }
 
-                if ($datos !== false) { // Cambia la condición para que verifique si $datos no es 'false'
+                if ($datos !== false) { 
                     echo json_encode(['success' => true, 'datos' => $datos]);
                 } else {
                     echo json_encode(['success' => false, 'mensaje' => 'No se encontraron datos o hubo un error al consultar la base de datos.']);
@@ -91,5 +90,5 @@ if (is_file("views/reportes/Daprobados.php")) {
     $anios = $reporteModel->obtenerAnios();
     require_once("views/reportes/Daprobados.php");
 } else {
-    echo "Página en construcción: Daprobadosv.php";
+    echo "Página en construcción: Daprobados.php";
 }

@@ -10,9 +10,6 @@ $(document).ready(function() {
         'rgba(100, 220, 150, 0.7)', 'rgba(220, 100, 100, 0.7)'
     ];
 
-    /**
-     * Función principal para mostrar/actualizar el gráfico.
-     */
     function displayChart(chartType) {
         if (!currentResponseData) {
             renderChart({ labels: [], datasets: [] }, 'bar', 'Seleccione los filtros para generar un reporte');
@@ -33,9 +30,6 @@ $(document).ready(function() {
         renderChart(finalChartData, chartType, chartTitle);
     }
 
-    /**
-     * Construye la estructura de datos para un gráfico.
-     */
     function buildChartData(data, tipoReporte) {
         const labels = [];
         const dataValues = [];
@@ -65,9 +59,6 @@ $(document).ready(function() {
         };
     }
 
-    /**
-     * Transforma los datos para un gráfico de torta/anillo.
-     */
     function transformForPieChart(barData) {
         const tipoReporte = $('#tipo_reporte').val();
         const newTitle = getChartTitle(tipoReporte);
@@ -86,9 +77,6 @@ $(document).ready(function() {
         };
     }
     
-    /**
-     * Renderiza el gráfico en el canvas.
-     */
     function renderChart(chartData, chartType, chartTitle) {
         if (myChart) myChart.destroy();
         
@@ -123,17 +111,12 @@ $(document).ready(function() {
         });
     }
 
-    /**
-     * Genera el título del gráfico.
-     */
     function getChartTitle(tipoReporte) {
         if (tipoReporte === 'general') return 'Total de Aprobados Directo';
         if (tipoReporte === 'seccion') return 'Aprobados Directo por Unidad Curricular';
         if (tipoReporte === 'uc') return 'Aprobados Directo por Sección';
         return 'Seleccione los filtros para generar un reporte';
     }
-
-    // --- MANEJO DE EVENTOS ---
 
     $('#tipo_reporte').change(function() {
         const tipo = $(this).val();
