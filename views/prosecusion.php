@@ -26,6 +26,10 @@ $puede_registrar_seccion = tiene_permiso_accion('seccion', 'registrar', $permiso
 $puede_modificar_seccion = tiene_permiso_accion('seccion', 'modificar', $permisos);
 $puede_realizar_prosecusion = $puede_registrar_seccion && $puede_modificar_seccion;
 
+if (!$puede_realizar_prosecusion) {
+    header('Location: ?pagina=principal');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>

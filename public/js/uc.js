@@ -111,21 +111,50 @@ $(document).ready(function() {
     });
 
     $("#proceso").on("click", function() {
+        let ejeVal = $("#ejeUC").val();
+        if (!ejeVal) {
+            let opcionEliminada = $("#ejeUC option:selected");
+            if (opcionEliminada.length && opcionEliminada.prop("disabled")) {
+                ejeVal = opcionEliminada.val();
+                $("#ejeUC").val(ejeVal);
+            }
+        }
+
+        let areaVal = $("#areaUC").val();
+        if (!areaVal) {
+            let opcionEliminadaArea = $("#areaUC option:selected");
+            if (opcionEliminadaArea.length && opcionEliminadaArea.prop("disabled")) {
+                areaVal = opcionEliminadaArea.val();
+                $("#areaUC").val(areaVal);
+            }
+        }
+
         if ($(this).text() == "MODIFICAR") {
             if (validarenvio()) {
                 var datos = new FormData($("#f")[0]);
                 datos.append("accion", "modificar");
                 datos.append("codigoUCOriginal", originalCodigoUC);
+                if ($("#ejeUC option:selected").prop("disabled")) {
+                    datos.set("ejeUC", $("#ejeUC option:selected").val());
+                }
+                if ($("#areaUC option:selected").prop("disabled")) {
+                    datos.set("areaUC", $("#areaUC option:selected").val());
+                }
                 enviaAjax(datos);
             }
         } else if ($(this).text() == "REGISTRAR") {
             if (validarenvio()) {
                 var datos = new FormData($("#f")[0]);
                 datos.append("accion", "registrar");
+                if ($("#ejeUC option:selected").prop("disabled")) {
+                    datos.set("ejeUC", $("#ejeUC option:selected").val());
+                }
+                if ($("#areaUC option:selected").prop("disabled")) {
+                    datos.set("areaUC", $("#areaUC option:selected").val());
+                }
                 enviaAjax(datos);
             }
-        }
-        if ($(this).text() == "ELIMINAR") {
+        } else if ($(this).text() == "ELIMINAR") {
             var codigoUC = $("#codigoUC").val();
             var datosVerificacion = new FormData();
             datosVerificacion.append("accion", "verificar_horario");
@@ -256,17 +285,27 @@ function validarenvio() {
     }
 
     if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
-        $("#seje").text("Debe seleccionar un eje.").css("color", "");
-        $("#ejeUC").focus();
-        esValido = false;
+        let opcionEliminada = $("#ejeUC option:selected");
+        if (opcionEliminada.length && opcionEliminada.prop("disabled")) {
+            $("#seje").text("").hide();
+        } else {
+            $("#seje").text("Debe seleccionar un eje.").css("color", "");
+            $("#ejeUC").focus();
+            esValido = false;
+        }
     } else {
         $("#seje").text("").hide();
     }
 
     if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
-        $("#sarea").text("Debe seleccionar un área.").css("color", "");
-        $("#areaUC").focus();
-        esValido = false;
+        let opcionEliminadaArea = $("#areaUC option:selected");
+        if (opcionEliminadaArea.length && opcionEliminadaArea.prop("disabled")) {
+            $("#sarea").text("").hide();
+        } else {
+            $("#sarea").text("Debe seleccionar un área.").css("color", "");
+            $("#areaUC").focus();
+            esValido = false;
+        }
     } else {
         $("#sarea").text("").hide();
     }
@@ -320,12 +359,53 @@ function pone(pos, accion) {
     $("#codigoUC").val(linea.data("codigo"));
     $("#nombreUC").val(linea.data("nombre"));
     $("#trayectoUC").val(linea.data("trayecto"));
-    $("#ejeUC").val(linea.data("eje"));
-    $("#areaUC").val(linea.data("area"));
+
+    const ejeValor = linea.data("eje");
+    const $ejeUC = $("#ejeUC");
+    $ejeUC.find("option").each(function() {
+        if ($(this).text().includes("(eliminado)")) {
+            $(this).remove();
+        }
+    });
+    if ($ejeUC.find("option[value='" + ejeValor + "']").length === 0 && ejeValor) {
+        $ejeUC.prepend(
+            $("<option>", {
+                value: ejeValor,
+                text: ejeValor + " (eliminado)",
+                disabled: true,
+                selected: true
+            })
+        );
+    } else {
+        $ejeUC.val(ejeValor);
+        $("#seje").text("").hide();
+    }
+
+    const areaValor = linea.data("area");
+    const $areaUC = $("#areaUC");
+    $areaUC.find("option").each(function() {
+        if ($(this).text().includes("(eliminado)")) {
+            $(this).remove();
+        }
+    });
+    if ($areaUC.find("option[value='" + areaValor + "']").length === 0 && areaValor) {
+        $areaUC.prepend(
+            $("<option>", {
+                value: areaValor,
+                text: areaValor + " (eliminado)",
+                disabled: true,
+                selected: true
+            })
+        );
+    } else {
+        $areaUC.val(areaValor);
+        $("#sarea").text("").hide();
+    }
+
     $("#creditosUC").val(linea.data("creditos"));
     $("#periodoUC").val(linea.data("periodo"));
     $("#electivaUC").val(linea.data("electiva"));
-    
+
     $("#modal1").modal("show");
 }
 
@@ -527,6 +607,17 @@ function enviaAjax(datos, accion = "") {
 }
 
 function limpia() {
+    $("#ejeUC option").each(function() {
+        if ($(this).text().includes("(eliminado)")) {
+            $(this).remove();
+        }
+    });
+    $("#areaUC option").each(function() {
+        if ($(this).text().includes("(eliminado)")) {
+            $(this).remove();
+        }
+    });
+
     $("#codigoUC").val("");
     $("#nombreUC").val("");
     $("#creditosUC").val("");

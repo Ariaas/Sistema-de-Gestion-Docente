@@ -110,6 +110,11 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         <select class="form-select" name="ejeUC" id="ejeUC" required>
                                             <option value="" disabled selected>Seleccione una opción</option>
                                             <?php
+                                            $ejeActual = isset($_GET['ejeActual']) ? $_GET['ejeActual'] : '';
+                                            $ejesActivos = array_column($ejes, 'eje_nombre');
+                                            if ($ejeActual && !in_array($ejeActual, $ejesActivos)) {
+                                                echo "<option value='" . htmlspecialchars($ejeActual) . "' disabled selected>" . htmlspecialchars($ejeActual) . " (eliminado)</option>";
+                                            }
                                             if (!empty($ejes)) {
                                                 foreach ($ejes as $eje) {
                                                     echo "<option value='" . htmlspecialchars($eje['eje_nombre']) . "'>" . htmlspecialchars($eje['eje_nombre']) . "</option>";
@@ -127,12 +132,19 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         <select class="form-select" name="areaUC" id="areaUC" required>
                                             <option value="" disabled selected>Seleccione una opción</option>
                                             <?php
+                                            $areasActivas = array_column($areas, 'area_nombre');
                                             if (!empty($areas)) {
                                                 foreach ($areas as $area) {
                                                     echo "<option value='" . htmlspecialchars($area['area_nombre']) . "'>" . htmlspecialchars($area['area_nombre']) . "</option>";
                                                 }
-                                            } else {
-                                                echo "<option value='' disabled>No hay areas disponibles</option>";
+                                            }
+                                            if (!empty($areasEliminadas)) {
+                                                foreach ($areasEliminadas as $areaEliminada) {
+                                                    // Evita duplicados
+                                                    if (!in_array($areaEliminada, $areasActivas)) {
+                                                        echo "<option value='" . htmlspecialchars($areaEliminada) . "'>" . htmlspecialchars($areaEliminada) . " (eliminado)</option>";
+                                                    }
+                                                }
                                             }
                                             ?>
                                         </select>

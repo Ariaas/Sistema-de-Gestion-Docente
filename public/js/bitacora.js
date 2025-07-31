@@ -37,7 +37,7 @@ function Listar() {
           },
         },
         autoWidth: false,
-        order: [[1, "asc"]],
+        order: [[3, "desc"]],
         dom:
           "<'row'<'col-sm-2'l><'col-sm-6'B><'col-sm-4'f>><'row'<'col-sm-12'tr>>" +
           "<'row'<'col-sm-5'i><'col-sm-7'p>>",
