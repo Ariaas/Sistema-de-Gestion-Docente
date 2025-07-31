@@ -17,7 +17,7 @@ class Bitacora extends Connection
         $r = array();
 
         try {
-            $stmt = $co->query("SELECT tbl_usuario.usu_id, tbl_usuario.usu_nombre, bit_modulo, bit_accion, bit_fecha FROM tbl_usuario INNER JOIN tbl_bitacora ON tbl_usuario.usu_id = tbl_bitacora.usu_id");
+            $stmt = $co->query("SELECT tbl_usuario.usu_id, tbl_usuario.usu_nombre, bit_modulo, bit_accion, bit_fecha FROM tbl_usuario INNER JOIN tbl_bitacora ON tbl_usuario.usu_id = tbl_bitacora.usu_id ORDER BY bit_fecha DESC");
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
