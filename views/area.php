@@ -82,7 +82,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label for="areaNombre" class="form-label">Nombre del Área</label>
-                                        <input class="form-control" type="text" id="areaNombre" name="areaNombre" required placeholder="Arquitectura">
+                                        <input class="form-control" type="text" id="areaNombre" name="areaNombre" required placeholder="Ej: Arquitectura">
                                         <span id="sareaNombre" class="form-text"></span>
                                     </div>
                                 </div>

@@ -30,6 +30,7 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'eliminar') {
             $e->setNumero($_POST['numeroEspacio']);
             $e->setEdificio($_POST['edificioEspacio']);
+            $e->setTipo($_POST['tipoEspacio']);
             echo  json_encode($e->eliminar());
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'espacios');
@@ -57,7 +58,7 @@ if (is_file("views/" . $pagina . ".php")) {
                 echo  json_encode($e->modificar(
                     $_POST['original_numeroEspacio'],
                     $_POST['original_edificioEspacio'],
-                    $_POST['original_tipoEspacio'] 
+                    $_POST['original_tipoEspacio']
                 ));
             }
         }

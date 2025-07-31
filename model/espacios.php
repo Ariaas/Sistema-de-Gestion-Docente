@@ -181,10 +181,11 @@ class Espacio extends Connection
             try {
                 $stmt = $co->prepare("UPDATE tbl_espacio
                 SET esp_estado = 0
-                WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio");
+                WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio");
 
                 $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
                 $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
+                $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
 
                 $stmt->execute();
 

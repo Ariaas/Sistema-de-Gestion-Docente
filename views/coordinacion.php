@@ -81,7 +81,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label for="coordinacionNombre" class="form-label">Nombre de la Coordinación</label>
-                                    <input class="form-control" type="text" id="coordinacionNombre" name="coordinacionNombre" required placeholder="Ej: Coordinador de Base de datos">
+                                    <input class="form-control" type="text" id="coordinacionNombre" name="coordinacionNombre" required placeholder="Ej: Proyecto">
                                     <span id="scoordinacionNombre" class="text-danger"></span>
                                 </div>
                             </div>
