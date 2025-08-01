@@ -325,7 +325,7 @@ class Seccion extends Connection
         }
     }
 
-    public function UnirHorarios($sec_codigo_origen, $sec_codigos_a_unir)
+     public function UnirHorarios($sec_codigo_origen, $sec_codigos_a_unir)
     {
 
         if (empty($sec_codigo_origen) || empty($sec_codigos_a_unir) || count($sec_codigos_a_unir) < 2) {
@@ -425,7 +425,6 @@ class Seccion extends Connection
             return ['resultado' => 'error', 'mensaje' => 'Error al unir los horarios: ' . $e->getMessage()];
         }
     }
-    
 
     public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo)
     {
