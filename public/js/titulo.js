@@ -62,17 +62,16 @@ function pone(pos, accion) {
     $("#tituloprefijo").val(prefijo);
     $("#titulonombre").val(nombre);
 
-    if (accion === 0) { // Modificar
+    if (accion === 0) { 
         $("#proceso").text("MODIFICAR");
         $("#tituloprefijo, #titulonombre").prop("disabled", false);
         $("#tituloprefijo_original").val(prefijo);
         $("#titulonombre_original").val(nombre);
         $("#stituloprefijo, #stitulonombre").text("").show();
-    } else { // Eliminar
+    } else { 
         $("#proceso").text("ELIMINAR");
         $("#tituloprefijo, #titulonombre").prop("disabled", true);
         $("#stituloprefijo, #stitulonombre").hide();
-        // Se habilita explícitamente el botón para asegurar que funcione
         $("#proceso").prop("disabled", false); 
     }
     $("#modal1").modal("show");
@@ -140,7 +139,7 @@ function enviaAjax(datos, accion) {
                     Swal.fire({
                         icon: 'success',
                         title: tituloMayusculas,
-                        text: lee.mensaje,
+                        html: lee.mensaje, 
                         timer: 2000
                     });
                     $("#modal1").modal("hide");
@@ -169,12 +168,9 @@ $(document).ready(function() {
     Listar();
 
     $("#titulonombre, #tituloprefijo").on("keyup change", function () {
-        // -------------- INICIO DEL CÓDIGO CORREGIDO --------------
-        // Si el formulario está en modo Eliminar, no se ejecuta la validación de 'existe'.
         if ($("#proceso").text() === 'ELIMINAR') {
             return;
         }
-        // -------------- FIN DEL CÓDIGO CORREGIDO ----------------
     
         $("#stitulonombre").css("color", "");
 
@@ -250,5 +246,10 @@ $(document).ready(function() {
         }
         
         enviaAjax(datos);
+    });
+
+    $('#modal1').on('hidden.bs.modal', function () {
+        $("#proceso").prop("disabled", false);
+        $("#stituloprefijo, #stitulonombre").text("").css("color", "");
     });
 });

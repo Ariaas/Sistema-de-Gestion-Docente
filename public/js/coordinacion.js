@@ -115,7 +115,6 @@ $(document).ready(function () {
         enviaAjax(datos);
     }
   });
-  // -------------- FIN DEL CÓDIGO CORREGIDO ----------------
 
   $("#registrar").on("click", function () {
     limpia();
@@ -126,8 +125,14 @@ $(document).ready(function () {
     modalTitle.text("Formulario de Registro de Coordinación");
 
     $("#proceso").text("REGISTRAR").removeClass("btn-danger btn-warning").addClass("btn-primary");
-    $("#proceso").prop("disabled", true); 
+    $("#proceso").prop("disabled", false); 
+    $("#scoordinacionNombre").text("").hide(); 
     $("#modal1").modal("show");
+  });
+
+  $('#modal1').on('hidden.bs.modal', function () {
+    $("#proceso").prop("disabled", false);
+    $("#scoordinacionNombre").text("").css("color", "");
   });
 });
 
@@ -235,6 +240,7 @@ function enviaAjax(datos) {
 function limpia() {
   $("#coordinacionNombre").val("").prop('disabled', false);
   $("#scoordinacionNombre").text("");
+  $("#proceso").prop("disabled", false); 
   originalNombreCoordinacion = '';
 }
 

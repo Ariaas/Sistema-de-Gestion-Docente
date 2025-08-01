@@ -56,7 +56,7 @@ class Titulo extends Connection
 
         if ($existeActivo) {
             $r['resultado'] = 'error';
-            $r['mensaje'] = '¡ERROR!   El título con ese prefijo y nombre ya existe.';
+            $r['mensaje'] = '¡ERROR! <br/> El título colocado ya existe!.';
             return $r;
         }
 
@@ -73,7 +73,7 @@ class Titulo extends Connection
             $stmtReactivar->execute();
 
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = '¡Registro Incluido!  Se registró el título correctamente.';
+            $r['mensaje'] = '¡Registro Incluido! <br/> Se registró el título correctamente.';
             $co = null;
             return $r;
         }
@@ -85,7 +85,7 @@ class Titulo extends Connection
             $stmt->execute();
 
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = '¡Registro Incluido!  Se registró el título correctamente.';
+            $r['mensaje'] = '¡Registro Incluido! <br/> Se registró el título correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
@@ -123,7 +123,7 @@ class Titulo extends Connection
         if ($this->prefijoTitulo !== $this->originalPrefijoTitulo || $this->nombreTitulo !== $this->originalNombreTitulo) {
             if ($this->Existe()) {
                 $r['resultado'] = 'error';
-                $r['mensaje'] = '¡ERROR!   La nueva combinación de prefijo y nombre ya existe.';
+                $r['mensaje'] = '¡ERROR! <br/> El titulo colocado ya existe!';
                 return $r;
             }
         }
@@ -141,7 +141,7 @@ class Titulo extends Connection
             $stmt->execute();
 
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = '¡Registro Modificado! Se modificó el título correctamente.';
+            $r['mensaje'] = '¡Registro Modificado! <br/> Se modificó el título correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
 
@@ -170,7 +170,7 @@ class Titulo extends Connection
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = '¡Registro Eliminado! Se eliminó el título correctamente.';
+                $r['mensaje'] = '¡Registro Eliminado! <br/> Se eliminó el título correctamente.';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
 
@@ -182,7 +182,7 @@ class Titulo extends Connection
             }
         } else {
             $r['resultado'] = 'error';
-            $r['mensaje'] = '¡ERROR!   El título que intenta eliminar no existe.';
+            $r['mensaje'] = '¡ERROR! <br/> El título que intenta eliminar no existe.';
         }
         return $r;
     }
