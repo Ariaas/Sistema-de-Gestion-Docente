@@ -14,7 +14,6 @@ $(document).ready(function() {
         if (myChart) {
             myChart.destroy();
         }
-
         
         const isHorizontal = chartType === 'bar';
 
@@ -22,12 +21,10 @@ $(document).ready(function() {
             type: chartType,
             data: chartData,
             options: {
-                
                 indexAxis: isHorizontal ? 'y' : 'x',
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    
                     x: { beginAtZero: true, ticks: { precision: 0 } },
                     y: { beginAtZero: true, ticks: { precision: 0 } }
                 },
@@ -72,9 +69,9 @@ $(document).ready(function() {
                 data.push(parseInt(item.per_cantidad, 10));
             });
         } else if (tipoReporte === 'uc') {
-            chartTitle = 'Estudiantes en PER por Sección';
+            chartTitle = 'Estudiantes en PER por Sección o Grupo';
             responseData.forEach(item => {
-                labels.push('Sección ' + item.sec_codigo);
+                labels.push('Sección(es) ' + item.sec_codigo.replace(/,/g, '-'));
                 data.push(parseInt(item.per_cantidad, 10));
             });
         }
@@ -95,7 +92,6 @@ $(document).ready(function() {
 
         renderChart(finalChartData, $('#tipo_grafico').val(), chartTitle);
     }
-
 
     $('#tipo_grafico').change(function() {
         if (currentResponseData) {
@@ -130,7 +126,7 @@ $(document).ready(function() {
         }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
             if (data.length > 0) {
-                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo}</option>`);
+                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo_label}</option>`);
                 seccionSelect.prop('disabled', false);
             } else {
                 options = '<option value="">No hay secciones</option>';
@@ -191,7 +187,6 @@ $(document).ready(function() {
             }
         });
     });
-
-   
+    
     renderChart({ labels: [], datasets: [{ data:[] }] }, 'bar', 'Seleccione los filtros para generar un reporte');
 });

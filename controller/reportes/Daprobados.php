@@ -3,13 +3,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
 if (!is_file("model/reportes/Daprobados.php")) {
     echo "Falta definir la clase del modelo: Daprobados.php";
     exit;
 }
 require_once("model/reportes/Daprobados.php");
-
 
 if (is_file("views/reportes/Daprobados.php")) {
 
@@ -19,7 +17,6 @@ if (is_file("views/reportes/Daprobados.php")) {
         header('Content-Type: application/json');
         $accion = $_POST['accion'];
 
-   
         $anio_completo = $_POST['anio_completo'] ?? '';
         $anio_parts = explode('|', $anio_completo);
         $anio = $anio_parts[0] ?? 0;
@@ -36,14 +33,12 @@ if (is_file("views/reportes/Daprobados.php")) {
                 }
 
                 switch ($tipo_reporte) {
-                    
                     case 'seccion':
-                        $seccion_codigo = $_POST['seccion_codigo'] ?? 0;
+                        $seccion_codigo = $_POST['seccion_codigo'] ?? '';
                         if (empty($seccion_codigo)) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        
                         $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':
@@ -68,7 +63,7 @@ if (is_file("views/reportes/Daprobados.php")) {
 
             case 'obtener_secciones':
                 if (!empty($anio) && !empty($tipo)) {
-                    $secciones = $reporteModel->obtenerSeccionesPorAnio($anio, $tipo);
+                    $secciones = $reporteModel->obtenerSeccionesAgrupadasPorAnio($anio, $tipo);
                     echo json_encode($secciones);
                 } else {
                     echo json_encode([]);
@@ -92,3 +87,4 @@ if (is_file("views/reportes/Daprobados.php")) {
 } else {
     echo "Página en construcción: Daprobados.php";
 }
+?>

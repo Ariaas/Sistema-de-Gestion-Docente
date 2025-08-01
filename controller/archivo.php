@@ -77,7 +77,7 @@ if (is_file("views/" . $pagina . ".php")) {
 
             case 'obtener_secciones':
                 $anio_compuesto = isset($_POST['anio_compuesto']) ? explode(':', $_POST['anio_compuesto']) : [null, null];
-                echo json_encode($modelo->obtenerSeccionesPorAnio($anio_compuesto[0], $anio_compuesto[1], $usu_cedula));
+                echo json_encode($modelo->obtenerSeccionesAgrupadasPorAnio($anio_compuesto[0], $anio_compuesto[1], $usu_cedula));
                 break;
 
             case 'obtener_uc_por_seccion':
@@ -91,25 +91,9 @@ if (is_file("views/" . $pagina . ".php")) {
     $obj = new Archivo();
     $anios = $obj->obtenerAnios();
     $fase_actual = $obj->obtenerFaseActual();
-
-    $rol_permitido = true;
-
-
-    $doc_cedula = $_SESSION['usu_cedula'] ?? null;
-    $fase_remedial = $obj->determinarFaseParaRemedial($fase_actual);
-
-    $unidadesCurriculares = [];
-    $secciones = [];
     $alerta_datos = "";
 
-    if ($doc_cedula && $fase_remedial) {
-        $unidadesCurriculares = $obj->obtenerUnidadesParaRemedial($doc_cedula, $fase_remedial['fase_uc']);
-        $secciones = $obj->obtenerSeccionesPorAnio($fase_remedial['anio'], $fase_remedial['tipo'], $doc_cedula);
-    }
-
-    if (!$rol_permitido) {
-        $alerta_datos .= "<div class='alert alert-danger' style='max-width: 1200px;'><strong>Acceso Denegado:</strong> No tiene los permisos necesarios para gestionar notas.</div>";
-    } elseif (empty($fase_actual)) {
+    if (empty($fase_actual)) {
         $alerta_datos .= "<div class='alert alert-warning' style='max-width: 1200px;'><strong>Atención:</strong> Todavía no ha iniciado la fase de registro.</div>";
     }
 
@@ -117,3 +101,4 @@ if (is_file("views/" . $pagina . ".php")) {
 } else {
     echo "Página en construcción";
 }
+?>

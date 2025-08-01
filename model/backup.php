@@ -136,10 +136,20 @@ class Mantenimiento  extends Connection
                             }, array_values($row));
                             $valuesBatch[] = "(" . implode(', ', $values) . ")";
 
-                            if (count($valuesBatch) >= 500 || $rowIndex === count($rows) - 1) {
-                                $sqlContent .= implode(",\n", $valuesBatch) . ";\n";
-                                $valuesBatch = [];
-                            }
+                           if (count($valuesBatch) >= 500 || $rowIndex === count($rows) - 1) {
+    
+    $sqlContent .= implode(",\n", $valuesBatch);
+    $valuesBatch = [];
+
+  
+    if ($rowIndex === count($rows) - 1) {
+       
+        $sqlContent .= ";\n\n";
+    } else {
+    
+        $sqlContent .= ",\n"; 
+    }
+}
                         }
                         $sqlContent .= "\n";
                     }

@@ -3,7 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
 if (!is_file("model/reportes/rAprobados.php")) {
     echo "Falta definir la clase del modelo: rAprobados.php";
     exit;
@@ -35,12 +34,11 @@ if (is_file("views/reportes/rAprobados.php")) {
 
                 switch ($tipo_reporte) {
                     case 'seccion':
-                        $seccion_codigo = $_POST['seccion_codigo'] ?? 0;
+                        $seccion_codigo = $_POST['seccion_codigo'] ?? '';
                         if (empty($seccion_codigo)) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
                         }
-                        
                         $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
                         break;
                     case 'uc':
@@ -65,7 +63,7 @@ if (is_file("views/reportes/rAprobados.php")) {
 
             case 'obtener_secciones':
                 if (!empty($anio) && !empty($tipo)) {
-                    $secciones = $reporteModel->obtenerSeccionesPorAnio($anio, $tipo);
+                    $secciones = $reporteModel->obtenerSeccionesAgrupadasPorAnio($anio, $tipo);
                     echo json_encode($secciones);
                 } else {
                     echo json_encode([]);
@@ -89,3 +87,4 @@ if (is_file("views/reportes/rAprobados.php")) {
 } else {
     echo "Página en construcción: rAprobados.php";
 }
+?>

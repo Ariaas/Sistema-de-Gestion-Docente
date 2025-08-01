@@ -34,7 +34,7 @@ if (is_file("views/reportes/rReprobados.php")) {
 
                 switch ($tipo_reporte) {
                     case 'seccion':
-                        $seccion_codigo = $_POST['seccion_codigo'] ?? 0;
+                        $seccion_codigo = $_POST['seccion_codigo'] ?? '';
                         if (empty($seccion_codigo)) {
                             echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
                             exit;
@@ -64,7 +64,7 @@ if (is_file("views/reportes/rReprobados.php")) {
 
             case 'obtener_secciones':
                 if (!empty($anio) && !empty($tipo)) {
-                    $secciones = $reporteModel->obtenerSeccionesPorAnio($anio, $tipo);
+                    $secciones = $reporteModel->obtenerSeccionesAgrupadasPorAnio($anio, $tipo);
                     echo json_encode($secciones);
                 } else {
                     echo json_encode([]);
@@ -88,3 +88,4 @@ if (is_file("views/reportes/rReprobados.php")) {
 } else {
     echo "Página en construcción: rReprobados.php";
 }
+?>

@@ -39,7 +39,13 @@ $(document).ready(function() {
             dataValues.push(parseInt(data.total_aprobados_directo, 10));
         } else {
             data.forEach(item => {
-                labels.push((tipoReporte === 'seccion') ? item.uc_nombre : 'Sección ' + item.sec_codigo);
+                let label = '';
+                if (tipoReporte === 'seccion') {
+                    label = item.uc_nombre;
+                } else { // tipoReporte === 'uc'
+                    label = 'Sección(es) ' + item.sec_codigo.replace(/,/g, '-');
+                }
+                labels.push(label);
                 dataValues.push(parseInt(item.apro_cantidad, 10));
             });
         }
@@ -114,7 +120,7 @@ $(document).ready(function() {
     function getChartTitle(tipoReporte) {
         if (tipoReporte === 'general') return 'Total de Aprobados Directo';
         if (tipoReporte === 'seccion') return 'Aprobados Directo por Unidad Curricular';
-        if (tipoReporte === 'uc') return 'Aprobados Directo por Sección';
+        if (tipoReporte === 'uc') return 'Aprobados Directo por Sección o Grupo';
         return 'Seleccione los filtros para generar un reporte';
     }
 
@@ -148,7 +154,7 @@ $(document).ready(function() {
         $.post('?pagina=Daprobados', { accion: 'obtener_secciones', anio_completo: anio_completo }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
             if (data.length > 0) {
-                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo}</option>`);
+                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo_label}</option>`);
                 seccionSelect.prop('disabled', false);
             } else { options = '<option value="">No hay secciones</option>'; }
             seccionSelect.html(options);

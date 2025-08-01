@@ -66,10 +66,10 @@ function validarFormularioRegistro() {
         isValid = false;
     }
     const archivo = $('#archivo_notas');
-if (archivo.get(0).files.length === 0) {
-    archivo.addClass('is-invalid');
-    isValid = false;
-}
+    if (archivo.get(0).files.length === 0) {
+        archivo.addClass('is-invalid');
+        isValid = false;
+    }
 
     return isValid;
 }
@@ -92,43 +92,44 @@ function listarRegistros() {
         if (response.resultado === 'ok_registros' && Array.isArray(response.datos)) {
             response.datos.forEach(item => {
                 const totalEst = parseInt(item.sec_cantidad) || 0;
-                const aprobadosDir = parseInt(item.apro_cantidad) || 0;
-                const paraPer = parseInt(item.per_cantidad) || 0;
-                const aprobadosPer = parseInt(item.per_aprobados) || 0;
-                const aprobadosTotales = aprobadosDir + aprobadosPer;
-                const reprobadosTotales = paraPer - aprobadosPer;
-                const esPerCero = paraPer === 0;
+const aprobadosDir = parseInt(item.apro_cantidad) || 0;
+const paraPer = parseInt(item.per_cantidad) || 0;
+const aprobadosPer = parseInt(item.per_aprobados) || 0;
+
+// Este cálculo está bien
+const aprobadosTotales = aprobadosDir + aprobadosPer;
+
+// Este es el cálculo corregido y definitivo para los reprobados
+const reprobadosTotales = totalEst - aprobadosTotales;
+
+const esPerCero = paraPer === 0;
 
                 let archivoDefinitivoHtml = `
-    <a href="archivos_subidos/${encodeURIComponent(item.archivo_definitivo || '')}" 
-       class="btn btn-icon btn-info ${!item.archivo_definitivo ? 'disabled' : ''}" 
-       title="Descargar Acta Final" 
-       ${item.archivo_definitivo ? 'download' : ''}>
-       <img src="public/assets/icons/file-earmark-down2.svg">
-    </a>`;
+                    <a href="archivos_subidos/${encodeURIComponent(item.archivo_definitivo || '')}" 
+                       class="btn btn-icon btn-info ${!item.archivo_definitivo ? 'disabled' : ''}" 
+                       title="Descargar Acta Final" 
+                       ${item.archivo_definitivo ? 'download' : ''}>
+                       <img src="public/assets/icons/file-earmark-down2.svg">
+                    </a>`;
 
-let archivoPerHtml = `
-    <a href="archivos_per/${encodeURIComponent(item.archivo_per || '')}" 
-       class="btn btn-icon btn-edit ${!item.archivo_per ? 'disabled' : ''}" 
-       title="Descargar Acta PER" 
-       ${item.archivo_per ? 'download' : ''}>
-      <img src="public/assets/icons/file-earmark-down.svg"></i>
-    </a>`;
-
-
-
+                let archivoPerHtml = `
+                    <a href="archivos_per/${encodeURIComponent(item.archivo_per || '')}" 
+                       class="btn btn-icon btn-edit ${!item.archivo_per ? 'disabled' : ''}" 
+                       title="Descargar Acta PER" 
+                       ${item.archivo_per ? 'download' : ''}>
+                       <img src="public/assets/icons/file-earmark-down.svg"></i>
+                    </a>`;
 
                 const perHabilitado = !esPerCero && item.per_abierto;
                 const tituloBoton = perHabilitado ? "Registrar Notas del PER" : "El período de registro para PER no está activo";
                 
-                const btnRegistrarPer = `<button class="btn btn-icon btn-success" title="${tituloBoton}" onclick="abrirModalPer('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}', '${paraPer}', '${aprobadosPer}', '${item.ani_anio}', '${item.ani_tipo}', '${item.fase_numero}')" ${!perHabilitado ? 'disabled' : ''}><img src="public/assets/icons/file-earmark-ruled.svg"></button>`;                
+                const btnRegistrarPer = `<button class="btn btn-icon btn-success" title="${tituloBoton}" onclick="abrirModalPer('${item.uc_codigo}', '${item.sec_codigo}', '${item.uc_nombre}', '${paraPer}', '${aprobadosPer}', '${item.ani_anio}', '${item.ani_tipo}', '${item.fase_numero}')" ${!perHabilitado ? 'disabled' : ''}><img src="public/assets/icons/file-earmark-ruled.svg"></button>`;                 
                 const btnEliminarRegistro = `<button class="btn btn-icon btn-delete btn-eliminar" title="Eliminar Registro" data-uc-codigo="${item.uc_codigo}" data-sec-codigo="${item.sec_codigo}" data-uc-nombre="${item.uc_nombre}" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}" data-fase="${item.fase_numero}"><img src="public/assets/icons/trash.svg"></button>`;
-
                 const accionesHtml = `<div class="d-flex justify-content-start align-items-center gap-2">${archivoDefinitivoHtml}${archivoPerHtml}${btnRegistrarPer}${btnEliminarRegistro}</div>`;
 
                 $("#resultadosRegistros").append(`<tr>
                     <td>${item.ani_anio} (${item.ani_tipo})<br><b>Fase: ${item.fase_numero}</b></td>
-                    <td>${item.sec_codigo}</td>
+                    <td>${item.sec_codigo.replace(/,/g, '-')}</td>
                     <td>${item.uc_nombre}</td>
                     <td class="text-center">${totalEst}</td>
                     <td class="text-center">${aprobadosDir}</td>
@@ -144,8 +145,6 @@ let archivoPerHtml = `
     });
 }
 
-
-
 function abrirModalPer(uc_codigo, sec_codigo, uc_nombre, cantidad_per, aprobados_actuales, anio, tipo, fase_numero) {
     $('#formAprobadosPer')[0].reset();
     $('#per_uc_codigo').val(uc_codigo);
@@ -154,12 +153,13 @@ function abrirModalPer(uc_codigo, sec_codigo, uc_nombre, cantidad_per, aprobados
     $('#per_anio_anio').val(anio);
     $('#per_anio_tipo').val(tipo);
     $('#per_fase_numero').val(fase_numero);
-    $('#per_seccion').text(sec_codigo);
+    $('#per_seccion').text(sec_codigo.replace(/,/g, '-'));
     $('#per_uc').text(uc_nombre);
     $('#per_cantidad_en_remedial').text(cantidad_per);
     $('#cantidad_aprobados_per').val(aprobados_actuales || '0').attr('max', cantidad_per);
     $('#modalAprobadosPer').modal('show');
 }
+
 $(document).ready(function () {
     listarRegistros();
 
@@ -170,16 +170,17 @@ $(document).ready(function () {
     $('#ucurricular').change(function () { 
         $('#uc_nombre').val($(this).find('option:selected').text()); 
     });
-   $('#tablaRegistros').on('click', '.btn-eliminar', function() {
+
+    $('#tablaRegistros').on('click', '.btn-eliminar', function() {
         const uc_codigo = $(this).data('uc-codigo');
         const sec_codigo = $(this).data('sec-codigo');
         const uc_nombre = $(this).data('uc-nombre');
         const anio = $(this).data('anio');
         const tipo = $(this).data('tipo');
         const fase = $(this).data('fase');
-
         eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo, fase);
     });
+
     $('#anio').change(function () {
         const anio_compuesto = $(this).val();
         const seccionSelect = $('#seccion');
@@ -198,9 +199,11 @@ $(document).ready(function () {
         datos.append("accion", "obtener_secciones");
         datos.append("anio_compuesto", anio_compuesto);
         enviaAjax(datos, function (secciones) {
-            let options = '<option value="" selected disabled>Seleccione una sección</option>';
+            let options = '<option value="" selected disabled>Seleccione una sección o grupo</option>';
             if (Array.isArray(secciones) && secciones.length > 0) {
-                secciones.forEach(sec => { options += `<option value="${sec.sec_codigo}" data-cantidad="${sec.sec_cantidad}">${sec.sec_codigo}</option>`; });
+                secciones.forEach(sec => { 
+                    options += `<option value="${sec.sec_codigo}" data-cantidad="${sec.sec_cantidad}">${sec.sec_codigo_label}</option>`; 
+                });
                 seccionSelect.prop('disabled', false);
             } else { 
                 options = '<option value="">No hay secciones asignadas</option>'; 
@@ -233,7 +236,7 @@ $(document).ready(function () {
                 unidades.forEach(uc => { options += `<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`; });
                 ucSelect.prop('disabled', false);
             } else {
-                options = '<option value="">No hay U.C. para esta sección</option>';
+                options = '<option value="">No hay U.C. para esta sección o grupo</option>';
             }
             ucSelect.html(options);
         });
@@ -242,99 +245,107 @@ $(document).ready(function () {
     $('#cantidad_aprobados, #cantidad_per').on('input', validarSumaAprobados);
 
     $('#formRegistro').submit(function (e) {
-    e.preventDefault();
+        e.preventDefault();
+        const archivo = $('#archivo_notas');
+        if (archivo.get(0).files.length === 0) {
+            $('#archivo_notas').addClass('is-invalid');
+            return; 
+        }
+        if (validarFormularioRegistro()) { 
+            enviaAjax(new FormData(this), function (response) {
+                if (response.success) {
+                    $('#modalRegistroNotas').modal('hide');
+                    Swal.fire({
+                        icon: 'success', title: '¡Registrado!', text: response.mensaje, timer: 2000, showConfirmButton: false
+                    }).then(() => {
+                        listarRegistros();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error', title: 'Error', text: response.mensaje
+                    });
+                }
+            });
+        }
+    });
 
-    const archivo = $('#archivo_notas');
-    if (archivo.get(0).files.length === 0) {
-        $('#archivo_notas').addClass('is-invalid');
-        return; 
-    }
-
-    if (validarFormularioRegistro()) { 
+    $('#formAprobadosPer').submit(function (e) {
+        e.preventDefault();
         enviaAjax(new FormData(this), function (response) {
             if (response.success) {
-                $('#modalRegistroNotas').modal('hide');
+                $('#modalAprobadosPer').modal('hide');
                 Swal.fire({
-                    icon: 'success',
-                    title: '¡Registrado!',
-                    text: response.mensaje,
-                    timer: 2000,
-                    showConfirmButton: false
+                    icon: 'success', title: '¡Actualizado!', text: response.mensaje, timer: 2000, showConfirmButton: false
                 }).then(() => {
                     listarRegistros();
                 });
             } else {
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: response.mensaje
+                    icon: 'error', title: 'Error', text: response.mensaje
+                });
+            }
+        });
+    });
+
+    function eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo, fase) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            html: `Se eliminará el registro de notas de:<br><b>Sección(es):</b> ${sec_codigo.replace(/,/g, '-')}<br><b>U.C.:</b> ${uc_nombre}<br><b>Año:</b> ${anio} (${tipo})`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Sí, eliminar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const datos = new FormData();
+                datos.append("accion", "eliminar_registro");
+                datos.append("uc_codigo", uc_codigo);
+                datos.append("sec_codigo", sec_codigo);
+                datos.append("ani_anio", anio);
+                datos.append("ani_tipo", tipo);
+                datos.append("fase_numero", fase);
+                
+                enviaAjax(datos, function(response) {
+                    if (response.success) {
+                        Swal.fire('¡Eliminado!', response.mensaje, 'success').then(() => {
+                            listarRegistros();
+                        });
+                    } else {
+                        Swal.fire('Error', response.mensaje, 'error');
+                    }
                 });
             }
         });
     }
 });
 
-$('#formAprobadosPer').submit(function (e) {
-    e.preventDefault();
-    enviaAjax(new FormData(this), function (response) {
-        if (response.success) {
-            $('#modalAprobadosPer').modal('hide');
-            Swal.fire({
-                icon: 'success',
-                title: '¡Actualizado!',
-                text: response.mensaje,
-                timer: 2000,
-                showConfirmButton: false
-            }).then(() => {
-                listarRegistros();
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: response.mensaje
-            });
-        }
-    });
-});
+/*  const totalEst = parseInt(item.sec_cantidad) || 0;
 
-function eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo, fase) {
-    Swal.fire({
-        title: '¿Estás seguro?',
-        html: `Se eliminará el registro de notas de:<br><b>Sección:</b> ${sec_codigo}<br><b>U.C.:</b> ${uc_nombre}<br><b>Año:</b> ${anio} (${tipo})`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonText: 'Cancelar',
-        confirmButtonText: 'Sí, eliminar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const datos = new FormData();
-            datos.append("accion", "eliminar_registro");
-            datos.append("uc_codigo", uc_codigo);
-            datos.append("sec_codigo", sec_codigo);
-            datos.append("ani_anio", anio);
-            datos.append("ani_tipo", tipo);
-            datos.append("fase_numero", fase);
-            
-            enviaAjax(datos, function(response) {
-                if (response.success) {
-                    Swal.fire(
-                        '¡Eliminado!',
-                        response.mensaje,
-                        'success'
-                    ).then(() => {
-                        listarRegistros();
-                    });
-                } else {
-                    Swal.fire(
-                        'Error',
-                        response.mensaje,
-                        'error'
-                    );
-                }
-            });
-        }
-    });
-}
-});
+                const aprobadosDir = parseInt(item.apro_cantidad) || 0;
+
+                const paraPer = parseInt(item.per_cantidad) || 0;
+
+                const aprobadosPer = parseInt(item.per_aprobados) || 0;
+
+                const aprobadosTotales = aprobadosDir + aprobadosPer;
+
+                
+
+
+
+
+
+                const reprobadosdirectos = totalEst - aprobadosDir;
+
+                const reprobadosper = item.archivo_per ? (paraPer - aprobadosPer) : 0;
+
+               const reprobadosTotales = reprobadosdirectos + reprobadosper;
+
+
+
+
+
+
+
+                const esPerCero = paraPer === 0;*/

@@ -39,7 +39,13 @@ $(document).ready(function() {
             dataValues.push(parseInt(data.total_aprobados, 10));
         } else {
             data.forEach(item => {
-                labels.push((tipoReporte === 'seccion') ? item.uc_nombre : 'Sección ' + item.sec_codigo);
+                let label = '';
+                if (tipoReporte === 'seccion') {
+                    label = item.uc_nombre;
+                } else { // tipoReporte === 'uc'
+                    label = 'Sección(es) ' + item.sec_codigo.replace(/,/g, '-');
+                }
+                labels.push(label);
                 dataValues.push(parseInt(item.total_aprobados, 10));
             });
         }
@@ -97,13 +103,10 @@ $(document).ready(function() {
                         display: !isHorizontal 
                     },
                     title: { display: true, text: chartTitle, font: { size: 16 } },
-
                     tooltip: {
                         callbacks: {
                             label: function(tooltipItem) {
-                                
                                 const datasetLabel = tooltipItem.dataset.label || '';
-                               
                                 const label = `${datasetLabel}: ${tooltipItem.formattedValue}`;
                                 return " " + label;
                             }
@@ -117,11 +120,10 @@ $(document).ready(function() {
     function getChartTitle(tipoReporte) {
         if (tipoReporte === 'general') return 'Total de Aprobados (Directo + PER)';
         if (tipoReporte === 'seccion') return 'Aprobados Totales por Unidad Curricular';
-        if (tipoReporte === 'uc') return 'Aprobados Totales por Sección';
+        if (tipoReporte === 'uc') return 'Aprobados Totales por Sección o Grupo';
         return 'Seleccione los filtros para generar un reporte';
     }
 
-    // --- MANEJO DE EVENTOS ---
     $('#tipo_reporte').change(function() {
         const tipo = $(this).val();
         $('#filtro_seccion_container').toggle(tipo === 'seccion');
@@ -152,7 +154,7 @@ $(document).ready(function() {
         $.post('?pagina=rAprobados', { accion: 'obtener_secciones', anio_completo: anio_completo }, function(data) {
             let options = '<option value="" selected disabled>Seleccionar...</option>';
             if (data.length > 0) {
-                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo}</option>`);
+                data.forEach(item => options += `<option value="${item.sec_codigo}">${item.sec_codigo_label}</option>`);
                 seccionSelect.prop('disabled', false);
             } else { options = '<option value="">No hay secciones</option>'; }
             seccionSelect.html(options);
