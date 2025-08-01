@@ -88,7 +88,7 @@ function validarenvio() {
         $("#stituloprefijo").text("").hide();
     }
 
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 30 letras.") === 0) {
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,80}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 80 letras.") === 0) {
         if(esValido) muestraMensaje("error", 4000, "¡ERROR!", "El formato del nombre del título es incorrecto.");
         esValido = false;
     }
@@ -111,7 +111,7 @@ function enviaAjax(datos, accion) {
                     } else {
                         $("#stitulonombre").text("").css("color", "");
                         $("#proceso").prop("disabled", false);
-                        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 30 letras.");
+                        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,80}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 80 letras.");
                     }
                     return;
                 }
@@ -178,7 +178,7 @@ $(document).ready(function() {
             $("#stituloprefijo").text("").hide();
         }
 
-        let nombreValido = validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,30}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 30 letras.");
+        let nombreValido = validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,80}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 80 letras.");
         let prefijoValido = $("#tituloprefijo").val() !== "" && $("#tituloprefijo").val() !== null;
 
         if (nombreValido === 1 && prefijoValido) {

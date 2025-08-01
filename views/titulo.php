@@ -84,10 +84,12 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         <select class="form-select" name="tituloprefijo" id="tituloprefijo" required>
                                             <option value="" disabled selected>Seleccione un tipo</option>
                                             <option value="Ing.">Ingeniero</option>
-                                            <option value="MSc.">Maestría</option>
+                                            <option value="Msc.">Maestría</option>
                                             <option value="Dr.">Doctorado</option>
-                                            <option value="TSU.">TSU</option>
+                                            <option value="TSU.">Técnico Superior</option>
                                             <option value="Lic.">Licenciado</option>
+                                            <option value="Esp.">Especialista</option>
+                                            <option value="Prof.">Profesor</option>
                                         </select>
                                         <span id="stituloprefijo"></span>
                                     </div>

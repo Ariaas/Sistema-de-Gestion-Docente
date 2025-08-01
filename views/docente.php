@@ -221,7 +221,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     </div>
                                     <div class="col-md-6 mt-3">
                                         <label for="observacionesDocente" class="form-label">Observaciones (Opcional)</label>
-                                        <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="100" placeholder="Añadir observaciones (máx. 100 caracteres)"></textarea>
+                                        <textarea class="form-control" id="observacionesDocente" name="observacionesDocente" rows="3" maxlength="250" placeholder="Añadir observaciones (máx. 250 caracteres)"></textarea>
                                     </div>
                                 </div>
                             </div>
