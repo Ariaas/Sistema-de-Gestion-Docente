@@ -274,7 +274,17 @@ function cargarUcPorDocente(docCedula, callback) {
             if (respuesta.resultado === 'ok' && respuesta.ucs_docente.length > 0) {
                 ucSelect.append('<option value="">Seleccionar UC</option>');
                 respuesta.ucs_docente.forEach(uc => {
-                    let faseTexto = (uc.uc_periodo === '1') ? ' (Fase 1)' : (uc.uc_periodo === '2') ? ' (Fase 2)' : ' (Anual)';
+                    let faseTexto = '';
+                    const periodo = uc.uc_periodo;
+                    if (periodo === 'Fase I') {
+                        faseTexto = ' (Fase I)';
+                    } else if (periodo === 'Fase II') {
+                        faseTexto = ' (Fase II)';
+                    } else if (periodo === 'Anual') {
+                        faseTexto = ' (Anual)';
+                    } else if (periodo === '0') {
+                        faseTexto = ' (Inicial)';
+                    }
                     ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}${faseTexto}</option>`);
                 });
                 ucSelect.prop("disabled", false);

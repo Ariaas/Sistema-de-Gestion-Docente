@@ -219,7 +219,7 @@ class Seccion extends Connection
             return [];
         }
     }
-    public function EjecutarPromocionAutomatica()
+     public function EjecutarPromocionAutomatica()
     {
 
         if ($this->determinarFaseActual() !== 'fase2' || isset($_SESSION['promocion_f2_ejecutada_session'])) {
@@ -860,7 +860,7 @@ class Seccion extends Connection
         }
         return $bloques_horario;
     }
-    public function obtenerUcPorDocente($doc_cedula, $trayecto_seccion = null)
+     public function obtenerUcPorDocente($doc_cedula, $trayecto_seccion = null)
     {
 
         if (empty($doc_cedula)) {
