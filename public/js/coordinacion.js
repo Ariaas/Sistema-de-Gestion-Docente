@@ -44,17 +44,12 @@ let originalNombreCoordinacion = '';
 $(document).ready(function () {
   Listar();
 
- 
-
   $("#coordinacionNombre").on("keypress", function (e) {
     validarkeypress(/^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
   });
 
- 
   $("#coordinacionNombre").on("keyup", function () {
     const nombreActual = $(this).val();
-
-   
     const formatoValido = validarkeyup(
       /^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
       $(this),
@@ -67,13 +62,11 @@ $(document).ready(function () {
       return; 
     }
 
-    
     if (originalNombreCoordinacion !== '' && nombreActual === originalNombreCoordinacion) {
         $("#scoordinacionNombre").text("No se han realizado cambios.").show();
         $("#proceso").prop("disabled", true);
         return; 
     }
-
     
     var datos = new FormData();
     datos.append('accion', 'existe');
@@ -82,9 +75,13 @@ $(document).ready(function () {
     enviaAjax(datos);
   });
 
-
-  $("#proceso").on("click", function () {
-    let accion = $(this).text();
+  // -------------- INICIO DEL CÓDIGO CORREGIDO --------------
+  $("#f").on("submit", function (event) {
+    // 1. Prevenir el envío nativo del formulario
+    event.preventDefault(); 
+    
+    // 2. Obtener la acción desde el texto del botón
+    let accion = $("#proceso").text();
 
     if (accion === "ELIMINAR") {
         Swal.fire({
@@ -118,6 +115,7 @@ $(document).ready(function () {
         enviaAjax(datos);
     }
   });
+  // -------------- FIN DEL CÓDIGO CORREGIDO ----------------
 
   $("#registrar").on("click", function () {
     limpia();
@@ -159,7 +157,6 @@ function pone(pos, accion) {
     procesoBtn.removeClass("btn-danger").addClass("btn-primary");
 
     $("#coordinacionNombre").prop("disabled", false);
-
     procesoBtn.prop("disabled", true);
     $("#scoordinacionNombre").text("Realice un cambio para poder modificar.").show();
 
@@ -193,7 +190,6 @@ function enviaAjax(datos) {
               const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
             const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
             $("#resultadoconsulta").append(`
-              
               <tr>
                 <td>${item.cor_nombre}</td>
                 <td>
@@ -207,14 +203,12 @@ function enviaAjax(datos) {
         } 
         else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
           let tituloMayusculas = lee.resultado.toUpperCase();
-
           Swal.fire({
             icon: 'success',
             title: tituloMayusculas,
             text: lee.mensaje,
             timer: 2000
           });
-
           $("#modal1").modal("hide");
           Listar();
         }

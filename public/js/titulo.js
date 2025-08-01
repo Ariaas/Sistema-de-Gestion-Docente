@@ -62,19 +62,18 @@ function pone(pos, accion) {
     $("#tituloprefijo").val(prefijo);
     $("#titulonombre").val(nombre);
 
-    if (accion === 0) {
+    if (accion === 0) { // Modificar
         $("#proceso").text("MODIFICAR");
         $("#tituloprefijo, #titulonombre").prop("disabled", false);
-
         $("#tituloprefijo_original").val(prefijo);
         $("#titulonombre_original").val(nombre);
-
-        $("#stituloprefijo").text("").show();
-        $("#stitulonombre").text("").show();
-    } else { 
+        $("#stituloprefijo, #stitulonombre").text("").show();
+    } else { // Eliminar
         $("#proceso").text("ELIMINAR");
         $("#tituloprefijo, #titulonombre").prop("disabled", true);
         $("#stituloprefijo, #stitulonombre").hide();
+        // Se habilita explícitamente el botón para asegurar que funcione
+        $("#proceso").prop("disabled", false); 
     }
     $("#modal1").modal("show");
 }
@@ -136,26 +135,24 @@ function enviaAjax(datos, accion) {
                         `);
                     });
                     crearDT();
-                }        else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
-            let tituloMayusculas = lee.resultado.toUpperCase();
-
-            Swal.fire({
-                icon: 'success',
-                title: tituloMayusculas,
-                text: lee.mensaje,
-                timer: 2000
-            });
-
-            $("#modal1").modal("hide");
-            Listar();
-            }
-                } catch (e) {
-                    console.error("Error al procesar JSON: ", e, respuesta);
-                    muestraMensaje("error", 8000, "Error de Respuesta", "No se pudo procesar la respuesta del servidor.");
+                } else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
+                    let tituloMayusculas = lee.resultado.toUpperCase();
+                    Swal.fire({
+                        icon: 'success',
+                        title: tituloMayusculas,
+                        text: lee.mensaje,
+                        timer: 2000
+                    });
+                    $("#modal1").modal("hide");
+                    Listar();
                 }
-            },
-            error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${status} - ${err}`)
-        });
+            } catch (e) {
+                console.error("Error al procesar JSON: ", e, respuesta);
+                muestraMensaje("error", 8000, "Error de Respuesta", "No se pudo procesar la respuesta del servidor.");
+            }
+        },
+        error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${status} - ${err}`)
+    });
 }
 
 function limpia() {
@@ -172,6 +169,13 @@ $(document).ready(function() {
     Listar();
 
     $("#titulonombre, #tituloprefijo").on("keyup change", function () {
+        // -------------- INICIO DEL CÓDIGO CORREGIDO --------------
+        // Si el formulario está en modo Eliminar, no se ejecuta la validación de 'existe'.
+        if ($("#proceso").text() === 'ELIMINAR') {
+            return;
+        }
+        // -------------- FIN DEL CÓDIGO CORREGIDO ----------------
+    
         $("#stitulonombre").css("color", "");
 
         if ($("#tituloprefijo").val() !== "" && $("#tituloprefijo").val() !== null) {
@@ -203,8 +207,9 @@ $(document).ready(function() {
         $("#stituloprefijo, #stitulonombre").show();
     });
 
-    $("#proceso").on("click", function() {
-        let accion = $(this).text().toLowerCase();
+    $("#f").on("submit", function(event) {
+        event.preventDefault();
+        let accion = $("#proceso").text().toLowerCase();
 
         if (accion === "eliminar") {
             Swal.fire({

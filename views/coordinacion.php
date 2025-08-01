@@ -86,7 +86,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center mt-4">
-                                <button type="button" class="btn btn-primary px-4 me-2" id="proceso">REGISTRAR</button>
+                                <button type="submit" class="btn btn-primary px-4 me-2" id="proceso">REGISTRAR</button>
                                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
