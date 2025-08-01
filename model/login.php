@@ -199,7 +199,7 @@ class Login extends Connection
                 $sql = "SELECT p.per_modulo, rp.per_accion
                     FROM rol_permisos rp
                     JOIN tbl_permisos p ON rp.per_id = p.per_id
-                    WHERE rp.rol_id = :rol_id AND p.per_estado = 1";
+                    WHERE rp.rol_id = :rol_id";
 
                 $stmt_permisos = $co->prepare($sql);
                 $stmt_permisos->bindParam(':rol_id', $rol_id, PDO::PARAM_INT);

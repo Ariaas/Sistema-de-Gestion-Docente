@@ -216,12 +216,12 @@ class Rol extends Connection
             'modulosDisponibles' => []
         ];
         try {
-            $stmtAsignados = $co->prepare("SELECT per_id, per_accion FROM rol_permisos WHERE rol_id = :rolId AND rol_per_estado = 1");
+            $stmtAsignados = $co->prepare("SELECT per_id, per_accion FROM rol_permisos WHERE rol_id = :rolId");
             $stmtAsignados->bindParam(':rolId', $rolId, PDO::PARAM_INT);
             $stmtAsignados->execute();
             $respuesta['permisosAsignados'] = $stmtAsignados->fetchAll(PDO::FETCH_ASSOC);
 
-            $stmtDisponibles = $co->query("SELECT per_id, per_modulo FROM tbl_permisos WHERE per_estado = 1 ORDER BY CASE WHEN per_modulo = 'Reportes' THEN 0 ELSE 1 END, per_modulo ASC");
+            $stmtDisponibles = $co->query("SELECT per_id, per_modulo FROM tbl_permisos ORDER BY CASE WHEN per_modulo = 'Reportes' THEN 0 ELSE 1 END, per_modulo ASC");
             $respuesta['modulosDisponibles'] = $stmtDisponibles->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
         }
@@ -239,7 +239,7 @@ class Rol extends Connection
             $stmt->execute();
 
             if (!empty($permisos)) {
-                $stmtInsert = $co->prepare("INSERT INTO rol_permisos (rol_id, per_id, per_accion, rol_per_estado) VALUES (:rolId, :perId, :accion, 1)");
+                $stmtInsert = $co->prepare("INSERT INTO rol_permisos (rol_id, per_id, per_accion) VALUES (:rolId, :perId, :accion)");
                 foreach ($permisos as $permiso) {
                     $stmtInsert->bindParam(':rolId', $rolId, PDO::PARAM_INT);
                     $stmtInsert->bindParam(':perId', $permiso['per_id'], PDO::PARAM_INT);
