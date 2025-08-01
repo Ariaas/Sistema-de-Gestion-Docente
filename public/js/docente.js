@@ -197,8 +197,8 @@ $(document).ready(function() {
     function validarenvioPaso1() {
         let esValido = true;
         if (!/^[0-9]{7,8}$/.test($("#cedulaDocente").val())) esValido = false;
-        if (!/^[A-Za-z\u00f1\u00d1\s]{3,30}$/.test($("#nombreDocente").val())) esValido = false;
-        if (!/^[A-Za-z\u00f1\u00d1\s]{3,30}$/.test($("#apellidoDocente").val())) esValido = false;
+        if (!/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/.test($("#nombreDocente").val())) esValido = false;
+        if (!/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/.test($("#apellidoDocente").val())) esValido = false;
         if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test($("#correoDocente").val())) esValido = false;
         if (!$('#categoria').val()) esValido = false;
         if (!$('#dedicacion').val()) esValido = false;
@@ -455,7 +455,7 @@ $(document).ready(function() {
             }
         } else if (id === 'nombreDocente' || id === 'apellidoDocente') {
             this.value = this.value.replace(/[0-9]/g, '');
-            validarkeyup(/^[A-Za-z\u00f1\u00d1\s]{3,30}$/, el, $("#s" + id), "Formato inválido.");
+            validarkeyup(/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/, el, $("#s" + id), "Formato inválido.");
         } else if (id === 'correoDocente') {
             let esValido = validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, el, $("#scorreoDocente"), "Correo inválido.");
             if(esValido && el.val()){
