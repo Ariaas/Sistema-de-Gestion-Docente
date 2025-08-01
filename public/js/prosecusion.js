@@ -213,13 +213,13 @@ function enviaAjax(datos) {
                 $("#confirmarProsecusion").prop("disabled", true);
             }
         } else if (lee.resultado == "eliminar") {
-          muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
+          muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
           $("#tipoProsecusion").val("automatico");
           $("#destinoManualContainer").hide();
           Listar();
         } else if (lee.resultado === "prosecusion") {
           $('#modalProsecusion').modal('hide');
-          muestraMensaje("info", 4000, "PROSECUSIÓN", lee.mensaje);
+          muestraMensaje("success", 4000, "PROSECUSIÓN", lee.mensaje);
           Listar();
         } else if (lee.resultado === 'confirmacion_requerida') {
             Swal.fire({

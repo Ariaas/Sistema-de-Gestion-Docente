@@ -367,7 +367,7 @@ function enviaAjax(datos, tipo_accion_local = null) {
           crearDT();
         }
         else if (lee.resultado == "registrar") {
-          muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
+          muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
             "Registro Incluido!<br/>Se registró el espacio correctamente!"
@@ -377,7 +377,7 @@ function enviaAjax(datos, tipo_accion_local = null) {
           }
         }
         else if (lee.resultado == "modificar") {
-          muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
+          muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
             "Registro Modificado!<br/>Se modificó el espacio correctamente!"
@@ -396,7 +396,7 @@ function enviaAjax(datos, tipo_accion_local = null) {
           }
         }
         else if (lee.resultado == "eliminar") {
-          muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
+          muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
             "Registro Eliminado!<br/>Se eliminó el espacio correctamente!"

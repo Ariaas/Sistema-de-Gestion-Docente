@@ -206,10 +206,18 @@ function enviaAjax(datos) {
           crearDT();
         } 
         else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
-          Swal.fire({ icon: 'success', title: 'Éxito', text: lee.mensaje, timer: 2000, showConfirmButton: false });
+          let tituloMayusculas = lee.resultado.toUpperCase();
+
+          Swal.fire({
+            icon: 'success',
+            title: tituloMayusculas,
+            text: lee.mensaje,
+            timer: 2000
+          });
+
           $("#modal1").modal("hide");
           Listar();
-        } 
+        }
         else if (lee.resultado === "existe") {
             $("#scoordinacionNombre").text(lee.mensaje).show();
             $("#proceso").prop("disabled", true);

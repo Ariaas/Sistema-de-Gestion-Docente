@@ -577,25 +577,25 @@ function enviaAjax(datos, accion = "") {
                     $('#resultadoconsulta1').html(tabla);
                     crearDT("#tablauc");
                 } else if (lee.resultado == "registrar") {
-                    muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
+                    muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
                     if (lee.mensaje.includes("¡Registro Incluido!") || lee.mensaje.includes("registró la unidad de curricular correctamente")) {
                         $("#modal1").modal("hide"); 
                     }
                     Listar();
                 } else if (lee.resultado == "modificar") {
-                    muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
+                    muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
                     if (lee.mensaje.includes("modificó la unidad curricular")) {
                         $("#modal1").modal("hide");
                     }
                     Listar();
                 } else if (lee.resultado == "eliminar") {
-                    muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
+                    muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
                     if (lee.mensaje.includes("eliminó la unidad curricular")) {
                         $("#modal1").modal("hide");
                     }
                     Listar();
                 } else if (lee.resultado == 'asignar') {
-                    muestraMensaje("info", 4000, "ASIGNACIÓN", lee.mensaje);
+                    muestraMensaje("success", 4000, "ASIGNACIÓN", lee.mensaje);
                     $("#modal2").modal("hide");
                     $("#docenteUC").val("");
                     $("#carritoDocentes").empty();
@@ -603,7 +603,7 @@ function enviaAjax(datos, accion = "") {
                     actualizarCarritoDocentes();
                     Listar();
                 } else if (lee.resultado == "quitar") {
-                    muestraMensaje("info", 2000, "QUITAR", lee.mensaje);
+                    muestraMensaje("success", 2000, "QUITAR", lee.mensaje);
                     if (lee.uc_codigo) {
                         const ucNombre = $('#ucNombreModal').text();
                         verDocentes(lee.uc_codigo, ucNombre);

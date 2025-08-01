@@ -435,7 +435,7 @@ $("#tipoAnio").on("change", function() {
           }
           ////////
           else if (lee.resultado == "registrar") {
-            muestraMensaje("info", 4000, "REGISTRAR", lee.mensaje);
+            muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
             if (
               lee.mensaje ==
               "Registro Incluido!<br/>Se registró el AÑO correctamente!"
@@ -445,7 +445,7 @@ $("#tipoAnio").on("change", function() {
             }
           }
           else if (lee.resultado == "modificar") {
-            muestraMensaje("info", 4000, "MODIFICAR", lee.mensaje);
+            muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
             if (
               lee.mensaje ==
               "Registro Modificado!<br/>Se modificó el AÑO correctamente!"
@@ -457,7 +457,7 @@ $("#tipoAnio").on("change", function() {
             muestraMensaje('info', 4000,'Atención!', lee.mensaje);
           }
           else if (lee.resultado == "eliminar") {
-            muestraMensaje("info", 4000, "ELIMINAR", lee.mensaje);
+            muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
             if (
               lee.mensaje ==
               "Registro Eliminado!<br/>Se eliminó el AÑO correctamente!"

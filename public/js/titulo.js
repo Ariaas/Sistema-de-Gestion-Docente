@@ -136,20 +136,26 @@ function enviaAjax(datos, accion) {
                         `);
                     });
                     crearDT();
-                } else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
-                    muestraMensaje("success", 4000, "¡ÉXITO!", lee.mensaje);
-                    $("#modal1").modal("hide");
-                    Listar();
-                } else if (lee.resultado === "error") {
-                    muestraMensaje("error", 8000, "¡ERROR!", lee.mensaje);
-                }
-            } catch (e) {
-                console.error("Error al procesar JSON: ", e, respuesta);
-                muestraMensaje("error", 8000, "Error de Respuesta", "No se pudo procesar la respuesta del servidor.");
+                }        else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
+            let tituloMayusculas = lee.resultado.toUpperCase();
+
+            Swal.fire({
+                icon: 'success',
+                title: tituloMayusculas,
+                text: lee.mensaje,
+                timer: 2000
+            });
+
+            $("#modal1").modal("hide");
+            Listar();
             }
-        },
-        error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${status} - ${err}`)
-    });
+                } catch (e) {
+                    console.error("Error al procesar JSON: ", e, respuesta);
+                    muestraMensaje("error", 8000, "Error de Respuesta", "No se pudo procesar la respuesta del servidor.");
+                }
+            },
+            error: (request, status, err) => muestraMensaje("error", 5000, "ERROR DE COMUNICACIÓN", `Ocurrió un error: ${status} - ${err}`)
+        });
 }
 
 function limpia() {
