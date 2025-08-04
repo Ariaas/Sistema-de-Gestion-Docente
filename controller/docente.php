@@ -3,8 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
-
 $pagina = 'docente';
 
 if (!is_file("model/" . $pagina . ".php")) {
@@ -68,10 +66,18 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setApellido($_POST['apellidoDocente']);
             $p->setCorreo($_POST['correoDocente']);
             $p->setDedicacion($_POST['dedicacion']);
-            $p->setCondicion($_POST['condicion']);
+            
+            // Asigna un valor predeterminado para 'condicion' si está vacío
+            $p->setCondicion(!empty($_POST['condicion']) ? $_POST['condicion'] : 'No Especificada');
+            
+            // Si la fecha de ingreso (completa) está vacía, usa la fecha actual.
+            $p->setIngreso(!empty($_POST['fechaIngreso']) ? $_POST['fechaIngreso'] : date('Y-m-d'));
+
+            // Convierte "YYYY-MM" a "YYYY-MM-01" para el año de concurso.
+            $anioConcurso = !empty($_POST['anioConcurso']) ? $_POST['anioConcurso'] . '-01' : '';
+            $p->setAnioConcurso($anioConcurso);
+
             $p->setTipoConcurso($_POST['tipoConcurso'] ?? '');
-            $p->setIngreso($_POST['fechaIngreso']);
-            $p->setAnioConcurso($_POST['anioConcurso'] ?? '');
             $p->setObservacion($_POST['observacionesDocente']);
             $p->setTitulos($_POST['titulos'] ?? []);
             $p->setCoordinaciones($_POST['coordinaciones'] ?? []);

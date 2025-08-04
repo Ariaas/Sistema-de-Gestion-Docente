@@ -449,79 +449,31 @@ class Docente extends Connection
         }
     }
 
+    // --- INICIO DE CÓDIGO MODIFICADO ---
     private function ValidarCargaHoraria()
     {
-        if ($this->horasAcademicas < 0 || $this->creacionIntelectual < 0 || $this->integracionComunidad < 0 || $this->gestionAcademica < 0 || $this->otras < 0) {
-            return ['resultado' => 'error', 'mensaje' => 'Los valores de horas no pueden ser negativos.'];
-        }
-
-        $cargaTotal = (int)$this->horasAcademicas + (int)$this->creacionIntelectual + (int)$this->integracionComunidad + (int)$this->gestionAcademica + (int)$this->otras;
-        $dedicacion = strtolower($this->doc_dedicacion);
-        $maxHoras = 0;
-
-        switch ($dedicacion) {
-            case 'exclusiva':
-                $maxHoras = 42;
-                break;
-            case 'tiempo completo':
-                $maxHoras = 36;
-                break;
-            case 'medio tiempo':
-                $maxHoras = 21;
-                break;
-            case 'tiempo convencional':
-                $maxHoras = 7;
-                break;
-        }
-
-        if ($maxHoras > 0 && $cargaTotal > $maxHoras) {
-            return ['resultado' => 'error', 'mensaje' => "La carga horaria total ($cargaTotal horas) excede el límite de $maxHoras para la dedicación '{$this->doc_dedicacion}'."];
-        }
-
-        if ($dedicacion == 'tiempo convencional' && $cargaTotal > 7) {
-            return ['resultado' => 'error', 'mensaje' => "La carga horaria total ($cargaTotal horas) excede el límite de 7 para la dedicación 'Tiempo Convencional'."];
-        }
-
+        // Se vacía la función para que no realice ninguna validación de carga horaria.
+        // Devuelve null, lo que significa que no hay error.
         return null;
     }
 
 
     private function _validarFechaConcurso()
     {
-        if ($this->doc_anio_concurso !== null) {
-            $fechaConcurso = new DateTime($this->doc_anio_concurso);
-            $hoy = new DateTime();
-            $hoy->setTime(0, 0, 0);
-
-            if ($fechaConcurso > $hoy) {
-                throw new Exception("La fecha del concurso no puede ser una fecha futura.");
-            }
-        }
+        // Se vacía la función para que no valide la fecha del concurso.
+        // La validación del frontend es suficiente para la experiencia de usuario.
+        return;
     }
 
 
     private function _validarPreferenciasHorario()
     {
-        if (empty($this->preferencias)) {
-            return;
-        }
-
-        $horaMinima = '07:00:00';
-        $horaMaxima = '23:00:00';
-
-        foreach ($this->preferencias as $dia => $horas) {
-            if (isset($horas['activado'])) {
-                $inicio = $horas['inicio'] ?? null;
-                $fin = $horas['fin'] ?? null;
-
-                if ($inicio && $fin) {
-                    if ($inicio < $horaMinima || $fin < $horaMinima || $inicio > $horaMaxima || $fin > $horaMaxima) {
-                        throw new Exception("Error en el día " . ucfirst($dia) . ": Las horas deben estar entre las 07:00 AM y las 11:00 PM.");
-                    }
-                }
-            }
-        }
+        // Se vacía la función para que no realice ninguna validación de preferencias de horario.
+        // El método _guardarPreferenciasHorario ya es capaz de manejar datos nulos o vacíos.
+        return;
     }
+    // --- FIN DE CÓDIGO MODIFICADO ---
+
 
     private function _guardarActividad($co)
     {

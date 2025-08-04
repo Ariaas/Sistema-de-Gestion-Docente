@@ -162,8 +162,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <input class="form-control" type="text" id="tipoConcurso" name="tipoConcurso" readonly>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="anioConcurso" class="form-label">Año Concurso</label>
-                                            <input class="form-control" type="date" id="anioConcurso" name="anioConcurso">
+                                            <label for="anioConcurso" class="form-label">Mes y Año del Concurso</label>
+                                            <input class="form-control" type="month" id="anioConcurso" name="anioConcurso">
                                             <span id="sanioConcurso" class="text-danger"></span>
                                         </div>
                                     </div>

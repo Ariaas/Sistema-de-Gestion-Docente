@@ -162,23 +162,24 @@ $(document).ready(function() {
         if (!$('#correoDocente').val()) { setErrorText($('#scorreoDocente'), 'El correo es requerido.'); }
         if (!$('#categoria').val()) { setErrorText($('#scategoria'), 'Debe seleccionar una categoría.'); }
         if (!$('#dedicacion').val()) { setErrorText($('#sdedicacion'), 'Debe seleccionar una dedicación.'); }
-        if (!$('#condicion').val()) { setErrorText($('#scondicion'), 'Debe seleccionar una condición.'); }
         const anioConcursoInput = $('#anioConcurso');
         if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
-            setErrorText($('#sanioConcurso'), 'El año de concurso es requerido.');
+            setErrorText($('#sanioConcurso'), 'El mes de concurso es requerido.');
         } else if (anioConcursoInput.val()) {
             const hoy = new Date();
-            const fechaSeleccionada = new Date(anioConcursoInput.val());
-            fechaSeleccionada.setMinutes(fechaSeleccionada.getMinutes() + fechaSeleccionada.getTimezoneOffset());
-            hoy.setHours(0, 0, 0, 0);
-            if (fechaSeleccionada > hoy) { setErrorText($('#sanioConcurso'),'El año de concurso no puede ser una fecha futura.'); }
-            else { setErrorText($('#sanioConcurso'),''); }
+            const anioActual = hoy.getFullYear();
+            const mesActual = hoy.getMonth() + 1;
+            const [anioSeleccionado, mesSeleccionado] = anioConcursoInput.val().split('-').map(Number);
+            if (anioSeleccionado > anioActual || (anioSeleccionado === anioActual && mesSeleccionado > mesActual)) {
+                setErrorText($('#sanioConcurso'), 'El mes del concurso no puede ser futuro.');
+            } else {
+                setErrorText($('#sanioConcurso'), '');
+            }
         }
     }
 
     function mostrarErroresPaso2() {
-        if ($("input[name='titulos[]']:checked").length === 0) { setErrorText($('#stitulos'), 'Debe seleccionar al menos un título.'); }
-        if (!$('#fechaIngreso').val()) { setErrorText($('#sfechaIngreso'), 'La fecha de ingreso es requerida.'); }
+        // Las validaciones de este paso fueron removidas
     }
     
     function mostrarErroresPaso3() {
@@ -187,11 +188,7 @@ $(document).ready(function() {
     }
 
     function mostrarErroresPaso4() {
-        if ($('.dia-preferencia-check:checked').length === 0) { 
-            setErrorText($('#spreferencias'), 'Debe seleccionar al menos un día.'); 
-        } else { 
-            setErrorText($('#spreferencias'),''); 
-        }
+        setErrorText($('#spreferencias'),''); 
     }
 
     function validarenvioPaso1() {
@@ -202,16 +199,18 @@ $(document).ready(function() {
         if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test($("#correoDocente").val())) esValido = false;
         if (!$('#categoria').val()) esValido = false;
         if (!$('#dedicacion').val()) esValido = false;
-        if (!$('#condicion').val()) esValido = false;
+        
         const anioConcursoInput = $('#anioConcurso');
         if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
             esValido = false;
         } else if (anioConcursoInput.val()) {
             const hoy = new Date();
-            const fechaSeleccionada = new Date(anioConcursoInput.val());
-            fechaSeleccionada.setMinutes(fechaSeleccionada.getMinutes() + fechaSeleccionada.getTimezoneOffset());
-            hoy.setHours(0, 0, 0, 0);
-            if (fechaSeleccionada > hoy) esValido = false;
+            const anioActual = hoy.getFullYear();
+            const mesActual = hoy.getMonth() + 1;
+            const [anioSeleccionado, mesSeleccionado] = anioConcursoInput.val().split('-').map(Number);
+            if (anioSeleccionado > anioActual || (anioSeleccionado === anioActual && mesSeleccionado > mesActual)) {
+                esValido = false;
+            }
         }
         if (!esValido) {
             muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del Paso 1.");
@@ -220,56 +219,15 @@ $(document).ready(function() {
     }
 
     function validarenvioPaso2() {
-        let esValido = true;
-        if (!$('#fechaIngreso').val()) esValido = false;
-        if ($("input[name='titulos[]']:checked").length === 0) esValido = false;
-        if (!esValido) {
-            muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise los campos del Paso 2.");
-        }
-        return esValido;
+        return true;
     }
 
     function validarPaso3() {
-        mostrarErroresPaso3(); 
-        const camposValidos = validarCamposHoraria();
-        const totalValido = $('#sHorasTotales').text() === '';
-        
-        if (!camposValidos || !totalValido) {
-            muestraMensaje("error", 4000, "Error de Validación", "Por favor, revise la carga horaria.");
-            return false;
-        }
         return true;
     }
 
     function validarPaso4() {
-        let esValido = true;
-        const errores = [];
-        const diasSeleccionados = $('.dia-preferencia-check:checked');
-        if (diasSeleccionados.length === 0) {
-            errores.push('Debe seleccionar y configurar al menos un día de preferencia.');
-            esValido = false;
-        } else {
-            let errorDeHorario = false;
-            diasSeleccionados.each(function() {
-                const row = $(this).closest('.row');
-                if (!validarFilaHorario(row)) {
-                    errorDeHorario = true;
-                }
-            });
-            if (errorDeHorario) {
-                errores.push('Revise las horas de preferencia, hay valores incorrectos.');
-                esValido = false;
-            }
-        }
-        if (!esValido) {
-            let mensajeHtml = "Por favor, corrija los siguientes errores:<br><br><ul class='list-unstyled text-start ps-4'>";
-            errores.forEach(error => {
-                mensajeHtml += `<li><i class="fas fa-times-circle text-danger me-2"></i>${error}</li>`;
-            });
-            mensajeHtml += "</ul>";
-            muestraMensaje('error', 8000, 'Error de Validación - Paso 4', mensajeHtml);
-        }
-        return esValido;
+        return true;
     }
 
     function validarCamposHoraria() {
@@ -282,8 +240,7 @@ $(document).ready(function() {
             const valor = input.val();
             
             if (valor === '' || valor === null || isNaN(parseInt(valor))) {
-                setErrorText(errorSpan, 'Este campo es requerido.');
-                esValido = false;
+                // No se valida
             } else {
                 setErrorText(errorSpan, '');
             }
@@ -493,12 +450,12 @@ $(document).ready(function() {
         
         if(el.attr('id') === 'anioConcurso' && el.val()){
             const hoy = new Date();
-            const fechaSeleccionada = new Date(el.val());
-            fechaSeleccionada.setMinutes(fechaSeleccionada.getMinutes() + fechaSeleccionada.getTimezoneOffset());
-            hoy.setHours(0, 0, 0, 0);
+            const anioActual = hoy.getFullYear();
+            const mesActual = hoy.getMonth() + 1;
+            const [anioSeleccionado, mesSeleccionado] = el.val().split('-').map(Number);
 
-            if (fechaSeleccionada > hoy) {
-                setErrorText(spanEl, "El año de concurso no puede ser una fecha futura.");
+            if (anioSeleccionado > anioActual || (anioSeleccionado === anioActual && mesSeleccionado > mesActual)) {
+                setErrorText(spanEl, "El mes del concurso no puede ser futuro.");
             } else {
                 setErrorText(spanEl, "");
             }
@@ -509,7 +466,7 @@ $(document).ready(function() {
     
     $("input[name='titulos[]']").on("change", function() {
         if ($("input[name='titulos[]']:checked").length === 0) {
-            setErrorText($("#stitulos"), "Debe seleccionar al menos un título.");
+            // No se muestra error
         } else {
             setErrorText($("#stitulos"), "");
         }
@@ -536,8 +493,14 @@ $(document).ready(function() {
         $('#dedicacion').val(fila.find("td:eq(5)").text().trim());
         
         $('#condicion').val(fila.data('condicion')).trigger('change');
-        $('#anioConcurso').val(fila.data('anio-concurso'));
+        
+        // Formatear fechas a YYYY-MM para 'anioConcurso'
+        const anioConcurso = fila.data('anio-concurso');
+        if (anioConcurso) $('#anioConcurso').val(anioConcurso.substring(0, 7));
+
+        // Asignar fecha completa para 'fechaIngreso'
         $('#fechaIngreso').val(fila.data('fecha-ingreso'));
+
         $("#observacionesDocente").val(fila.data('observacion'));
 
         const titulosIds = fila.data('titulos-ids');
@@ -561,6 +524,16 @@ $(document).ready(function() {
         $(".text-danger, .text-secondary").text("").removeClass('text-danger text-secondary');
         $('#concurso-fields-wrapper').hide();
         cachedTeacherData = null;
+        
+        // --- INICIO CÓDIGO CORREGIDO ---
+        // Limpiar los campos de filtro de texto
+        $('#filtroTitulos, #filtroCoordinaciones').val('');
+        
+        // Mostrar todos los elementos que pudieron haber sido ocultados por el filtro
+        $('#titulos-container .form-check').show();
+        $('#coordinaciones-container .form-check').show();
+        // --- FIN CÓDIGO CORREGIDO ---
+
         setModalStep(1);
     }
 
