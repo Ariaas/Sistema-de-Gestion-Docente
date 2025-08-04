@@ -449,30 +449,8 @@ class Docente extends Connection
         }
     }
 
-    // --- INICIO DE CÓDIGO MODIFICADO ---
-    private function ValidarCargaHoraria()
-    {
-        // Se vacía la función para que no realice ninguna validación de carga horaria.
-        // Devuelve null, lo que significa que no hay error.
-        return null;
-    }
 
-
-    private function _validarFechaConcurso()
-    {
-        // Se vacía la función para que no valide la fecha del concurso.
-        // La validación del frontend es suficiente para la experiencia de usuario.
-        return;
-    }
-
-
-    private function _validarPreferenciasHorario()
-    {
-        // Se vacía la función para que no realice ninguna validación de preferencias de horario.
-        // El método _guardarPreferenciasHorario ya es capaz de manejar datos nulos o vacíos.
-        return;
-    }
-    // --- FIN DE CÓDIGO MODIFICADO ---
+   
 
 
     private function _guardarActividad($co)

@@ -179,7 +179,7 @@ $(document).ready(function() {
     }
 
     function mostrarErroresPaso2() {
-        // Las validaciones de este paso fueron removidas
+      
     }
     
     function mostrarErroresPaso3() {
@@ -240,7 +240,7 @@ $(document).ready(function() {
             const valor = input.val();
             
             if (valor === '' || valor === null || isNaN(parseInt(valor))) {
-                // No se valida
+               
             } else {
                 setErrorText(errorSpan, '');
             }
@@ -466,7 +466,7 @@ $(document).ready(function() {
     
     $("input[name='titulos[]']").on("change", function() {
         if ($("input[name='titulos[]']:checked").length === 0) {
-            // No se muestra error
+        
         } else {
             setErrorText($("#stitulos"), "");
         }
@@ -494,11 +494,11 @@ $(document).ready(function() {
         
         $('#condicion').val(fila.data('condicion')).trigger('change');
         
-        // Formatear fechas a YYYY-MM para 'anioConcurso'
+        
         const anioConcurso = fila.data('anio-concurso');
         if (anioConcurso) $('#anioConcurso').val(anioConcurso.substring(0, 7));
 
-        // Asignar fecha completa para 'fechaIngreso'
+     
         $('#fechaIngreso').val(fila.data('fecha-ingreso'));
 
         $("#observacionesDocente").val(fila.data('observacion'));
@@ -525,14 +525,13 @@ $(document).ready(function() {
         $('#concurso-fields-wrapper').hide();
         cachedTeacherData = null;
         
-        // --- INICIO CÓDIGO CORREGIDO ---
-        // Limpiar los campos de filtro de texto
+        
         $('#filtroTitulos, #filtroCoordinaciones').val('');
         
-        // Mostrar todos los elementos que pudieron haber sido ocultados por el filtro
+   
         $('#titulos-container .form-check').show();
         $('#coordinaciones-container .form-check').show();
-        // --- FIN CÓDIGO CORREGIDO ---
+       
 
         setModalStep(1);
     }
