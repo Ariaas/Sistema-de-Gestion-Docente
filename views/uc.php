@@ -140,7 +140,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             }
                                             if (!empty($areasEliminadas)) {
                                                 foreach ($areasEliminadas as $areaEliminada) {
-                                               
+
                                                     if (!in_array($areaEliminada, $areasActivas)) {
                                                         echo "<option value='" . htmlspecialchars($areaEliminada) . "'>" . htmlspecialchars($areaEliminada) . " (eliminado)</option>";
                                                     }
@@ -201,48 +201,33 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Asignar</h5>
+                        <h5 class="modal-title">Asignar Docentes</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f-asignar" autocomplete="off" class="needs-validation" novalidate>
-                            <div class="mb-4">
-                                <div class="row g-3">
-                                    <div class="col-md-12">
-                                        <label for="docenteUC" class="form-label">Docente</label>
-                                        <select class="form-select" name="docenteUC" id="docenteUC" required>
-                                            <option value="" disabled selected>Seleccione un docente</option>
-                                            <?php
-                                            if (!empty($docentes)) {
-                                                foreach ($docentes as $docente) {
-                                                    $prefijo = isset($docente['doc_prefijo']) ? $docente['doc_prefijo'] : '';
-                                                    $cedula = $docente['doc_cedula'];
-                                                    $nombre = $docente['doc_nombre'] . " " . $docente['doc_apellido'];
-                                                    echo "<option value='" . $cedula . "' data-prefijo='" . $prefijo . "'>" . $prefijo . "-" . $cedula . ", " . $nombre . "</option>";
-                                                }
-                                            } else {
-                                                echo "<option value='' disabled>No hay docentes disponibles</option>";
-                                            }
-                                            ?>
-                                        </select>
-                                        <span id="sdocente" class="form-text"></span>
-                                    </div>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-hover w-100" id="tablaDocentesDisponibles">
+                                    <thead>
+                                        <tr>
+                                            <th>Cédula</th>
+                                            <th>Nombre</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cuerpoTablaDocentesDisp"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="row g-3 mt-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Docentes a asignar:</label>
+                                    <ul id="carritoDocentes" class="list-group"></ul>
                                 </div>
-                                <div class="row g-3 mt-3">
-                                    <div class="col-md-12">
-                                        <button type="button" class="btn btn-success" id="agregarDocente">Agregar</button>
-                                    </div>
-                                </div>
-                                <div class="row g-3 mt-3">
-                                    <div class="col-md-12">
-                                        <label class="form-label">Docentes seleccionados:</label>
-                                        <ul id="carritoDocentes" class="list-group"></ul>
-                                    </div>
-                                </div>
-                                <div class="modal-footer justify-content-center">
-                                    <button type="button" class="btn btn-success" id="asignarDocentes">Procesar</button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                                </div>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-success" id="asignarDocentes">Procesar Asignación</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
                     </div>

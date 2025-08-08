@@ -434,6 +434,24 @@ class UC extends Connection
         return $r;
     }
 
+    public function obtenerDocentesNoAsignados($uc_codigo)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $stmt = $co->prepare("SELECT d.doc_cedula, d.doc_prefijo, d.doc_nombre, d.doc_apellido
+                                  FROM tbl_docente d
+                                  WHERE d.doc_estado = 1 AND d.doc_cedula NOT IN (
+                                      SELECT ud.doc_cedula FROM uc_docente ud WHERE ud.uc_codigo = :uc_codigo
+                                  )");
+            $stmt->bindParam(':uc_codigo', $uc_codigo, PDO::PARAM_STR);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
     function obtenerDocente()
     {
         $co = $this->Con();

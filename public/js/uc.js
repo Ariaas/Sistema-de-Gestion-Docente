@@ -11,6 +11,33 @@ function destruyeDT(selector) {
     }
 }
 
+function crearDTModal(selector) {
+  if (!$.fn.DataTable.isDataTable(selector)) {
+    $(selector).DataTable({
+      paging: false,
+      lengthChange: false,
+      searching: true,
+      ordering: true,
+      info: false,
+      autoWidth: false,
+      responsive: true,
+      language: {
+        search: "",
+        searchPlaceholder: "Buscar...",
+        zeroRecords: "No se encontraron resultados",
+      },
+      dom: "f" + 
+           "<'row'<'col-sm-12'tr>>"
+    });
+  }
+}
+
+function destruyeDTModal(selector) {
+  if ($.fn.DataTable.isDataTable(selector)) {
+    $(selector).DataTable().destroy();
+  }
+}
+
 function crearDT(selector) {
     if (!$.fn.DataTable.isDataTable(selector)) {
         $(selector).DataTable({
@@ -94,20 +121,66 @@ $(document).ready(function() {
     destruyeDT("#tablauc");
     crearDT("#tablauc");
 
-    destruyeDT("#tabladocente");
-    crearDT("#tabladocente");
-
-    let docentesAsignadosUC = [];
-
     $(document).on("click", ".asignar-uc", function() {
         ucSeleccionada = $(this).closest("tr").data("codigo");
         carritoDocentes = [];
         actualizarCarritoDocentes();
 
         var datos = new FormData();
-        datos.append('accion', 'ver_docentes');
+        datos.append('accion', 'cargar_docentes_para_asignar');
         datos.append('codigo', ucSeleccionada);
-        enviaAjax(datos, 'cargarDocentesAsignados');
+        
+        $.ajax({
+            async: true, url: "", type: "POST", contentType: false, data: datos, processData: false, cache: false,
+            success: function(respuesta) {
+                try {
+                    const lee = JSON.parse(respuesta);
+                    if (lee.resultado === 'ok') {
+                        const disponibles = lee.disponibles;
+                        
+                        if (disponibles.length === 0) {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'No hay docentes disponibles',
+                                text: 'Todos los docentes ya han sido asignados a esta unidad curricular o no hay docentes registrados.'
+                            });
+                            return;
+                        }
+
+                        const cuerpoTabla = $('#cuerpoTablaDocentesDisp');
+                        
+                        destruyeDTModal('#tablaDocentesDisponibles');
+                        cuerpoTabla.empty();
+
+                        disponibles.forEach(function(docente) {
+                            const prefijo = docente.doc_prefijo || '';
+                            const cedula = docente.doc_cedula || '';
+                            const nombreCompleto = `${docente.doc_nombre} ${docente.doc_apellido}`;
+                            cuerpoTabla.append(`
+                                <tr>
+                                    <td>${prefijo}-${cedula}</td>
+                                    <td>${nombreCompleto}</td>
+                                    <td><button type="button" class="btn btn-success btn-sm seleccionar-docente-para-uc" data-cedula="${cedula}" data-nombre="${nombreCompleto}" data-prefijo="${prefijo}">Seleccionar</button></td>
+                                </tr>`);
+                        });
+
+                        crearDTModal('#tablaDocentesDisponibles');
+                        $('#modal2').modal('show');
+                        
+                        $('#modal2').off('shown.bs.modal').on('shown.bs.modal', function () {
+                            $('#tablaDocentesDisponibles').DataTable().columns.adjust().responsive.recalc();
+                        });
+                    } else {
+                        muestraMensaje("error", 5000, "Error", lee.mensaje || "No se pudo cargar la lista de docentes.");
+                    }
+                } catch(e) {
+                    muestraMensaje("error", 5000, "Error", "Respuesta inválida del servidor.");
+                }
+            },
+            error: function() {
+                muestraMensaje("error", 5000, "Error de conexión", "No se pudo comunicar con el servidor.");
+            }
+        });
     });
 
     $("#proceso").on("click", function() {
@@ -496,26 +569,6 @@ function enviaAjax(datos, accion = "") {
             try {
                 var lee = JSON.parse(respuesta);
 
-                if (accion === 'cargarDocentesAsignados') {
-                    docentesAsignadosUC = [];
-                    if (lee.resultado === 'ok' && lee.mensaje) {
-                        docentesAsignadosUC = lee.mensaje.map(d => d.doc_cedula.toString());
-                    }
-
-                    const docenteSelect = $("#docenteUC");
-                    docenteSelect.val('');
-                    docenteSelect.find('option').show();
-
-                    if (docentesAsignadosUC.length > 0) {
-                        docentesAsignadosUC.forEach(function(cedula) {
-                            docenteSelect.find(`option[value="${cedula}"]`).hide();
-                        });
-                    }
-
-                    $("#modal2").modal("show");
-                    return;
-                }
-
                 if (accion === "verificarQuitarDocente") {
                     let titulo = "¿Está seguro de quitar este docente de la unidad curricular?";
                     let texto = "Esta acción puede revertirse asignando de nuevo al docente.";
@@ -713,10 +766,33 @@ $(document).on("click", "#agregarDocente", function() {
     $("#docenteUC").val("");
 });
 
+$(document).on("click", ".seleccionar-docente-para-uc", function() {
+    const btn = $(this);
+    const docenteCedula = btn.data("cedula").toString();
+    const docenteNombre = btn.data("nombre");
+    const docentePrefijo = btn.data("prefijo");
+
+    if (carritoDocentes.some(doc => doc.cedula === docenteCedula)) {
+        return;
+    }
+
+    carritoDocentes.push({
+        cedula: docenteCedula,
+        nombre: docenteNombre,
+        prefijo: docentePrefijo
+    });
+    actualizarCarritoDocentes();
+    btn.prop('disabled', true).text('Seleccionado');
+});
+
 $(document).on("click", ".quitar-docente", function() {
     const idx = $(this).data("idx");
+    const docenteCedula = carritoDocentes[idx].cedula;
     carritoDocentes.splice(idx, 1);
     actualizarCarritoDocentes();
+
+    // Reactivar el botón en la tabla
+    $(`.seleccionar-docente-para-uc[data-cedula='${docenteCedula}']`).prop('disabled', false).text('Seleccionar');
 });
 
 $(document).on("click", "#asignarDocentes", function() {

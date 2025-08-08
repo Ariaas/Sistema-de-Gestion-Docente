@@ -36,6 +36,12 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'ver_docentes') {
             $docentesAsignados = $u->obtenerDocentesPorUc($_POST['codigo']);
             echo json_encode(['resultado' => 'ok', 'mensaje' => $docentesAsignados]);
+        } elseif ($accion == 'cargar_docentes_para_asignar') {
+            $docentesDisponibles = $u->obtenerDocentesNoAsignados($_POST['codigo']);
+            echo json_encode([
+                'resultado' => 'ok',
+                'disponibles' => $docentesDisponibles
+            ]);
         } elseif ($accion == 'asignar') {
             $asignacionesJSON = $_POST['asignaciones'];
             $ucsJSON = $_POST['ucs'];
