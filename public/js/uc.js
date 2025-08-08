@@ -501,6 +501,17 @@ function enviaAjax(datos, accion = "") {
                     if (lee.resultado === 'ok' && lee.mensaje) {
                         docentesAsignadosUC = lee.mensaje.map(d => d.doc_cedula.toString());
                     }
+
+                    const docenteSelect = $("#docenteUC");
+                    docenteSelect.val('');
+                    docenteSelect.find('option').show();
+
+                    if (docentesAsignadosUC.length > 0) {
+                        docentesAsignadosUC.forEach(function(cedula) {
+                            docenteSelect.find(`option[value="${cedula}"]`).hide();
+                        });
+                    }
+
                     $("#modal2").modal("show");
                     return;
                 }
