@@ -86,7 +86,6 @@ if (isset($_POST['generar_reporte_rod'])) {
                 'doc_anio_concurso' => $row['doc_anio_concurso'],
                 'doc_tipo_concurso' => $row['doc_tipo_concurso'],
                 'doc_horas_max' => $horas_max,
-                // --- AJUSTE RESTAURADO: Usamos el valor que viene de la base de datos ---
                 'doc_horas_descarga' => (int)($row['doc_horas_descarga'] ?? 0),
                 'doc_observacion' => $row['doc_observacion'],
                 'coordinaciones' => $row['coordinaciones'],
@@ -107,7 +106,6 @@ if (isset($_POST['generar_reporte_rod'])) {
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("ORGANIZACION DOCENTE");
 
-    // Estilos y encabezados
     $headerStyle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $columnHeaderStyle = ['font' => ['bold' => true, 'size' => 8], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $cellStyle = ['font' => ['size' => 8], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
@@ -141,7 +139,6 @@ if (isset($_POST['generar_reporte_rod'])) {
         $rowCount = max(1, count($ucToSectionsMap));
         $startRowTeacher = $filaActual;
 
-        // Escribir datos principales del docente
         $sheet->setCellValue("A{$startRowTeacher}", $itemNumber);
         $sheet->setCellValue("B{$startRowTeacher}", $docente['nombre_completo']);
         $sheet->setCellValue("C{$startRowTeacher}", $docente['doc_cedula']);

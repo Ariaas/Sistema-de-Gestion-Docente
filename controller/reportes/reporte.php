@@ -13,7 +13,6 @@ if (is_file("views/reportes/reporte.php")) {
 
     $reporteModel = new Reporte();
 
-    // Atiende las solicitudes AJAX
     if (!empty($_POST['accion'])) {
         header('Content-Type: application/json');
         $accion = $_POST['accion'];
@@ -46,7 +45,7 @@ if (is_file("views/reportes/reporte.php")) {
                         }
                         $datos = $reporteModel->obtenerDatosEstadisticosPorUC($uc_id, $anio_id);
                         break;
-                    default: // general
+                    default: 
                         $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio_id);
                         break;
                 }
@@ -73,7 +72,6 @@ if (is_file("views/reportes/reporte.php")) {
         exit;
     }
 
-    // Carga los datos iniciales para la vista
     $anios = $reporteModel->obtenerAnios();
     require_once("views/reportes/reporte.php");
 } else {

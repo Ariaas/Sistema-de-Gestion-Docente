@@ -1,5 +1,5 @@
 let ucsDisponibles = [];
-let originalCohorte = ''; // Variable para guardar la cohorte original al modificar
+let originalCohorte = ''; 
 
 function Listar() {
     var datos = new FormData();
@@ -298,7 +298,7 @@ function enviaAjax(datos, tipoLlamada = '') {
                     const mensajeSpan = $("#smalcodigo");
                     const btnSiguiente = $("#btn-siguiente");
                     if (lee.resultado === 'existe') {
-                        // MODIFICADO: Ya no se fuerza el color. Usará el gris del CSS.
+                        
                         mensajeSpan.text(lee.mensaje);
                         btnSiguiente.prop("disabled", true);
                     }
@@ -309,7 +309,7 @@ function enviaAjax(datos, tipoLlamada = '') {
                     const mensajeSpan = $("#smalcohorte");
                     const btnSiguiente = $("#btn-siguiente");
                     if (lee.resultado === 'existe') {
-                        // SIN CAMBIOS: Esta es la excepción. Se mantiene en rojo.
+                        
                         mensajeSpan.text(lee.mensaje).css('color', 'red');
                         btnSiguiente.prop("disabled", true);
                     }

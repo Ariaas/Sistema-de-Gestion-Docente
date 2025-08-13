@@ -25,7 +25,7 @@ class DefinitivoEmit extends Connection
     {
         $co = $this->con();
         try {
-            // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" FINAL Y PERFECCIONADA ---
+           
             $sqlBase = "SELECT
                             (
                                 SELECT d.doc_cedula
@@ -90,7 +90,7 @@ class DefinitivoEmit extends Connection
             }
             
             $sqlBase .= " WHERE " . implode(" AND ", $conditions);
-            $sqlBase .= " HAVING IDDocente IS NOT NULL"; // Solo mostrar filas con docentes asignados
+            $sqlBase .= " HAVING IDDocente IS NOT NULL"; 
             $sqlBase .= " ORDER BY NombreCompletoDocente, NombreUnidadCurricular, NombreSeccion";
             
             $resultado = $co->prepare($sqlBase);

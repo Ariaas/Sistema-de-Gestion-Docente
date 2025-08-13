@@ -38,8 +38,7 @@ if (isset($_POST['generar_transcripcion'])) {
         }
     }
 
-    // --- FUNCIÓN AUXILIAR PARA FORMATEAR LAS SECCIONES ---
-    // Esta función añade un salto de línea cada N secciones.
+
     function formatSectionsWithWrapping($sectionString, $wrapAfter = 3) {
         if (empty($sectionString)) {
             return '';
@@ -49,11 +48,11 @@ if (isset($_POST['generar_transcripcion'])) {
         $output = '';
         foreach ($sections as $index => $section) {
             $output .= $section;
-            if ($index < $total - 1) { // Si no es el último elemento
-                if (($index + 1) % $wrapAfter === 0) { // Si es el 3ro, 6to, etc.
-                    $output .= "\n"; // Añade un salto de línea
+            if ($index < $total - 1) { 
+                if (($index + 1) % $wrapAfter === 0) { 
+                    $output .= "\n"; 
                 } else {
-                    $output .= ' - '; // Añade el separador de guion
+                    $output .= ' - '; 
                 }
             }
         }
@@ -98,8 +97,7 @@ if (isset($_POST['generar_transcripcion'])) {
                 foreach ($assignments as $assignment) {
                     $sheet->setCellValue("D{$filaActual}", $assignment['NombreUnidadCurricular']);
                     
-                    // --- AQUÍ SE USA LA NUEVA FUNCIÓN ---
-                    // Formateamos las secciones antes de escribirlas en la celda.
+
                     $seccionesFormateadas = formatSectionsWithWrapping($assignment['NombreSeccion'], 3);
                     $sheet->setCellValue("E{$filaActual}", $seccionesFormateadas);
 
@@ -132,7 +130,7 @@ if (isset($_POST['generar_transcripcion'])) {
     $sheet->getColumnDimension('B')->setWidth(15);
     $sheet->getColumnDimension('C')->setWidth(40);
     $sheet->getColumnDimension('D')->setWidth(50);
-    $sheet->getColumnDimension('E')->setWidth(25); // Un poco más ancho para que quepan 3 secciones
+    $sheet->getColumnDimension('E')->setWidth(25); 
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();

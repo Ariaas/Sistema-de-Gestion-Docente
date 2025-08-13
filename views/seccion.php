@@ -300,6 +300,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <option value="1">1 Bloque (40 min)</option>
                                     <option value="2">2 Bloques (80 min)</option>
                                     <option value="3">3 Bloques (120 min)</option>
+                                    <option value="4">4 Bloques (160 min)</option>
                                 </select>
                             </div>
                             <button type="submit" class="btn btn-primary" id="btnGuardarClase">Guardar Cambios</button>

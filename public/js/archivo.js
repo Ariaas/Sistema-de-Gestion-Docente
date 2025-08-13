@@ -96,10 +96,10 @@ const aprobadosDir = parseInt(item.apro_cantidad) || 0;
 const paraPer = parseInt(item.per_cantidad) || 0;
 const aprobadosPer = parseInt(item.per_aprobados) || 0;
 
-// Este cálculo está bien
+
 const aprobadosTotales = aprobadosDir + aprobadosPer;
 
-// Este es el cálculo corregido y definitivo para los reprobados
+
 const reprobadosTotales = totalEst - aprobadosTotales;
 
 const esPerCero = paraPer === 0;

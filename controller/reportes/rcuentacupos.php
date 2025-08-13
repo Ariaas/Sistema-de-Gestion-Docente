@@ -61,11 +61,10 @@ if (isset($_POST['generar_reporte'])) {
     $datosCrudos = $oCuentaCupos->obtenerCuentaCupos();
 
     if (empty($datosCrudos)) {
-        // ... (código para reporte sin resultados)
+       
     }
 
-    // --- LÓGICA DE AGRUPACIÓN EN PHP ---
-    // 1. Crear firmas de horario para cada sección
+   
     $seccionesConFirma = [];
     foreach ($datosCrudos as $fila) {
         $sec_codigo = $fila['sec_codigo'];
@@ -85,11 +84,11 @@ if (isset($_POST['generar_reporte'])) {
     }
     unset($data);
 
-    // 2. Agrupar secciones por su firma de horario
+   
     $gruposPorFirma = [];
     foreach ($seccionesConFirma as $sec_codigo => $data) {
         $firma = $data['firma'];
-        // Si no hay horario (firma vacía), usar el propio código de sección para que no se agrupe
+       
         $key = ($firma === '') ? 'no-unida-'.$sec_codigo : $firma;
 
         if (!isset($gruposPorFirma[$key])) {
@@ -99,17 +98,17 @@ if (isset($_POST['generar_reporte'])) {
         $gruposPorFirma[$key]['cantidad_total'] += $data['cantidad'];
     }
 
-    // 3. Preparar datos finales para el reporte
+   
     $datosReporte = [];
     foreach ($gruposPorFirma as $grupo) {
         $primer_sec_codigo = $grupo['secciones'][0];
         $datosReporte[] = [
             'Trayecto' => substr($primer_sec_codigo, 0, 1),
-            'Seccion' => $grupo['secciones'], // Ahora es un array de códigos
+            'Seccion' => $grupo['secciones'], 
             'Cantidad' => $grupo['cantidad_total']
         ];
     }
-    // --- FIN DE LA LÓGICA DE AGRUPACIÓN ---
+  
 
     $datosAgrupados = [];
     $totalGeneral = 0;
@@ -153,7 +152,7 @@ if (isset($_POST['generar_reporte'])) {
             }
             
             foreach ($seccionesDelTrayecto as $seccion) {
-                // Se formatean las secciones usando la función auxiliar
+              
                 $seccionesFormateadas = formatSectionsFromArray($seccion['Seccion']);
                 $sheet->setCellValue('B'.$filaActual, $seccionesFormateadas);
                 $sheet->getStyle('B'.$filaActual)->applyFromArray($styleCentrado);

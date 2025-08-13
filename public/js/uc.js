@@ -791,7 +791,7 @@ $(document).on("click", ".quitar-docente", function() {
     carritoDocentes.splice(idx, 1);
     actualizarCarritoDocentes();
 
-    // Reactivar el botón en la tabla
+    
     $(`.seleccionar-docente-para-uc[data-cedula='${docenteCedula}']`).prop('disabled', false).text('Seleccionar');
 });
 

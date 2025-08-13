@@ -13,7 +13,7 @@ class ReporteHorarioDocente extends Connection
     public function setAnio($valor) { $this->anio = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
 
-    // Las funciones getAnios, getFases, etc., no necesitan cambios.
+   
     public function getAniosActivos() {
         try {
             $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";

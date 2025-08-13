@@ -55,7 +55,7 @@ class AularioReport extends Connection
         try {
             $params = [':anio_param' => $this->anio];
             
-            // --- CONSULTA CORREGIDA APLICANDO LA "RECETA" ---
+          
             $sql_base = "SELECT
                            CASE
     WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('Lab. ', uh.esp_numero, ' - ', uh.esp_edificio)

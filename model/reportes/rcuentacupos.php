@@ -35,8 +35,7 @@ class CuentaCupos extends Connection
     {
         $co = $this->con();
         try {
-            // --- CONSULTA SIMPLIFICADA PARA EVITAR ERRORES ---
-            // Trae todas las secciones con sus datos de horario (si los tienen)
+          
             $sql = "
                 SELECT
                     s.sec_codigo,

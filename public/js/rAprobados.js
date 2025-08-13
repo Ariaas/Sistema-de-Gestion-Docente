@@ -48,7 +48,7 @@ $(document).ready(function() {
                 let label = '';
                 if (tipoReporte === 'seccion') {
                     label = item.uc_nombre;
-                } else { // tipoReporte === 'uc'
+                } else {
                     label = 'Sección(es) ' + item.sec_codigo.replace(/,/g, '-');
                 }
                 labels.push(label);

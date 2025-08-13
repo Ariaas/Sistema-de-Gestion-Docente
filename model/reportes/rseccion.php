@@ -11,7 +11,7 @@ class SeccionReport extends Connection
     public function setFase($valor) { $this->fase = trim($valor); }
     public function setTrayecto($valor) { $this->trayecto = trim($valor); }
     
-    // ... (las funciones getAniosActivos, getFases, getTrayectos no cambian y pueden quedar como están) ...
+   
     public function getAniosActivos() {
         try {
             $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
@@ -56,7 +56,7 @@ class SeccionReport extends Connection
         try {
             $params = [':anio_param' => $this->anio];
             
-            // --- SOLUCIÓN DEFINITIVA: Se adapta la consulta del módulo "Ver Horario" que sí funciona ---
+          
             $sql_base = "SELECT
                             uh.sec_codigo,
                             u.uc_trayecto,

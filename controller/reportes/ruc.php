@@ -77,20 +77,20 @@
     $styleHeaderTrayecto = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]]; 
     $styleHeaderColumnas = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]]; 
     $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]]; 
-    // ---- OJO: 'wrapText' => true es clave para que los saltos de línea (\n) funcionen en Excel ----
+   
     $styleCentrado = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]]; 
 
-    // ---- LÓGICA DE AGRUPACIÓN SIMPLIFICADA ----
+   
     $datosAgrupados = []; 
     foreach ($datosReporte as $fila) { 
         $trayecto = $fila['Número de Trayecto']; 
         $uc = $fila['Nombre de la Unidad Curricular']; 
         $docente = $fila['Nombre Completo del Docente'] ?? 'NO ASIGNADO'; 
-        // La consulta SQL ya nos da las secciones agrupadas
+       
         $seccionesAgrupadas = $fila['Código de Sección']; 
         
         if ($seccionesAgrupadas) { 
-            // Simplemente asignamos el string de secciones al docente
+            
             $datosAgrupados[$trayecto][$uc][$docente] = $seccionesAgrupadas; 
         } 
     } 
@@ -98,7 +98,7 @@
 
     $rowOffset = 1; $colOffset = 1; $bloquesEnFila = 0; $alturaMaximaFila = 0; 
 
-    // ---- FUNCIÓN DE RENDERIZADO MODIFICADA ----
+   
     function renderizarBloqueUC($sheet, $numTrayecto, $unidades, $startRow, $startCol, &$styles) { 
         $filaActual = $startRow; 
         $label = "TRAYECTO " . toRoman($numTrayecto); 
@@ -122,19 +122,19 @@
          
         foreach ($unidades as $nombreUC => $docentes) { 
             $filaInicioUC = $filaActual; 
-            // Ahora $docentes es un array de [nombreDocente => stringDeSecciones]
+            
             foreach ($docentes as $nombreDocente => $seccionesConcatenadas) { 
-                // Escribimos el bloque de secciones (ya con saltos de línea) en la celda
+                
                 $sheet->setCellValue($colSeccion.$filaActual, $seccionesConcatenadas); 
-                // Escribimos el docente en la celda de al lado
+                
                 $sheet->setCellValue($colDocente.$filaActual, $nombreDocente);
                 
-                // Cada combinación de UC/Docente es una sola fila en el Excel
+                
                 $filaActual++;
             } 
             $filaFinUC = $filaActual - 1; 
             $sheet->setCellValue($colUC.$filaInicioUC, $nombreUC); 
-            // Se combina la celda de UC si abarca más de un docente (más de una fila)
+            
             if($filaInicioUC < $filaFinUC) { 
                 $sheet->mergeCells("{$colUC}{$filaInicioUC}:{$colUC}{$filaFinUC}"); 
             } 
@@ -153,7 +153,7 @@
     ]; 
      
     foreach ($datosAgrupados as $numTrayecto => $unidades) { 
-        if ($numTrayecto > 0 && $bloquesEnFila >= 2) { // Ajuste para iniciar nueva fila de bloques
+        if ($numTrayecto > 0 && $bloquesEnFila >= 2) { 
             $rowOffset += $alturaMaximaFila + 2; 
             $colOffset = 1; 
             $bloquesEnFila = 0; 
@@ -163,7 +163,7 @@
         $alturaBloqueActual = renderizarBloqueUC($sheet, $numTrayecto, $unidades, $rowOffset, $colOffset, $estilos); 
 
         $alturaMaximaFila = max($alturaMaximaFila, $alturaBloqueActual); 
-        $colOffset += 4; // Espacio entre bloques
+        $colOffset += 4; 
         $bloquesEnFila++; 
     } 
 

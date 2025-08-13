@@ -158,7 +158,7 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
     }
 }
 
-// ** FUNCIÓN CORREGIDA **
+
 function validarEntradaHorario() {
     $("#conflicto-docente-warning, #conflicto-espacio-warning, #conflicto-uc-warning").hide().html('');
     $("#btnGuardarClase").prop("disabled", false);
@@ -172,7 +172,7 @@ function validarEntradaHorario() {
     if (!currentClickedCell) return;
     const datosClaseActual = currentClickedCell.data("horario-data");
 
-    // --- LÓGICA DE VALIDACIÓN DE UC DUPLICADA (CORREGIDA) ---
+   
     if (ucId) {
         let ucDuplicada = false;
         const claveEdicion = datosClaseActual ? `${datosClaseActual.hora_inicio.substring(0,5)}-${normalizeDayKey(datosClaseActual.dia)}` : null;
@@ -197,7 +197,7 @@ function validarEntradaHorario() {
         return;
     }
 
-    // --- VALIDACIÓN DE CONFLICTO EN VIVO ---
+  
     const franjaInicioActual = currentClickedCell.data("franja-inicio");
     const indiceTurnoActual = allTurnos.findIndex(t => t.tur_horainicio === franjaInicioActual);
     
@@ -383,6 +383,7 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, an
         const segundoDigito = secCodigo.toString().charAt(1);
         if (segundoDigito === '2') turnoSeleccionado = 'tarde';
         else if (segundoDigito === '3') turnoSeleccionado = 'noche';
+        else if (segundoDigito === '1' || segundoDigito === '4' || segundoDigito === '0') turnoSeleccionado = 'mañana';
     }
 
     const prefijo = getPrefijoSeccion(secCodigo);
@@ -681,7 +682,7 @@ $(document).ready(function() {
         let turnoSeleccionado = 'todos';
         if (seccionData.sec_codigo) {
             const segundoDigito = seccionData.sec_codigo.toString().charAt(1);
-            if (segundoDigito === '1') turnoSeleccionado = 'mañana';
+            if (segundoDigito === '1' || segundoDigito === '4' || segundoDigito === '0') turnoSeleccionado = 'mañana';
             else if (segundoDigito === '2') turnoSeleccionado = 'tarde';
             else if (segundoDigito === '3') turnoSeleccionado = 'noche';
         }
@@ -805,6 +806,7 @@ $(document).ready(function() {
                             const segundoDigito = respuesta.nuevo_codigo.toString().charAt(1);
                             if (segundoDigito === '2') turnoSeleccionado = 'tarde';
                             else if (segundoDigito === '3') turnoSeleccionado = 'noche';
+                            else if (segundoDigito === '1' || segundoDigito === '4' || segundoDigito === '0') turnoSeleccionado = 'mañana';
                         }
                         inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
                     }
@@ -911,7 +913,7 @@ $(document).ready(function() {
         }
     });
 
-   // ** MANEJADOR DE EVENTO CORREGIDO **
+   
     $("#proceso").on("click", function() {
         const cantidadInput = $('#cantidadSeccionModificar');
         const cantidad = parseInt(cantidadInput.val(), 10);
@@ -955,9 +957,9 @@ $(document).ready(function() {
     
         const clasesAEnviar = Array.from(horarioContenidoGuardado.values())
                                      .map(v => v.data)
-                                     .filter(item => item && item.uc_codigo && item.hora_inicio && item.hora_fin); // Filtra items inválidos o incompletos
+                                     .filter(item => item && item.uc_codigo && item.hora_inicio && item.hora_fin); 
         
-        // Formatear las horas a HH:MM antes de enviar
+        
         clasesAEnviar.forEach(item => {
             item.hora_inicio = item.hora_inicio.substring(0, 5);
             item.hora_fin = item.hora_fin.substring(0, 5);

@@ -232,7 +232,6 @@ $html .= '<table class="tabla-horario no-margin-bottom">
 
     $html .= '</table>';
 
-    // -- SECCIÓN OBSERVACIONES MODIFICADA --
     $html .= '<table class="tabla-encabezado">
         <tr>
             <td class="titulo-seccion" style="width:25%; text-align:left;">20. OBSERVACIONES:</td>

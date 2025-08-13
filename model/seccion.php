@@ -31,7 +31,6 @@ class Seccion extends Connection
         return $total ? (int)$total : 0;
     }
 
-    // ** FUNCIÓN CON LA CORRECCIÓN DEFINITIVA DE FILTRO DE TURNO **
     public function CrearHorarioAleatorio($sec_codigo, $trayecto)
     {
         $co = $this->Con();
@@ -40,17 +39,16 @@ class Seccion extends Connection
         $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
         $bloques_todos = $this->obtenerTurnos();
         
-        // **INICIO DE LA CORRECCIÓN**
-        // Determinar el turno basado en el segundo dígito del código de sección
         $turno_seccion_char = substr($sec_codigo, 1, 1);
-        $turno_seccion = 'mañana'; // Valor por defecto
+        $turno_seccion = 'mañana'; 
         if ($turno_seccion_char === '2') {
             $turno_seccion = 'tarde';
         } elseif ($turno_seccion_char === '3') {
             $turno_seccion = 'noche';
+        } elseif ($turno_seccion_char === '4') {
+            $turno_seccion = 'mañana';
         }
 
-        // Filtrar los bloques horarios para que coincidan con el turno de la sección
         $bloques = array_filter($bloques_todos, function($bloque) use ($turno_seccion) {
             $hora_inicio = (int)substr($bloque['tur_horainicio'], 0, 2);
             if ($turno_seccion === 'mañana') return $hora_inicio < 13;
@@ -58,7 +56,7 @@ class Seccion extends Connection
             if ($turno_seccion === 'noche') return $hora_inicio >= 18;
             return false;
         });
-        // **FIN DE LA CORRECCIÓN**
+        
 
         $fase_actual = $this->determinarFaseActual();
         $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
@@ -81,7 +79,7 @@ class Seccion extends Connection
             return ['resultado' => 'ok', 'mensaje' => 'No hay suficientes datos (UCs, espacios, bloques de turno, etc.) para generar un horario.', 'horario' => []];
         }
 
-        // ... El resto de la función continúa igual que antes ...
+    
         $ocupacion_global = [];
         $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, dh.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($horarios_existentes as $h) {
@@ -129,7 +127,7 @@ class Seccion extends Connection
                 if ($tiene_preferencias) {
                     foreach ($info_docente['preferencias'] as $pref) {
                         $dia_pref = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $pref['dia_semana']));
-                        foreach ($bloques as $bloque) { // USA LOS BLOQUES YA FILTRADOS
+                        foreach ($bloques as $bloque) { 
                             if ($bloque['tur_horainicio'] >= $pref['hora_inicio'] && $bloque['tur_horafin'] <= $pref['hora_fin']) {
                                 $opciones_validas[] = ['dia' => $dia_pref, 'bloque' => $bloque, 'docente' => $docente_id];
                             }
@@ -137,7 +135,7 @@ class Seccion extends Connection
                     }
                 } else {
                     foreach ($dias as $dia) {
-                        foreach ($bloques as $bloque) { // USA LOS BLOQUES YA FILTRADOS
+                        foreach ($bloques as $bloque) { 
                             $opciones_validas[] = ['dia' => $dia, 'bloque' => $bloque, 'docente' => $docente_id];
                         }
                     }
@@ -183,8 +181,7 @@ class Seccion extends Connection
         return ['resultado' => 'ok', 'mensaje' => 'Plantilla de horario generada.', 'horario' => $horario_generado];
     }
     
-    // ... EL RESTO DE LAS FUNCIONES DEL MODELO PERMANECEN IGUAL ...
-    // ... (copia aquí el resto de las funciones desde 'public function __construct()' hasta el final del archivo)
+
 
     public function __construct()
     {
@@ -566,9 +563,7 @@ class Seccion extends Connection
         foreach ($items_horario as $item) {
             $dia_normalizado = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
             $stmt_docente->execute([':doc_cedula' => $item['doc_cedula'], ':dia' => $dia_normalizado, ':inicio' => $item['hora_inicio'], ':sec_codigo' => $sec_codigo]);
-            if ($conflicto = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
-                return "Conflicto: El docente ya tiene una clase a esta hora en la sección IN" . htmlspecialchars($conflicto['sec_codigo']) . ".";
-            }
+          
             
             $espacio = $item['espacio'] ?? null;
             if ($espacio && !empty($espacio['numero'])) {
@@ -877,7 +872,7 @@ class Seccion extends Connection
             $bloques_horario = [];
         }
         if (empty($bloques_horario)) {
-            // Valores por defecto por si falla la BD
+            
             $bloques_horario = [
                 ['tur_id' => 1, 'tur_horainicio' => '08:00:00', 'tur_horafin' => '08:40:00'],
                 ['tur_id' => 2, 'tur_horainicio' => '08:40:00', 'tur_horafin' => '09:20:00'],

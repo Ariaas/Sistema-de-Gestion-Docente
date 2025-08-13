@@ -31,7 +31,7 @@ class Reporte extends Connection
         $registros = $p->fetchAll(PDO::FETCH_ASSOC);
         if (empty($registros)) return [];
 
-        // MODIFICACIÓN: Variables traducidas.
+        
         $anio = $parametros[':anio'] ?? 0;
         $tipo = $parametros[':tipo'] ?? '';
 

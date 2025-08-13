@@ -25,7 +25,6 @@ if (isset($_POST['generar_seccion_report'])) {
     $oReporte->setFase($fase);
     $oReporte->setTrayecto($trayecto_filtrado);
 
-    // --- 1. Generar la Plantilla de Horarios completa ---
     $turnos = $oReporte->getTurnosCompletos();
     $slot_duration_minutes = 40;
     $todas_las_franjas = [];
@@ -51,7 +50,7 @@ if (isset($_POST['generar_seccion_report'])) {
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0); 
 
-    // --- Estilos y Definiciones ---
+
     $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleSubheaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleTableHeader = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD0E4F5']]];
@@ -59,7 +58,7 @@ if (isset($_POST['generar_seccion_report'])) {
     $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true]];
     $days_of_week = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-    // --- Función para renderizar UN SOLO TURNO de la tabla de horario ---
+   
     $renderScheduleTable = function(Worksheet $sheet, $turnoNombre, $franjas, &$currentRow, $gridData) use ($days_of_week, $styleSubheaderTitle, $styleTableHeader, $styleTimeSlot, $styleScheduleCell) {
         $startRowForTurno = $currentRow;
         $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", mb_strtoupper($turnoNombre, 'UTF-8'));

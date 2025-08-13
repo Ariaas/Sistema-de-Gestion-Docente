@@ -75,12 +75,12 @@ $(document).ready(function () {
     enviaAjax(datos);
   });
 
-  // -------------- INICIO DEL CÓDIGO CORREGIDO --------------
+ 
   $("#f").on("submit", function (event) {
-    // 1. Prevenir el envío nativo del formulario
+    
     event.preventDefault(); 
     
-    // 2. Obtener la acción desde el texto del botón
+    
     let accion = $("#proceso").text();
 
     if (accion === "ELIMINAR") {

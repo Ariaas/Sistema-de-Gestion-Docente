@@ -33,7 +33,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
     $countAnios = $o->contarAniosActivos();
     $countMallas = $o->contarMallasActivas();
 
-    // MODIFICADO: Se llama a la nueva función de actualización
+   
     $reporte_promocion = $o->ActualizarSeccionesParaFase2();
     if ($reporte_promocion !== null) {
         $_SESSION['reporte_promocion'] = $reporte_promocion;

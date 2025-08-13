@@ -13,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-// Objeto creado fuera del if/else para que esté disponible en ambos casos
+
 $oAulario = new AularioReport();
 
 if (isset($_POST['generar_aulario_report'])) {
@@ -30,9 +30,9 @@ if (isset($_POST['generar_aulario_report'])) {
     $oAulario->setFase($fase);
     $oAulario->setEspacio($espacio_filtrado);
 
-    // --- Generar Plantilla de Horarios ---
+ 
     $turnos = $oAulario->getTurnosCompletos();
-    $slot_duration_minutes = 40; // Duración de cada bloque de clase en minutos
+    $slot_duration_minutes = 40; 
     $todas_las_franjas = [];
 
     foreach ($turnos as $turno) {
@@ -58,7 +58,7 @@ if (isset($_POST['generar_aulario_report'])) {
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0); 
     
-    // --- Estilos y Definiciones ---
+   
     $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleSubheaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleTableHeader = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD0E4F5']]];
@@ -66,7 +66,7 @@ if (isset($_POST['generar_aulario_report'])) {
     $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true]];
     $days_of_week = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-    // --- Función para renderizar la tabla de horario ---
+    
     $renderScheduleTable = function(Worksheet $sheet, $title_suffix, $slots_to_render, &$currentRow, $gridData) use ($days_of_week, $styleSubheaderTitle, $styleTableHeader, $styleTimeSlot, $styleScheduleCell) {
         if (empty($slots_to_render)) return;
         $startRow = $currentRow;
@@ -117,7 +117,7 @@ if (isset($_POST['generar_aulario_report'])) {
             $sheet->getStyle("A{$currentRow}")->applyFromArray($styleHeaderTitle);
             $currentRow+=2;
 
-            // --- 1. Lógica para agrupar secciones ---
+           
             $horarioProcesado = [];
             foreach ($horarioData as $item) {
                 $clave = $item['hor_dia'] . '|' . $item['hor_horainicio'] . '|' . $item['hor_horafin'] . '|' . $item['uc_nombre'] . '|' . $item['NombreCompletoDocente'];
@@ -132,7 +132,7 @@ if (isset($_POST['generar_aulario_report'])) {
                 $horarioProcesado[$clave]['sec_codigo'] = implode('-', array_unique($item['sec_codigo']));
             }
             
-            // --- 2. Llenar la parrilla $gridData con la información ---
+          
             $gridData = [];
             foreach ($horarioProcesado as $item) {
                 $dia = ucfirst(strtolower(trim($item['hor_dia'])));
@@ -156,7 +156,7 @@ if (isset($_POST['generar_aulario_report'])) {
                 }
             }
 
-            // --- 3. Renderizar la tabla usando la plantilla y los datos de $gridData ---
+           
             foreach($todas_las_franjas as $nombreTurno => $franjas) {
                 if (!empty($franjas)) {
                     $renderScheduleTable($sheet, mb_strtoupper($nombreTurno, 'UTF-8'), $franjas, $currentRow, $gridData);
@@ -165,7 +165,7 @@ if (isset($_POST['generar_aulario_report'])) {
         }
     }
     
-    // --- Salida del archivo Excel ---
+
     if (ob_get_length()) ob_end_clean();
     $outputFileName = "Reporte_Aulario_" . $anio . ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -176,7 +176,7 @@ if (isset($_POST['generar_aulario_report'])) {
     exit;
 
 } else {
-    // --- Carga de la vista inicial con los filtros ---
+    
     $listaAnios = $oAulario->getAniosActivos();
     $listaFases = $oAulario->getFases();
     $listaEspacios = $oAulario->getEspacios();

@@ -54,7 +54,7 @@ if (is_file("views/reportes/Daprobados.php")) {
                         break;
                 }
 
-                if ($datos !== false) { 
+                if ($datos !== false) {
                     echo json_encode(['success' => true, 'datos' => $datos]);
                 } else {
                     echo json_encode(['success' => false, 'mensaje' => 'No se encontraron datos o hubo un error al consultar la base de datos.']);
@@ -83,12 +83,10 @@ if (is_file("views/reportes/Daprobados.php")) {
     }
 
     $anios = $reporteModel->obtenerAnios();
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Verificamos si hay datos de aprobados en la base de datos
+
     $hayDatos = $reporteModel->verificarDatosDeAprobadosD();
-    // --- FIN DE LA MODIFICACIÓN ---
+
     require_once("views/reportes/Daprobados.php");
 } else {
     echo "Página en construcción: Daprobados.php";
 }
-?>

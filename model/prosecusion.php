@@ -147,7 +147,7 @@ class Prosecusion extends Connection
 
         $co = $this->Con();
 
-        if ($seccionDestinoCodigo === null) { // Modo automático
+        if ($seccionDestinoCodigo === null) { 
             $stmtOrigen = $co->prepare("SELECT ani_anio FROM tbl_seccion WHERE sec_codigo = ?");
             $stmtOrigen->execute([$seccionOrigenCodigo]);
             $origenAnio = $stmtOrigen->fetchColumn();

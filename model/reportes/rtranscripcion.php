@@ -24,7 +24,7 @@ class Transcripcion extends Connection
         $co = $this->con();
         try {
             
-            // --- CONSULTA AJUSTADA: Usa una coma como separador para procesarlo en PHP ---
+          
             $sqlBase = "SELECT
                 d.doc_cedula AS CedulaDocente,
                 CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS NombreCompletoDocente,
@@ -94,7 +94,7 @@ class Transcripcion extends Connection
         }
     }
 
-    // El resto de las funciones no necesitan cambios.
+    
     public function obtenerCursosSinDocente() {
         $co = $this->con();
         try {

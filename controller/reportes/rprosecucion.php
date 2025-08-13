@@ -29,20 +29,17 @@ function formatSeccionCode($sec_codigo) {
     return $sec_codigo; 
 }
 
-// --- NUEVA FUNCIÓN DE AGRUPACIÓN ---
 function procesarYAgruparDatos($datosCrudos) {
     $gruposPorDestino = [];
 
-    // Paso 1: Agrupar las secciones de origen por su destino común
     foreach ($datosCrudos as $fila) {
-        // Usamos el código de promoción como clave. Si no hay, se tratan individualmente.
         $claveDestino = $fila['promocion_codigo'] ?? 'SIN_PROMOCION_' . $fila['origen_codigo'];
 
         if (!isset($gruposPorDestino[$claveDestino])) {
             $gruposPorDestino[$claveDestino] = [
                 'origenes' => [],
                 'origen_cantidad_total' => 0,
-                'info_promocion' => $fila // Guardamos la info del primer registro del grupo
+                'info_promocion' => $fila 
             ];
         }
         
@@ -50,27 +47,23 @@ function procesarYAgruparDatos($datosCrudos) {
         $gruposPorDestino[$claveDestino]['origen_cantidad_total'] += (int)$fila['origen_cantidad'];
     }
 
-    // Paso 2: Construir la estructura final de datos procesados a partir de los grupos
     $datosProcesados = [];
     foreach ($gruposPorDestino as $grupo) {
         $primerOrigen = $grupo['origenes'][0];
         $trayectoActual = getTrayectoFromCode($primerOrigen);
         
-        // Unir los códigos de origen con un guion
         sort($grupo['origenes']);
         $codigoOrigenAgrupado = implode('-', $grupo['origenes']);
 
-        // Añadir la fila agrupada al lado "actual" del reporte
         $datosProcesados[$trayectoActual]['actuales'][] = [
             'codigo' => $codigoOrigenAgrupado,
             'cantidad' => $grupo['origen_cantidad_total']
         ];
         
-        // Añadir la información de promoción (si existe) al lado "siguiente"
         $infoPromocion = $grupo['info_promocion'];
         if ($infoPromocion['promocion_codigo']) {
             $trayectoSiguiente = getTrayectoFromCode($infoPromocion['promocion_codigo']);
-            // Usar la clave de promoción para evitar duplicados en la columna de destino
+
             $datosProcesados[$trayectoActual]['siguientes'][$infoPromocion['promocion_codigo']] = [
                 'trayecto' => $trayectoSiguiente,
                 'codigo' => $infoPromocion['promocion_codigo'],
@@ -93,20 +86,19 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
 
     $datosCrudos = $oProsecucion->obtenerDatosProsecucion($selectedAnio);
     
-    // --- Llamada a la nueva función de agrupación ---
     $datosProcesados = procesarYAgruparDatos($datosCrudos);
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("Prosecución " . $selectedAnio);
 
-    // --- Estilos ---
+
     $styleHeader = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $styleColHeader = ['font' => ['bold' => true], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleCenter = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleBorders = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]]];
 
-    // --- Cabeceras del Excel ---
+
     $sheet->mergeCells('A1:G1')->setCellValue('A1', 'UPTAEB - PNF INFORMATICA');
     $sheet->getStyle('A1')->applyFromArray($styleHeader);
     $sheet->setCellValue('A3', 'Trayecto')->setCellValue('B3', 'Secciones')->setCellValue('C3', 'Cantidad')
@@ -114,7 +106,7 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
           ->setCellValue('G3', 'Carga Académica');
     $sheet->getStyle('A3:G3')->applyFromArray($styleColHeader);
 
-    // --- Llenado de datos en el Excel ---
+
     $filaActual = 4;
     $ordenTrayectos = ['Inicial', 'I', 'II', 'III', 'IV'];
 
@@ -158,7 +150,7 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
         }
     }
     
-    // --- Formato y Salida ---
+
     $sheet->getStyle('A3:G' . ($filaActual - 1))->applyFromArray($styleBorders);
     foreach(range('A','G') as $col) { $sheet->getColumnDimension($col)->setAutoSize(true); }
     $sheet->getColumnDimension('G')->setWidth(20);

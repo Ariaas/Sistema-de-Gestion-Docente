@@ -31,7 +31,7 @@
     {
         $co = $this->con();
         try {
-            // --- CONSULTA MODIFICADA PARA AGRUPAR SECCIONES UNIDAS ---
+        
             $sqlBase = "SELECT
                 u.uc_trayecto AS `Número de Trayecto`,
                 u.uc_nombre AS `Nombre de la Unidad Curricular`,

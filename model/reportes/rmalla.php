@@ -1,5 +1,5 @@
 <?php
-// model/reportes/rmalla.php
+
 
 require_once('model/dbconnection.php');
 
