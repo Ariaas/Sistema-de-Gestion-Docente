@@ -164,20 +164,6 @@ class Reporte extends Connection
         return $resultado_final;
     }
 
-/*     public function obtenerUCPorAnio($anio, $tipo)
-    {
-        $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre
-                FROM tbl_uc uc
-                JOIN per_aprobados pa ON uc.uc_codigo = pa.uc_codigo
-                WHERE pa.ani_anio = :anio AND pa.ani_tipo = :tipo AND uc.uc_estado = 1 AND pa.pa_estado = 1
-                ORDER BY uc.uc_nombre";
-        $p = $this->Con()->prepare($sql);
-        $p->bindParam(':anio', $anio, PDO::PARAM_INT);
-        $p->bindParam(':tipo', $tipo, PDO::PARAM_STR);
-        $p->execute();
-        return $p->fetchAll(PDO::FETCH_ASSOC);
-    } */
-
     public function obtenerUCPorAnio($anio, $tipo)
     {
         $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre
