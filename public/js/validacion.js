@@ -1,16 +1,11 @@
-
 function validarkeypress(er, e) {
     key = e.keyCode;
-
     tecla = String.fromCharCode(key);
-
     a = er.test(tecla);
-
     if (!a) {
         e.preventDefault();
     }
 }
-
 
 function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
     a = er.test(etiqueta.val());
@@ -32,8 +27,4 @@ function muestraMensaje(icono, tiempo, titulo, mensaje) {
     showConfirmButton: true,
     confirmButtonText: "Aceptar",
   });
-}  
-
-
-
-
+}

@@ -84,6 +84,7 @@ if (is_file("views/reportes/reporteG.php")) {
     }
 
     $anios = $reporteModel->obtenerAnios();
+    $hayDatos = $reporteModel->verificarDatosGenerales();
     require_once("views/reportes/reporteG.php");
 } else {
     echo "Página en construcción: reporteG.php";

@@ -3,45 +3,59 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    private $archivosPerDir;
+    private $directorioArchivosPer;
 
     public function __construct()
     {
         parent::__construct();
-        $this->archivosPerDir = realpath(__DIR__ . '/../../archivos_per/') . DIRECTORY_SEPARATOR;
+        $this->directorioArchivosPer = $_SERVER['DOCUMENT_ROOT'] . '/Sistema-de-Gestion-Docente/archivos_per/';
     }
 
-    private function groupAndCalculateReprobados($base_sql, $params = [])
+    public function verificarDatosReprobados()
     {
-        $p = $this->Con()->prepare($base_sql);
-        $p->execute($params);
+        $sql = "SELECT COUNT(*) as total FROM per_aprobados WHERE pa_estado = 1";
+        try {
+            $p = $this->Con()->prepare($sql);
+            $p->execute();
+            $resultado = $p->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    private function agruparYCalcularReprobados($sql_base, $parametros = [])
+    {
+        $p = $this->Con()->prepare($sql_base);
+        $p->execute($parametros);
         $registros = $p->fetchAll(PDO::FETCH_ASSOC);
         if (empty($registros)) return [];
 
-        $anio = $params[':anio'] ?? 0;
-        $tipo = $params[':tipo'] ?? '';
-        $uc_codigo_filter = $params[':uc_codigo'] ?? null;
+        // MODIFICACIÓN: Variables traducidas.
+        $anio = $parametros[':anio'] ?? 0;
+        $tipo = $parametros[':tipo'] ?? '';
 
-        $sql_signatures = "SELECT sec_codigo, uc_codigo, GROUP_CONCAT(DISTINCT CONCAT_WS('-', hor_dia, hor_horainicio) ORDER BY hor_dia, hor_horainicio SEPARATOR ';') as signature 
-                           FROM uc_horario 
-                           WHERE sec_codigo IN (SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = ? AND ani_tipo = ?)
-                           GROUP BY sec_codigo, uc_codigo";
-        $p_sigs = $this->Con()->prepare($sql_signatures);
-        $p_sigs->execute([$anio, $tipo]);
-        $signatures_map_raw = $p_sigs->fetchAll(PDO::FETCH_ASSOC);
-        $signatures_map = [];
-        foreach($signatures_map_raw as $sig) {
-            $signatures_map[$sig['sec_codigo']][$sig['uc_codigo']] = $sig['signature'];
+        $sql_firmas = "SELECT sec_codigo, uc_codigo, GROUP_CONCAT(DISTINCT CONCAT_WS('-', hor_dia, hor_horainicio) ORDER BY hor_dia, hor_horainicio SEPARATOR ';') as signature 
+                       FROM uc_horario 
+                       WHERE sec_codigo IN (SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = ? AND ani_tipo = ?)
+                       GROUP BY sec_codigo, uc_codigo";
+        $p_firmas = $this->Con()->prepare($sql_firmas);
+        $p_firmas->execute([$anio, $tipo]);
+        $mapa_firmas_bruto = $p_firmas->fetchAll(PDO::FETCH_ASSOC);
+
+        $mapa_firmas = [];
+        foreach ($mapa_firmas_bruto as $firma) {
+            $mapa_firmas[$firma['sec_codigo']][$firma['uc_codigo']] = $firma['signature'];
         }
 
         $grupos = [];
         foreach ($registros as $registro) {
             $uc_codigo = $registro['uc_codigo'];
-            $signature = $signatures_map[$registro['sec_codigo']][$uc_codigo] ?? 'sin-horario-' . $registro['sec_codigo'];
-            $group_key = $uc_codigo . '::' . $signature;
-            
-            if (!isset($grupos[$group_key])) {
-                $grupos[$group_key] = [
+            $firma_horario = $mapa_firmas[$registro['sec_codigo']][$uc_codigo] ?? 'sin-horario-' . $registro['sec_codigo'];
+            $clave_grupo = $uc_codigo . '::' . $firma_horario;
+
+            if (!isset($grupos[$clave_grupo])) {
+                $grupos[$clave_grupo] = [
                     'sec_codigo' => $registro['sec_codigo'],
                     'uc_codigo' => $uc_codigo,
                     'uc_nombre' => $registro['uc_nombre'],
@@ -50,17 +64,22 @@ class Reporte extends Connection
                     'per_aprobados' => 0,
                 ];
             } else {
-                $grupos[$group_key]['sec_codigo'] .= ',' . $registro['sec_codigo'];
+                $grupos[$clave_grupo]['sec_codigo'] .= ',' . $registro['sec_codigo'];
             }
-            $grupos[$group_key]['per_cantidad'] += (int)$registro['per_cantidad'];
-            $grupos[$group_key]['per_aprobados'] += (int)$registro['per_aprobados'];
+            $grupos[$clave_grupo]['per_cantidad'] += (int)$registro['per_cantidad'];
+            $grupos[$clave_grupo]['per_aprobados'] += (int)$registro['per_aprobados'];
         }
 
         foreach ($grupos as &$grupo) {
-            $identificador = preg_replace('/[^a-zA-Z0-9_]/', '', $grupo['uc_nombre']) . "_" . str_replace(',', '_', $grupo['sec_codigo']) . "_" . $anio . "_" . $tipo . "_fase" . $grupo['fase_numero'];
-            $foundFiles = glob($this->archivosPerDir . "PER_{$identificador}.*");
+            $identificador_actual = $grupo['uc_codigo'] . "_" . str_replace(',', '_', $grupo['sec_codigo']) . "_" . $anio . "_" . $tipo . "_fase" . $grupo['fase_numero'];
+            $identificador_antiguo = preg_replace('/[^a-zA-Z0-9_]/', '', $grupo['uc_nombre']) . "_" . str_replace(',', '_', $grupo['sec_codigo']) . "_" . $anio . "_" . $tipo . "_fase" . $grupo['fase_numero'];
 
-            if (!empty($foundFiles)) {
+            $archivosEncontrados = glob($this->directorioArchivosPer . "PER_{$identificador_actual}.*");
+            if (empty($archivosEncontrados)) {
+                $archivosEncontrados = glob($this->directorioArchivosPer . "PER_{$identificador_antiguo}.*");
+            }
+
+            if (!empty($archivosEncontrados)) {
                 $grupo['reprobados_per'] = $grupo['per_cantidad'] - $grupo['per_aprobados'];
             } else {
                 $grupo['reprobados_per'] = 0;
@@ -74,9 +93,9 @@ class Reporte extends Connection
     {
         $sql = "SELECT pa.*, uc.uc_nombre 
                 FROM per_aprobados pa JOIN tbl_uc uc ON pa.uc_codigo = uc.uc_codigo 
-                WHERE pa.ani_anio = :anio AND pa.ani_tipo = :tipo AND pa.pa_estado = 1";
-        
-        $grupos = $this->groupAndCalculateReprobados($sql, [':anio' => $anio, ':tipo' => $tipo]);
+                WHERE pa.ani_anio = :anio AND pa.ani_tipo = :tipo AND pa.pa_estado = 1 AND uc.uc_estado = 1";
+
+        $grupos = $this->agruparYCalcularReprobados($sql, [':anio' => $anio, ':tipo' => $tipo]);
         $total_reprobados = array_sum(array_column($grupos, 'reprobados_per'));
 
         return ['total_reprobados_per' => $total_reprobados];
@@ -90,10 +109,10 @@ class Reporte extends Connection
 
         $sql = "SELECT pa.*, uc.uc_nombre 
                 FROM per_aprobados pa JOIN tbl_uc uc ON pa.uc_codigo = uc.uc_codigo 
-                WHERE pa.sec_codigo IN ($placeholders) AND pa.ani_anio = ? AND pa.ani_tipo = ? AND pa.pa_estado = 1";
-        
-        $grupos_procesados = $this->groupAndCalculateReprobados($sql, array_merge($seccion_codigos, [$anio, $tipo]));
-        
+                WHERE pa.sec_codigo IN ($placeholders) AND pa.ani_anio = ? AND pa.ani_tipo = ? AND pa.pa_estado = 1 AND uc.uc_estado = 1";
+
+        $grupos_procesados = $this->agruparYCalcularReprobados($sql, array_merge($seccion_codigos, [$anio, $tipo]));
+
         $resultado_final = [];
         foreach($grupos_procesados as $grupo){
             $uc_nombre = $grupo['uc_nombre'];
@@ -110,8 +129,8 @@ class Reporte extends Connection
         $sql = "SELECT pa.*, uc.uc_nombre 
                 FROM per_aprobados pa JOIN tbl_uc uc ON pa.uc_codigo = uc.uc_codigo 
                 WHERE pa.uc_codigo = :uc_codigo AND pa.ani_anio = :anio AND pa.ani_tipo = :tipo AND pa.pa_estado = 1";
-        
-        return $this->groupAndCalculateReprobados($sql, [':uc_codigo' => $uc_codigo, ':anio' => $anio, ':tipo' => $tipo]);
+
+        return $this->agruparYCalcularReprobados($sql, [':uc_codigo' => $uc_codigo, ':anio' => $anio, ':tipo' => $tipo]);
     }
 
     public function obtenerAnios()
@@ -123,7 +142,15 @@ class Reporte extends Connection
 
     public function obtenerSeccionesAgrupadasPorAnio($anio, $tipo)
     {
-        $sql_secciones = "SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = :anio AND ani_tipo = :tipo AND sec_estado = 1";
+        $sql_secciones = "SELECT DISTINCT s.sec_codigo 
+                          FROM tbl_seccion s
+                          JOIN per_aprobados p ON s.sec_codigo = p.sec_codigo
+                          WHERE s.ani_anio = :anio 
+                            AND s.ani_tipo = :tipo 
+                            AND s.sec_estado = 1 
+                            AND p.pa_estado = 1
+                            AND p.ani_anio = :anio
+                            AND p.ani_tipo = :tipo";
         $p_secciones = $this->Con()->prepare($sql_secciones);
         $p_secciones->execute([':anio' => $anio, ':tipo' => $tipo]);
         $secciones = $p_secciones->fetchAll(PDO::FETCH_COLUMN);
@@ -171,7 +198,10 @@ class Reporte extends Connection
         $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre
                 FROM tbl_uc uc
                 JOIN per_aprobados pa ON uc.uc_codigo = pa.uc_codigo
-                WHERE pa.ani_anio = :anio AND pa.ani_tipo = :tipo AND uc.uc_estado = 1 AND pa.pa_estado = 1
+                WHERE pa.ani_anio = :anio 
+                  AND pa.ani_tipo = :tipo 
+                  AND uc.uc_estado = 1 
+                  AND pa.pa_estado = 1
                 ORDER BY uc.uc_nombre";
 
         try {

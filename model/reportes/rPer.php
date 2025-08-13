@@ -3,7 +3,20 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    
+
+    public function verificarDatosDePer()
+    {
+        $sql = "SELECT COUNT(*) as total FROM per_aprobados WHERE pa_estado = 1";
+        try {
+            $p = $this->Con()->prepare($sql);
+            $p->execute();
+            $resultado = $p->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT COALESCE(SUM(per_cantidad), 0) as total_en_per
@@ -48,7 +61,7 @@ class Reporte extends Connection
         }
     }
 
-    
+
     public function obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo)
     {
         $sql_individual = "SELECT pa.sec_codigo, SUM(pa.per_cantidad) as per_cantidad
@@ -59,7 +72,7 @@ class Reporte extends Connection
                              AND pa.pa_estado = 1
                            GROUP BY pa.sec_codigo
                            ORDER BY pa.sec_codigo";
-        
+
         $p = $this->Con()->prepare($sql_individual);
         $p->execute([':uc_codigo' => $uc_codigo, ':anio' => $anio, ':tipo' => $tipo]);
         $registros_individuales = $p->fetchAll(PDO::FETCH_ASSOC);
@@ -100,7 +113,15 @@ class Reporte extends Connection
 
     public function obtenerSeccionesAgrupadasPorAnio($anio, $tipo)
     {
-        $sql_secciones = "SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = :anio AND ani_tipo = :tipo AND sec_estado = 1";
+        $sql_secciones = "SELECT DISTINCT s.sec_codigo 
+                          FROM tbl_seccion s
+                          JOIN per_aprobados p ON s.sec_codigo = p.sec_codigo
+                          WHERE s.ani_anio = :anio 
+                            AND s.ani_tipo = :tipo 
+                            AND s.sec_estado = 1 
+                            AND p.pa_estado = 1
+                            AND p.ani_anio = :anio
+                            AND p.ani_tipo = :tipo";
         $p_secciones = $this->Con()->prepare($sql_secciones);
         $p_secciones->execute([':anio' => $anio, ':tipo' => $tipo]);
         $secciones = $p_secciones->fetchAll(PDO::FETCH_COLUMN);
@@ -125,7 +146,7 @@ class Reporte extends Connection
         $secciones_procesadas = [];
         foreach ($grupos_por_uc_firma as $grupo) {
             if (count(array_intersect($grupo, $secciones_procesadas)) > 0) continue;
-            
+
             foreach ($grupo as $sec) $secciones_procesadas[] = $sec;
             sort($grupo);
             $resultado_final[] = [
@@ -138,7 +159,7 @@ class Reporte extends Connection
         foreach ($secciones_restantes as $sec) {
             $resultado_final[] = ['sec_codigo' => $sec, 'sec_codigo_label' => $sec];
         }
-        
+
         usort($resultado_final, fn($a, $b) => strcmp($a['sec_codigo_label'], $b['sec_codigo_label']));
         return $resultado_final;
     }
@@ -148,7 +169,10 @@ class Reporte extends Connection
         $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre
                 FROM tbl_uc uc
                 JOIN per_aprobados pa ON uc.uc_codigo = pa.uc_codigo
-                WHERE pa.ani_anio = :anio AND pa.ani_tipo = :tipo AND uc.uc_estado = 1 AND pa.pa_estado = 1
+                WHERE pa.ani_anio = :anio 
+                  AND pa.ani_tipo = :tipo 
+                  AND uc.uc_estado = 1 
+                  AND pa.pa_estado = 1
                 ORDER BY uc.uc_nombre";
         $p = $this->Con()->prepare($sql);
         $p->bindParam(':anio', $anio, PDO::PARAM_INT);
@@ -157,4 +181,3 @@ class Reporte extends Connection
         return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 }
-?>

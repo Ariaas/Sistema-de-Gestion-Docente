@@ -3,7 +3,19 @@ require_once('model/dbconnection.php');
 
 class Reporte extends Connection
 {
-    
+    public function verificarDatosDeAprobados()
+    {
+        $sql = "SELECT COUNT(*) as total FROM tbl_aprobados WHERE apro_estado = 1";
+        try {
+            $p = $this->Con()->prepare($sql);
+            $p->execute();
+            $resultado = $p->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
     public function obtenerDatosEstadisticosPorAnio($anio, $tipo)
     {
         $sql = "SELECT
@@ -114,7 +126,15 @@ class Reporte extends Connection
 
     public function obtenerSeccionesAgrupadasPorAnio($anio, $tipo)
     {
-        $sql_secciones = "SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = :anio AND ani_tipo = :tipo AND sec_estado = 1";
+        $sql_secciones = "SELECT DISTINCT s.sec_codigo 
+                          FROM tbl_seccion s
+                          JOIN tbl_aprobados a ON s.sec_codigo = a.sec_codigo
+                          WHERE s.ani_anio = :anio 
+                            AND s.ani_tipo = :tipo 
+                            AND s.sec_estado = 1 
+                            AND a.apro_estado = 1
+                            AND a.ani_anio = :anio
+                            AND a.ani_tipo = :tipo";
         $p_secciones = $this->Con()->prepare($sql_secciones);
         $p_secciones->execute([':anio' => $anio, ':tipo' => $tipo]);
         $secciones = $p_secciones->fetchAll(PDO::FETCH_COLUMN);
@@ -159,11 +179,14 @@ class Reporte extends Connection
 
     public function obtenerUCPorAnio($anio, $tipo)
     {
-        $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre FROM tbl_uc uc WHERE uc.uc_codigo IN (
-                    SELECT ta.uc_codigo FROM tbl_aprobados ta JOIN tbl_seccion s ON ta.sec_codigo = s.sec_codigo WHERE s.ani_anio = :anio AND s.ani_tipo = :tipo
-                    UNION
-                    SELECT pa.uc_codigo FROM per_aprobados pa WHERE pa.ani_anio = :anio AND pa.ani_tipo = :tipo
-                ) AND uc.uc_estado = 1 ORDER BY uc.uc_nombre";
+        $sql = "SELECT DISTINCT uc.uc_codigo, uc.uc_nombre
+                FROM tbl_uc uc
+                JOIN tbl_aprobados ta ON uc.uc_codigo = ta.uc_codigo
+                WHERE ta.ani_anio = :anio 
+                  AND ta.ani_tipo = :tipo 
+                  AND uc.uc_estado = 1 
+                  AND ta.apro_estado = 1
+                ORDER BY uc.uc_nombre";
         $p = $this->Con()->prepare($sql);
         $p->bindParam(':anio', $anio, PDO::PARAM_INT);
         $p->bindParam(':tipo', $tipo, PDO::PARAM_STR);
