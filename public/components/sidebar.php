@@ -40,8 +40,8 @@ $gestion_items = [
     'Espacio' => 'espacios',
     'Seccion' => 'seccion',
     'Unidad Curricular' => 'uc',
-    'Malla Curricular' => 'mallacurricular',
-    'Horario Docente' => 'horariodocente'
+    'Malla Curricular' => 'mallacurricular'
+   /* 'Horario Docente' => 'horariodocente'*/
 ];
 
 $reportes_estadisticos_items = [
@@ -137,14 +137,7 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                     </li>
                 <?php endif; ?>
 
-                <?php if (tiene_permiso('Horario', $permisos)) : ?>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle <?php echo is_active(['horario', 'horariodocente'], $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Horario</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item <?php echo is_active('horariodocente', $pagina_actual); ?>" href="?pagina=horariodocente">Horario Docente</a></li>
-                        </ul>
-                    </li>
-                <?php endif; ?>
+               
 
                 <?php if ($tiene_permiso_admin) : ?>
                     <li class="nav-item dropdown">

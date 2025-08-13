@@ -40,7 +40,23 @@ class ReporteHorarioDocente extends Connection
     public function obtenerInfoDocente() {
         if (empty($this->cedula_docente)) return false;
         try {
-            $sql = "SELECT d.doc_cedula, CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombreCompleto, d.doc_dedicacion, d.doc_condicion, d.cat_nombre AS categoria, (SELECT GROUP_CONCAT(t.tit_nombre SEPARATOR ', ') FROM titulo_docente td JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre WHERE td.doc_cedula = d.doc_cedula) AS pregrado_titulo FROM tbl_docente d WHERE d.doc_cedula = :cedula_docente";
+            $sql = "SELECT 
+                        d.doc_cedula, 
+                        CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombreCompleto, 
+                        d.doc_dedicacion, 
+                        d.doc_condicion, 
+                        d.doc_observacion, -- Asegúrate de tener esta columna en tu tabla tbl_docente
+                        d.cat_nombre AS categoria,
+                        (SELECT GROUP_CONCAT(t.tit_prefijo, ' ', t.tit_nombre SEPARATOR ', ') 
+                         FROM titulo_docente td 
+                         JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre 
+                         WHERE td.doc_cedula = d.doc_cedula AND t.tit_prefijo NOT IN ('Msc.', 'Dr.', 'Esp.')) AS pregrado_titulo,
+                        (SELECT GROUP_CONCAT(t.tit_prefijo, ' ', t.tit_nombre SEPARATOR ', ') 
+                         FROM titulo_docente td 
+                         JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre 
+                         WHERE td.doc_cedula = d.doc_cedula AND t.tit_prefijo IN ('Msc.', 'Dr.', 'Esp.')) AS postgrado_titulo
+                    FROM tbl_docente d 
+                    WHERE d.doc_cedula = :cedula_docente";
             $stmt = $this->con()->prepare($sql);
             $stmt->execute([':cedula_docente' => $this->cedula_docente]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -119,7 +135,6 @@ class ReporteHorarioDocente extends Connection
             $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
             $allowed_periods = $this->get_allowed_periods();
             
-            // --- AJUSTE: Seleccionar los datos del espacio por separado ---
             $sql = "SELECT 
                         uh.hor_dia, 
                         uh.hor_horainicio, 
@@ -159,7 +174,7 @@ class ReporteHorarioDocente extends Connection
             return []; 
         }
     }
-    // Añade esta función a tu archivo de modelo
+
     public function getTurnos() {
         try {
             $sql = "SELECT tur_nombre, tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_estado = 1";

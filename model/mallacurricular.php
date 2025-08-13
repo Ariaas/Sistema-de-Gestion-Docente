@@ -115,73 +115,66 @@ class Malla extends Connection
         return $r;
     }
 
-    public function Registrar($unidades)
-    {
-        $r = array();
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+   public function Registrar($unidades)
+{
+    $r = array();
+    $co = $this->Con();
+    $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $check_codigo = $this->Existecodigo();
-        if (isset($check_codigo['resultado']) && $check_codigo['resultado'] === 'existe') {
-            return $check_codigo;
+    if (empty($unidades)) {
+        return ['resultado' => 'error', 'mensaje' => 'No se han proporcionado unidades curriculares para registrar.'];
+    }
+
+    try {
+        $codigos_uc = array_column($unidades, 'uc_codigo');
+        
+        $placeholders = implode(',', array_fill(0, count($codigos_uc), '?'));
+        $stmt_trayectos = $co->prepare("SELECT DISTINCT uc_trayecto FROM tbl_uc WHERE uc_codigo IN ($placeholders) AND uc_estado = 1");
+        $stmt_trayectos->execute($codigos_uc);
+        $trayectos_enviados = $stmt_trayectos->fetchAll(PDO::FETCH_COLUMN, 0);
+
+        $trayectosRequeridos = ['0', '1', '2', '3', '4'];
+        $trayectosFaltantes = array_diff($trayectosRequeridos, $trayectos_enviados);
+
+        if (!empty($trayectosFaltantes)) {
+            $nombresFaltantes = array_map(function($t) {
+                return $t == '0' ? 'Inicial' : 'Trayecto ' . $t;
+            }, $trayectosFaltantes);
+            return [
+                'resultado' => 'error', 
+                'mensaje' => 'Error de validación del servidor: Debe incluir al menos una UC de los trayectos: ' . implode(', ', $nombresFaltantes)
+            ];
         }
+    } catch (Exception $e) {
+        return ['resultado' => 'error', 'mensaje' => 'Error al validar los trayectos: ' . $e->getMessage()];
+    }
 
-        $check_cohorte = $this->ExisteCohorte();
-        if (isset($check_cohorte['resultado']) && $check_cohorte['resultado'] === 'existe') {
-            return $check_cohorte;
-        }
+    $check_codigo = $this->Existecodigo();
+    if (isset($check_codigo['resultado']) && $check_codigo['resultado'] === 'existe') {
+        return $check_codigo;
+    }
 
-        $stmt_inactiva = $co->prepare("SELECT mal_codigo FROM tbl_malla WHERE mal_codigo = :mal_codigo AND mal_estado = 0");
-        $stmt_inactiva->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-        $stmt_inactiva->execute();
-        if ($stmt_inactiva->fetch()) {
-            try {
-                $co->beginTransaction();
-                $stmt_reactivar = $co->prepare("UPDATE tbl_malla SET mal_nombre = :mal_nombre, mal_descripcion = :mal_descripcion, mal_cohorte = :mal_cohorte, mal_estado = 1, mal_activa = 0 WHERE mal_codigo = :mal_codigo");
-                $stmt_reactivar->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-                $stmt_reactivar->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
-                $stmt_reactivar->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
-                $stmt_reactivar->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
-                $stmt_reactivar->execute();
+    $check_cohorte = $this->ExisteCohorte();
+    if (isset($check_cohorte['resultado']) && $check_cohorte['resultado'] === 'existe') {
+        return $check_cohorte;
+    }
 
-                $stmt_delete = $co->prepare("DELETE FROM uc_malla WHERE mal_codigo = :mal_codigo");
-                $stmt_delete->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-                $stmt_delete->execute();
-
-                $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_codigo, uc_codigo, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_codigo, :uc_codigo, :hora_ind, :hora_asis, :hora_acad)");
-                foreach ($unidades as $uc) {
-                    if ($uc['hora_independiente'] > 0 || $uc['hora_asistida'] > 0 || $uc['hora_academica'] > 0) {
-                        $stmt_pensum->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-                        $stmt_pensum->bindParam(':uc_codigo', $uc['uc_codigo'], PDO::PARAM_STR);
-                        $stmt_pensum->bindParam(':hora_ind', $uc['hora_independiente'], PDO::PARAM_INT);
-                        $stmt_pensum->bindParam(':hora_asis', $uc['hora_asistida'], PDO::PARAM_INT);
-                        $stmt_pensum->bindParam(':hora_acad', $uc['hora_academica'], PDO::PARAM_INT);
-                        $stmt_pensum->execute();
-                    }
-                }
-                $co->commit();
-                $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/> Se reactivó y actualizó la malla curricular correctamente!';
-            } catch (Exception $e) {
-                $co->rollBack();
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
-            }
-            $co = null;
-            return $r;
-        }
-
+    $stmt_inactiva = $co->prepare("SELECT mal_codigo FROM tbl_malla WHERE mal_codigo = :mal_codigo AND mal_estado = 0");
+    $stmt_inactiva->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+    $stmt_inactiva->execute();
+    if ($stmt_inactiva->fetch()) {
         try {
             $co->beginTransaction();
+            $stmt_reactivar = $co->prepare("UPDATE tbl_malla SET mal_nombre = :mal_nombre, mal_descripcion = :mal_descripcion, mal_cohorte = :mal_cohorte, mal_estado = 1, mal_activa = 0 WHERE mal_codigo = :mal_codigo");
+            $stmt_reactivar->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+            $stmt_reactivar->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
+            $stmt_reactivar->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
+            $stmt_reactivar->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
+            $stmt_reactivar->execute();
 
-
-
-            $stmt = $co->prepare("INSERT INTO tbl_malla( mal_codigo, mal_nombre, mal_descripcion, mal_cohorte, mal_estado, mal_activa) VALUES (:mal_codigo, :mal_nombre, :mal_descripcion, :mal_cohorte, 1, 0)");
-            $stmt->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
-            $stmt->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
-            $stmt->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
-            $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt_delete = $co->prepare("DELETE FROM uc_malla WHERE mal_codigo = :mal_codigo");
+            $stmt_delete->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+            $stmt_delete->execute();
 
             $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_codigo, uc_codigo, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_codigo, :uc_codigo, :hora_ind, :hora_asis, :hora_acad)");
             foreach ($unidades as $uc) {
@@ -196,16 +189,49 @@ class Malla extends Connection
             }
             $co->commit();
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/> Se registró y activó la malla curricular correctamente!';
+            $r['mensaje'] = 'Registro Incluido!<br/> Se reactivó y actualizó la malla curricular correctamente!';
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-
         $co = null;
         return $r;
     }
+
+    try {
+        $co->beginTransaction();
+        $stmt = $co->prepare("INSERT INTO tbl_malla( mal_codigo, mal_nombre, mal_descripcion, mal_cohorte, mal_estado, mal_activa) VALUES (:mal_codigo, :mal_nombre, :mal_descripcion, :mal_cohorte, 1, 0)");
+        $stmt->bindParam(':mal_cohorte', $this->mal_cohorte, PDO::PARAM_STR);
+        $stmt->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+        $stmt->bindParam(':mal_nombre', $this->mal_nombre, PDO::PARAM_STR);
+        $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_codigo, uc_codigo, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_codigo, :uc_codigo, :hora_ind, :hora_asis, :hora_acad)");
+        foreach ($unidades as $uc) {
+            if ($uc['hora_independiente'] > 0 || $uc['hora_asistida'] > 0 || $uc['hora_academica'] > 0) {
+                $stmt_pensum->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
+                $stmt_pensum->bindParam(':uc_codigo', $uc['uc_codigo'], PDO::PARAM_STR);
+                $stmt_pensum->bindParam(':hora_ind', $uc['hora_independiente'], PDO::PARAM_INT);
+                $stmt_pensum->bindParam(':hora_asis', $uc['hora_asistida'], PDO::PARAM_INT);
+                $stmt_pensum->bindParam(':hora_acad', $uc['hora_academica'], PDO::PARAM_INT);
+                $stmt_pensum->execute();
+            }
+        }
+        $co->commit();
+        $r['resultado'] = 'registrar';
+        $r['mensaje'] = 'Registro Incluido!<br/> Se registró y activó la malla curricular correctamente!';
+    } catch (Exception $e) {
+        $co->rollBack();
+        $r['resultado'] = 'error';
+        $r['mensaje'] = $e->getMessage();
+    }
+
+    $co = null;
+    return $r;
+}
+
 
     public function Modificar($unidades)
     {

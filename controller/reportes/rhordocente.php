@@ -1,4 +1,6 @@
 <?php
+
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -9,7 +11,6 @@ require_once("model/reportes/rhordocente.php");
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// --- FUNCIÓN AÑADIDA PARA NÚMEROS ROMANOS ---
 function toRoman($number) {
     $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];
     return $map[$number] ?? $number;
@@ -48,7 +49,7 @@ function renderizarFilasHorario($bloques_horarios, $datos_parrilla, $dias) {
             $contenido = $datos_parrilla[$hora_db][$dia] ?? '';
             $html_tabla .= '<td>' . $contenido . '</td>';
         }
-        $html_tabla .= '<td></td></tr>'; 
+        $html_tabla .= '<td></td></tr>';
     }
     return $html_tabla;
 }
@@ -104,7 +105,6 @@ if (isset($_POST['generar_rhd_report'])) {
 
     if (!$infoDocente) { die("Error: No se encontró información para el docente seleccionado."); }
     
-    // Agrupación de secciones
     $horarioAgrupado = [];
     foreach($datosParrillaHorario as $item) {
         $key = trim($item['hor_horainicio']) . '_' . trim($item['hor_dia']) . '_' . trim($item['uc_nombre']) . '_' . trim($item['esp_edificio']) . '_' . trim($item['esp_numero']);
@@ -123,11 +123,10 @@ if (isset($_POST['generar_rhd_report'])) {
         
         $seccionesFormateadas = formatAndSortSections($item['secciones_array']);
         
-        // --- NUEVA LÓGICA PARA FORMATEAR EL ESPACIO ---
         $tipo_espacio = ($item['esp_tipo'] === 'Laboratorio') ? 'Lab:' : 'Aula:';
         $esp_codigo = ($item['esp_tipo'] === 'Laboratorio') 
-                    ? $item['esp_numero'] . ' - ' . $item['esp_edificio'] 
-                    : $item['esp_edificio'] . ' - ' . $item['esp_numero'];
+                        ? $item['esp_numero'] . ' - ' . $item['esp_edificio'] 
+                        : $item['esp_edificio'] . ' - ' . $item['esp_numero'];
         
         $contenidoCelda = htmlspecialchars($item['uc_nombre']) . "<br>" . $seccionesFormateadas . "<br>" . htmlspecialchars($tipo_espacio . ' ' . $esp_codigo);
         $parrillaHorario[$horaInicio][$dia] = $contenidoCelda;
@@ -150,18 +149,47 @@ if (isset($_POST['generar_rhd_report'])) {
         .titulo-seccion { font-weight: bold; text-align: center; background-color: #E0E0E0; } .sin-borde { border: none; }
         .texto-izquierda { text-align: left; } .texto-centro { text-align: center; } .tabla-horario th { background-color: #E0E0E0; font-size: 9px;}
         .tabla-horario td { height: 45px; font-size: 9px; line-height: 1.2; word-wrap: break-word; } .tabla-resumen td { height: auto; font-size: 9px; }
+        .no-margin-bottom { margin-bottom: 0; }
     </style></head><body>';
     
-    $html .= '<div class="titulo-principal">HORARIO DEL PERSONAL DOCENTE</div>';
-    $html .= '<table class="sin-borde" style="margin-bottom:0;"><tr><td width="80%" class="sin-borde" style="padding:0;"><table class="tabla-encabezado">
-        <tr><td width="18%">1. PNF/CARRERA:</td><td width="32%">INFORMATICA</td><td width="15%">2. LAPSO:</td><td width="35%">' . $anio . '-' . toRoman($fase) . '</td></tr>
-        <tr><td>3. PROFESOR(A):</td><td>'.htmlspecialchars($infoDocente['nombreCompleto']).'</td><td>4. CÉDULA:</td><td>'.htmlspecialchars($infoDocente['doc_cedula']).'</td></tr>
-        <tr><td>5. DEDICACIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_dedicacion']).'</td><td>6. CONDICIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_condicion']).'</td></tr>
-        <tr><td>8. TITULO DE PREGRADO:</td><td colspan="3">'.htmlspecialchars($infoDocente['pregrado_titulo']).'</td></tr>
-        </table></td><td width="20%" class="sin-borde texto-centro"><img src="https://i.imgur.com/35i612p.png" width="90px"></td></tr>
-        <tr><td colspan="2" class="sin-borde" style="padding:0;"><table class="tabla-encabezado">
-        <tr><td width="15%">7. CATEGORIA:</td><td width="28%">'.htmlspecialchars($infoDocente['categoria']).'</td><td width="15%">9. POSTGRADO:</td><td width="42%"></td></tr>
-        </table></td></tr></table>';
+
+    $imagePath = $_SERVER['DOCUMENT_ROOT'] . '/nuevo gestion docente/Sistema-de-Gestion-Docente/public/assets/img/logo_uptaeb.png';
+
+
+$imageData = base64_encode(file_get_contents($imagePath));
+
+
+$imageSrc = 'data:image/png;base64,' . $imageData;
+
+
+    $html .= '<table class="sin-borde"><tr>
+        <td width="80%" class="sin-borde" style="padding:0;">
+            <div class="titulo-principal">HORARIO DEL PERSONAL DOCENTE</div>
+        </td>
+        <td width="20%" class="sin-borde texto-centro" style="vertical-align:top;">
+            <img src="' . $imageSrc . '" width="90px">
+        </td>
+    </tr></table>';
+
+    $html .= '<table class="tabla-encabezado">
+        <tr>
+            <td style="width:15%">1. PNF/CARRERA:</td><td style="width:35%" colspan="2">INFORMATICA</td>
+            <td style="width:15%">2. LAPSO:</td><td style="width:35%" colspan="2">' . $anio . '-' . toRoman($fase) . '</td>
+        </tr>
+        <tr>
+            <td>3. PROFESOR(A):</td><td colspan="2">'.htmlspecialchars($infoDocente['nombreCompleto']).'</td>
+            <td>4. CÉDULA:</td><td colspan="2">'.htmlspecialchars($infoDocente['doc_cedula']).'</td>
+        </tr>
+        <tr>
+            <td>5. DEDICACIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_dedicacion']).'</td>
+            <td>6. CONDICIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_condicion']).'</td>
+            <td>7. CATEGORIA:</td><td>'.htmlspecialchars($infoDocente['categoria']).'</td>
+        </tr>
+        <tr>
+            <td>8. TITULO DE PREGRADO:</td><td colspan="2">'.htmlspecialchars($infoDocente['pregrado_titulo'] ?? 'N/A').'</td>
+            <td>9. TITULO DE POSTGRADO:</td><td colspan="2">'.htmlspecialchars($infoDocente['postgrado_titulo'] ?? 'N/A').'</td>
+        </tr>
+    </table>';
 
     $html .= '<table><tr><td colspan="6" class="titulo-seccion">ACTIVIDADES ACADÉMICAS</td></tr>
         <tr style="font-size:9px; font-weight:bold;"><td width="38%">10. Unidad Curricular</td><td width="12%">11. Código</td><td width="15%">12. Sección</td><td width="10%">13. Ambiente</td><td width="15%">14. Eje</td><td width="10%">15. FASE</td></tr>';
@@ -180,15 +208,37 @@ if (isset($_POST['generar_rhd_report'])) {
         <tr><td class="texto-izquierda">OTRAS ACT. ACADEMICAS</td><td>'.($otrasActividades['act_otras'] ?? 0).'</td><td></td></tr>
     </table>';
 
-    $html .= '<table class="tabla-horario"><tr><th colspan="8" class="titulo-seccion">19. HORARIO</th></tr>
+$turnosActivos = [];
+if ($tieneClasesManana) { $turnosActivos[] = 'MAÑANA'; }
+if ($tieneClasesTarde)  { $turnosActivos[] = 'TARDE'; }
+if ($tieneClasesNoche)  { $turnosActivos[] = 'NOCHE'; }
+$turnosString = implode(' / ', $turnosActivos); 
+    
+  
+$html .= '<table class="tabla-horario no-margin-bottom">
+    <tr>
+        <th colspan="8" class="titulo-seccion" style=" padding: 4px 8px;">
+            <div style="float: left;">19.HORARIO</div>
+            <div style="text-align: center;">' . $turnosString . '</div>
+            <div style="clear: both;"></div>
+        </th>
+    </tr>
         <tr><th width="15%">Hora</th><th width="12.14%">Lunes</th><th width="12.14%">Martes</th><th width="12.14%">Miércoles</th><th width="12.14%">Jueves</th><th width="12.14%">Viernes</th><th width="12.14%">Sábado</th><th width="12.14%">Observación</th></tr>';
     
-    if ($tieneClasesManana) { $html .= '<tr><td colspan="8" class="titulo-seccion" style="font-size: 8px;">Mañana</td></tr>' . renderizarFilasHorario($TODOS_LOS_BLOQUES_MANANA, $parrillaHorario, $diasDeLaSemana); }
-    if ($tieneClasesTarde) { $html .= '<tr><td colspan="8" class="titulo-seccion" style="font-size: 8px;">Tarde</td></tr>' . renderizarFilasHorario($TODOS_LOS_BLOQUES_TARDE, $parrillaHorario, $diasDeLaSemana); }
-    if ($tieneClasesNoche) { $html .= '<tr><td colspan="8" class="titulo-seccion" style="font-size: 8px;">Noche</td></tr>' . renderizarFilasHorario($TODOS_LOS_BLOQUES_NOCHE, $parrillaHorario, $diasDeLaSemana); }
+    if ($tieneClasesManana) { $html .= '</tr>' . renderizarFilasHorario($TODOS_LOS_BLOQUES_MANANA, $parrillaHorario, $diasDeLaSemana); }
+    if ($tieneClasesTarde) { $html .= '</tr>' . renderizarFilasHorario($TODOS_LOS_BLOQUES_TARDE, $parrillaHorario, $diasDeLaSemana); }
+    if ($tieneClasesNoche) { $html .= '</tr>' . renderizarFilasHorario($TODOS_LOS_BLOQUES_NOCHE, $parrillaHorario, $diasDeLaSemana); }
     if (!$tieneClasesManana && !$tieneClasesTarde && !$tieneClasesNoche) { $html .= '<tr><td colspan="8">No hay horas de clase asignadas en el horario para este período.</td></tr>'; }
 
     $html .= '</table>';
+
+    // -- SECCIÓN OBSERVACIONES MODIFICADA --
+    $html .= '<table class="tabla-encabezado">
+        <tr>
+            <td class="titulo-seccion" style="width:25%; text-align:left;">20. OBSERVACIONES:</td>
+            <td class="texto-izquierda">'.htmlspecialchars($infoDocente['doc_observacion'] ?? 'Ninguna.').'</td>
+        </tr>
+    </table>';
     
     $html .= '<table class="sin-borde" style="margin-top: 8px; font-size:9px;"><tr><td width="50%" class="sin-borde texto-izquierda" style="vertical-align:top;"><table class="tabla-resumen">
         <tr><td colspan="2" class="titulo-seccion">21. TOTAL (Horas Clases + Horas Adm.)</td></tr>

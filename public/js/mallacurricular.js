@@ -78,7 +78,7 @@ $(document).ready(function () {
         validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $(this), $("#smalnombre"), "El formato permite de 5 a 30 caracteres.");
     });
     $("#mal_descripcion").on("keyup down", function () {
-        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $(this), $("#smaldescripcion"), "El formato permite de 5 a 30 caracteres.");
+        validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $(this), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres.");
     });
 
 
@@ -298,7 +298,8 @@ function enviaAjax(datos, tipoLlamada = '') {
                     const mensajeSpan = $("#smalcodigo");
                     const btnSiguiente = $("#btn-siguiente");
                     if (lee.resultado === 'existe') {
-                        mensajeSpan.text(lee.mensaje).css('color', 'red');
+                        // MODIFICADO: Ya no se fuerza el color. Usará el gris del CSS.
+                        mensajeSpan.text(lee.mensaje);
                         btnSiguiente.prop("disabled", true);
                     }
                     return;
@@ -308,6 +309,7 @@ function enviaAjax(datos, tipoLlamada = '') {
                     const mensajeSpan = $("#smalcohorte");
                     const btnSiguiente = $("#btn-siguiente");
                     if (lee.resultado === 'existe') {
+                        // SIN CAMBIOS: Esta es la excepción. Se mantiene en rojo.
                         mensajeSpan.text(lee.mensaje).css('color', 'red');
                         btnSiguiente.prop("disabled", true);
                     }
@@ -393,12 +395,37 @@ function enviaAjax(datos, tipoLlamada = '') {
 }
 
 function validarenvio() {
-    if (!validarPagina1()) return false;
-    gestionarBotonGuardar();
-    if ($("#proceso").is(':disabled')) {
-        muestraMensaje("error", 4000, "ERROR", "Debe agregar al menos una unidad curricular y completar todas sus horas.");
+    if (!validarPagina1()) {
+        muestraMensaje("error", 4000, "ERROR", "Por favor, corrija los campos marcados en el primer paso.");
         return false;
     }
+
+    const trayectosRequeridos = ['0', '1', '2', '3', '4'];
+    const trayectosSeleccionados = new Set();
+
+    $('#contenedorAcordeonUC tbody tr').each(function() {
+        trayectosSeleccionados.add($(this).data('trayecto').toString());
+    });
+
+    const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
+
+    if (trayectosFaltantes.length > 0) {
+        const nombresFaltantes = trayectosFaltantes.map(t => (t === '0' ? 'Inicial' : `Trayecto ${t}`));
+        muestraMensaje(
+            "error", 
+            7000,
+            "Validación Fallida", 
+            "Debe agregar al menos una unidad curricular de los siguientes trayectos: <strong>" + nombresFaltantes.join(', ') + "</strong>."
+        );
+        return false;
+    }
+
+    gestionarBotonGuardar();
+    if ($("#proceso").is(':disabled')) {
+        muestraMensaje("error", 4000, "ERROR", "Debe completar todas las horas de las unidades curriculares agregadas.");
+        return false;
+    }
+
     return true;
 }
 
@@ -504,6 +531,8 @@ function pone(pos, accionBtn) {
 }
 
 function limpiaModal1(resetearTodo = true) {
+
+    $('#modal1').off('shown.bs.modal');
     if (resetearTodo) {
         $("#f")[0].reset();
         $(".form-control").removeClass("is-invalid is-valid").prop("disabled", false);
@@ -525,7 +554,7 @@ function validarPagina1() {
     if (validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $("#mal_codigo"), $("#smalcodigo"), "El código permite de 2 a 20 caracteres.") == 0) esValido = false;
     if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/,$("#mal_nombre"),$("#smalnombre"), "El formato permite de 5 a 30 caracteres.") == 0) esValido = false;
     if (validarkeyup(/^[1-9][0-9]{0,3}$/,$("#mal_cohorte"),$("#smalcohorte"),"Debe ser un número entre 1 y 999.") == 0) esValido = false;
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,30}$/, $("#mal_descripcion"), $("#smaldescripcion"), "El formato permite de 5 a 30 caracteres.") == 0) esValido = false;
+    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $("#mal_descripcion"), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres.") == 0) esValido = false;
     return esValido;
 }
 

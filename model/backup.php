@@ -40,7 +40,7 @@ class Mantenimiento  extends Connection
 
         $resultado_alternativo = $this->GuardarRespaldoAlternativoUnico(
             $pdo_connection->Con(),
-            'orgdocente',
+            'db_orgdocente',
             _DB_NAME_,
             $directorio_respaldos,
             $fecha_actual
