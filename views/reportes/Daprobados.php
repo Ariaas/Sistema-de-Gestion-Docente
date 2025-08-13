@@ -6,7 +6,8 @@
     <title>Reporte Estadístico de Aprobados</title>
 </head>
 
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100" data-hay-datos="<?php echo $hayDatos ? 'true' : 'false'; ?>">
+
     <?php require_once("public/components/sidebar.php"); ?>
 
     <main class="main-content flex-shrink-0">
@@ -76,6 +77,7 @@
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
+    <script type="text/javascript" src="public/js/validacion.js"></script>
     <script type="text/javascript" src="public/js/Daprobados.js"></script>
     <script src="public/package/dist/chart.umd.js"></script>
 </body>

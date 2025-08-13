@@ -83,6 +83,7 @@ if (is_file("views/reportes/rAprobados.php")) {
     }
 
     $anios = $reporteModel->obtenerAnios();
+    $hayDatos = $reporteModel->verificarDatosDeAprobados();
     require_once("views/reportes/rAprobados.php");
 } else {
     echo "Página en construcción: rAprobados.php";

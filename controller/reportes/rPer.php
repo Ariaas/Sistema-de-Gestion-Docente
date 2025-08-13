@@ -84,6 +84,7 @@ if (is_file("views/reportes/rPer.php")) {
     }
 
     $anios = $reporteModel->obtenerAnios();
+    $hayDatos = $reporteModel->verificarDatosDePer();
     require_once("views/reportes/rPer.php");
 } else {
     echo "Página en construcción: rPer.php";

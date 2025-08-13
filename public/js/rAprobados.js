@@ -2,6 +2,12 @@ $(document).ready(function() {
     let myChart = null;
     let currentResponseData = null;
     const ctx = document.getElementById('reporteChart').getContext('2d');
+    
+    const hayDatos = $('body').data('hay-datos');
+    
+    if (!hayDatos) {
+        muestraMensaje('info', null, 'Sin Datos para Reportes', 'Actualmente no existen datos de aprobados registrados para generar un reporte. Por favor, vaya al módulo Resguardar Notas para ingresar los datos.');
+    }
 
     const colorPalette = [
         'rgba(54, 162, 235, 0.7)', 'rgba(75, 192, 192, 0.7)',
@@ -185,13 +191,13 @@ $(document).ready(function() {
                     displayChart($('#tipo_grafico').val());
                 } else {
                     currentResponseData = null;
-                    Swal.fire({ icon: 'info', title: 'Sin Datos', text: response.mensaje || 'No se encontraron datos para generar el reporte.' });
+                    muestraMensaje('info', null, 'Sin Datos', response.mensaje || 'No se encontraron datos para generar el reporte.');
                     renderChart({ labels: [], datasets: [] }, 'bar', 'Seleccione los filtros para generar un reporte');
                 }
             },
             error: function() {
                 currentResponseData = null;
-                Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'Hubo un problema al contactar con el servidor.' });
+                muestraMensaje('error', null, 'Error de Conexión', 'Hubo un problema al contactar con el servidor.');
             }
         });
     });

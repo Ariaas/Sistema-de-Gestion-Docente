@@ -83,6 +83,10 @@ if (is_file("views/reportes/Daprobados.php")) {
     }
 
     $anios = $reporteModel->obtenerAnios();
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Verificamos si hay datos de aprobados en la base de datos
+    $hayDatos = $reporteModel->verificarDatosDeAprobadosD();
+    // --- FIN DE LA MODIFICACIÓN ---
     require_once("views/reportes/Daprobados.php");
 } else {
     echo "Página en construcción: Daprobados.php";
