@@ -393,6 +393,10 @@ $(document).on("click", "#guardarPermisos", function () {
 });
 
 function renderTablaPermisos(modulosDisponibles, permisosAsignados) {
+    if ($.fn.DataTable.isDataTable("#tablaPermisos")) {
+        $("#tablaPermisos").DataTable().destroy();
+    }
+
     let tbody = "";
     const ACCIONES_ESTANDAR = ["registrar", "modificar", "eliminar"];
 
@@ -435,4 +439,21 @@ function renderTablaPermisos(modulosDisponibles, permisosAsignados) {
         tbody += `</tr>`;
     });
     $("#tablaPermisos tbody").html(tbody);
+
+    $("#tablaPermisos").DataTable({
+        paging: false,
+        lengthChange: false,
+        searching: true,
+        ordering: true,
+        info: false,
+        autoWidth: false,
+        responsive: true,
+        language: {
+            search: "Buscar Módulo: ",
+            zeroRecords: "No se encontraron resultados",
+        },
+        order: [],
+        dom: "f" +
+             "<'row'<'col-sm-12'tr>>"
+    });
 }

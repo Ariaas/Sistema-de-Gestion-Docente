@@ -43,7 +43,7 @@ function crearDT() {
         info: "Mostrando _PAGE_ de _PAGES_",
         infoEmpty: "No hay registros disponibles",
         infoFiltered: "(filtrado de _MAX_ registros totales)",
-        search: "Buscar:",
+        search: "Buscar: ",
         paginate: {
           first: "Primero",
           last: "Último",
@@ -78,6 +78,34 @@ function crearDT() {
       float: "right",
       "margin-left": "10px",
     });
+  }
+}
+
+function crearDTModal(selector) {
+  if (!$.fn.DataTable.isDataTable(selector)) {
+    $(selector).DataTable({
+      paging: false,
+      lengthChange: false,
+      searching: true,
+      ordering: true,
+      info: false,
+      autoWidth: false,
+      responsive: true,
+      language: {
+        search: "Buscar: ",
+        zeroRecords: "No se encontraron resultados",
+      },
+      dom: "<'row'<'col-sm-12'f>>" + 
+           "<'row'<'col-sm-12'tr>>"
+    });
+
+    $(selector + '_filter').parent().parent().css('margin-bottom', '0');
+  }
+}
+
+function destruyeDTModal(selector) {
+  if ($.fn.DataTable.isDataTable(selector)) {
+    $(selector).DataTable().destroy();
   }
 }
 
@@ -208,6 +236,7 @@ $(document).ready(function () {
                 var lee = JSON.parse(respuesta);
                 if (lee.resultado === 'ok') {
                     const cuerpoTabla = $('#cuerpoTablaDocentes');
+                    destruyeDTModal('#tablaDocentes');
                     cuerpoTabla.empty();
                     if (lee.mensaje.length > 0) {
                         lee.mensaje.forEach(function(docente) {
@@ -222,6 +251,7 @@ $(document).ready(function () {
                     } else {
                         cuerpoTabla.append('<tr><td colspan="3" class="text-center">No hay docentes disponibles para asignar.</td></tr>');
                     }
+                    crearDTModal('#tablaDocentes');
                     $('#modalDocentes').modal('show');
                 } else {
                     muestraMensaje("error", 5000, "Error", lee.mensaje);
@@ -258,7 +288,13 @@ $(document).ready(function () {
 
   $('#btnSeleccionarRol').on('click', function() {
     $('#modal1').modal('hide');
+    destruyeDTModal('#tablaRoles');
+    crearDTModal('#tablaRoles');
     $('#modalRoles').modal('show');
+  });
+
+  $('#modalRoles').on('shown.bs.modal', function () {
+    $('#tablaRoles').DataTable().columns.adjust().responsive.recalc();
   });
 
   $(document).on('click', '.btn-seleccionar-rol', function() {

@@ -173,15 +173,15 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         </div>
 
         <div class="modal fade" id="modalRoles" tabindex="-1" aria-labelledby="modalRolesLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content" style="border: 1px solid #000;">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title" id="modalRolesLabel">Seleccionar Rol</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="table-responsive">
-                            <table class="table table-hover" id="tablaRoles">
+                            <table class="table table-hover w-100" id="tablaRoles">
                                 <thead>
                                     <tr>
                                         <th>Rol</th>

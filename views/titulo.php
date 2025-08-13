@@ -91,12 +91,12 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <option value="Esp.">Especialista</option>
                                             <option value="Prof.">Profesor</option>
                                         </select>
-                                        <span id="stituloprefijo"></span>
+                                        <span id="stituloprefijo" class="form-text">></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="titulonombre" class="form-label">Nombre</label>
                                         <input class="form-control" type="text" id="titulonombre" name="titulonombre" placeholder="Ej: Informática" required>
-                                        <span id="stitulonombre"></span>
+                                        <span id="stitulonombre" class="form-text">></span>
                                     </div>
                                 </div>
                             </div>
