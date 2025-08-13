@@ -293,7 +293,15 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 </select>
                                 <div id="conflicto-espacio-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
                             </div>
-
+                            
+                            <div class="mb-3">
+                                <label for="modalBloquesClase" class="form-label">Duración de la Clase:</label>
+                                <select class="form-select" id="modalBloquesClase">
+                                    <option value="1">1 Bloque (40 min)</option>
+                                    <option value="2">2 Bloques (80 min)</option>
+                                    <option value="3">3 Bloques (120 min)</option>
+                                </select>
+                            </div>
                             <button type="submit" class="btn btn-primary" id="btnGuardarClase">Guardar Cambios</button>
                             <button type="button" class="btn btn-danger" id="btnEliminarEntrada" style="display:none;">Eliminar Clase</button>
                         </form>

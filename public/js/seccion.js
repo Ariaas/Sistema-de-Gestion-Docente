@@ -101,22 +101,51 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
 
     turnosFiltrados.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
     const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const celdasProcesadas = new Set();
 
-    turnosFiltrados.forEach((turno) => {
+    const horarioMapeado = new Map();
+    for (const clase of horarioContenidoGuardado.values()) {
+        if (clase.data && clase.data.dia && clase.data.hora_inicio) {
+            const dia_key = normalizeDayKey(clase.data.dia);
+            const key_inicio = `${clase.data.hora_inicio.substring(0, 5)}-${dia_key}`;
+            horarioMapeado.set(key_inicio, clase);
+        }
+    }
+
+    turnosFiltrados.forEach((turno, rowIndex) => {
         const row = $("<tr>");
         row.append(`<td>${formatTime12Hour(turno.tur_horainicio)} - ${formatTime12Hour(turno.tur_horafin)}</td>`);
+
         dias.forEach((dia) => {
+            const dia_key = normalizeDayKey(dia);
+            const key_actual = `${turno.tur_horainicio.substring(0, 5)}-${dia_key}`;
+
+            if (celdasProcesadas.has(key_actual)) {
+                return;
+            }
+
             const cell = $("<td>").attr("data-franja-inicio", turno.tur_horainicio).attr("data-dia-nombre", dia);
             if (!isViewOnly) {
                 cell.addClass("celda-horario");
             }
-            const dia_key = normalizeDayKey(dia);
-            const key = `${turno.tur_horainicio.substring(0, 5)}-${turno.tur_horafin.substring(0, 5)}-${dia_key}`;
-            if (horarioContenidoGuardado.has(key)) {
+
+            if (horarioMapeado.has(key_actual)) {
                 const {
                     html,
                     data
-                } = horarioContenidoGuardado.get(key);
+                } = horarioMapeado.get(key_actual);
+                const bloques_span = data.bloques_span || 1;
+
+                if (bloques_span > 1) {
+                    cell.attr("rowspan", bloques_span);
+                    for (let i = 1; i < bloques_span; i++) {
+                        const turnoFuturo = turnosFiltrados[rowIndex + i];
+                        if (turnoFuturo) {
+                            const key_futuro = `${turnoFuturo.tur_horainicio.substring(0, 5)}-${dia_key}`;
+                            celdasProcesadas.add(key_futuro);
+                        }
+                    }
+                }
                 cell.html(html).data("horario-data", data);
             }
             row.append(cell);
@@ -129,8 +158,8 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
     }
 }
 
+// ** FUNCIÓN CORREGIDA **
 function validarEntradaHorario() {
-
     $("#conflicto-docente-warning, #conflicto-espacio-warning, #conflicto-uc-warning").hide().html('');
     $("#btnGuardarClase").prop("disabled", false);
 
@@ -141,26 +170,26 @@ function validarEntradaHorario() {
     const secId = $("#sec_codigo_hidden").val();
 
     if (!currentClickedCell) return;
+    const datosClaseActual = currentClickedCell.data("horario-data");
 
+    // --- LÓGICA DE VALIDACIÓN DE UC DUPLICADA (CORREGIDA) ---
     if (ucId) {
         let ucDuplicada = false;
-        const turnoCompleto = allTurnos.find(t => t.tur_horainicio === currentClickedCell.data("franja-inicio"));
-        if (!turnoCompleto) return;
-        const diaKeyActual = normalizeDayKey(currentClickedCell.data('dia-nombre'));
-        const keyActual = `${turnoCompleto.tur_horainicio.substring(0, 5)}-${turnoCompleto.tur_horafin.substring(0, 5)}-${diaKeyActual}`;
+        const claveEdicion = datosClaseActual ? `${datosClaseActual.hora_inicio.substring(0,5)}-${normalizeDayKey(datosClaseActual.dia)}` : null;
 
-        horarioContenidoGuardado.forEach((valor, key) => {
-            if (valor.data.uc_codigo === ucId && key !== keyActual) {
+        for (const [key, valor] of horarioContenidoGuardado.entries()) {
+            if (valor.data && valor.data.uc_codigo === ucId && key !== claveEdicion) {
                 ucDuplicada = true;
+                break;
             }
-        });
+        }
 
         if (ucDuplicada) {
             const ucInfo = allUcs.find(u => u.uc_codigo === ucId);
             const nombreUc = ucInfo ? ucInfo.uc_nombre : `código ${ucId}`;
             $('#conflicto-uc-warning').html(`<strong>Inválido:</strong> La UC <strong>${nombreUc}</strong> ya fue asignada. Una UC solo puede ser asignada una vez por horario.`).show();
             $("#btnGuardarClase").prop("disabled", true);
-            return;
+            return; 
         }
     }
 
@@ -168,12 +197,15 @@ function validarEntradaHorario() {
         return;
     }
 
-    const turnoCompleto = allTurnos.find(t => t.tur_horainicio === currentClickedCell.data("franja-inicio"));
-    if (!turnoCompleto) return;
-    const horaInicio = turnoCompleto.tur_horainicio;
+    // --- VALIDACIÓN DE CONFLICTO EN VIVO ---
+    const franjaInicioActual = currentClickedCell.data("franja-inicio");
+    const indiceTurnoActual = allTurnos.findIndex(t => t.tur_horainicio === franjaInicioActual);
+    
+    if (indiceTurnoActual === -1) return;
 
+    const horaInicio = allTurnos[indiceTurnoActual].tur_horainicio;
+    
     const espId = JSON.parse(espIdJson);
-
     const datos = new FormData();
     datos.append("accion", "validar_clase_en_vivo");
     datos.append("doc_cedula", docId);
@@ -181,11 +213,11 @@ function validarEntradaHorario() {
     datos.append("esp_tipo", espId.tipo);
     datos.append("esp_edificio", espId.edificio);
     datos.append("dia", dia);
-    datos.append("hora_inicio", horaInicio.substring(0, 5));
+    datos.append("hora_inicio", horaInicio);
     datos.append("sec_codigo", secId);
     datos.append("uc_codigo", ucId);
 
-    $.ajax({
+     $.ajax({
         url: "",
         type: "POST",
         data: datos,
@@ -193,11 +225,8 @@ function validarEntradaHorario() {
         processData: false,
         success: function(respuesta) {
             if (respuesta.conflicto === true) {
-                if (respuesta.tipo === 'docente') {
-                    $("#conflicto-docente-warning").html(respuesta.mensaje).show();
-                } else if (respuesta.tipo === 'espacio') {
-                    $("#conflicto-espacio-warning").html(respuesta.mensaje).show();
-                }
+                const warningDiv = respuesta.tipo === 'docente' ? $("#conflicto-docente-warning") : $("#conflicto-espacio-warning");
+                warningDiv.html(respuesta.mensaje).show();
                 $("#btnGuardarClase").prop("disabled", true);
             }
         },
@@ -240,8 +269,10 @@ function onCeldaHorarioClick() {
                 edificio: data.espacio.edificio
             }));
         }
+        $("#modalBloquesClase").val(data.bloques_span || 1);
         $("#btnEliminarEntrada").show();
     } else {
+        $("#modalBloquesClase").val(1);
         $("#btnEliminarEntrada").hide();
     }
     $("#modalEntradaHorario").modal("show");
@@ -307,7 +338,7 @@ function generarCellContent(clase) {
     const doc = allDocentes.find(d => d.doc_cedula == clase.doc_cedula);
     const doc_nombre = doc ? `${doc.doc_nombre} ${doc.doc_apellido}` : 'N/A';
 
-    
+
     let codigoEspacioFormateado = 'N/A';
     if (clase.espacio && clase.espacio.numero && clase.espacio.tipo && clase.espacio.edificio) {
         const tipo = clase.espacio.tipo.toLowerCase();
@@ -319,7 +350,7 @@ function generarCellContent(clase) {
         } else if (tipo === 'laboratorio') {
             codigoEspacioFormateado = `${tipo.charAt(0).toUpperCase()}-${numero}`;
         } else {
-          
+
             codigoEspacioFormateado = numero;
         }
     }
@@ -458,7 +489,7 @@ function enviaAjax(datos, boton) {
                                <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" title="Eliminar Horario">
                                  <img src="public/assets/icons/trash.svg" alt="Eliminar">
                                </button>`;
-                            
+
                             $("#resultadoconsulta").append(`<tr><td>${prefijo}${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
                     }
@@ -520,7 +551,7 @@ $(document).ready(function() {
         } else {
             cantidadError.hide();
         }
-        
+
         const isFormValid = form.checkValidity();
 
         if (isCohorteValid && isFormValid) {
@@ -545,7 +576,7 @@ $(document).ready(function() {
             allUcs = respuesta.ucs.map(u => ({ ...u,
                 uc_id: u.uc_codigo
             })) || [];
-            allEspacios = respuesta.espacios || []; 
+            allEspacios = respuesta.espacios || [];
             allDocentes = respuesta.docentes.map(d => ({ ...d,
                 doc_id: d.doc_cedula
             })) || [];
@@ -668,16 +699,26 @@ $(document).ready(function() {
             success: function(respuesta) {
                 if (respuesta.resultado === 'ok' && Array.isArray(respuesta.mensaje)) {
                     horarioContenidoGuardado.clear();
+                    
+                    const clasesAgrupadas = new Map();
                     respuesta.mensaje.forEach(clase => {
-                        if (clase.hora_inicio && clase.hora_fin && clase.dia) {
-                            const dia_key = normalizeDayKey(clase.dia);
-                            const key = `${clase.hora_inicio.substring(0, 5)}-${clase.hora_fin.substring(0, 5)}-${dia_key}`;
-                            horarioContenidoGuardado.set(key, {
-                                html: generarCellContent(clase),
-                                data: clase
-                            });
-                        }
+                        const inicio = new Date(`1970-01-01T${clase.hora_inicio}`);
+                        const fin = new Date(`1970-01-01T${clase.hora_fin}`);
+                        const diffMinutes = (fin - inicio) / (1000 * 60);
+                        const bloques = Math.round(diffMinutes / 40);
+                        
+                        clase.bloques_span = bloques > 0 ? bloques : 1;
+
+                        const dia_key = normalizeDayKey(clase.dia);
+                        const key = `${clase.hora_inicio.substring(0, 5)}-${dia_key}`;
+                        
+                        clasesAgrupadas.set(key, {
+                           html: generarCellContent(clase),
+                           data: clase
+                        });
                     });
+                    horarioContenidoGuardado = clasesAgrupadas;
+
                     const prefijo = getPrefijoSeccion(seccionData.sec_codigo);
                     const seccionTexto = `${prefijo}${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio})`;
                     if (isDelete) {
@@ -707,7 +748,7 @@ $(document).ready(function() {
     });
 
 
-    $("#modalSeleccionarDocente, #modalSeleccionarUc, #modalSeleccionarEspacio").on("change", validarEntradaHorario);
+    $("#modalSeleccionarDocente, #modalSeleccionarUc, #modalSeleccionarEspacio, #modalBloquesClase").on("change", validarEntradaHorario);
 
     $('#filtro_turno').on("change", function() {
         inicializarTablaHorario($(this).val(), "#tablaHorario", false);
@@ -745,9 +786,14 @@ $(document).ready(function() {
                     if (respuesta.horario_aleatorio && respuesta.horario_aleatorio.horario) {
                         horarioContenidoGuardado.clear();
                         respuesta.horario_aleatorio.horario.forEach(clase => {
-                            if (clase.hora_inicio && clase.hora_fin && clase.dia) {
+                            const inicio = new Date(`1970-01-01T${clase.hora_inicio}:00`);
+                            const fin = new Date(`1970-01-01T${clase.hora_fin}:00`);
+                            const diffMinutes = (fin - inicio) / (1000 * 60);
+                            clase.bloques_span = Math.round(diffMinutes / 40) || 1;
+
+                            if (clase.hora_inicio && clase.dia) {
                                 const dia_key = normalizeDayKey(clase.dia);
-                                const key = `${clase.hora_inicio.substring(0, 5)}-${clase.hora_fin.substring(0, 5)}-${dia_key}`;
+                                const key = `${clase.hora_inicio.substring(0, 5)}-${dia_key}`;
                                 horarioContenidoGuardado.set(key, {
                                     html: generarCellContent(clase),
                                     data: clase
@@ -803,16 +849,32 @@ $(document).ready(function() {
 
     $("#formularioEntradaHorario").on("submit", function(e) {
         e.preventDefault();
-        const turnoCompleto = allTurnos.find(t => t.tur_horainicio === currentClickedCell.data("franja-inicio"));
-        const espacioSeleccionado = $("#modalSeleccionarEspacio").val();
 
+        const bloquesSeleccionados = parseInt($("#modalBloquesClase").val(), 10) || 1;
+        const franjaInicioActual = currentClickedCell.data("franja-inicio");
+        const diaActual = $("#modalDia").val();
+        const dia_key = normalizeDayKey(diaActual);
+
+        const indiceTurnoActual = allTurnos.findIndex(t => t.tur_horainicio === franjaInicioActual);
+
+        if (indiceTurnoActual + bloquesSeleccionados > allTurnos.length) {
+            muestraMensaje("error", 4000, "Error de Duración", "La duración seleccionada excede los bloques disponibles en el horario.");
+            return;
+        }
+
+        const turnoDeInicio = allTurnos[indiceTurnoActual];
+        const turnoDeFin = allTurnos[indiceTurnoActual + bloquesSeleccionados - 1];
+        const horaFinReal = turnoDeFin.tur_horafin;
+
+        const espacioSeleccionado = $("#modalSeleccionarEspacio").val();
         const horarioData = {
             doc_cedula: $("#modalSeleccionarDocente").val(),
             uc_codigo: $("#modalSeleccionarUc").val(),
             espacio: espacioSeleccionado ? JSON.parse(espacioSeleccionado) : null,
-            dia: $("#modalDia").val(),
-            hora_inicio: turnoCompleto.tur_horainicio,
-            hora_fin: turnoCompleto.tur_horafin
+            dia: diaActual,
+            hora_inicio: turnoDeInicio.tur_horainicio,
+            hora_fin: horaFinReal,
+            bloques_span: bloquesSeleccionados
         };
 
         if (!horarioData.doc_cedula || !horarioData.uc_codigo || !horarioData.espacio) {
@@ -820,34 +882,37 @@ $(document).ready(function() {
             return;
         }
 
+        const key = `${horarioData.hora_inicio.substring(0, 5)}-${dia_key}`;
         const cellContent = generarCellContent(horarioData);
-        const dia_key = normalizeDayKey(horarioData.dia);
-        const key = `${horarioData.hora_inicio.substring(0, 5)}-${horarioData.hora_fin.substring(0, 5)}-${dia_key}`;
 
-        currentClickedCell.html(cellContent).data("horario-data", horarioData);
         horarioContenidoGuardado.set(key, {
             html: cellContent,
             data: horarioData
         });
+
+        const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+        inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
 
         $("#modalEntradaHorario").modal("hide");
     });
 
     $("#btnEliminarEntrada").on("click", function() {
         if (currentClickedCell) {
-            const data = currentClickedCell.data("horario-data");
-            const dia_key = normalizeDayKey(data.dia);
+            const dataOriginal = currentClickedCell.data("horario-data");
+            if (dataOriginal) {
+                const dia_key = normalizeDayKey(dataOriginal.dia);
+                const key = `${dataOriginal.hora_inicio.substring(0, 5)}-${dia_key}`;
+                horarioContenidoGuardado.delete(key);
+            }
 
-            const key = `${data.hora_inicio.substring(0, 5)}-${data.hora_fin.substring(0, 5)}-${dia_key}`;
-
-            horarioContenidoGuardado.delete(key);
-            currentClickedCell.empty().removeData("horario-data");
+            const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+            inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
             $("#modalEntradaHorario").modal("hide");
         }
     });
 
+   // ** MANEJADOR DE EVENTO CORREGIDO **
     $("#proceso").on("click", function() {
-
         const cantidadInput = $('#cantidadSeccionModificar');
         const cantidad = parseInt(cantidadInput.val(), 10);
         if (isNaN(cantidad) || cantidad < 0 || cantidad > 99) {
@@ -855,41 +920,49 @@ $(document).ready(function() {
             $('#cantidad-seccion-modificar-error').show();
             return;
         } else {
-             $('#cantidad-seccion-modificar-error').hide();
+            $('#cantidad-seccion-modificar-error').hide();
         }
-
-        const ucsEnHorario = new Set();
+        
+        const ucsAsignadas = new Set();
         let ucDuplicada = null;
-        Array.from(horarioContenidoGuardado.values()).forEach(v => {
-            if (ucsEnHorario.has(v.data.uc_codigo)) {
-                ucDuplicada = v.data.uc_codigo;
+    
+        for (const v of horarioContenidoGuardado.values()) {
+            if (v.data && v.data.uc_codigo) {
+                const uc = v.data.uc_codigo;
+                if (ucsAsignadas.has(uc)) {
+                    ucDuplicada = uc;
+                    break; 
+                }
+                ucsAsignadas.add(uc);
             }
-            ucsEnHorario.add(v.data.uc_codigo);
-        });
-
+        }
+    
         if (ucDuplicada) {
             const ucInfo = allUcs.find(u => u.uc_codigo === ucDuplicada);
             const nombreUc = ucInfo ? ucInfo.uc_nombre : `código ${ucDuplicada}`;
             muestraMensaje("error", 6000, "Horario Inválido", `La unidad curricular <strong>${nombreUc}</strong> no puede ser asignada más de una vez.`);
             return;
         }
-
+    
         const accion = $("#accion").val();
         const datos = new FormData();
         datos.append("accion", accion);
         datos.append("sec_codigo", $("#sec_codigo_hidden").val());
-
+    
         if (accion === 'modificar') {
             datos.append("cantidadSeccion", $("#cantidadSeccionModificar").val());
         }
-
-        const clasesAEnviar = Array.from(horarioContenidoGuardado.values()).map(v => {
-            let item = { ...v.data
-            };
+    
+        const clasesAEnviar = Array.from(horarioContenidoGuardado.values())
+                                     .map(v => v.data)
+                                     .filter(item => item && item.uc_codigo && item.hora_inicio && item.hora_fin); // Filtra items inválidos o incompletos
+        
+        // Formatear las horas a HH:MM antes de enviar
+        clasesAEnviar.forEach(item => {
             item.hora_inicio = item.hora_inicio.substring(0, 5);
             item.hora_fin = item.hora_fin.substring(0, 5);
-            return item;
         });
+
         datos.append("items_horario", JSON.stringify(clasesAEnviar));
         enviaAjax(datos, $(this));
     });

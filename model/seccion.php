@@ -31,13 +31,35 @@ class Seccion extends Connection
         return $total ? (int)$total : 0;
     }
 
+    // ** FUNCIÓN CON LA CORRECCIÓN DEFINITIVA DE FILTRO DE TURNO **
     public function CrearHorarioAleatorio($sec_codigo, $trayecto)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
-        $bloques = $this->obtenerTurnos();
+        $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        $bloques_todos = $this->obtenerTurnos();
+        
+        // **INICIO DE LA CORRECCIÓN**
+        // Determinar el turno basado en el segundo dígito del código de sección
+        $turno_seccion_char = substr($sec_codigo, 1, 1);
+        $turno_seccion = 'mañana'; // Valor por defecto
+        if ($turno_seccion_char === '2') {
+            $turno_seccion = 'tarde';
+        } elseif ($turno_seccion_char === '3') {
+            $turno_seccion = 'noche';
+        }
+
+        // Filtrar los bloques horarios para que coincidan con el turno de la sección
+        $bloques = array_filter($bloques_todos, function($bloque) use ($turno_seccion) {
+            $hora_inicio = (int)substr($bloque['tur_horainicio'], 0, 2);
+            if ($turno_seccion === 'mañana') return $hora_inicio < 13;
+            if ($turno_seccion === 'tarde') return $hora_inicio >= 13 && $hora_inicio < 18;
+            if ($turno_seccion === 'noche') return $hora_inicio >= 18;
+            return false;
+        });
+        // **FIN DE LA CORRECCIÓN**
+
         $fase_actual = $this->determinarFaseActual();
         $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
 
@@ -49,15 +71,17 @@ class Seccion extends Connection
 
         if ($fase_actual === 'fase1') $sql_ucs .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual' OR u.uc_periodo = '0')";
         elseif ($fase_actual === 'fase2') $sql_ucs .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
+        
         $stmt_ucs = $co->prepare($sql_ucs);
         $stmt_ucs->execute([':trayecto' => $trayecto, ':mal_codigo' => $active_malla]);
         $ucs_por_asignar = $stmt_ucs->fetchAll(PDO::FETCH_ASSOC);
 
         $espacios = $this->obtenerEspacios();
         if (empty($ucs_por_asignar) || empty($espacios) || empty($bloques)) {
-            return ['resultado' => 'ok', 'mensaje' => 'No hay suficientes datos (UCs, espacios, etc.) para generar un horario.', 'horario' => []];
+            return ['resultado' => 'ok', 'mensaje' => 'No hay suficientes datos (UCs, espacios, bloques de turno, etc.) para generar un horario.', 'horario' => []];
         }
 
+        // ... El resto de la función continúa igual que antes ...
         $ocupacion_global = [];
         $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, dh.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($horarios_existentes as $h) {
@@ -105,7 +129,7 @@ class Seccion extends Connection
                 if ($tiene_preferencias) {
                     foreach ($info_docente['preferencias'] as $pref) {
                         $dia_pref = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $pref['dia_semana']));
-                        foreach ($bloques as $bloque) {
+                        foreach ($bloques as $bloque) { // USA LOS BLOQUES YA FILTRADOS
                             if ($bloque['tur_horainicio'] >= $pref['hora_inicio'] && $bloque['tur_horafin'] <= $pref['hora_fin']) {
                                 $opciones_validas[] = ['dia' => $dia_pref, 'bloque' => $bloque, 'docente' => $docente_id];
                             }
@@ -113,7 +137,7 @@ class Seccion extends Connection
                     }
                 } else {
                     foreach ($dias as $dia) {
-                        foreach ($bloques as $bloque) {
+                        foreach ($bloques as $bloque) { // USA LOS BLOQUES YA FILTRADOS
                             $opciones_validas[] = ['dia' => $dia, 'bloque' => $bloque, 'docente' => $docente_id];
                         }
                     }
@@ -123,6 +147,10 @@ class Seccion extends Connection
             shuffle($opciones_validas);
 
             foreach ($opciones_validas as $opcion) {
+                if (empty($opcion['docente']) || empty($opcion['dia']) || empty($opcion['bloque'])) {
+                    continue;
+                }
+                
                 $docente_id = $opcion['docente'];
                 $dia = $opcion['dia'];
                 $bloque = $opcion['bloque'];
@@ -135,26 +163,29 @@ class Seccion extends Connection
                 if (isset($ocupacion_global[$key_slot]['docentes'][$docente_id])) continue;
                 if (isset($ocupacion_global[$key_slot]['espacios'][$espacio_key])) continue;
 
-                $horario_generado[] = ['uc_codigo' => $uc['uc_codigo'], 'doc_cedula' => $docente_id, 'espacio' => $espacio, 'dia' => $dia, 'hora_inicio' => $hora_corta, 'hora_fin' => substr($bloque['tur_horafin'], 0, 5)];
+                $horario_generado[] = [
+                    'uc_codigo'   => $uc['uc_codigo'], 
+                    'doc_cedula'  => $docente_id, 
+                    'espacio'     => $espacio, 
+                    'dia'         => $dia, 
+                    'hora_inicio' => $hora_corta, 
+                    'hora_fin'    => substr($bloque['tur_horafin'], 0, 5)
+                ];
+                
                 if (!isset($ocupacion_global[$key_slot])) $ocupacion_global[$key_slot] = ['docentes' => [], 'espacios' => []];
                 $ocupacion_global[$key_slot]['docentes'][$docente_id] = true;
                 $ocupacion_global[$key_slot]['espacios'][$espacio_key] = true;
                 $docentes_info[$docente_id]['horas_asignadas'] += $costo_uc;
-                goto siguiente_uc;
+                
+                break; 
             }
-            siguiente_uc:;
         }
         return ['resultado' => 'ok', 'mensaje' => 'Plantilla de horario generada.', 'horario' => $horario_generado];
     }
-
-    private function getHoraFin($hora_inicio, $bloques)
-    {
-        foreach ($bloques as $b) {
-            if ($b['tur_horainicio'] == $hora_inicio) return $b['tur_horafin'];
-        }
-        return date('H:i:s', strtotime($hora_inicio) + 40 * 60);
-    }
     
+    // ... EL RESTO DE LAS FUNCIONES DEL MODELO PERMANECEN IGUAL ...
+    // ... (copia aquí el resto de las funciones desde 'public function __construct()' hasta el final del archivo)
+
     public function __construct()
     {
         parent::__construct();
@@ -448,10 +479,6 @@ class Seccion extends Connection
         }
     }
     
-    /**
-     * @author Geminis
-     * @description CORREGIDO: Llama a la función de ayuda con el nombre correcto: EliminarDependenciasDeSeccion.
-     */
     public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo)
     {
         if (empty($codigoSeccion) || !isset($cantidadSeccion) || $cantidadSeccion === '' || empty($anio_anio) || empty($anio_tipo)) {
@@ -464,24 +491,23 @@ class Seccion extends Connection
 
         $co = $this->Con();
         try {
-            // Se busca una sección existente, sin importar su estado.
+            $co->beginTransaction();
+            
             $stmt_check = $co->prepare("SELECT sec_estado FROM tbl_seccion WHERE sec_codigo = :codigo");
             $stmt_check->execute([':codigo' => $codigoSeccion]);
             $seccion_existente = $stmt_check->fetch(PDO::FETCH_ASSOC);
 
             if ($seccion_existente) {
-                // Si la sección existe y está activa, es un error.
                 if ($seccion_existente['sec_estado'] == 1) {
+                    $co->rollBack();
                     return ['resultado' => 'error', 'mensaje' => '¡ERROR! La sección con ese código ya existe y está activa.'];
                 } else {
-                    // Si la sección existe pero está inactiva (sec_estado = 0), se borran sus dependencias antes de reactivar.
                     $this->EliminarDependenciasDeSeccion($codigoSeccion, $co);
                     $stmtSeccion = $co->prepare(
                         "UPDATE tbl_seccion SET sec_cantidad = :cantidad, ani_anio = :anio, ani_tipo = :tipo, sec_estado = 1 WHERE sec_codigo = :codigo"
                     );
                 }
             } else {
-                // Si la sección no existe, se inserta como nueva.
                 $stmtSeccion = $co->prepare(
                     "INSERT INTO tbl_seccion (sec_codigo, sec_cantidad, ani_anio, ani_tipo, sec_estado) VALUES (:codigo, :cantidad, :anio, :tipo, 1)"
                 );
@@ -493,6 +519,8 @@ class Seccion extends Connection
             $stmtSeccion->bindParam(':tipo', $anio_tipo, PDO::PARAM_STR);
             $stmtSeccion->execute();
 
+            $co->commit();
+
             return [
                 'resultado' => 'registrar_seccion_ok',
                 'mensaje' => '¡Se registró la sección correctamente!',
@@ -500,6 +528,9 @@ class Seccion extends Connection
                 'nueva_cantidad' => $cantidadInt
             ];
         } catch (Exception $e) {
+            if ($co->inTransaction()) {
+                $co->rollBack();
+            }
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
     }
@@ -660,7 +691,9 @@ class Seccion extends Connection
             }
 
             foreach ($items_horario as &$item) {
-                $item['dia'] = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
+                if(isset($item['dia'])) {
+                    $item['dia'] = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
+                }
             }
             unset($item);
 
@@ -691,7 +724,7 @@ class Seccion extends Connection
                 $docentes_en_seccion = [];
 
                 foreach ($items_horario as $item) {
-                    if (!empty($item['uc_codigo']) && !empty($item['doc_cedula'])) {
+                    if (!empty($item['uc_codigo']) && !empty($item['doc_cedula']) && !empty($item['hora_inicio']) && !empty($item['hora_fin'])) {
                         $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
                         $stmt_uh->execute([
                             ':uc_codigo' => $item['uc_codigo'],
@@ -844,6 +877,7 @@ class Seccion extends Connection
             $bloques_horario = [];
         }
         if (empty($bloques_horario)) {
+            // Valores por defecto por si falla la BD
             $bloques_horario = [
                 ['tur_id' => 1, 'tur_horainicio' => '08:00:00', 'tur_horafin' => '08:40:00'],
                 ['tur_id' => 2, 'tur_horainicio' => '08:40:00', 'tur_horafin' => '09:20:00'],
