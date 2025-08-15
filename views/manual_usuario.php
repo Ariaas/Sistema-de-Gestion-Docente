@@ -1,5 +1,9 @@
 <?php include_once("public/components/head.php"); ?>
 
+<head>
+    <title>Manual de Usuario Interactivo</title>
+</head>
+
 <style>
     #btnVolverArriba {
         display: none;
