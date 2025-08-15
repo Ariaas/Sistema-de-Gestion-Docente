@@ -37,6 +37,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
 <head>
     <?php require_once("public/components/head.php"); ?>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <title>Sección</title>
 </head>
 
@@ -274,7 +276,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                             <div class="mb-3">
                                 <label for="modalSeleccionarDocente" class="form-label">Docente <span class="text-danger">*</span></label>
-                                <select class="form-select" id="modalSeleccionarDocente" required>
+                                <select class="form-select" id="modalSeleccionarDocente" required style="width: 100%;">
                                     <option value="">Seleccionar Docente</option>
                                 </select>
                                 <div id="conflicto-docente-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
@@ -290,7 +292,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                             <div class="mb-3">
                                 <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab) <span class="text-danger">*</span></label>
-                                <select class="form-select" id="modalSeleccionarEspacio" required>
+                                <select class="form-select" id="modalSeleccionarEspacio" required style="width: 100%;">
                                     <option value="">Seleccionar Espacio</option>
                                 </select>
                                 <div id="conflicto-espacio-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
@@ -361,6 +363,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         };
     </script>
     <?php require_once("public/components/footer.php"); ?>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="public/js/seccion.js"></script>
 </body>
 

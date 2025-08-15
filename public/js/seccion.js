@@ -126,10 +126,7 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
 
             const cell = $("<td>").attr("data-franja-inicio", turno.tur_horainicio).attr("data-dia-nombre", dia);
             
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Se agrega esta línea para centrar verticalmente el contenido de la celda.
             cell.css('vertical-align', 'middle');
-            // --- FIN DE LA MODIFICACIÓN ---
 
             if (!isViewOnly) {
                 cell.addClass("celda-horario");
@@ -261,6 +258,14 @@ function onCeldaHorarioClick() {
     const franjaInicio = currentClickedCell.data("franja-inicio");
     const turnoCompleto = allTurnos.find(t => t.tur_horainicio === franjaInicio);
 
+    // Primero, si Select2 ya estaba inicializado, lo destruimos para evitar conflictos.
+    if ($("#modalSeleccionarDocente").data('select2')) {
+        $("#modalSeleccionarDocente").select2('destroy');
+    }
+    if ($("#modalSeleccionarEspacio").data('select2')) {
+        $("#modalSeleccionarEspacio").select2('destroy');
+    }
+
     $("#formularioEntradaHorario")[0].reset();
     $("#conflicto-docente-warning, #conflicto-espacio-warning, #conflicto-uc-warning").hide().html('');
     $("#btnGuardarClase").prop("disabled", false);
@@ -268,6 +273,7 @@ function onCeldaHorarioClick() {
     $("#modalFranjaHoraria").val(`${formatTime12Hour(turnoCompleto.tur_horainicio)} - ${formatTime12Hour(turnoCompleto.tur_horafin)}`);
     $("#modalDia").val($(this).data("dia-nombre"));
 
+    // Llenamos los selects de forma normal
     $("#modalSeleccionarDocente").empty().append('<option value="">Seleccionar Docente</option>').val('');
     allDocentes.forEach(doc => $("#modalSeleccionarDocente").append(`<option value="${doc.doc_cedula}">${doc.doc_nombre} ${doc.doc_apellido}</option>`));
 
@@ -294,9 +300,24 @@ function onCeldaHorarioClick() {
         $("#modalBloquesClase").val(2);
         $("#btnEliminarEntrada").hide();
     }
+
+    // Ahora inicializamos Select2 en los campos con el tema de Bootstrap
+    $("#modalSeleccionarDocente").select2({
+        theme: "bootstrap-5",
+        dropdownParent: $('#modalEntradaHorario')
+    });
+
+    $("#modalSeleccionarEspacio").select2({
+        theme: "bootstrap-5",
+        dropdownParent: $('#modalEntradaHorario')
+    });
+    
+    // Disparamos 'change' para que los valores pre-seleccionados se reflejen correctamente en Select2
+    $('#modalSeleccionarDocente').trigger('change');
+    $('#modalSeleccionarEspacio').trigger('change');
+
     $("#modalEntradaHorario").modal("show");
 }
-
 
 function cargarUcPorDocente(docCedula, callback) {
     const ucSelect = $("#modalSeleccionarUc");
