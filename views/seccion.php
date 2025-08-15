@@ -87,8 +87,10 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div class="col-md-6">
                                         <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
                                         <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4" pattern="\d{4}" title="El código debe contener exactamente 4 números." oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-
-                                        <div id="alerta-cohorte" class="form-text text-muted p-1 mt-2 text-center"  style="display:none; font-size: 0.85em;"></div>
+                                        
+                                        <div id="alerta-turno" class="form-text text-danger p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
+                                        
+                                        <div id="alerta-cohorte" class="form-text text-muted p-1 mt-1 text-center"  style="display:none; font-size: 0.85em;"></div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
@@ -301,6 +303,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <option value="2">2 Bloques (80 min)</option>
                                     <option value="3">3 Bloques (120 min)</option>
                                     <option value="4">4 Bloques (160 min)</option>
+                                    <option value="5">5 Bloques (240 min)</option>
+                                    <option value="6">6 Bloques (320 min)</option>
                                 </select>
                             </div>
                             <button type="submit" class="btn btn-primary" id="btnGuardarClase">Guardar Cambios</button>

@@ -49,7 +49,7 @@ class Seccion extends Connection
             $turno_seccion = 'mañana';
         }
 
-        $bloques = array_filter($bloques_todos, function($bloque) use ($turno_seccion) {
+        $bloques_40min = array_filter($bloques_todos, function($bloque) use ($turno_seccion) {
             $hora_inicio = (int)substr($bloque['tur_horainicio'], 0, 2);
             if ($turno_seccion === 'mañana') return $hora_inicio < 13;
             if ($turno_seccion === 'tarde') return $hora_inicio >= 13 && $hora_inicio < 18;
@@ -57,6 +57,22 @@ class Seccion extends Connection
             return false;
         });
         
+        // Agrupar los bloques de 40 min en slots de 80 min
+        $bloques_80min_slots = [];
+        $bloques_array = array_values($bloques_40min);
+        $num_bloques = count($bloques_array);
+        for ($i = 0; $i < $num_bloques - 1; $i += 2) { // Iterar de 2 en 2
+            $bloque1 = $bloques_array[$i];
+            $bloque2 = $bloques_array[$i + 1];
+    
+            // Asegurarse de que los bloques son consecutivos
+            if (isset($bloque2) && $bloque1['tur_horafin'] === $bloque2['tur_horainicio']) {
+                $bloques_80min_slots[] = [
+                    'tur_horainicio' => $bloque1['tur_horainicio'],
+                    'tur_horafin' => $bloque2['tur_horafin']
+                ];
+            }
+        }
 
         $fase_actual = $this->determinarFaseActual();
         $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
@@ -75,19 +91,19 @@ class Seccion extends Connection
         $ucs_por_asignar = $stmt_ucs->fetchAll(PDO::FETCH_ASSOC);
 
         $espacios = $this->obtenerEspacios();
-        if (empty($ucs_por_asignar) || empty($espacios) || empty($bloques)) {
+        if (empty($ucs_por_asignar) || empty($espacios) || empty($bloques_80min_slots)) {
             return ['resultado' => 'ok', 'mensaje' => 'No hay suficientes datos (UCs, espacios, bloques de turno, etc.) para generar un horario.', 'horario' => []];
         }
 
     
         $ocupacion_global = [];
-        $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, dh.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
+        $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, dh.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
         foreach ($horarios_existentes as $h) {
             $key = trim($h['hor_dia']) . '_' . trim($h['hor_horainicio']);
             if (!isset($ocupacion_global[$key])) $ocupacion_global[$key] = ['docentes' => [], 'espacios' => []];
-            $ocupacion_global[$key]['docentes'][$h['doc_cedula']] = true;
+            $ocupacion_global[$key]['docentes'][$h['doc_cedula']] = ['inicio' => $h['hor_horainicio'], 'fin' => $h['hor_horafin']];
             $espacio_key = $h['esp_numero'] . '|' . $h['esp_tipo'] . '|' . $h['esp_edificio'];
-            $ocupacion_global[$key]['espacios'][$espacio_key] = true;
+            $ocupacion_global[$key]['espacios'][$espacio_key] = ['inicio' => $h['hor_horainicio'], 'fin' => $h['hor_horafin']];
         }
 
         $docentes_info = [];
@@ -127,7 +143,7 @@ class Seccion extends Connection
                 if ($tiene_preferencias) {
                     foreach ($info_docente['preferencias'] as $pref) {
                         $dia_pref = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $pref['dia_semana']));
-                        foreach ($bloques as $bloque) { 
+                        foreach ($bloques_80min_slots as $bloque) { 
                             if ($bloque['tur_horainicio'] >= $pref['hora_inicio'] && $bloque['tur_horafin'] <= $pref['hora_fin']) {
                                 $opciones_validas[] = ['dia' => $dia_pref, 'bloque' => $bloque, 'docente' => $docente_id];
                             }
@@ -135,7 +151,7 @@ class Seccion extends Connection
                     }
                 } else {
                     foreach ($dias as $dia) {
-                        foreach ($bloques as $bloque) { 
+                        foreach ($bloques_80min_slots as $bloque) { 
                             $opciones_validas[] = ['dia' => $dia, 'bloque' => $bloque, 'docente' => $docente_id];
                         }
                     }
@@ -153,26 +169,45 @@ class Seccion extends Connection
                 $dia = $opcion['dia'];
                 $bloque = $opcion['bloque'];
                 $espacio = $espacios[array_rand($espacios)];
-                $hora_corta = substr($bloque['tur_horainicio'], 0, 5);
-                $key_slot = $dia . '_' . $hora_corta;
+                $hora_inicio = $bloque['tur_horainicio'];
+                $hora_fin = $bloque['tur_horafin'];
                 $espacio_key = $espacio['numero'] . '|' . $espacio['tipo'] . '|' . $espacio['edificio'];
 
+                $conflicto = false;
+                foreach($ocupacion_global as $dia_hora => $data) {
+                    $dia_slot = explode('_', $dia_hora)[0];
+                    if($dia_slot != $dia) continue;
+
+                    foreach($data['docentes'] as $doc_id_ocupado => $horas) {
+                        if($doc_id_ocupado == $docente_id && $hora_inicio < $horas['fin'] && $hora_fin > $horas['inicio']) {
+                            $conflicto = true; break;
+                        }
+                    }
+                    if($conflicto) break;
+                    foreach($data['espacios'] as $esp_key_ocupado => $horas) {
+                        if($esp_key_ocupado == $espacio_key && $hora_inicio < $horas['fin'] && $hora_fin > $horas['inicio']) {
+                            $conflicto = true; break;
+                        }
+                    }
+                    if($conflicto) break;
+                }
+
+                if ($conflicto) continue;
                 if (($docentes_info[$docente_id]['horas_asignadas'] + $costo_uc) > $docentes_info[$docente_id]['max_horas']) continue;
-                if (isset($ocupacion_global[$key_slot]['docentes'][$docente_id])) continue;
-                if (isset($ocupacion_global[$key_slot]['espacios'][$espacio_key])) continue;
 
                 $horario_generado[] = [
                     'uc_codigo'   => $uc['uc_codigo'], 
                     'doc_cedula'  => $docente_id, 
                     'espacio'     => $espacio, 
                     'dia'         => $dia, 
-                    'hora_inicio' => $hora_corta, 
-                    'hora_fin'    => substr($bloque['tur_horafin'], 0, 5)
+                    'hora_inicio' => substr($hora_inicio, 0, 5), 
+                    'hora_fin'    => substr($hora_fin, 0, 5)
                 ];
                 
+                $key_slot = $dia . '_' . $hora_inicio;
                 if (!isset($ocupacion_global[$key_slot])) $ocupacion_global[$key_slot] = ['docentes' => [], 'espacios' => []];
-                $ocupacion_global[$key_slot]['docentes'][$docente_id] = true;
-                $ocupacion_global[$key_slot]['espacios'][$espacio_key] = true;
+                $ocupacion_global[$key_slot]['docentes'][$docente_id] = ['inicio' => $hora_inicio, 'fin' => $hora_fin];
+                $ocupacion_global[$key_slot]['espacios'][$espacio_key] = ['inicio' => $hora_inicio, 'fin' => $hora_fin];
                 $docentes_info[$docente_id]['horas_asignadas'] += $costo_uc;
                 
                 break; 
@@ -557,26 +592,40 @@ class Seccion extends Connection
 
     private function validarConflictos($items_horario, $sec_codigo, $co)
     {
-        $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-        $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+        $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+        $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
 
         foreach ($items_horario as $item) {
             $dia_normalizado = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
-            $stmt_docente->execute([':doc_cedula' => $item['doc_cedula'], ':dia' => $dia_normalizado, ':inicio' => $item['hora_inicio'], ':sec_codigo' => $sec_codigo]);
-          
             
+            $params_docente = [
+                ':doc_cedula' => $item['doc_cedula'],
+                ':dia' => $dia_normalizado,
+                ':inicio' => $item['hora_inicio'],
+                ':fin' => $item['hora_fin'],
+                ':sec_codigo' => $sec_codigo
+            ];
+            $stmt_docente->execute($params_docente);
+            if ($conflicto = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
+                $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
+                return "Conflicto: El docente ya tiene una clase en la sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> que choca con este horario.";
+            }
+
             $espacio = $item['espacio'] ?? null;
             if ($espacio && !empty($espacio['numero'])) {
-                $stmt_espacio->execute([
+                $params_espacio = [
                     ':esp_numero' => $espacio['numero'],
                     ':esp_tipo' => $espacio['tipo'],
                     ':esp_edificio' => $espacio['edificio'],
                     ':dia' => $dia_normalizado,
                     ':inicio' => $item['hora_inicio'],
+                    ':fin' => $item['hora_fin'],
                     ':sec_codigo' => $sec_codigo
-                ]);
+                ];
+                $stmt_espacio->execute($params_espacio);
                 if ($conflicto = $stmt_espacio->fetch(PDO::FETCH_ASSOC)) {
-                    return "Conflicto: El espacio " . htmlspecialchars($espacio['numero']) . " ya está ocupado a esta hora en la sección IN" . htmlspecialchars($conflicto['sec_codigo']) . ".";
+                    $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
+                    return "Conflicto: El espacio " . htmlspecialchars($espacio['numero']) . " ya está ocupado a esta hora en la sección " . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . ".";
                 }
             }
         }
@@ -613,27 +662,40 @@ class Seccion extends Connection
         return null;
     }
 
-    public function ValidarClaseEnVivo($doc_cedula, $esp_numero, $esp_tipo, $esp_edificio, $dia, $hora_inicio, $sec_codigo, $uc_codigo = null)
+    public function ValidarClaseEnVivo($doc_cedula, $esp_numero, $esp_tipo, $esp_edificio, $dia, $hora_inicio, $hora_fin, $sec_codigo, $uc_codigo = null)
     {
-        if (empty($dia) || empty($hora_inicio) || empty($sec_codigo)) {
+        if (empty($dia) || empty($hora_inicio) || empty($hora_fin) || empty($sec_codigo)) {
             return ['conflicto' => false];
         }
         try {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $dia_normalizado = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $dia));
+            
+            $params = [
+                ':dia' => $dia_normalizado,
+                ':inicio' => $hora_inicio,
+                ':fin' => $hora_fin,
+                ':sec_codigo' => $sec_codigo
+            ];
 
             if (!empty($doc_cedula)) {
-                $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-                $stmt_docente->execute([':dia' => $dia_normalizado, ':inicio' => $hora_inicio, ':doc_cedula' => $doc_cedula, ':sec_codigo' => $sec_codigo]);
+                $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+                $params_docente = array_merge($params, [':doc_cedula' => $doc_cedula]);
+                $stmt_docente->execute($params_docente);
                 if ($conflicto = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
                     $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
                     return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "Conflicto: Docente ya asignado en sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];
                 }
             }
             if (!empty($esp_numero)) {
-                $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio = :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-                $stmt_espacio->execute([':dia' => $dia_normalizado, ':inicio' => $hora_inicio, ':esp_numero' => $esp_numero, ':esp_tipo' => $esp_tipo, ':esp_edificio' => $esp_edificio, ':sec_codigo' => $sec_codigo]);
+                $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
+                $params_espacio = array_merge($params, [
+                    ':esp_numero' => $esp_numero,
+                    ':esp_tipo' => $esp_tipo,
+                    ':esp_edificio' => $esp_edificio
+                ]);
+                $stmt_espacio->execute($params_espacio);
                 if ($conflicto = $stmt_espacio->fetch(PDO::FETCH_ASSOC)) {
                     $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
                     return ['conflicto' => true, 'tipo' => 'espacio', 'mensaje' => "Conflicto: Espacio ya ocupado en sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];

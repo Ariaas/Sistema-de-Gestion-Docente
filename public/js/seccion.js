@@ -125,28 +125,44 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
             }
 
             const cell = $("<td>").attr("data-franja-inicio", turno.tur_horainicio).attr("data-dia-nombre", dia);
+            
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se agrega esta línea para centrar verticalmente el contenido de la celda.
+            cell.css('vertical-align', 'middle');
+            // --- FIN DE LA MODIFICACIÓN ---
+
             if (!isViewOnly) {
                 cell.addClass("celda-horario");
             }
+
+            let bloques_span = 1;
 
             if (horarioMapeado.has(key_actual)) {
                 const {
                     html,
                     data
                 } = horarioMapeado.get(key_actual);
-                const bloques_span = data.bloques_span || 1;
-
-                if (bloques_span > 1) {
-                    cell.attr("rowspan", bloques_span);
-                    for (let i = 1; i < bloques_span; i++) {
-                        const turnoFuturo = turnosFiltrados[rowIndex + i];
-                        if (turnoFuturo) {
-                            const key_futuro = `${turnoFuturo.tur_horainicio.substring(0, 5)}-${dia_key}`;
-                            celdasProcesadas.add(key_futuro);
-                        }
+                bloques_span = data.bloques_span || 1;
+                cell.html(html).data("horario-data", data);
+            } else {
+                if (rowIndex % 2 === 0 && (rowIndex + 1) < turnosFiltrados.length) {
+                    const turno_siguiente = turnosFiltrados[rowIndex + 1];
+                    const key_siguiente = `${turno_siguiente.tur_horainicio.substring(0, 5)}-${dia_key}`;
+                    if (!horarioMapeado.has(key_siguiente)) {
+                        bloques_span = 2;
                     }
                 }
-                cell.html(html).data("horario-data", data);
+            }
+
+            if (bloques_span > 1) {
+                cell.attr("rowspan", bloques_span);
+                for (let i = 1; i < bloques_span; i++) {
+                    const turnoFuturo = turnosFiltrados[rowIndex + i];
+                    if (turnoFuturo) {
+                        const key_futuro = `${turnoFuturo.tur_horainicio.substring(0, 5)}-${dia_key}`;
+                        celdasProcesadas.add(key_futuro);
+                    }
+                }
             }
             row.append(cell);
         });
@@ -172,7 +188,6 @@ function validarEntradaHorario() {
     if (!currentClickedCell) return;
     const datosClaseActual = currentClickedCell.data("horario-data");
 
-   
     if (ucId) {
         let ucDuplicada = false;
         const claveEdicion = datosClaseActual ? `${datosClaseActual.hora_inicio.substring(0,5)}-${normalizeDayKey(datosClaseActual.dia)}` : null;
@@ -189,7 +204,7 @@ function validarEntradaHorario() {
             const nombreUc = ucInfo ? ucInfo.uc_nombre : `código ${ucId}`;
             $('#conflicto-uc-warning').html(`<strong>Inválido:</strong> La UC <strong>${nombreUc}</strong> ya fue asignada. Una UC solo puede ser asignada una vez por horario.`).show();
             $("#btnGuardarClase").prop("disabled", true);
-            return; 
+            return;
         }
     }
 
@@ -197,14 +212,17 @@ function validarEntradaHorario() {
         return;
     }
 
-  
     const franjaInicioActual = currentClickedCell.data("franja-inicio");
     const indiceTurnoActual = allTurnos.findIndex(t => t.tur_horainicio === franjaInicioActual);
-    
-    if (indiceTurnoActual === -1) return;
+    const bloques = parseInt($("#modalBloquesClase").val(), 10) || 1;
+
+    if (indiceTurnoActual === -1 || (indiceTurnoActual + bloques) > allTurnos.length) {
+        return; 
+    }
 
     const horaInicio = allTurnos[indiceTurnoActual].tur_horainicio;
-    
+    const horaFin = allTurnos[indiceTurnoActual + bloques - 1].tur_horafin;
+
     const espId = JSON.parse(espIdJson);
     const datos = new FormData();
     datos.append("accion", "validar_clase_en_vivo");
@@ -214,10 +232,11 @@ function validarEntradaHorario() {
     datos.append("esp_edificio", espId.edificio);
     datos.append("dia", dia);
     datos.append("hora_inicio", horaInicio);
+    datos.append("hora_fin", horaFin);
     datos.append("sec_codigo", secId);
     datos.append("uc_codigo", ucId);
 
-     $.ajax({
+    $.ajax({
         url: "",
         type: "POST",
         data: datos,
@@ -272,7 +291,7 @@ function onCeldaHorarioClick() {
         $("#modalBloquesClase").val(data.bloques_span || 1);
         $("#btnEliminarEntrada").show();
     } else {
-        $("#modalBloquesClase").val(1);
+        $("#modalBloquesClase").val(2);
         $("#btnEliminarEntrada").hide();
     }
     $("#modalEntradaHorario").modal("show");
