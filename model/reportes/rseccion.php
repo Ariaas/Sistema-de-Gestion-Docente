@@ -11,7 +11,7 @@ class SeccionReport extends Connection
     public function setFase($valor) { $this->fase = trim($valor); }
     public function setTrayecto($valor) { $this->trayecto = trim($valor); }
     
-   
+    
     public function getAniosActivos() {
         try {
             $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
@@ -56,18 +56,19 @@ class SeccionReport extends Connection
         try {
             $params = [':anio_param' => $this->anio];
             
-          
             $sql_base = "SELECT
                             uh.sec_codigo,
                             u.uc_trayecto,
                             uh.hor_dia,
-                            CONCAT(uh.hor_horainicio, ':00') as hor_horainicio,
-                            CONCAT(uh.hor_horafin, ':00') as hor_horafin,
+                            uh.hor_horainicio,
+                            uh.hor_horafin,
                             u.uc_nombre,
+                            uh.esp_tipo,
                             CASE
-    WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('Lab. ', uh.esp_numero, ' - ', uh.esp_edificio)
-    ELSE CONCAT(uh.esp_tipo, ' ', uh.esp_numero, ' (', uh.esp_edificio, ')')
-END AS esp_codigo,
+                                WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('L-', uh.esp_numero)
+                                WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
+                                ELSE uh.esp_numero
+                            END AS esp_codigo,
                             (
                                 SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
                                 FROM uc_docente ud
@@ -115,11 +116,11 @@ END AS esp_codigo,
     }
 
     public function getTurnosCompletos() {
-    try {
-        $sql = "SELECT tur_nombre, tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_estado = 1 ORDER BY tur_horaInicio ASC";
-        $stmt = $this->con()->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) { return []; }
-}
+		try {
+			$sql = "SELECT tur_nombre, tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_estado = 1 ORDER BY tur_horaInicio ASC";
+			$stmt = $this->con()->prepare($sql);
+			$stmt->execute();
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		} catch (PDOException $e) { return []; }
+	}
 }
