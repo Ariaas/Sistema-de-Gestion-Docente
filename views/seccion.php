@@ -52,9 +52,9 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         data-count-mallas="<?= $countMallas ?? 0 ?>">
 
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
-            <h2 class="text-primary text-center mb-4">Gestionar Sección</h2>
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Sección</h2>
             <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
-                 <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button>
+                <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button>
                 <button class="btn btn-success px-4" id="btnIniciarRegistro">Registrar Sección</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 900px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
@@ -89,10 +89,10 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div class="col-md-6">
                                         <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
                                         <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4" pattern="\d{4}" title="El código debe contener exactamente 4 números." oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                                        
+
                                         <div id="alerta-turno" class="form-text text-danger p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
-                                        
-                                        <div id="alerta-cohorte" class="form-text text-muted p-1 mt-1 text-center"  style="display:none; font-size: 0.85em;"></div>
+
+                                        <div id="alerta-cohorte" class="form-text text-muted p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
@@ -108,10 +108,10 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <?php
                                             if (!empty($anios)) {
                                                 foreach ($anios as $anio) {
-                                                   
+
                                                     $value = htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo'], ENT_QUOTES);
 
-                                               
+
                                                     $text = htmlspecialchars($anio['ani_anio'], ENT_QUOTES);
 
                                                     echo "<option value='{$value}'>{$text}</option>";
@@ -297,7 +297,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 </select>
                                 <div id="conflicto-espacio-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="modalBloquesClase" class="form-label">Duración de la Clase:</label>
                                 <select class="form-select" id="modalBloquesClase">
