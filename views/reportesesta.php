@@ -51,25 +51,52 @@ if (!$puede_registrar) {
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
 
                 <div class="col">
-                    <a href="?pagina=reportesnor" class="dashboard-card">
+                    <a href="?pagina=Daprobados" class="dashboard-card">
                         <div class="icon-circle">
-                            <img src="public/assets/icons/user-graduate-solid.svg" alt="Reportes ODS">
+                            <img src="public/assets/icons/user-graduate-solid.svg" alt="Reporte Unidad Curricular">
                         </div>
-                        <h5>Reportes Organizacion Docente</h5>
+                        <h5>Reporte Aprobados Directos</h5>
                     </a>
                 </div>
 
                 <div class="col">
-                    <a href="?pagina=reportesesta" class="dashboard-card">
+                    <a href="?pagina=rAprobados" class="dashboard-card">
                         <div class="icon-circle">
-                            <img src="public/assets/icons/building-solid.svg" alt="Reporte estadisticos">
+                            <img src="public/assets/icons/building-solid.svg" alt="Reporte de horarios">
                         </div>
-                        <h5>Reportes estadisticos</h5>
+                        <h5>Reporte Aprobados Totales</h5>
                     </a>
                 </div>
 
-                
-            </div>
+                <div class="col">
+                    <a href="?pagina=rPer" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte PER">
+                        </div>
+                        <h5>Reporte PER</h5>
+                    </a>
+                </div>
+
+                      <div class="col">
+                    <a href="?pagina=rReprobados" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte Reprobados">
+                        </div>
+                        <h5>Reporte Reprobados</h5>
+                    </a>
+                </div>
+
+                  <div class="col">
+                    <a href="?pagina=reporteG" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
+                        </div>
+                        <h5>Reporte General</h5>
+                    </a>
+                </div>
+
+
+               
         </section>
     </main>
     <?php require_once("public/components/footer.php"); ?>

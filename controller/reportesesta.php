@@ -4,5 +4,3 @@ if (is_file("views/" . $pagina . ".php")) {
 } else {
     echo "pagina en construccion";
 }
-
-?>

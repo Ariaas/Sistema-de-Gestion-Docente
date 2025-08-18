@@ -126,16 +126,7 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                     </li>
                 <?php endif; ?>
 
-                <?php if ($tiene_permiso_reportes_estadisticos): ?>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle <?php echo is_active($paginas_reportes_estadisticos, $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Reportes Estadísticos</a>
-                        <ul class="dropdown-menu">
-                            <?php foreach ($reportes_estadisticos_items as $nombre => $pagina): ?>
-                                <li><a class="dropdown-item <?php echo is_active($pagina, $pagina_actual); ?>" href="?pagina=<?php echo $pagina; ?>"><?php echo $nombre; ?></a></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </li>
-                <?php endif; ?>
+               
 
                
 
