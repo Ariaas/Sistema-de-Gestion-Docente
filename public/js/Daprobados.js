@@ -6,7 +6,7 @@ $(document).ready(function() {
     const hayDatos = $('body').data('hay-datos');
     
     if (!hayDatos) {
-        muestraMensaje('info', null, 'Sin Datos para Reportes', 'Actualmente no existen datos de aprobados registrados para generar un reporte. Por favor, vaya al módulo Resguardar Notas para ingresar los datos.');
+        muestraMensaje('info', null, 'Sin Datos para Reportes', 'Actualmente no existen datos de Aprobados registrados para generar un reporte. Por favor, vaya al módulo Resguardar Notas para ingresar los datos.');
     }
    
     const colorPalette = [
