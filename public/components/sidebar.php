@@ -41,7 +41,7 @@ $gestion_items = [
     'Seccion' => 'seccion',
     'Unidad Curricular' => 'uc',
     'Malla Curricular' => 'mallacurricular'
-   /* 'Horario Docente' => 'horariodocente'*/
+    /* 'Horario Docente' => 'horariodocente'*/
 ];
 
 $reportes_estadisticos_items = [
@@ -53,7 +53,7 @@ $reportes_estadisticos_items = [
 ];
 
 $mantenimiento_permisos = ['Usuario', 'Rol', 'Bitacora', 'backup'];
-$config_permisos = ['Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad','año'];
+$config_permisos = ['Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas', 'Actividad', 'año'];
 
 $tiene_permiso_gestion = false;
 $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedula']);
@@ -126,33 +126,39 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                     </li>
                 <?php endif; ?>
 
-               
 
-               
+
+
+
 
                 <?php if ($tiene_permiso_admin) : ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes', 'archivo'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                             <?php if ($docente_asignado): ?>
-                                <?php endif; ?>
+                            <?php endif; ?>
                             <?php if ($tiene_permiso_config_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
                             <?php endif; ?>
                             <?php if ($tiene_permiso_mantenimiento_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('mantenimiento', $pagina_actual); ?>" href="?pagina=mantenimiento">Mantenimiento</a></li>
                             <?php endif; ?>
-                            <?php if ($tiene_permiso_reportes_subitem): ?>
-                                <li><a class="dropdown-item <?php echo is_active('reportes', $pagina_actual); ?>" href="?pagina=reportes">Reportes</a></li>
-                            <?php endif; ?>
                         </ul>
                     </li>
                 <?php endif; ?>
+                <!-- Reportes Dropdown (Standalone) -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle <?php echo is_active(['reportesnor', 'reportesesta'], $pagina_actual); ?>" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Reportes</a>
+                    <ul class="dropdown-menu" aria-labelledby="reportesDropdown">
+                        <li><a class="dropdown-item <?php echo is_active('reportesnor', $pagina_actual); ?>" href="?pagina=reportesnor">Reportes Organización Docente</a></li>
+                        <li><a class="dropdown-item <?php echo is_active('reportesesta', $pagina_actual); ?>" href="?pagina=reportesesta">Reportes estadísticos</a></li>
+                    </ul>
+                </li>
 
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle <?php echo is_active(['preguntas', 'manual_usuario'], $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Ayuda</a>
                     <ul class="dropdown-menu">
-                        
+
                         <li><a class="dropdown-item <?php echo is_active('manual_usuario', $pagina_actual); ?>" href="?pagina=manual_usuario">Manual de Usuario</a></li>
                     </ul>
                 </li>
@@ -183,7 +189,7 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                     </ul>
                 </li>
             </ul>
-            </div>
+        </div>
     </div>
 </nav>
 
