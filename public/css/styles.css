@@ -1,19 +1,17 @@
-/* Asegura que el footer esté abajo */
 html {
-    height: 100%; /* Asegura que el HTML ocupe toda la altura */
+    height: 100%;
 }
 
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    margin: 0; /* Elimina márgenes */
+    margin: 0;
     font-family: Arial, sans-serif;
-    overflow-x: hidden; /* Garantía final contra el desbordamiento */
-    background-color: #f8f9fa; /* Gris claro para el fondo del dashboard */
+    overflow-x: hidden;
+    background-color: #f8f9fa;
 }
 
-/* --- Estilos del Dashboard Principal --- */
 .dashboard-header {
     margin-bottom: 2.5rem;
 }
@@ -34,9 +32,9 @@ body {
     border: none;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    text-align: center;
+    text-align: center; 
     padding: 2rem 1.5rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Transición más sutil y específica */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     text-decoration: none;
     display: block;
     color: #343a40;
@@ -45,7 +43,6 @@ body {
 .dashboard-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    /* Se elimina el cambio de color del texto para que no sea tan brusco */
 }
 
 .dashboard-card .icon-circle {
@@ -56,22 +53,29 @@ body {
     align-items: center;
     justify-content: center;
     margin-bottom: 1.5rem;
-    background-color: #e9f2ff; /* Azul muy claro de fondo */
+    background-color: #e9f2ff;
     transition: background-color 0.2s ease;
 }
 
 .dashboard-card:hover .icon-circle {
-    background-color: #0d6efd; /* Azul principal en hover */
+    background-color: #0d6efd;
 }
 
 .dashboard-card .icon-circle img {
     width: 32px;
     height: 32px;
-    filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg); /* Icono azul */
+    filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);
 }
 
+.dashboard-card .icon-circle img[src$="user-graduate-solid.svg"],
+.dashboard-card .icon-circle img[src$="screwdriver-wrench-solid.svg"],
+.dashboard-card .icon-circle img[src$="book-solid.svg"] {
+    filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);
+}
+
+
 .dashboard-card:hover .icon-circle img {
-    filter: invert(1); /* Icono blanco en hover */
+    filter: invert(1);
 }
 
 .dashboard-card h5 {
@@ -81,17 +85,17 @@ body {
 }
 
 h1{
-    font-size: 1.8rem; /* Tamaño del título ajustado */
-    margin-bottom: 10px; /* Espaciado inferior */
-    text-align: left; /* Alineado a la izquierda */
-    color: #343a40; /* Color del texto */
-    font-weight: 600; /* Un poco menos grueso */
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    text-align: left;
+    color: #343a40;
+    font-weight: 600; 
 }
 
 .main-content {
     flex-grow: 1;
     padding: 1.5rem;
-    padding-top: 90px; /* Espacio para la navbar (70px) + un poco de margen */
+    padding-top: 90px; 
     width: 100%;
 }
 
@@ -99,35 +103,34 @@ h1{
     flex-grow: 1;
 }
 
-/* Estilos para las tarjetas de la página principal */
 .card-tabla {
-    border: none; /* Sin borde */
-    border-radius: 12px; /* Bordes más redondeados */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Sombra más sutil */
-    transition: transform 0.2s, box-shadow 0.2s; /* Transición para hover */
-    background-color: #fff; /* Fondo blanco */
+    border: none; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
+    transition: transform 0.2s, box-shadow 0.2s; 
+    background-color: #fff; 
 }
 
 .card-tabla:hover {
-    transform: translateY(-5px); /* Eleva la tarjeta al pasar el mouse */
-    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+    transform: translateY(-5px); 
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1); 
 }
 
 .card-title {
-    font-size: 1rem; /* Tamaño del título */
-    font-weight: 500; /* Peso normal */
-    color: #495057; /* Color del texto gris oscuro */
+    font-size: 1rem; 
+    font-weight: 500; 
+    color: #495057; 
 }
 
 .card-text {
-    font-size: 0.95rem; /* Tamaño del texto */
-    color: var(--text); /* Color gris para el texto */
-    margin-bottom: 15px; /* Espaciado debajo del icono */
-    filter: brightness(0) invert(1); /* Íconos de tarjeta blancos */
+    font-size: 0.95rem; 
+    color: var(--text); 
+    margin-bottom: 15px; 
+    filter: brightness(0) invert(1); 
 }
 
 .card-body {
-    padding: 20px; /* Espaciado interno */
+    padding: 20px;
 }
 
 .a-cards{
@@ -135,73 +138,68 @@ h1{
 }
 
 .row-cols-1 .col {
-    margin-bottom: 20px; /* Espaciado entre tarjetas en pantallas pequeñas */
+    margin-bottom: 20px;
 }
 
 @media (max-width: 768px) {
-    /* Ya no es necesario, se maneja con flexbox y padding */
 }
 
 @media (max-width: 480px) {
-    /* Ya no es necesario, se maneja con flexbox y padding */
 }
 
 .custom-footer {
     background-color: #fff;
     border-top: 1px solid #dee2e6;
     padding: 1rem 0;
-    width: 100%;
-    margin-top: auto; /* La magia de Flexbox para empujar al fondo */
+    width: 100%; 
+    margin-top: auto;
 }
 
 .custom-footer p,
 .custom-footer small {
-    margin: 0; /* Elimina márgenes */
+    margin: 0; 
 }
 
-/* Estilos generales para las cartas */
 .custom-card {
-    border-radius: 12px; /* Bordes redondeados */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-    transition: transform 0.3s, box-shadow 0.3s; /* Transición suave */
-    color: white; /* Texto blanco */
+    border-radius: 12px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    transition: transform 0.3s, box-shadow 0.3s; 
+    color: white; 
     background-color: #007bff;
 }
 
 .custom-card:hover {
-    transform: translateY(-10px); /* Eleva la tarjeta al pasar el mouse */
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra más intensa */
+    transform: translateY(-10px); 
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); 
     background-color: #0056b3;
 }
 
 .card-icon {
-    font-size: 3rem; /* Tamaño grande para el icono */
-    margin-bottom: 15px; /* Espaciado debajo del icono */
-    filter: brightness(0) invert(1); /* Íconos de tarjeta blancos */
+    font-size: 3rem; 
+    margin-bottom: 15px; 
+    filter: brightness(0) invert(1); 
 }
 
-/* Mantener los íconos del navbar en su color original */
 .navbar .icon img {
     filter: none;
 }
 
-/* Colores personalizados para cada carta */
+
 .card-principal {
-    background-color: #007bff; /* Azul */
-    color: #ffff; /* Texto blanco para contraste */
+    background-color: #007bff; 
+    color: #ffff; 
 }
 
 table {
-    width: 100%; /* Asegura que la tabla ocupe todo el ancho */
-    border-collapse: collapse; /* Elimina espacios entre celdas */
-    margin-top: 20px; /* Espaciado superior */
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 20px; 
 }
 
 .table-responsive {
   overflow-x: auto;
 }
 
-/* DataTable visual minimalista, elegante y responsiva */
 .datatable-ui {
   background: #fafdff;
   border-radius: 18px;
@@ -277,7 +275,6 @@ table {
   border-color: #b02a37;
 }
 
-/* Controles de DataTable (Mostrar y Buscar) más bonitos */
 .datatable-ui .dataTables_length label,
 .datatable-ui .dataTables_filter label {
   font-weight: 500;
@@ -304,20 +301,18 @@ table {
   margin-left: 0.3rem;
 }
 
-/* Info de DataTable (Mostrando X de Y) bonito y centrado */
 .datatable-ui .dataTables_info {
-  padding: 0.5rem 1rem; /* Padding aumentado */
+  padding: 0.5rem 1rem;
   color: #6c757d;
   font-size: 0.9rem;
 }
 
-/* Paginación DataTable reutilizable y responsiva */
-.datatable-ui .dataTables_paginate,
-.dataTables_paginate {
+
+.datatable-ui .dataTables_paginate, .dataTables_paginate {
   width: 100%;
   display: flex;
   justify-content: center !important;
-  align-items: center;
+  align-items: center; 
   margin-top: 2rem;
   flex-wrap: wrap;
   text-align: center;
@@ -377,7 +372,6 @@ table {
   opacity: 0.7;
 }
 
-/* Responsive para tablas y paginación */
 @media (max-width: 900px) {
   .datatable-ui {
     padding: 0.5rem 0.5rem 1.5rem 0.5rem;
@@ -407,15 +401,13 @@ table {
   }
 }
 
-/* =================================
-   NUEVOS ESTILOS PÁGINA DE LOGIN
-   ================================= */
+
 .login-section {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f8f9fa; /* Mismo fondo gris que el dashboard */
+    background-color: #f8f9fa;
 }
 
 .login-container {
@@ -444,8 +436,8 @@ table {
 .login-graphic img {
     width: 120px;
     margin-bottom: 1.5rem;
-    filter: brightness(0) invert(1); /* Hace el logo blanco */
-    opacity: 0.9; /* Un poco transparente para integrarse mejor */
+    filter: brightness(0) invert(1); 
+    opacity: 0.9; 
 }
 
 .login-graphic h2 {
@@ -472,7 +464,7 @@ table {
     font-weight: 600;
     color: #333;
     margin-bottom: 0.5rem;
-}
+} 
 
 .login-form-wrapper p {
     color: #6c757d;
@@ -487,7 +479,7 @@ table {
 .login-form-wrapper .form-control {
     border-radius: 0.5rem;
     border: 1px solid #ced4da;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1rem; 
     font-size: 1rem;
     transition: all 0.2s;
 }
@@ -521,14 +513,13 @@ table {
     text-decoration: none;
 }
 .login-form-wrapper .forgot-password-link:hover {
-    text-decoration: underline;
+    text-decoration: underline; 
 }
 
-/* Responsive para el nuevo Login */
 @media (max-width: 768px) {
     .login-container {
         flex-direction: column;
-        margin: 1rem;
+        margin: 1rem; 
     }
     .login-graphic, .login-form-wrapper {
         flex-basis: 100%;
@@ -536,13 +527,9 @@ table {
     }
 }
 
-/* =====================
-   LOGIN PAGE STYLES
-   ===================== */
 .login-body-bg {
     min-height: 100vh;
-  /* fondo de gradiente */
-    background: linear-gradient(135deg, #0d6efd 0%, #1a4979 100%);
+    background: linear-gradient(135deg, #0d6efd 0%, #1a4979 100%); 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -552,7 +539,7 @@ table {
     background: #fff;
     padding: 2.5rem 2rem 2rem 2rem;
     border-radius: 1.2rem;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08); 
     max-width: 370px;
     width: 100%;
     margin: 2rem auto;
@@ -564,7 +551,7 @@ table {
 .login-title {
     font-size: 2rem;
     font-weight: 600;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.5rem; 
     color: #222;
     text-align: center;
 }
@@ -577,7 +564,7 @@ table {
 .login-card .form-control {
     border-radius: 0.5rem;
     border: 1px solid #cfd8dc;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.2rem; 
     font-size: 1rem;
     padding: 0.7rem 1rem;
     background: #f8fafc;
@@ -587,7 +574,7 @@ table {
 .login-card .form-control:focus {
     border-color: #1976d2;
     box-shadow: 0 0 0 2px #1976d220;
-    background: #fff;
+    background: #fff; 
 }
 
 .login-card .btn-primary {
@@ -597,7 +584,7 @@ table {
     font-size: 1.1rem;
     font-weight: 500;
     padding: 0.7rem 0;
-    margin-top: 0.5rem;
+    margin-top: 0.5rem; 
     transition: background 0.2s;
 }
 
@@ -620,21 +607,19 @@ footer {
   text-align: center;
   padding: 10px 0;
   position: relative;
-  bottom: 0;
+  bottom: 0; 
   width: 100%;
-  z-index: 10; /* Lower than the sidebar */
+  z-index: 10;
 }
 
-/* Fix for DataTable header and body alignment */
 .dataTables_wrapper .dataTables_scrollHeadInner {
     width: 100% !important;
 }
 
 .dataTables_wrapper .dataTables_scrollBody {
-    overflow-x: auto !important;
+    overflow-x: auto !important; 
 }
 
-/* Ensure table responsiveness */
 .table {
     width: 100% !important;
     table-layout: auto !important;
@@ -677,36 +662,29 @@ footer {
             gap: 10px;
         }
 
-/* Ajustes para la nueva navbar */
 .navbar-custom {
-    background-color: #fff; /* Navbar blanca */
-    box-shadow: 0 2px 4px rgba(0,0,0,.04); /* Sombra muy sutil */
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,.04);
     border-bottom: 1px solid #dee2e6;
 }
 
 .navbar-custom .navbar-brand span {
-    color: #0d6efd; /* Texto del logo en azul */
+    color: #0d6efd;
     font-weight: 600;
 }
 
 .navbar-custom .nav-link {
-    color: #495057; /* Texto de los links gris oscuro */
+    color: #495057; 
     font-weight: 500;
 }
 
 .navbar-custom .nav-link:hover,
-.navbar-custom .nav-link.active {
-    color: #0d6efd; /* Color azul para el hover y el link activo */
+.navbar-custom .nav-link.active { 
+    color: #0d6efd;
 }
 
 .navbar-custom .navbar-toggler {
     border-color: transparent;
-}
-
-.navbar-custom .navbar-toggler-icon {
-    /* El icono de hamburguesa de bootstrap hereda el color via background-image y filter,
-       para cambiarlo a oscuro es más fácil sobreescribir el SVG */
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 0.55)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 .navbar-custom .dropdown-menu {
@@ -721,7 +699,7 @@ footer {
 
 .navbar-custom .dropdown-item:hover {
     background-color: #f8f9fa;
-    color: #0d6efd;
+    color: #0d6efd; 
 }
 
 .navbar {
@@ -736,14 +714,12 @@ footer {
     border-radius: .5rem;
 }
 
-
-/* Estilos para los nuevos botones con iconos */
 .btn-icon {
     border: none;
-    padding: 0.5rem; /* Padding uniforme */
+    padding: 0.5rem;
     width: 32px;
     height: 32px;
-    border-radius: 50%; /* Botones circulares */
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -753,25 +729,25 @@ footer {
 .btn-icon img {
     width: 16px;
     height: 16px;
-    filter: brightness(0) invert(1); /* Iconos blancos */
+    filter: brightness(0) invert(1);
 }
-
 
 
 .btn-icon.btn-edit {
-    background-color: #ffc107; /* Amarillo de Bootstrap */
+    background-color: #ffc107;
 }
 
 .btn-icon.btn-asignar {
-    background-color: #356e0f; /* Amarillo de Bootstrap */
+    background-color: #356e0f;
 }
 
+ 
 .btn-icon.btn-delete {
-    background-color: #dc3545; /* Rojo de Bootstrap */
+    background-color: #dc3545;
 }
 
 .btn-icon.btn-info {
-    background-color: #0d6efd; /* Azul de Bootstrap */
+    background-color: #0d6efd; 
 }
 
 .btn-icon.btn-asignar:hover {
@@ -794,21 +770,20 @@ footer {
     
     transform: scale(1.1);
 }
-/* --- Estilo compacto y moderno para DataTable --- */
 
-/* Contenedor principal de la tabla */
+
 .datatable-ui {
     padding: 1.5rem;
     background-color: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 24px 0 rgba(13,110,253,0.07);
     border: 1.5px solid #e3eafc;
-    width: 100%; /* Asegura que ocupe el espacio disponible */
-    max-width: 1100px; /* Ancho máximo para pantallas grandes */
-    margin: 0 auto; /* Centrar el contenedor */
+    width: 100%; 
+    max-width: 1100px; 
+    margin: 0 auto;
 }
 
-/* Forzar la unificación de la tabla */
+
 .datatable-ui .table {
     border-collapse: collapse !important;
     width: 100% !important;
@@ -830,15 +805,13 @@ footer {
     background-color: #f4faff;
 }
 
-/* Controles de la tabla (Buscar y Mostrar) */
 .dataTables_wrapper .row:first-child {
     margin-bottom: 1rem;
 }
 .dataTables_filter {
-    text-align: right; /* Alinear el buscador a la derecha */
+    text-align: right; 
 }
 
-/* --- Controles inferiores (Info y Paginación) --- */
 .dataTables_wrapper .row:last-child {
     display: flex;
     justify-content: space-between;
@@ -886,16 +859,13 @@ footer {
     color: #b6d4fe;
     cursor: not-allowed;
 }
-
 .datatable-ui .paginate_button.disabled:hover {
     background: transparent;
-    border-color: #b6d4fe;
 }
 .datatable-ui .paginate_button.disabled:hover a {
     color: #b6d4fe;
 }
 
-/* Responsive para tablas y paginación */
 @media (max-width: 900px) {
     .datatable-ui {
         padding: 0.5rem 0.5rem 1.5rem 0.5rem;
@@ -925,19 +895,13 @@ footer {
     }
 }
 
-/* --- Estilos Responsivos --- */
-
-/* Para tablets y dispositivos más pequeños */
 @media (max-width: 768px) {
-    /* Apilar cabecera de la página */
     .main-content section > .d-flex.justify-content-between {
         flex-direction: column;
         align-items: stretch !important;
         gap: 1rem;
     }
 
-    /* Apilar controles de la DataTable */
-    .dataTables_wrapper .row:first-child,
     .dataTables_wrapper .row:last-child {
         flex-direction: column;
         gap: 1rem;
@@ -954,7 +918,6 @@ footer {
     }
 }
 
-/* Responsive para tablas y paginación */
 @media (max-width: 900px) {
     .datatable-ui {
         padding: 0.5rem 0.5rem 1.5rem 0.5rem;
@@ -965,71 +928,63 @@ footer {
     }
 }
 
-/* --- Estilos Responsivos --- */
 .page-header {
     text-align: center;
     margin-bottom: 2rem;
 }
 
 .page-header h2 {
-    font-size: 2rem;
+    font-size: 2rem; 
     font-weight: 600;
     color: #343a40;
 }
 
 .page-header .btn {
-    margin-top: 1rem;
+    margin-top: 1rem; 
 }
 
-/* Estilos base para todos los botones de icono (asegura que son pequeños y centrados) */
 .btn-icon {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    width: 30px;           
-    height: 30px;          
-    padding: 0;            
-    border: none;          
-    border-radius: 50%;    
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 0;          
-    text-decoration: none; 
-    transition: background-color 0.2s ease, transform 0.1s ease; 
+    font-size: 0;
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-/* Estilos para las imágenes SVG/PNG dentro de los botones de icono */
 .btn-icon img,
 .btn-icon svg {
-    width: 16px;  
-    height: 16px; 
-    display: block; 
+    width: 16px;
+    height: 16px;
+    display: block;
 }
 
-/* Estilos de color y hover para cada tipo de botón */
-
-/* Botón de Información/Ver Horario (azul) - Más oscuro */
 .btn-icon.btn-info {
-    background-color: #0d6efd; /* Un azul más profundo que el #17a2b8 original */
+    background-color: #0d6efd;
     color: #fff;
 }
 .btn-icon.btn-info:hover {
-    background-color: #0b5ed7; /* Versión aún más oscura para el hover */
+    background-color: #0b5ed7; 
     transform: translateY(-1px);
 }
 
-/* Botón de Modificar (amarillo) - Más oscuro */
 .btn-icon.btn-warning {
-    background-color: #ffc107; /* Mantengo este color ya que es el amarillo estándar de Bootstrap. Podrías probar #d6a100 para más oscuro si este no es suficiente */
-    color: #fff; 
+    background-color: #ffc107;
+    color: #fff;
 }
 .btn-icon.btn-warning:hover {
-    background-color: #e0a800; /* Versión aún más oscura para el hover */
+    background-color: #e0a800; 
     transform: translateY(-1px); 
 }
 
-/* Botón de Eliminar (rojo) - Más oscuro */
 .btn-icon.btn-danger {
-    background-color: #dc3545; /* Mantengo este color ya que es el rojo estándar de Bootstrap. Podrías probar #a71d2a para más oscuro si este no es suficiente */
+    background-color: #dc3545;
     color: #fff;
 }
 .btn-icon.btn-danger:hover {
@@ -1037,7 +992,6 @@ footer {
     transform: translateY(-1px);
 }
 
-/* Botón de Asignar (si lo implementas y usas la clase 'btn-asignar') */
 .btn-icon.btn-asignar {
     background-color: #28a745; 
     color: #fff;
@@ -1047,7 +1001,6 @@ footer {
     transform: translateY(-1px);
 }
 
-/* Estilos para botones deshabilitados (si usas la lógica de PERMISOS) */
 .btn-icon[disabled] {
     opacity: 0.6;
     cursor: not-allowed;

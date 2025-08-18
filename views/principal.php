@@ -45,11 +45,6 @@ require_once 'public/components/head.php';
                         </a>
                     </div>
                 <?php endif; ?>
-
-
-
-
-
                 <?php if (tiene_permiso('Espacio', $permisos)) : ?>
                     <div class="col">
                         <a href="?pagina=espacios" class="dashboard-card">
@@ -64,7 +59,7 @@ require_once 'public/components/head.php';
                     <div class="col">
                         <a href="?pagina=seccion" class="dashboard-card">
                             <div class="icon-circle">
-                                <img src="public/assets/icons/people.svg" alt="Seccion">
+                                <img src="public/assets/icons/people-solid.svg" alt="Seccion">
                             </div>
                             <h5>Seccion</h5>
                         </a>
@@ -79,18 +74,16 @@ require_once 'public/components/head.php';
                             <h5>Unidad Curricular</h5>
                         </a>
                     </div>
-
-                    <?php if (tiene_permiso('Malla Curricular', $permisos)) : ?>
-                        <div class="col">
-                            <a href="?pagina=mallacurricular" class="dashboard-card">
-                                <div class="icon-circle">
-                                    <img src="public/assets/icons/journal-text.svg" alt="Malla Curricular">
-                                </div>
-                                <h5>Malla Curricular</h5>
-                            </a>
-                        </div>
-                    <?php endif; ?>
-
+                <?php endif; ?>
+                <?php if (tiene_permiso('Malla Curricular', $permisos)) : ?>
+                    <div class="col">
+                        <a href="?pagina=mallacurricular" class="dashboard-card">
+                            <div class="icon-circle">
+                                <img src="public/assets/icons/journal-text-solid.svg" alt="Malla Curricular">
+                            </div>
+                            <h5>Malla Curricular</h5>
+                        </a>
+                    </div>
                 <?php endif; ?>
                 <?php if (tiene_permiso('Reportes', $permisos)) : ?>
                     <div class="col">
