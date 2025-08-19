@@ -126,11 +126,6 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                     </li>
                 <?php endif; ?>
 
-
-
-
-
-
                 <?php if ($tiene_permiso_admin) : ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes', 'archivo'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
@@ -146,7 +141,8 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                         </ul>
                     </li>
                 <?php endif; ?>
-                <!-- Reportes Dropdown (Standalone) -->
+              
+                 <?php if ($tiene_permiso_reportes_estadisticos): ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle <?php echo is_active(['reportesnor', 'reportesesta'], $pagina_actual); ?>" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Reportes</a>
                     <ul class="dropdown-menu" aria-labelledby="reportesDropdown">
@@ -154,7 +150,7 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                         <li><a class="dropdown-item <?php echo is_active('reportesesta', $pagina_actual); ?>" href="?pagina=reportesesta">Reportes estadísticos</a></li>
                     </ul>
                 </li>
-
+                    <?php endif; ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle <?php echo is_active(['preguntas', 'manual_usuario'], $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Ayuda</a>
                     <ul class="dropdown-menu">

@@ -69,7 +69,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
 
             <div class="datatable-ui w-100" id="tablaMallaPrincipalContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
-                <div class="table-responsive" style="overflow-x: auto;">
+                
                     <table class="table table-striped table-hover w-100" id="tablamalla">
                         <thead>
                             <tr>
@@ -83,7 +83,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         </thead>
                         <tbody id="resultadoconsulta"></tbody>
                     </table>
-                </div>
+               
             </div>
         </section>
 

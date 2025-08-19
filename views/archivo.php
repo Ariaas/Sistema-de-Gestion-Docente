@@ -61,7 +61,7 @@
 
             <div class="w-100 datatable-ui" style="max-width: 1200px; margin: 0 auto 2rem auto; border: 1px solid #dee2e6; border-radius: .5rem; padding: 1.5rem 2rem;">
                 <h3 class="text-secondary mt-3 mb-4">Historial de Registros de Notas</h3>
-                <div class="table-responsive">
+               
                     <table class="table table-striped table-hover w-100 table-compact" id="tablaRegistros">
                         <thead>
                             <tr>
@@ -79,7 +79,7 @@
                         </thead>
                         <tbody id="resultadosRegistros"></tbody>
                     </table>
-                </div>
+                
             </div>
         </section>
 
