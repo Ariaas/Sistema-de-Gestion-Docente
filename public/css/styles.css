@@ -643,6 +643,11 @@ footer {
   width: 100% !important;
   table-layout: auto !important;
 }
+
+.table td.text-center {
+  white-space: nowrap;
+  min-width: 160px; 
+}
 .horario-detalle {
   display: none;
   margin-top: 20px;

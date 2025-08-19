@@ -62,11 +62,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Trayecto</th>
-                                <th>Eje</th>
                                 <th>Área</th>
-                                <th>Créditos</th>
-                                <th>Periodo</th>
-                                <th>Electiva</th>
+                                <th>Fase</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -266,6 +263,28 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         };
     </script>
     <script type="text/javascript" src="public/js/uc.js"></script>
+    <div class="modal fade" id="modalVerMasUC" tabindex="-1" aria-labelledby="modalVerMasUCLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalVerMasUCLabel">Detalles de Unidad Curricular</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group">
+                        <li class="list-group-item"><strong>Código:</strong> <span id="ucVerMasCodigo"></span></li>
+                        <li class="list-group-item"><strong>Nombre:</strong> <span id="ucVerMasNombre"></span></li>
+                        <li class="list-group-item"><strong>Trayecto:</strong> <span id="ucVerMasTrayecto"></span></li>
+                        <li class="list-group-item"><strong>Área:</strong> <span id="ucVerMasArea"></span></li>
+                        <li class="list-group-item"><strong>Eje:</strong> <span id="ucVerMasEje"></span></li>
+                        <li class="list-group-item"><strong>Créditos:</strong> <span id="ucVerMasCreditos"></span></li>
+                        <li class="list-group-item"><strong>Periodo:</strong> <span id="ucVerMasPeriodo"></span></li>
+                        <li class="list-group-item"><strong>Electiva:</strong> <span id="ucVerMasElectiva"></span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 
 </body>
