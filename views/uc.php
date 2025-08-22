@@ -55,21 +55,21 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
 
             <div class="datatable-ui w-100" id="tablaucContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
-               
-                    <table class="table table-striped table-hover w-100" id="tablauc">
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Nombre</th>
-                                <th>Trayecto</th>
-                                <th>Área</th>
-                                <th>Fase</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultadoconsulta1"></tbody>
-                    </table>
-               
+
+                <table class="table table-striped table-hover w-100" id="tablauc">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Trayecto</th>
+                            <th>Área</th>
+                            <th>Fase</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultadoconsulta1"></tbody>
+                </table>
+
             </div>
         </section>
 
@@ -203,7 +203,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                     </div>
                     <div class="modal-body">
                         <form method="post" id="f-asignar" autocomplete="off" class="needs-validation" novalidate>
-                            <div class="table-responsive mb-3">
+                            <div class="table-responsive mb-3" style="max-height: 300px; overflow-y: auto;">
                                 <table class="table table-hover w-100" id="tablaDocentesDisponibles">
                                     <thead>
                                         <tr>
@@ -219,7 +219,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <div class="row g-3 mt-3">
                                 <div class="col-md-12">
                                     <label class="form-label">Docentes a asignar:</label>
-                                    <ul id="carritoDocentes" class="list-group"></ul>
+                                    <ul id="carritoDocentes" class="list-group" style="max-height: 150px; overflow-y: auto;"></ul>
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center">
@@ -227,25 +227,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" tabindex="-1" role="dialog" id="modalVerDocentes">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="modalVerDocentesLabel">Docentes Asignados</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <h6 class="mb-3">Unidad Curricular: <span id="ucNombreModal" class="fw-bold"></span></h6>
-                        <ul class="list-group" id="listaDocentesAsignados">
-
-                        </ul>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -281,6 +262,40 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <li class="list-group-item"><strong>Periodo:</strong> <span id="ucVerMasPeriodo"></span></li>
                         <li class="list-group-item"><strong>Electiva:</strong> <span id="ucVerMasElectiva"></span></li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalDetallesUC" tabindex="-1" aria-labelledby="modalDetallesUCLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalDetallesUCLabel">Detalles de Unidad Curricular</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6>Detalles Generales</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item"><strong>Código:</strong> <span id="detallesUcCodigo"></span></li>
+                            <li class="list-group-item"><strong>Nombre:</strong> <span id="detallesUcNombre"></span></li>
+                            <li class="list-group-item"><strong>Trayecto:</strong> <span id="detallesUcTrayecto"></span></li>
+                            <li class="list-group-item"><strong>Área:</strong> <span id="detallesUcArea"></span></li>
+                            <li class="list-group-item"><strong>Eje:</strong> <span id="detallesUcEje"></span></li>
+                            <li class="list-group-item"><strong>Créditos:</strong> <span id="detallesUcCreditos"></span></li>
+                            <li class="list-group-item"><strong>Periodo:</strong> <span id="detallesUcPeriodo"></span></li>
+                            <li class="list-group-item"><strong>Electiva:</strong> <span id="detallesUcElectiva"></span></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h6 class="mb-3">Docentes Asignados a: <span id="ucDetallesNombreModal" class="fw-bold"></span></h6>
+                        <ul class="list-group" id="listaDocentesDetalles">
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

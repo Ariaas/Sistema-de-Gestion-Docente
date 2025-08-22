@@ -646,7 +646,7 @@ footer {
 
 .table td.text-center {
   white-space: nowrap;
-  min-width: 160px; 
+  min-width: 160px;
 }
 .horario-detalle {
   display: none;
@@ -770,6 +770,15 @@ footer {
 
 .btn-icon.btn-info {
   background-color: #0d6efd;
+}
+
+.btn-icon.btn-success {
+  background-color: #198754;
+}
+
+.btn-icon.btn-success:hover {
+  background-color: #157347;
+  transform: scale(1.1);
 }
 
 .btn-icon.btn-asignar:hover {

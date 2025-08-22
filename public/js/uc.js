@@ -594,74 +594,6 @@ function pone(pos, accion) {
   $("#modal1").modal("show");
 }
 
-function verDocentes(ucCodigo, ucNombre) {
-  var datos = new FormData();
-  datos.append("accion", "ver_docentes");
-  datos.append("codigo", ucCodigo);
-
-  $.ajax({
-    async: true,
-    url: "",
-    type: "POST",
-    contentType: false,
-    data: datos,
-    processData: false,
-    cache: false,
-    success: function (respuesta) {
-      try {
-        var lee = JSON.parse(respuesta);
-        if (lee.resultado === "ok" && lee.mensaje) {
-          $("#ucNombreModal").text(ucNombre);
-          var lista = $("#listaDocentesAsignados");
-          lista.empty();
-
-          if (lee.mensaje.length > 0) {
-            lee.mensaje.forEach(function (docente) {
-              var prefijo = docente.doc_prefijo || "";
-              var cedula = docente.doc_cedula || "";
-              var nombre = docente.doc_nombre || "";
-              var apellido = docente.doc_apellido || "";
-              var li = `
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>
-                                        ${prefijo}-${cedula}, ${nombre} ${apellido}
-                                    </span>
-                                    <button class="btn btn-danger btn-sm quitar-docente-uc" data-uccodigo="${ucCodigo}" data-doccedula="${cedula}" title="Quitar Docente">
-                                        Quitar
-                                    </button>
-                                </li>`;
-              lista.append(li);
-            });
-          } else {
-            lista.append(
-              '<li class="list-group-item">No hay docentes asignados a esta unidad curricular.</li>'
-            );
-          }
-
-          $("#modalVerDocentes").modal("show");
-        } else {
-          muestraMensaje(
-            "error",
-            4000,
-            "Error",
-            "No se pudieron cargar los docentes."
-          );
-        }
-      } catch (e) {
-        muestraMensaje(
-          "error",
-          4000,
-          "Error",
-          "Respuesta inválida del servidor: " + respuesta
-        );
-      }
-    },
-    error: function (solicitud, estado, error) {
-      muestraMensaje("error", 4000, "Error", "Error de conexión: " + error);
-    },
-  });
-}
-
 function enviaAjax(datos, accion = "") {
   $.ajax({
     async: true,
@@ -741,12 +673,7 @@ function enviaAjax(datos, accion = "") {
             const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${
               !PERMISOS.modificar ? "disabled" : ""
             }><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
-            const btnVerDocentes = `<button class="btn btn-icon btn-info" onclick="verDocentes('${
-              item.uc_codigo
-            }', '${item.uc_nombre}')" title="Ver Docentes" ${
-              !PERMISOS.modificar ? "disabled" : ""
-            }><img src="public/assets/icons/people.svg" alt="Ver Docentes"></button>`;
-            const btnVerMas = `<button class="btn btn-icon btn-info btn-ver-mas-uc" title="Ver más" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${periodoTexto}" data-electiva="${electivaTexto}"><img src="public/assets/icons/eye.svg" alt="Ver más"></button>`;
+            const btnDetalles = `<button class="btn btn-icon btn-info btn-detalles-uc" title="Ver Detalles" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${periodoTexto}" data-electiva="${electivaTexto}"><img src="public/assets/icons/eye.svg" alt="Ver Detalles"></button>`;
             tabla += `
               <tr data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${item.uc_periodo}" data-electiva="${item.uc_electiva}">
                 <td>${item.uc_codigo}</td>
@@ -755,11 +682,10 @@ function enviaAjax(datos, accion = "") {
                 <td>${item.area_nombre}</td>
                 <td>${periodoTexto}</td>
                 <td class="text-center">
-                  ${btnVerMas}
+                  ${btnDetalles}
                   ${btnModificar}
                   ${btnEliminar}
                   ${btnAsignar}
-                  ${btnVerDocentes}
                 </td>
               </tr>`;
           });
@@ -774,6 +700,80 @@ function enviaAjax(datos, accion = "") {
             $("#ucVerMasElectiva").text($(this).data("electiva"));
             $("#modalVerMasUC").modal("show");
           });
+
+          $(document).on("click", ".btn-detalles-uc", function () {
+            const data = $(this).data();
+            $("#detallesUcCodigo").text(data.codigo);
+            $("#detallesUcNombre").text(data.nombre);
+            $("#detallesUcTrayecto").text(data.trayecto);
+            $("#detallesUcArea").text(data.area);
+            $("#detallesUcEje").text(data.eje);
+            $("#detallesUcCreditos").text(data.creditos);
+            $("#detallesUcPeriodo").text(data.periodo);
+            $("#detallesUcElectiva").text(data.electiva);
+            $("#ucDetallesNombreModal").text(data.nombre);
+
+            var datos = new FormData();
+            datos.append("accion", "ver_docentes");
+            datos.append("codigo", data.codigo);
+
+            $.ajax({
+              async: true,
+              url: "",
+              type: "POST",
+              contentType: false,
+              data: datos,
+              processData: false,
+              cache: false,
+              success: function (respuesta) {
+                try {
+                  var lee = JSON.parse(respuesta);
+                  var lista = $("#listaDocentesDetalles");
+                  lista.empty();
+                  if (
+                    lee.resultado === "ok" &&
+                    lee.mensaje &&
+                    lee.mensaje.length > 0
+                  ) {
+                    lee.mensaje.forEach(function (docente) {
+                      var prefijo = docente.doc_prefijo || "";
+                      var cedula = docente.doc_cedula || "";
+                      var nombre = docente.doc_nombre || "";
+                      var apellido = docente.doc_apellido || "";
+                      var li = `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          <span>${prefijo}-${cedula}, ${nombre} ${apellido}</span>
+                          <button class="btn btn-danger btn-sm quitar-docente-uc" data-uccodigo="${data.codigo}" data-doccedula="${cedula}" title="Quitar Docente">
+                            Quitar
+                          </button>
+                        </li>`;
+                      lista.append(li);
+                    });
+                  } else {
+                    lista.append(
+                      '<li class="list-group-item">No hay docentes asignados a esta unidad curricular.</li>'
+                    );
+                  }
+                } catch (e) {
+                  $("#listaDocentesDetalles")
+                    .empty()
+                    .append(
+                      '<li class="list-group-item">Error al cargar los docentes.</li>'
+                    );
+                }
+                $("#modalDetallesUC").modal("show");
+              },
+              error: function () {
+                $("#listaDocentesDetalles")
+                  .empty()
+                  .append(
+                    '<li class="list-group-item">Error de conexión al buscar docentes.</li>'
+                  );
+                $("#modalDetallesUC").modal("show");
+              },
+            });
+          });
+
           $("#resultadoconsulta1").html(tabla);
           crearDT("#tablauc");
         } else if (lee.resultado == "registrar") {
@@ -810,8 +810,19 @@ function enviaAjax(datos, accion = "") {
         } else if (lee.resultado == "quitar") {
           muestraMensaje("success", 2000, "QUITAR", lee.mensaje);
           if (lee.uc_codigo) {
-            const ucNombre = $("#ucNombreModal").text();
-            verDocentes(lee.uc_codigo, ucNombre);
+            const liToRemove = $(
+              `#listaDocentesDetalles button[data-doccedula='${datos.get(
+                "doc_cedula"
+              )}']`
+            ).closest("li");
+            liToRemove.fadeOut(300, function () {
+              $(this).remove();
+              if ($("#listaDocentesDetalles li").length === 0) {
+                $("#listaDocentesDetalles").append(
+                  '<li class="list-group-item">No hay docentes asignados a esta unidad curricular.</li>'
+                );
+              }
+            });
           }
           Listar();
         } else if (lee.resultado == "error" || lee.resultado == "existe") {
