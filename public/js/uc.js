@@ -365,11 +365,29 @@ $(document).ready(function () {
   $("#creditosUC").on("keyup keydown", function () {
     $("#screditosUC").css("color", "");
     validarkeyup(
-      /^([3-9]|[1-9][0-9])$/,
+      /^([2-9]|[1-9][0-9])$/,
       $(this),
       $("#screditosUC"),
-      "Debe ser un número entre 3 y 99."
+      "Debe ser un número entre 2 y 99."
     );
+  });
+
+  $("#trayectoUC, #periodoUC, #electivaUC").on("change", function () {
+    if ($(this).val()) {
+      $(this).next("span").text("").hide();
+    }
+  });
+
+  $("#ejeUC").on("change", function () {
+    if ($(this).val()) {
+      $("#seje").text("").hide();
+    }
+  });
+
+  $("#areaUC").on("change", function () {
+    if ($(this).val()) {
+      $("#sarea").text("").hide();
+    }
   });
 
   $("#modal1").on("hidden.bs.modal", function () {
@@ -378,120 +396,118 @@ $(document).ready(function () {
   });
 
   $("#modal1").on("show.bs.modal", function () {
-    $(
-      "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC, #selectivaUC"
-    )
-      .text("")
-      .hide();
+    if ($("#proceso").text().trim() !== "MODIFICAR") {
+      $(
+        "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC, #selectivaUC"
+      )
+        .text("")
+        .hide();
+    }
   });
 });
 
 function validarenvio() {
   let esValido = true;
 
-  if ($("#codigoUC").val() == "" || $("#codigoUC").val() == null) {
-    $("#scodigoUC")
-      .text("El código debe tener entre 5 y 20 caracteres.")
-      .css("color", "");
-    $("#codigoUC").focus();
+  if (
+    validarkeyup(
+      /^[A-Za-z0-9-]{5,20}$/,
+      $("#codigoUC"),
+      $("#scodigoUC"),
+      "El código debe tener entre 5 y 20 caracteres."
+    ) === 0
+  ) {
+    if (esValido)
+      muestraMensaje(
+        "error",
+        4000,
+        "¡Error!",
+        "Error en el formato del código."
+      );
     esValido = false;
-  } else {
-    $("#scodigoUC").text("").hide();
-  }
-
-  if ($("#nombreUC").val() == "" || $("#nombreUC").val() == null) {
-    $("#snombreUC")
-      .text("El nombre debe tener entre 5 y 50 caracteres.")
-      .css("color", "");
-    $("#nombreUC").focus();
-    esValido = false;
-  } else {
-    $("#snombreUC").text("").hide();
   }
 
   if (
     validarkeyup(
-      /^([3-9]|[1-9][0-9])$/,
-      $("#creditosUC"),
-      $("#screditosUC"),
-      "Debe ser un número entre 3 y 99."
+      /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,50}$/,
+      $("#nombreUC"),
+      $("#snombreUC"),
+      "El nombre debe tener entre 5 y 50 caracteres."
     ) === 0
   ) {
-    $("#screditosUC")
-      .text("Las unidades de crédito deben ser entre 3 y 99.")
-      .css("color", "");
-    $("#creditosUC").focus();
+    if (esValido)
+      muestraMensaje(
+        "error",
+        4000,
+        "¡Error!",
+        "Error en el formato del nombre."
+      );
     esValido = false;
-  } else {
-    $("#screditosUC").text("").hide();
+  }
+
+  if (
+    validarkeyup(
+      /^([2-9]|[1-9][0-9])$/,
+      $("#creditosUC"),
+      $("#screditosUC"),
+      "Las unidades de crédito deben ser entre 2 y 99."
+    ) === 0
+  ) {
+    if (esValido)
+      muestraMensaje(
+        "error",
+        4000,
+        "¡Error!",
+        "Error en el formato de las unidades de crédito."
+      );
+    esValido = false;
   }
 
   if ($("#trayectoUC").val() == "" || $("#trayectoUC").val() == null) {
-    $("#strayectoUC").text("Debe seleccionar un trayecto.").css("color", "");
-    $("#trayectoUC").focus();
+    $("#strayectoUC").text("Debe seleccionar un trayecto.").show();
+    if (esValido)
+      muestraMensaje("error", 4000, "¡Error!", "Debe seleccionar un trayecto.");
     esValido = false;
   } else {
     $("#strayectoUC").text("").hide();
   }
 
-  const proceso = $("#proceso").text().trim();
-
   if ($("#ejeUC").val() == "" || $("#ejeUC").val() == null) {
-    let opcionEliminada = $("#ejeUC option:selected");
-    if (
-      opcionEliminada.length &&
-      opcionEliminada.prop("disabled") &&
-      proceso === "REGISTRAR"
-    ) {
-      $("#seje").text("Debe seleccionar un eje.").css("color", "").show();
-      $("#ejeUC").focus();
-      esValido = false;
-    } else if (opcionEliminada.length && opcionEliminada.prop("disabled")) {
-      $("#seje").text("").hide();
-    } else {
-      $("#seje").text("Debe seleccionar un eje.").css("color", "").show();
-      $("#ejeUC").focus();
-      esValido = false;
-    }
+    $("#seje").text("Debe seleccionar un eje.").show();
+    if (esValido)
+      muestraMensaje("error", 4000, "¡Error!", "Debe seleccionar un eje.");
+    esValido = false;
   } else {
     $("#seje").text("").hide();
   }
 
   if ($("#areaUC").val() == "" || $("#areaUC").val() == null) {
-    let opcionEliminadaArea = $("#areaUC option:selected");
-    if (
-      opcionEliminadaArea.length &&
-      opcionEliminadaArea.prop("disabled") &&
-      proceso === "REGISTRAR"
-    ) {
-      $("#sarea").text("Debe seleccionar un área.").css("color", "").show();
-      $("#areaUC").focus();
-      esValido = false;
-    } else if (
-      opcionEliminadaArea.length &&
-      opcionEliminadaArea.prop("disabled")
-    ) {
-      $("#sarea").text("").hide();
-    } else {
-      $("#sarea").text("Debe seleccionar un área.").css("color", "").show();
-      $("#areaUC").focus();
-      esValido = false;
-    }
+    $("#sarea").text("Debe seleccionar un área.").show();
+    if (esValido)
+      muestraMensaje("error", 4000, "¡Error!", "Debe seleccionar un área.");
+    esValido = false;
   } else {
     $("#sarea").text("").hide();
   }
 
   if ($("#periodoUC").val() == "" || $("#periodoUC").val() == null) {
-    $("#speriodoUC").text("Debe seleccionar un periodo.").css("color", "");
-    $("#periodoUC").focus();
+    $("#speriodoUC").text("Debe seleccionar un periodo.").show();
+    if (esValido)
+      muestraMensaje("error", 4000, "¡Error!", "Debe seleccionar un periodo.");
     esValido = false;
   } else {
     $("#speriodoUC").text("").hide();
   }
 
   if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
-    $("#selectivaUC").text("Debe seleccionar si es electiva.").css("color", "");
-    $("#electivaUC").focus();
+    $("#selectivaUC").text("Debe seleccionar si es electiva.").show();
+    if (esValido)
+      muestraMensaje(
+        "error",
+        4000,
+        "¡Error!",
+        "Debe seleccionar si la unidad curricular es electiva."
+      );
     esValido = false;
   } else {
     $("#selectivaUC").text("").hide();
@@ -500,8 +516,14 @@ function validarenvio() {
   if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
     $("#speriodoUC")
       .text("Una unidad curricular electiva no puede tener periodo anual.")
-      .css("color", "");
-    $("#periodoUC").focus();
+      .show();
+    if (esValido)
+      muestraMensaje(
+        "error",
+        4000,
+        "¡Error!",
+        "Una unidad curricular electiva no puede tener periodo anual."
+      );
     esValido = false;
   }
 
@@ -509,6 +531,7 @@ function validarenvio() {
 }
 
 function pone(pos, accion) {
+
   linea = $(pos).closest("tr");
   originalCodigoUC = linea.data("codigo");
 
@@ -517,21 +540,13 @@ function pone(pos, accion) {
     $(
       "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
     ).prop("disabled", false);
-    $("#scodigoUC").text("").show();
-    $("#snombreUC").text("").show();
-    $("#screditosUC").text("").show();
-    $("#strayectoUC").text("").show();
-    $("#sejeUC").text("").show();
-    $("#sareaUC").text("").show();
-    $("#speriodoUC").text("").show();
-    $("#selectivaUC").text("").show();
   } else {
     $("#proceso").text("ELIMINAR");
     $(
       "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
     ).prop("disabled", true);
     $(
-      "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #sejeUC, #sareaUC, #speriodoUC, #selectivaUC"
+      "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC, #selectivaUC"
     ).hide();
   }
 
@@ -590,6 +605,11 @@ function pone(pos, accion) {
   $("#creditosUC").val(linea.data("creditos"));
   $("#periodoUC").val(linea.data("periodo"));
   $("#electivaUC").val(linea.data("electiva"));
+
+  if (accion == 0) {
+    $("#codigoUC, #nombreUC, #creditosUC").trigger("keyup");
+    $("#trayectoUC, #ejeUC, #areaUC, #periodoUC, #electivaUC").trigger("change");
+  }
 
   $("#modal1").modal("show");
 }
@@ -660,25 +680,23 @@ function enviaAjax(datos, accion = "") {
               item.uc_periodo === "anual"
                 ? "Anual"
                 : item.uc_periodo === "1"
-                ? "Fase 1"
-                : item.uc_periodo === "2"
-                ? "Fase 2"
-                : item.uc_periodo;
-            const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${
-              !PERMISOS.modificar ? "disabled" : ""
-            }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${
-              !PERMISOS.eliminar ? "disabled" : ""
-            }><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-            const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${
-              !PERMISOS.modificar ? "disabled" : ""
-            }><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
+                  ? "Fase 1"
+                  : item.uc_periodo === "2"
+                    ? "Fase 2"
+                    : item.uc_periodo;
+            let trayectoTexto = (item.uc_trayecto == 0 || item.uc_trayecto === "0") ? "Inicial" : item.uc_trayecto;
+            const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${!PERMISOS.modificar ? "disabled" : ""
+              }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${!PERMISOS.eliminar ? "disabled" : ""
+              }><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+            const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${!PERMISOS.modificar ? "disabled" : ""
+              }><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
             const btnDetalles = `<button class="btn btn-icon btn-info btn-detalles-uc" title="Ver Detalles" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${periodoTexto}" data-electiva="${electivaTexto}"><img src="public/assets/icons/eye.svg" alt="Ver Detalles"></button>`;
             tabla += `
               <tr data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${item.uc_periodo}" data-electiva="${item.uc_electiva}">
                 <td>${item.uc_codigo}</td>
                 <td>${item.uc_nombre}</td>
-                <td>${item.uc_trayecto}</td>
+                <td>${trayectoTexto}</td>
                 <td>${item.area_nombre}</td>
                 <td>${periodoTexto}</td>
                 <td class="text-center">
