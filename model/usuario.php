@@ -180,12 +180,28 @@ class Usuario extends Connection
     }
 
 
-    function Modificar()
+    function Modificar($current_user_id)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         if ($this->ExisteId($this->usuarioId)) {
+            $stmt_info = $co->prepare("
+                SELECT r.rol_nombre 
+                FROM tbl_usuario u 
+                LEFT JOIN tbl_rol r ON u.rol_id = r.rol_id 
+                WHERE u.usu_id = :usuarioId
+            ");
+            $stmt_info->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_INT);
+            $stmt_info->execute();
+            $userInfo = $stmt_info->fetch(PDO::FETCH_ASSOC);
+
+            if ($userInfo && $userInfo['rol_nombre'] === 'Administrador' && $this->usuarioId != $current_user_id) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'No se puede modificar a un usuario con el rol de Administrador.';
+                return $r;
+            }
+
             if (!$this->existe($this->nombreUsuario, $this->correoUsuario, $this->usuarioId)) {
                 try {
                     $sql = "UPDATE tbl_usuario
@@ -232,21 +248,41 @@ class Usuario extends Connection
 
 
 
-    function Eliminar()
+    function Eliminar($current_user_id)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
+
         if ($this->ExisteId($this->usuarioId)) {
             try {
+                $stmt_info = $co->prepare("
+                    SELECT r.rol_nombre 
+                    FROM tbl_usuario u 
+                    LEFT JOIN tbl_rol r ON u.rol_id = r.rol_id 
+                    WHERE u.usu_id = :usuarioId
+                ");
+                $stmt_info->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_INT);
+                $stmt_info->execute();
+                $userInfo = $stmt_info->fetch(PDO::FETCH_ASSOC);
+
+                if ($userInfo && $userInfo['rol_nombre'] === 'Administrador' && $this->usuarioId != $current_user_id) {
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = 'No se puede eliminar a un usuario con el rol de Administrador.';
+                    return $r;
+                }
+
                 $stmt = $co->prepare("UPDATE tbl_usuario
                 SET usu_estado = 0
                 WHERE usu_id = :usuarioId");
-                $stmt->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_STR);
+                $stmt->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_INT);
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
                 $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el usuario correctamente!';
+                if ($this->usuarioId == $current_user_id) {
+                    $r['autoeliminado'] = true;
+                }
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -439,7 +475,7 @@ class Usuario extends Connection
                 WHERE d.doc_correo = :correo AND d.doc_estado = 1 AND u.usu_id IS NULL
             ");
             $stmt_docente->execute([':correo' => $correo]);
-            
+
             if ($docente = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
                 return ['resultado' => 'existe_docente', 'mensaje' => 'El correo pertenece al docente (' . $docente['doc_nombre'] . ' ' . $docente['doc_apellido'] . '). Asigne este docente para usar el correo.'];
             }

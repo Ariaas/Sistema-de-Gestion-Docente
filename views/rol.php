@@ -115,7 +115,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <thead>
                                                 <tr>
                                                     <th>Módulo</th>
-                                                    <th class="text-center">Registrar</th>
+                                                    <th class="text-center">Ver / Registrar</th>
                                                     <th class="text-center">Modificar</th>
                                                     <th class="text-center">Eliminar</th>
                                                 </tr>

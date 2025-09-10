@@ -80,6 +80,13 @@ class Rol extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
+
+        if ($this->nombreRol === 'Administrador') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El rol "Administrador" no puede ser modificado.';
+            return $r;
+        }
+
         if ($this->ExisteId($this->rolId)) {
             $existe = $this->existe($this->nombreRol);
             if (empty($existe) || $this->nombreRol == $this->getNombre()) {
@@ -115,6 +122,14 @@ class Rol extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
+
+        $rolInfo = $this->getRolById($this->rolId);
+        if ($rolInfo && $rolInfo['rol_nombre'] === 'Administrador') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El rol "Administrador" no puede ser eliminado.';
+            return $r;
+        }
+
         if ($this->ExisteId($this->rolId)) {
             try {
                 $stmt = $co->prepare("UPDATE tbl_rol
@@ -233,6 +248,12 @@ class Rol extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $rolInfo = $this->getRolById($rolId);
+        if ($rolInfo && $rolInfo['rol_nombre'] === 'Administrador') {
+            return ['resultado' => 'error', 'mensaje' => 'Los permisos del rol "Administrador" no se pueden modificar.'];
+        }
+
         try {
             $stmt = $co->prepare("DELETE FROM rol_permisos WHERE rol_id = :rolId");
             $stmt->bindParam(':rolId', $rolId, PDO::PARAM_INT);
@@ -251,6 +272,20 @@ class Rol extends Connection
             return ['resultado' => 'ok', 'mensaje' => 'Permisos asignados correctamente'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        }
+    }
+
+    public function getRolById($rolId)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $stmt = $co->prepare("SELECT rol_nombre FROM tbl_rol WHERE rol_id = :rolId");
+            $stmt->bindParam(':rolId', $rolId, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return null;
         }
     }
 }

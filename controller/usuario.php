@@ -35,7 +35,7 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($u->obtenerDocentesDisponibles($cedula_actual));
         } elseif ($accion == 'eliminar') {
             $u->set_usuarioId($_POST['usuarioId']);
-            echo  json_encode($u->Eliminar());
+            echo  json_encode($u->Eliminar($usu_id));
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'usuario');
         } elseif ($accion == 'existe') {
@@ -71,7 +71,7 @@ if (is_file("views/" . $pagina . ".php")) {
                     $u->set_contraseniaUsuario($_POST['contraseniaUsuario']);
                 }
 
-                $resultado = $u->modificar();
+                $resultado = $u->modificar($usu_id);
 
                 if (isset($resultado['resultado']) && $resultado['resultado'] == 'modificar') {
                     if ($_POST['usuarioId'] == $usu_id) {

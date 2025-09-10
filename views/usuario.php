@@ -70,7 +70,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
 
         </section>
-        <!-- Modal -->
         <div class="modal fade" tabindex="-1" role="dialog" id="modal1">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -208,20 +207,17 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                 </div>
             </div>
         </div>
-        <!-- Fin del Modal Roles -->
     </main>
-    <!-- Footer -->
     <?php require_once("public/components/footer.php"); ?>
-    <!-- Scripts -->
     <script>
         const PERMISOS = {
             modificar: <?php echo json_encode($puede_modificar); ?>,
             eliminar: <?php echo json_encode($puede_eliminar); ?>
         };
+        const USUARIO_ID = <?php echo json_encode($_SESSION['usu_id']); ?>;
     </script>
     <script type="text/javascript" src="public/js/usuario.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <!-- Scripts -->
 </body>
 
 </html>
