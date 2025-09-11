@@ -355,10 +355,10 @@ $(document).ready(function () {
   $("#nombreUC").on("keyup keydown", function () {
     $("#snombreUC").css("color", "");
     validarkeyup(
-      /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,50}$/,
+      /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/,
       $(this),
       $("#snombreUC"),
-      "El nombre debe tener entre 5 y 50 caracteres."
+      "El nombre debe tener entre 5 y 100 caracteres."
     );
   });
 
@@ -429,10 +429,10 @@ function validarenvio() {
 
   if (
     validarkeyup(
-      /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,50}$/,
+      /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-]{5,100}$/,
       $("#nombreUC"),
       $("#snombreUC"),
-      "El nombre debe tener entre 5 y 50 caracteres."
+      "El nombre debe tener entre 5 y 100 caracteres."
     ) === 0
   ) {
     if (esValido)

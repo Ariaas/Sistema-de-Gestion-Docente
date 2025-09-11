@@ -1,7 +1,7 @@
 <?php
-require_once('model/dbconnection.php');
+require_once('model/db_bitacora.php');
 
-class Notificaciones extends Connection
+class Notificaciones extends Connection_bitacora
 {
     public function RegistrarNotificacion($notificacion, $fin)
     {

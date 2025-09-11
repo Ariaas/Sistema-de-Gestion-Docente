@@ -1,11 +1,11 @@
 <?php
 
-require_once('model/dbconnection.php');
+require_once('model/db_bitacora.php');
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-class Login extends Connection
+class Login extends Connection_bitacora
 {
     private $nombreUsuario;
     private $contraseniaUsuario;
