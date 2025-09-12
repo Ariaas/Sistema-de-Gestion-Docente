@@ -275,24 +275,24 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" id="modalDia" readonly></div>
 
                             <div class="mb-3">
-                                <label for="modalSeleccionarDocente" class="form-label">Docente <span class="text-danger">*</span></label>
-                                <select class="form-select" id="modalSeleccionarDocente" required style="width: 100%;">
+                                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
+                                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;">
                                     <option value="">Seleccionar Docente</option>
                                 </select>
                                 <div id="conflicto-docente-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="modalSeleccionarUc" class="form-label">Unidad Curricular <span class="text-danger">*</span></label>
-                                <select class="form-select" id="modalSeleccionarUc" required>
+                                <label for="modalSeleccionarUc" class="form-label">Unidad Curricular</label>
+                                 <select class="form-select" id="modalSeleccionarUc">
                                     <option value="">Primero seleccione un docente</option>
                                 </select>
                                 <div id="conflicto-uc-warning" class="alert alert-danger p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab) <span class="text-danger">*</span></label>
-                                <select class="form-select" id="modalSeleccionarEspacio" required style="width: 100%;">
+                                <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab)</label>
+                                 <select class="form-select" id="modalSeleccionarEspacio" style="width: 100%;">
                                     <option value="">Seleccionar Espacio</option>
                                 </select>
                                 <div id="conflicto-espacio-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
@@ -364,7 +364,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     </script>
     <?php require_once("public/components/footer.php"); ?>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="public/js/seccion.js"></script>
+    <script src="public/js/seccion.js?v=FINAL"></script>
 </body>
 
 </html>

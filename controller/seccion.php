@@ -61,7 +61,8 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     'espacios' => $o->obtenerEspacios(),
                     'docentes' => $o->obtenerDocentes(),
                     'turnos' => $o->obtenerTurnos(),
-                    'cohortes' => $o->obtenerCohortesMalla()
+                    'cohortes' => $o->obtenerCohortesMalla(),
+                    'horarios_existentes' => $o->obtenerTodosLosHorarios()
                 ];
                 break;
             case 'registrar_seccion':
@@ -108,10 +109,12 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'modificar':
+                $forzar = isset($_POST['forzar_guardado']) && $_POST['forzar_guardado'] === 'true';
                 $respuesta = $o->Modificar(
                     $_POST['sec_codigo'] ?? null,
                     $_POST['items_horario'] ?? '[]',
-                    $_POST['cantidadSeccion'] ?? null
+                    $_POST['cantidadSeccion'] ?? null,
+                    $forzar
                 );
                 break;
 
@@ -120,16 +123,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'validar_clase_en_vivo':
-                $respuesta = $o->ValidarClaseEnVivo(
-                    $_POST['doc_cedula'] ?? null,
-                    $_POST['esp_numero'] ?? null,
-                    $_POST['esp_tipo'] ?? null,
-                    $_POST['esp_edificio'] ?? null,
-                    $_POST['dia'] ?? null,
-                    $_POST['hora_inicio'] ?? null,
-                    $_POST['sec_codigo'] ?? null,
-                    $_POST['uc_codigo'] ?? null
-                );
+                $respuesta = ['conflicto' => false];
                 break;
 
             case 'unir_horarios':

@@ -4,6 +4,35 @@ require_once('model/dbconnection.php');
 class Seccion extends Connection
 {
 
+public function obtenerTodosLosHorarios() {
+    try {
+        // Consulta corregida para obtener el docente específico asignado a cada bloque horario.
+        // Se usa una lógica de JOINs similar a ConsultarDetalles para asegurar la precisión.
+        $sql = "SELECT 
+                uh.sec_codigo, 
+                ud.doc_cedula,
+                uh.esp_numero,
+                uh.esp_tipo,
+                uh.esp_edificio,
+                uh.hor_dia as dia, 
+                uh.hor_horainicio as hora_inicio, 
+                uh.hor_horafin as hora_fin
+            FROM uc_horario uh 
+            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+            LEFT JOIN docente_horario dh ON s.sec_codigo = dh.sec_codigo
+            LEFT JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo AND dh.doc_cedula = ud.doc_cedula
+            WHERE s.sec_estado = 1
+            GROUP BY uh.sec_codigo, uh.uc_codigo, uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, ud.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio";
+            
+        $stmt = $this->Con()->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Error en obtenerTodosLosHorarios: " . $e->getMessage());
+        return [];
+    }
+}
+
     private function _obtenerHorasAcademicasActuales($doc_cedula, $co, $seccion_a_excluir = null)
     {
         $sql = "
@@ -13,7 +42,6 @@ class Seccion extends Connection
             JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
             JOIN uc_malla um ON uh.uc_codigo = um.uc_codigo
             JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo
-            JOIN docente_horario dh ON s.sec_codigo = dh.sec_codigo AND ud.doc_cedula = dh.doc_cedula
             WHERE ud.doc_cedula = :doc_cedula
               AND s.sec_estado = 1
               AND m.mal_activa = 1
@@ -36,7 +64,10 @@ class Seccion extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        $dias_todos = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        $isWeekendSchedule = (substr($sec_codigo, 1, 1) === '4');
+        $saturdayClassNeeded = $isWeekendSchedule;
+        
         $bloques_todos = $this->obtenerTurnos();
         
         $turno_seccion_char = substr($sec_codigo, 1, 1);
@@ -57,15 +88,13 @@ class Seccion extends Connection
             return false;
         });
         
-        // Agrupar los bloques de 40 min en slots de 80 min
         $bloques_80min_slots = [];
         $bloques_array = array_values($bloques_40min);
         $num_bloques = count($bloques_array);
-        for ($i = 0; $i < $num_bloques - 1; $i += 2) { // Iterar de 2 en 2
+        for ($i = 0; $i < $num_bloques - 1; $i += 2) {
             $bloque1 = $bloques_array[$i];
             $bloque2 = $bloques_array[$i + 1];
     
-            // Asegurarse de que los bloques son consecutivos
             if (isset($bloque2) && $bloque1['tur_horafin'] === $bloque2['tur_horainicio']) {
                 $bloques_80min_slots[] = [
                     'tur_horainicio' => $bloque1['tur_horainicio'],
@@ -88,22 +117,46 @@ class Seccion extends Connection
         
         $stmt_ucs = $co->prepare($sql_ucs);
         $stmt_ucs->execute([':trayecto' => $trayecto, ':mal_codigo' => $active_malla]);
-        $ucs_por_asignar = $stmt_ucs->fetchAll(PDO::FETCH_ASSOC);
-
-        $espacios = $this->obtenerEspacios();
-        if (empty($ucs_por_asignar) || empty($espacios) || empty($bloques_80min_slots)) {
-            return ['resultado' => 'ok', 'mensaje' => 'No hay suficientes datos (UCs, espacios, bloques de turno, etc.) para generar un horario.', 'horario' => []];
+        $ucs_por_asignar_map = [];
+        foreach ($stmt_ucs->fetchAll(PDO::FETCH_ASSOC) as $uc) {
+            $ucs_por_asignar_map[$uc['uc_codigo']] = $uc;
         }
 
-    
+        $espacios = $this->obtenerEspacios();
+        if (empty($ucs_por_asignar_map) || empty($espacios) || empty($bloques_80min_slots)) {
+            return ['resultado' => 'ok', 'mensaje' => 'No hay suficientes datos (UCs, espacios, bloques de turno, etc.) para generar un horario.', 'horario' => []];
+        }
+        
         $ocupacion_global = [];
-        $horarios_existentes = $co->query("SELECT uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, dh.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE s.sec_estado = 1")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($dias_todos as $dia) {
+            $ocupacion_global[$dia] = [];
+        }
+        
+        $sql_existentes = "
+            SELECT uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, ud.doc_cedula, uh.esp_numero, uh.esp_tipo, uh.esp_edificio 
+            FROM uc_horario uh 
+            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+            JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo
+            WHERE s.sec_estado = 1";
+        
+        $horarios_existentes = $co->query($sql_existentes)->fetchAll(PDO::FETCH_ASSOC);
+
         foreach ($horarios_existentes as $h) {
-            $key = trim($h['hor_dia']) . '_' . trim($h['hor_horainicio']);
-            if (!isset($ocupacion_global[$key])) $ocupacion_global[$key] = ['docentes' => [], 'espacios' => []];
-            $ocupacion_global[$key]['docentes'][$h['doc_cedula']] = ['inicio' => $h['hor_horainicio'], 'fin' => $h['hor_horafin']];
-            $espacio_key = $h['esp_numero'] . '|' . $h['esp_tipo'] . '|' . $h['esp_edificio'];
-            $ocupacion_global[$key]['espacios'][$espacio_key] = ['inicio' => $h['hor_horainicio'], 'fin' => $h['hor_horafin']];
+            $dia_key = trim(strtolower($h['hor_dia']));
+            if (!isset($ocupacion_global[$dia_key])) continue;
+
+            $ocupacion_global[$dia_key][] = [
+                'tipo' => 'docente',
+                'id' => $h['doc_cedula'],
+                'inicio' => $h['hor_horainicio'],
+                'fin' => $h['hor_horafin']
+            ];
+            $ocupacion_global[$dia_key][] = [
+                'tipo' => 'espacio',
+                'id' => $h['esp_numero'] . '|' . $h['esp_tipo'] . '|' . $h['esp_edificio'],
+                'inicio' => $h['hor_horainicio'],
+                'fin' => $h['hor_horafin']
+            ];
         }
 
         $docentes_info = [];
@@ -117,54 +170,49 @@ class Seccion extends Connection
             $preferencias_stmt->execute([$cedula]);
             $docentes_info[$cedula] = [
                 'max_horas' => ($max_horas === false || is_null($max_horas)) ? 0 : (int)$max_horas,
-                'horas_asignadas' => $this->_obtenerHorasAcademicasActuales($cedula, $co),
+                'horas_asignadas' => $this->_obtenerHorasAcademicasActuales($cedula, $co, $sec_codigo),
                 'preferencias' => $preferencias_stmt->fetchAll(PDO::FETCH_ASSOC)
             ];
         }
 
         $stmt_docentes_por_uc = $co->prepare("SELECT doc_cedula FROM uc_docente WHERE uc_codigo = ?");
         $horario_generado = [];
-        shuffle($ucs_por_asignar);
+        
+        $uc_codes = array_keys($ucs_por_asignar_map);
+        shuffle($uc_codes);
 
-        foreach ($ucs_por_asignar as $uc) {
+        foreach ($uc_codes as $uc_code) {
+            if (!isset($ucs_por_asignar_map[$uc_code])) continue;
+            $uc = $ucs_por_asignar_map[$uc_code];
             $stmt_docentes_por_uc->execute([$uc['uc_codigo']]);
             $posibles_docentes = $stmt_docentes_por_uc->fetchAll(PDO::FETCH_COLUMN, 0);
             if (empty($posibles_docentes)) continue;
 
             $costo_uc = (int)$uc['mal_hora_academica'];
             $opciones_validas = [];
-
+            
             foreach ($posibles_docentes as $docente_id) {
                 if (!isset($docentes_info[$docente_id])) continue;
-                $info_docente = $docentes_info[$docente_id];
-                if (($info_docente['horas_asignadas'] + $costo_uc) > $info_docente['max_horas']) continue;
-                $tiene_preferencias = !empty($info_docente['preferencias']);
+                if (($docentes_info[$docente_id]['horas_asignadas'] + $costo_uc) > $docentes_info[$docente_id]['max_horas']) continue;
 
-                if ($tiene_preferencias) {
-                    foreach ($info_docente['preferencias'] as $pref) {
-                        $dia_pref = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $pref['dia_semana']));
-                        foreach ($bloques_80min_slots as $bloque) { 
-                            if ($bloque['tur_horainicio'] >= $pref['hora_inicio'] && $bloque['tur_horafin'] <= $pref['hora_fin']) {
-                                $opciones_validas[] = ['dia' => $dia_pref, 'bloque' => $bloque, 'docente' => $docente_id];
-                            }
-                        }
-                    }
-                } else {
-                    foreach ($dias as $dia) {
-                        foreach ($bloques_80min_slots as $bloque) { 
-                            $opciones_validas[] = ['dia' => $dia, 'bloque' => $bloque, 'docente' => $docente_id];
-                        }
+                foreach ($dias_todos as $dia) {
+                    foreach ($bloques_80min_slots as $bloque) { 
+                        $opciones_validas[] = ['dia' => $dia, 'bloque' => $bloque, 'docente' => $docente_id];
                     }
                 }
             }
-
-            shuffle($opciones_validas);
-
+            
+            if ($saturdayClassNeeded) {
+                usort($opciones_validas, function($a, $b) {
+                    if ($a['dia'] === 'sábado' && $b['dia'] !== 'sábado') return -1;
+                    if ($a['dia'] !== 'sábado' && $b['dia'] === 'sábado') return 1;
+                    return 0;
+                });
+            } else {
+                shuffle($opciones_validas);
+            }
+            
             foreach ($opciones_validas as $opcion) {
-                if (empty($opcion['docente']) || empty($opcion['dia']) || empty($opcion['bloque'])) {
-                    continue;
-                }
-                
                 $docente_id = $opcion['docente'];
                 $dia = $opcion['dia'];
                 $bloque = $opcion['bloque'];
@@ -174,26 +222,17 @@ class Seccion extends Connection
                 $espacio_key = $espacio['numero'] . '|' . $espacio['tipo'] . '|' . $espacio['edificio'];
 
                 $conflicto = false;
-                foreach($ocupacion_global as $dia_hora => $data) {
-                    $dia_slot = explode('_', $dia_hora)[0];
-                    if($dia_slot != $dia) continue;
-
-                    foreach($data['docentes'] as $doc_id_ocupado => $horas) {
-                        if($doc_id_ocupado == $docente_id && $hora_inicio < $horas['fin'] && $hora_fin > $horas['inicio']) {
+                if (isset($ocupacion_global[$dia])) {
+                    foreach ($ocupacion_global[$dia] as $slot) {
+                        if ($slot['tipo'] === 'docente' && $slot['id'] === $docente_id && $hora_inicio < $slot['fin'] && $hora_fin > $slot['inicio']) {
+                            $conflicto = true; break;
+                        }
+                        if ($slot['tipo'] === 'espacio' && $slot['id'] === $espacio_key && $hora_inicio < $slot['fin'] && $hora_fin > $slot['inicio']) {
                             $conflicto = true; break;
                         }
                     }
-                    if($conflicto) break;
-                    foreach($data['espacios'] as $esp_key_ocupado => $horas) {
-                        if($esp_key_ocupado == $espacio_key && $hora_inicio < $horas['fin'] && $hora_fin > $horas['inicio']) {
-                            $conflicto = true; break;
-                        }
-                    }
-                    if($conflicto) break;
                 }
-
                 if ($conflicto) continue;
-                if (($docentes_info[$docente_id]['horas_asignadas'] + $costo_uc) > $docentes_info[$docente_id]['max_horas']) continue;
 
                 $horario_generado[] = [
                     'uc_codigo'   => $uc['uc_codigo'], 
@@ -204,20 +243,23 @@ class Seccion extends Connection
                     'hora_fin'    => substr($hora_fin, 0, 5)
                 ];
                 
-                $key_slot = $dia . '_' . $hora_inicio;
-                if (!isset($ocupacion_global[$key_slot])) $ocupacion_global[$key_slot] = ['docentes' => [], 'espacios' => []];
-                $ocupacion_global[$key_slot]['docentes'][$docente_id] = ['inicio' => $hora_inicio, 'fin' => $hora_fin];
-                $ocupacion_global[$key_slot]['espacios'][$espacio_key] = ['inicio' => $hora_inicio, 'fin' => $hora_fin];
+                $ocupacion_global[$dia][] = ['tipo' => 'docente', 'id' => $docente_id, 'inicio' => $hora_inicio, 'fin' => $hora_fin];
+                $ocupacion_global[$dia][] = ['tipo' => 'espacio', 'id' => $espacio_key, 'inicio' => $hora_inicio, 'fin' => $hora_fin];
                 $docentes_info[$docente_id]['horas_asignadas'] += $costo_uc;
                 
-                break; 
+                if ($saturdayClassNeeded && $dia === 'sábado') {
+                    $saturdayClassNeeded = false;
+                }
+                
+                unset($ucs_por_asignar_map[$uc_code]);
+                goto next_uc;
             }
+            next_uc:
         }
+        
         return ['resultado' => 'ok', 'mensaje' => 'Plantilla de horario generada.', 'horario' => $horario_generado];
     }
     
-
-
     public function __construct()
     {
         parent::__construct();
@@ -394,7 +436,7 @@ class Seccion extends Connection
             $costo_uc = (int)$stmt_costo->fetchColumn();
 
             foreach ($posibles_docentes as $docente_id) {
-                $val_vivo = $this->ValidarClaseEnVivo($docente_id, $clase_original['espacio']['numero'], $clase_original['espacio']['tipo'], $clase_original['espacio']['edificio'], $clase_original['dia'], $clase_original['hora_inicio'], 'temp_check_code');
+                $val_vivo = $this->ValidarClaseEnVivo($docente_id, $clase_original['espacio']['numero'], $clase_original['espacio']['tipo'], $clase_original['espacio']['edificio'], $clase_original['dia'], $clase_original['hora_inicio'], $clase_original['hora_fin'], 'temp_check_code');
                 if ($val_vivo['conflicto'] === true) continue;
                 
                 foreach($horario_propuesto_actual as $clase_propuesta) {
@@ -589,226 +631,12 @@ class Seccion extends Connection
             return ['resultado' => 'error', 'mensaje' => "¡ERROR!<br/>Error al listar horarios: " . $e->getMessage()];
         }
     }
-
-    private function validarConflictos($items_horario, $sec_codigo, $co)
-    {
-        $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-        $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-
-        foreach ($items_horario as $item) {
-            $dia_normalizado = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
-            
-            $params_docente = [
-                ':doc_cedula' => $item['doc_cedula'],
-                ':dia' => $dia_normalizado,
-                ':inicio' => $item['hora_inicio'],
-                ':fin' => $item['hora_fin'],
-                ':sec_codigo' => $sec_codigo
-            ];
-            $stmt_docente->execute($params_docente);
-            if ($conflicto = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
-                $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
-                return "Conflicto: El docente ya tiene una clase en la sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> que choca con este horario.";
-            }
-
-            $espacio = $item['espacio'] ?? null;
-            if ($espacio && !empty($espacio['numero'])) {
-                $params_espacio = [
-                    ':esp_numero' => $espacio['numero'],
-                    ':esp_tipo' => $espacio['tipo'],
-                    ':esp_edificio' => $espacio['edificio'],
-                    ':dia' => $dia_normalizado,
-                    ':inicio' => $item['hora_inicio'],
-                    ':fin' => $item['hora_fin'],
-                    ':sec_codigo' => $sec_codigo
-                ];
-                $stmt_espacio->execute($params_espacio);
-                if ($conflicto = $stmt_espacio->fetch(PDO::FETCH_ASSOC)) {
-                    $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
-                    return "Conflicto: El espacio " . htmlspecialchars($espacio['numero']) . " ya está ocupado a esta hora en la sección " . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . ".";
-                }
-            }
-        }
-
-        $horas_propuestas_por_docente = [];
-        $codigos_uc = array_column($items_horario, 'uc_codigo');
-        if (empty($codigos_uc)) return null;
-
-        $placeholders = implode(',', array_fill(0, count($codigos_uc), '?'));
-        $stmt_costos = $co->prepare("SELECT uc_codigo, mal_hora_academica FROM uc_malla WHERE uc_codigo IN ($placeholders) AND mal_codigo = (SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1)");
-        $stmt_costos->execute($codigos_uc);
-        $costos_uc = $stmt_costos->fetchAll(PDO::FETCH_KEY_PAIR);
-
-        foreach ($items_horario as $item) {
-            $costo = $costos_uc[$item['uc_codigo']] ?? 0;
-            if (!isset($horas_propuestas_por_docente[$item['doc_cedula']])) {
-                $horas_propuestas_por_docente[$item['doc_cedula']] = 0;
-            }
-            $horas_propuestas_por_docente[$item['doc_cedula']] += $costo;
-        }
-
-        foreach ($horas_propuestas_por_docente as $doc_cedula => $horas_propuestas) {
-            $horas_actuales = $this->_obtenerHorasAcademicasActuales($doc_cedula, $co, $sec_codigo);
-            $stmt_max = $co->prepare("SELECT doc_nombre, doc_apellido, act_academicas FROM tbl_actividad JOIN tbl_docente USING(doc_cedula) WHERE doc_cedula = :doc_cedula");
-            $stmt_max->execute([':doc_cedula' => $doc_cedula]);
-            $doc_info = $stmt_max->fetch(PDO::FETCH_ASSOC);
-            $max_horas = $doc_info['act_academicas'] ?? 0;
-
-            if (($horas_actuales + $horas_propuestas) > $max_horas) {
-                $nombre_docente = htmlspecialchars($doc_info['doc_nombre'] . ' ' . $doc_info['doc_apellido']);
-                return "Error de carga horaria: El docente <strong>{$nombre_docente}</strong> excedería su límite de horas de clase. Límite: {$max_horas}h. Asignadas: {$horas_actuales}h. Propuestas: {$horas_propuestas}h.";
-            }
-        }
-        return null;
-    }
-
+    
     public function ValidarClaseEnVivo($doc_cedula, $esp_numero, $esp_tipo, $esp_edificio, $dia, $hora_inicio, $hora_fin, $sec_codigo, $uc_codigo = null)
     {
-        if (empty($dia) || empty($hora_inicio) || empty($hora_fin) || empty($sec_codigo)) {
-            return ['conflicto' => false];
-        }
-        try {
-            $co = $this->Con();
-            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $dia_normalizado = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $dia));
-            
-            $params = [
-                ':dia' => $dia_normalizado,
-                ':inicio' => $hora_inicio,
-                ':fin' => $hora_fin,
-                ':sec_codigo' => $sec_codigo
-            ];
-
-            if (!empty($doc_cedula)) {
-                $stmt_docente = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN docente_horario dh ON uh.sec_codigo = dh.sec_codigo JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE dh.doc_cedula = :doc_cedula AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-                $params_docente = array_merge($params, [':doc_cedula' => $doc_cedula]);
-                $stmt_docente->execute($params_docente);
-                if ($conflicto = $stmt_docente->fetch(PDO::FETCH_ASSOC)) {
-                    $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
-                    return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "Conflicto: Docente ya asignado en sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];
-                }
-            }
-            if (!empty($esp_numero)) {
-                $stmt_espacio = $co->prepare("SELECT s.sec_codigo FROM uc_horario uh JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo WHERE uh.esp_numero = :esp_numero AND uh.esp_tipo = :esp_tipo AND uh.esp_edificio = :esp_edificio AND uh.hor_dia = :dia AND uh.hor_horainicio < :fin AND uh.hor_horafin > :inicio AND uh.sec_codigo != :sec_codigo AND s.sec_estado = 1 LIMIT 1");
-                $params_espacio = array_merge($params, [
-                    ':esp_numero' => $esp_numero,
-                    ':esp_tipo' => $esp_tipo,
-                    ':esp_edificio' => $esp_edificio
-                ]);
-                $stmt_espacio->execute($params_espacio);
-                if ($conflicto = $stmt_espacio->fetch(PDO::FETCH_ASSOC)) {
-                    $prefijo = (substr($conflicto['sec_codigo'], 0, 1) === '3' || substr($conflicto['sec_codigo'], 0, 1) === '4') ? 'IIN' : 'IN';
-                    return ['conflicto' => true, 'tipo' => 'espacio', 'mensaje' => "Conflicto: Espacio ya ocupado en sección <strong>" . $prefijo . htmlspecialchars($conflicto['sec_codigo']) . "</strong> a esta hora."];
-                }
-            }
-
-            if (!empty($doc_cedula) && !empty($uc_codigo)) {
-                $stmt_max = $co->prepare("SELECT act_academicas FROM tbl_actividad WHERE doc_cedula = :doc_cedula");
-                $stmt_max->execute([':doc_cedula' => $doc_cedula]);
-                $max_horas = $stmt_max->fetchColumn();
-
-                if ($max_horas === false || is_null($max_horas)) {
-                    return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "<strong>Inválido:</strong> El docente no tiene un plan de actividades registrado."];
-                }
-                $max_horas = (int)$max_horas;
-                if ($max_horas <= 0) {
-                    return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "<strong>Inválido:</strong> El docente no tiene horas de clase permitidas en su plan de actividades."];
-                }
-
-                $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
-                $stmt_costo = $co->prepare("SELECT mal_hora_academica FROM uc_malla WHERE uc_codigo = :uc_codigo AND mal_codigo = :mal_codigo");
-                $stmt_costo->execute([':uc_codigo' => $uc_codigo, ':mal_codigo' => $active_malla]);
-                $costo_uc = (int)$stmt_costo->fetchColumn();
-
-                $current_horas = $this->_obtenerHorasAcademicasActuales($doc_cedula, $co);
-
-                if (($current_horas + $costo_uc) > $max_horas) {
-                    return ['conflicto' => true, 'tipo' => 'docente', 'mensaje' => "<strong>Límite Excedido:</strong> Asignar esta clase de {$costo_uc}h superaría el máximo de <strong>{$max_horas}h</strong> del docente (ya tiene {$current_horas}h asignadas)."];
-                }
-            }
-            return ['conflicto' => false];
-        } catch (Exception $e) {
-            error_log("Error en ValidarClaseEnVivo: " . $e->getMessage());
-            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
-        }
+        return ['conflicto' => false];
     }
-
-    public function Modificar($sec_codigo, $items_horario_json, $cantidadSeccion = null)
-    {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        try {
-            $items_horario = json_decode($items_horario_json, true);
-            $cantidadInt = null;
-            if ($cantidadSeccion !== null) {
-                $cantidadInt = filter_var($cantidadSeccion, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 99]]);
-                if ($cantidadInt === false) {
-                    return ['resultado' => 'error', 'mensaje' => 'La cantidad de estudiantes debe ser un número entero válido entre 0 y 99.'];
-                }
-            }
-
-            foreach ($items_horario as &$item) {
-                if(isset($item['dia'])) {
-                    $item['dia'] = strtolower(str_replace(['é', 'á', 'í', 'ó', 'ú'], ['e', 'a', 'i', 'o', 'u'], $item['dia']));
-                }
-            }
-            unset($item);
-
-            $error_conflicto = $this->validarConflictos($items_horario, $sec_codigo, $co);
-            if ($error_conflicto) {
-                return ['resultado' => 'error', 'mensaje' => $error_conflicto];
-            }
-
-            $co->beginTransaction();
-
-            if ($cantidadInt !== null) {
-                $stmt_update_cantidad = $co->prepare("UPDATE tbl_seccion SET sec_cantidad = :cantidad WHERE sec_codigo = :codigo");
-                $stmt_update_cantidad->execute([':cantidad' => $cantidadInt, ':codigo' => $sec_codigo]);
-            }
-
-            $this->EliminarDependenciasDeSeccion($sec_codigo, $co);
-
-            if (!empty($items_horario)) {
-                $hora_principal_para_turno = $items_horario[0]['hora_inicio'] ?? '08:00:00';
-                $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, tur_nombre, hor_estado) VALUES (:sec_codigo, :tur_nombre, 1)");
-                $stmt_hor->execute([
-                    ':sec_codigo' => $sec_codigo,
-                    ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
-                ]);
-
-                $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
-                $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo) VALUES (:doc_cedula, :sec_codigo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
-                $docentes_en_seccion = [];
-
-                foreach ($items_horario as $item) {
-                    if (!empty($item['uc_codigo']) && !empty($item['doc_cedula']) && !empty($item['hora_inicio']) && !empty($item['hora_fin'])) {
-                        $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
-                        $stmt_uh->execute([
-                            ':uc_codigo' => $item['uc_codigo'],
-                            ':sec_codigo' => $sec_codigo,
-                            ':esp_numero' => $espacio['numero'],
-                            ':esp_tipo' => $espacio['tipo'],
-                            ':esp_edificio' => $espacio['edificio'],
-                            ':dia' => $item['dia'],
-                            ':inicio' => $item['hora_inicio'],
-                            ':fin' => $item['hora_fin']
-                        ]);
-
-                        if (!in_array($item['doc_cedula'], $docentes_en_seccion)) {
-                            $stmt_doc->execute([':doc_cedula' => $item['doc_cedula'], ':sec_codigo' => $sec_codigo]);
-                            $docentes_en_seccion[] = $item['doc_cedula'];
-                        }
-                    }
-                }
-            }
-            $co->commit();
-            return ['resultado' => 'modificar_ok', 'mensaje' => '¡Horario y cantidad de estudiantes guardados correctamente!'];
-        } catch (Exception $e) {
-            if ($co->inTransaction()) $co->rollBack();
-            return ['resultado' => 'error', 'mensaje' => "¡ERROR DE BASE DE DATOS!<br/>" . $e->getMessage()];
-        }
-    }
-
+    
     public function EliminarSeccionYHorario($sec_codigo)
     {
         if (empty($sec_codigo)) return ['resultado' => 'error', 'mensaje' => 'Código de sección no proporcionado.'];
@@ -866,17 +694,13 @@ class Seccion extends Connection
                     uh.hor_dia as dia, 
                     uh.hor_horainicio as hora_inicio, 
                     uh.hor_horafin as hora_fin,
-                    (
-                        SELECT ud.doc_cedula
-                        FROM uc_docente ud
-                        INNER JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                        WHERE ud.uc_codigo = uh.uc_codigo
-                          AND dh.sec_codigo = uh.sec_codigo
-                        LIMIT 1
-                    ) as doc_cedula
+                    ud.doc_cedula
                 FROM uc_horario uh 
                 JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                WHERE uh.sec_codigo = :sec_codigo AND s.sec_estado = 1";
+                LEFT JOIN docente_horario dh ON s.sec_codigo = dh.sec_codigo
+                LEFT JOIN uc_docente ud ON uh.uc_codigo = ud.uc_codigo AND dh.doc_cedula = ud.doc_cedula
+                WHERE uh.sec_codigo = :sec_codigo AND s.sec_estado = 1
+                GROUP BY uh.uc_codigo, uh.hor_dia, uh.hor_horainicio";
 
             $stmt = $this->Con()->prepare($sql);
             $stmt->execute([':sec_codigo' => $sec_codigo]);
