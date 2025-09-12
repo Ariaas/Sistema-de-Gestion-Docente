@@ -65,7 +65,7 @@ class SeccionReport extends Connection
                             u.uc_nombre,
                             uh.esp_tipo,
                             CASE
-                                WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('L-', uh.esp_numero)
+                                WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
                                 WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
                                 ELSE uh.esp_numero
                             END AS esp_codigo,

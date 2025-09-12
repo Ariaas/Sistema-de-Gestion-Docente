@@ -1,11 +1,11 @@
-<?php
+<?php // S
 require_once("model/dbconnection.php");
 require_once("config/config.php");
 require_once("model/db_bitacora.php");
 require_once("config/configBitacora.php");
 
 
-class Mantenimiento  extends Connection
+class Mantenimiento extends Connection
 {
 
     public function __construct()
@@ -23,7 +23,7 @@ class Mantenimiento  extends Connection
         return $output;
     }
 
- public function GuardarRespaldo()
+   public function GuardarRespaldo()
 {
     try {
         $directorio_respaldos = "respaldos/";
@@ -35,23 +35,41 @@ class Mantenimiento  extends Connection
 
         $fecha_actual = date('Ymd_His');
         $sql_files_to_zip = [];
-        
-        $pdo_connection = new Connection();
 
-        $resultado_alternativo = $this->GuardarRespaldoAlternativoUnico(
-            $pdo_connection->Con(),
+       
+        $pdo_connection_main = new Connection();
+        $resultado_main = $this->GuardarRespaldoAlternativoUnico(
+            $pdo_connection_main->Con(),
             'db_orgdocente',
-            _DB_NAME_,
+            _DB_NAME_, 
             $directorio_respaldos,
             $fecha_actual
         );
 
-        if (!$resultado_alternativo['success']) {
-            throw new Exception("Error en respaldo alternativo: " . $resultado_alternativo['message']);
+        if (!$resultado_main['success']) {
+            throw new Exception("Error en respaldo de db_orgdocente: " . $resultado_main['message']);
         }
-        
-        $sql_files_to_zip[] = $resultado_alternativo['filepath_sql'];
-        $pdo_connection = null;
+        $sql_files_to_zip[] = $resultado_main['filepath_sql'];
+        $pdo_connection_main = null;
+
+
+       
+        $pdo_connection_bitacora = new Connection_bitacora();
+        $resultado_bitacora = $this->GuardarRespaldoAlternativoUnico(
+            $pdo_connection_bitacora->Con(),
+            'db_bitacora',
+            _BITA_DB_NAME_, 
+            $directorio_respaldos,
+            $fecha_actual
+        );
+
+        if (!$resultado_bitacora['success']) {
+            unlink($resultado_main['filepath_sql']);
+            throw new Exception("Error en respaldo de db_bitacora: " . $resultado_bitacora['message']);
+        }
+        $sql_files_to_zip[] = $resultado_bitacora['filepath_sql'];
+        $pdo_connection_bitacora = null;
+
 
         $zip_file_base_name = 'respaldo_completo_' . $fecha_actual . '.zip';
         $zip_file_path = $directorio_respaldos . $zip_file_base_name;
@@ -68,14 +86,14 @@ class Mantenimiento  extends Connection
                     unlink($sql_file);
                 }
             }
-            
+
             return [
                 "status" => "success",
-                "message" => "Respaldo de la base de datos guardado y comprimido en: " . $zip_file_base_name,
+                "message" => "Respaldo de ambas bases de datos guardado y comprimido en: " . $zip_file_base_name,
                 "filename" => $zip_file_base_name
             ];
         } else {
-            throw new Exception("Se generó el respaldo SQL, pero no se pudo comprimir.");
+            throw new Exception("Se generaron los respaldos SQL, pero no se pudieron comprimir.");
         }
     } catch (Exception $e) {
         error_log("Error en GuardarRespaldo: " . $e->getMessage());
@@ -83,22 +101,24 @@ class Mantenimiento  extends Connection
     }
 }
 
- private function RestaurarDesdeSQL($pdo, $sql_file_path)
-{
-    try {
-        $sql_content = file_get_contents($sql_file_path);
-        if ($sql_content === false) {
-            throw new Exception("No se pudo leer el archivo de respaldo SQL.");
+
+
+    private function RestaurarDesdeSQL($pdo, $sql_file_path)
+    {
+        try {
+            $sql_content = file_get_contents($sql_file_path);
+            if ($sql_content === false) {
+                throw new Exception("No se pudo leer el archivo de respaldo SQL.");
+            }
+
+            $pdo->exec($sql_content);
+
+            return true;
+        } catch (Exception $e) {
+            throw new Exception("Error durante la restauración SQL: " . $e->getMessage());
         }
-
-        $pdo->exec($sql_content);
-
-        return true;
-
-    } catch (Exception $e) {
-        throw new Exception("Error durante la restauración SQL: " . $e->getMessage());
     }
-}
+
     private function GuardarRespaldoAlternativoUnico($pdo, $db_alias, $db_name_real, $directorio_base, $fecha_suffix)
     {
         try {
@@ -136,20 +156,20 @@ class Mantenimiento  extends Connection
                             }, array_values($row));
                             $valuesBatch[] = "(" . implode(', ', $values) . ")";
 
-                           if (count($valuesBatch) >= 500 || $rowIndex === count($rows) - 1) {
-    
-    $sqlContent .= implode(",\n", $valuesBatch);
-    $valuesBatch = [];
+                            if (count($valuesBatch) >= 500 || $rowIndex === count($rows) - 1) {
 
-  
-    if ($rowIndex === count($rows) - 1) {
-       
-        $sqlContent .= ";\n\n";
-    } else {
-    
-        $sqlContent .= ",\n"; 
-    }
-}
+                                $sqlContent .= implode(",\n", $valuesBatch);
+                                $valuesBatch = [];
+
+
+                                if ($rowIndex === count($rows) - 1) {
+
+                                    $sqlContent .= ";\n\n";
+                                } else {
+
+                                    $sqlContent .= ",\n";
+                                }
+                            }
                         }
                         $sqlContent .= "\n";
                     }
@@ -181,7 +201,7 @@ class Mantenimiento  extends Connection
     }
 
 
-   public function RestaurarSistema($archivo_zip_nombre)
+    public function RestaurarSistema($archivo_zip_nombre)
 {
     try {
         $directorio_respaldos = "respaldos/";
@@ -208,15 +228,36 @@ class Mantenimiento  extends Connection
             throw new Exception("No se encontraron archivos .sql dentro del ZIP.");
         }
 
-        $pdo_connection = new Connection();
-        $pdo = $pdo_connection->Con();
+        $pdo_connection_main = new Connection();
+        $pdo_main = $pdo_connection_main->Con();
 
-        $this->RestaurarDesdeSQL($pdo, $archivos_sql_extraidos[0]);
-        
-        $pdo_connection = null; 
+        $pdo_connection_bitacora = new Connection_bitacora();
+        $pdo_bitacora = $pdo_connection_bitacora->Con();
+
+        $restaurada_main = false;
+        $restaurada_bitacora = false;
+
+        foreach ($archivos_sql_extraidos as $sql_file) {
+            $filename = basename($sql_file);
+
+            if (strpos($filename, _DB_NAME_) !== false && strpos($filename, 'db_orgdocente') !== false) {
+                $this->RestaurarDesdeSQL($pdo_main, $sql_file);
+                $restaurada_main = true;
+            } elseif (strpos($filename, _BITA_DB_NAME_) !== false && strpos($filename, 'db_bitacora') !== false) { // <-- CAMBIO
+                $this->RestaurarDesdeSQL($pdo_bitacora, $sql_file);
+                $restaurada_bitacora = true;
+            }
+        }
+
+        $pdo_connection_main = null;
+        $pdo_connection_bitacora = null;
         $this->limpiarDirectorioTemporal($temp_dir);
 
-        return ["status" => "success", "message" => "La base de datos se ha restaurado exitosamente desde: " . $archivo_zip_nombre];
+        if (!$restaurada_main || !$restaurada_bitacora) {
+            throw new Exception("Restauración incompleta. No se encontraron los archivos de respaldo para ambas bases de datos en el ZIP.");
+        }
+
+        return ["status" => "success", "message" => "Las bases de datos se han restaurado exitosamente desde: " . $archivo_zip_nombre];
 
     } catch (Exception $e) {
         error_log("Error en RestaurarSistema: " . $e->getMessage());
@@ -226,24 +267,6 @@ class Mantenimiento  extends Connection
         return ["status" => "error", "message" => "Error al restaurar: " . $e->getMessage()];
     }
 }
-
-    private function limpiarDirectorioTemporal($dirPath)
-    {
-        if (!is_dir($dirPath)) {
-            return;
-        }
-        $files = glob($dirPath . '*', GLOB_MARK);
-        foreach ($files as $file) {
-            if (is_dir($file)) {
-                $this->limpiarDirectorioTemporal($file);
-            } else {
-                unlink($file);
-            }
-        }
-        if (is_dir($dirPath)) {
-            rmdir($dirPath);
-        }
-    }
 
 
     public function ObtenerRespaldos()
@@ -268,5 +291,22 @@ class Mantenimiento  extends Connection
         return $archivos;
     }
 
-  
+     private function limpiarDirectorioTemporal($dirPath)
+    {
+        if (!is_dir($dirPath)) {
+            return;
+        }
+        $files = glob($dirPath . '*', GLOB_MARK);
+        foreach ($files as $file) {
+            if (is_dir($file)) {
+                $this->limpiarDirectorioTemporal($file);
+            } else {
+                unlink($file);
+            }
+        }
+        if (is_dir($dirPath)) {
+            rmdir($dirPath);
+        }
+    }
 }
+

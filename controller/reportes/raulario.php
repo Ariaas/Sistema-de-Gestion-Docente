@@ -12,7 +12,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-
+use PhpOffice\PhpSpreadsheet\RichText\RichText; 
 $oAulario = new AularioReport();
 
 if (isset($_POST['generar_aulario_report'])) {
@@ -95,26 +95,39 @@ if (isset($_POST['generar_aulario_report'])) {
             }
 
             foreach ($horarioProcesado as $item) {
-                $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
-                $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
-                
-                $horaInicio = new DateTime($item['hor_horainicio']);
-                foreach ($turnos as $turno) {
-                    if ($horaInicio >= new DateTime($turno['tur_horaInicio']) && $horaInicio < new DateTime($turno['tur_horaFin'])) {
-                        $activeShifts[ucfirst(strtolower($turno['tur_nombre']))] = true;
-                    }
-                }
-                
-                $horaFin = new DateTime($item['hor_horafin']);
-                $diffMinutes = ($horaFin->getTimestamp() - $horaInicio->getTimestamp()) / 60;
-                $bloques_span = round($diffMinutes / $slot_duration_minutes);
-                if ($bloques_span < 1) $bloques_span = 1;
-                
-                $secciones = implode(",\n", array_unique($item['sec_codigo_list']));
-                $cellContent = $secciones . "\n" . $item['uc_nombre'] . "\n" . $item['NombreCompletoDocente'];
+    $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
+    $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
+    
+    $horaInicio = new DateTime($item['hor_horainicio']);
+    foreach ($turnos as $turno) {
+        if ($horaInicio >= new DateTime($turno['tur_horaInicio']) && $horaInicio < new DateTime($turno['tur_horaFin'])) {
+            $activeShifts[ucfirst(strtolower($turno['tur_nombre']))] = true;
+        }
+    }
+    
+    $horaFin = new DateTime($item['hor_horafin']);
+    $diffMinutes = ($horaFin->getTimestamp() - $horaInicio->getTimestamp()) / 60;
+    $bloques_span = round($diffMinutes / $slot_duration_minutes);
+    if ($bloques_span < 1) $bloques_span = 1;
+    
+   
+    $secciones = implode(",\n", array_unique($item['sec_codigo_list']));
+    
+    $richText = new RichText();
+    
+    
+    $richText->createText($secciones . "\n");
+    
+    
+    $uc_part = $richText->createTextRun($item['uc_nombre']);
+    $uc_part->getFont()->setBold(true);
+    
+   
+    $richText->createText("\n" . $item['NombreCompletoDocente']);
+   
 
-                $gridData[$dia_key][$horaInicio->format('H:i:s')] = ['content' => $cellContent, 'span' => $bloques_span];
-            }
+    $gridData[$dia_key][$horaInicio->format('H:i:s')] = ['content' => $richText, 'span' => $bloques_span];
+}
 
             foreach(array_keys($activeShifts) as $nombreTurno) {
                 $shiftTimeSlots = $todas_las_franjas_por_turno[$nombreTurno] ?? [];
@@ -157,7 +170,7 @@ if (isset($_POST['generar_aulario_report'])) {
                         $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
                         $colNum++;
                     }
-                    $sheet->getRowDimension($currentRow)->setRowHeight(45);
+                    $sheet->getRowDimension($currentRow)->setRowHeight(40);
                     $currentRow++;
                 }
                 $currentRow += 2;

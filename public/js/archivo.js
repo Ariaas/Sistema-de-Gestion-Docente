@@ -131,12 +131,12 @@ const esPerCero = paraPer === 0;
                     <td>${item.ani_anio} (${item.ani_tipo})<br><b>Fase: ${item.fase_numero}</b></td>
                     <td>${item.sec_codigo.replace(/,/g, '-')}</td>
                     <td>${item.uc_nombre}</td>
-                    <td class="text-center">${totalEst}</td>
-                    <td class="text-center">${aprobadosDir}</td>
-                    <td class="text-center">${paraPer}</td>
-                    <td class="text-center">${aprobadosPer}</td>
-                    <td class="text-center fw-bold text-success">${aprobadosTotales}</td>
-                    <td class="text-center fw-bold text-danger">${reprobadosTotales}</td>
+                    <td>${totalEst}</td>
+                    <td>${aprobadosDir}</td>
+                    <td>${paraPer}</td>
+                    <td>${aprobadosPer}</td>
+                    <td>${aprobadosTotales}</td>
+                    <td >${reprobadosTotales}</td>
                     <td>${accionesHtml}</td>
                 </tr>`);
             });
@@ -320,32 +320,3 @@ $(document).ready(function () {
     }
 });
 
-/*  const totalEst = parseInt(item.sec_cantidad) || 0;
-
-                const aprobadosDir = parseInt(item.apro_cantidad) || 0;
-
-                const paraPer = parseInt(item.per_cantidad) || 0;
-
-                const aprobadosPer = parseInt(item.per_aprobados) || 0;
-
-                const aprobadosTotales = aprobadosDir + aprobadosPer;
-
-                
-
-
-
-
-
-                const reprobadosdirectos = totalEst - aprobadosDir;
-
-                const reprobadosper = item.archivo_per ? (paraPer - aprobadosPer) : 0;
-
-               const reprobadosTotales = reprobadosdirectos + reprobadosper;
-
-
-
-
-
-
-
-                const esPerCero = paraPer === 0;*/

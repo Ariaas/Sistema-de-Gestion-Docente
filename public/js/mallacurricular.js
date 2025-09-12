@@ -54,9 +54,12 @@ function actualizarSelectUC() {
     $('#contenedorAcordeonUC tbody tr').each(function() {
         ucsAgregadas.push($(this).data('uc_codigo'));
     });
+
+
+    
     select.empty().append('<option value="">Seleccione...</option>');
     ucsDisponibles.forEach(uc => {
-        if (!ucsAgregadas.includes(uc.uc_codigo)) {
+        if (!ucsAgregadas.includes(uc.uc_codigo.toString())) {
             select.append(`<option value="${uc.uc_codigo}" data-trayecto="${uc.uc_trayecto}">${uc.uc_nombre}</option>`);
         }
     });

@@ -17,7 +17,7 @@ class Connection_bitacora extends PDO
         }
     }
 
-    protected function Con()
+    public function Con()
     {
         return $this->conex;
     }

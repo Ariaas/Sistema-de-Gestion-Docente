@@ -34,7 +34,7 @@ if (!$puede_registrar) {
 <head>
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
-    <title>Reporte de Horarios por Filtro</title>
+    <title>Reporte de Horarios de las secciones</title>
     <style>
         .form-label { font-weight: 500; }
         .required-mark { color: red; margin-left: 2px; }
@@ -46,7 +46,7 @@ if (!$puede_registrar) {
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
         <div class="container" style="width: 85%; max-width: 900px;">
             <div class="text-center mb-4">
-                <h2 class="text-primary">Reporte de Horarios por Filtro</h2>
+                <h2 class="text-primary">Reporte de Horarios de las secciones</h2>
                 <p class="text-muted">Seleccione los criterios para generar los horarios de las secciones.</p>
             </div>
 

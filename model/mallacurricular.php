@@ -115,7 +115,7 @@ class Malla extends Connection
         return $r;
     }
 
-   public function Registrar($unidades)
+  public function Registrar($unidades)
 {
     $r = array();
     $co = $this->Con();
@@ -148,17 +148,9 @@ class Malla extends Connection
     } catch (Exception $e) {
         return ['resultado' => 'error', 'mensaje' => 'Error al validar los trayectos: ' . $e->getMessage()];
     }
-
-    $check_codigo = $this->Existecodigo();
-    if (isset($check_codigo['resultado']) && $check_codigo['resultado'] === 'existe') {
-        return $check_codigo;
-    }
-
-    $check_cohorte = $this->ExisteCohorte();
-    if (isset($check_cohorte['resultado']) && $check_cohorte['resultado'] === 'existe') {
-        return $check_cohorte;
-    }
-
+    
+    // LÓGICA CORREGIDA:
+    // 1. PRIMERO, verificamos si existe una malla INACTIVA para reactivar.
     $stmt_inactiva = $co->prepare("SELECT mal_codigo FROM tbl_malla WHERE mal_codigo = :mal_codigo AND mal_estado = 0");
     $stmt_inactiva->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
     $stmt_inactiva->execute();
@@ -189,7 +181,7 @@ class Malla extends Connection
             }
             $co->commit();
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/> Se reactivó y actualizó la malla curricular correctamente!';
+            $r['mensaje'] = 'Registro Incluido!<br/> Se registró la malla curricular correctamente!';
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';
@@ -199,6 +191,18 @@ class Malla extends Connection
         return $r;
     }
 
+    // 2. LUEGO, verificamos si el código o la cohorte ya existen en una malla ACTIVA.
+    $check_codigo = $this->Existecodigo();
+    if (isset($check_codigo['resultado']) && $check_codigo['resultado'] === 'existe') {
+        return $check_codigo;
+    }
+    
+    $check_cohorte = $this->ExisteCohorte(false);
+    if (isset($check_cohorte['resultado']) && $check_cohorte['resultado'] === 'existe') {
+        return $check_cohorte;
+    }
+    
+    // 3. SI NADA DE LO ANTERIOR ES CIERTO, procedemos a insertar una malla nueva.
     try {
         $co->beginTransaction();
         $stmt = $co->prepare("INSERT INTO tbl_malla( mal_codigo, mal_nombre, mal_descripcion, mal_cohorte, mal_estado, mal_activa) VALUES (:mal_codigo, :mal_nombre, :mal_descripcion, :mal_cohorte, 1, 0)");
@@ -221,7 +225,7 @@ class Malla extends Connection
         }
         $co->commit();
         $r['resultado'] = 'registrar';
-        $r['mensaje'] = 'Registro Incluido!<br/> Se registró y activó la malla curricular correctamente!';
+        $r['mensaje'] = 'Registro Incluido!<br/> Se registró la malla curricular correctamente!';
     } catch (Exception $e) {
         $co->rollBack();
         $r['resultado'] = 'error';
@@ -240,6 +244,7 @@ class Malla extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         $check_cohorte = $this->ExisteCohorte(true);
+        
         if (isset($check_cohorte['resultado']) && $check_cohorte['resultado'] === 'existe') {
             return $check_cohorte;
         }
@@ -388,7 +393,7 @@ class Malla extends Connection
         return $r;
     }
 
-    public function ExisteCohorte($is_modificar = false)
+    public function ExisteCohorte($is_modificar)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

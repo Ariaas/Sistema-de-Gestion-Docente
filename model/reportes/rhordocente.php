@@ -81,99 +81,107 @@ class ReporteHorarioDocente extends Connection
     }
 
     public function obtenerAsignacionesAcademicas() {
-        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+    if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+    
+    try {
+        $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+        $allowed_periods = $this->get_allowed_periods();
         
-        try {
-            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
-            $allowed_periods = $this->get_allowed_periods();
-            
-            $sql = "SELECT 
-                        u.uc_nombre, 
-                        u.uc_codigo, 
-                        GROUP_CONCAT(DISTINCT s.sec_codigo ORDER BY s.sec_codigo SEPARATOR '\n') as secciones,
-                        GROUP_CONCAT(DISTINCT CONCAT(uh.esp_edificio, ' - ', uh.esp_numero) ORDER BY uh.esp_edificio, uh.esp_numero SEPARATOR '\n') as ambientes,
-                        e.eje_nombre, 
-                        u.uc_periodo,
-                        (SELECT um.mal_hora_academica FROM uc_malla um JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo WHERE um.uc_codigo = u.uc_codigo AND m.mal_activa = 1 LIMIT 1) as totalHorasClase
-                    FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                    JOIN tbl_eje e ON u.eje_nombre = e.eje_nombre
-                    WHERE 
-                        s.ani_anio = :anio_param
-                        AND :cedula_docente = (
-                            SELECT ud.doc_cedula
-                            FROM uc_docente ud
-                            JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                            WHERE ud.uc_codigo = uh.uc_codigo AND dh.sec_codigo = uh.sec_codigo
-                            LIMIT 1
-                        )";
+        $sql = "SELECT 
+                    u.uc_nombre, 
+                    u.uc_codigo, 
+                    GROUP_CONCAT(DISTINCT s.sec_codigo ORDER BY s.sec_codigo SEPARATOR '\n') as secciones,
+                    GROUP_CONCAT(DISTINCT 
+                        CASE
+                            WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
+                            WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
+                            ELSE uh.esp_numero
+                        END 
+                    ORDER BY uh.esp_edificio, uh.esp_numero SEPARATOR '\n') as ambientes,
+                    e.eje_nombre, 
+                    u.uc_periodo,
+                    (SELECT um.mal_hora_academica FROM uc_malla um JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo WHERE um.uc_codigo = u.uc_codigo AND m.mal_activa = 1 LIMIT 1) as totalHorasClase
+                FROM uc_horario uh
+                JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                JOIN tbl_eje e ON u.eje_nombre = e.eje_nombre
+                WHERE 
+                    s.ani_anio = :anio_param
+                    AND :cedula_docente = (
+                        SELECT ud.doc_cedula
+                        FROM uc_docente ud
+                        JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                        WHERE ud.uc_codigo = uh.uc_codigo AND dh.sec_codigo = uh.sec_codigo
+                        LIMIT 1
+                    )";
 
-            $placeholders = [];
-            $i = 0;
-            foreach ($allowed_periods as $period) {
-                $key = ":period" . $i++;
-                $placeholders[] = $key;
-                $params[$key] = $period;
-            }
-            $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
-            $sql .= " GROUP BY u.uc_codigo, u.uc_nombre, e.eje_nombre, u.uc_periodo ORDER BY u.uc_nombre";
-            
-            $stmt = $this->con()->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) { 
-            error_log("Error en obtenerAsignacionesAcademicas: " . $e->getMessage());
-            return []; 
+        $placeholders = [];
+        $i = 0;
+        foreach ($allowed_periods as $period) {
+            $key = ":period" . $i++;
+            $placeholders[] = $key;
+            $params[$key] = $period;
         }
+        $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
+        $sql .= " GROUP BY u.uc_codigo, u.uc_nombre, e.eje_nombre, u.uc_periodo ORDER BY u.uc_nombre";
+        
+        $stmt = $this->con()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) { 
+        error_log("Error en obtenerAsignacionesAcademicas: " . $e->getMessage());
+        return []; 
     }
+}
 
     public function obtenerDatosParrillaHorario() {
-        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+    if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+    
+    try {
+        $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+        $allowed_periods = $this->get_allowed_periods();
         
-        try {
-            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
-            $allowed_periods = $this->get_allowed_periods();
-            
-            $sql = "SELECT 
-                        uh.hor_dia, 
-                        uh.hor_horainicio, 
-                        uh.hor_horafin, 
-                        uh.esp_edificio,
-                        uh.esp_numero,
-                        uh.esp_tipo,
-                        uh.sec_codigo, 
-                        u.uc_nombre
-                    FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                    WHERE 
-                        s.ani_anio = :anio_param
-                        AND :cedula_docente = (
-                            SELECT ud.doc_cedula
-                            FROM uc_docente ud
-                            JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                            WHERE ud.uc_codigo = uh.uc_codigo AND dh.sec_codigo = uh.sec_codigo
-                            LIMIT 1
-                        )";
-            
-            $placeholders = [];
-            $i = 0;
-            foreach ($allowed_periods as $period) {
-                $key = ":period" . $i++;
-                $placeholders[] = $key;
-                $params[$key] = $period;
-            }
-            $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
-
-            $stmt = $this->con()->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) { 
-            error_log("Error en obtenerDatosParrillaHorario: " . $e->getMessage());
-            return []; 
+        $sql = "SELECT 
+                    uh.hor_dia, 
+                    uh.hor_horainicio, 
+                    uh.hor_horafin, 
+                    uh.sec_codigo, 
+                    u.uc_nombre,
+                    CASE
+                        WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
+                        WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
+                        ELSE uh.esp_numero
+                    END AS esp_codigo_formatted
+                FROM uc_horario uh
+                JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                WHERE 
+                    s.ani_anio = :anio_param
+                    AND :cedula_docente = (
+                        SELECT ud.doc_cedula
+                        FROM uc_docente ud
+                        JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
+                        WHERE ud.uc_codigo = uh.uc_codigo AND dh.sec_codigo = uh.sec_codigo
+                        LIMIT 1
+                    )";
+        
+        $placeholders = [];
+        $i = 0;
+        foreach ($allowed_periods as $period) {
+            $key = ":period" . $i++;
+            $placeholders[] = $key;
+            $params[$key] = $period;
         }
+        $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
+
+        $stmt = $this->con()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) { 
+        error_log("Error en obtenerDatosParrillaHorario: " . $e->getMessage());
+        return []; 
     }
+}
 
     public function getTurnos() {
         try {

@@ -9,6 +9,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
 
 $oReporte = new SeccionReport();
 
@@ -162,29 +163,39 @@ if (isset($_POST['generar_seccion_report'])) {
                             }
                             
                             $clase = $gridData[$day][$dbStartTimeKey] ?? null;
-                            if ($clase) {
-                                $cellContent = $clase['uc'] . "\n" . $clase['docente'];
-                                $isSingleLocation = count($locationsPerDay[$day]) === 1;
-                                $singleLocationType = $isSingleLocation ? current($locationsPerDay[$day]) : '';
-                                
-                                if ($clase['tipo'] === 'Laboratorio' || !$isSingleLocation || $singleLocationType === 'Laboratorio') {
-                                    $cellContent .= "\n" . $clase['espacio'];
-                                }
+if ($clase) {
+    
+    $richText = new RichText();
 
-                                $sheet->setCellValue($cellAddress, $cellContent);
+ 
+    $uc_part = $richText->createTextRun($clase['uc']);
+    $uc_part->getFont()->setBold(true);
 
-                                if ($clase['span'] > 1) {
-                                    $endRow = $currentRow + $clase['span'] - 1;
-                                    $sheet->mergeCells($cellAddress . ':' . chr(65 + $colNum) . $endRow);
-                                    for ($i = 1; $i < $clase['span']; $i++) {
-                                        $celdasOcupadas[chr(65 + $colNum) . ($currentRow + $i)] = true;
-                                    }
-                                }
-                            }
+    
+    $resto_contenido = "\n" . $clase['docente'];
+    $isSingleLocation = count($locationsPerDay[$day]) === 1;
+    $singleLocationType = $isSingleLocation ? current($locationsPerDay[$day]) : '';
+
+    if ($clase['tipo'] === 'Laboratorio' || !$isSingleLocation || $singleLocationType === 'Laboratorio') {
+        $resto_contenido .= "\n" . $clase['espacio'];
+    }
+    $richText->createText($resto_contenido);
+
+ 
+    $sheet->getCell($cellAddress)->setValue($richText);
+
+    if ($clase['span'] > 1) {
+        $endRow = $currentRow + $clase['span'] - 1;
+        $sheet->mergeCells($cellAddress . ':' . chr(65 + $colNum) . $endRow);
+        for ($i = 1; $i < $clase['span']; $i++) {
+            $celdasOcupadas[chr(65 + $colNum) . ($currentRow + $i)] = true;
+        }
+    }
+}
                             $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
                             $colNum++;
                         }
-                        $sheet->getRowDimension($currentRow)->setRowHeight(45);
+                        $sheet->getRowDimension($currentRow)->setRowHeight(25);
                         $currentRow++;
                     }
                     $currentRow += 2;

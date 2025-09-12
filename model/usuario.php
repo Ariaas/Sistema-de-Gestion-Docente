@@ -426,7 +426,7 @@ class Usuario extends Connection_bitacora
         $r = array();
         try {
             $sql = "SELECT d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo 
-                    FROM tbl_docente d 
+                    FROM db_orgdocente.tbl_docente d 
                     LEFT JOIN tbl_usuario u ON d.doc_cedula = u.usu_cedula AND u.usu_estado = 1
                     WHERE d.doc_estado = 1 AND (u.usu_cedula IS NULL";
             if ($cedula_actual) {

@@ -54,8 +54,8 @@
                     </div>
                 <?php endif; ?>
 
-                <button class="btn btn-success px-4 ms-auto" id="btnNuevoRegistro" 
-                    <i class="fas fa-plus me-2"></i> Crear Nuevo Registro
+                <button class="btn btn-success px-4 ms-auto" id="btnNuevoRegistro"> 
+                    <i class="fas fa-plus me-2"></i> Crear Nuevo Registro 
                 </button>
             </div>
 

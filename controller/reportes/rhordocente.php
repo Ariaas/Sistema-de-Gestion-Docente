@@ -52,34 +52,33 @@ if (isset($_POST['generar_rhd_report'])) {
     }
 
     foreach($horarioAgrupado as $item) {
-        $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
-        $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
-        
-        $horaInicio = new DateTime($item['hor_horainicio']);
-        $horaFin = new DateTime($item['hor_horafin']);
-        
-        foreach ($turnos_db as $turno) {
-            if ($horaInicio >= new DateTime($turno['tur_horaInicio']) && $horaInicio < new DateTime($turno['tur_horaFin'])) {
-                $activeShifts[ucfirst(strtolower($turno['tur_nombre']))] = true;
-            }
+    $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
+    $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
+    
+    $horaInicio = new DateTime($item['hor_horainicio']);
+    $horaFin = new DateTime($item['hor_horafin']);
+    
+    foreach ($turnos_db as $turno) {
+        if ($horaInicio >= new DateTime($turno['tur_horaInicio']) && $horaInicio < new DateTime($turno['tur_horaFin'])) {
+            $activeShifts[ucfirst(strtolower($turno['tur_nombre']))] = true;
         }
-        
-        $diffMinutes = ($horaFin->getTimestamp() - $horaInicio->getTimestamp()) / 60;
-        $bloques_span = round($diffMinutes / 40);
-        if ($bloques_span < 1) $bloques_span = 1;
-
-        $seccionesFormateadas = '';
-        foreach($item['secciones_array'] as $sec){
-            $prefijo = (substr($sec, 0, 1) === '3' || substr($sec, 0, 1) === '4') ? 'IIN' : 'IN';
-            $seccionesFormateadas .= $prefijo . $sec . ', ';
-        }
-        $seccionesFormateadas = rtrim($seccionesFormateadas, ', ');
-
-        $contenidoCelda = htmlspecialchars($item['uc_nombre']) . "<br>" . $seccionesFormateadas . "<br>" . htmlspecialchars($item['esp_codigo_formatted']);
-        $gridData[$dia_key][$horaInicio->format('H:i')] = ['content' => $contenidoCelda, 'span' => $bloques_span];
     }
     
-    // GENERACIÓN DE BLOQUES DE HORA POR TURNO
+    $diffMinutes = ($horaFin->getTimestamp() - $horaInicio->getTimestamp()) / 60;
+    $bloques_span = round($diffMinutes / 40);
+    if ($bloques_span < 1) $bloques_span = 1;
+
+    $seccionesFormateadas = '';
+    foreach($item['secciones_array'] as $sec){
+        $prefijo = (substr($sec, 0, 1) === '3' || substr($sec, 0, 1) === '4') ? 'IIN' : 'IN';
+        $seccionesFormateadas .= $prefijo . $sec . ', ';
+    }
+    $seccionesFormateadas = rtrim($seccionesFormateadas, ', ');
+
+    $contenidoCelda = "<b>" . htmlspecialchars($item['uc_nombre']) . "</b><br>" . $seccionesFormateadas . "<br>" . htmlspecialchars($item['esp_codigo_formatted']);
+    $gridData[$dia_key][$horaInicio->format('H:i')] = ['content' => $contenidoCelda, 'span' => $bloques_span];
+}
+    
     $bloques_por_turno = [];
     $shiftOrder = ['Mañana' => 1, 'Tarde' => 2, 'Noche' => 3];
     usort($turnos_db, function($a, $b) use ($shiftOrder) {
@@ -105,15 +104,16 @@ if (isset($_POST['generar_rhd_report'])) {
     }
     
     $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-        @page { margin: 25px; } body { font-family: sans-serif; font-size: 10px; } table { width: 100%; border-collapse: collapse; margin-bottom: 8px;}
-        th, td { border: 1px solid black; padding: 4px; text-align: center; vertical-align: middle; }
-        .tabla-encabezado td { font-weight: bold; text-align: left; } .titulo-principal { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; }
-        .titulo-seccion { font-weight: bold; text-align: center; background-color: #E0E0E0; } .sin-borde { border: none; }
-        .texto-izquierda { text-align: left; } .texto-centro { text-align: center; } 
-        .tabla-horario th { background-color: #E0E0E0; font-size: 9px; font-weight:bold; }
-        .tabla-horario td { height: 45px; font-size: 9px; line-height: 1.2; word-wrap: break-word; } 
-        .tabla-resumen td { height: auto; font-size: 9px; }
-    </style></head><body>';
+    @page { margin: 25px; } body { font-family: sans-serif; font-size: 7px; } table { width: 100%; border-collapse: collapse; margin-bottom: 8px;}
+    th, td { border: 1px solid black; padding: 4px; text-align: center; vertical-align: middle; }
+    .tabla-encabezado td { font-weight: bold; text-align: left; } .titulo-principal { font-size: 14px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+    .titulo-seccion { font-weight: bold; text-align: center; background-color: #E0E0E0; } .sin-borde { border: none; }
+    .texto-izquierda { text-align: left; } .texto-centro { text-align: center; } 
+    .tabla-horario th { background-color: #E0E0E0; font-size: 7px; font-weight:bold; }
+    .tabla-horario td { height: 1px; font-size: 8px; line-height: 1.2; word-wrap: break-word; } 
+    .tabla-resumen td { height: auto; font-size: 8px; }
+</style></head><body>';
+
     
     $imagePath = $_SERVER['DOCUMENT_ROOT'] . '/nuevo gestion docente/Sistema-de-Gestion-Docente/public/assets/img/logo_uptaeb.png';
     $imageData = base64_encode(file_get_contents($imagePath));
@@ -127,8 +127,6 @@ if (isset($_POST['generar_rhd_report'])) {
             <img src="' . $imageSrc . '" width="90px">
         </td>
     </tr></table>';
-
-    // ... (El HTML para la info del docente y actividades académicas se mantiene igual) ...
 
      $html .= '<table class="tabla-encabezado">
         <tr>
@@ -167,7 +165,7 @@ if (isset($_POST['generar_rhd_report'])) {
         <tr><td class="texto-izquierda">OTRAS ACT. ACADEMICAS</td><td>'.($otrasActividades['act_otras'] ?? 0).'</td><td></td></tr>
     </table>';
     
-    // RENDERIZADO DEL HORARIO CORREGIDO
+    
     $diasDeLaSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     $isFirstScheduleTable = true;
 
@@ -231,8 +229,7 @@ if (isset($_POST['generar_rhd_report'])) {
         </tr>
     </table>';
     
-    // ... (El resto del HTML del pie del reporte se mantiene igual) ...
-    $html .= '<table class="sin-borde" style="margin-top: 8px; font-size:9px;"><tr><td width="50%" class="sin-borde texto-izquierda" style="vertical-align:top;"><table class="tabla-resumen">
+        $html .= '<table class="sin-borde" style="margin-top: 8px; font-size:9px;"><tr><td width="50%" class="sin-borde texto-izquierda" style="vertical-align:top;"><table class="tabla-resumen">
         <tr><td colspan="2" class="titulo-seccion">21. TOTAL (Horas Clases + Horas Adm.)</td></tr>
         <tr><td class="texto-izquierda">21.1 Horas Clases</td><td>'.$totalHorasClase.'</td></tr>
         <tr><td class="texto-izquierda">21.2 Creación Intelectual (CI)</td><td>'.($otrasActividades['act_creacion_intelectual'] ?? 0).'</td></tr>

@@ -94,12 +94,14 @@ $(document).ready(function() {
         }
         $('#mensajeRestauracion').text(''); 
 
+        
         Swal.fire({
-        title: '¿Está seguro de restaurar el sistema?',
-        html: `Se restaurará <strong>la base de datos</strong> desde el archivo:<br>
-               <strong>${archivoZipSeleccionado}</strong><br><br>
-               Esta acción es irreversible y podría causar pérdida de datos recientes.`,
-        icon: 'warning',
+            title: '¿Está seguro de restaurar el sistema?',
+            
+            html: `Se restaurarán <strong>ambas bases de datos</strong> (principal y bitácora) desde el archivo:<br>
+                   <strong>${archivoZipSeleccionado}</strong><br><br>
+                   Esta acción es irreversible y podría causar pérdida de datos recientes.`,
+            icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
