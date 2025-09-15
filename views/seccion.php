@@ -132,7 +132,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
         </div>
 
-        <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario">
+      <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
@@ -143,8 +143,9 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <form method="post" id="form-horario" autocomplete="off">
                             <input type="hidden" name="accion" id="accion">
                             <input type="hidden" name="sec_codigo" id="sec_codigo_hidden">
+                            
                             <div class="row align-items-end">
-                                <div class="col-md-5 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label for="seccion_principal_id" class="form-label">Sección</label>
                                     <select class="form-select" id="seccion_principal_id" name="seccion_id_display" disabled>
                                         <option value=""></option>
@@ -163,12 +164,22 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         <option value="noche">Turno Noche</option>
                                     </select>
                                 </div>
+                                <div class="col-md-1 mb-3">
+                                     <button type="button" class="btn btn-warning w-100" id="btnLimpiarHorario" title="Limpiar todo el horario">
+                                        <img src="public/assets/icons/escoba.svg" alt="Limpiar" style="width: 20px; height: 20px;">
+                                    </button>
+                                </div>
                             </div>
-                            <div class="table-responsive mt-3" id="contenedorTablaHorario">
+                            <div class="table-responsive mt-2" id="contenedorTablaHorario">
                                 <table class="table table-bordered text-center" id="tablaHorario">
                                     <thead>
                                         <tr>
-                                            <th>Hora</th>
+                                            <th>
+                                                Hora
+                                                <a href="#" id="btnAnadirFilaHorario" class="d-block small fw-normal" style="text-decoration: none;">
+                                                    (Agregar más horas de clase)
+                                                </a>
+                                            </th>
                                             <th>Lunes</th>
                                             <th>Martes</th>
                                             <th>Miércoles</th>
@@ -180,8 +191,9 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <tbody></tbody>
                                 </table>
                             </div>
+                            
                             <div class="modal-footer justify-content-center">
-                                <button type="button" class="btn me-2" id="proceso"></button>
+                                <button type="button" class="btn" id="proceso"></button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
@@ -262,56 +274,15 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
         </div>
 
-        <div class="modal fade" id="modalEntradaHorario" tabindex="-1">
+    <div class="modal fade" id="modalEntradaHorario" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Añadir/Editar Clase</h5>
+                        <h5 class="modal-title">Gestionar Bloque Horario</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
-                        <form id="formularioEntradaHorario" autocomplete="off">
-                            <div class="mb-3"><label class="form-label">Franja Horaria:</label><input type="text" class="form-control" id="modalFranjaHoraria" readonly></div>
-                            <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" id="modalDia" readonly></div>
-
-                            <div class="mb-3">
-                                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
-                                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;">
-                                    <option value="">Seleccionar Docente</option>
-                                </select>
-                                <div id="conflicto-docente-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="modalSeleccionarUc" class="form-label">Unidad Curricular</label>
-                                 <select class="form-select" id="modalSeleccionarUc">
-                                    <option value="">Primero seleccione un docente</option>
-                                </select>
-                                <div id="conflicto-uc-warning" class="alert alert-danger p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab)</label>
-                                 <select class="form-select" id="modalSeleccionarEspacio" style="width: 100%;">
-                                    <option value="">Seleccionar Espacio</option>
-                                </select>
-                                <div id="conflicto-espacio-warning" class="alert alert-warning p-2 mt-2" role="alert" style="display:none; font-size: 0.85em;"></div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="modalBloquesClase" class="form-label">Duración de la Clase:</label>
-                                <select class="form-select" id="modalBloquesClase">
-                                    <option value="1">1 Bloque (40 min)</option>
-                                    <option value="2">2 Bloques (80 min)</option>
-                                    <option value="3">3 Bloques (120 min)</option>
-                                    <option value="4">4 Bloques (160 min)</option>
-                                    <option value="5">5 Bloques (240 min)</option>
-                                    <option value="6">6 Bloques (320 min)</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary" id="btnGuardarClase">Guardar Cambios</button>
-                            <button type="button" class="btn btn-danger" id="btnEliminarEntrada" style="display:none;">Eliminar Clase</button>
-                        </form>
+                    <div class="modal-body" id="modal-body-gestion-clase">
+                        
                     </div>
                 </div>
             </div>

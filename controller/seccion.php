@@ -3,8 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
-
 if (!is_file("model/" . $pagina . ".php")) {
     echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina]);
     exit;
@@ -26,14 +24,12 @@ $acciones_json_validas = [
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
     $o = new Seccion();
 
-
     $countDocentes = $o->contarDocentes();
     $countEspacios = $o->contarEspacios();
     $countTurnos = $o->contarTurnos();
     $countAnios = $o->contarAniosActivos();
     $countMallas = $o->contarMallasActivas();
 
-   
     $reporte_promocion = $o->ActualizarSeccionesParaFase2();
     if ($reporte_promocion !== null) {
         $_SESSION['reporte_promocion'] = $reporte_promocion;
@@ -123,7 +119,16 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 break;
 
             case 'validar_clase_en_vivo':
-                $respuesta = ['conflicto' => false];
+                 $espacio = isset($_POST['espacio']) ? json_decode($_POST['espacio'], true) : null;
+                 $respuesta = $o->ValidarClaseEnVivo(
+                    $_POST['doc_cedula'] ?? null,
+                    $_POST['uc_codigo'] ?? null, // Parámetro añadido para la validación de carga académica
+                    $espacio,
+                    $_POST['dia'] ?? null,
+                    $_POST['hora_inicio'] ?? null,
+                    $_POST['hora_fin'] ?? null,
+                    $_POST['sec_codigo'] ?? null
+                );
                 break;
 
             case 'unir_horarios':

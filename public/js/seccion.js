@@ -36,6 +36,7 @@ function formatTime12Hour(time24) {
 
 let currentClickedCell = null;
 let horarioContenidoGuardado = new Map();
+let bloquesDeLaTablaActual = [];
 let allUcs = [],
     allEspacios = [],
     allDocentes = [],
@@ -44,6 +45,58 @@ let allUcs = [],
     allCohortes = [],
     ocupacionGlobalCompleta = [];
 let modalDataLoaded = false;
+let isSplittingProcess = false;
+let hasSaved = false;
+
+// CORRECCIÓN 1: Esta función ahora devuelve un array con TODOS los conflictos encontrados.
+function checkForConflicts(newClassDetails) {
+    const { docId, espIdJson, dia, secId, horaInicioNueva, horaFinNueva } = newClassDetails;
+    const foundConflicts = []; // Usaremos un array para acumular conflictos
+    if (!dia) return { hasConflict: false };
+
+    const espId = (espIdJson && espIdJson.startsWith('{')) ? JSON.parse(espIdJson) : null;
+    const espKey = espId ? `${espId.numero}|${espId.tipo}|${espId.edificio}` : null;
+    
+    for (const claseExistente of ocupacionGlobalCompleta) {
+        if (claseExistente.sec_codigo == secId) continue;
+
+        if (normalizeDayKey(claseExistente.dia) === normalizeDayKey(dia)) {
+            const inicioExistente = claseExistente.hora_inicio.substring(0, 5);
+            const finExistente = claseExistente.hora_fin.substring(0, 5);
+            
+            const haySolapamiento = (horaInicioNueva < finExistente && horaFinNueva > inicioExistente);
+
+            if (haySolapamiento) {
+                const prefijo = getPrefijoSeccion(claseExistente.sec_codigo);
+                const seccionConflicto = `<strong>${prefijo}${claseExistente.sec_codigo}</strong>`;
+                
+                // Conflicto de docente
+                if (docId && String(claseExistente.doc_cedula) == docId) {
+                    foundConflicts.push({ // Añade al array en lugar de retornar
+                        type: 'docente',
+                        message: `<b>Conflicto:</b> Docente ya asignado en sección ${seccionConflicto} a esta hora.`
+                    });
+                }
+                
+                // Conflicto de espacio
+                const claseExistenteEspKey = `${claseExistente.esp_numero}|${claseExistente.esp_tipo}|${claseExistente.esp_edificio}`;
+                if (espKey && claseExistenteEspKey === espKey) {
+                    foundConflicts.push({ // Añade al array en lugar de retornar
+                        type: 'espacio',
+                        message: `<b>Conflicto:</b> Espacio ya ocupado por la sección ${seccionConflicto} a esta hora.`
+                    });
+                }
+            }
+        }
+    }
+    // Retorna el resultado final después de revisar todo
+    return { 
+        hasConflict: foundConflicts.length > 0, 
+        messages: foundConflicts // Devuelve el array completo de mensajes
+    };
+}
+// --- FIN DE LA LÓGICA PORTADA ---
+
 
 function Listar() {
     const datos = new FormData();
@@ -88,77 +141,138 @@ function normalizeDayKey(day) {
 function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaHorario", isViewOnly = false) {
     const tbody = $(`${targetTableId} tbody`);
     tbody.empty();
-    let turnosFiltrados = allTurnos;
 
-    if (filtroTurno !== 'todos') {
-        turnosFiltrados = allTurnos.filter(turno => {
-            const horaInicio = parseInt(turno.tur_horainicio.substring(0, 2), 10);
-            if (filtroTurno === 'mañana') return horaInicio < 13;
-            if (filtroTurno === 'tarde') return horaInicio >= 13 && horaInicio < 18;
-            if (filtroTurno === 'noche') return horaInicio >= 18;
-            return false;
+    const bloquesTurno = allTurnos.filter(turno => {
+        const horaInicio = parseInt(turno.tur_horainicio.substring(0, 2), 10);
+        if (filtroTurno === 'todos') return true;
+        if (filtroTurno === 'mañana') return horaInicio < 13;
+        if (filtroTurno === 'tarde') return horaInicio >= 13 && horaInicio < 18;
+        if (filtroTurno === 'noche') return horaInicio >= 18;
+        return false;
+    });
+
+    const todosLosBloquesMap = new Map();
+
+    bloquesTurno.forEach(b => {
+        todosLosBloquesMap.set(b.tur_horainicio, {
+            tur_horainicio: b.tur_horainicio,
+            tur_horafin: b.tur_horafin,
+            isCustom: false
         });
-    }
+    });
 
-    turnosFiltrados.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
-    const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-    const celdasProcesadas = new Set();
-
-    const horarioMapeado = new Map();
-    for (const clase of horarioContenidoGuardado.values()) {
-        if (clase.data && clase.data.dia && clase.data.hora_inicio) {
-            const dia_key = normalizeDayKey(clase.data.dia);
-            const key_inicio = `${clase.data.hora_inicio.substring(0, 5)}-${dia_key}`;
-            horarioMapeado.set(key_inicio, clase);
+    for (const claseArray of horarioContenidoGuardado.values()) {
+        if (Array.isArray(claseArray) && claseArray.length > 0) {
+            const clase = claseArray[0];
+            const horaInicio = clase.data.hora_inicio;
+            if (clase.data && horaInicio && !todosLosBloquesMap.has(horaInicio)) {
+                todosLosBloquesMap.set(horaInicio, {
+                    tur_horainicio: horaInicio,
+                    tur_horafin: clase.data.hora_fin,
+                    isCustom: true
+                });
+            }
         }
     }
 
-    turnosFiltrados.forEach((turno, rowIndex) => {
+    const bloquesDeLaTabla = Array.from(todosLosBloquesMap.values())
+        .sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+
+    if (targetTableId === "#tablaHorario") {
+        bloquesDeLaTablaActual = bloquesDeLaTabla;
+    }
+
+    const horarioMapeado = new Map();
+    for (const [key, claseArray] of horarioContenidoGuardado.entries()) {
+        if (Array.isArray(claseArray) && claseArray.length > 0) {
+            horarioMapeado.set(key, claseArray);
+        }
+    }
+
+    const celdasProcesadas = new Set();
+    const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+    bloquesDeLaTabla.forEach((bloque, rowIndex) => {
         const row = $("<tr>");
-        row.append(`<td>${formatTime12Hour(turno.tur_horainicio)} - ${formatTime12Hour(turno.tur_horafin)}</td>`);
+
+        const celdaHora = $("<td>").css({
+            'display': 'flex',
+            'justify-content': 'center',
+            'align-items': 'center'
+        });
+
+        const textoHora = $("<span>").text(`${formatTime12Hour(bloque.tur_horainicio)} - ${formatTime12Hour(bloque.tur_horafin)}`);
+        celdaHora.append(textoHora);
+
+        if (bloque.isCustom && !isViewOnly) {
+            const botonEliminar = $("<button type='button' class='btn btn-sm btn-eliminar-fila-personalizada' title='Eliminar esta fila'>")
+                .html('<img src="public/assets/icons/trash.svg" alt="Eliminar" style="height: 1em; opacity: 0.6; margin-left: 8px;">')
+                .data('franja-inicio', bloque.tur_horainicio)
+                .css({
+                    'border': 'none',
+                    'background': 'transparent',
+                    'padding': '0 5px'
+                });
+            celdaHora.append(botonEliminar);
+        }
+        row.append(celdaHora);
 
         dias.forEach((dia) => {
             const dia_key = normalizeDayKey(dia);
-            const key_actual = `${turno.tur_horainicio.substring(0, 5)}-${dia_key}`;
+            const key_actual = `${bloque.tur_horainicio.substring(0, 5)}-${dia_key}`;
 
             if (celdasProcesadas.has(key_actual)) {
                 return;
             }
 
-            const cell = $("<td>").attr("data-franja-inicio", turno.tur_horainicio).attr("data-dia-nombre", dia);
-            
-            cell.css('vertical-align', 'middle');
-
+            const cell = $("<td>").attr("data-franja-inicio", bloque.tur_horainicio).attr("data-dia-nombre", dia);
+            cell.css('vertical-align', 'top');
             if (!isViewOnly) {
                 cell.addClass("celda-horario");
             }
 
-            let bloques_span = 1;
-
             if (horarioMapeado.has(key_actual)) {
-                const {
-                    html,
-                    data
-                } = horarioMapeado.get(key_actual);
-                bloques_span = data.bloques_span || 1;
-                cell.html(html).data("horario-data", data);
-            } else {
-                if (rowIndex % 2 === 0 && (rowIndex + 1) < turnosFiltrados.length) {
-                    const turno_siguiente = turnosFiltrados[rowIndex + 1];
-                    const key_siguiente = `${turno_siguiente.tur_horainicio.substring(0, 5)}-${dia_key}`;
-                    if (!horarioMapeado.has(key_siguiente)) {
-                        bloques_span = 2;
-                    }
-                }
-            }
+                const claseArray = horarioMapeado.get(key_actual);
 
-            if (bloques_span > 1) {
-                cell.attr("rowspan", bloques_span);
-                for (let i = 1; i < bloques_span; i++) {
-                    const turnoFuturo = turnosFiltrados[rowIndex + i];
-                    if (turnoFuturo) {
-                        const key_futuro = `${turnoFuturo.tur_horainicio.substring(0, 5)}-${dia_key}`;
-                        celdasProcesadas.add(key_futuro);
+                if (Array.isArray(claseArray) && claseArray.length > 0) {
+                    const primeraClase = claseArray[0].data;
+                    let bloques_span = 1;
+                    const horaFinClaseStr = primeraClase.hora_fin.substring(0, 5);
+                    for (let i = rowIndex + 1; i < bloquesDeLaTabla.length; i++) {
+                        const bloqueSiguiente = bloquesDeLaTabla[i];
+                        if (bloqueSiguiente.tur_horainicio.substring(0, 5) < horaFinClaseStr) {
+                            bloques_span++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let combinedHtml;
+                    if (claseArray.length > 1) {
+                        let columna1 = `<td style="width: 50%; vertical-align: top; border-right: 1px solid #dee2e6; padding: 2px;">`;
+                        let columna2 = `<td style="width: 50%; vertical-align: top; padding: 2px;">`;
+
+                        if (claseArray[0]) columna1 += generarCellContent(claseArray[0].data);
+                        if (claseArray[1]) columna2 += generarCellContent(claseArray[1].data);
+
+                        columna1 += '</td>';
+                        columna2 += '</td>';
+                        combinedHtml = `<table style="width: 100%; border: none; height: 100%;"><tbody><tr>${columna1}${columna2}</tr></tbody></table>`;
+
+                    } else {
+                        combinedHtml = generarCellContent(claseArray[0].data);
+                    }
+
+                    cell.html(combinedHtml).data("horario-data", claseArray.map(c => c.data));
+
+                    if (bloques_span > 1) {
+                        cell.attr("rowspan", bloques_span);
+                        for (let i = 1; i < bloques_span; i++) {
+                            if ((rowIndex + i) < bloquesDeLaTabla.length) {
+                                const bloqueFuturo = bloquesDeLaTabla[rowIndex + i];
+                                celdasProcesadas.add(`${bloqueFuturo.tur_horainicio.substring(0, 5)}-${dia_key}`);
+                            }
+                        }
                     }
                 }
             }
@@ -168,222 +282,14 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
     });
 
     if (!isViewOnly) {
-        $(".celda-horario").off("click").on("click", onCeldaHorarioClick);
+        $("#tablaHorario tbody").off("click").on("click", ".celda-horario", onCeldaHorarioClick);
     }
-}
-
-function checkForConflicts(newClassDetails) {
-    const { docId, espIdJson, dia, secId, horaInicioNueva, horaFinNueva } = newClassDetails;
-    if (!dia) return { hasConflict: false };
-
-
-    const espId = espIdJson ? JSON.parse(espIdJson) : null;
-    const espKey = espId ? `${espId.numero}|${espId.tipo}|${espId.edificio}` : null;
-    const diaNormalizado = normalizeDayKey(dia);
-    
-    for (const claseExistente of ocupacionGlobalCompleta) {
-        if (claseExistente.sec_codigo == secId) continue;
-
-        if (normalizeDayKey(claseExistente.dia) === diaNormalizado) {
-            const inicioExistente = claseExistente.hora_inicio;
-            const finExistente = claseExistente.hora_fin;
-            
-            // Lógica estricta: un conflicto solo existe si las horas se solapan,
-            // no si son consecutivas.
-            const haySolapamiento = (horaInicioNueva < finExistente && horaFinNueva > inicioExistente);
-
-            if (haySolapamiento) {
-                const prefijo = getPrefijoSeccion(claseExistente.sec_codigo);
-                const seccionConflicto = `<strong>${prefijo}${claseExistente.sec_codigo}</strong>`;
-                
-                if (docId && String(claseExistente.doc_cedula) == docId) {
-                    return {
-                        hasConflict: true,
-                        type: 'docente',
-                        message: `Conflicto: Docente ya asignado en sección ${seccionConflicto} a esta hora.`
-                    };
-                }
-                
-                const claseExistenteEspKey = `${claseExistente.esp_numero}|${claseExistente.esp_tipo}|${claseExistente.esp_edificio}`;
-                if (espKey && claseExistenteEspKey === espKey) {
-                    return {
-                        hasConflict: true,
-                        type: 'espacio',
-                        message: `Conflicto: Espacio ya ocupado en sección ${seccionConflicto} a esta hora.`
-                    };
-                }
-            }
-        }
-    }
-    return { hasConflict: false };
-}
-
-function validarEntradaHorario() {
-    $("#conflicto-docente-warning, #conflicto-espacio-warning, #conflicto-uc-warning").hide().html('');
-    $("#btnGuardarClase").prop("disabled", false);
-
-    const ucId = $("#modalSeleccionarUc").val();
-    const datosClaseActual = currentClickedCell ? currentClickedCell.data("horario-data") : null;
-
-    if (ucId) {
-        let ucDuplicada = false;
-        const claveEdicion = datosClaseActual ? `${datosClaseActual.hora_inicio.substring(0,5)}-${normalizeDayKey(datosClaseActual.dia)}` : null;
-        for (const [key, valor] of horarioContenidoGuardado.entries()) {
-            if (valor.data && valor.data.uc_codigo === ucId && key !== claveEdicion) {
-                ucDuplicada = true;
-                break;
-            }
-        }
-        if (ucDuplicada) {
-            const ucInfo = allUcs.find(u => u.uc_codigo === ucId);
-            const nombreUc = ucInfo ? ucInfo.uc_nombre : `código ${ucId}`;
-            $('#conflicto-uc-warning').html(`<strong>Aviso:</strong> La UC <strong>${nombreUc}</strong> ya fue asignada en este horario.`).show();
-        }
-    }
-
-    const franjaInicioActual = currentClickedCell.data("franja-inicio");
-    const indiceTurnoActual = allTurnos.findIndex(t => t.tur_horainicio === franjaInicioActual);
-    const bloques = parseInt($("#modalBloquesClase").val(), 10) || 1;
-    if (indiceTurnoActual === -1 || (indiceTurnoActual + bloques) > allTurnos.length) return; 
-
-    const details = {
-        docId: $("#modalSeleccionarDocente").val(),
-        espIdJson: $("#modalSeleccionarEspacio").val(),
-        dia: $("#modalDia").val(),
-        secId: $("#sec_codigo_hidden").val(),
-        horaInicioNueva: allTurnos[indiceTurnoActual].tur_horainicio.substring(0, 5),
-        horaFinNueva: allTurnos[indiceTurnoActual + bloques - 1].tur_horafin.substring(0, 5)
-    };
-
-    const conflictInfo = checkForConflicts(details);
-    
-    if(conflictInfo.hasConflict) {
-        const warningDiv = conflictInfo.type === 'docente' ? $("#conflicto-docente-warning") : $("#conflicto-espacio-warning");
-        warningDiv.html(conflictInfo.message).show();
-    }
-}
-
-function onCeldaHorarioClick() {
-    currentClickedCell = $(this);
-    const data = currentClickedCell.data("horario-data");
-    const franjaInicio = currentClickedCell.data("franja-inicio");
-    const turnoCompleto = allTurnos.find(t => t.tur_horainicio === franjaInicio);
-
-    if ($("#modalSeleccionarDocente").data('select2')) {
-        $("#modalSeleccionarDocente").select2('destroy');
-    }
-    if ($("#modalSeleccionarEspacio").data('select2')) {
-        $("#modalSeleccionarEspacio").select2('destroy');
-    }
-
-    $("#formularioEntradaHorario")[0].reset();
-    $("#conflicto-docente-warning, #conflicto-espacio-warning, #conflicto-uc-warning").hide().html('');
-    $("#btnGuardarClase").prop("disabled", false);
-
-    $("#modalFranjaHoraria").val(`${formatTime12Hour(turnoCompleto.tur_horainicio)} - ${formatTime12Hour(turnoCompleto.tur_horafin)}`);
-    $("#modalDia").val($(this).data("dia-nombre"));
-
-    $("#modalSeleccionarDocente").empty().append('<option value="">Seleccionar Docente</option>').val('');
-    allDocentes.forEach(doc => $("#modalSeleccionarDocente").append(`<option value="${doc.doc_cedula}">${doc.doc_nombre} ${doc.doc_apellido}</option>`));
-
-    $("#modalSeleccionarEspacio").empty().append('<option value="">Seleccionar Espacio</option>').val('');
-    allEspacios.forEach(esp => $("#modalSeleccionarEspacio").append(`<option value='${JSON.stringify({numero: esp.numero, tipo: esp.tipo, edificio: esp.edificio})}'>${esp.numero} (${esp.tipo} - ${esp.edificio})</option>`));
-
-    $("#modalSeleccionarUc").empty().append('<option value="">Seleccione un docente</option>').prop('disabled', true);
-
-    if (data) {
-        $("#modalSeleccionarDocente").val(data.doc_cedula);
-        cargarUcPorDocente(data.doc_cedula, () => {
-            $("#modalSeleccionarUc").val(data.uc_codigo).trigger('change');
-        });
-        if (data.espacio && data.espacio.numero) {
-            $('#modalSeleccionarEspacio').val(JSON.stringify({
-                numero: data.espacio.numero,
-                tipo: data.espacio.tipo,
-                edificio: data.espacio.edificio
-            }));
-        } else {
-             $('#modalSeleccionarEspacio').val('');
-        }
-        $("#modalBloquesClase").val(data.bloques_span || 1);
-        $("#btnEliminarEntrada").show();
-    } else {
-        $("#modalBloquesClase").val(2);
-        $("#btnEliminarEntrada").hide();
-    }
-
-    $("#modalSeleccionarDocente").select2({
-        theme: "bootstrap-5",
-        dropdownParent: $('#modalEntradaHorario')
-    });
-
-    $("#modalSeleccionarEspacio").select2({
-        theme: "bootstrap-5",
-        dropdownParent: $('#modalEntradaHorario')
-    });
-    
-    $('#modalSeleccionarDocente').trigger('change');
-    $('#modalSeleccionarEspacio').trigger('change');
-
-    $("#modalEntradaHorario").modal("show");
-}
-
-function cargarUcPorDocente(docCedula, callback) {
-    const ucSelect = $("#modalSeleccionarUc");
-    if (!docCedula) {
-        ucSelect.empty().append('<option value="">Seleccione un docente</option>').prop("disabled", true);
-        if (callback) callback();
-        return;
-    }
-
-    const secCodigo = $("#sec_codigo_hidden").val();
-
-    const datos = new FormData();
-    datos.append("accion", "obtener_uc_por_docente");
-    datos.append("doc_cedula", docCedula);
-    datos.append("sec_codigo_actual", secCodigo);
-
-    $.ajax({
-        url: "",
-        type: "POST",
-        data: datos,
-        contentType: false,
-        processData: false,
-        success: function(respuesta) {
-            ucSelect.empty();
-            if (respuesta.resultado === 'ok' && respuesta.ucs_docente.length > 0) {
-                ucSelect.append('<option value="">Seleccionar UC</option>');
-                respuesta.ucs_docente.forEach(uc => {
-                    let faseTexto = '';
-                    const periodo = uc.uc_periodo;
-                    if (periodo === 'Fase I') {
-                        faseTexto = ' (Fase I)';
-                    } else if (periodo === 'Fase II') {
-                        faseTexto = ' (Fase II)';
-                    } else if (periodo === 'Anual') {
-                        faseTexto = ' (Anual)';
-                    } else if (periodo === '0') {
-                        faseTexto = ' (Inicial)';
-                    }
-                    ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}${faseTexto}</option>`);
-                });
-                ucSelect.prop("disabled", false);
-            } else {
-                const mensaje = respuesta.mensaje_uc || "No hay UCs asignadas";
-                ucSelect.append(`<option value="">${mensaje}</option>`).prop("disabled", true);
-            }
-            if (callback) callback();
-        },
-        error: function() {
-            ucSelect.empty().append('<option value="">Error al cargar UCs</option>').prop("disabled", true);
-            if (callback) callback();
-        }
-    });
 }
 
 function generarCellContent(clase) {
-    const uc = clase.uc_codigo ? (allUcs.find(u => u.uc_codigo == clase.uc_codigo)?.uc_nombre || `UC Inválida`) : '<i>(Sin UC)</i>';
-    
+    const uc_nombre_completo = clase.uc_codigo ? (allUcs.find(u => u.uc_codigo == clase.uc_codigo)?.uc_nombre || `UC Inválida`) : '<i>(Sin UC)</i>';
+    const uc = abreviarNombreLargo(uc_nombre_completo, 25);
+
     const doc = clase.doc_cedula ? allDocentes.find(d => d.doc_cedula == clase.doc_cedula) : null;
     const doc_nombre = doc ? `${doc.doc_nombre} ${doc.doc_apellido}` : '<i>(Sin Docente)</i>';
 
@@ -396,13 +302,737 @@ function generarCellContent(clase) {
         if (tipo === 'aula') {
             codigoEspacioFormateado = `${edificio.charAt(0).toUpperCase()}-${numero}`;
         } else if (tipo === 'laboratorio') {
-            codigoEspacioFormateado = `${tipo.charAt(0).toUpperCase()}-${numero}`;
+            codigoEspacioFormateado = `Lab.-${numero}`;
         } else {
             codigoEspacioFormateado = numero;
         }
     }
 
-    return `<p class="m-0" style="font-size:0.8em;"><strong>${uc}</strong></p><small class="text-muted" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>`;
+    const subgrupoId = clase.subgrupo || 'default';
+    const subgrupoDisplay = clase.subgrupo ? `<span class="badge bg-primary-soft text-primary me-2">G(${clase.subgrupo})</span>` : '';
+
+    const editButton = `
+        <button type="button" class="btn btn-light btn-edit-icon" title="Gestionar este bloque" style="border: none; padding: 4px 8px; line-height: 1;">
+            <img src="public/assets/icons/edit.svg" style="width: 1.1em; height: 1.1em; opacity: 0.7;">
+        </button>
+    `;
+
+    return `<div class="subgroup-item p-1" style="display: flex; align-items: center; justify-content: space-between;" data-subgrupo-id="${subgrupoId}">
+                <div class="subgroup-content" style="cursor: pointer; flex-grow: 1;">
+                    <p class="m-0" style="font-size:0.8em;">${subgrupoDisplay}<strong>${uc}</strong></p>
+                    <small class="text-muted" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>
+                </div>
+                ${editButton}
+            </div>`;
+}
+
+
+function abreviarNombreLargo(nombre, longitudMaxima = 25) {
+    if (typeof nombre !== 'string' || nombre.length <= longitudMaxima) {
+        return nombre;
+    }
+    const palabrasExcluidas = new Set(['de', 'y', 'a', 'del', 'la', 'los', 'las', 'en']);
+    const partes = nombre.split(' ');
+    let numeral = '';
+    const ultimoTermino = partes[partes.length - 1];
+    if (['I', 'II', 'III', 'IV', 'V', 'VI'].includes(ultimoTermino.toUpperCase())) {
+        numeral = ' ' + partes.pop();
+    }
+    const iniciales = partes
+        .filter(palabra => !palabrasExcluidas.has(palabra.toLowerCase()))
+        .map(palabra => palabra.charAt(0).toUpperCase());
+    return iniciales.join('') + numeral;
+}
+
+function renderizarModalDeGestion(clases, franjaInicio, diaNombre) {
+    const modalBody = $("#modal-body-gestion-clase");
+    modalBody.empty();
+
+    let listHtml = '<p class="text-muted">Este bloque horario tiene múltiples clases (subgrupos). Puede editar o eliminar cada uno.</p>';
+    listHtml += '<ul class="list-group">';
+
+    clases.forEach(claseData => {
+        const uc = claseData.uc_codigo ? (allUcs.find(u => u.uc_codigo == claseData.uc_codigo)?.uc_nombre || 'N/A') : '(Sin UC)';
+        const doc = claseData.doc_cedula ? (allDocentes.find(d => d.doc_cedula == claseData.doc_cedula)?.doc_nombre + ' ' + allDocentes.find(d => d.doc_cedula == claseData.doc_cedula)?.doc_apellido || 'N/A') : '(Sin Docente)';
+        const subgrupoId = claseData.subgrupo || 'default';
+        const subgrupoDisplay = claseData.subgrupo ? `Grupo ${claseData.subgrupo}` : 'Grupo Único';
+
+        listHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${subgrupoDisplay}:</strong> ${uc}<br>
+                            <small class="text-muted">${doc}</small>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-editar-subgrupo" data-subgrupo-id="${subgrupoId}">Editar</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-subgrupo" data-subgrupo-id="${subgrupoId}">Eliminar</button>
+                        </div>
+                     </li>`;
+    });
+
+    listHtml += '</ul>';
+
+    if (clases.length < 2) {
+        listHtml += '<div class="text-center mt-3"><button type="button" class="btn btn-success" id="btn-anadir-otro-subgrupo">Añadir otro Subgrupo</button></div>';
+    } else {
+        listHtml += '<p class="text-center text-muted mt-3">Máximo de 2 subgrupos por bloque alcanzado.</p>';
+    }
+
+    modalBody.html(listHtml);
+}
+
+function renderizarModalClaseUnica(claseData, franjaInicio, diaNombre) {
+    const modalBody = $("#modal-body-gestion-clase");
+    const uc = allUcs.find(u => u.uc_codigo == claseData.uc_codigo)?.uc_nombre || 'N/A';
+    const doc = allDocentes.find(d => d.doc_cedula == claseData.doc_cedula);
+    const doc_nombre = doc ? `${doc.doc_nombre} ${doc.doc_apellido}` : 'N/A';
+    const espacio_info = (claseData.espacio && claseData.espacio.numero) ? `${claseData.espacio.numero} (${claseData.espacio.tipo})` : '<i>(Sin Espacio)</i>';
+
+    const html = `
+        <h5 class="mb-3">Gestionar Bloque Horario</h5>
+        <ul class="list-group mb-4">
+            <li class="list-group-item"><strong>UC:</strong> ${uc}</li>
+            <li class="list-group-item"><strong>Docente:</strong> ${doc_nombre}</li>
+            <li class="list-group-item"><strong>Espacio:</strong> ${espacio_info}</li>
+        </ul>
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-outline-primary" id="btn-editar-clase-unica">
+                <img src="public/assets/icons/edit.svg" alt="Editar" style="height: 1em; margin-right: 8px;">Editar Clase
+            </button>
+            <button type="button" class="btn btn-outline-success" id="btn-dividir-bloque">
+                 <img src="public/assets/icons/columns.svg" alt="Dividir" style="height: 1em; margin-right: 8px;">Dividir Bloque para Subgrupos
+            </button>
+            <button type="button" class="btn btn-outline-danger mt-2" id="btn-eliminar-clase-unica">
+                <img src="public/assets/icons/trash.svg" alt="Eliminar" style="height: 1em; margin-right: 8px;">Eliminar Clase
+            </button>
+        </div>
+    `;
+    modalBody.html(html);
+}
+
+function inicializarFiltroUcPorDocente(docenteSelect, ucSelect) {
+    docenteSelect.on("change", function() {
+        const docCedula = $(this).val();
+        const ucToSelect = ucSelect.data('uc-to-select-after-filter');
+
+        if (!docCedula) {
+            ucSelect.empty().append('<option value="">Seleccione una UC</option>');
+            const secCodigo = $("#sec_codigo_hidden").val();
+            const trayecto = secCodigo ? String(secCodigo).charAt(0) : null;
+            
+            const ucsFiltradas = trayecto ? allUcs.filter(uc => uc.uc_trayecto == trayecto) : allUcs;
+            
+            ucsFiltradas.forEach(uc => ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`));
+
+            ucSelect.prop("disabled", false).trigger('change');
+            return;
+        }
+
+        const datos = new FormData();
+        datos.append("accion", "obtener_uc_por_docente");
+        datos.append("doc_cedula", docCedula);
+        datos.append("sec_codigo_actual", $("#sec_codigo_hidden").val());
+
+        $.ajax({
+            url: "",
+            type: "POST",
+            data: datos,
+            contentType: false,
+            processData: false,
+            success: function(respuesta) {
+                ucSelect.empty();
+                if (respuesta.resultado === 'ok' && respuesta.ucs_docente.length > 0) {
+                    ucSelect.append('<option value="">Seleccionar UC</option>');
+                    respuesta.ucs_docente.forEach(uc => {
+                        let faseTexto = uc.uc_periodo ? ` (${uc.uc_periodo})` : '';
+                        ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}${faseTexto}</option>`);
+                    });
+                    ucSelect.prop("disabled", false);
+                } else {
+                    const mensaje = respuesta.mensaje_uc || "No hay UCs asignadas";
+                    ucSelect.append(`<option value="">${mensaje}</option>`).prop("disabled", true);
+                }
+
+                if (ucToSelect) {
+                    ucSelect.val(ucToSelect).trigger('change');
+                    ucSelect.data('uc-to-select-after-filter', null);
+                }
+            },
+            error: function() {
+                ucSelect.empty().append('<option value="">Error al cargar UCs</option>').prop("disabled", true);
+            }
+        });
+    });
+}
+
+
+function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
+    const modalBody = $("#modal-body-gestion-clase");
+    const turnoCompleto = bloquesDeLaTablaActual.find(b => b.tur_horainicio === franjaInicio);
+    const isEditing = !!claseData;
+
+    const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
+    let maxBloques = 0;
+    if (indiceInicio !== -1) {
+        maxBloques = 1;
+        for (let i = indiceInicio; i < bloquesDeLaTablaActual.length - 1; i++) {
+            if (bloquesDeLaTablaActual[i].tur_horafin === bloquesDeLaTablaActual[i + 1].tur_horainicio) {
+                maxBloques++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    let opcionesDuracion = '';
+    for (let i = 1; i <= maxBloques; i++) {
+        opcionesDuracion += `<option value="${i}">${i} Bloque${i > 1 ? 's' : ''} (${i * 40} min)</option>`;
+    }
+
+    const formHtml = `
+        <form id="formularioEntradaHorario" autocomplete="off" novalidate>
+            <input type="hidden" id="formContext" value="simple">
+            <input type="hidden" id="subgrupoOriginalId" value="default">
+            <div class="mb-3"><label class="form-label">Franja Horaria:</label><input type="text" class="form-control" id="franjaHorariaDisplay" value="${formatTime12Hour(turnoCompleto.tur_horainicio)} - ${formatTime12Hour(turnoCompleto.tur_horafin)}" readonly></div>
+            <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" value="${diaNombre}" readonly></div>
+            <div class="mb-3">
+                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
+                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;"></select>
+                <div id="docente-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+                <label for="modalSeleccionarUc" class="form-label">Unidad Curricular</label>
+                <select class="form-select" id="modalSeleccionarUc" style="width: 100%;"></select>
+                <div id="uc-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+                <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab)</label>
+                <select class="form-select" id="modalSeleccionarEspacio" style="width: 100%;"></select>
+                <div id="espacio-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+                <label for="modalDuracionSubgrupo" class="form-label">Duración de la Clase:</label>
+                <select class="form-select" id="modalDuracionSubgrupo">${opcionesDuracion}</select>
+                <div id="duracion-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+             <div class="d-flex justify-content-start gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">${isEditing ? 'Guardar Cambios' : 'Guardar Clase'}</button>
+                ${isEditing ? '<button type="button" class="btn btn-danger" id="btn-eliminar-clase-unica-desde-form">Eliminar</button>' : ''}
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </form>
+    `;
+    modalBody.html(formHtml);
+
+    const select2Config = {
+        theme: "bootstrap-5",
+        dropdownParent: $('#modalEntradaHorario .modal-content')
+    };
+
+    const ucSelect = $("#modalSeleccionarUc");
+    ucSelect.empty().append('<option value="">Seleccione una UC o un docente para filtrar</option>');
+    const secCodigo = $("#sec_codigo_hidden").val();
+    const trayecto = secCodigo ? String(secCodigo).charAt(0) : null;
+    
+    const ucsFiltradas = trayecto ? allUcs.filter(uc => uc.uc_trayecto == trayecto) : allUcs;
+    
+    ucsFiltradas.forEach(uc => ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`));
+    ucSelect.select2(select2Config);
+
+    const docenteSelect = $("#modalSeleccionarDocente");
+    docenteSelect.empty().append('<option value="">Seleccionar Docente</option>');
+    allDocentes.forEach(doc => docenteSelect.append(`<option value="${doc.doc_cedula}">${doc.doc_nombre} ${doc.doc_apellido}</option>`));
+    docenteSelect.select2(select2Config);
+
+    const espacioSelect = $("#modalSeleccionarEspacio");
+    espacioSelect.empty().append('<option value="">Seleccionar Espacio</option>');
+    allEspacios.forEach(esp => espacioSelect.append(`<option value='${JSON.stringify({numero: esp.numero, tipo: esp.tipo, edificio: esp.edificio})}'>${esp.numero} (${esp.tipo} - ${esp.edificio})</option>`));
+    espacioSelect.select2(select2Config);
+
+    $("#modalDuracionSubgrupo").select2({
+        ...select2Config,
+        minimumResultsForSearch: Infinity
+    });
+
+    inicializarFiltroUcPorDocente(docenteSelect, ucSelect);
+    
+    $("#modalSeleccionarDocente, #modalSeleccionarUc, #modalSeleccionarEspacio, #modalDuracionSubgrupo").on('change', function() {
+        validarBloqueEnTiempoReal();
+    });
+
+    $("#modalDuracionSubgrupo").on('change', function() {
+        const bloquesSeleccionados = parseInt($(this).val(), 10);
+        const indiceFin = indiceInicio + bloquesSeleccionados - 1;
+        if (indiceFin < bloquesDeLaTablaActual.length) {
+            const horaFin = bloquesDeLaTablaActual[indiceFin].tur_horafin;
+            $("#franjaHorariaDisplay").val(`${formatTime12Hour(franjaInicio)} - ${formatTime12Hour(horaFin)}`);
+        }
+    });
+
+    if (claseData) {
+        $("#modalDuracionSubgrupo").val(claseData.bloques_span).trigger('change');
+        ucSelect.data('uc-to-select-after-filter', claseData.uc_codigo);
+        $("#modalSeleccionarDocente").val(claseData.doc_cedula).trigger('change');
+        if (claseData.espacio && claseData.espacio.numero) {
+            $("#modalSeleccionarEspacio").val(JSON.stringify(claseData.espacio)).trigger('change');
+        }
+    } else {
+        $("#modalDuracionSubgrupo").val(maxBloques >= 2 ? '2' : '1').trigger('change');
+    }
+}
+
+
+function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
+    const modalBody = $("#modal-body-gestion-clase");
+    const subgrupoOriginal = claseData ? (claseData.subgrupo || '') : '';
+    const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+    const clasesEnCelda = horarioContenidoGuardado.get(key_horario) || [];
+    const esEdicion = !!claseData;
+    const placeholderSubgrupo = clasesEnCelda.some(c => c.data.subgrupo === 'A') ? 'Tarde, Práctica...' : 'A, Mañana...';
+
+    const duracionFija = clasesEnCelda.length > 0 ? clasesEnCelda[0].data.bloques_span : 1;
+    const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
+    const horaFin = bloquesDeLaTablaActual[indiceInicio + duracionFija - 1].tur_horafin;
+    const textoFranjaCompleta = `${formatTime12Hour(franjaInicio)} - ${formatTime12Hour(horaFin)}`;
+
+    const mostrarBotonVolver = clasesEnCelda.length > 0;
+
+    const formHtml = `
+        <form id="formularioEntradaHorario" autocomplete="off" novalidate>
+            <input type="hidden" id="formContext" value="subgrupo">
+            <input type="hidden" id="subgrupoOriginalId" value="${subgrupoOriginal}">
+            <div class="mb-3"><label class="form-label">Franja Horaria Completa:</label><input type="text" class="form-control" value="${textoFranjaCompleta}" readonly></div>
+            <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" value="${diaNombre}" readonly></div>
+            <hr>
+            <div class="mb-3">
+                <label for="modalSubgrupo" class="form-label">Identificador del Subgrupo <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="modalSubgrupo" placeholder="Ej: ${placeholderSubgrupo}" required>
+                <div class="invalid-feedback">Este identificador ya existe o está vacío.</div>
+            </div>
+            <div class="mb-3">
+                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
+                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;"></select>
+                 <div id="docente-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+                <label for="modalSeleccionarUc" class="form-label">Unidad Curricular</label>
+                <select class="form-select" id="modalSeleccionarUc" style="width: 100%;"></select>
+                <div id="uc-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+                <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab)</label>
+                <select class="form-select" id="modalSeleccionarEspacio" style="width: 100%;"></select>
+                <div id="espacio-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">${esEdicion ? 'Guardar Cambios' : 'Añadir Subgrupo'}</button>
+            ${mostrarBotonVolver ? '<button type="button" class="btn btn-secondary" id="btn-volver-a-lista">Volver a la lista</button>' : ''}
+        </form>
+    `;
+    modalBody.html(formHtml);
+
+    const select2Config = {
+        theme: "bootstrap-5",
+        dropdownParent: $('#modalEntradaHorario .modal-content')
+    };
+
+    const ucSelect = $("#modalSeleccionarUc");
+    ucSelect.empty().append('<option value="">Seleccione una UC o un docente para filtrar</option>');
+    const secCodigo = $("#sec_codigo_hidden").val();
+    const trayecto = secCodigo ? String(secCodigo).charAt(0) : null;
+    
+    const ucsFiltradas = trayecto ? allUcs.filter(uc => uc.uc_trayecto == trayecto) : allUcs;
+    
+    ucsFiltradas.forEach(uc => ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`));
+    ucSelect.select2(select2Config);
+
+    const docenteSelect = $("#modalSeleccionarDocente");
+    docenteSelect.empty().append('<option value="">Seleccionar Docente</option>');
+    allDocentes.forEach(doc => docenteSelect.append(`<option value="${doc.doc_cedula}">${doc.doc_nombre} ${doc.doc_apellido}</option>`));
+    docenteSelect.select2(select2Config);
+
+    const espacioSelect = $("#modalSeleccionarEspacio");
+    espacioSelect.empty().append('<option value="">Seleccionar Espacio</option>');
+    allEspacios.forEach(esp => espacioSelect.append(`<option value='${JSON.stringify({numero: esp.numero, tipo: esp.tipo, edificio: esp.edificio})}'>${esp.numero} (${esp.tipo} - ${esp.edificio})</option>`));
+    espacioSelect.select2(select2Config);
+
+    inicializarFiltroUcPorDocente(docenteSelect, ucSelect);
+    
+    $("#modalSeleccionarDocente, #modalSeleccionarUc, #modalSeleccionarEspacio, #modalSubgrupo").on('change keyup', function() {
+        validarBloqueEnTiempoReal();
+    });
+
+    if (claseData) {
+        $("#modalSubgrupo").val(claseData.subgrupo);
+        ucSelect.data('uc-to-select-after-filter', claseData.uc_codigo);
+        $("#modalSeleccionarDocente").val(claseData.doc_cedula).trigger('change');
+        if (claseData.espacio && claseData.espacio.numero) {
+            $("#modalSeleccionarEspacio").val(JSON.stringify(claseData.espacio)).trigger('change');
+        }
+    }
+}
+
+function validarBloqueEnTiempoReal() {
+    // Limpiar alertas previas
+    $('#docente-conflicto-info, #uc-conflicto-info, #espacio-conflicto-info, #duracion-conflicto-info').html('');
+    const submitButton = $('#formularioEntradaHorario button[type="submit"]');
+    submitButton.prop('disabled', false);
+
+    const franjaInicio = currentClickedCell.data("franja-inicio");
+    const diaNombre = currentClickedCell.data("dia-nombre");
+    const dia_key = normalizeDayKey(diaNombre);
+
+    // --- MODIFICACIÓN INICIA: Lógica de validación de duración local, corregida y robusta ---
+    const duracionSelect = $("#modalDuracionSubgrupo");
+    if (duracionSelect.length > 0) {
+        const nuevaDuracion = parseInt(duracionSelect.val(), 10);
+        const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
+        
+        // Obtiene la clave de la clase que se está editando para poder ignorarla en la verificación
+        const originalKey = `${franjaInicio.substring(0, 5)}-${dia_key}`;
+
+        // Itera sobre los bloques que la clase ocuparía si se extiende
+        for (let i = 1; i < nuevaDuracion; i++) {
+            const indiceBloqueSiguiente = indiceInicio + i;
+            if (indiceBloqueSiguiente < bloquesDeLaTablaActual.length) {
+                const bloqueSiguiente = bloquesDeLaTablaActual[indiceBloqueSiguiente];
+                const tiempoBloqueSiguiente = bloqueSiguiente.tur_horainicio.substring(0, 5);
+
+                // Revisa en todo el horario guardado si algún bloque futuro está ocupado por OTRA clase
+                for (const [key, claseArray] of horarioContenidoGuardado.entries()) {
+                    // Si la clase encontrada es la que estamos editando, la ignora y continúa
+                    if (key === originalKey) {
+                        continue;
+                    }
+                    
+                    const claseExistente = claseArray[0].data;
+                    const inicioExistente = claseExistente.hora_inicio.substring(0, 5);
+                    const finExistente = claseExistente.hora_fin.substring(0, 5);
+                    
+                    // Comprueba si el bloque que queremos usar está dentro del rango de una clase existente en el mismo día
+                    if (normalizeDayKey(claseExistente.dia) === dia_key) {
+                        if (tiempoBloqueSiguiente >= inicioExistente && tiempoBloqueSiguiente < finExistente) {
+                            // ¡Conflicto encontrado! Muestra el mensaje, deshabilita el guardado y detiene la validación.
+                            $('#duracion-conflicto-info').html(`<b>Conflicto:</b> El bloque de las ${formatTime12Hour(bloqueSiguiente.tur_horainicio)} ya está ocupado.`);
+                            submitButton.prop('disabled', true);
+                            return; // Detiene la ejecución para prevenir más validaciones
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // --- MODIFICACIÓN TERMINA ---
+
+    // 2. Validar UC duplicada (localmente, no estricto)
+    const ucCodigo = $("#modalSeleccionarUc").val();
+    if (ucCodigo) {
+        const key_actual = `${franjaInicio.substring(0, 5)}-${dia_key}`;
+        for (const [key, claseArray] of horarioContenidoGuardado.entries()) {
+            if (key !== key_actual && claseArray.some(c => c.data.uc_codigo === ucCodigo)) {
+                const nombreUc = allUcs.find(u => u.uc_codigo === ucCodigo)?.uc_nombre || ucCodigo;
+                $('#uc-conflicto-info').html(`<b>Advertencia:</b> La UC '${nombreUc}' ya está asignada en esta sección.`);
+                break;
+            }
+        }
+    }
+
+    // 3. Validación de Docente/Espacio con consulta al servidor (AJAX)
+    const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
+    const bloques_span_ajax = duracionSelect.length > 0 ? parseInt(duracionSelect.val(), 10) : (horarioContenidoGuardado.get(`${franjaInicio.substring(0, 5)}-${dia_key}`) || [{data:{bloques_span: 1}}])[0].data.bloques_span;
+
+    const indiceFin = indiceInicio + bloques_span_ajax - 1;
+    if (indiceFin >= bloquesDeLaTablaActual.length || indiceFin < 0) return;
+
+    const datosValidacion = new FormData();
+    datosValidacion.append("accion", "validar_clase_en_vivo");
+    datosValidacion.append("doc_cedula", $("#modalSeleccionarDocente").val());
+    datosValidacion.append("uc_codigo", $("#modalSeleccionarUc").val());
+    datosValidacion.append("espacio", $("#modalSeleccionarEspacio").val());
+    datosValidacion.append("dia", diaNombre);
+    datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
+    datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
+    datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
+    
+    $.ajax({
+        url: "",
+        type: "POST",
+        data: datosValidacion,
+        contentType: false,
+        processData: false,
+        success: function(respuesta) {
+            if (respuesta.conflicto && Array.isArray(respuesta.mensajes)) {
+                let conflictosDocente = [];
+                let conflictosEspacio = [];
+                
+                respuesta.mensajes.forEach(conflicto => {
+                    if (conflicto.tipo === 'docente') {
+                        conflictosDocente.push(`<div>${conflicto.mensaje}</div>`);
+                    } else if (conflicto.tipo === 'espacio') {
+                        conflictosEspacio.push(`<div>${conflicto.mensaje}</div>`);
+                    }
+                });
+
+                if (conflictosDocente.length > 0) {
+                    $('#docente-conflicto-info').html(conflictosDocente.join(''));
+                }
+                if (conflictosEspacio.length > 0) {
+                    $('#espacio-conflicto-info').html(conflictosEspacio.join(''));
+                }
+            }
+        }
+    });
+}
+
+
+function guardarClase() {
+    const franjaInicio = currentClickedCell.data("franja-inicio");
+    const diaNombre = currentClickedCell.data("dia-nombre");
+    const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
+    const duracionSelect = $("#modalDuracionSubgrupo");
+    
+    // Determina la duración de la clase según el contexto del formulario
+    let bloques_span;
+    if (duracionSelect.length > 0) {
+        bloques_span = parseInt(duracionSelect.val(), 10) || 1;
+    } else {
+        const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+        const clasesEnCelda = horarioContenidoGuardado.get(key_horario) || [];
+        bloques_span = clasesEnCelda.length > 0 ? clasesEnCelda[0].data.bloques_span : 1;
+    }
+
+    const indiceFin = indiceInicio + bloques_span - 1;
+    if (indiceFin >= bloquesDeLaTablaActual.length || indiceFin < 0) {
+        muestraMensaje("error", 4000, "Error de Duración", "La duración seleccionada excede los bloques disponibles.");
+        return;
+    }
+
+    // Prepara los datos para la validación vía AJAX
+    const datosValidacion = new FormData();
+    datosValidacion.append("accion", "validar_clase_en_vivo");
+    datosValidacion.append("doc_cedula", $("#modalSeleccionarDocente").val());
+    datosValidacion.append("uc_codigo", $("#modalSeleccionarUc").val());
+    datosValidacion.append("espacio", $("#modalSeleccionarEspacio").val());
+    datosValidacion.append("dia", diaNombre);
+    datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
+    datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
+    datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
+
+    // Realiza la llamada AJAX para una validación completa y centralizada
+    $.ajax({
+        url: "",
+        type: "POST",
+        data: datosValidacion,
+        contentType: false,
+        processData: false,
+        success: function(respuesta) {
+            if (respuesta.conflicto && Array.isArray(respuesta.mensajes)) {
+                // Si el backend reporta conflictos, los muestra en el pop-up de confirmación
+                const conflictos = respuesta.mensajes.map(c => c.mensaje);
+                let mensajeHtml = "Se encontraron los siguientes conflictos:<ul class='text-start mt-2'>";
+                conflictos.forEach(msg => { mensajeHtml += `<li>${msg}</li>`; });
+                mensajeHtml += "</ul><br>¿Desea asignar la clase de todas formas?";
+
+                Swal.fire({
+                    title: 'Conflictos Detectados',
+                    html: mensajeHtml,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, guardar de todas formas',
+                    cancelButtonText: 'Cancelar y corregir'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        procederConGuardadoLocal();
+                    }
+                });
+            } else {
+                // Si no hay conflictos, procede a guardar localmente de inmediato
+                procederConGuardadoLocal();
+            }
+        },
+        error: function() {
+            muestraMensaje("error", 5000, "Error de Conexión", "No se pudo validar la clase con el servidor.");
+        }
+    });
+}
+
+
+
+function procederConGuardadoLocal() {
+    hasSaved = true;
+    const franjaInicio = currentClickedCell.data("franja-inicio");
+    const diaNombre = currentClickedCell.data("dia-nombre");
+    const dia_key = normalizeDayKey(diaNombre);
+    const key_horario = `${franjaInicio.substring(0, 5)}-${dia_key}`;
+
+    const context = $("#formContext").val();
+    const subgrupoOriginalId = $("#subgrupoOriginalId").val();
+    let clasesEnCelda = (horarioContenidoGuardado.get(key_horario) || []).map(c => c.data);
+
+    let subgrupoNuevo, bloques_span, hora_fin;
+
+    if (context === 'simple') {
+        subgrupoNuevo = null;
+        bloques_span = parseInt($("#modalDuracionSubgrupo").val(), 10) || 1;
+    } else {
+        const subgrupoInput = $("#modalSubgrupo");
+        subgrupoNuevo = subgrupoInput.val().trim();
+        if (!subgrupoNuevo) {
+            subgrupoInput.addClass('is-invalid');
+            return;
+        }
+        const otroConMismoNombre = clasesEnCelda.find(c => c.subgrupo === subgrupoNuevo);
+        if (otroConMismoNombre && subgrupoNuevo !== subgrupoOriginalId) {
+            subgrupoInput.addClass('is-invalid');
+            return;
+        }
+        subgrupoInput.removeClass('is-invalid');
+        bloques_span = clasesEnCelda.length > 0 ? clasesEnCelda[0].bloques_span : 1;
+    }
+
+    const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
+    const indiceFin = indiceInicio + bloques_span - 1;
+    hora_fin = bloquesDeLaTablaActual[indiceFin].tur_horafin;
+
+    const nuevaClaseData = {
+        subgrupo: subgrupoNuevo,
+        uc_codigo: $("#modalSeleccionarUc").val(),
+        doc_cedula: $("#modalSeleccionarDocente").val(),
+        espacio: $("#modalSeleccionarEspacio").val() ? JSON.parse($("#modalSeleccionarEspacio").val()) : null,
+        dia: diaNombre,
+        hora_inicio: franjaInicio,
+        hora_fin: hora_fin,
+        bloques_span: bloques_span
+    };
+
+    let nuevaListaClases = [];
+    if (context === 'simple') {
+        nuevaListaClases.push({ data: nuevaClaseData });
+    } else {
+        if (isSplittingProcess) {
+            clasesEnCelda[0].subgrupo = 'A';
+            nuevaListaClases = clasesEnCelda.map(c => ({ data: c }));
+            nuevaListaClases.push({ data: nuevaClaseData });
+        } else {
+            let seEncontro = false;
+            nuevaListaClases = clasesEnCelda.map(claseData => {
+                if ((claseData.subgrupo || 'default') === subgrupoOriginalId) {
+                    seEncontro = true;
+                    return { data: nuevaClaseData };
+                }
+                return { data: claseData };
+            });
+            if (!seEncontro) {
+                nuevaListaClases.push({ data: nuevaClaseData });
+            }
+        }
+    }
+
+    nuevaListaClases.forEach(c => {
+        c.data.bloques_span = bloques_span;
+        c.data.hora_fin = hora_fin;
+    });
+
+    horarioContenidoGuardado.set(key_horario, nuevaListaClases);
+    inicializarTablaHorario($("#filtro_turno").val(), "#tablaHorario", false);
+    $("#modalEntradaHorario").modal("hide");
+}
+
+function eliminarSubgrupo(subgrupoId) {
+    Swal.fire({
+        title: `¿Eliminar ${subgrupoId === 'default' ? 'esta clase' : 'el subgrupo ' + subgrupoId}?`,
+        text: "Esta acción no se puede deshacer.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const key_horario = `${currentClickedCell.data("franja-inicio").substring(0, 5)}-${normalizeDayKey(currentClickedCell.data("dia-nombre"))}`;
+
+            let clasesEnCelda = (horarioContenidoGuardado.get(key_horario) || []).map(c => c.data);
+            clasesEnCelda = clasesEnCelda.filter(c => (c.subgrupo || 'default') !== subgrupoId);
+
+            if (clasesEnCelda.length > 0) {
+                if (clasesEnCelda.length === 1) {
+                    clasesEnCelda[0].subgrupo = null;
+                }
+                const nuevaListaConHtml = clasesEnCelda.map(c => ({
+                    data: c
+                }));
+                horarioContenidoGuardado.set(key_horario, nuevaListaConHtml);
+            } else {
+                horarioContenidoGuardado.delete(key_horario);
+            }
+
+            inicializarTablaHorario($("#filtro_turno").val(), "#tablaHorario", false);
+            $("#modalEntradaHorario").modal("hide");
+        }
+    });
+}
+
+function onCeldaHorarioClick(e) {
+    currentClickedCell = $(e.currentTarget);
+    const franjaInicio = currentClickedCell.data("franja-inicio");
+    const diaNombre = currentClickedCell.data("dia-nombre");
+    const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+    const clasesEnCelda = (horarioContenidoGuardado.get(key_horario) || []).map(c => c.data);
+
+    const botonEditClickeado = $(e.target).closest('.btn-edit-icon');
+    const contenidoClickeado = $(e.target).closest('.subgroup-content');
+
+    if (botonEditClickeado.length > 0) {
+        if (clasesEnCelda.length > 1) {
+            renderizarModalDeGestion(clasesEnCelda, franjaInicio, diaNombre);
+        } else if (clasesEnCelda.length === 1) {
+            renderizarModalClaseUnica(clasesEnCelda[0], franjaInicio, diaNombre);
+        }
+    } else if (contenidoClickeado.length > 0) {
+        const subgrupoId = contenidoClickeado.parent('.subgroup-item').data('subgrupo-id');
+        const claseAEditar = clasesEnCelda.find(c => (c.subgrupo || 'default') === subgrupoId);
+        if (claseAEditar.subgrupo) {
+            abrirFormularioSubgrupo(claseAEditar, franjaInicio, diaNombre);
+        } else {
+            abrirFormularioClaseSimple(claseAEditar, franjaInicio, diaNombre);
+        }
+    } else {
+        if (clasesEnCelda.length === 0) {
+            abrirFormularioClaseSimple(null, franjaInicio, diaNombre);
+        }
+    }
+
+    $("#modalEntradaHorario").modal("show");
+}
+
+function procederConGuardado() {
+    const ejecutarGuardado = () => {
+        const accion = $("#accion").val();
+        const datos = new FormData();
+        datos.append("accion", accion);
+        datos.append("sec_codigo", $("#sec_codigo_hidden").val());
+
+        if (accion === 'modificar') {
+            datos.append("cantidadSeccion", $("#cantidadSeccionModificar").val());
+        }
+
+        let clasesAEnviar = [];
+        for (const claseArray of horarioContenidoGuardado.values()) {
+            claseArray.forEach(claseObj => clasesAEnviar.push(claseObj.data));
+        }
+
+        clasesAEnviar = clasesAEnviar.filter(item => item && item.hora_inicio && item.hora_fin);
+
+        clasesAEnviar.forEach(item => {
+            item.hora_inicio = item.hora_inicio.substring(0, 5);
+            item.hora_fin = item.hora_fin.substring(0, 5);
+        });
+
+        datos.append("items_horario", JSON.stringify(clasesAEnviar));
+        enviaAjax(datos, $("#proceso"));
+    };
+
+    ejecutarGuardado();
 }
 
 function limpiaModalPrincipal() {
@@ -416,7 +1046,6 @@ function limpiaModalPrincipal() {
 function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, anioValue) {
     limpiaModalPrincipal();
     horarioContenidoGuardado.clear();
-
     const [anioAnio, anioTipo] = anioValue.split('|');
     allSecciones.push({
         sec_codigo: secCodigo,
@@ -424,27 +1053,23 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, an
         ani_anio: anioAnio,
         ani_tipo: anioTipo
     });
-
     let turnoSeleccionado = 'mañana';
     if (secCodigo && secCodigo.length > 1) {
         const segundoDigito = secCodigo.toString().charAt(1);
         if (segundoDigito === '2') turnoSeleccionado = 'tarde';
         else if (segundoDigito === '3') turnoSeleccionado = 'noche';
-        else if (segundoDigito === '1' || segundoDigito === '4' || segundoDigito === '0') turnoSeleccionado = 'mañana';
+        else if (['1', '4', '0'].includes(segundoDigito)) turnoSeleccionado = 'mañana';
     }
-
     const prefijo = getPrefijoSeccion(secCodigo);
     const textoSeccion = `${prefijo}${secCodigo} (${secCantidad} Est.) (Año ${anioTexto})`;
     $("#seccion_principal_id").empty().append(`<option value="${secCodigo}" selected>${textoSeccion}</option>`).prop('disabled', true);
     $("#cantidadSeccionModificar").val(secCantidad);
     $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
-
     $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario para la sección ${prefijo}${secCodigo}`);
     $("#accion").val("modificar");
     $("#proceso").text("GUARDAR HORARIO").data("action-type", "modificar").addClass("btn-success");
     $("#sec_codigo_hidden").val(secCodigo);
     $("#modal-horario").data("mode", "registrar");
-
     inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
     $("#modal-horario").modal("show");
 }
@@ -458,7 +1083,6 @@ function verificarRequisitosInicialesSeccion() {
     const countMallas = parseInt(mainContent.data('count-mallas'), 10);
 
     const mensajesError = [];
-
     if (countMallas === 0) {
         mensajesError.push('No hay <b>mallas curriculares activas</b> registradas.');
     }
@@ -479,19 +1103,13 @@ function verificarRequisitosInicialesSeccion() {
         const btnRegistrar = $("#btnIniciarRegistro");
         const btnUnir = $("#btnAbrirModalUnir");
         const mensajeTooltip = "Debe registrar primero los datos maestros requeridos.";
-
-        btnRegistrar.prop('disabled', true).attr('title', mensajeTooltip);
-        btnUnir.prop('disabled', true).attr('title', mensajeTooltip);
-
-        btnRegistrar.addClass('disabled-look');
-        btnUnir.addClass('disabled-look');
-
+        btnRegistrar.prop('disabled', true).attr('title', mensajeTooltip).addClass('disabled-look');
+        btnUnir.prop('disabled', true).attr('title', mensajeTooltip).addClass('disabled-look');
         let mensajeHtml = "Para poder gestionar secciones, primero debe configurar lo siguiente en sus respectivos módulos:<br><br><ul class='list-unstyled text-start ps-4'>";
         mensajesError.forEach(msg => {
             mensajeHtml += `<li><i class="fas fa-exclamation-circle text-warning me-2"></i>${msg}</li>`;
         });
         mensajeHtml += "</ul>";
-
         Swal.fire({
             icon: 'warning',
             title: 'Faltan Datos para Continuar',
@@ -520,14 +1138,14 @@ function enviaAjax(datos, boton) {
 
                 if (respuesta.resultado === 'confirmar_conflicto') {
                     Swal.fire({
-                        title: 'Conflicto de Horario Detectado',
+                        title: 'Conflictos Detectados en el Horario',
                         html: `${respuesta.mensaje}<br><br>¿Desea guardar el horario de todas formas?`,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#28a745',
                         cancelButtonColor: '#6c757d',
                         confirmButtonText: 'Sí, guardar de todas formas',
-                        cancelButtonText: 'Cancelar'
+                        cancelButtonText: 'Cancelar y corregir'
                     }).then((result) => {
                         if (result.isConfirmed) {
                             datos.append("forzar_guardado", "true");
@@ -561,13 +1179,20 @@ function enviaAjax(datos, boton) {
                 } else if (respuesta.resultado.endsWith("_ok")) {
                     $('.modal').modal('hide');
                     muestraMensaje("success", 4000, "¡ÉXITO!", respuesta.mensaje);
-                    
+
                     const datosGlobales = new FormData();
                     datosGlobales.append("accion", "obtener_datos_selects");
-                    $.ajax({ url: "", type: "POST", data: datosGlobales, contentType: false, processData: false, success: function(r) {
-                        ocupacionGlobalCompleta = r.horarios_existentes || [];
-                        Listar();
-                    }});
+                    $.ajax({
+                        url: "",
+                        type: "POST",
+                        data: datosGlobales,
+                        contentType: false,
+                        processData: false,
+                        success: function(r) {
+                            ocupacionGlobalCompleta = r.horarios_existentes || [];
+                            Listar();
+                        }
+                    });
                 } else if (respuesta.resultado == "error") {
                     muestraMensaje("error", 8000, "¡ERROR!", respuesta.mensaje);
                 }
@@ -591,44 +1216,84 @@ function enviaAjax(datos, boton) {
 
 $(document).ready(function() {
 
-    function validarFormularioRegistro() {
-        const form = document.getElementById('formRegistroSeccion');
-        const codigoInput = document.getElementById('codigoSeccion');
-        const alerta = $("#alerta-cohorte");
-        const btnGuardar = $("#btnGuardarSeccion");
+    const modalBody = $("#modal-body-gestion-clase");
 
-        let isCohorteValid = false;
-        if (codigoInput.value.length === 4) {
-            const cohorteIngresado = parseInt(codigoInput.value.charAt(3), 10);
-            if (allCohortes.includes(cohorteIngresado)) {
-                alerta.hide();
-                isCohorteValid = true;
-            } else {
-                const cohortesDisponibles = allCohortes.join(', ');
-                alerta.text(`Cohorte '${cohorteIngresado}' no registrado. Válidos: ${cohortesDisponibles}`).show();
-                isCohorteValid = false;
+    modalBody.on("submit", "#formularioEntradaHorario", function(e) {
+        e.preventDefault();
+        guardarClase();
+    });
+
+    modalBody.on("click", "#btn-volver-a-lista", function() {
+        const franjaInicio = currentClickedCell.data("franja-inicio");
+        const diaNombre = currentClickedCell.data("dia-nombre");
+        const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+        const clasesEnCelda = (horarioContenidoGuardado.get(key_horario) || []).map(c => c.data);
+
+        renderizarModalDeGestion(clasesEnCelda, franjaInicio, diaNombre);
+    });
+
+    modalBody.on("click", "#btn-editar-clase-unica", function() {
+        const franjaInicio = currentClickedCell.data("franja-inicio");
+        const diaNombre = currentClickedCell.data("dia-nombre");
+        const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+        const claseData = (horarioContenidoGuardado.get(key_horario) || [])[0].data;
+        abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre);
+    });
+
+    modalBody.on("click", "#btn-dividir-bloque", function() {
+        isSplittingProcess = true;
+        const franjaInicio = currentClickedCell.data("franja-inicio");
+        const diaNombre = currentClickedCell.data("dia-nombre");
+        abrirFormularioSubgrupo(null, franjaInicio, diaNombre);
+    });
+
+    modalBody.on("click", "#btn-eliminar-clase-unica, #btn-eliminar-clase-unica-desde-form", function() {
+        eliminarSubgrupo('default');
+    });
+
+    modalBody.on("click", "#btn-anadir-otro-subgrupo", function() {
+        const franjaInicio = currentClickedCell.data("franja-inicio");
+        const diaNombre = currentClickedCell.data("dia-nombre");
+        abrirFormularioSubgrupo(null, franjaInicio, diaNombre);
+    });
+
+    modalBody.on("click", ".btn-editar-subgrupo", function() {
+        const subgrupoId = $(this).data('subgrupo-id');
+        const franjaInicio = currentClickedCell.data("franja-inicio");
+        const diaNombre = currentClickedCell.data("dia-nombre");
+        const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+        const clasesEnCelda = (horarioContenidoGuardado.get(key_horario) || []).map(c => c.data);
+        const claseAEditar = clasesEnCelda.find(c => (c.subgrupo || 'default') === subgrupoId);
+        abrirFormularioSubgrupo(claseAEditar, franjaInicio, diaNombre);
+    });
+
+    modalBody.on("click", ".btn-eliminar-subgrupo", function() {
+        eliminarSubgrupo($(this).data('subgrupo-id'));
+    });
+
+    $("#btnLimpiarHorario").on("click", function() {
+        if (horarioContenidoGuardado.size === 0) {
+            muestraMensaje("info", 2000, "Horario ya vacío", "No hay clases para limpiar.");
+            return;
+        }
+        Swal.fire({
+            title: '¿Está seguro de limpiar el horario?',
+            text: "Esta acción eliminará todas las clases de la vista actual. Los cambios no serán permanentes hasta que guarde.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, limpiar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                horarioContenidoGuardado.clear();
+                const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+                inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
+                muestraMensaje("success", 3000, "Horario Limpiado", "Se han eliminado todas las clases. Presione 'Guardar Cambios' para hacer la acción permanente.");
             }
-        } else {
-            alerta.hide();
-            isCohorteValid = false;
-        }
-
-        const cantidadInput = document.getElementById('cantidadSeccion');
-        const cantidadError = $('#cantidad-seccion-error');
-        if (cantidadInput.validity.rangeOverflow || cantidadInput.validity.rangeUnderflow) {
-            cantidadError.show();
-        } else {
-            cantidadError.hide();
-        }
-
-        const isFormValid = form.checkValidity();
-
-        if (isCohorteValid && isFormValid) {
-            btnGuardar.prop("disabled", false);
-        } else {
-            btnGuardar.prop("disabled", true);
-        }
-    }
+        });
+    });
 
     verificarRequisitosInicialesSeccion();
     $('#resultadoconsulta').html('<tr><td colspan="4" class="text-center">Cargando datos...</td></tr>');
@@ -685,7 +1350,6 @@ $(document).ready(function() {
         const errorDiv = $('#cantidad-seccion-modificar-error');
         const cantidad = parseInt(input.val(), 10);
         const isValid = !isNaN(cantidad) && cantidad >= 0 && cantidad <= 99;
-
         if (!isValid && input.val() !== '') {
             errorDiv.show();
         } else {
@@ -700,16 +1364,13 @@ $(document).ready(function() {
             const codigoStr = seccion.sec_codigo.toString();
             const trayecto = codigoStr.charAt(0);
             const turno = codigoStr.charAt(1);
-
             const turnosNombres = {
                 '1': 'Mañana',
                 '2': 'Tarde',
                 '3': 'Noche'
             };
             const turnoNombre = turnosNombres[turno] || 'Desconocido';
-
             const key = `${seccion.ani_anio}-${seccion.ani_tipo}-${trayecto}-${turno}`;
-
             if (!acc[key]) {
                 acc[key] = {
                     nombre: `Año ${seccion.ani_anio} / Trayecto ${trayecto} / Turno ${turnoNombre}`,
@@ -719,7 +1380,6 @@ $(document).ready(function() {
             acc[key].secciones.push(seccion);
             return acc;
         }, {});
-
         let hayGrupos = false;
         for (const key in gruposCompatibles) {
             const grupo = gruposCompatibles[key];
@@ -744,14 +1404,13 @@ $(document).ready(function() {
         const isView = $(this).hasClass('ver-horario');
         const isModify = $(this).hasClass('modificar-horario');
         const isDelete = $(this).hasClass('eliminar-horario');
-
         const seccionData = allSecciones.find(s => s.sec_codigo == sec_codigo);
         if (!seccionData) return;
 
         let turnoSeleccionado = 'todos';
         if (seccionData.sec_codigo) {
             const segundoDigito = seccionData.sec_codigo.toString().charAt(1);
-            if (segundoDigito === '1' || segundoDigito === '4' || segundoDigito === '0') turnoSeleccionado = 'mañana';
+            if (['1', '4', '0'].includes(segundoDigito)) turnoSeleccionado = 'mañana';
             else if (segundoDigito === '2') turnoSeleccionado = 'tarde';
             else if (segundoDigito === '3') turnoSeleccionado = 'noche';
         }
@@ -759,7 +1418,6 @@ $(document).ready(function() {
         const datos = new FormData();
         datos.append("accion", "consultar_detalles");
         datos.append("sec_codigo", sec_codigo);
-
         $.ajax({
             url: "",
             type: "POST",
@@ -769,25 +1427,22 @@ $(document).ready(function() {
             success: function(respuesta) {
                 if (respuesta.resultado === 'ok' && Array.isArray(respuesta.mensaje)) {
                     horarioContenidoGuardado.clear();
-                    
-                    const clasesAgrupadas = new Map();
                     respuesta.mensaje.forEach(clase => {
                         const inicio = new Date(`1970-01-01T${clase.hora_inicio}`);
                         const fin = new Date(`1970-01-01T${clase.hora_fin}`);
                         const diffMinutes = (fin - inicio) / (1000 * 60);
-                        const bloques = Math.round(diffMinutes / 40);
-                        
-                        clase.bloques_span = bloques > 0 ? bloques : 1;
+                        clase.bloques_span = Math.round(diffMinutes / 40) || 1;
 
                         const dia_key = normalizeDayKey(clase.dia);
                         const key = `${clase.hora_inicio.substring(0, 5)}-${dia_key}`;
-                        
-                        clasesAgrupadas.set(key, {
-                           html: generarCellContent(clase),
-                           data: clase
+                        if (!horarioContenidoGuardado.has(key)) {
+                            horarioContenidoGuardado.set(key, []);
+                        }
+                        horarioContenidoGuardado.get(key).push({
+                            data: clase,
+                            html: generarCellContent(clase)
                         });
                     });
-                    horarioContenidoGuardado = clasesAgrupadas;
 
                     const prefijo = getPrefijoSeccion(seccionData.sec_codigo);
                     const seccionTexto = `${prefijo}${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio})`;
@@ -817,80 +1472,32 @@ $(document).ready(function() {
         });
     });
 
-    $("#modalSeleccionarDocente, #modalSeleccionarEspacio").on("select2:select", validarEntradaHorario);
-    $("#modalSeleccionarUc, #modalBloquesClase").on("change", validarEntradaHorario);
-
-
     $('#filtro_turno').on("change", function() {
         inicializarTablaHorario($(this).val(), "#tablaHorario", false);
     });
-    $("#modalSeleccionarDocente").on("change", function() {
-        const docCedula = $(this).val();
-        cargarUcPorDocente(docCedula, () => {
-            validarEntradaHorario();
-        });
-    });
+
     $('#modal-horario, #modalVerHorario, #modalConfirmarEliminar, #modalUnirHorarios').on('hidden.bs.modal', function() {
         if ($(this).find('form').length > 0) $(this).find('form').removeClass('was-validated')[0].reset();
         $("#unirSeccionesContainer input[type='checkbox']").prop('disabled', false);
     });
 
+    $('#modalEntradaHorario').on('hidden.bs.modal', function() {
+        if (isSplittingProcess && !hasSaved) {
+            const key_horario = `${currentClickedCell.data("franja-inicio").substring(0, 5)}-${normalizeDayKey(currentClickedCell.data("dia-nombre"))}`;
+            let clasesArray = horarioContenidoGuardado.get(key_horario);
+            if (clasesArray && clasesArray.length === 1 && clasesArray[0].data.subgrupo === 'A') {
+                clasesArray[0].data.subgrupo = null;
+                horarioContenidoGuardado.set(key_horario, clasesArray);
+            }
+        }
+        isSplittingProcess = false;
+        hasSaved = false;
+    });
+
     $("#formRegistroSeccion").on("submit", function(e) {
         e.preventDefault();
-        const datosSeccion = new FormData(this);
-        const boton = $("#btnGuardarSeccion");
-        const textoOriginal = boton.text();
-        boton.prop("disabled", true).text("Guardando...");
-        $.ajax({
-            url: "",
-            type: "POST",
-            data: datosSeccion,
-            contentType: false,
-            processData: false,
-            success: function(respuesta) {
-                if (respuesta.resultado === 'registrar_seccion_ok') {
-                    $("#modalRegistroSeccion").modal("hide");
-                    const anioOption = $("#anioId option:selected");
-                    const anioTexto = anioOption.text();
-                    const anioValue = anioOption.val();
-                    abrirModalHorarioParaNuevaSeccion(respuesta.nuevo_codigo, respuesta.nueva_cantidad, anioTexto, anioValue);
-                    if (respuesta.horario_aleatorio && respuesta.horario_aleatorio.horario) {
-                        horarioContenidoGuardado.clear();
-                        respuesta.horario_aleatorio.horario.forEach(clase => {
-                            const inicio = new Date(`1970-01-01T${clase.hora_inicio}:00`);
-                            const fin = new Date(`1970-01-01T${clase.hora_fin}:00`);
-                            const diffMinutes = (fin - inicio) / (1000 * 60);
-                            clase.bloques_span = Math.round(diffMinutes / 40) || 1;
-
-                            if (clase.hora_inicio && clase.dia) {
-                                const dia_key = normalizeDayKey(clase.dia);
-                                const key = `${clase.hora_inicio.substring(0, 5)}-${dia_key}`;
-                                horarioContenidoGuardado.set(key, {
-                                    html: generarCellContent(clase),
-                                    data: clase
-                                });
-                            }
-                        });
-                        let turnoSeleccionado = 'mañana';
-                        if (respuesta.nuevo_codigo && respuesta.nuevo_codigo.length > 1) {
-                            const segundoDigito = respuesta.nuevo_codigo.toString().charAt(1);
-                            if (segundoDigito === '2') turnoSeleccionado = 'tarde';
-                            else if (segundoDigito === '3') turnoSeleccionado = 'noche';
-                            else if (segundoDigito === '1' || segundoDigito === '4' || segundoDigito === '0') turnoSeleccionado = 'mañana';
-                        }
-                        inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
-                    }
-                } else {
-                    muestraMensaje("error", 5000, "Error al Registrar", respuesta.mensaje);
-                }
-            },
-            error: function() {
-                muestraMensaje("error", 5000, "Error de Conexión", "No se pudo comunicar con el servidor.");
-            },
-            complete: function() {
-                boton.prop("disabled", false).text(textoOriginal);
-            }
-        });
+        const datos = new FormData(this);
+        enviaAjax(datos, $("#btnGuardarSeccion"));
     });
 
     $("#btnProcederEliminacion").on("click", function() {
@@ -919,259 +1526,207 @@ $(document).ready(function() {
         }, 500);
     });
 
-    function agregarClaseAlHorario() {
-        const bloquesSeleccionados = parseInt($("#modalBloquesClase").val(), 10) || 1;
-        const franjaInicioActual = currentClickedCell.data("franja-inicio");
-        const diaActual = $("#modalDia").val();
-        const dia_key = normalizeDayKey(diaActual);
-        const indiceTurnoActual = allTurnos.findIndex(t => t.tur_horainicio === franjaInicioActual);
-
-        if (indiceTurnoActual + bloquesSeleccionados > allTurnos.length) {
-            muestraMensaje("error", 4000, "Error de Duración", "La duración seleccionada excede los bloques disponibles.");
-            return;
-        }
-
-        const turnoDeInicio = allTurnos[indiceTurnoActual];
-        const turnoDeFin = allTurnos[indiceTurnoActual + bloquesSeleccionados - 1];
-        
-        const espacioSeleccionado = $("#modalSeleccionarEspacio").val();
-        const horarioData = {
-            doc_cedula: $("#modalSeleccionarDocente").val(),
-            uc_codigo: $("#modalSeleccionarUc").val(),
-            espacio: espacioSeleccionado ? JSON.parse(espacioSeleccionado) : null,
-            dia: diaActual,
-            hora_inicio: turnoDeInicio.tur_horainicio,
-            hora_fin: turnoDeFin.tur_horafin,
-            bloques_span: bloquesSeleccionados
-        };
-
-        const key = `${horarioData.hora_inicio.substring(0, 5)}-${dia_key}`;
-        horarioContenidoGuardado.set(key, { html: generarCellContent(horarioData), data: horarioData });
-        
-        const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
-        inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-        $("#modalEntradaHorario").modal("hide");
-    }
-
-    $("#formularioEntradaHorario").on("submit", function(e) {
-        e.preventDefault();
-
-        const docId = $("#modalSeleccionarDocente").val();
-        const ucId = $("#modalSeleccionarUc").val();
-        const espIdJson = $("#modalSeleccionarEspacio").val();
-
-        let missingFields = [];
-        if (!docId) missingFields.push("Docente");
-        if (!ucId) missingFields.push("Unidad Curricular");
-        if (!espIdJson) missingFields.push("Espacio");
-
-        const checkOverlapsAndSave = () => {
-            const franjaInicioActual = currentClickedCell.data("franja-inicio");
-            const indiceTurnoActual = allTurnos.findIndex(t => t.tur_horainicio === franjaInicioActual);
-            const bloques = parseInt($("#modalBloquesClase").val(), 10) || 1;
-
-            const details = {
-                docId: docId,
-                espIdJson: espIdJson,
-                dia: $("#modalDia").val(),
-                secId: $("#sec_codigo_hidden").val(),
-                horaInicioNueva: allTurnos[indiceTurnoActual].tur_horainicio,
-                horaFinNueva: allTurnos[indiceTurnoActual + bloques - 1].tur_horafin
-            };
-
-            const conflictInfo = checkForConflicts(details);
-
-            if (conflictInfo.hasConflict) {
-                Swal.fire({
-                    title: 'Conflicto de Horario Detectado',
-                    html: `${conflictInfo.message}<br><br>¿Desea asignar esta clase de todas formas?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, guardar de todas formas',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        agregarClaseAlHorario();
-                    }
-                });
-            } else {
-                agregarClaseAlHorario();
-            }
-        };
-
-        if (missingFields.length > 0) {
-            const fieldsString = missingFields.join(', ');
-            Swal.fire({
-                title: 'Faltan Datos en la Clase',
-                html: `No ha seleccionado los siguientes campos: <strong>${fieldsString}</strong>.<br><br>¿Desea guardar la clase de todas formas?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, guardar de todas formas',
-                cancelButtonText: 'Cancelar y corregir'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    checkOverlapsAndSave();
-                }
-            });
-        } else {
-            checkOverlapsAndSave();
-        }
-    });
-
-    $("#btnEliminarEntrada").on("click", function() {
-        if (currentClickedCell) {
-            const dataOriginal = currentClickedCell.data("horario-data");
-            if (dataOriginal) {
-                const dia_key = normalizeDayKey(dataOriginal.dia);
-                const key = `${dataOriginal.hora_inicio.substring(0, 5)}-${dia_key}`;
-                horarioContenidoGuardado.delete(key);
-            }
-
-            const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
-            inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-            $("#modalEntradaHorario").modal("hide");
-        }
-    });
-    
-    function procederConGuardado() {
-        const ucsAsignadas = new Set();
-        let ucDuplicada = null;
-        const clases = Array.from(horarioContenidoGuardado.values());
-
-        for (const v of clases) {
-            if (v.data && v.data.uc_codigo) {
-                const uc = v.data.uc_codigo;
-                if (ucsAsignadas.has(uc)) {
-                    ucDuplicada = uc;
-                    break;
-                }
-                ucsAsignadas.add(uc);
-            }
-        }
-
-        const ejecutarGuardado = () => {
-            const accion = $("#accion").val();
-            const datos = new FormData();
-            datos.append("accion", accion);
-            datos.append("sec_codigo", $("#sec_codigo_hidden").val());
-
-            if (accion === 'modificar') {
-                datos.append("cantidadSeccion", $("#cantidadSeccionModificar").val());
-            }
-
-            const clasesAEnviar = clases
-                .map(v => v.data)
-                .filter(item => item && item.uc_codigo && item.hora_inicio && item.hora_fin);
-
-            clasesAEnviar.forEach(item => {
-                item.hora_inicio = item.hora_inicio.substring(0, 5);
-                item.hora_fin = item.hora_fin.substring(0, 5);
-            });
-
-            datos.append("items_horario", JSON.stringify(clasesAEnviar));
-            enviaAjax(datos, $("#proceso"));
-        };
-
-        if (ucDuplicada) {
-            const ucInfo = allUcs.find(u => u.uc_codigo === ucDuplicada);
-            const nombreUc = ucInfo ? ucInfo.uc_nombre : `código ${ucDuplicada}`;
-            Swal.fire({
-                title: 'Aviso de Duplicidad',
-                html: `La unidad curricular <strong>${nombreUc}</strong> está asignada más de una vez en este horario.<br><br>¿Desea guardarlo de todas formas?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, guardar de todas formas',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    ejecutarGuardado();
-                }
-            });
-        } else {
-            ejecutarGuardado();
-        }
-    }
-
     $("#proceso").on("click", function() {
-        const cantidadInput = $('#cantidadSeccionModificar');
-        const cantidad = parseInt(cantidadInput.val(), 10);
-        if (isNaN(cantidad) || cantidad < 0 || cantidad > 99) {
-            muestraMensaje("error", 5000, "Error de Validación", `La cantidad de estudiantes debe ser un número entre 0 y 99.`);
-            $('#cantidad-seccion-modificar-error').show();
-            return;
-        } else {
-            $('#cantidad-seccion-modificar-error').hide();
-        }
-
-        const secCodigo = $("#sec_codigo_hidden").val();
-        const isWeekendSchedule = secCodigo && secCodigo.toString().charAt(1) === '4';
-        let hasSaturdayClass = false;
-        if (isWeekendSchedule) {
-            for (const v of horarioContenidoGuardado.values()) {
-                if (v.data && v.data.dia && normalizeDayKey(v.data.dia) === 'sabado') {
-                    hasSaturdayClass = true;
-                    break;
-                }
-            }
-        }
-
-        if (isWeekendSchedule && !hasSaturdayClass) {
-            Swal.fire({
-                title: 'Aviso de Horario de Fin de Semana',
-                html: "Ha creado un horario de fin de semana sin clases el día sábado.<br>¿Desea guardarlo de todas formas?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, guardar de todas formas',
-                cancelButtonText: 'Cancelar y corregir'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    procederConGuardado();
-                }
-            });
-        } else {
-            procederConGuardado();
-        }
+        procederConGuardado();
     });
 
     $("#unirSeccionesContainer").on("change", "input[type='checkbox']", function() {
-        const selectOrigen = $("#unirSeccionOrigen");
-        const allCheckboxes = $("#unirSeccionesContainer input[type='checkbox']");
-        const checkedBoxes = allCheckboxes.filter(":checked");
-        selectOrigen.empty();
-        if (checkedBoxes.length === 0) {
-            allCheckboxes.prop('disabled', false);
-            selectOrigen.append('<option value="" disabled selected>Marque primero...</option>');
-        } else {
-            const groupKey = checkedBoxes.first().data('group-key');
-            allCheckboxes.not(`[data-group-key="${groupKey}"]`).prop('disabled', true);
-            selectOrigen.append('<option value="" disabled selected>Seleccione una opción...</option>');
-            checkedBoxes.each(function() {
-                const labelText = $(this).siblings('label').text().trim();
-                selectOrigen.append(`<option value="${$(this).val()}">${labelText}</option>`);
+        const selectorOrigen = $("#unirSeccionOrigen");
+        selectorOrigen.empty().append('<option value="" disabled selected>Seleccione una sección...</option>');
+        
+        const seleccionados = $("#unirSeccionesContainer input:checked");
+        
+        if(seleccionados.length > 0) {
+            const primerGrupo = seleccionados.first().data('group-key');
+            $("#unirSeccionesContainer input[type='checkbox']").not(seleccionados).prop('disabled', true);
+            $("#unirSeccionesContainer input[type='checkbox']").each(function() {
+                if ($(this).data('group-key') !== primerGrupo) {
+                    $(this).prop('disabled', true);
+                }
             });
+        } else {
+             $("#unirSeccionesContainer input[type='checkbox']").prop('disabled', false);
         }
+
+        seleccionados.each(function() {
+            const seccion = allSecciones.find(s => s.sec_codigo == $(this).val());
+            if (seccion) {
+                const prefijo = getPrefijoSeccion(seccion.sec_codigo);
+                selectorOrigen.append(`<option value="${seccion.sec_codigo}">${prefijo}${seccion.sec_codigo}</option>`);
+            }
+        });
     });
 
     $("#formUnirHorarios").on("submit", function(e) {
         e.preventDefault();
-        if ($("#unirSeccionesContainer input[type='checkbox']:checked").length < 2) {
-            muestraMensaje("error", 4000, "Error", "Debe marcar al menos 2 secciones.");
-            return;
-        }
-        if (this.checkValidity() === false) {
+        if(this.checkValidity() === false) {
             e.stopPropagation();
-            $(this).addClass('was-validated');
-            return;
+        } else {
+            const seleccionados = $("#unirSeccionesContainer input:checked");
+            if(seleccionados.length < 2) {
+                muestraMensaje('warning', 3000, 'Selección Incompleta', 'Debe marcar al menos 2 secciones para unir.');
+                return;
+            }
+             const datos = new FormData(this);
+             enviaAjax(datos, $("#btnConfirmarUnion"));
         }
-        $(this).removeClass('was-validated');
-        enviaAjax(new FormData(this), $("#btnConfirmarUnion"));
+        $(this).addClass('was-validated');
+    });
+
+    $(document).on('click', '#btnAnadirFilaHorario', async function(e) {
+        e.preventDefault();
+
+        let horaInicioSugerida = "13:00";
+        let horaFinSugerida = "13:40";
+        const ultimaFila = $("#tablaHorario tbody tr:last");
+
+        if (ultimaFila.length > 0) {
+            const franjaTexto = ultimaFila.find('td:first span').text();
+            const partes = franjaTexto.split(' - ');
+            if (partes.length === 2) {
+                const horaFinUltimoBloque = partes[1].trim();
+                const parse12HourTime = (timeStr) => {
+                    const [time, modifier] = timeStr.split(' ');
+                    let [hours, minutes] = time.split(':').map(Number);
+                    if (modifier && modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
+                    if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+                    const date = new Date();
+                    date.setHours(hours, minutes, 0, 0);
+                    return date;
+                };
+                try {
+                    const fechaInicio = parse12HourTime(horaFinUltimoBloque);
+                    horaInicioSugerida = fechaInicio.toTimeString().substring(0, 5);
+                    fechaInicio.setMinutes(fechaInicio.getMinutes() + 40);
+                    horaFinSugerida = fechaInicio.toTimeString().substring(0, 5);
+                } catch (error) {
+                    console.error("Error al parsear hora:", error);
+                }
+            }
+        }
+
+        const validarBloqueHorario = (inicioNuevo, finNuevo) => {
+            if (!inicioNuevo || !finNuevo) return `Debes especificar una hora de inicio y fin.`;
+            if (inicioNuevo >= finNuevo) return `La hora de inicio debe ser anterior a la hora de fin.`;
+            const horaMinima = "07:00";
+            const horaMaxima = "23:59";
+            if (inicioNuevo < horaMinima || finNuevo > horaMaxima) return `El horario debe estar entre las 7:00 a. m. y las 12:00 a. m.`;
+            let haySolapamiento = false;
+            $("#tablaHorario tbody tr").each(function() {
+                const cellText = $(this).find('td:first span').text();
+                const [startText, endText] = cellText.split(' - ');
+                if (!startText || !endText) return;
+
+                const to24Hour = timeStr => {
+                    const [time, modifier] = timeStr.trim().split(' ');
+                    let [hours, minutes] = time.split(':');
+                    if (hours === '12') {
+                        hours = '00';
+                    }
+                    if (modifier.toUpperCase() === 'PM') {
+                        hours = parseInt(hours, 10) + 12;
+                    }
+                    return `${String(hours).padStart(2, '0')}:${minutes}`;
+                };
+
+                const inicioExistente = to24Hour(startText);
+                const finExistente = to24Hour(endText);
+
+                if (inicioExistente && finExistente && (inicioNuevo < finExistente && finNuevo > inicioExistente)) {
+                    haySolapamiento = true;
+                    return false;
+                }
+            });
+            if (haySolapamiento) return 'El bloque horario se solapa con un bloque existente.';
+            return null;
+        };
+
+        const {
+            value: formValues,
+            isConfirmed
+        } = await Swal.fire({
+            title: 'Añadir Nuevo Bloque Horario',
+            html: `
+                <p class="text-muted">Introduce la hora de inicio y fin para la nueva fila del horario.</p>
+                <div class="form-floating mb-2">
+                    <input type="time" id="swal-hora-inicio" class="form-control" value="${horaInicioSugerida}" step="1800">
+                    <label for="swal-hora-inicio">Hora de Inicio</label>
+                </div>
+                <div class="form-floating">
+                    <input type="time" id="swal-hora-fin" class="form-control" value="${horaFinSugerida}" step="1800">
+                    <label for="swal-hora-fin">Hora de Fin</label>
+                </div>`,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Añadir Fila',
+            cancelButtonText: 'Cancelar',
+            didOpen: () => {
+                const inicioInput = document.getElementById('swal-hora-inicio');
+                const finInput = document.getElementById('swal-hora-fin');
+                const confirmButton = Swal.getConfirmButton();
+
+                function onInput() {
+                    const error = validarBloqueHorario(inicioInput.value, finInput.value);
+                    if (error) {
+                        Swal.showValidationMessage(error);
+                        confirmButton.disabled = true;
+                    } else {
+                        Swal.resetValidationMessage();
+                        confirmButton.disabled = false;
+                    }
+                }
+                inicioInput.addEventListener('input', onInput);
+                finInput.addEventListener('input', onInput);
+                onInput();
+            },
+            preConfirm: () => {
+                const inicio = document.getElementById('swal-hora-inicio').value;
+                const fin = document.getElementById('swal-hora-fin').value;
+                if (validarBloqueHorario(inicio, fin)) {
+                    return false;
+                }
+                return {
+                    inicio,
+                    fin
+                };
+            }
+        });
+
+        if (isConfirmed && formValues) {
+            const nuevaClaseFantasma = {
+                data: {
+                    hora_inicio: formValues.inicio + ':00',
+                    hora_fin: formValues.fin + ':00',
+                    isPlaceholder: true
+                }
+            };
+            const keyFantasma = `placeholder-${formValues.inicio}`;
+            horarioContenidoGuardado.set(keyFantasma, [nuevaClaseFantasma]);
+
+            const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+            inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
+
+            horarioContenidoGuardado.delete(keyFantasma);
+
+            $("#filtro_turno").prop('disabled', true);
+            muestraMensaje("success", 2500, "Fila Añadida", "El nuevo bloque horario ha sido agregado.");
+        }
+    });
+
+    $(document).on('click', '.btn-eliminar-fila-personalizada', function() {
+        const franjaInicio = $(this).data('franja-inicio');
+
+        const keysToDelete = [];
+        for (const key of horarioContenidoGuardado.keys()) {
+            if (key.startsWith(franjaInicio.substring(0, 5))) {
+                keysToDelete.push(key);
+            }
+        }
+        keysToDelete.forEach(key => horarioContenidoGuardado.delete(key));
+
+        const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+        inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
+
+        muestraMensaje("info", 2000, "Fila Eliminada", "El bloque horario y sus clases han sido eliminados.");
     });
 });
