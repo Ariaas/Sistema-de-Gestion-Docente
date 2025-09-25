@@ -348,7 +348,7 @@ class Archivo extends Connection
         return $unidades_comunes;
     }
 
-    public function esPeriodoPerAbierto($anio_del_registro, $fase_del_registro)
+    private function esPeriodoPerAbierto($anio_del_registro, $fase_del_registro)
     {
         $fase_actual = $this->obtenerFaseActual();
         if (!$fase_actual) {

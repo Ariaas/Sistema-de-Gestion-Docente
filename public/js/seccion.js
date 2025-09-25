@@ -1337,7 +1337,7 @@ $(document).ready(function() {
     $('#btnIniciarRegistro').on('click', function() {
         $("#formRegistroSeccion")[0].reset();
         $("#alerta-cohorte").hide();
-        $("#btnGuardarSeccion").prop("disabled", true);
+       /*  $("#btnGuardarSeccion").prop("disabled", true); */
         $("#modalRegistroSeccion").modal("show");
     });
 
@@ -1536,16 +1536,18 @@ $(document).ready(function() {
         
         const seleccionados = $("#unirSeccionesContainer input:checked");
         
-        if(seleccionados.length > 0) {
+       if(seleccionados.length > 0) {
             const primerGrupo = seleccionados.first().data('group-key');
-            $("#unirSeccionesContainer input[type='checkbox']").not(seleccionados).prop('disabled', true);
             $("#unirSeccionesContainer input[type='checkbox']").each(function() {
-                if ($(this).data('group-key') !== primerGrupo) {
+                const esSeleccionado = $(this).is(":checked");
+                if ($(this).data('group-key') !== primerGrupo && !esSeleccionado) {
                     $(this).prop('disabled', true);
+                } else {
+                    $(this).prop('disabled', false);
                 }
             });
         } else {
-             $("#unirSeccionesContainer input[type='checkbox']").prop('disabled', false);
+            $("#unirSeccionesContainer input[type='checkbox']").prop('disabled', false);
         }
 
         seleccionados.each(function() {
