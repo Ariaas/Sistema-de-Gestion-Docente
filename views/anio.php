@@ -95,7 +95,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <option value="" disabled>Seleccione un Año</option>
                                             <?php
                                             $anoActual = date('Y');
-                                            for ($year = 1999; $year <= $anoActual; $year++):
+                                            $anoMax = $anoActual + 1;
+                                            for ($year = 1999; $year <= $anoMax; $year++):
                                                 $selected = ($year == $anoActual) ? ' selected' : '';
                                             ?>
                                                 <option value="<?= $year ?>" <?= $selected ?>><?= $year ?></option>

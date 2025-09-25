@@ -231,14 +231,18 @@ class Anio extends Connection
                 $stmtAnio->bindParam(':tipoOriginal', $tipoOriginal, PDO::PARAM_STR);
                 $stmtAnio->execute();
 
-                $stmtFase = $co->prepare("UPDATE tbl_fase SET fase_apertura = :faseApertura, fase_cierre = :faseCierre WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo AND fase_numero = :faseNumero");
+                $stmtFase = $co->prepare("UPDATE tbl_fase SET fase_apertura = :faseApertura, fase_cierre = :faseCierre, ani_anio = :aniAnio, ani_tipo = :aniTipo WHERE ani_anio = :anioOriginal AND ani_tipo = :tipoOriginal AND fase_numero = :faseNumero");
+                $fechasFases = [];
                 foreach ($this->fases as $fase) {
                     $stmtFase->bindParam(':faseApertura', $fase['apertura'], PDO::PARAM_STR);
                     $stmtFase->bindParam(':faseCierre', $fase['cierre'], PDO::PARAM_STR);
                     $stmtFase->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
                     $stmtFase->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+                    $stmtFase->bindParam(':anioOriginal', $anioOriginal, PDO::PARAM_INT);
+                    $stmtFase->bindParam(':tipoOriginal', $tipoOriginal, PDO::PARAM_STR);
                     $stmtFase->bindParam(':faseNumero', $fase['numero'], PDO::PARAM_INT);
                     $stmtFase->execute();
+                    $fechasFases[$fase['numero']] = $fase['apertura'];
                 }
 
                 $fase2Actual = null;
