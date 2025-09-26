@@ -524,13 +524,14 @@ public function obtenerTodosLosHorarios() {
                         ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
                     ]);
 
-                    $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
+                   $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :doc_cedula, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
                     $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo) VALUES (:doc_cedula, :sec_codigo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
                     $docentes_procesados = [];
                     foreach ($clases_origen as $item) {
                         $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
                         $stmt_uh->execute([
                             ':uc_codigo' => $item['uc_codigo'],
+                            ':doc_cedula' => $item['doc_cedula'], 
                             ':sec_codigo' => $codigo_destino,
                             ':esp_numero' => $espacio['numero'],
                             ':esp_tipo' => $espacio['tipo'],
@@ -538,7 +539,7 @@ public function obtenerTodosLosHorarios() {
                             ':dia' => $item['dia'],
                             ':inicio' => $item['hora_inicio'],
                             ':fin' => $item['hora_fin']
-                        ]);
+                                ]);
 
                         if (!in_array($item['doc_cedula'], $docentes_procesados)) {
                             $stmt_doc->execute([':doc_cedula' => $item['doc_cedula'], ':sec_codigo' => $codigo_destino]);

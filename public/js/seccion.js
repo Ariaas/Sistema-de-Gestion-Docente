@@ -788,8 +788,7 @@ function guardarClase() {
     const diaNombre = currentClickedCell.data("dia-nombre");
     const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
     const duracionSelect = $("#modalDuracionSubgrupo");
-    
-    // Determina la duración de la clase según el contexto del formulario
+
     let bloques_span;
     if (duracionSelect.length > 0) {
         bloques_span = parseInt(duracionSelect.val(), 10) || 1;
@@ -805,18 +804,54 @@ function guardarClase() {
         return;
     }
 
-    // Prepara los datos para la validación vía AJAX
+    const localWarnings = [];
+    const docVal = $("#modalSeleccionarDocente").val();
+    const ucVal = $("#modalSeleccionarUc").val();
+    const espVal = $("#modalSeleccionarEspacio").val();
+
+    if (!docVal) {
+        localWarnings.push({ mensaje: "El campo <b>Docente</b> está vacío." });
+    }
+    if (!ucVal) {
+        localWarnings.push({ mensaje: "El campo <b>Unidad Curricular</b> está vacío." });
+    }
+    if (!espVal) {
+        localWarnings.push({ mensaje: "El campo <b>Espacio</b> está vacío." });
+    }
+
+
+    if (ucVal) {
+        const franjaInicioActual = franjaInicio.substring(0, 5);
+        const diaKeyActual = normalizeDayKey(diaNombre);
+
+        for (const [key, claseArray] of horarioContenidoGuardado.entries()) {
+            const [franjaExistente, diaKeyExistente] = key.split('-');
+            
+            
+            if (franjaExistente === franjaInicioActual && diaKeyExistente === diaKeyActual) {
+                continue;
+            }
+
+            
+            if (claseArray.some(c => c.data.uc_codigo === ucVal)) {
+                const nombreUc = allUcs.find(u => u.uc_codigo === ucVal)?.uc_nombre || ucVal;
+                localWarnings.push({ mensaje: `Advertencia: La UC <b>'${nombreUc}'</b> ya está asignada en esta sección.` });
+                break; 
+            }
+        }
+    }
+
     const datosValidacion = new FormData();
     datosValidacion.append("accion", "validar_clase_en_vivo");
-    datosValidacion.append("doc_cedula", $("#modalSeleccionarDocente").val());
-    datosValidacion.append("uc_codigo", $("#modalSeleccionarUc").val());
-    datosValidacion.append("espacio", $("#modalSeleccionarEspacio").val());
+    datosValidacion.append("doc_cedula", docVal);
+    datosValidacion.append("uc_codigo", ucVal);
+    datosValidacion.append("espacio", espVal);
     datosValidacion.append("dia", diaNombre);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
     datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
     datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
 
-    // Realiza la llamada AJAX para una validación completa y centralizada
+  
     $.ajax({
         url: "",
         type: "POST",
@@ -824,15 +859,18 @@ function guardarClase() {
         contentType: false,
         processData: false,
         success: function(respuesta) {
-            if (respuesta.conflicto && Array.isArray(respuesta.mensajes)) {
-                // Si el backend reporta conflictos, los muestra en el pop-up de confirmación
-                const conflictos = respuesta.mensajes.map(c => c.mensaje);
-                let mensajeHtml = "Se encontraron los siguientes conflictos:<ul class='text-start mt-2'>";
-                conflictos.forEach(msg => { mensajeHtml += `<li>${msg}</li>`; });
+            
+            const serverConflicts = (respuesta.conflicto && Array.isArray(respuesta.mensajes)) ? respuesta.mensajes : [];
+            const combinedIssues = [...localWarnings, ...serverConflicts];
+
+            if (combinedIssues.length > 0) {
+                const issueMessages = combinedIssues.map(c => c.mensaje);
+                let mensajeHtml = "Se encontraron los siguientes conflictos y/o advertencias:<ul class='text-start mt-2'>";
+                issueMessages.forEach(msg => { mensajeHtml += `<li>${msg}</li>`; });
                 mensajeHtml += "</ul><br>¿Desea asignar la clase de todas formas?";
 
                 Swal.fire({
-                    title: 'Conflictos Detectados',
+                    title: 'Conflictos y Advertencias',
                     html: mensajeHtml,
                     icon: 'warning',
                     showCancelButton: true,
@@ -846,7 +884,6 @@ function guardarClase() {
                     }
                 });
             } else {
-                // Si no hay conflictos, procede a guardar localmente de inmediato
                 procederConGuardadoLocal();
             }
         },
@@ -854,8 +891,8 @@ function guardarClase() {
             muestraMensaje("error", 5000, "Error de Conexión", "No se pudo validar la clase con el servidor.");
         }
     });
+   
 }
-
 
 
 function procederConGuardadoLocal() {
@@ -1021,7 +1058,7 @@ function procederConGuardado() {
             claseArray.forEach(claseObj => clasesAEnviar.push(claseObj.data));
         }
 
-        clasesAEnviar = clasesAEnviar.filter(item => item && item.hora_inicio && item.hora_fin);
+       clasesAEnviar = clasesAEnviar.filter(item => item && item.dia && item.hora_inicio && item.hora_fin);
 
         clasesAEnviar.forEach(item => {
             item.hora_inicio = item.hora_inicio.substring(0, 5);
@@ -1576,144 +1613,151 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '#btnAnadirFilaHorario', async function(e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        let horaInicioSugerida = "13:00";
-        let horaFinSugerida = "13:40";
-        const ultimaFila = $("#tablaHorario tbody tr:last");
+    let horaInicioSugerida = "13:00";
+    let horaFinSugerida = "13:40";
+    const ultimaFila = $("#tablaHorario tbody tr:last");
 
-        if (ultimaFila.length > 0) {
-            const franjaTexto = ultimaFila.find('td:first span').text();
-            const partes = franjaTexto.split(' - ');
-            if (partes.length === 2) {
-                const horaFinUltimoBloque = partes[1].trim();
-                const parse12HourTime = (timeStr) => {
-                    const [time, modifier] = timeStr.split(' ');
-                    let [hours, minutes] = time.split(':').map(Number);
-                    if (modifier && modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
-                    if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
-                    const date = new Date();
-                    date.setHours(hours, minutes, 0, 0);
-                    return date;
-                };
-                try {
-                    const fechaInicio = parse12HourTime(horaFinUltimoBloque);
-                    horaInicioSugerida = fechaInicio.toTimeString().substring(0, 5);
-                    fechaInicio.setMinutes(fechaInicio.getMinutes() + 40);
-                    horaFinSugerida = fechaInicio.toTimeString().substring(0, 5);
-                } catch (error) {
-                    console.error("Error al parsear hora:", error);
-                }
+    if (ultimaFila.length > 0) {
+        // Esta lógica para sugerir la siguiente hora es correcta, la mantenemos.
+        const franjaTexto = ultimaFila.find('td:first span').text();
+        const partes = franjaTexto.split(' - ');
+        if (partes.length === 2) {
+            const horaFinUltimoBloque = partes[1].trim();
+            const parse12HourTime = (timeStr) => {
+                const [time, modifier] = timeStr.split(' ');
+                let [hours, minutes] = time.split(':').map(Number);
+                if (modifier && modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
+                if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+                const date = new Date();
+                date.setHours(hours, minutes, 0, 0);
+                return date;
+            };
+            try {
+                const fechaInicio = parse12HourTime(horaFinUltimoBloque);
+                horaInicioSugerida = fechaInicio.toTimeString().substring(0, 5);
+                fechaInicio.setMinutes(fechaInicio.getMinutes() + 40);
+                horaFinSugerida = fechaInicio.toTimeString().substring(0, 5);
+            } catch (error) {
+                console.error("Error al parsear hora:", error);
             }
         }
+    }
 
-        const validarBloqueHorario = (inicioNuevo, finNuevo) => {
-            if (!inicioNuevo || !finNuevo) return `Debes especificar una hora de inicio y fin.`;
-            if (inicioNuevo >= finNuevo) return `La hora de inicio debe ser anterior a la hora de fin.`;
-            const horaMinima = "07:00";
-            const horaMaxima = "23:59";
-            if (inicioNuevo < horaMinima || finNuevo > horaMaxima) return `El horario debe estar entre las 7:00 a. m. y las 12:00 a. m.`;
-            let haySolapamiento = false;
-            $("#tablaHorario tbody tr").each(function() {
-                const cellText = $(this).find('td:first span').text();
-                const [startText, endText] = cellText.split(' - ');
-                if (!startText || !endText) return;
+  
+    const validarBloqueHorario = (inicioNuevo, finNuevo) => {
+        if (!inicioNuevo || !finNuevo) return `Debes especificar una hora de inicio y fin.`;
+        if (inicioNuevo >= finNuevo) return `La hora de inicio debe ser anterior a la hora de fin.`;
+        const horaMinima = "07:00";
+        const horaMaxima = "23:59";
+        if (inicioNuevo < horaMinima || finNuevo > horaMaxima) return `El horario debe estar entre las 7:00 a. m. y las 12:00 a. m.`;
+        let haySolapamiento = false;
+        $("#tablaHorario tbody tr").each(function() {
+            const cellText = $(this).find('td:first span').text();
+            const [startText, endText] = cellText.split(' - ');
+            if (!startText || !endText) return;
 
-                const to24Hour = timeStr => {
-                    const [time, modifier] = timeStr.trim().split(' ');
-                    let [hours, minutes] = time.split(':');
-                    if (hours === '12') {
-                        hours = '00';
-                    }
-                    if (modifier.toUpperCase() === 'PM') {
-                        hours = parseInt(hours, 10) + 12;
-                    }
-                    return `${String(hours).padStart(2, '0')}:${minutes}`;
-                };
-
-                const inicioExistente = to24Hour(startText);
-                const finExistente = to24Hour(endText);
-
-                if (inicioExistente && finExistente && (inicioNuevo < finExistente && finNuevo > inicioExistente)) {
-                    haySolapamiento = true;
-                    return false;
+            const to24Hour = timeStr => {
+                const [time, modifier] = timeStr.trim().split(' ');
+                let [hours, minutes] = time.split(':');
+                if (hours === '12') {
+                    hours = '00';
                 }
-            });
-            if (haySolapamiento) return 'El bloque horario se solapa con un bloque existente.';
-            return null;
-        };
-
-        const {
-            value: formValues,
-            isConfirmed
-        } = await Swal.fire({
-            title: 'Añadir Nuevo Bloque Horario',
-            html: `
-                <p class="text-muted">Introduce la hora de inicio y fin para la nueva fila del horario.</p>
-                <div class="form-floating mb-2">
-                    <input type="time" id="swal-hora-inicio" class="form-control" value="${horaInicioSugerida}" step="1800">
-                    <label for="swal-hora-inicio">Hora de Inicio</label>
-                </div>
-                <div class="form-floating">
-                    <input type="time" id="swal-hora-fin" class="form-control" value="${horaFinSugerida}" step="1800">
-                    <label for="swal-hora-fin">Hora de Fin</label>
-                </div>`,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'Añadir Fila',
-            cancelButtonText: 'Cancelar',
-            didOpen: () => {
-                const inicioInput = document.getElementById('swal-hora-inicio');
-                const finInput = document.getElementById('swal-hora-fin');
-                const confirmButton = Swal.getConfirmButton();
-
-                function onInput() {
-                    const error = validarBloqueHorario(inicioInput.value, finInput.value);
-                    if (error) {
-                        Swal.showValidationMessage(error);
-                        confirmButton.disabled = true;
-                    } else {
-                        Swal.resetValidationMessage();
-                        confirmButton.disabled = false;
-                    }
+                if (modifier.toUpperCase() === 'PM') {
+                    hours = parseInt(hours, 10) + 12;
                 }
-                inicioInput.addEventListener('input', onInput);
-                finInput.addEventListener('input', onInput);
-                onInput();
-            },
-            preConfirm: () => {
-                const inicio = document.getElementById('swal-hora-inicio').value;
-                const fin = document.getElementById('swal-hora-fin').value;
-                if (validarBloqueHorario(inicio, fin)) {
-                    return false;
-                }
-                return {
-                    inicio,
-                    fin
-                };
+                return `${String(hours).padStart(2, '0')}:${minutes}`;
+            };
+
+            const inicioExistente = to24Hour(startText);
+            const finExistente = to24Hour(endText);
+
+            if (inicioExistente && finExistente && (inicioNuevo < finExistente && finNuevo > inicioExistente)) {
+                haySolapamiento = true;
+                return false;
             }
         });
+        if (haySolapamiento) return 'El bloque horario se solapa con un bloque existente.';
+        return null;
+    };
 
-        if (isConfirmed && formValues) {
-            const nuevaClaseFantasma = {
-                data: {
-                    hora_inicio: formValues.inicio + ':00',
-                    hora_fin: formValues.fin + ':00',
-                    isPlaceholder: true
+    const {
+        value: formValues,
+        isConfirmed
+    } = await Swal.fire({
+        title: 'Añadir Nuevo Bloque Horario',
+        html: `
+            <p class="text-muted">Introduce la hora de inicio y fin para la nueva fila del horario.</p>
+            <div class="form-floating mb-2">
+                <input type="time" id="swal-hora-inicio" class="form-control" value="${horaInicioSugerida}" step="1800">
+                <label for="swal-hora-inicio">Hora de Inicio</label>
+            </div>
+            <div class="form-floating">
+                <input type="time" id="swal-hora-fin" class="form-control" value="${horaFinSugerida}" step="1800">
+                <label for="swal-hora-fin">Hora de Fin</label>
+            </div>`,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Añadir Fila',
+        cancelButtonText: 'Cancelar',
+        didOpen: () => {
+            const inicioInput = document.getElementById('swal-hora-inicio');
+            const finInput = document.getElementById('swal-hora-fin');
+            const confirmButton = Swal.getConfirmButton();
+
+            function onInput() {
+                const error = validarBloqueHorario(inicioInput.value, finInput.value);
+                if (error) {
+                    Swal.showValidationMessage(error);
+                    confirmButton.disabled = true;
+                } else {
+                    Swal.resetValidationMessage();
+                    confirmButton.disabled = false;
                 }
+            }
+            inicioInput.addEventListener('input', onInput);
+            finInput.addEventListener('input', onInput);
+            onInput();
+        },
+        preConfirm: () => {
+            const inicio = document.getElementById('swal-hora-inicio').value;
+            const fin = document.getElementById('swal-hora-fin').value;
+            if (validarBloqueHorario(inicio, fin)) {
+                return false;
+            }
+            return {
+                inicio,
+                fin
             };
-            const keyFantasma = `placeholder-${formValues.inicio}`;
-            horarioContenidoGuardado.set(keyFantasma, [nuevaClaseFantasma]);
-
-            const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
-            inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-
-            horarioContenidoGuardado.delete(keyFantasma);
-
-            $("#filtro_turno").prop('disabled', true);
-            muestraMensaje("success", 2500, "Fila Añadida", "El nuevo bloque horario ha sido agregado.");
         }
     });
+
+    if (isConfirmed && formValues) {
+     
+        const nuevoBloqueVacio = {
+            data: {
+                hora_inicio: formValues.inicio + ':00',
+                hora_fin: formValues.fin + ':00',
+                isCustomEmptyRow: true 
+            }
+        };
+        
+       
+        const claveBloqueNuevo = `${formValues.inicio}-custom`;
+        
+       
+        horarioContenidoGuardado.set(claveBloqueNuevo, [nuevoBloqueVacio]);
+
+        const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+        inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
+
+        
+
+        $("#filtro_turno").prop('disabled', true);
+        muestraMensaje("success", 2500, "Fila Añadida", "El nuevo bloque horario ha sido agregado.");
+    }
+});
 
     $(document).on('click', '.btn-eliminar-fila-personalizada', function() {
         const franjaInicio = $(this).data('franja-inicio');
