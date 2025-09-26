@@ -100,6 +100,10 @@ class Area extends Connection
 
         if (!$this->Existe($this->areaNombre, $areaOriginal)) {
             try {
+                $stmtDel = $co->prepare("DELETE FROM tbl_area WHERE area_nombre = :areaNombre AND area_estado = 0");
+                $stmtDel->bindParam(':areaNombre', $this->areaNombre, PDO::PARAM_STR);
+                $stmtDel->execute();
+
                 $stmt = $co->prepare("UPDATE tbl_area
                 SET area_nombre = :areaNombre, area_descripcion = :areaDescripcion
                 WHERE area_nombre = :areaOriginal");

@@ -130,6 +130,11 @@ class Titulo extends Connection
 
         try {
 
+            $stmtDel = $co->prepare("DELETE FROM tbl_titulo WHERE tit_prefijo = :prefijotitulo AND tit_nombre = :nombretitulo AND tit_estado = 0");
+            $stmtDel->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
+            $stmtDel->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
+            $stmtDel->execute();
+
             $stmt = $co->prepare("UPDATE tbl_titulo
             SET tit_prefijo = :new_prefijo, tit_nombre = :new_nombre
             WHERE tit_prefijo = :old_prefijo AND tit_nombre = :old_nombre");
@@ -144,7 +149,6 @@ class Titulo extends Connection
             $r['mensaje'] = '¡Registro Modificado! <br/> Se modificó el título correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
-
             if ($e->getCode() == '23000') {
                 $r['mensaje'] = 'No se puede modificar el título porque está siendo utilizado por uno o más docentes.';
             } else {

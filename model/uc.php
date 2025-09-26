@@ -257,6 +257,9 @@ class UC extends Connection
         $r = array();
         if (!$this->Existe($this->codigoUC, $codigoOriginal)) {
             try {
+                $stmtDel = $co->prepare("DELETE FROM tbl_uc WHERE uc_codigo = :codigoUC AND uc_estado = 0");
+                $stmtDel->bindParam(':codigoUC', $this->codigoUC, PDO::PARAM_STR);
+                $stmtDel->execute();
                 $stmt = $co->prepare("UPDATE tbl_uc
                     SET uc_codigo = :codigoUC, 
                     uc_nombre = :nombreUC,

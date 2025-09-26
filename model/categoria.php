@@ -106,6 +106,9 @@ class Categoria extends Connection
         $r = array();
         if (!$this->Existe($this->categoriaNombre, $categoriaOriginal)) {
             try {
+                $stmtDel = $co->prepare("DELETE FROM tbl_categoria WHERE cat_nombre = :categoriaNombre AND cat_estado = 0");
+                $stmtDel->bindParam(':categoriaNombre', $this->categoriaNombre, PDO::PARAM_STR);
+                $stmtDel->execute();
                 $stmt = $co->prepare("UPDATE tbl_categoria
                 SET cat_nombre = :categoriaNombre, cat_descripcion = :categoriaDescripcion
                 WHERE cat_nombre = :categoriaOriginal");

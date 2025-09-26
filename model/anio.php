@@ -89,6 +89,18 @@ class Anio extends Connection
         try {
             $co->beginTransaction();
 
+            if ($this->ExisteInactivo($this->aniAnio, $this->aniTipo)) {
+                $stmtDelFase = $co->prepare("DELETE FROM tbl_fase WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo");
+                $stmtDelFase->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+                $stmtDelFase->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+                $stmtDelFase->execute();
+
+                $stmtDelAnio = $co->prepare("DELETE FROM tbl_anio WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo AND ani_estado = 0");
+                $stmtDelAnio->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+                $stmtDelAnio->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+                $stmtDelAnio->execute();
+            }
+
             $stmtAnio = $co->prepare("INSERT INTO tbl_anio (ani_anio, ani_tipo, ani_activo, ani_estado) VALUES (:aniAnio, :aniTipo, 1, 1)");
             $stmtAnio->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
             $stmtAnio->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
@@ -223,6 +235,18 @@ class Anio extends Connection
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             try {
                 $co->beginTransaction();
+
+                if ($this->ExisteInactivo($this->aniAnio, $this->aniTipo)) {
+                    $stmtDelFase = $co->prepare("DELETE FROM tbl_fase WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo");
+                    $stmtDelFase->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+                    $stmtDelFase->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+                    $stmtDelFase->execute();
+
+                    $stmtDelAnio = $co->prepare("DELETE FROM tbl_anio WHERE ani_anio = :aniAnio AND ani_tipo = :aniTipo AND ani_estado = 0");
+                    $stmtDelAnio->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);
+                    $stmtDelAnio->bindParam(':aniTipo', $this->aniTipo, PDO::PARAM_STR);
+                    $stmtDelAnio->execute();
+                }
 
                 $stmtAnio = $co->prepare("UPDATE tbl_anio SET ani_anio = :aniAnio, ani_tipo = :aniTipo WHERE ani_anio = :anioOriginal AND ani_tipo = :tipoOriginal");
                 $stmtAnio->bindParam(':aniAnio', $this->aniAnio, PDO::PARAM_INT);

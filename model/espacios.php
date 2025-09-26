@@ -141,6 +141,12 @@ class Espacio extends Connection
         }
 
         try {
+            $stmtDel = $co->prepare("DELETE FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio AND esp_estado = 0");
+            $stmtDel->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
+            $stmtDel->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
+            $stmtDel->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
+            $stmtDel->execute();
+
             $stmt = $co->prepare("UPDATE tbl_espacio
             SET esp_numero = :numeroEspacio,
                 esp_edificio = :edificioEspacio,

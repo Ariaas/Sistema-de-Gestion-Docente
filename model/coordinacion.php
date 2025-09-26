@@ -11,27 +11,36 @@ class Coordinacion extends Connection
         parent::__construct();
     }
 
-   
-    public function getNombre() { return $this->cor_nombre; }
-    public function setNombre($nombre) { $this->cor_nombre = trim($nombre); }
-    public function setOriginalNombre($nombre) { $this->original_cor_nombre = trim($nombre); }
+
+    public function getNombre()
+    {
+        return $this->cor_nombre;
+    }
+    public function setNombre($nombre)
+    {
+        $this->cor_nombre = trim($nombre);
+    }
+    public function setOriginalNombre($nombre)
+    {
+        $this->original_cor_nombre = trim($nombre);
+    }
 
 
-  
+
     public function Registrar()
     {
         $r = [];
-        
+
 
         $registro_existente = $this->BuscarPorNombre($this->cor_nombre);
 
         if ($registro_existente) {
-            
+
             if ($registro_existente['cor_estado'] == 1) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = 'El nombre de la coordinación ya existe y está activa.';
             } else {
-               
+
                 if ($this->ActualizarYReactivar($registro_existente['cor_nombre'])) {
                     $r['resultado'] = 'registrar';
                     $r['mensaje'] = ' Coordinación registrada correctamente.';
@@ -41,7 +50,7 @@ class Coordinacion extends Connection
                 }
             }
         } else {
-       
+
             try {
                 $co = $this->Con();
                 $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -58,8 +67,8 @@ class Coordinacion extends Connection
         return $r;
     }
 
-    
-    
+
+
     public function Modificar()
     {
         $r = [];
@@ -73,6 +82,14 @@ class Coordinacion extends Connection
         try {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            $registro_inactivo = $this->BuscarPorNombre($this->cor_nombre);
+            if ($registro_inactivo && isset($registro_inactivo['cor_estado']) && $registro_inactivo['cor_estado'] == 0) {
+                $stmtDel = $co->prepare("DELETE FROM tbl_coordinacion WHERE cor_nombre = :nombre AND cor_estado = 0");
+                $stmtDel->bindParam(':nombre', $this->cor_nombre, PDO::PARAM_STR);
+                $stmtDel->execute();
+            }
+
             $stmt = $co->prepare("UPDATE tbl_coordinacion SET cor_nombre = :new_nombre WHERE cor_nombre = :original_nombre");
             $stmt->bindParam(':new_nombre', $this->cor_nombre, PDO::PARAM_STR);
             $stmt->bindParam(':original_nombre', $this->original_cor_nombre, PDO::PARAM_STR);
@@ -82,9 +99,9 @@ class Coordinacion extends Connection
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             if (strpos($e->getMessage(), 'foreign key constraint') !== false) {
-                 $r['mensaje'] = ' No se puede modificar el nombre porque está siendo usado en otros registros.';
+                $r['mensaje'] = ' No se puede modificar el nombre porque está siendo usado en otros registros.';
             } else {
-                 $r['mensaje'] = $e->getMessage();
+                $r['mensaje'] = $e->getMessage();
             }
         }
         return $r;
@@ -144,7 +161,7 @@ class Coordinacion extends Connection
         }
     }
 
-    
+
 
     private function BuscarPorNombre($nombre)
     {
@@ -159,20 +176,20 @@ class Coordinacion extends Connection
             return false;
         }
     }
-    
-    
+
+
     private function ActualizarYReactivar($nombre_original)
     {
         try {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $stmt = $co->prepare("UPDATE tbl_coordinacion SET cor_nombre = :nuevo_nombre, cor_estado = 1 WHERE cor_nombre = :nombre_original");
-            
-           
+
+
             $stmt->bindParam(':nuevo_nombre', $this->cor_nombre, PDO::PARAM_STR);
-         
+
             $stmt->bindParam(':nombre_original', $nombre_original, PDO::PARAM_STR);
-            
+
             $stmt->execute();
             return true;
         } catch (Exception $e) {
@@ -180,4 +197,3 @@ class Coordinacion extends Connection
         }
     }
 }
-?>

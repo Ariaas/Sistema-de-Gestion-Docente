@@ -103,6 +103,10 @@ class Eje extends Connection
 
         if (!$this->existe($this->ejeNombre, $ejeOriginal)) {
             try {
+                $stmtDel = $co->prepare("DELETE FROM tbl_eje WHERE eje_nombre = :ejeNombre AND eje_estado = 0");
+                $stmtDel->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
+                $stmtDel->execute();
+
                 $stmt = $co->prepare("UPDATE tbl_eje
                     SET eje_nombre = :ejeNombre, eje_descripcion = :ejeDescripcion 
                     WHERE eje_nombre = :ejeOriginal");
