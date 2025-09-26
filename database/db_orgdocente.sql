@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 25-09-2025 a las 09:55:44
+-- Tiempo de generación: 26-09-2025 a las 05:34:30
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1775,42 +1775,43 @@ CREATE TABLE `tbl_seccion` (
   `sec_cantidad` int(11) NOT NULL DEFAULT 0,
   `sec_estado` tinyint(1) NOT NULL,
   `ani_anio` int(11) NOT NULL,
-  `ani_tipo` varchar(10) NOT NULL
+  `ani_tipo` varchar(10) NOT NULL,
+  `grupo_union_id` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `tbl_seccion`
 --
 
-INSERT INTO `tbl_seccion` (`sec_codigo`, `sec_cantidad`, `sec_estado`, `ani_anio`, `ani_tipo`) VALUES
-('0103', 0, 1, 2025, 'regular'),
-('0113', 0, 1, 2025, 'regular'),
-('0123', 0, 1, 2025, 'regular'),
-('0403', 0, 1, 2025, 'regular'),
-('0423', 0, 1, 2025, 'regular'),
-('1101', 1, 1, 2025, 'regular'),
-('1102', 0, 1, 2025, 'regular'),
-('1103', 0, 1, 2025, 'regular'),
-('1104', 0, 1, 2025, 'regular'),
-('1113', 0, 1, 2025, 'regular'),
-('1123', 0, 1, 2025, 'regular'),
-('1133', 0, 1, 2025, 'regular'),
-('1143', 0, 1, 2025, 'regular'),
-('1202', 0, 1, 2025, 'regular'),
-('1203', 0, 1, 2025, 'regular'),
-('1204', 0, 1, 2025, 'regular'),
-('1213', 0, 1, 2025, 'regular'),
-('1214', 0, 1, 2025, 'regular'),
-('1403', 0, 1, 2025, 'regular'),
-('2103', 0, 1, 2025, 'regular'),
-('2113', 0, 1, 2025, 'regular'),
-('2123', 0, 1, 2025, 'regular'),
-('2133', 0, 1, 2025, 'regular'),
-('2403', 0, 1, 2025, 'regular'),
-('3103', 0, 1, 2025, 'regular'),
-('3104', 0, 1, 2025, 'regular'),
-('3113', 0, 1, 2025, 'regular'),
-('4403', 0, 1, 2025, 'regular');
+INSERT INTO `tbl_seccion` (`sec_codigo`, `sec_cantidad`, `sec_estado`, `ani_anio`, `ani_tipo`, `grupo_union_id`) VALUES
+('0103', 0, 1, 2025, 'regular', NULL),
+('0113', 0, 1, 2025, 'regular', NULL),
+('0123', 0, 1, 2025, 'regular', NULL),
+('0403', 0, 1, 2025, 'regular', NULL),
+('0423', 0, 1, 2025, 'regular', NULL),
+('1101', 1, 1, 2025, 'regular', NULL),
+('1102', 0, 1, 2025, 'regular', NULL),
+('1103', 0, 1, 2025, 'regular', NULL),
+('1104', 0, 1, 2025, 'regular', NULL),
+('1113', 0, 1, 2025, 'regular', NULL),
+('1123', 0, 1, 2025, 'regular', NULL),
+('1133', 0, 1, 2025, 'regular', NULL),
+('1143', 0, 1, 2025, 'regular', NULL),
+('1202', 0, 1, 2025, 'regular', NULL),
+('1203', 0, 1, 2025, 'regular', NULL),
+('1204', 0, 1, 2025, 'regular', NULL),
+('1213', 0, 1, 2025, 'regular', NULL),
+('1214', 0, 1, 2025, 'regular', NULL),
+('1403', 0, 1, 2025, 'regular', NULL),
+('2103', 0, 1, 2025, 'regular', NULL),
+('2113', 0, 1, 2025, 'regular', NULL),
+('2123', 0, 1, 2025, 'regular', NULL),
+('2133', 0, 1, 2025, 'regular', NULL),
+('2403', 0, 1, 2025, 'regular', NULL),
+('3103', 0, 1, 2025, 'regular', NULL),
+('3104', 0, 1, 2025, 'regular', NULL),
+('3113', 0, 1, 2025, 'regular', NULL),
+('4403', 0, 1, 2025, 'regular', NULL);
 
 -- --------------------------------------------------------
 

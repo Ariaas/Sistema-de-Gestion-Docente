@@ -587,7 +587,7 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
     const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
     const clasesEnCelda = horarioContenidoGuardado.get(key_horario) || [];
     const esEdicion = !!claseData;
-    const placeholderSubgrupo = clasesEnCelda.some(c => c.data.subgrupo === 'A') ? 'Tarde, Práctica...' : 'A, Mañana...';
+    const placeholderSubgrupo = clasesEnCelda.some(c => c.data.subgrupo === 'A') ? 'Tarde, Práctica...' : 'B, Mañana...';
 
     const duracionFija = clasesEnCelda.length > 0 ? clasesEnCelda[0].data.bloques_span : 1;
     const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
