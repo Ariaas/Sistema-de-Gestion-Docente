@@ -557,60 +557,74 @@ public function obtenerTodosLosHorarios() {
     }
     
     public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo)
-    {
-        if (empty($codigoSeccion) || !isset($cantidadSeccion) || $cantidadSeccion === '' || empty($anio_anio) || empty($anio_tipo)) {
-            return ['resultado' => 'error', 'mensaje' => 'Todos los campos de la sección son obligatorios.'];
-        }
-        $cantidadInt = filter_var($cantidadSeccion, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 99]]);
-        if ($cantidadInt === false) {
-            return ['resultado' => 'error', 'mensaje' => 'La cantidad de estudiantes debe ser un número entero entre 0 y 99.'];
-        }
+{
+    if (empty($codigoSeccion) || !isset($cantidadSeccion) || $cantidadSeccion === '' || empty($anio_anio) || empty($anio_tipo)) {
+        return ['resultado' => 'error', 'mensaje' => 'Todos los campos de la sección son obligatorios.'];
+    }
 
-        $co = $this->Con();
-        try {
-            $co->beginTransaction();
-            
-            $stmt_check = $co->prepare("SELECT sec_estado FROM tbl_seccion WHERE sec_codigo = :codigo");
-            $stmt_check->execute([':codigo' => $codigoSeccion]);
-            $seccion_existente = $stmt_check->fetch(PDO::FETCH_ASSOC);
+   
+    $cohorteSeccion = substr($codigoSeccion, -1);
+    if (!is_numeric($cohorteSeccion)) {
+        return ['resultado' => 'error', 'mensaje' => 'El código de la sección debe terminar en un número de cohorte válido.'];
+    }
 
-            if ($seccion_existente) {
-                if ($seccion_existente['sec_estado'] == 1) {
-                    $co->rollBack();
-                    return ['resultado' => 'error', 'mensaje' => '¡ERROR! La sección con ese código ya existe y está activa.'];
-                } else {
-                    $this->EliminarDependenciasDeSeccion($codigoSeccion, $co);
-                    $stmtSeccion = $co->prepare(
-                        "UPDATE tbl_seccion SET sec_cantidad = :cantidad, ani_anio = :anio, ani_tipo = :tipo, sec_estado = 1 WHERE sec_codigo = :codigo"
-                    );
-                }
+    $cohortesValidas = $this->obtenerCohortesMalla();
+    if (!in_array($cohorteSeccion, $cohortesValidas)) {
+        $mensaje = '¡Cohorte no válido! El cohorte ' . htmlspecialchars($cohorteSeccion) . ' no existe en la malla curricular activa. Cohortes permitidos: ' . implode(', ', $cohortesValidas);
+        return ['resultado' => 'error', 'mensaje' => $mensaje];
+    }
+ 
+
+    $cantidadInt = filter_var($cantidadSeccion, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 99]]);
+    if ($cantidadInt === false) {
+        return ['resultado' => 'error', 'mensaje' => 'La cantidad de estudiantes debe ser un número entero entre 0 y 99.'];
+    }
+
+    $co = $this->Con();
+    try {
+        $co->beginTransaction();
+        
+        $stmt_check = $co->prepare("SELECT sec_estado FROM tbl_seccion WHERE sec_codigo = :codigo");
+        $stmt_check->execute([':codigo' => $codigoSeccion]);
+        $seccion_existente = $stmt_check->fetch(PDO::FETCH_ASSOC);
+
+        if ($seccion_existente) {
+            if ($seccion_existente['sec_estado'] == 1) {
+                $co->rollBack();
+                return ['resultado' => 'error', 'mensaje' => '¡ERROR! La sección con ese código ya existe y está activa.'];
             } else {
+                $this->EliminarDependenciasDeSeccion($codigoSeccion, $co);
                 $stmtSeccion = $co->prepare(
-                    "INSERT INTO tbl_seccion (sec_codigo, sec_cantidad, ani_anio, ani_tipo, sec_estado) VALUES (:codigo, :cantidad, :anio, :tipo, 1)"
+                    "UPDATE tbl_seccion SET sec_cantidad = :cantidad, ani_anio = :anio, ani_tipo = :tipo, sec_estado = 1 WHERE sec_codigo = :codigo"
                 );
             }
-            
-            $stmtSeccion->bindParam(':codigo', $codigoSeccion, PDO::PARAM_STR);
-            $stmtSeccion->bindParam(':cantidad', $cantidadInt, PDO::PARAM_INT);
-            $stmtSeccion->bindParam(':anio', $anio_anio, PDO::PARAM_INT);
-            $stmtSeccion->bindParam(':tipo', $anio_tipo, PDO::PARAM_STR);
-            $stmtSeccion->execute();
-
-            $co->commit();
-
-            return [
-                'resultado' => 'registrar_seccion_ok',
-                'mensaje' => '¡Se registró la sección correctamente!',
-                'nuevo_codigo' => $codigoSeccion,
-                'nueva_cantidad' => $cantidadInt
-            ];
-        } catch (Exception $e) {
-            if ($co->inTransaction()) {
-                $co->rollBack();
-            }
-            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        } else {
+            $stmtSeccion = $co->prepare(
+                "INSERT INTO tbl_seccion (sec_codigo, sec_cantidad, ani_anio, ani_tipo, sec_estado) VALUES (:codigo, :cantidad, :anio, :tipo, 1)"
+            );
         }
+        
+        $stmtSeccion->bindParam(':codigo', $codigoSeccion, PDO::PARAM_STR);
+        $stmtSeccion->bindParam(':cantidad', $cantidadInt, PDO::PARAM_INT);
+        $stmtSeccion->bindParam(':anio', $anio_anio, PDO::PARAM_INT);
+        $stmtSeccion->bindParam(':tipo', $anio_tipo, PDO::PARAM_STR);
+        $stmtSeccion->execute();
+
+        $co->commit();
+
+        return [
+            'resultado' => 'registrar_seccion_ok',
+            'mensaje' => '¡Se registró la sección correctamente!',
+            'nuevo_codigo' => $codigoSeccion,
+            'nueva_cantidad' => $cantidadInt
+        ];
+    } catch (Exception $e) {
+        if ($co->inTransaction()) {
+            $co->rollBack();
+        }
+        return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
     }
+}
 
     public function ExisteSeccion($codigoSeccion, $anio_anio, $anio_tipo)
     {

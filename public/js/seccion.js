@@ -1372,15 +1372,14 @@ $(document).ready(function() {
     });
 
     $('#btnIniciarRegistro').on('click', function() {
-        $("#formRegistroSeccion")[0].reset();
-        $("#alerta-cohorte").hide();
-       /*  $("#btnGuardarSeccion").prop("disabled", true); */
-        $("#modalRegistroSeccion").modal("show");
-    });
-
-    $('#formRegistroSeccion').on('input change', function() {
-        validarFormularioRegistro();
-    });
+    $("#formRegistroSeccion")[0].reset();
+    $("#alerta-cohorte").hide();
+    $("#btnGuardarSeccion").prop("disabled", true); 
+    $("#modalRegistroSeccion").modal("show");
+});
+$('#formRegistroSeccion').on('input change', function() {
+    validarFormularioRegistro();
+});
 
     $('#cantidadSeccionModificar').on('input', function() {
         const input = $(this);
@@ -1776,3 +1775,33 @@ $(document).ready(function() {
         muestraMensaje("info", 2000, "Fila Eliminada", "El bloque horario y sus clases han sido eliminados.");
     });
 });
+function validarFormularioRegistro() {
+    const codigoInput = $('#codigoSeccion');
+    const anioInput = $('#anioId');
+    const cantidadInput = $('#cantidadSeccion');
+    const guardarBtn = $('#btnGuardarSeccion');
+    const alertaCohorte = $('#alerta-cohorte');
+
+    const codigo = codigoInput.val();
+    let cohorteValido = false;
+
+    if (codigo.length === 4) {
+        const cohorte = parseInt(codigo.charAt(3), 10);
+        if (allCohortes.includes(cohorte)) {
+            alertaCohorte.html(`Cohorte <strong>${cohorte}</strong> válido.`).removeClass('text-danger').addClass('text-muted').show();
+            cohorteValido = true;
+        } else {
+            const cohortesPermitidos = allCohortes.join(', ');
+            alertaCohorte.html(`<strong>Cohorte no válido.</strong> El cohorte ${cohorte} no existe. Permitidos: ${cohortesPermitidos}`).removeClass('text-muted').addClass('text-danger').show();
+        }
+    } else {
+        alertaCohorte.hide();
+    }
+
+  
+    if (codigo.length === 4 && anioInput.val() && cantidadInput.val() !== '' && cohorteValido) {
+        guardarBtn.prop('disabled', false);
+    } else {
+        guardarBtn.prop('disabled', true);
+    }
+}
