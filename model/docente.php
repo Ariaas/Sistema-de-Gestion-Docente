@@ -1,6 +1,5 @@
 <?php
 require_once('model/dbconnection.php');
-
 class Docente extends Connection
 {
     private $cat_nombre;
@@ -336,7 +335,7 @@ class Docente extends Connection
 
     public function existeCorreo($correo, $cedula_actual = null)
     {
-        $co = $this->Con();
+    $co = $this->Con();
         try {
             $sql_docente = "SELECT doc_cedula, doc_nombre, doc_apellido FROM tbl_docente WHERE doc_correo = :correo AND doc_estado = 1";
             $stmt_docente = $co->prepare($sql_docente);
@@ -353,9 +352,10 @@ class Docente extends Connection
                     ];
                 }
             }
-
+            require_once(__DIR__ . '/db_bitacora.php');
+            $bitacora_con = (new Connection_bitacora())->Con();
             $sql_usuario = "SELECT usu_id, usu_cedula FROM tbl_usuario WHERE usu_correo = :correo AND usu_estado = 1";
-            $stmt_usuario = $co->prepare($sql_usuario);
+            $stmt_usuario = $bitacora_con->prepare($sql_usuario);
             $stmt_usuario->execute([':correo' => $correo]);
             $usuario = $stmt_usuario->fetch(PDO::FETCH_ASSOC);
 
