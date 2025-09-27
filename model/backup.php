@@ -1,4 +1,4 @@
-<?php // S
+<?php 
 require_once("model/dbconnection.php");
 require_once("config/config.php");
 require_once("model/db_bitacora.php");
@@ -243,7 +243,7 @@ class Mantenimiento extends Connection
             if (strpos($filename, _DB_NAME_) !== false && strpos($filename, 'db_orgdocente') !== false) {
                 $this->RestaurarDesdeSQL($pdo_main, $sql_file);
                 $restaurada_main = true;
-            } elseif (strpos($filename, _BITA_DB_NAME_) !== false && strpos($filename, 'db_bitacora') !== false) { // <-- CAMBIO
+            } elseif (strpos($filename, _BITA_DB_NAME_) !== false && strpos($filename, 'db_bitacora') !== false) { 
                 $this->RestaurarDesdeSQL($pdo_bitacora, $sql_file);
                 $restaurada_bitacora = true;
             }

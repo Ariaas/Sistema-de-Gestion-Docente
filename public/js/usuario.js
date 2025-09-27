@@ -155,9 +155,8 @@ $(document).ready(function () {
 
   $("#contrasenia").on("keyup keydown", function () {
     $("#scontrasenia").css("color", "");
-    validarkeyup(/^.{5,30}$/, $("#contrasenia"), $("#scontrasenia"), "La contraseña debe tener entre 5 y 30 caracteres.");
+    validarkeyup(/^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]).{8,30}$/, $("#contrasenia"), $("#scontrasenia"), "Debe tener entre 8-30 caracteres, al menos una mayúscula y un carácter especial.");
   });
-
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
@@ -337,7 +336,7 @@ function validarenvio() {
   }
 
   if ($("#proceso").text() === "REGISTRAR" || $("#contrasenia").val().length > 0) {
-    if (validarkeyup(/^.{5,30}$/, $("#contrasenia"), $("#scontrasenia"), "La contraseña debe tener entre 5 y 30 caracteres.") == 0) {
+    if (validarkeyup(/^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]).{8,30}$/, $("#contrasenia"), $("#scontrasenia"), "Debe tener entre 8-30 caracteres, al menos una mayúscula y un carácter especial.") == 0) {
       if (esValido) muestraMensaje("error", 4000, "ERROR!", "El formato de la contraseña es incorrecto.");
       esValido = false;
     }

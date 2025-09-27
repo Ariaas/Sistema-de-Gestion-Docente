@@ -48,10 +48,10 @@ let modalDataLoaded = false;
 let isSplittingProcess = false;
 let hasSaved = false;
 
-// CORRECCIÓN 1: Esta función ahora devuelve un array con TODOS los conflictos encontrados.
+
 function checkForConflicts(newClassDetails) {
     const { docId, espIdJson, dia, secId, horaInicioNueva, horaFinNueva } = newClassDetails;
-    const foundConflicts = []; // Usaremos un array para acumular conflictos
+    const foundConflicts = []; 
     if (!dia) return { hasConflict: false };
 
     const espId = (espIdJson && espIdJson.startsWith('{')) ? JSON.parse(espIdJson) : null;
@@ -70,18 +70,18 @@ function checkForConflicts(newClassDetails) {
                 const prefijo = getPrefijoSeccion(claseExistente.sec_codigo);
                 const seccionConflicto = `<strong>${prefijo}${claseExistente.sec_codigo}</strong>`;
                 
-                // Conflicto de docente
+            
                 if (docId && String(claseExistente.doc_cedula) == docId) {
-                    foundConflicts.push({ // Añade al array en lugar de retornar
+                    foundConflicts.push({ 
                         type: 'docente',
                         message: `<b>Conflicto:</b> Docente ya asignado en sección ${seccionConflicto} a esta hora.`
                     });
                 }
                 
-                // Conflicto de espacio
+           
                 const claseExistenteEspKey = `${claseExistente.esp_numero}|${claseExistente.esp_tipo}|${claseExistente.esp_edificio}`;
                 if (espKey && claseExistenteEspKey === espKey) {
-                    foundConflicts.push({ // Añade al array en lugar de retornar
+                    foundConflicts.push({ 
                         type: 'espacio',
                         message: `<b>Conflicto:</b> Espacio ya ocupado por la sección ${seccionConflicto} a esta hora.`
                     });
@@ -89,13 +89,12 @@ function checkForConflicts(newClassDetails) {
             }
         }
     }
-    // Retorna el resultado final después de revisar todo
+   
     return { 
         hasConflict: foundConflicts.length > 0, 
-        messages: foundConflicts // Devuelve el array completo de mensajes
+        messages: foundConflicts 
     };
 }
-// --- FIN DE LA LÓGICA PORTADA ---
 
 
 function Listar() {
@@ -671,7 +670,7 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
 }
 
 function validarBloqueEnTiempoReal() {
-    // Limpiar alertas previas
+    
     $('#docente-conflicto-info, #uc-conflicto-info, #espacio-conflicto-info, #duracion-conflicto-info').html('');
     const submitButton = $('#formularioEntradaHorario button[type="submit"]');
     submitButton.prop('disabled', false);
@@ -680,25 +679,25 @@ function validarBloqueEnTiempoReal() {
     const diaNombre = currentClickedCell.data("dia-nombre");
     const dia_key = normalizeDayKey(diaNombre);
 
-    // --- MODIFICACIÓN INICIA: Lógica de validación de duración local, corregida y robusta ---
+    
     const duracionSelect = $("#modalDuracionSubgrupo");
     if (duracionSelect.length > 0) {
         const nuevaDuracion = parseInt(duracionSelect.val(), 10);
         const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
         
-        // Obtiene la clave de la clase que se está editando para poder ignorarla en la verificación
+        
         const originalKey = `${franjaInicio.substring(0, 5)}-${dia_key}`;
 
-        // Itera sobre los bloques que la clase ocuparía si se extiende
+        
         for (let i = 1; i < nuevaDuracion; i++) {
             const indiceBloqueSiguiente = indiceInicio + i;
             if (indiceBloqueSiguiente < bloquesDeLaTablaActual.length) {
                 const bloqueSiguiente = bloquesDeLaTablaActual[indiceBloqueSiguiente];
                 const tiempoBloqueSiguiente = bloqueSiguiente.tur_horainicio.substring(0, 5);
 
-                // Revisa en todo el horario guardado si algún bloque futuro está ocupado por OTRA clase
+               
                 for (const [key, claseArray] of horarioContenidoGuardado.entries()) {
-                    // Si la clase encontrada es la que estamos editando, la ignora y continúa
+                   
                     if (key === originalKey) {
                         continue;
                     }
@@ -707,22 +706,20 @@ function validarBloqueEnTiempoReal() {
                     const inicioExistente = claseExistente.hora_inicio.substring(0, 5);
                     const finExistente = claseExistente.hora_fin.substring(0, 5);
                     
-                    // Comprueba si el bloque que queremos usar está dentro del rango de una clase existente en el mismo día
+                    
                     if (normalizeDayKey(claseExistente.dia) === dia_key) {
                         if (tiempoBloqueSiguiente >= inicioExistente && tiempoBloqueSiguiente < finExistente) {
-                            // ¡Conflicto encontrado! Muestra el mensaje, deshabilita el guardado y detiene la validación.
+                            
                             $('#duracion-conflicto-info').html(`<b>Conflicto:</b> El bloque de las ${formatTime12Hour(bloqueSiguiente.tur_horainicio)} ya está ocupado.`);
                             submitButton.prop('disabled', true);
-                            return; // Detiene la ejecución para prevenir más validaciones
+                            return; 
                         }
                     }
                 }
             }
         }
     }
-    // --- MODIFICACIÓN TERMINA ---
 
-    // 2. Validar UC duplicada (localmente, no estricto)
     const ucCodigo = $("#modalSeleccionarUc").val();
     if (ucCodigo) {
         const key_actual = `${franjaInicio.substring(0, 5)}-${dia_key}`;
@@ -735,7 +732,7 @@ function validarBloqueEnTiempoReal() {
         }
     }
 
-    // 3. Validación de Docente/Espacio con consulta al servidor (AJAX)
+   
     const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
     const bloques_span_ajax = duracionSelect.length > 0 ? parseInt(duracionSelect.val(), 10) : (horarioContenidoGuardado.get(`${franjaInicio.substring(0, 5)}-${dia_key}`) || [{data:{bloques_span: 1}}])[0].data.bloques_span;
 
@@ -1619,7 +1616,7 @@ $('#formRegistroSeccion').on('input change', function() {
     const ultimaFila = $("#tablaHorario tbody tr:last");
 
     if (ultimaFila.length > 0) {
-        // Esta lógica para sugerir la siguiente hora es correcta, la mantenemos.
+
         const franjaTexto = ultimaFila.find('td:first span').text();
         const partes = franjaTexto.split(' - ');
         if (partes.length === 2) {

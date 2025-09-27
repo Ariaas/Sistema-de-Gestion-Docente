@@ -6,7 +6,7 @@ class Seccion extends Connection
 
 public function obtenerTodosLosHorarios() {
     try {
-        // Consulta corregida para obtener el docente directamente de uc_horario
+       
         $sql = "SELECT 
                 uh.sec_codigo, 
                 uh.doc_cedula,
@@ -867,7 +867,7 @@ public function obtenerTodosLosHorarios() {
                     ':sec_codigo' => $sec_codigo,
                     ':esp_numero' => $espacio['numero'],
                     ':esp_tipo' => $espacio['tipo'],
-                    // CORRECCIÓN: El nombre del parámetro ahora es el correcto
+                  
                     ':esp_edificio' => $espacio['edificio'],
                     ':dia' => $item['dia'],
                     ':inicio' => $item['hora_inicio'],

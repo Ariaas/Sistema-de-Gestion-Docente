@@ -122,7 +122,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                  $espacio = isset($_POST['espacio']) ? json_decode($_POST['espacio'], true) : null;
                  $respuesta = $o->ValidarClaseEnVivo(
                     $_POST['doc_cedula'] ?? null,
-                    $_POST['uc_codigo'] ?? null, // Parámetro añadido para la validación de carga académica
+                    $_POST['uc_codigo'] ?? null, 
                     $espacio,
                     $_POST['dia'] ?? null,
                     $_POST['hora_inicio'] ?? null,

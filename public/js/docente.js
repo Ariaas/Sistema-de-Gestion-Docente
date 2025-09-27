@@ -164,7 +164,7 @@ $(document).ready(function() {
         if (!$('#dedicacion').val()) { setErrorText($('#sdedicacion'), 'Debe seleccionar una dedicación.'); }
         const anioConcursoInput = $('#anioConcurso');
         if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
-            setErrorText($('#sanioConcurso'), 'El mes de concurso es requerido.');
+            setErrorText($('#sanioConcurso'), 'El mes y año de concurso es requerido.');
         } else if (anioConcursoInput.val()) {
             const hoy = new Date();
             const anioActual = hoy.getFullYear();
@@ -177,7 +177,6 @@ $(document).ready(function() {
             }
         }
     }
-
     function mostrarErroresPaso2() {
       
     }
@@ -263,12 +262,12 @@ $(document).ready(function() {
         switch(seleccion) {
             case 'Ordinario':
                 tipoConcursoInput.val('Oposición');
-                anioConcursoInput.prop('required', true);
+               
                 concursoWrapper.slideDown();
                 break;
             case 'Contratado por Credenciales':
                 tipoConcursoInput.val('Credenciales');
-                anioConcursoInput.prop('required', true);
+           
                 concursoWrapper.slideDown();
                 break;
             default:
@@ -453,7 +452,7 @@ $(document).ready(function() {
             const anioActual = hoy.getFullYear();
             const mesActual = hoy.getMonth() + 1;
             const [anioSeleccionado, mesSeleccionado] = el.val().split('-').map(Number);
-
+    
             if (anioSeleccionado > anioActual || (anioSeleccionado === anioActual && mesSeleccionado > mesActual)) {
                 setErrorText(spanEl, "El mes del concurso no puede ser futuro.");
             } else {
