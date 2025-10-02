@@ -39,7 +39,7 @@ function crearDT() {
   }
 }
 
-let originalNombreCoordinacion = ''; 
+let originalNombreCoordinacion = "";
 
 $(document).ready(function () {
   Listar();
@@ -59,60 +59,60 @@ $(document).ready(function () {
 
     if (!formatoValido) {
       $("#proceso").prop("disabled", true);
-      return; 
+      return;
     }
 
-    if (originalNombreCoordinacion !== '' && nombreActual === originalNombreCoordinacion) {
-        $("#scoordinacionNombre").text("No se han realizado cambios.").show();
-        $("#proceso").prop("disabled", true);
-        return; 
+    if (
+      originalNombreCoordinacion !== "" &&
+      nombreActual === originalNombreCoordinacion
+    ) {
+      $("#scoordinacionNombre").text("No se han realizado cambios.").show();
+      $("#proceso").prop("disabled", true);
+      return;
     }
-    
+
     var datos = new FormData();
-    datos.append('accion', 'existe');
-    datos.append('coordinacionNombre', nombreActual);
-    datos.append('coordinacionOriginalNombre', originalNombreCoordinacion);
+    datos.append("accion", "existe");
+    datos.append("coordinacionNombre", nombreActual);
+    datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
     enviaAjax(datos);
   });
 
- 
   $("#f").on("submit", function (event) {
-    
-    event.preventDefault(); 
-    
-    
+    event.preventDefault();
+
     let accion = $("#proceso").text();
 
     if (accion === "ELIMINAR") {
-        Swal.fire({
-          title: "¿Está seguro que quieres Eliminar esta coordinación?",
-          text: "Esta acción no se puede deshacer.",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#d33",
-          cancelButtonColor: "#3085d6",
-          confirmButtonText: "Sí, eliminar",
-          cancelButtonText: "Cancelar",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            var datos = new FormData();
-            datos.append("accion", "eliminar");
-            datos.append("coordinacionNombre", $("#coordinacionNombre").val());
-            enviaAjax(datos);
-          }
-        });
-        return;
-    }
-    
-    if (validarenvio()) { 
-        var datos = new FormData($("#f")[0]);
-        if (accion === "MODIFICAR") {
-            datos.append("accion", "modificar");
-            datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
-        } else {
-            datos.append("accion", "registrar");
+      Swal.fire({
+        title: "¿Está seguro que quieres Eliminar esta coordinación?",
+        text: "Esta acción no se puede deshacer.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          var datos = new FormData();
+          datos.append("accion", "eliminar");
+          datos.append("coordinacionNombre", $("#coordinacionNombre").val());
+          enviaAjax(datos);
         }
-        enviaAjax(datos);
+      });
+      return;
+    }
+
+    if (validarenvio()) {
+      var datos = new FormData($("#f")[0]);
+      if (accion === "MODIFICAR") {
+        datos.append("accion", "modificar");
+        datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
+      } else {
+        datos.append("accion", "registrar");
+      }
+      enviaAjax(datos);
     }
   });
 
@@ -120,71 +120,89 @@ $(document).ready(function () {
     limpia();
     let modalHeader = $("#modal1 .modal-header");
     let modalTitle = $("#modal1 .modal-title");
-    
+
     modalHeader.removeClass("bg-danger").addClass("bg-primary");
     modalTitle.text("Formulario de Registro de Coordinación");
 
-    $("#proceso").text("REGISTRAR").removeClass("btn-danger btn-warning").addClass("btn-primary");
-    $("#proceso").prop("disabled", false); 
-    $("#scoordinacionNombre").text("").hide(); 
+    $("#proceso")
+      .text("REGISTRAR")
+      .removeClass("btn-danger btn-warning")
+      .addClass("btn-primary");
+    $("#proceso").prop("disabled", false);
+    $("#scoordinacionNombre").text("").hide();
     $("#modal1").modal("show");
   });
 
-  $('#modal1').on('hidden.bs.modal', function () {
+  $("#modal1").on("hidden.bs.modal", function () {
     $("#proceso").prop("disabled", false);
     $("#scoordinacionNombre").text("").css("color", "");
   });
 });
 
 function validarenvio() {
-    if ($("#proceso").is(":disabled")) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Acción no permitida',
-            text: 'Por favor, corrija los errores en el formulario antes de continuar.'
-        });
-        return false;
-    }
-    return true;
+  if ($("#proceso").is(":disabled")) {
+    Swal.fire({
+      icon: "error",
+      title: "Acción no permitida",
+      text: "Por favor, corrija los errores en el formulario antes de continuar.",
+    });
+    return false;
+  }
+  var nombre = $("#coordinacionNombre").val();
+  if (!nombre || nombre.trim() === "") {
+    $("#scoordinacionNombre")
+      .text("El nombre de la coordinación no puede estar vacío.")
+      .show();
+    $("#coordinacionNombre").focus();
+    return false;
+  }
+  return true;
 }
 
 function pone(pos, accion) {
   let linea = $(pos).closest("tr");
-  originalNombreCoordinacion = $(linea).find("td:eq(0)").text(); 
-  
+  originalNombreCoordinacion = $(linea).find("td:eq(0)").text();
+
   let modalHeader = $("#modal1 .modal-header");
   let modalTitle = $("#modal1 .modal-title");
   let procesoBtn = $("#proceso");
 
-  if (accion === 0) { 
+  if (accion === 0) {
     modalTitle.text("Formulario de Modificación de Coordinación");
     procesoBtn.text("MODIFICAR");
     procesoBtn.removeClass("btn-danger").addClass("btn-primary");
 
     $("#coordinacionNombre").prop("disabled", false);
     procesoBtn.prop("disabled", true);
-    $("#scoordinacionNombre").text("Realice un cambio para poder modificar.").show();
-
-  } else { 
+    $("#scoordinacionNombre")
+      .text("Realice un cambio para poder modificar.")
+      .show();
+  } else {
     modalTitle.text("Confirmar Eliminación de Coordinación");
     procesoBtn.text("ELIMINAR");
-    
+
     $("#coordinacionNombre").prop("disabled", true);
     procesoBtn.prop("disabled", false);
   }
-  
+
   $("#coordinacionNombre").val(originalNombreCoordinacion);
-  
+
   if (accion !== 0) {
     $("#scoordinacionNombre").hide();
   }
   $("#modal1").modal("show");
-} 
+}
 
 function enviaAjax(datos) {
   $.ajax({
-    async: true, url: "", type: "POST", contentType: false, data: datos,
-    processData: false, cache: false, timeout: 10000,
+    async: true,
+    url: "",
+    type: "POST",
+    contentType: false,
+    data: datos,
+    processData: false,
+    cache: false,
+    timeout: 10000,
     success: function (respuesta) {
       try {
         var lee = JSON.parse(respuesta);
@@ -192,8 +210,12 @@ function enviaAjax(datos) {
           destruyeDT();
           $("#resultadoconsulta").empty();
           $.each(lee.mensaje, function (index, item) {
-              const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+            const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${
+              !PERMISOS.modificar ? "disabled" : ""
+            }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${
+              !PERMISOS.eliminar ? "disabled" : ""
+            }><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
             $("#resultadoconsulta").append(`
               <tr>
                 <td>${item.cor_nombre}</td>
@@ -205,43 +227,53 @@ function enviaAjax(datos) {
             `);
           });
           crearDT();
-        } 
-        else if (lee.resultado === "registrar" || lee.resultado === "modificar" || lee.resultado === "eliminar") {
+        } else if (
+          lee.resultado === "registrar" ||
+          lee.resultado === "modificar" ||
+          lee.resultado === "eliminar"
+        ) {
           let tituloMayusculas = lee.resultado.toUpperCase();
           Swal.fire({
-            icon: 'success',
+            icon: "success",
             title: tituloMayusculas,
             text: lee.mensaje,
-            timer: 2000
+            timer: 2000,
           });
           $("#modal1").modal("hide");
           Listar();
-        }
-        else if (lee.resultado === "existe") {
-            $("#scoordinacionNombre").text(lee.mensaje).show();
-            $("#proceso").prop("disabled", true);
+        } else if (lee.resultado === "existe") {
+          $("#scoordinacionNombre").text(lee.mensaje).show();
+          $("#proceso").prop("disabled", true);
         } else if (lee.resultado === "no_existe") {
-            $("#scoordinacionNombre").text("").hide();
-            $("#proceso").prop("disabled", false);
+          $("#scoordinacionNombre").text("").hide();
+          $("#proceso").prop("disabled", false);
         } else if (lee.resultado === "error") {
-            Swal.fire({ icon: 'error', title: 'Error', html: lee.mensaje });
+          Swal.fire({ icon: "error", title: "Error", html: lee.mensaje });
         }
       } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Error en respuesta', text: 'No se pudo procesar la respuesta del servidor.'});
+        Swal.fire({
+          icon: "error",
+          title: "Error en respuesta",
+          text: "No se pudo procesar la respuesta del servidor.",
+        });
         console.error("Error en JSON: ", e, "Respuesta: ", respuesta);
       }
     },
     error: function (request, status, err) {
-      Swal.fire({ icon: 'error', title: 'Error de Conexión', text: "Ocurrió un problema de comunicación." });
-    }
+      Swal.fire({
+        icon: "error",
+        title: "Error de Conexión",
+        text: "Ocurrió un problema de comunicación.",
+      });
+    },
   });
 }
 
 function limpia() {
-  $("#coordinacionNombre").val("").prop('disabled', false);
+  $("#coordinacionNombre").val("").prop("disabled", false);
   $("#scoordinacionNombre").text("");
-  $("#proceso").prop("disabled", false); 
-  originalNombreCoordinacion = '';
+  $("#proceso").prop("disabled", false);
+  originalNombreCoordinacion = "";
 }
 
 function validarkeypress(er, e) {
