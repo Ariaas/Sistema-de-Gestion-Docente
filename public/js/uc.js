@@ -231,6 +231,7 @@ $(document).ready(function () {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "modificar");
         datos.append("codigoUCOriginal", originalCodigoUC);
+        datos.set("electivaUC", $("#electivaUC").is(":checked") ? "1" : "0");
         if ($("#ejeUC option:selected").prop("disabled")) {
           datos.set("ejeUC", $("#ejeUC option:selected").val());
         }
@@ -243,6 +244,7 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "registrar");
+        datos.set("electivaUC", $("#electivaUC").is(":checked") ? "1" : "0");
         if ($("#ejeUC option:selected").prop("disabled")) {
           datos.set("ejeUC", $("#ejeUC option:selected").val());
         }
@@ -499,21 +501,22 @@ function validarenvio() {
     $("#speriodoUC").text("").hide();
   }
 
-  if ($("#electivaUC").val() == "" || $("#electivaUC").val() == null) {
-    $("#selectivaUC").text("Debe seleccionar si es electiva.").show();
+  var isElectiva = $("#electivaUC").is(":checked") ? "1" : "0";
+  if (isElectiva !== "1" && isElectiva !== "0") {
+    $("#selectivaUC").text("Debe indicar si es electiva.").show();
     if (esValido)
       muestraMensaje(
         "error",
         4000,
         "¡Error!",
-        "Debe seleccionar si la unidad curricular es electiva."
+        "Debe indicar si la unidad curricular es electiva."
       );
     esValido = false;
   } else {
     $("#selectivaUC").text("").hide();
   }
 
-  if ($("#electivaUC").val() == "1" && $("#periodoUC").val() == "anual") {
+  if (isElectiva == "1" && $("#periodoUC").val() == "anual") {
     $("#speriodoUC")
       .text("Una unidad curricular electiva no puede tener periodo anual.")
       .show();
@@ -531,7 +534,6 @@ function validarenvio() {
 }
 
 function pone(pos, accion) {
-
   linea = $(pos).closest("tr");
   originalCodigoUC = linea.data("codigo");
 
@@ -604,11 +606,17 @@ function pone(pos, accion) {
 
   $("#creditosUC").val(linea.data("creditos"));
   $("#periodoUC").val(linea.data("periodo"));
-  $("#electivaUC").val(linea.data("electiva"));
+  if (linea.data("electiva") == "1") {
+    $("#electivaUC").prop("checked", true);
+  } else {
+    $("#electivaUC").prop("checked", false);
+  }
 
   if (accion == 0) {
     $("#codigoUC, #nombreUC, #creditosUC").trigger("keyup");
-    $("#trayectoUC, #ejeUC, #areaUC, #periodoUC, #electivaUC").trigger("change");
+    $("#trayectoUC, #ejeUC, #areaUC, #periodoUC, #electivaUC").trigger(
+      "change"
+    );
   }
 
   $("#modal1").modal("show");
@@ -680,17 +688,23 @@ function enviaAjax(datos, accion = "") {
               item.uc_periodo === "anual"
                 ? "Anual"
                 : item.uc_periodo === "1"
-                  ? "Fase 1"
-                  : item.uc_periodo === "2"
-                    ? "Fase 2"
-                    : item.uc_periodo;
-            let trayectoTexto = (item.uc_trayecto == 0 || item.uc_trayecto === "0") ? "Inicial" : item.uc_trayecto;
-            const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${!PERMISOS.modificar ? "disabled" : ""
-              }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${!PERMISOS.eliminar ? "disabled" : ""
-              }><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-            const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${!PERMISOS.modificar ? "disabled" : ""
-              }><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
+                ? "Fase 1"
+                : item.uc_periodo === "2"
+                ? "Fase 2"
+                : item.uc_periodo;
+            let trayectoTexto =
+              item.uc_trayecto == 0 || item.uc_trayecto === "0"
+                ? "Inicial"
+                : item.uc_trayecto;
+            const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" ${
+              !PERMISOS.modificar ? "disabled" : ""
+            }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Eliminar" ${
+              !PERMISOS.eliminar ? "disabled" : ""
+            }><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+            const btnAsignar = `<button class="btn btn-icon btn-success asignar-uc" title="Asignar" ${
+              !PERMISOS.modificar ? "disabled" : ""
+            }><img src="public/assets/icons/user-graduate-solid.svg" alt="Asignar"></button>`;
             const btnDetalles = `<button class="btn btn-icon btn-info btn-detalles-uc" title="Ver Detalles" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${periodoTexto}" data-electiva="${electivaTexto}"><img src="public/assets/icons/eye.svg" alt="Ver Detalles"></button>`;
             tabla += `
               <tr data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${item.uc_periodo}" data-electiva="${item.uc_electiva}">
@@ -818,7 +832,12 @@ function enviaAjax(datos, accion = "") {
           }
           Listar();
         } else if (lee.resultado == "asignar") {
-          muestraMensaje("success", 4000, "ASIGNACIÓN", lee.mensaje);
+          muestraMensaje(
+            "success",
+            4000,
+            "Operación exitosa",
+            "Docente(s) asignado(s) correctamente."
+          );
           $("#modal2").modal("hide");
           $("#docenteUC").val("");
           $("#carritoDocentes").empty();
@@ -826,7 +845,12 @@ function enviaAjax(datos, accion = "") {
           actualizarCarritoDocentes();
           Listar();
         } else if (lee.resultado == "quitar") {
-          muestraMensaje("success", 2000, "QUITAR", lee.mensaje);
+          muestraMensaje(
+            "success",
+            2000,
+            "Operación exitosa",
+            "Docente removido correctamente."
+          );
           if (lee.uc_codigo) {
             const liToRemove = $(
               `#listaDocentesDetalles button[data-doccedula='${datos.get(
@@ -890,7 +914,7 @@ function limpia() {
   $("#ejeUC").val("");
   $("#areaUC").val("");
   $("#periodoUC").val("");
-  $("#electivaUC").val("");
+  $("#electivaUC").prop("checked", false);
 
   $(
     "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC, #selectivaUC"
@@ -990,6 +1014,13 @@ $(document).on("click", ".quitar-docente", function () {
   $(`.seleccionar-docente-para-uc[data-cedula='${docenteCedula}']`)
     .prop("disabled", false)
     .text("Seleccionar");
+  Swal.fire({
+    icon: "success",
+    title: "Operación exitosa",
+    text: "Docente removido correctamente.",
+    timer: 1800,
+    showConfirmButton: false,
+  });
 });
 
 $(document).on("click", "#asignarDocentes", function () {

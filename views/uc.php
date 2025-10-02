@@ -84,7 +84,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <form method="post" id="f" autocomplete="off" class="needs-validation" novalidate>
                             <input type="hidden" name="accion" id="accion" value="registrar">
                             <div class="mb-4">
-                                <div class="row g-3">
+                                <div class="row g-3 mb-2">
                                     <div class="col-md-4">
                                         <label for="codigoUC" class="form-label">Código</label>
                                         <input class="form-control" type="text" id="codigoUC" name="codigoUC" required placeholder="Ej: MAT101">
@@ -101,7 +101,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         <span id="screditosUC" class="form-text"></span>
                                     </div>
                                 </div>
-                                <div class="row g-3">
+                                <div class="row g-3 mb-2">
                                     <div class="col-md-4">
                                         <label for="ejeUC" class="form-label">Eje</label>
                                         <select class="form-select" name="ejeUC" id="ejeUC" required>
@@ -123,7 +123,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         </select>
                                         <span id="seje" class="form-text"></span>
                                     </div>
-
                                     <div class="col-md-4">
                                         <label for="areaUC" class="form-label">Área</label>
                                         <select class="form-select" name="areaUC" id="areaUC" required>
@@ -137,7 +136,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             }
                                             if (!empty($areasEliminadas)) {
                                                 foreach ($areasEliminadas as $areaEliminada) {
-
                                                     if (!in_array($areaEliminada, $areasActivas)) {
                                                         echo "<option value='" . htmlspecialchars($areaEliminada) . "'>" . htmlspecialchars($areaEliminada) . " (eliminado)</option>";
                                                     }
@@ -147,7 +145,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         </select>
                                         <span id="sarea" class="form-text"></span>
                                     </div>
-
                                     <div class="col-md-4">
                                         <label for="trayectoUC" class="form-label">Trayecto</label>
                                         <select class="form-select" name="trayectoUC" id="trayectoUC" required>
@@ -161,10 +158,10 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         <span id="strayectoUC" class="form-text"></span>
                                     </div>
                                 </div>
-                                <div class="row g-3">
+                                <div class="row g-3 align-items-end">
                                     <div class="col-md-6">
                                         <label for="periodoUC" class="form-label">Periodo</label>
-                                        <select class="form-select" name="periodoUC" id="periodoUC">
+                                        <select class="form-select form-select-sm" name="periodoUC" id="periodoUC">
                                             <option value="" disabled selected>Seleccione un Periodo</option>
                                             <option value="Anual">Anual</option>
                                             <option value="Fase I">Fase 1</option>
@@ -172,16 +169,13 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         </select>
                                         <span id="speriodoUC" class="form-text"></span>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="electivaUC" class="form-label">Electiva</label>
-                                        <select class="form-select" name="electivaUC" id="electivaUC">
-                                            <option value="" disabled selected>Seleccione una opción</option>
-                                            <option value="0">No Electiva</option>
-                                            <option value="1">Electiva</option>
-                                        </select>
-                                        <span id="selectivaUC" class="form-text"></span>
+                                    <div class="col-md-6 d-flex align-items-center" style="margin-top: 2em;">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="electivaUC" name="electivaUC" value="1">
+                                            <label class="form-check-label" for="electivaUC">Electiva</label>
+                                        </div>
+                                        <span id="selectivaUC" class="form-text ms-2"></span>
                                     </div>
-
                                 </div>
                             </div>
 
