@@ -55,14 +55,22 @@ function actualizarSelectUC() {
         ucsAgregadas.push($(this).data('uc_codigo'));
     });
 
-
-    
-    select.empty().append('<option value="">Seleccione...</option>');
+    select.empty();
+    let disponibles = 0;
     ucsDisponibles.forEach(uc => {
         if (!ucsAgregadas.includes(uc.uc_codigo.toString())) {
             select.append(`<option value="${uc.uc_codigo}" data-trayecto="${uc.uc_trayecto}">${uc.uc_nombre}</option>`);
+            disponibles++;
         }
     });
+
+    if (disponibles === 0) {
+        select.append('<option value="">Todas las unidades curriculares han sido agregadas</option>');
+        select.prop('disabled', true);
+    } else {
+        select.prepend('<option value="">Seleccione...</option>');
+        select.prop('disabled', false);
+    }
     select.trigger('change');
 }
 
@@ -231,6 +239,8 @@ $(document).ready(function () {
         $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)");
     });
 
+
+    $("#proceso").addClass("ms-2");
     $("#proceso").on("click", function () {
         if (validarenvio()) {
             $("#mal_codigo").prop("disabled", false);
@@ -346,7 +356,7 @@ function enviaAjax(datos, tipoLlamada = '') {
                                 estadoActiva = `<button class="btn btn-xs btn-secondary btn-activar" data-codigo="${item.mal_codigo}" data-estado="0">Activar</button>`;
                             }
                             let botonesAccion = `<td class="acciones-cell">
-                                <button class="btn btn-icon btn-info" onclick='pone(this,2)'> <img src="public/assets/icons/people.svg" alt="Ver malla"></button> 
+                                <button class="btn btn-icon btn-info" onclick='pone(this,2)'> <img src="public/assets/icons/eye.svg" alt="Ver malla"></button> 
                                 <button class="btn btn-icon btn-edit" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button> 
                                 <button class="btn btn-icon btn-delete" onclick='pone(this,1)' ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
                             </td>`;
@@ -500,15 +510,15 @@ function pone(pos, accionBtn) {
                                     const nombreTrayecto = (trayecto == '0') ? 'Trayecto Inicial' : `Trayecto ${trayecto}`;
                                     const idTab = `tab-trayecto-${trayecto}`;
                                     navTabs += `<li class="nav-item" role="presentation"><button class="nav-link ${primerItem ? 'active' : ''}" id="${idTab}-tab" data-bs-toggle="tab" data-bs-target="#${idTab}" type="button" role="tab">${nombreTrayecto}</button></li>`;
-                                    const tabla = $('<div class="table-responsive"><table class="table table-sm table-striped table-bordered mt-3"><thead><tr><th>Unidad Curricular</th><th>H. Indep.</th><th>H. Asist.</th><th>HTE</th><th>H. Acad.</th></tr></thead><tbody></tbody></table></div>');
+                                    const tabla = $('<div class="table-responsive"><table class="table table-sm table-striped table-bordered mt-3"><thead><tr><th>Unidad Curricular</th><th class="text-center">H. Indep.</th><th class="text-center">H. Asist.</th><th class="text-center">HTE</th><th class="text-center">H. Acad.</th></tr></thead><tbody></tbody></table></div>');
                                     gruposVer[trayecto].forEach(uc => {
                                         const hte = (parseInt(uc.mal_hora_independiente) || 0) + (parseInt(uc.mal_hora_asistida) || 0);
                                         const fila = $('<tr>');
                                         fila.append($('<td>').text(uc.uc_nombre));
-                                        fila.append($('<td>').text(uc.mal_hora_independiente));
-                                        fila.append($('<td>').text(uc.mal_hora_asistida));
-                                        fila.append($('<td>').text(hte));
-                                        fila.append($('<td>').text(uc.mal_hora_academica));
+                                        fila.append($('<td class="text-center">').text(uc.mal_hora_independiente));
+                                        fila.append($('<td class="text-center">').text(uc.mal_hora_asistida));
+                                        fila.append($('<td class="text-center">').text(hte));
+                                        fila.append($('<td class="text-center">').text(uc.mal_hora_academica));
                                         tabla.find('tbody').append(fila);
                                     });
                                     tabContent += `<div class="tab-pane fade ${primerItem ? 'show active' : ''}" id="${idTab}" role="tabpanel">${tabla.html()}</div>`;
