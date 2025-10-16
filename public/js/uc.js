@@ -159,7 +159,7 @@ $(document).ready(function () {
         }
         enviaAjax(datos);
       }
-    } else if ($(this).text() == "REGISTRAR") {
+    } else if ($(this).text() == "GUARDAR") {
       if (validarenvio()) {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "registrar");
@@ -247,7 +247,7 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("REGISTRAR");
+    $("#proceso").text("GUARDAR");
     $("#modal1 .modal-title").text("Registrar Unidad Curricular");
     $(
       "#codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #academicaUC"

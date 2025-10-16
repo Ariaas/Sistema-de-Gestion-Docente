@@ -309,28 +309,26 @@ $(document).ready(function() {
     $("#registrar").on("click", function() { if ($(this).is(':disabled')) return; limpiaModal1(); $("#accion").val("registrar"); $("#mal_codigo_original").val(''); $("#mal_codigo").prop('disabled', false); $("#modal1Titulo").text("Registrar Malla (Paso 1 de 2)"); $("#proceso").text("GUARDAR"); $("#modal1").modal("show"); });
     
    
-    $('#resultadoconsulta').on('click', '.btn-toggle-estado', function() { 
-        const boton = $(this); const mal_codigo = boton.data('codigo'); 
-        const estaActiva = parseInt(boton.data('activa')) === 1;
-        const titulo = estaActiva ? '¿Desea desactivar esta malla?' : '¿Desea activar esta malla?'; 
-        const texto = estaActiva ? 'La malla dejará de aparecer como activa.' : 'La malla aparecera activa.'; 
-        const confirmText = estaActiva ? 'Sí, desactivar' : 'Sí, activar'; 
-        const confirmColor = estaActiva ? '#d33' : '#28a745'; 
-        Swal.fire({ title: titulo, 
-            text: texto, 
-            icon: 'question', 
-            showCancelButton: true, 
-            confirmButtonColor: confirmColor, 
-            cancelButtonColor: '#6c757d', 
-            confirmButtonText: confirmText, 
-            cancelButtonText: 'Cancelar' 
-        }).then((result) => { 
+    // Handler para activar una malla desactivada
+    $(document).on('click', '.btn-activar-malla', function(e) {
+        e.preventDefault();
+        const codigo = $(this).data('codigo');
+        Swal.fire({
+            title: '¿Está seguro de activar esta malla?',
+            text: 'La malla pasará a estar activa.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, activar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
             if (result.isConfirmed) {
-                 const datos = new FormData(); 
-                 datos.append('accion', 'cambiar_estado_activo'); 
-                 datos.append('mal_codigo', mal_codigo); enviaAjax(datos); } 
-                }); 
-            });
+                var datos = new FormData();
+                datos.append('accion', 'cambiar_estado_activo');
+                datos.append('mal_codigo', codigo);
+                enviaAjax(datos);
+            }
+        });
+    });
 });
 
 function enviaAjax(datos, tipoLlamada = '') {
@@ -389,15 +387,15 @@ function enviaAjax(datos, tipoLlamada = '') {
                         $("#resultadoconsulta").empty();
                         $.each(lee.mensaje, function(index, item) {
                             const esActiva = parseInt(item.mal_activa) === 1;
-                            const estadoTexto = esActiva ? '<span class="badge bg-success">Activa</span>' : '<span class="badge bg-secondary">Inactiva</span>';
-                            const toggleBtnClass = esActiva ? 'btn-danger' : 'btn-success';
-                            const toggleBtnTitle = esActiva ? 'Desactivar malla' : 'Activar malla';
-                            const botonesAccion = `<td class="acciones-cell">
+                            const estadoBadge = esActiva ? '<span class="uc-badge activa">Activa</span>' : '<span class="uc-badge desactivada">Desactivada</span>';
+                            const btnDesactivar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Desactivar" aria-label="Desactivar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/power.svg" alt="Desactivar"></button>`;
+                            const btnActivar = `<button class="btn btn-icon btn-success btn-activar-malla" title="Activar" aria-label="Activar" data-codigo="${item.mal_codigo}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/check.svg" alt="Activar"></button>`;
+                            const botonesAccion = `<td class="text-center">
                                 <button class="btn btn-icon btn-info" onclick='pone(this,2)' title="Ver malla"><img src="public/assets/icons/eye.svg" alt="Ver"></button> 
                                 <button class="btn btn-icon btn-edit" onclick='pone(this,0)' ${!PERMISOS.modificar ? 'disabled' : ''} title="Modificar malla"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-                                <button class="btn btn-icon ${toggleBtnClass} btn-toggle-estado" data-codigo="${item.mal_codigo}" data-activa="${item.mal_activa}" title="${toggleBtnTitle}"><img src="public/assets/icons/power.svg" alt="Activar/Desactivar"></button>
+                                ${esActiva ? btnDesactivar : btnActivar}
                             </td>`;
-                            $("#resultadoconsulta").append(`<tr><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.mal_cohorte}</td><td>${item.mal_descripcion}</td><td>${estadoTexto}</td>${botonesAccion}</tr>`);
+                            $("#resultadoconsulta").append(`<tr><td>${item.mal_codigo}</td><td>${item.mal_nombre}</td><td>${item.mal_cohorte}</td><td>${item.mal_descripcion}</td><td>${estadoBadge}</td>${botonesAccion}</tr>`);
                         });
                         crearDT("#tablamalla");
                         break;
@@ -518,7 +516,24 @@ function pone(pos, accionBtn) {
             $("#mal_codigo").prop('disabled', false).focus();
             enviaAjax(datos);
         });
-    } else if (accionBtn === 1) { 
+    } else if (accionBtn === 1) {
+        Swal.fire({
+            title: '¿Está seguro de desactivar esta malla?',
+            text: 'Esta acción puede desactivar la malla y ocultarla de la lista principal.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, desactivar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const datos = new FormData();
+                datos.append('accion', 'cambiar_estado_activo');
+                datos.append('mal_codigo', mal_codigo);
+                enviaAjax(datos);
+            }
+        });
     } else if (accionBtn === 2) { 
         const boton = $(pos);
         const datos = new FormData();
