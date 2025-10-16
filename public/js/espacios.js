@@ -41,8 +41,30 @@ function crearDT() {
   }
 }
 
+let originalNumero = '';
+let originalEdificio = '';
+let originalTipo = '';
+
 $(document).ready(function () {
   Listar();
+
+  $('#modal1').on('shown.bs.modal', function () {
+    $("#edificio").focus();
+  });
+
+  $('#modal1').on('keydown', function(e) {
+    if (e.which === 13) {
+      if ($('.swal2-container').length) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      if (!$("#proceso").prop("disabled")) {
+        e.preventDefault();
+        $("#proceso").click();
+      }
+    }
+  });
 
   //////////////////////////////VALIDACIONES/////////////////////////////////////
 
@@ -55,6 +77,10 @@ $(document).ready(function () {
     let valor = $(this).val();
     let tipo = $("#tipoEspacio").val();
     let esValido = false;
+    
+    if ($("#proceso").text() === "MODIFICAR") {
+      verificarCambios();
+    }
 
     if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{5,20}$/.test(valor)) {
       let prefijo = "";
@@ -90,10 +116,10 @@ $(document).ready(function () {
       datos.append("numeroEspacio", valor);
       datos.append("edificioEspacio", $("#edificio").val());
       datos.append("tipoEspacio", $("#tipoEspacio").val());
-      if ($("#proceso").text() === "MODIFICAR") {
-        datos.append("numeroEspacioExcluir", $("#modal1").data("original-numero"));
-        datos.append("edificioEspacioExcluir", $("#modal1").data("original-edificio"));
-        datos.append("tipoEspacioExcluir", $("#modal1").data("original-tipo"));
+      if ($("#proceso").text() === "GUARDAR") {
+        datos.append("numeroEspacioExcluir", originalNumero);
+        datos.append("edificioEspacioExcluir", originalEdificio);
+        datos.append("tipoEspacioExcluir", originalTipo);
       }
       enviaAjax(datos, 'existe');
     } else if (!esValido) {
@@ -104,6 +130,10 @@ $(document).ready(function () {
   $("#tipoEspacio").on("change", function () {
     $("#snumeroEspacio").css("color", "");
     $("#proceso").prop("disabled", false);
+    
+    if ($("#proceso").text() === "MODIFICAR") {
+      verificarCambios();
+    }
     let valor = $("#numeroEspacio").val();
     let tipo = $(this).val();
     let edificio = $("#edificio").val();
@@ -113,10 +143,10 @@ $(document).ready(function () {
       datos.append("numeroEspacio", valor);
       datos.append("edificioEspacio", edificio);
       datos.append("tipoEspacio", tipo);
-      if ($("#proceso").text() === "MODIFICAR") {
-        datos.append("numeroEspacioExcluir", $("#modal1").data("original-numero"));
-        datos.append("edificioEspacioExcluir", $("#modal1").data("original-edificio"));
-        datos.append("tipoEspacioExcluir", $("#modal1").data("original-tipo"));
+      if ($("#proceso").text() === "GUARDAR") {
+        datos.append("numeroEspacioExcluir", originalNumero);
+        datos.append("edificioEspacioExcluir", originalEdificio);
+        datos.append("tipoEspacioExcluir", originalTipo);
       }
       enviaAjax(datos, 'existe');
     }
@@ -126,6 +156,10 @@ $(document).ready(function () {
     $("#sedificio").text("");
     $("#snumeroEspacio").css("color", "");
     $("#proceso").prop("disabled", false);
+    
+    if ($("#proceso").text() === "MODIFICAR") {
+      verificarCambios();
+    }
     let valor = $("#numeroEspacio").val();
     let tipo = $("#tipoEspacio").val();
     let edificio = $(this).val();
@@ -135,10 +169,10 @@ $(document).ready(function () {
       datos.append("numeroEspacio", valor);
       datos.append("edificioEspacio", edificio);
       datos.append("tipoEspacio", tipo);
-      if ($("#proceso").text() === "MODIFICAR") {
-        datos.append("numeroEspacioExcluir", $("#modal1").data("original-numero"));
-        datos.append("edificioEspacioExcluir", $("#modal1").data("original-edificio"));
-        datos.append("tipoEspacioExcluir", $("#modal1").data("original-tipo"));
+      if ($("#proceso").text() === "GUARDAR") {
+        datos.append("numeroEspacioExcluir", originalNumero);
+        datos.append("edificioEspacioExcluir", originalEdificio);
+        datos.append("tipoEspacioExcluir", originalTipo);
       }
       enviaAjax(datos, 'existe');
     }
@@ -149,7 +183,7 @@ $(document).ready(function () {
 
   $("#proceso").on("click", function () {
     if ($(this).prop("disabled")) return; 
-    if ($(this).text() == "REGISTRAR") {
+    if ($(this).text() == "GUARDAR") {
       if ($("#snumeroEspacio").text() === "El espacio ya existe.") {
         $("#snumeroEspacio").css("color", "red");
         return;
@@ -174,7 +208,7 @@ $(document).ready(function () {
         enviaAjax(datos, 'modificar');
     } else if ($(this).text() == "ELIMINAR") {
 
-        Swal.fire({
+        const swalInstance = Swal.fire({
             title: "¿Está seguro de eliminar este espacio?",
             text: "Esta acción no se puede deshacer.",
             icon: "warning",
@@ -183,7 +217,21 @@ $(document).ready(function () {
             cancelButtonColor: "#d33",
             confirmButtonText: "Sí, eliminar",
             cancelButtonText: "Cancelar",
-        }).then((result) => {
+            focusConfirm: true,
+            allowOutsideClick: false,
+            allowEscapeKey: true,
+            didOpen: () => {
+                const popup = Swal.getPopup();
+                popup.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.stopPropagation();
+                        Swal.clickConfirm();
+                    }
+                });
+            }
+        });
+        
+        swalInstance.then((result) => {
             if (result.isConfirmed) {
                 var datos = new FormData();
                 datos.append("accion", "eliminar");
@@ -207,11 +255,14 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("REGISTRAR");
+    $("#proceso").text("GUARDAR");
     $("#modal1").modal("show");
     $("#snumeroEspacio").text('').css('color', '');
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
     $("#edificio").val("");
+    originalNumero = '';
+    originalEdificio = '';
+    originalTipo = '';
   });
 
   $('#modal1').on('hidden.bs.modal', function () {
@@ -268,6 +319,24 @@ function getPrefijoEdificio(nombreEdificio) {
     return nombreEdificio.charAt(0).toUpperCase();
 }
 
+function verificarCambios() {
+  const numeroActual = $("#numeroEspacio").val();
+  const edificioActual = $("#edificio").val();
+  const tipoActual = $("#tipoEspacio").val();
+  
+  if (numeroActual === originalNumero && 
+      edificioActual === originalEdificio && 
+      tipoActual === originalTipo) {
+    $("#proceso").prop("disabled", true);
+    $("#snumeroEspacio").text("No se han realizado cambios.").show();
+  } else {
+    if ($("#snumeroEspacio").text() !== "El espacio ya existe.") {
+      $("#proceso").prop("disabled", false);
+      $("#snumeroEspacio").text("").hide();
+    }
+  }
+}
+
 function separarCodigoEdificio(codigoCompleto) {
     if (!codigoCompleto || codigoCompleto.length < 2) {
         return { prefijo: '', codigoNumerico: codigoCompleto, nombreEdificio: 'Desconocido' };
@@ -295,9 +364,15 @@ function pone(pos, accion) {
   $("#modal1").data("original-edificio", edificio);
   $("#modal1").data("original-tipo", tipo);
 
+  originalNumero = numero;
+  originalEdificio = edificio;
+  originalTipo = tipo;
+
   if (accion == 0) { 
     $("#proceso").text("MODIFICAR");
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
+    $("#proceso").prop("disabled", true);
+    $("#snumeroEspacio").text("Realice un cambio para poder modificar.").show();
   } else {
     $("#proceso").text("ELIMINAR");
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", true);
@@ -332,6 +407,7 @@ function enviaAjax(datos, tipo_accion_local = null) {
           $("#resultadoconsulta").empty();
           let tabla = "";
           lee.mensaje.forEach(item => {
+            if (item.esp_estado == 1) {
             let numeroMostrado = item.esp_numero;
             if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{5,20}$/.test(numeroMostrado)) {
               if (item.esp_tipo === "Laboratorio" && !numeroMostrado.startsWith("Lab. ")) {
@@ -362,12 +438,13 @@ function enviaAjax(datos, tipo_accion_local = null) {
                     </button>
                 </td>
             </tr>`;
+            }
           });
           $('#resultadoconsulta').html(tabla);
           crearDT();
         }
         else if (lee.resultado == "registrar") {
-          muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
+          muestraMensaje("success", 4000, "GUARDAR", lee.mensaje);
           if (
             lee.mensaje ==
             "Registro Incluido!<br/>Se registró el espacio correctamente!"
@@ -430,4 +507,7 @@ function limpia() {
   $("#edificio").val("");
   $("#snumeroEspacio, #sedificio, #stipoEspacio").text('');
   $("#proceso").prop("disabled", false);
+  originalNumero = '';
+  originalEdificio = '';
+  originalTipo = '';
 }

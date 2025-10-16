@@ -7,16 +7,13 @@ class Espacio extends Connection
     private $numeroEspacio;
     private $edificioEspacio;
     private $tipoEspacio;
+    private $numeroEspacioOriginal;
+    private $edificioEspacioOriginal;
+    private $tipoEspacioOriginal;
 
-
-
-    public function __construct($numeroEspacio = null, $edificioEspacio = null, $tipoEspacio = null)
+    public function __construct()
     {
         parent::__construct();
-
-        $this->numeroEspacio = $numeroEspacio;
-        $this->edificioEspacio = $edificioEspacio;
-        $this->tipoEspacio = $tipoEspacio;
     }
 
 
@@ -35,22 +32,34 @@ class Espacio extends Connection
 
     public function setNumero($numeroEspacio)
     {
-        $this->numeroEspacio = $numeroEspacio;
+        $this->numeroEspacio = trim($numeroEspacio);
     }
     public function setEdificio($edificioEspacio)
     {
-        $this->edificioEspacio = $edificioEspacio;
+        $this->edificioEspacio = trim($edificioEspacio);
     }
     public function setTipo($tipoEspacio)
     {
-        $this->tipoEspacio = $tipoEspacio;
+        $this->tipoEspacio = trim($tipoEspacio);
+    }
+    public function setNumeroOriginal($numero)
+    {
+        $this->numeroEspacioOriginal = trim($numero);
+    }
+    public function setEdificioOriginal($edificio)
+    {
+        $this->edificioEspacioOriginal = trim($edificio);
+    }
+    public function setTipoOriginal($tipo)
+    {
+        $this->tipoEspacioOriginal = trim($tipo);
     }
 
 
 
     function Registrar()
     {
-        $r = array();
+        $r = [];
 
         if ($this->existeDirecto($this->numeroEspacio, $this->edificioEspacio, $this->tipoEspacio)) {
             $r['resultado'] = 'error';
@@ -69,31 +78,21 @@ class Espacio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         try {
-            $stmt = $co->prepare("INSERT INTO tbl_espacio (
-                esp_numero,
-                esp_edificio,
-                esp_tipo,
-                esp_estado
-            ) VALUES (
-                :numeroEspacio,
-                :edificioEspacio,
-                :tipoEspacio,
-                1
-            )");
-
-            $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-            $stmt->execute();
+            $co->prepare("INSERT INTO tbl_espacio (esp_numero, esp_edificio, esp_tipo, esp_estado) VALUES (:numeroEspacio, :edificioEspacio, :tipoEspacio, 1)")
+               ->execute([
+                   ':numeroEspacio' => $this->numeroEspacio,
+                   ':edificioEspacio' => $this->edificioEspacio,
+                   ':tipoEspacio' => $this->tipoEspacio
+               ]);
 
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
         }
-
-        $co = null;
         return $r;
     }
 
@@ -102,22 +101,22 @@ class Espacio extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = [];
         try {
-            $stmt = $co->prepare("UPDATE tbl_espacio
-            SET esp_tipo = :tipoEspacio, esp_estado = 1
-            WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio");
-
-            $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
-            $stmt->execute();
+            $co->prepare("UPDATE tbl_espacio SET esp_tipo = :tipoEspacio, esp_estado = 1 WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio")
+               ->execute([
+                   ':tipoEspacio' => $this->tipoEspacio,
+                   ':numeroEspacio' => $this->numeroEspacio,
+                   ':edificioEspacio' => $this->edificioEspacio
+               ]);
 
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
         }
         return $r;
     }
@@ -127,7 +126,29 @@ class Espacio extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = [];
+        
+        try {
+            $stmt = $co->prepare("SELECT esp_numero, esp_edificio, esp_tipo FROM tbl_espacio WHERE esp_numero = :numero AND esp_edificio = :edificio AND esp_tipo = :tipo AND esp_estado = 1");
+            $stmt->execute([
+                ':numero' => $originalNumero,
+                ':edificio' => $originalEdificio,
+                ':tipo' => $originalTipo
+            ]);
+            $datosOriginales = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$datosOriginales) {
+                return ['resultado' => 'error', 'mensaje' => 'El espacio no existe.'];
+            }
+            
+            if ($datosOriginales['esp_numero'] === $this->numeroEspacio && 
+                $datosOriginales['esp_edificio'] === $this->edificioEspacio &&
+                $datosOriginales['esp_tipo'] === $this->tipoEspacio) {
+                return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
+            }
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        }
 
         if (
             ($originalNumero != $this->numeroEspacio ||
@@ -141,26 +162,22 @@ class Espacio extends Connection
         }
 
         try {
-            $stmtDel = $co->prepare("DELETE FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio AND esp_estado = 0");
-            $stmtDel->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
-            $stmtDel->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
-            $stmtDel->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-            $stmtDel->execute();
+            $co->prepare("DELETE FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio AND esp_estado = 0")
+               ->execute([
+                   ':numeroEspacio' => $this->numeroEspacio,
+                   ':edificioEspacio' => $this->edificioEspacio,
+                   ':tipoEspacio' => $this->tipoEspacio
+               ]);
 
-            $stmt = $co->prepare("UPDATE tbl_espacio
-            SET esp_numero = :numeroEspacio,
-                esp_edificio = :edificioEspacio,
-                esp_tipo = :tipoEspacio
-            WHERE esp_numero = :originalNumero AND esp_edificio = :originalEdificio AND esp_tipo = :originalTipo AND esp_estado = 1");
-
-            $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
-            $stmt->bindParam(':originalNumero', $originalNumero, PDO::PARAM_STR);
-            $stmt->bindParam(':originalEdificio', $originalEdificio, PDO::PARAM_STR);
-            $stmt->bindParam(':originalTipo', $originalTipo, PDO::PARAM_STR);
-
-            $stmt->execute();
+            $stmt = $co->prepare("UPDATE tbl_espacio SET esp_numero = :numeroEspacio, esp_edificio = :edificioEspacio, esp_tipo = :tipoEspacio WHERE esp_numero = :originalNumero AND esp_edificio = :originalEdificio AND esp_tipo = :originalTipo AND esp_estado = 1");
+            $stmt->execute([
+                ':tipoEspacio' => $this->tipoEspacio,
+                ':numeroEspacio' => $this->numeroEspacio,
+                ':edificioEspacio' => $this->edificioEspacio,
+                ':originalNumero' => $originalNumero,
+                ':originalEdificio' => $originalEdificio,
+                ':originalTipo' => $originalTipo
+            ]);
 
             if ($stmt->rowCount() > 0) {
                 $r['resultado'] = 'modificar';
@@ -172,6 +189,8 @@ class Espacio extends Connection
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
         }
         return $r;
     }
@@ -181,29 +200,43 @@ class Espacio extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = [];
 
-        if ($this->existeDirecto($this->numeroEspacio, $this->edificioEspacio, $this->tipoEspacio)) {
-            try {
-                $stmt = $co->prepare("UPDATE tbl_espacio
-                SET esp_estado = 0
-                WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio");
+        try {
+            $stmt = $co->prepare("SELECT esp_estado FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio");
+            $stmt->execute([
+                ':numeroEspacio' => $this->numeroEspacio,
+                ':edificioEspacio' => $this->edificioEspacio,
+                ':tipoEspacio' => $this->tipoEspacio
+            ]);
+            $espacio = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt->bindParam(':numeroEspacio', $this->numeroEspacio, PDO::PARAM_STR);
-                $stmt->bindParam(':edificioEspacio', $this->edificioEspacio, PDO::PARAM_STR);
-                $stmt->bindParam(':tipoEspacio', $this->tipoEspacio, PDO::PARAM_STR);
-
-                $stmt->execute();
-
-                $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el espacio correctamente!';
-            } catch (Exception $e) {
+            if (!$espacio) {
                 $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
+                $r['mensaje'] = 'ERROR! <br/> El ESPACIO a eliminar NO existe!';
+                return $r;
             }
-        } else {
+
+            if ($espacio['esp_estado'] == 0) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'El espacio ya está desactivado.';
+                return $r;
+            }
+            
+            $co->prepare("UPDATE tbl_espacio SET esp_estado = 0 WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio")
+               ->execute([
+                   ':numeroEspacio' => $this->numeroEspacio,
+                   ':edificioEspacio' => $this->edificioEspacio,
+                   ':tipoEspacio' => $this->tipoEspacio
+               ]);
+
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El ESPACIO a eliminar NO existe!';
+            $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el espacio correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
         }
         return $r;
     }
@@ -212,18 +245,17 @@ class Espacio extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = [];
         try {
-
-            $stmt = $co->query("SELECT CONCAT(CASE WHEN LOWER(esp_tipo) = 'laboratorio' THEN 'L' ELSE SUBSTRING(esp_edificio, 1, 1) END, '-', esp_numero) AS esp_codigo, esp_numero, esp_edificio, esp_tipo FROM tbl_espacio WHERE esp_estado = 1");
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt = $co->query("SELECT CONCAT(CASE WHEN LOWER(esp_tipo) = 'laboratorio' THEN 'L' ELSE SUBSTRING(esp_edificio, 1, 1) END, '-', esp_numero) AS esp_codigo, esp_numero, esp_edificio, esp_tipo, esp_estado FROM tbl_espacio ORDER BY esp_edificio, esp_numero");
             $r['resultado'] = 'consultar';
-            $r['mensaje'] = $data;
+            $r['mensaje'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
         }
-        $co = null;
         return $r;
     }
 
@@ -232,7 +264,7 @@ class Espacio extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = [];
         try {
             if (
                 $numeroEspacioExcluir !== null &&

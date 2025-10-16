@@ -4,47 +4,10 @@ function Listar() {
   enviaAjax(datos);
 }
 
-var __uc_modTracking = false;
-var __uc_userModified = false;
-var __uc_initialSnapshot = null;
-
-function ucCaptureSnapshot() {
-  return {
-    codigo: $("#codigoUC").val(),
-    nombre: $("#nombreUC").val(),
-    creditos: $("#creditosUC").val(),
-    trayecto: $("#trayectoUC").val(),
-    eje: $("#ejeUC").val() || $("#ejeUC option:selected").val(),
-    area: $("#areaUC").val() || $("#areaUC option:selected").val(),
-    periodo: $("#periodoUC").val(),
-  };
-}
-
-function ucHasChanges(snap) {
-  if (!snap) return true;
-  const cur = ucCaptureSnapshot();
-  return (
-    snap.codigo !== cur.codigo ||
-    snap.nombre !== cur.nombre ||
-    snap.creditos !== cur.creditos ||
-    String(snap.trayecto) !== String(cur.trayecto) ||
-    snap.eje !== cur.eje ||
-    snap.area !== cur.area ||
-    snap.periodo !== cur.periodo
-  );
-}
-
-function ucAttachChangeWatchers() {
-  const handler = function () {
-    __uc_userModified = ucHasChanges(__uc_initialSnapshot);
-    $("#proceso").prop("disabled", !__uc_userModified);
-  };
-  $("#f :input").on("input.ucwatch change.ucwatch keyup.ucwatch", handler);
-}
-
-function ucDetachChangeWatchers() {
-  $("#f :input").off(".ucwatch");
-}
+// seguimiento de modificación: cuando se abre modal en modo MODIFICAR,
+// deshabilitamos el botón hasta que el usuario cambie algún campo.
+var __uc_modTracking = false; // true mientras el modal está en modo modificar
+var __uc_userModified = false; // true cuando el usuario cambió algún campo
 
 function destruyeDT(selector) {
   if ($.fn.DataTable.isDataTable(selector)) {
@@ -161,6 +124,8 @@ $(document).ready(function () {
   destruyeDT("#tablauc");
   crearDT("#tablauc");
 
+  // Asignación de docentes eliminada: handlers removidos
+
   $("#proceso").on("click", function () {
     let ejeVal = $("#ejeUC").val();
     if (!ejeVal) {
@@ -185,6 +150,7 @@ $(document).ready(function () {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "modificar");
         datos.append("codigoUCOriginal", originalCodigoUC);
+        // campo 'electiva' eliminado del formulario; no se añade al FormData
         if ($("#ejeUC option:selected").prop("disabled")) {
           datos.set("ejeUC", $("#ejeUC option:selected").val());
         }
@@ -193,10 +159,11 @@ $(document).ready(function () {
         }
         enviaAjax(datos);
       }
-    } else if ($(this).text() == "GUARDAR") {
+    } else if ($(this).text() == "REGISTRAR") {
       if (validarenvio()) {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "registrar");
+        // campo 'electiva' eliminado del formulario; no se añade al FormData
         if ($("#ejeUC option:selected").prop("disabled")) {
           datos.set("ejeUC", $("#ejeUC option:selected").val());
         }
@@ -224,7 +191,7 @@ $(document).ready(function () {
             var lee = JSON.parse(respuesta);
             let titulo = "¿Está seguro de desactivar esta unidad curricular?";
             let texto =
-              "Esta acción desactivará la unidad curricular y se marcará como desactivada en la lista principal. La unidad curricular seguirá mostrándose en la lista principal, pero con un estado desactivado.";
+              "Esta acción puede desactivar la unidad curricular y ocultarla de la lista principal.";
 
             if (lee.resultado === "en_horario") {
               titulo = "¡Atención!";
@@ -280,7 +247,7 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("GUARDAR");
+    $("#proceso").text("REGISTRAR");
     $("#modal1 .modal-title").text("Registrar Unidad Curricular");
     $(
       "#codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #academicaUC"
@@ -347,12 +314,8 @@ $(document).ready(function () {
   });
 
   $("#modal1").on("hidden.bs.modal", function () {
-    $("#proceso").prop("disabled", false).removeAttr("title");
+    $("#proceso").prop("disabled", false);
     $("#scodigoUC").text("");
-    __uc_modTracking = false;
-    __uc_userModified = false;
-    __uc_initialSnapshot = null;
-    ucDetachChangeWatchers();
   });
 
   $("#modal1").on("show.bs.modal", function () {
@@ -459,6 +422,8 @@ function validarenvio() {
     $("#speriodoUC").text("").hide();
   }
 
+  // Lógica relacionada con 'electiva' eliminada (campo eliminado del formulario)
+
   return esValido;
 }
 
@@ -470,14 +435,14 @@ function pone(pos, accion) {
     $("#proceso").text("MODIFICAR");
     $("#modal1 .modal-title").text("Modificar Unidad Curricular");
     $(
-      "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC"
+      "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
     ).prop("disabled", false);
-    __uc_modTracking = true;
   } else {
+    // botón de proceso en modo DESACTIVAR: solo texto (sin icono)
     $("#proceso").text("DESACTIVAR");
     $("#modal1 .modal-title").text("Desactivar Unidad Curricular");
     $(
-      "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC"
+      "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
     ).prop("disabled", true);
     $(
       "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC"
@@ -538,21 +503,11 @@ function pone(pos, accion) {
 
   $("#creditosUC").val(linea.data("creditos"));
   $("#periodoUC").val(linea.data("periodo"));
+  // El campo 'electiva' fue eliminado; no se setea checkbox
 
   if (accion == 0) {
-    __uc_initialSnapshot = ucCaptureSnapshot();
-    __uc_userModified = false;
-    
-    $("#proceso")
-      .prop("disabled", true)
-      .attr("title", "Realiza algún cambio para habilitar");
-    
     $("#codigoUC, #nombreUC, #creditosUC").trigger("keyup");
     $("#trayectoUC, #ejeUC, #areaUC, #periodoUC").trigger("change");
-    
-    setTimeout(function() {
-      ucAttachChangeWatchers();
-    }, 100);
   }
 
   $("#modal1").modal("show");
@@ -610,11 +565,7 @@ function enviaAjax(datos, accion = "") {
             $("#proceso").prop("disabled", true);
           } else {
             $("#scodigoUC").text("");
-            if (__uc_modTracking) {
-              $("#proceso").prop("disabled", !ucHasChanges(__uc_initialSnapshot));
-            } else {
-              $("#proceso").prop("disabled", false);
-            }
+            $("#proceso").prop("disabled", false);
           }
           return;
         }
@@ -623,6 +574,7 @@ function enviaAjax(datos, accion = "") {
           $("#resultadoconsulta1").empty();
           let tabla = "";
           lee.mensaje.forEach((item) => {
+            // el campo 'electiva' ya no se muestra; se omite
             let periodoTexto =
               item.uc_periodo === "anual"
                 ? "Anual"
@@ -635,6 +587,7 @@ function enviaAjax(datos, accion = "") {
               item.uc_trayecto == 0 || item.uc_trayecto === "0"
                 ? "Inicial"
                 : item.uc_trayecto;
+            // Botones icon-only (solo SVG) para una interfaz más compacta
             const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" aria-label="Modificar" ${
               !PERMISOS.modificar ? "disabled" : ""
             }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
@@ -646,6 +599,7 @@ function enviaAjax(datos, accion = "") {
             }" ${
               !PERMISOS.eliminar ? "disabled" : ""
             }><img src="public/assets/icons/check.svg" alt="Activar"></button>`;
+            // Botón de asignar removido según nueva especificación
             const btnDetalles = `<button class="btn btn-icon btn-info btn-detalles-uc" title="Ver Detalles" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${periodoTexto}"><img src="public/assets/icons/eye.svg" alt="Ver Detalles"></button>`;
             const estadoTexto =
               item.uc_estado == 1 || item.uc_estado === "1"
@@ -690,6 +644,7 @@ function enviaAjax(datos, accion = "") {
             $("#ucVerMasEje").text($(this).data("eje"));
             $("#ucVerMasCreditos").text($(this).data("creditos"));
             $("#ucVerMasPeriodo").text($(this).data("periodo"));
+            // detalle 'electiva' eliminado
             $("#modalVerMasUC").modal("show");
           });
 
@@ -702,14 +657,16 @@ function enviaAjax(datos, accion = "") {
             $("#detallesUcEje").text(data.eje);
             $("#detallesUcCreditos").text(data.creditos);
             $("#detallesUcPeriodo").text(data.periodo);
+            // detalle 'electiva' eliminado
             $("#ucDetallesNombreModal").text(data.nombre);
+            // Ya no se muestran docentes asignados en los detalles según nueva especificación
             $("#modalDetallesUC").modal("show");
           });
 
           $("#resultadoconsulta1").html(tabla);
           crearDT("#tablauc");
         } else if (lee.resultado == "registrar") {
-          muestraMensaje("success", 4000, "GUARDAR", lee.mensaje);
+          muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje.includes("¡Registro Incluido!") ||
             lee.mensaje.includes(
@@ -726,6 +683,7 @@ function enviaAjax(datos, accion = "") {
           }
           Listar();
         } else if (lee.resultado == "eliminar") {
+          // Mostrar como desactivada
           muestraMensaje("success", 4000, "DESACTIVAR", lee.mensaje);
           if (
             lee.mensaje.includes("eliminó la unidad curricular") ||
@@ -762,6 +720,7 @@ function enviaAjax(datos, accion = "") {
   });
 }
 
+// Handler para activar una UC desactivada
 $(document).on("click", ".btn-activar", function (e) {
   e.preventDefault();
   const codigo = $(this).data("codigo");
@@ -804,6 +763,7 @@ function limpia() {
   $("#ejeUC").val("");
   $("#areaUC").val("");
   $("#periodoUC").val("");
+  // campo 'electiva' eliminado
 
   $(
     "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC"
@@ -812,3 +772,4 @@ function limpia() {
     .hide();
 }
 
+// Eliminadas funciones y handlers relacionados con asignación de docentes

@@ -38,7 +38,8 @@ if (is_file("views/" . $pagina . ".php")) {
                 break;
 
             case 'modificar':
-                $obj1->setNombreTurno($_POST['turnoid']);
+                $obj1->setNombreTurno($_POST['turnonombre']);
+                $obj1->setNombreTurnoOriginal($_POST['turnoid']);
                 $obj1->setHoraInicio($_POST['horaInicio']); 
                 $obj1->setHoraFin($_POST['horafin']);
                 echo json_encode($obj1->Modificar());

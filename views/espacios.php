@@ -80,12 +80,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                             <div class="container">
                                 <div class="row mb-3">
-
-                                    <div class="col-md-6">
-                                        <label for="numeroEspacio" class="form-label">Número</label>
-                                        <input class="form-control" type="text" id="numeroEspacio" name="numeroEspacio" placeholder="Ejemplo: 12" required>
-                                        <span id="snumeroEspacio" class="form-text"></span>
-                                    </div>
                                     <div class="col-md-6">
                                         <label for="edificio" class="form-label">Edificio</label>
                                         <select class="form-select" name="edificio" id="edificio" required>
@@ -97,9 +91,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         </select>
                                         <span id="sedificio" class="form-text"></span>
                                     </div>
-
-                                </div>
-                                <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="tipoEspacio" class="form-label">Tipo</label>
                                         <select class="form-select" name="tipoEspacio" id="tipoEspacio" required>
@@ -108,6 +99,13 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <option value="Laboratorio">Laboratorio</option>
                                         </select>
                                         <span id="stipoEspacio" class="form-text"></span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="numeroEspacio" class="form-label">Número</label>
+                                        <input class="form-control" type="text" id="numeroEspacio" name="numeroEspacio" placeholder="Ejemplo: 12" required>
+                                        <span id="snumeroEspacio" class="form-text"></span>
                                     </div>
                                 </div>
                             </div>
