@@ -55,19 +55,38 @@ if (isset($_POST['generar_aulario_report'])) {
     $turnos = $oAulario->getTurnosCompletos();
     $slot_duration_minutes = 40;
     $todas_las_franjas_por_turno = [];
+    $franjas_ordenadas_con_turno = [];
+
+    $orden_turnos = ['mañana' => 1, 'tarde' => 2, 'noche' => 3];
+
+    usort($turnos, function ($a, $b) use ($orden_turnos) {
+        $nombre_a = strtolower($a['tur_nombre']);
+        $nombre_b = strtolower($b['tur_nombre']);
+        return ($orden_turnos[$nombre_a] ?? 99) <=> ($orden_turnos[$nombre_b] ?? 99);
+    });
 
     foreach ($turnos as $turno) {
         $nombre_turno = ucfirst(strtolower($turno['tur_nombre']));
         $todas_las_franjas_por_turno[$nombre_turno] = [];
         $hora_actual = new DateTime($turno['tur_horaInicio']);
         $hora_fin_turno = new DateTime($turno['tur_horaFin']);
+
         while ($hora_actual < $hora_fin_turno) {
             $franja_inicio = clone $hora_actual;
             $hora_actual->modify('+' . $slot_duration_minutes . ' minutes');
             $franja_fin = ($hora_actual > $hora_fin_turno) ? $hora_fin_turno : clone $hora_actual;
-            $db_start_time_key = $franja_inicio->format('H:i:s');
-            $display_string = $franja_inicio->format('h:i A') . ' a ' . $franja_fin->format('h:i A');
-            $todas_las_franjas_por_turno[$nombre_turno][$display_string] = $db_start_time_key;
+
+            if ($franja_inicio < $franja_fin) {
+                $db_start_time_key = $franja_inicio->format('H:i:s');
+                $display_string = $franja_inicio->format('h:i A') . ' a ' . $franja_fin->format('h:i A');
+
+                $todas_las_franjas_por_turno[$nombre_turno][$display_string] = $db_start_time_key;
+                $franjas_ordenadas_con_turno[] = [
+                    'display' => $display_string,
+                    'db_key' => $db_start_time_key,
+                    'turno' => $nombre_turno
+                ];
+            }
         }
     }
 
@@ -76,7 +95,6 @@ if (isset($_POST['generar_aulario_report'])) {
     $spreadsheet->removeSheetByIndex(0);
 
     $styleMainTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleShiftTitle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleDayHeader = ['font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF5B9BD5']], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleTimeColumn = ['font' => ['bold' => true], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
@@ -108,113 +126,133 @@ if (isset($_POST['generar_aulario_report'])) {
             $sheet->getStyle("A{$currentRow}")->applyFromArray($styleMainTitle);
             $currentRow += 2;
 
-            $clasesPorTurno = [];
-            foreach ($turnos as $turno) {
-                $clasesPorTurno[ucfirst(strtolower($turno['tur_nombre']))] = [];
+            $horarioProcesado = [];
+            foreach ($horarioData as $item) {
+                $clave = $item['hor_dia'] . '|' . $item['hor_horainicio'] . '|' . $item['uc_codigo'] . '|' . ($item['doc_cedula'] ?? 'N/A') . '|' . ($item['subgrupo'] ?? '');
+                if (!isset($horarioProcesado[$clave])) {
+                    $horarioProcesado[$clave] = $item;
+                    $horarioProcesado[$clave]['sec_codigo_list'] = [];
+                }
+                $horarioProcesado[$clave]['sec_codigo_list'][] = $item['sec_codigo_formatted'];
             }
 
-            foreach ($horarioData as $clase) {
-                if (empty($clase['hor_horainicio'])) continue;
-                $horaInicioClase = new DateTime($clase['hor_horainicio']);
-                foreach ($turnos as $turno) {
-                    if ($horaInicioClase >= new DateTime($turno['tur_horaInicio']) && $horaInicioClase < new DateTime($turno['tur_horaFin'])) {
-                        $clasesPorTurno[ucfirst(strtolower($turno['tur_nombre']))][] = $clase;
-                        break;
-                    }
-                }
+            $gridData = [];
+            foreach ($horarioProcesado as $item) {
+                $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
+                $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
+                $horaInicio = new DateTime($item['hor_horainicio']);
+                $gridData[$dia_key][$horaInicio->format('H:i:s')] = $item;
             }
 
-            foreach ($clasesPorTurno as $nombreTurno => $clasesDelTurno) {
-                if (empty($clasesDelTurno)) continue;
+            $headerRow = $currentRow;
+            $sheet->setCellValue('A' . $headerRow, 'Hora');
+            $col = 'B';
+            foreach ($days_of_week as $day) {
+                $sheet->setCellValue($col++ . $headerRow, mb_strtoupper($day));
+            }
+            $sheet->getStyle("A{$headerRow}:G{$headerRow}")->applyFromArray($styleDayHeader);
+            $currentRow++;
 
-                $horarioProcesado = [];
-                foreach ($clasesDelTurno as $item) {
-                    $clave = $item['hor_dia'] . '|' . $item['hor_horainicio'] . '|' . $item['uc_codigo'] . '|' . ($item['doc_cedula'] ?? 'N/A') . '|' . ($item['subgrupo'] ?? '');
-                    if (!isset($horarioProcesado[$clave])) {
-                        $horarioProcesado[$clave] = $item;
-                        $horarioProcesado[$clave]['sec_codigo_list'] = [];
-                    }
-                    $horarioProcesado[$clave]['sec_codigo_list'][] = $item['sec_codigo_formatted'];
-                }
+            $celdasOcupadas = [];
+            foreach ($franjas_ordenadas_con_turno as $franja) {
+                $displaySlot = $franja['display'];
+                $dbStartTimeKey = $franja['db_key'];
+                $nombreTurno = $franja['turno'];
+                $nombreTurnoNormalizado = strtolower($nombreTurno);
 
-                $gridData = [];
-                foreach ($horarioProcesado as $item) {
-                    $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
-                    $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
-                    $horaInicio = new DateTime($item['hor_horainicio']);
-                    $gridData[$dia_key][$horaInicio->format('H:i:s')] = $item;
-                }
+                // ===== INICIO DE LA CORRECCIÓN =====
+                // Esta condición ahora verifica dos cosas:
+                // 1. Si una clase INICIA en esta franja horaria.
+                // 2. Si la franja está OCUPADA por una clase que inició antes (celda combinada).
+                // Solo si ambas son falsas, se ocultará la fila en los turnos de tarde/noche.
+                if ($nombreTurnoNormalizado === 'tarde' || $nombreTurnoNormalizado === 'noche') {
+                    $filaTieneContenido = false;
 
-                $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", mb_strtoupper($nombreTurno, 'UTF-8'));
-                $sheet->getStyle("A{$currentRow}")->applyFromArray($styleShiftTitle);
-                $currentRow++;
-
-                $headerRow = $currentRow;
-                $sheet->setCellValue('A' . $headerRow, 'Hora');
-                $col = 'B';
-                foreach ($days_of_week as $day) {
-                    $sheet->setCellValue($col++ . $headerRow, mb_strtoupper($day));
-                }
-                $sheet->getStyle("A{$headerRow}:G{$headerRow}")->applyFromArray($styleDayHeader);
-                $currentRow++;
-
-                $celdasOcupadas = [];
-                $shiftTimeSlots = $todas_las_franjas_por_turno[$nombreTurno] ?? [];
-                foreach ($shiftTimeSlots as $displaySlot => $dbStartTimeKey) {
-                    $sheet->setCellValue('A' . $currentRow, $displaySlot);
-                    $sheet->getStyle('A' . $currentRow)->applyFromArray($styleTimeColumn);
-
-                    $colNum = 1;
+                    // Verifica si una clase INICIA en esta fila
                     foreach ($days_of_week as $day) {
-                        $cellAddress = chr(65 + $colNum) . $currentRow;
-                        $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
-
-                        if (isset($celdasOcupadas[$cellAddress])) {
-                            $colNum++;
-                            continue;
+                        if (isset($gridData[$day][$dbStartTimeKey])) {
+                            $filaTieneContenido = true;
+                            break;
                         }
-                        if (isset($celdasOcupadas[$cellAddress])) {
-                            $colNum++;
-                            continue;
-                        }
+                    }
 
-                        $clase = $gridData[$day][$dbStartTimeKey] ?? null;
-                        if ($clase) {
-                            $richText = new RichText();
-                            $secciones = implode(", ", array_unique($clase['sec_codigo_list']));
-                            $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
-                            $subgrupoTexto = $clase['subgrupo'] ? ' (Grupo: ' . $clase['subgrupo'] . ')' : '';
-
-                            $ucPart = $richText->createTextRun($ucAbreviada . $subgrupoTexto);
-                            $ucPart->getFont()->setBold(true);
-
-                            $docente = $clase['NombreCompletoDocente'] ?? '(Sin Docente)';
-
-                            $richText->createText("\n" . $secciones . "\n" . $docente);
-
-                            $sheet->setCellValue($cellAddress, $richText);
-
-                            $horaInicioClase = new DateTime($clase['hor_horainicio']);
-                            $horaFinClase = new DateTime($clase['hor_horafin']);
-                            $diffMinutes = ($horaFinClase->getTimestamp() - $horaInicioClase->getTimestamp()) / 60;
-                            $span = ceil($diffMinutes / $slot_duration_minutes);
-                            if ($span < 1) $span = 1;
-
-                            if ($span > 1) {
-                                $endRow = $currentRow + $span - 1;
-                                $sheet->mergeCells($cellAddress . ':' . chr(65 + $colNum) . $endRow);
-                                for ($i = 1; $i < $span; $i++) {
-                                    $celdasOcupadas[chr(65 + $colNum) . ($currentRow + $i)] = true;
-                                }
+                    // Si no, verifica si la fila está OCUPADA por una clase anterior (merge)
+                    if (!$filaTieneContenido) {
+                        $estaOcupadaPorMerge = false;
+                        for ($colNumCheck = 1; $colNumCheck <= count($days_of_week); $colNumCheck++) {
+                            $cellAddressCheck = chr(65 + $colNumCheck) . $currentRow;
+                            if (isset($celdasOcupadas[$cellAddressCheck])) {
+                                $estaOcupadaPorMerge = true;
+                                break;
                             }
                         }
-                        $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
-                        $colNum++;
+                        if ($estaOcupadaPorMerge) {
+                            $filaTieneContenido = true;
+                        }
                     }
-                    $sheet->getRowDimension($currentRow)->setRowHeight(40);
-                    $currentRow++;
+
+                    if (!$filaTieneContenido) {
+                        continue;
+                    }
                 }
-                $currentRow += 2;
+                // ===== FIN DE LA CORRECCIÓN =====
+
+                $sheet->setCellValue('A' . $currentRow, $displaySlot);
+                $sheet->getStyle('A' . $currentRow)->applyFromArray($styleTimeColumn);
+
+                $colNum = 1;
+                foreach ($days_of_week as $day) {
+                    $cellAddress = chr(65 + $colNum) . $currentRow;
+                    $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
+
+                    if (isset($celdasOcupadas[$cellAddress])) {
+                        $colNum++;
+                        continue;
+                    }
+
+                    $clase = $gridData[$day][$dbStartTimeKey] ?? null;
+                    if ($clase) {
+                        $richText = new RichText();
+                        $secciones = implode(", ", array_unique($clase['sec_codigo_list']));
+                        $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
+                        $subgrupoTexto = $clase['subgrupo'] ? ' (Grupo: ' . $clase['subgrupo'] . ')' : '';
+
+                        $ucPart = $richText->createTextRun($ucAbreviada . $subgrupoTexto);
+                        $ucPart->getFont()->setBold(true);
+
+                        $docente = $clase['NombreCompletoDocente'] ?? '(Sin Docente)';
+
+                        $richText->createText("\n" . $secciones . "\n" . $docente);
+
+                        $sheet->setCellValue($cellAddress, $richText);
+
+                        $horaInicioClase = new DateTime($clase['hor_horainicio']);
+                        $horaFinClase = new DateTime($clase['hor_horafin']);
+
+                        $minutosInicio = ($horaInicioClase->format('H') * 60) + $horaInicioClase->format('i');
+                        $minutosFin = ($horaFinClase->format('H') * 60) + $horaFinClase->format('i');
+
+                        $diffMinutes = $minutosFin - $minutosInicio;
+
+                        $span = ceil($diffMinutes / $slot_duration_minutes);
+
+                        if ($span < 1) {
+                            $span = 1;
+                        }
+
+                        if ($span > 1) {
+                            $endRow = $currentRow + $span - 1;
+                            $sheet->mergeCells($cellAddress . ':' . chr(65 + $colNum) . $endRow);
+                            for ($i = 1; $i < $span; $i++) {
+                                $celdasOcupadas[chr(65 + $colNum) . ($currentRow + $i)] = true;
+                            }
+                        }
+                    }
+                    $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
+                    $colNum++;
+                }
+                $sheet->getRowDimension($currentRow)->setRowHeight(40);
+                $currentRow++;
             }
         }
     }

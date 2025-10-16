@@ -24,40 +24,21 @@ if (is_file("views/" . $pagina . ".php")) {
         $bitacora = new Bitacora();
 
         $accion = $_POST['accion'] ?? '';
-        $usu_cedula = $_SESSION['usu_cedula'] ?? null;
-        $rol_nombre = $_SESSION['rol_nombre'] ?? null;
 
         switch ($accion) {
             case 'registrar_notas':
                 $anio_compuesto = explode(':', $_POST['anio']);
-                $fase_actual = $modelo->obtenerFaseActual();
 
                 $modelo->setAnioAnio($anio_compuesto[0]);
                 $modelo->setAnioTipo($anio_compuesto[1]);
                 $modelo->setSecCodigo($_POST['seccion'] ?? null);
                 $modelo->setUcCodigo($_POST['ucurricular'] ?? null);
-                $modelo->setAproCantidad($_POST['cantidad_aprobados'] ?? 0);
-                $modelo->setPerCantidad($_POST['cantidad_per'] ?? 0);
                 $modelo->setUcNombre($_POST['uc_nombre'] ?? '');
-                $modelo->setDocCedula($usu_cedula);
-                if ($fase_actual) {
-                    $modelo->setFaseNumero($fase_actual['fase_numero']);
-                }
+                $modelo->setDocCedula($_POST['docente'] ?? null);
+
                 $file = $_FILES['archivo_notas'] ?? null;
                 echo json_encode($modelo->guardarRegistroInicial($file));
-                $bitacora->registrarAccion($usu_id, 'Registrar notas', 'Archivo');
-                break;
-
-            case 'registrar_per':
-                $modelo->setUcCodigo($_POST['uc_codigo'] ?? null);
-                $modelo->setSecCodigo($_POST['sec_codigo'] ?? null);
-                $modelo->setPerAprobados($_POST['cantidad_aprobados_per'] ?? 0);
-                $modelo->setUcNombre($_POST['uc_nombre'] ?? '');
-                $modelo->setAnioAnio($_POST['anio_anio'] ?? null);
-                $modelo->setAnioTipo($_POST['ani_tipo'] ?? null);
-                $modelo->setFaseNumero($_POST['fase_numero'] ?? null);
-                $file = $_FILES['archivo_per'] ?? null;
-                echo json_encode($modelo->registrarAprobadosPer($file));
+                $bitacora->registrarAccion($usu_id, 'Registrar acta', 'Archivo');
                 break;
 
             case 'eliminar_registro':
@@ -65,24 +46,37 @@ if (is_file("views/" . $pagina . ".php")) {
                 $modelo->setSecCodigo($_POST['sec_codigo'] ?? null);
                 $modelo->setAnioAnio($_POST['ani_anio'] ?? null);
                 $modelo->setAnioTipo($_POST['ani_tipo'] ?? null);
-                $modelo->setFaseNumero($_POST['fase_numero'] ?? null);
                 echo json_encode($modelo->eliminarRegistroCompleto());
-                $bitacora->registrarAccion($usu_id, 'eliminar', 'Archivo');
+                $bitacora->registrarAccion($usu_id, 'eliminar acta', 'Archivo');
+                break;
+
+           
+            case 'verificar_existencia':
+                $anio_compuesto = isset($_POST['anio_compuesto']) ? explode(':', $_POST['anio_compuesto']) : [null, null];
+                $uc_codigo = $_POST['uc_codigo'] ?? null;
+                $sec_codigo_str = $_POST['sec_codigo'] ?? '';
+
+                
+                $primera_seccion = explode(',', $sec_codigo_str)[0];
+
+                $existe = $modelo->verificarExistencia($anio_compuesto[0], $anio_compuesto[1], $uc_codigo, $primera_seccion);
+                echo json_encode(['existe' => $existe]);
                 break;
 
             case 'listar_registros':
-                $filtrar_propios = isset($_POST['filtrar_propios']) && $_POST['filtrar_propios'] === 'true';
-                echo json_encode(['resultado' => 'ok_registros', 'datos' => $modelo->listarRegistros($usu_cedula, $rol_nombre, $filtrar_propios)]);
+                echo json_encode(['resultado' => 'ok_registros', 'datos' => $modelo->listarRegistros()]);
                 break;
 
             case 'obtener_secciones':
                 $anio_compuesto = isset($_POST['anio_compuesto']) ? explode(':', $_POST['anio_compuesto']) : [null, null];
-                echo json_encode($modelo->obtenerSeccionesAgrupadasPorAnio($anio_compuesto[0], $anio_compuesto[1], $usu_cedula));
+                $doc_cedula = $_POST['doc_cedula'] ?? null;
+                echo json_encode($modelo->obtenerSeccionesAgrupadasPorAnio($anio_compuesto[0], $anio_compuesto[1], $doc_cedula));
                 break;
 
             case 'obtener_uc_por_seccion':
                 $sec_codigo = $_POST['sec_codigo'] ?? null;
-                echo json_encode($modelo->obtenerUnidadesPorSeccion($usu_cedula, $sec_codigo));
+                $doc_cedula = $_POST['doc_cedula'] ?? null;
+                echo json_encode($modelo->obtenerUnidadesPorSeccion($doc_cedula, $sec_codigo));
                 break;
         }
         exit;
@@ -90,15 +84,23 @@ if (is_file("views/" . $pagina . ".php")) {
 
     $obj = new Archivo();
     $anios = $obj->obtenerAnios();
-    $fase_actual = $obj->obtenerFaseActual();
+    $docentes = $obj->obtenerDocentes();
     $alerta_datos = "";
 
-    if (empty($fase_actual)) {
-        $alerta_datos .= "<div class='alert alert-warning' style='max-width: 1200px;'><strong>Atención:</strong> Todavía no ha iniciado la fase de registro.</div>";
+    $anio_seleccionado = '';
+    $current_year = date('Y');
+    foreach ($anios as $a) {
+        if ($a['ani_anio'] == $current_year) {
+            $anio_seleccionado = $a['ani_anio'] . ':' . $a['ani_tipo'];
+            break;
+        }
+    }
+
+    if ($anio_seleccionado == '' && !empty($anios)) {
+        $anio_seleccionado = $anios[0]['ani_anio'] . ':' . $anios[0]['ani_tipo'];
     }
 
     require_once("views/" . $pagina . ".php");
 } else {
     echo "Página en construcción";
 }
-?>

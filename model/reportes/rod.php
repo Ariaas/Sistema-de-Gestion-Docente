@@ -30,7 +30,7 @@ class Rod extends Connection
         $co = $this->con();
         try {
             $periodos_permitidos = ($this->fase_numero == 1) ? ['FASE I', 'ANUAL', 'anual', '0'] : ['FASE II', 'ANUAL', 'anual'];
-            
+
             $params = [':anio_anio' => $this->anio_id];
             $placeholders = [];
             foreach ($periodos_permitidos as $index => $periodo) {
@@ -39,85 +39,99 @@ class Rod extends Connection
                 $params[strval($key)] = $periodo;
             }
 
-            $sql = "SELECT
-                        d.doc_cedula,
-                        CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombre_completo,
-                        d.doc_ingreso AS doc_fecha_ingreso,
-                        d.doc_dedicacion,
-                        d.doc_anio_concurso,
-                        d.doc_tipo_concurso,
-                        d.doc_observacion,
-                        titulos.doc_perfil_profesional,
-                        act.act_academicas,
-                        act.doc_horas_descarga,
-                        coords.coordinaciones,
-                        asig.uc_nombre,
-                        asig.uc_horas,
-                        asig.sec_codigo_formateado AS sec_codigo
-                    FROM
-                        tbl_docente d
-                    LEFT JOIN (
-                        SELECT doc_cedula, GROUP_CONCAT(tit_prefijo, ' ', tit_nombre SEPARATOR ' / ') as doc_perfil_profesional
-                        FROM titulo_docente GROUP BY doc_cedula
-                    ) AS titulos ON d.doc_cedula = titulos.doc_cedula
-                    LEFT JOIN (
-                        SELECT 
-                            doc_cedula, 
-                            act_academicas,
-                            COALESCE(SUM(act_creacion_intelectual + act_integracion_comunidad + act_gestion_academica + act_otras), 0) as doc_horas_descarga
-                        FROM tbl_actividad GROUP BY doc_cedula, act_academicas
-                    ) AS act ON d.doc_cedula = act.doc_cedula
-                    LEFT JOIN (
-                        SELECT doc_cedula, GROUP_CONCAT(cor_nombre SEPARATOR ', ') as coordinaciones
-                        FROM coordinacion_docente GROUP BY doc_cedula
-                    ) AS coords ON d.doc_cedula = coords.doc_cedula
-                    LEFT JOIN (
-                        SELECT
-                            d_inner.doc_cedula,
-                            u.uc_nombre,
-                            -- CORRECCIÓN: La subconsulta ahora usa la cohorte de la sección para encontrar la malla correcta
-                            (
-                                SELECT um.mal_hora_academica FROM uc_malla um 
-                                JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo 
-                                WHERE um.uc_codigo = u.uc_codigo 
-                                  AND m.mal_activa = 1
-                                  AND m.mal_cohorte = SUBSTRING(s.sec_codigo, -1)
-                                LIMIT 1
-                            ) AS uc_horas,
-                            CASE
-                                WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
-                                WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
-                                ELSE s.sec_codigo
-                            END AS sec_codigo_formateado
-                        FROM uc_horario uh
-                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-                        JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        JOIN (
-                            SELECT
-                                uh_inner.sec_codigo,
-                                uh_inner.uc_codigo,
-                                (
-                                    SELECT d_inner.doc_cedula FROM uc_docente ud
-                                    JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                                    JOIN tbl_docente d_inner ON ud.doc_cedula = d_inner.doc_cedula
-                                    WHERE ud.uc_codigo = uh_inner.uc_codigo AND dh.sec_codigo = uh_inner.sec_codigo
-                                    ORDER BY d_inner.doc_ingreso ASC
-                                    LIMIT 1
-                                ) as doc_cedula_valido
-                            FROM uc_horario uh_inner
-                        ) AS valid_teacher ON uh.sec_codigo = valid_teacher.sec_codigo AND uh.uc_codigo = valid_teacher.uc_codigo
-                        JOIN tbl_docente d_inner ON valid_teacher.doc_cedula_valido = d_inner.doc_cedula
-                        WHERE s.ani_anio = :anio_anio AND s.sec_estado = 1 AND u.uc_periodo IN (".implode(', ', $placeholders).")
-                    ) AS asig ON d.doc_cedula = asig.doc_cedula
-                    
-                    WHERE d.doc_estado = 1
-                    ORDER BY d.doc_apellido, d.doc_nombre, asig.uc_nombre";
-            
-            $resultado = $co->prepare($sql);
-            $resultado->execute($params);
-            
-            return $resultado->fetchAll(PDO::FETCH_ASSOC);
+            // --- INICIO DE LA CONSULTA SQL COMPLETA ---
+            // Esta consulta está diseñada en dos partes principales para manejar la lógica de las secciones unidas.
+            $sql_asignaciones = "
+            WITH HorasPorBloqueUnico AS (
+                -- Paso 1: Identifica bloques de enseñanza únicos (profesor, materia, hora) y calcula sus horas una sola vez.
+                -- Esto evita contar las horas múltiples veces para secciones unidas.
+                SELECT DISTINCT
+                    uh.doc_cedula,
+                    uh.uc_codigo,
+                    uh.hor_dia,
+                    uh.hor_horainicio,
+                    uh.hor_horafin,
+                    ROUND(TIMESTAMPDIFF(MINUTE, STR_TO_DATE(uh.hor_horainicio, '%H:%i'), STR_TO_DATE(uh.hor_horafin, '%H:%i')) / 40) AS horas_bloque
+                FROM uc_horario uh
+                JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                WHERE
+                    s.ani_anio = :anio_anio
+                    AND s.sec_estado = 1
+                    AND uh.doc_cedula IS NOT NULL
+                    AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")
+            )
+            -- Paso 2: Agrupa los resultados por profesor y materia para obtener el total de horas asignadas
+            -- y también genera una lista de todas las secciones asociadas.
+            SELECT
+                hbu.doc_cedula,
+                u.uc_nombre,
+                SUM(hbu.horas_bloque) AS uc_horas,
+                (
+                    -- Esta subconsulta crea la cadena de texto con todas las secciones (unidas o no) para una materia y docente.
+                    SELECT GROUP_CONCAT(DISTINCT
+                        CASE
+                            WHEN u_inner.uc_trayecto IN ('0', '1', '2') THEN CONCAT('IN', s_inner.sec_codigo)
+                            WHEN u_inner.uc_trayecto IN ('3', '4') THEN CONCAT('IIN', s_inner.sec_codigo)
+                            ELSE s_inner.sec_codigo
+                        END
+                        ORDER BY s_inner.sec_codigo ASC SEPARATOR ' - '
+                    )
+                    FROM uc_horario uh_inner
+                    JOIN tbl_seccion s_inner ON uh_inner.sec_codigo = s_inner.sec_codigo
+                    JOIN tbl_uc u_inner ON uh_inner.uc_codigo = u_inner.uc_codigo
+                    WHERE uh_inner.doc_cedula = hbu.doc_cedula AND uh_inner.uc_codigo = hbu.uc_codigo AND s_inner.ani_anio = :anio_anio
+                ) AS sec_codigo_formateado
+            FROM HorasPorBloqueUnico hbu
+            JOIN tbl_uc u ON hbu.uc_codigo = u.uc_codigo
+            GROUP BY hbu.doc_cedula, hbu.uc_codigo, u.uc_nombre
+            ";
 
+            // --- Consulta Principal que une toda la información del docente con sus asignaciones calculadas ---
+            $fullQuery = "
+            SELECT
+                d.doc_cedula,
+                CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombre_completo,
+                d.doc_ingreso AS doc_fecha_ingreso,
+                d.doc_dedicacion,
+                d.doc_anio_concurso,
+                d.doc_tipo_concurso,
+                d.doc_observacion,
+                titulos.doc_perfil_profesional,
+                act.act_academicas,
+                COALESCE(descarga_coords.total_horas_descarga, 0) AS doc_horas_descarga,
+                coords.coordinaciones,
+                asig.uc_nombre,
+                asig.uc_horas,
+                asig.sec_codigo_formateado AS sec_codigo
+            FROM
+                tbl_docente d
+            LEFT JOIN (
+                SELECT doc_cedula, GROUP_CONCAT(tit_prefijo, ' ', tit_nombre SEPARATOR ' / ') as doc_perfil_profesional
+                FROM titulo_docente GROUP BY doc_cedula
+            ) AS titulos ON d.doc_cedula = titulos.doc_cedula
+            LEFT JOIN (
+                SELECT doc_cedula, act_academicas FROM tbl_actividad GROUP BY doc_cedula, act_academicas
+            ) AS act ON d.doc_cedula = act.doc_cedula
+            LEFT JOIN (
+                SELECT cd.doc_cedula, SUM(c.coor_hora_descarga) AS total_horas_descarga
+                FROM coordinacion_docente cd JOIN tbl_coordinacion c ON cd.cor_nombre = c.cor_nombre
+                WHERE cd.cor_doc_estado = 1 AND c.cor_estado = 1 GROUP BY cd.doc_cedula
+            ) AS descarga_coords ON d.doc_cedula = descarga_coords.doc_cedula
+            LEFT JOIN (
+                SELECT doc_cedula, GROUP_CONCAT(cor_nombre SEPARATOR ', ') as coordinaciones
+                FROM coordinacion_docente WHERE cor_doc_estado = 1 GROUP BY doc_cedula
+            ) AS coords ON d.doc_cedula = coords.doc_cedula
+            LEFT JOIN (
+                {$sql_asignaciones}
+            ) AS asig ON d.doc_cedula = asig.doc_cedula
+            WHERE d.doc_estado = 1
+            ORDER BY d.doc_apellido, d.doc_nombre, asig.uc_nombre";
+
+            $resultado = $co->prepare($fullQuery);
+            $resultado->execute($params);
+
+            return $resultado->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error en Rod::obtenerDatosReporte: " . $e->getMessage());
             return false;
