@@ -13,7 +13,14 @@
  use PhpOffice\PhpSpreadsheet\Style\Border; 
  use PhpOffice\PhpSpreadsheet\Cell\Coordinate; 
 
-
+ if (isset($_POST['action']) && $_POST['action'] == 'filtrar_uc') {
+    header('Content-Type: application/json');
+    $oUc = new Ruc();
+    $trayectoId = $_POST['trayecto_id'] ?? '';
+    $unidades = $oUc->obtenerUcPorTrayecto($trayectoId);
+    echo json_encode($unidades);
+    exit; 
+ }
  function toRoman($number) { 
     if ($number == 0) return 'INICIAL'; 
     $map = ['M' => 1000, 'CM' => 900, 'D' => 500, 'CD' => 400, 'C' => 100, 'XC' => 90, 'L' => 50, 'XL' => 40, 'X' => 10, 'IX' => 9, 'V' => 5, 'IV' => 4, 'I' => 1]; 
@@ -30,6 +37,7 @@
     return $returnValue; 
  } 
 
+ 
  $oUc = new Ruc(); 
  $vistaFormularioUc = "views/reportes/ruc.php"; 
 

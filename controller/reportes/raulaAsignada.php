@@ -13,34 +13,36 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 if (isset($_POST['generar_asignacion_aulas_report'])) {
-    $oAsignacionAulas = new AsignacionAulasReport();
-    $aulasData = $oAsignacionAulas->getAulasConAsignaciones();
-
-    $dataPorDia = [];
-    $ordenDias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-    foreach ($ordenDias as $dia) {
-        $dataPorDia[$dia] = [];
+    
+    if (!isset($_POST['ani_anio']) || empty($_POST['ani_anio'])) {
+        die("Error: Debe seleccionar un año académico.");
     }
+    
+    $anio = $_POST['ani_anio'];
+    $oReporte = new AsignacionAulasReport();
+    $aulasData = $oReporte->getAulasConAsignaciones($anio);
+
+    $ordenDias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    $dataPorDia = array_fill_keys($ordenDias, []);
 
     if ($aulasData) {
         foreach ($aulasData as $row) {
-            $dia = ucfirst(strtolower(trim($row['hor_dia'])));
+            $dia = str_replace(['Miercoles'], ['Miércoles'], trim($row['hor_dia']));
             if (isset($dataPorDia[$dia])) {
-             
-                if (!in_array($row['aula_completa'], $dataPorDia[$dia])) {
-                    $dataPorDia[$dia][] = $row['aula_completa'];
-                }
+                $dataPorDia[$dia][] = $row['aula_completa'];
             }
         }
     }
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle("Asignación de Aulas");
+    $sheet->setTitle("Aulas Asignadas $anio");
 
+    
     $styleHeader = ['font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F81BD']]];
-    $styleCell = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
+    $styleCell = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
 
+    
     $col = 'A';
     foreach ($ordenDias as $dia) {
         $sheet->setCellValue($col . '1', mb_strtoupper($dia, 'UTF-8'));
@@ -51,16 +53,15 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
 
     $maxRows = 0;
     foreach ($dataPorDia as $aulas) {
-        if (count($aulas) > $maxRows) {
-            $maxRows = count($aulas);
-        }
+        $maxRows = max($maxRows, count($aulas));
     }
 
+    
     if ($maxRows > 0) {
+        
         for ($i = 0; $i < $maxRows; $i++) {
             $colChar = 'A';
             foreach ($dataPorDia as $dia => $aulas) {
-               
                 $cellValue = isset($aulas[$i]) ? $aulas[$i] : '';
                 $sheet->setCellValue($colChar . ($i + 2), $cellValue);
                 $colChar++;
@@ -69,14 +70,15 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
         $range = 'A1:' . $sheet->getHighestColumn() . ($maxRows + 1);
         $sheet->getStyle($range)->applyFromArray($styleCell);
     } else {
-        $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->applyFromArray($styleCell);
-        $sheet->mergeCells('A2:F2')->setCellValue('A2', 'No se encontraron aulas asignadas.');
+        
+        $sheet->mergeCells('A2:F2')->setCellValue('A2', 'No se encontraron aulas asignadas para el año seleccionado.');
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A2:F2')->applyFromArray($styleCell); 
     }
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Reporte_Asignacion_Aulas_" . date('Y-m-d') . ".xlsx";
+    $fileName = "Reporte_Aulas_Asignadas_{$anio}_" . date('Y-m-d') . ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -84,5 +86,8 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     exit;
 
 } else {
+    $oReporte = new AsignacionAulasReport();
+    $anios = $oReporte->getAnios();
     require_once("views/reportes/raulaAsignada.php");
 }
+?>

@@ -1,5 +1,5 @@
-<?php 
- require_once('model/dbconnection.php'); 
+<?php
+require_once('model/dbconnection.php');
 
  class Ruc extends Connection 
  { 
@@ -8,25 +8,25 @@
     private $nombreUnidad; 
     private $fase; 
 
-    public function __construct() 
-    { 
-        parent::__construct(); 
-    } 
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-    public function set_anio($valor) 
-    { 
-        $this->anio_id = $valor; 
-    } 
+    public function set_anio($valor)
+    {
+        $this->anio_id = $valor;
+    }
 
-    public function set_trayecto($valor) 
-    { 
-        $this->trayecto = $valor; 
-    } 
+    public function set_trayecto($valor)
+    {
+        $this->trayecto = $valor;
+    }
 
-    public function set_nombreUnidad($valor) 
-    { 
-        $this->nombreUnidad = $valor; 
-    } 
+    public function set_nombreUnidad($valor)
+    {
+        $this->nombreUnidad = $valor;
+    }
 
     public function set_fase($valor) 
     { 
@@ -49,6 +49,7 @@
                 CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS `Nombre Completo del Docente`
             FROM
                 uc_horario uh
+                uc_horario uh
             INNER JOIN
                 tbl_uc u ON uh.uc_codigo = u.uc_codigo
             INNER JOIN
@@ -66,9 +67,8 @@
             } else {
                 $conditions[] = "s.ani_anio IN (SELECT ani_anio FROM tbl_anio WHERE ani_activo = 1)";
             }
+            
             $conditions[] = "s.sec_estado = 1";
-            $conditions[] = "d.doc_estado = 1";
-
 
             if (isset($this->trayecto) && $this->trayecto !== '') {
                 $conditions[] = "u.uc_trayecto = :trayecto_id";
@@ -133,24 +133,24 @@
         } 
     } 
 
-    public function obtenerTrayectos() 
-    { 
-        $co = $this->con(); 
-        try { 
+    public function obtenerTrayectos()
+    {
+        $co = $this->con();
+        try {
             $p = $co->prepare("SELECT DISTINCT  
                                     uc_trayecto AS tra_id,  
                                     CASE  
                                         WHEN uc_trayecto = 0 THEN 'Trayecto Inicial'  
                                         ELSE CONCAT('Trayecto ', uc_trayecto)  
                                     END AS tra_numero  
-                                FROM tbl_uc ORDER BY uc_trayecto"); 
-            $p->execute(); 
-            return $p->fetchAll(PDO::FETCH_ASSOC); 
-        } catch (PDOException $e) { 
-            error_log("Error en Ruc::obtenerTrayectos: " . $e->getMessage()); 
-            return false; 
-        } 
-    } 
+                                FROM tbl_uc ORDER BY uc_trayecto");
+            $p->execute();
+            return $p->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en Ruc::obtenerTrayectos: " . $e->getMessage());
+            return false;
+        }
+    }
 
     public function obtenerUc() 
     { 

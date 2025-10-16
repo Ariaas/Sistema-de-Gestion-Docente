@@ -11,6 +11,23 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 
+function abreviarNombreLargo($nombre, $longitudMaxima = 25) {
+    if (mb_strlen($nombre) <= $longitudMaxima) { return $nombre; }
+    $palabrasExcluidas = ['de', 'y', 'a', 'del', 'la', 'los', 'las', 'en'];
+    $partes = explode(' ', $nombre);
+    $numeral = '';
+    $ultimoTermino = end($partes);
+    $romanos = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+    if (in_array(strtoupper($ultimoTermino), $romanos)) { $numeral = ' ' . array_pop($partes); }
+    $iniciales = [];
+    foreach ($partes as $palabra) {
+        if (!in_array(strtolower($palabra), $palabrasExcluidas) && !empty($palabra)) {
+            $iniciales[] = strtoupper(mb_substr($palabra, 0, 1, 'UTF-8'));
+        }
+    }
+    return implode('', $iniciales) . $numeral;
+}
+
 $oReporte = new SeccionReport();
 
 if (isset($_POST['generar_seccion_report'])) {
@@ -19,7 +36,7 @@ if (isset($_POST['generar_seccion_report'])) {
     $fase = $_POST['fase_id'] ?? '';
     $trayecto_filtrado = $_POST['trayecto_id'] ?? '';
 
-    if (empty($anio) || empty($fase)) die("Error: Debe seleccionar un Año y una Fase.");
+    if (empty($anio) || empty($fase)) { die("Error: Debe seleccionar un Año y una Fase."); }
     
     $oReporte->setAnio($anio);
     $oReporte->setFase($fase);
@@ -28,7 +45,6 @@ if (isset($_POST['generar_seccion_report'])) {
     $turnos = $oReporte->getTurnosCompletos();
     $slot_duration_minutes = 40;
     $todas_las_franjas_por_turno = [];
-
     foreach ($turnos as $turno) {
         $nombre_turno = ucfirst(strtolower($turno['tur_nombre']));
         $todas_las_franjas_por_turno[$nombre_turno] = [];
@@ -39,7 +55,7 @@ if (isset($_POST['generar_seccion_report'])) {
             $hora_actual->modify('+' . $slot_duration_minutes . ' minutes');
             $franja_fin = ($hora_actual > $hora_fin_turno) ? $hora_fin_turno : clone $hora_actual;
             $db_start_time_key = $franja_inicio->format('H:i:s');
-            $display_string = $franja_inicio->format('H:i') . ' a ' . $franja_fin->format('H:i');
+            $display_string = $franja_inicio->format('h:i A') . ' a ' . $franja_fin->format('h:i A');
             $todas_las_franjas_por_turno[$nombre_turno][$display_string] = $db_start_time_key;
         }
     }
@@ -51,8 +67,10 @@ if (isset($_POST['generar_seccion_report'])) {
     $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleTableHeader = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleTimeSlot = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    $styleScheduleCell = ['font' => ['size' => 10], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    $day_map = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miercoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sabado' => 'Sábado'];
+    $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    
+    $day_map = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miércoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sábado' => 'Sábado'];
+    $day_order = array_flip(array_values($day_map));
 
     if (empty($horarioDataRaw)) {
         $sheet = new Worksheet($spreadsheet, "Sin Resultados");
@@ -68,138 +86,198 @@ if (isset($_POST['generar_seccion_report'])) {
             $spreadsheet->addSheet($sheet);
             $currentRow = 1;
 
-            $horariosPorSeccion = [];
-            foreach ($data_for_trayecto as $item) { $horariosPorSeccion[$item['sec_codigo']][] = $item; }
-            ksort($horariosPorSeccion);
+            $gruposDeSecciones = [];
+            foreach ($data_for_trayecto as $item) {
+                $groupId = !empty($item['grupo_union_id']) ? $item['grupo_union_id'] : $item['sec_codigo'];
+                $gruposDeSecciones[$groupId][] = $item;
+            }
+            ksort($gruposDeSecciones);
             
-            foreach($horariosPorSeccion as $seccionCodigo => $horarioData) {
-                $prefijo = (substr($seccionCodigo, 0, 1) === '3' || substr($seccionCodigo, 0, 1) === '4') ? 'IIN' : 'IN';
+            foreach($gruposDeSecciones as $groupId => $clasesDelGrupo) {
                 
-                $gridData = [];
-                $activeShifts = [];
-                $locationsPerDay = [];
-                $activeDaysOrder = [];
+                $seccionesEnGrupo = [];
+                foreach ($clasesDelGrupo as $clase) {
+                    $seccionesEnGrupo[$clase['sec_codigo']] = true;
+                }
+                $codigosDeSeccion = array_keys($seccionesEnGrupo);
+                sort($codigosDeSeccion);
 
-                foreach($horarioData as $item) {
-                    $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
-                    $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
-                    
-                    $locationsPerDay[$dia_key][$item['esp_codigo']] = $item['esp_tipo'];
-                    $activeDaysOrder[$dia_key] = $dayOrder[$dia_key_from_db] ?? 7;
+                $tituloSeccion = "Sección";
+                foreach ($codigosDeSeccion as $codigo) {
+                    $prefijo = (substr($codigo, 0, 1) === '3' || substr($codigo, 0, 1) === '4') ? 'IIN' : 'IN';
+                    $tituloSeccion .= " " . $prefijo . $codigo;
+                }
 
-                    $horaInicio = new DateTime($item['hor_horainicio']);
-                    $horaFin = new DateTime($item['hor_horafin']);
-                    $diffMinutes = ($horaFin->getTimestamp() - $horaInicio->getTimestamp()) / 60;
-                    $bloques_span = round($diffMinutes / $slot_duration_minutes);
-                    if ($bloques_span < 1) $bloques_span = 1;
-                    
-                    $gridData[$dia_key][$horaInicio->format('H:i:s')] = [
-                        'uc' => $item['uc_nombre'],
-                        'docente' => $item['NombreCompletoDocente'],
-                        'espacio' => $item['esp_codigo'],
-                        'tipo' => $item['esp_tipo'],
-                        'span' => $bloques_span
-                    ];
+                $clasesPorTurno = [];
+                foreach ($turnos as $turno) {
+                    $clasesPorTurno[ucfirst(strtolower($turno['tur_nombre']))] = [];
+                }
 
+                foreach ($clasesDelGrupo as $clase) {
+                    if (empty($clase['hor_horainicio'])) continue;
+                    $horaInicioClase = new DateTime($clase['hor_horainicio']);
                     foreach ($turnos as $turno) {
-                        if ($horaInicio >= new DateTime($turno['tur_horaInicio']) && $horaInicio < new DateTime($turno['tur_horaFin'])) {
-                            $activeShifts[ucfirst(strtolower($turno['tur_nombre']))] = true;
+                        if ($horaInicioClase >= new DateTime($turno['tur_horaInicio']) && $horaInicioClase < new DateTime($turno['tur_horaFin'])) {
+                            $clasesPorTurno[ucfirst(strtolower($turno['tur_nombre']))][] = $clase;
+                            break;
                         }
                     }
                 }
 
-                uksort($activeDaysOrder, function($a, $b) use ($day_map) {
-                    $order = array_flip(array_values($day_map));
-                    return ($order[$a] ?? 99) <=> ($order[$b] ?? 99);
-                });
-                $activeDays = array_keys($activeDaysOrder);
-                
-                if(empty($activeDays)) { $currentRow++; continue; }
+                foreach ($clasesPorTurno as $shiftName => $clasesDelTurno) {
+                    if (empty($clasesDelTurno)) continue;
 
-                foreach (array_keys($activeShifts) as $shiftName) {
-                    $shiftTimeSlots = $todas_las_franjas_por_turno[$shiftName] ?? [];
-                    if(empty($shiftTimeSlots)) continue;
+                    $columnasHeader = [];
+                    $horarioGrid = [];
+                    $diasConSubgrupos = [];
+                    $clasesGeneralesPorDia = [];
 
-                    $numDataColumns = count($activeDays);
+                    foreach ($clasesDelTurno as $clase) {
+                        $dia = $day_map[strtolower(str_replace('é', 'e', $clase['hor_dia']))] ?? $clase['hor_dia'];
+                        $subgrupo = $clase['subgrupo'];
+                        $horaInicio = (new DateTime($clase['hor_horainicio']))->format('H:i:s');
+                        
+                        if ($subgrupo) {
+                            $diasConSubgrupos[$dia][$subgrupo] = true;
+                            $horarioGrid[$dia][$subgrupo][$horaInicio] = $clase;
+                        } else {
+                            $clasesGeneralesPorDia[$dia][$horaInicio] = $clase;
+                        }
+                    }
+                    
+                    $diasOrdenados = array_keys(array_merge($diasConSubgrupos, $clasesGeneralesPorDia));
+                    usort($diasOrdenados, function($a, $b) use ($day_order) { return ($day_order[$a] ?? 99) <=> ($day_order[$b] ?? 99); });
+
+                    foreach ($diasOrdenados as $dia) {
+                        if (!empty($diasConSubgrupos[$dia])) {
+                            $subgruposDelDia = array_keys($diasConSubgrupos[$dia]);
+                            sort($subgruposDelDia);
+                            foreach ($subgruposDelDia as $subgrupo) {
+                                $columnasHeader[] = ['dia' => $dia, 'subgrupo' => $subgrupo];
+                                if (!empty($clasesGeneralesPorDia[$dia])) {
+                                    foreach($clasesGeneralesPorDia[$dia] as $hora => $clase) {
+                                        if(!isset($horarioGrid[$dia][$subgrupo][$hora])) {
+                                            $horarioGrid[$dia][$subgrupo][$hora] = $clase;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            $columnasHeader[] = ['dia' => $dia, 'subgrupo' => 'general'];
+                            if (!empty($clasesGeneralesPorDia[$dia])) {
+                                $horarioGrid[$dia]['general'] = $clasesGeneralesPorDia[$dia];
+                            }
+                        }
+                    }
+
+                    $numDataColumns = count($columnasHeader);
+                    if ($numDataColumns == 0) continue;
+
                     $sheet->mergeCells("A{$currentRow}:" . chr(65 + $numDataColumns) . $currentRow);
-                    $sheet->setCellValue("A{$currentRow}", "Seccion " . $prefijo . $seccionCodigo);
+                    $sheet->setCellValue("A{$currentRow}", $tituloSeccion);
                     $sheet->getStyle("A{$currentRow}")->applyFromArray($styleHeaderTitle);
-                    $sheet->getRowDimension($currentRow)->setRowHeight(20);
                     $currentRow++;
 
                     $headerRow = $currentRow;
                     $sheet->setCellValue('A' . $headerRow, 'Hora');
-                    $sheet->getColumnDimension('A')->setWidth(20);
-                    $currentCol = 1;
-                    
-                    foreach($activeDays as $day) {
-                        $colLetter = chr(65 + $currentCol);
-                        $headerText = mb_strtoupper($day);
-                        $isSingleLocation = count($locationsPerDay[$day]) === 1;
-                        $singleLocationType = $isSingleLocation ? current($locationsPerDay[$day]) : '';
-                        
-                        if($isSingleLocation && $singleLocationType !== 'Laboratorio') {
-                            $headerText .= "\n" . key($locationsPerDay[$day]);
+                    $sheet->getColumnDimension('A')->setWidth(22);
+                    $colIndex = 1;
+
+                    $columnLocationInfo = [];
+                    foreach($columnasHeader as $idx => $colInfo) {
+                        $locationsInColumn = [];
+                        foreach($horarioGrid[$colInfo['dia']][$colInfo['subgrupo']] ?? [] as $clase) {
+                            $locationsInColumn[$clase['esp_codigo']] = $clase['esp_tipo'];
                         }
+                        $columnLocationInfo[$idx] = [
+                            'is_single' => count($locationsInColumn) === 1,
+                            'name' => count($locationsInColumn) === 1 ? key($locationsInColumn) : null,
+                            'type' => count($locationsInColumn) === 1 ? current($locationsInColumn) : null,
+                        ];
+
+                        $colLetter = chr(65 + $colIndex++);
+                        $headerText = mb_strtoupper($colInfo['dia']);
                         
+                        $subgrupo = $colInfo['subgrupo'];
+                        if ($subgrupo && $subgrupo !== 'general') {
+                            $headerText .= "\n(Grupo " . strtoupper($subgrupo) . ")";
+                        }
+
+                        if ($columnLocationInfo[$idx]['is_single'] && strtolower($columnLocationInfo[$idx]['type']) !== 'laboratorio') {
+                           $headerText .= "\n" . $columnLocationInfo[$idx]['name'];
+                        }
                         $sheet->setCellValue($colLetter . $headerRow, $headerText);
                         $sheet->getColumnDimension($colLetter)->setWidth(25);
-                        $currentCol++;
                     }
-                    $sheet->getStyle("A{$headerRow}:" . chr(64 + $currentCol) . $headerRow)->applyFromArray($styleTableHeader);
+                    $sheet->getStyle("A{$headerRow}:" . chr(64 + $colIndex) . $headerRow)->applyFromArray($styleTableHeader);
                     $currentRow++;
                     
                     $celdasOcupadas = [];
+                    $shiftTimeSlots = $todas_las_franjas_por_turno[$shiftName] ?? [];
                     foreach ($shiftTimeSlots as $displaySlot => $dbStartTimeKey) {
                         $sheet->setCellValue('A'.$currentRow, $displaySlot);
                         $sheet->getStyle('A'.$currentRow)->applyFromArray($styleTimeSlot);
                         
-                        $colNum = 1;
-                        foreach ($activeDays as $day) {
-                            $cellAddress = chr(65 + $colNum) . $currentRow;
-                            if(isset($celdasOcupadas[$cellAddress])) {
-                                $colNum++;
-                                continue;
+                        $colIndex = 1;
+                        foreach ($columnasHeader as $idx => $colInfo) {
+                            $cellAddress = chr(65 + $colIndex) . $currentRow;
+                            if(isset($celdasOcupadas[$cellAddress])) { $colIndex++; continue; }
+
+                            $clasesEnBloque = $horarioGrid[$colInfo['dia']][$colInfo['subgrupo']][$dbStartTimeKey] ?? null;
+
+                            if ($clasesEnBloque) {
+                               
+                                if (!is_array($clasesEnBloque) || !isset($clasesEnBloque[0])) {
+                                    $clasesEnBloque = [$clasesEnBloque];
+                                }
+
+                                $richText = new RichText();
+                                foreach ($clasesEnBloque as $cIdx => $clase) {
+                                    if ($cIdx > 0) {
+                                        $richText->createText("\n- - - - - - - - -\n");
+                                    }
+
+                                    $subgrupoTexto = ($clase['subgrupo'] && $clase['subgrupo'] !== 'general') ? '(G: ' . $clase['subgrupo'] . ') ' : '';
+                                    $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
+                                    $ucPart = $richText->createTextRun($subgrupoTexto . $ucAbreviada);
+                                    $ucPart->getFont()->setBold(true);
+
+                                    $docente = $clase['NombreCompletoDocente'] ?? '(Sin docente)';
+                                    $richText->createText("\n" . $docente);
+                                    
+                                    $currentColumnInfo = $columnLocationInfo[$idx];
+                                    if (!$currentColumnInfo['is_single'] || strtolower($currentColumnInfo['type']) === 'laboratorio') {
+                                        $espacio = $clase['esp_codigo'] ?? '(Sin espacio)';
+                                        $richText->createText("\n" . $espacio);
+                                    }
+                                }
+                                
+                                $sheet->getCell($cellAddress)->setValue($richText);
+                                
+                                $primeraClase = $clasesEnBloque[0];
+                                $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);
+                                $horaFinClase = new DateTime($primeraClase['hor_horafin']);
+                                $diffMinutes = ($horaFinClase->getTimestamp() - $horaInicioClase->getTimestamp()) / 60;
+                                $span = ceil($diffMinutes / $slot_duration_minutes);
+                                if ($span < 1) $span = 1;
+
+                                if ($span > 1) {
+                                    $endRow = $currentRow + $span - 1;
+                                    $sheet->mergeCells($cellAddress . ':' . chr(65 + $colIndex) . $endRow);
+                                    for ($k = 1; $k < $span; $k++) {
+                                        $celdasOcupadas[chr(65 + $colIndex) . ($currentRow + $k)] = true;
+                                    }
+                                }
                             }
-                            
-                            $clase = $gridData[$day][$dbStartTimeKey] ?? null;
-if ($clase) {
-    
-    $richText = new RichText();
-
- 
-    $uc_part = $richText->createTextRun($clase['uc']);
-    $uc_part->getFont()->setBold(true);
-
-    
-    $resto_contenido = "\n" . $clase['docente'];
-    $isSingleLocation = count($locationsPerDay[$day]) === 1;
-    $singleLocationType = $isSingleLocation ? current($locationsPerDay[$day]) : '';
-
-    if ($clase['tipo'] === 'Laboratorio' || !$isSingleLocation || $singleLocationType === 'Laboratorio') {
-        $resto_contenido .= "\n" . $clase['espacio'];
-    }
-    $richText->createText($resto_contenido);
-
- 
-    $sheet->getCell($cellAddress)->setValue($richText);
-
-    if ($clase['span'] > 1) {
-        $endRow = $currentRow + $clase['span'] - 1;
-        $sheet->mergeCells($cellAddress . ':' . chr(65 + $colNum) . $endRow);
-        for ($i = 1; $i < $clase['span']; $i++) {
-            $celdasOcupadas[chr(65 + $colNum) . ($currentRow + $i)] = true;
-        }
-    }
-}
                             $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
-                            $colNum++;
+                            $colIndex++;
                         }
-                        $sheet->getRowDimension($currentRow)->setRowHeight(25);
+                        $sheet->getRowDimension($currentRow)->setRowHeight(45);
                         $currentRow++;
                     }
-                    $currentRow += 2;
+                    $currentRow++;
                 }
+                $currentRow++; 
             }
         }
     }
