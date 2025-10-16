@@ -64,6 +64,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <th>Trayecto</th>
                             <th>Área</th>
                             <th>Fase</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -161,7 +162,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3 align-items-end">
                                     <div class="col-md-6">
                                         <label for="periodoUC" class="form-label">Periodo</label>
-                                        <select class="form-select form-select-sm" name="periodoUC" id="periodoUC">
+                                        <select class="form-select" name="periodoUC" id="periodoUC">
                                             <option value="" disabled selected>Seleccione un Periodo</option>
                                             <option value="Anual">Anual</option>
                                             <option value="Fase I">Fase 1</option>
@@ -169,55 +170,11 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                         </select>
                                         <span id="speriodoUC" class="form-text"></span>
                                     </div>
-                                    <div class="col-md-6 d-flex align-items-center" style="margin-top: 2em;">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="electivaUC" name="electivaUC" value="1">
-                                            <label class="form-check-label" for="electivaUC">Electiva</label>
-                                        </div>
-                                        <span id="selectivaUC" class="form-text ms-2"></span>
-                                    </div>
                                 </div>
                             </div>
 
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn btn-primary me-2" id="proceso">Guardar</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" tabindex="-1" role="dialog" id="modal2">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Asignar Docentes</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form method="post" id="f-asignar" autocomplete="off" class="needs-validation" novalidate>
-                            <div class="table-responsive mb-3" style="max-height: 300px; overflow-y: auto;">
-                                <table class="table table-hover w-100" id="tablaDocentesDisponibles">
-                                    <thead>
-                                        <tr>
-                                            <th>Cédula</th>
-                                            <th>Nombre</th>
-                                            <th>Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="cuerpoTablaDocentesDisp"></tbody>
-                                </table>
-                            </div>
-
-                            <div class="row g-3 mt-3">
-                                <div class="col-md-12">
-                                    <label class="form-label">Docentes a asignar:</label>
-                                    <ul id="carritoDocentes" class="list-group" style="max-height: 150px; overflow-y: auto;"></ul>
-                                </div>
-                            </div>
-                            <div class="modal-footer justify-content-center">
-                                <button type="button" class="btn btn-success" id="asignarDocentes">Procesar Asignación</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
@@ -254,7 +211,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <li class="list-group-item"><strong>Eje:</strong> <span id="ucVerMasEje"></span></li>
                         <li class="list-group-item"><strong>Créditos:</strong> <span id="ucVerMasCreditos"></span></li>
                         <li class="list-group-item"><strong>Periodo:</strong> <span id="ucVerMasPeriodo"></span></li>
-                        <li class="list-group-item"><strong>Electiva:</strong> <span id="ucVerMasElectiva"></span></li>
                     </ul>
                 </div>
             </div>
@@ -278,13 +234,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <li class="list-group-item"><strong>Eje:</strong> <span id="detallesUcEje"></span></li>
                             <li class="list-group-item"><strong>Créditos:</strong> <span id="detallesUcCreditos"></span></li>
                             <li class="list-group-item"><strong>Periodo:</strong> <span id="detallesUcPeriodo"></span></li>
-                            <li class="list-group-item"><strong>Electiva:</strong> <span id="detallesUcElectiva"></span></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h6 class="mb-3">Docentes Asignados a: <span id="ucDetallesNombreModal" class="fw-bold"></span></h6>
-                        <ul class="list-group" id="listaDocentesDetalles">
                         </ul>
                     </div>
                 </div>

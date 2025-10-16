@@ -3,17 +3,12 @@ require_once('model/dbconnection.php');
 
 class Eje extends Connection
 {
-
     private $ejeNombre;
     private $ejeDescripcion;
 
-
-    public function __construct($ejeNombre = null, $ejeDescripcion = null)
+    public function __construct()
     {
         parent::__construct();
-
-        $this->ejeNombre = $ejeNombre;
-        $this->ejeDescripcion = $ejeDescripcion;
     }
 
     public function getEje()
@@ -23,7 +18,7 @@ class Eje extends Connection
 
     public function getDescripcion()
     {
-        return $this->ejeNombre;
+        return $this->ejeDescripcion;
     }
 
     public function setEje($ejeNombre)
@@ -36,173 +31,151 @@ class Eje extends Connection
         $this->ejeDescripcion = $ejeDescripcion;
     }
 
-
-    function Registrar()
+    public function Registrar()
     {
-        $r = array();
-
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        if ($this->Existe($this->ejeNombre)) {
-            $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El EJE colocado YA existe!';
-            $co = null;
-            return $r;
-        }
-
-        $stmt = $co->prepare("SELECT eje_nombre FROM tbl_eje WHERE eje_nombre = :ejeNombre AND eje_estado = 0");
-        $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
-        $stmt->execute();
-        $existeInactivo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($existeInactivo) {
-            $stmtReactivar = $co->prepare("UPDATE tbl_eje SET eje_descripcion = :ejeDescripcion, eje_estado = 1 WHERE eje_nombre = :ejeNombre");
-            $stmtReactivar->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
-            $stmtReactivar->bindParam(':ejeDescripcion', $this->ejeDescripcion, PDO::PARAM_STR);
-            $stmtReactivar->execute();
-
-            $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el EJE correctamente!';
-            $co = null;
-            return $r;
-        }
 
         try {
-            $stmt = $co->prepare("INSERT INTO tbl_eje (
-                eje_nombre,
-                eje_descripcion,
-                eje_estado
-            ) VALUES (
-                :ejeNombre,
-                :ejeDescripcion,
-                1
-            )");
+            $stmt = $co->prepare("SELECT eje_estado FROM tbl_eje WHERE eje_nombre = :ejeNombre");
+            $stmt->execute([':ejeNombre' => $this->ejeNombre]);
+            $existe = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
-            $stmt->bindParam(':ejeDescripcion', $this->ejeDescripcion, PDO::PARAM_STR);
+            if ($existe) {
+                if ($existe['eje_estado'] == 1) {
+                    return ['resultado' => 'registrar', 'mensaje' => 'ERROR! <br/> El EJE colocado YA existe!'];
+                }
+                
+                $stmt = $co->prepare("UPDATE tbl_eje SET eje_descripcion = :ejeDescripcion, eje_estado = 1 WHERE eje_nombre = :ejeNombre");
+            } else {
+                $stmt = $co->prepare("INSERT INTO tbl_eje (eje_nombre, eje_descripcion, eje_estado) VALUES (:ejeNombre, :ejeDescripcion, 1)");
+            }
 
-            $stmt->execute();
+            $stmt->execute([
+                ':ejeNombre' => $this->ejeNombre,
+                ':ejeDescripcion' => $this->ejeDescripcion
+            ]);
 
-            $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el EJE correctamente!';
+            return ['resultado' => 'registrar', 'mensaje' => 'Registro Incluido!<br/>Se registró el EJE correctamente!'];
         } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        } finally {
+            $co = null;
         }
-
-        $co = null;
-        return $r;
     }
 
-    function Modificar($ejeOriginal)
+    public function Modificar($ejeOriginal)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
 
-        if (!$this->existe($this->ejeNombre, $ejeOriginal)) {
-            try {
-                $stmtDel = $co->prepare("DELETE FROM tbl_eje WHERE eje_nombre = :ejeNombre AND eje_estado = 0");
-                $stmtDel->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
-                $stmtDel->execute();
+        try {
+            $stmt = $co->prepare("SELECT eje_nombre, eje_descripcion FROM tbl_eje WHERE eje_nombre = :ejeOriginal");
+            $stmt->execute([':ejeOriginal' => $ejeOriginal]);
+            $datosOriginales = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt = $co->prepare("UPDATE tbl_eje
-                    SET eje_nombre = :ejeNombre, eje_descripcion = :ejeDescripcion 
-                    WHERE eje_nombre = :ejeOriginal");
-
-                $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
-                $stmt->bindParam(':ejeDescripcion', $this->ejeDescripcion, PDO::PARAM_STR);
-                $stmt->bindParam(':ejeOriginal', $ejeOriginal, PDO::PARAM_STR);
-
-                $stmt->execute();
-
-                $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el EJE correctamente!';
-            } catch (Exception $e) {
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
+            if (!$datosOriginales) {
+                return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> El eje no existe!'];
             }
-        } else {
-            $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El EJE colocado YA existe!';
+
+            if ($datosOriginales['eje_nombre'] === $this->ejeNombre && 
+                $datosOriginales['eje_descripcion'] === $this->ejeDescripcion) {
+                return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
+            }
+
+            if ($this->Existe($this->ejeNombre, $ejeOriginal)) {
+                return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> El EJE colocado YA existe!'];
+            }
+
+            if ($this->ejeNombre !== $ejeOriginal) {
+                $co->prepare("DELETE FROM tbl_eje WHERE eje_nombre = :ejeNombre AND eje_estado = 0")
+                   ->execute([':ejeNombre' => $this->ejeNombre]);
+            }
+
+            $stmt = $co->prepare("UPDATE tbl_eje SET eje_nombre = :ejeNombre, eje_descripcion = :ejeDescripcion WHERE eje_nombre = :ejeOriginal");
+            $stmt->execute([
+                ':ejeNombre' => $this->ejeNombre,
+                ':ejeDescripcion' => $this->ejeDescripcion,
+                ':ejeOriginal' => $ejeOriginal
+            ]);
+
+            return ['resultado' => 'modificar', 'mensaje' => 'Registro Modificado!<br/>Se modificó el EJE correctamente!'];
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        } finally {
+            $co = null;
         }
-        $co = null;
-        return $r;
     }
 
-    function Eliminar()
+    public function Eliminar()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
-        if ($this->Existe($this->ejeNombre, NULL)) {
-            try {
-                $stmt = $co->prepare("UPDATE tbl_eje
-                SET eje_estado = 0
-                WHERE eje_nombre = :ejeNombre");
 
-                $stmt->bindParam(':ejeNombre', $this->ejeNombre, PDO::PARAM_STR);
+        try {
+            $stmt = $co->prepare("SELECT eje_estado FROM tbl_eje WHERE eje_nombre = :ejeNombre");
+            $stmt->execute([':ejeNombre' => $this->ejeNombre]);
+            $eje = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt->execute();
-
-                $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el EJE correctamente!';
-            } catch (Exception $e) {
-                $r['resultado'] = 'error';
-                $r['mensaje'] = $e->getMessage();
+            if (!$eje) {
+                return ['resultado' => 'eliminar', 'mensaje' => 'ERROR! <br/> El EJE no existe!'];
             }
-        } else {
-            $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El EJE colocado NO existe!';
+
+            if ($eje['eje_estado'] == 0) {
+                return ['resultado' => 'eliminar', 'mensaje' => 'ERROR! <br/> El EJE ya está desactivado!'];
+            }
+
+            $co->prepare("UPDATE tbl_eje SET eje_estado = 0 WHERE eje_nombre = :ejeNombre")
+               ->execute([':ejeNombre' => $this->ejeNombre]);
+
+            return ['resultado' => 'eliminar', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó el EJE correctamente!'];
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        } finally {
+            $co = null;
         }
-        return $r;
     }
 
     public function Listar()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+
         try {
-            $stmt = $co->query("SELECT eje_nombre, eje_descripcion FROM tbl_eje WHERE eje_estado = 1");
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $r['resultado'] = 'consultar';
-            $r['mensaje'] = $data;
+            $stmt = $co->query("SELECT eje_nombre, eje_descripcion, eje_estado FROM tbl_eje");
+            return ['resultado' => 'consultar', 'mensaje' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        } finally {
+            $co = null;
         }
-        $co = null;
-        return $r;
     }
 
-    public function Existe($ejeNombre, $ejeExcluir = NULL)
+    public function Existe($ejeNombre, $ejeExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+
         try {
-            $sql = "SELECT * FROM tbl_eje WHERE eje_nombre=:ejeNombre AND eje_estado = 1";
+            $sql = "SELECT COUNT(*) FROM tbl_eje WHERE eje_nombre = :ejeNombre AND eje_estado = 1";
+            $params = [':ejeNombre' => $ejeNombre];
+
             if ($ejeExcluir !== null) {
                 $sql .= " AND eje_nombre != :ejeExcluir";
+                $params[':ejeExcluir'] = $ejeExcluir;
             }
+
             $stmt = $co->prepare($sql);
-            $stmt->bindParam(':ejeNombre', $ejeNombre, PDO::PARAM_STR);
-            if ($ejeExcluir !== null) {
-                $stmt->bindParam(':ejeExcluir', $ejeExcluir, PDO::PARAM_STR);
+            $stmt->execute($params);
+
+            if ($stmt->fetchColumn() > 0) {
+                return ['resultado' => 'existe', 'mensaje' => 'El EJE colocado YA existe!'];
             }
-            $stmt->execute();
-            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
-            if ($fila) {
-                $r['resultado'] = 'existe';
-                $r['mensaje'] = 'El EJE colocado YA existe!';
-            }
+            return [];
         } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        } finally {
+            $co = null;
         }
-        $co = null;
-        return $r;
     }
 }

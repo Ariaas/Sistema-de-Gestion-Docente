@@ -67,6 +67,9 @@ function crearDT() {
   }
 }
 
+let originalNombreEje = '';
+let originalDescripcionEje = '';
+
 $(document).ready(function () {
   Listar();
 
@@ -89,6 +92,7 @@ $(document).ready(function () {
         datos.append('ejeNombre', $(this).val());
         if ($("#proceso").text() === "MODIFICAR") {
             datos.append('ejeExcluir', originalNombreEje);
+            verificarCambios();
         }
         enviaAjax(datos, 'existe');
     }
@@ -96,6 +100,9 @@ $(document).ready(function () {
 
   $("#ejeDescripcion").on("keyup", function() {
     validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sejeDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
+    if ($("#proceso").text() === "MODIFICAR") {
+      verificarCambios();
+    }
   });
 
   $("#proceso").on("click", function () {
@@ -111,7 +118,7 @@ $(document).ready(function () {
       datos.append("ejeNombreOriginal", originalNombreEje); 
       enviaAjax(datos);
     }
-  } else if (accion === "REGISTRAR") {
+  } else if (accion === "GUARDAR") {
     $("#sejeNombre").show();
     $("#sejeDescripcion").show();
     if (validarenvio()) {
@@ -139,8 +146,8 @@ $(document).ready(function () {
       );
     } else {
         
-        Swal.fire({
-          title: "¿Está seguro de eliminar este espacio?",
+        const swalInstance = Swal.fire({
+          title: "¿Está seguro de eliminar este eje?",
           text: "Esta acción no se puede deshacer.",
           icon: "warning",
           showCancelButton: true,
@@ -148,7 +155,21 @@ $(document).ready(function () {
           cancelButtonColor: "#d33",
           confirmButtonText: "Sí, eliminar",
           cancelButtonText: "Cancelar",
-        }).then((result) => {
+          focusConfirm: true,
+          allowOutsideClick: false,
+          allowEscapeKey: true,
+          didOpen: () => {
+            const popup = Swal.getPopup();
+            popup.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                e.stopPropagation();
+                Swal.clickConfirm();
+              }
+            });
+          }
+        });
+        
+        swalInstance.then((result) => {
           if (result.isConfirmed) {
             
             var datos = new FormData();
@@ -172,7 +193,7 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("REGISTRAR");
+    $("#proceso").text("GUARDAR");
     $("#modal1").modal("show");
     $("#sejeNombre").show();
     $("#sejeDescripcion").show();
@@ -181,6 +202,26 @@ $(document).ready(function () {
 
   $('#modal1').on('hidden.bs.modal', function () {
     $("#proceso").prop("disabled", false);
+    $("#sejeNombre").text("").css("color", "");
+    $("#sejeDescripcion").text("").css("color", "");
+  });
+
+  $('#modal1').on('shown.bs.modal', function () {
+    $("#ejeNombre").focus();
+  });
+
+  $('#modal1').on('keydown', function(e) {
+    if (e.which === 13) {
+      if ($("#proceso").text() === "ELIMINAR" && $('.swal2-container').length) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      if (!$("#proceso").prop("disabled")) {
+        e.preventDefault();
+        $("#proceso").click();
+      }
+    }
   });
 });
 
@@ -208,7 +249,8 @@ function validarenvio() {
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
-  originalNombreEje = $(linea).find("td:eq(0)").text(); 
+  originalNombreEje = $(linea).find("td:eq(0)").text();
+  originalDescripcionEje = $(linea).find("td:eq(1)").text();
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
@@ -216,6 +258,7 @@ function pone(pos, accion) {
     $("#ejeDescripcion").prop("disabled", false);
     $("#sejeNombre").text("").show();
     $("#sejeDescripcion").text("").show();
+    $("#proceso").prop("disabled", true);
   } else {
     $("#proceso").text("ELIMINAR");
     $("#ejeId, #ejeNombre, #ejeDescripcion").prop("disabled", true);
@@ -256,20 +299,21 @@ function enviaAjax(datos, accion) {
           destruyeDT();
           $("#resultadoconsulta").empty();
           $.each(lee.mensaje, function (index, item) {
-            
-            const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+            if (item.eje_estado == 1) {
+              const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+              const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" data-codigo="${item.eje_id}" data-tipo="${item.eje_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
 
-            $("#resultadoconsulta").append(`
-              <tr>
-                <td>${item.eje_nombre}</td>
-                <td>${item.eje_descripcion}</td>
-                <td>
-                  ${btnModificar}
-                  ${btnEliminar}
-                </td>
-              </tr>
-            `);
+              $("#resultadoconsulta").append(`
+                <tr>
+                  <td>${item.eje_nombre}</td>
+                  <td>${item.eje_descripcion}</td>
+                  <td>
+                    ${btnModificar}
+                    ${btnEliminar}
+                  </td>
+                </tr>
+              `);
+            }
           });
           crearDT();
         }
@@ -329,12 +373,23 @@ function enviaAjax(datos, accion) {
   });
 }
 
-function limpia() {
-  $("#ejeId").val("");
-  $("#ejeNombre").val("");
-  $("#ejeDescripcion").val("");
-  $("#sejeNombre").text("");
-  $("#sejeDescripcion").text("");
+function verificarCambios() {
+  const nombreActual = $("#ejeNombre").val();
+  const descripcionActual = $("#ejeDescripcion").val();
+  
+  if (nombreActual === originalNombreEje && descripcionActual === originalDescripcionEje) {
+    $("#proceso").prop("disabled", true);
+  } else {
+    if ($("#sejeNombre").text() === "" || $("#sejeNombre").css("color") !== "rgb(255, 0, 0)") {
+      $("#proceso").prop("disabled", false);
+    }
+  }
 }
 
-
+function limpia() {
+  $("#ejeDescripcion").val("");
+  $("#ejeNombre").val("");
+  $("#sejeNombre").text("");
+  $("#sejeDescripcion").text("");
+  $("#proceso").prop("disabled", false);
+}

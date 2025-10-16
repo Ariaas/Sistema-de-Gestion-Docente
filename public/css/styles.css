@@ -274,6 +274,34 @@ table {
   border: none;
   transition: background 0.18s, color 0.18s;
 }
+
+.uc-badge {
+  display: inline-block;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+.uc-badge.activa {
+  background: #28a745; 
+}
+.uc-badge.desactivada {
+  background: #dc3545; 
+}
+
+.btn-icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+.btn-icon-text img {
+  width: 16px;
+  height: 16px;
+}
 .datatable-ui .btn-warning {
   background: #ffe066;
   color: #856404;
@@ -766,6 +794,23 @@ footer {
 
 .btn-icon.btn-delete {
   background-color: #dc3545;
+}
+
+/* Icon-only circular buttons (no text) */
+.btn-icon {
+  padding: 0.45rem;
+  width: 36px;
+  height: 36px;
+}
+.btn-icon img {
+  width: 18px;
+  height: 18px;
+}
+.btn-icon[disabled],
+.btn-icon.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(60%);
 }
 
 .btn-icon.btn-info {

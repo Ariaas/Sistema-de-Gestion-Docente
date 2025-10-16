@@ -49,7 +49,7 @@ if (!$puede_registrar) {
         <div class="container" style="width: 85%; max-width: 900px;">
             <div class="text-center mb-4">
                 <h2 class="text-primary">Reporte de Horario del Personal Docente</h2>
-                <p class="text-muted">Seleccione los criterios para generar el horario detallado en formato PDF.</p>
+                <p class="text-muted">Seleccione los criterios para generar el horario detallado en formato Excel.</p>
             </div>
             <div class="card p-4 shadow-sm bg-light rounded">
                 <form method="post" action="" id="fReporteHorDocente" target="_blank">
@@ -91,8 +91,8 @@ if (!$puede_registrar) {
                     </div>
                     <div class="row">
                         <div class="col-12 text-center">
-                            <button type="submit" class="btn btn-danger btn-lg px-5" name="generar_rhd_report">
-                                <i class="fas fa-file-pdf me-2"></i>Generar PDF
+                             <button type="submit" class="btn btn-success btn-lg px-5" name="generar_rhd_report">
+                                <i class="fas fa-file-excel me-2"></i>Generar Excel
                             </button>
                         </div>
                     </div>

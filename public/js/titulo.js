@@ -68,6 +68,7 @@ function pone(pos, accion) {
         $("#tituloprefijo_original").val(prefijo);
         $("#titulonombre_original").val(nombre);
         $("#stituloprefijo, #stitulonombre").text("").show();
+          $("#proceso").prop("disabled", true);
     } else { 
         $("#proceso").text("ELIMINAR");
         $("#tituloprefijo, #titulonombre").prop("disabled", true);
@@ -172,6 +173,19 @@ $(document).ready(function() {
             return;
         }
     
+         if ($("#proceso").text() === "MODIFICAR") {
+        const prefijoActual = $("#tituloprefijo").val();
+        const nombreActual = $("#titulonombre").val();
+        const prefijoOriginal = $("#tituloprefijo_original").val();
+        const nombreOriginal = $("#titulonombre_original").val();
+
+       
+        if (prefijoActual === prefijoOriginal && nombreActual === nombreOriginal) {
+            $("#proceso").prop("disabled", true);
+        } else {
+            $("#proceso").prop("disabled", false);
+        }
+    }
         $("#stitulonombre").css("color", "");
 
         if ($("#tituloprefijo").val() !== "" && $("#tituloprefijo").val() !== null) {

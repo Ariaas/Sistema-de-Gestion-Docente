@@ -26,5 +26,14 @@ function muestraMensaje(icono, tiempo, titulo, mensaje) {
     html: mensaje,
     showConfirmButton: true,
     confirmButtonText: "Aceptar",
+    timerProgressBar: true,
+    allowEnterKey: true,
+    allowEscapeKey: true,
+    didOpen: () => {
+      const confirmButton = Swal.getConfirmButton();
+      if (confirmButton) {
+        confirmButton.focus();
+      }
+    }
   });
 }

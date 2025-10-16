@@ -7,18 +7,86 @@ if (session_status() == PHP_SESSION_NONE) {
 require_once("vendor/autoload.php");
 require_once("model/reportes/rhordocente.php");
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 function toRoman($number) {
     $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];
     return $map[$number] ?? $number;
 }
 
-function abreviarNombreUC($nombre, $longitudMaxima = 25) {
-    if (mb_strlen($nombre) <= $longitudMaxima) {
-        return $nombre;
+function abreviarNombreUC($nombre) {
+  
+    $mapaAbreviaturas = [
+       
+        'Introducción a la universidad y a los programas nacionales de formacion' => 'INPNFI',
+        'Proyecto nacional y nueva ciudadanía' => 'PNNC',
+        'Tecnologías de la información y comunicación' => 'TIC',
+        'Matemática' => 'MAT INICIAL',
+        
+       
+        'Algorítmica y Programación' => 'AP',
+        'Arquitectura del Computador' => 'AC',
+        'Formación Crítica I' => 'FC-I',
+        'Idiomas I' => 'AA-I',
+        'Matemática I' => 'MAT-I',
+        'Proyecto Socio Tecnológico I' => 'PST-I',
+        
+        
+        'Base de Datos' => 'BD',
+        'Formación Crítica II' => 'FC-II',
+        'Ingeniería del Software I' => 'IS-I',
+        'Matemática II' => 'MAT-II',
+        'Programación II' => 'PP-II',
+        'Proyecto Socio Tecnológico II' => 'PST-II',
+        'Redes de Computadoras' => 'REDES',
+        
+        
+        'Formación Crítica III' => 'FC-III',
+        'Ingeniería de Software II' => 'IS-II',
+        'Investigación de operaciones' => 'IO',
+        'Matemática Aplicada' => 'Mat Apli.',
+        'Modelado de bases de datos' => 'MBD',
+        'Proyecto Socio Tecnológico III' => 'PST-III',
+        'Sistemas Operativos' => 'SO',
+
+        
+        'Administración de bases de datos' => 'ABD',
+        'Auditoria de sistemas' => 'AUD SIS',
+        'Formación Crítica IV' => 'FC-IV',
+        'Gestión de proyecto Informático' => 'GPI',
+        'Idiomas II' => 'IDIOMAS IV',
+        'Proyecto Socio Tecnológico IV' => 'PST-IV',
+        'Redes Avanzadas' => 'RED AVANZ',
+        'Seguridad Informática' => 'SEG INF',
+        
+        
+        'Actividades Acreditable I' => 'AA-I',
+        'Actividades Acreditables II' => 'AA-II',
+        'Actividades Acreditables III' => 'AA-III',
+        'Actividades Acreditables IV' => 'AA-IV',
+        'Electiva I' => 'Electiva I',
+        'Electiva II' => 'Electiva II',
+        'Electiva III' => 'Electiva III',
+        'Electiva IV' => 'Electiva IV',
+        
+        
+        'CREACIÓN INTELECTUAL'  => 'CREACIÓN INTELECTUAL',
+        'INTEGRACIÓN COMUNIDAD' => 'INTEGRACIÓN COMUNIDAD',
+        'GESTIÓN ACADÉMICA'     => 'GESTIÓN ACADÉMICA',
+        
+    ];
+
+   
+    if (isset($mapaAbreviaturas[$nombre])) {
+        return $mapaAbreviaturas[$nombre];
     }
+
+    
     $palabrasExcluidas = ['de', 'y', 'a', 'del', 'la', 'los', 'las', 'en'];
     $partes = explode(' ', $nombre);
     $numeral = '';
@@ -35,14 +103,15 @@ function abreviarNombreUC($nombre, $longitudMaxima = 25) {
     return $iniciales . $numeral;
 }
 
+$oReporteHorario = new ReporteHorarioDocente();
 
-$oReporteHorario = new ReporteHorarioDocente(); 
-
-if (isset($_POST['generar_rhd_report'])) { 
+if (isset($_POST['generar_rhd_report'])) {
     $anio = $_POST['anio_id'] ?? '';
     $fase = $_POST['fase_id'] ?? '';
-    $cedulaDocenteSeleccionada = $_POST['cedula_docente'] ?? ''; 
-    if (empty($cedulaDocenteSeleccionada) || empty($anio) || empty($fase)) { die("Error: Debe seleccionar Año, Fase y Docente."); }
+    $cedulaDocenteSeleccionada = $_POST['cedula_docente'] ?? '';
+    if (empty($cedulaDocenteSeleccionada) || empty($anio) || empty($fase)) {
+        die("Error: Debe seleccionar Año, Fase y Docente.");
+    }
 
     $oReporteHorario->setAnio($anio);
     $oReporteHorario->setFase($fase);
@@ -52,12 +121,13 @@ if (isset($_POST['generar_rhd_report'])) {
     $asignacionesAcademicas = $oReporteHorario->obtenerAsignacionesAcademicas();
     $otrasActividades = $oReporteHorario->obtenerOtrasActividades();
     $datosParrillaHorario = $oReporteHorario->obtenerDatosParrillaHorario();
+    $turnos_db = $oReporteHorario->getTurnos();
 
-    if (!$infoDocente) { die("Error: No se encontró información para el docente seleccionado."); }
-    
+    if (!$infoDocente) {
+        die("Error: No se encontró información para el docente seleccionado.");
+    }
     
     $gridData = [];
-    $turnos_db = $oReporteHorario->getTurnos();
     $day_map = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miercoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sabado' => 'Sábado'];
     $activeShifts = [];
 
@@ -67,29 +137,19 @@ if (isset($_POST['generar_rhd_report'])) {
         $clases_por_bloque[$bloque_key][] = $item;
     }
 
-    foreach ($clases_por_bloque as $bloque_key => $clases_en_este_bloque) {
-        
+    foreach ($clases_por_bloque as $clases_en_este_bloque) {
         $ucs_en_bloque = [];
         foreach ($clases_en_este_bloque as $clase) {
-            $uc_codigo = $clase['uc_codigo'];
-            if (!isset($ucs_en_bloque[$uc_codigo])) {
-                $ucs_en_bloque[$uc_codigo] = [
-                    'data' => $clase,
-                    'subgrupos' => [],
-                    'secciones' => [],
-                    'ambientes' => []
-                ];
+            if (!isset($ucs_en_bloque[$clase['uc_codigo']])) {
+                $ucs_en_bloque[$clase['uc_codigo']] = ['data' => $clase, 'subgrupos' => [], 'secciones' => [], 'ambientes' => []];
             }
-            if (!empty($clase['subgrupo'])) {
-                $ucs_en_bloque[$uc_codigo]['subgrupos'][] = $clase['subgrupo'];
-            }
-            $ucs_en_bloque[$uc_codigo]['secciones'][] = $clase['sec_codigo'];
-            $ucs_en_bloque[$uc_codigo]['ambientes'][] = $clase['esp_codigo_formatted'];
+            if (!empty($clase['subgrupo'])) { $ucs_en_bloque[$clase['uc_codigo']]['subgrupos'][] = $clase['subgrupo']; }
+            $ucs_en_bloque[$clase['uc_codigo']]['secciones'][] = $clase['sec_codigo'];
+            $ucs_en_bloque[$clase['uc_codigo']]['ambientes'][] = $clase['esp_codigo_formatted'];
         }
 
         foreach ($ucs_en_bloque as $uc_info) {
             $item_base = $uc_info['data'];
-            
             $dia_key_from_db = strtolower(trim(str_replace(['é', 'É'], 'e', $item_base['hor_dia'])));
             $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
             $horaInicio = new DateTime($item_base['hor_horainicio']);
@@ -107,30 +167,32 @@ if (isset($_POST['generar_rhd_report'])) {
 
             $subgrupos_unicos = array_unique($uc_info['subgrupos']);
             sort($subgrupos_unicos);
+            $subgrupoDisplay = !empty($subgrupos_unicos) ? " G(" . implode(', ', $subgrupos_unicos) . ")" : "";
 
-            $subgrupoDisplay = !empty($subgrupos_unicos) ? " <b>G(" . implode(', ', $subgrupos_unicos) . ")</b>" : "";
-            
             $secciones_unicas = array_unique($uc_info['secciones']);
             $seccionesFormateadas = '';
             foreach($secciones_unicas as $sec){
-                $prefijo = (in_array(substr($sec, 0, 1), ['3', '4'])) ? 'IIN' : 'IN';
-                $seccionesFormateadas .= $prefijo . $sec . ', ';
+                if (!empty(trim($sec))) {
+                    $primerCaracter = substr(trim($sec), 0, 1);
+                    $prefijo = (in_array($primerCaracter, ['3', '4'])) ? 'IIN' : 'IN';
+                    $seccionesFormateadas .= $prefijo . trim($sec) . ', ';
+                }
             }
             $seccionesFormateadas = rtrim($seccionesFormateadas, ', ');
 
             $ambientes_unicos = array_unique($uc_info['ambientes']);
             $ambientesFormateados = implode(', ', $ambientes_unicos);
-
-            $nombreUC_Abreviado = abreviarNombreUC(htmlspecialchars($item_base['uc_nombre']));
-            $contenidoCelda = "<b>" . $nombreUC_Abreviado . "</b>" . $subgrupoDisplay . "<br>" . $seccionesFormateadas . "<br>" . htmlspecialchars($ambientesFormateados);
             
+            $nombreUC_Abreviado = abreviarNombreUC($item_base['uc_nombre']);
+            $contenidoCeldaSimple = $nombreUC_Abreviado . $subgrupoDisplay . "\n" . $seccionesFormateadas . "\n" . $ambientesFormateados;
+
             if (!isset($gridData[$dia_key][$horaInicio->format('H:i')])) {
                 $gridData[$dia_key][$horaInicio->format('H:i')] = [];
             }
-            $gridData[$dia_key][$horaInicio->format('H:i')][] = ['content' => $contenidoCelda, 'span' => $bloques_span];
+            $gridData[$dia_key][$horaInicio->format('H:i')][] = ['content' => $contenidoCeldaSimple, 'span' => $bloques_span, 'type' => 'class'];
         }
     }
-    
+
     $bloques_por_turno = [];
     $shiftOrder = ['Mañana' => 1, 'Tarde' => 2, 'Noche' => 3];
     usort($turnos_db, function($a, $b) use ($shiftOrder) {
@@ -138,7 +200,8 @@ if (isset($_POST['generar_rhd_report'])) {
         $pos_b = $shiftOrder[ucfirst(strtolower($b['tur_nombre']))] ?? 99;
         return $pos_a <=> $pos_b;
     });
-
+    
+    $todos_los_bloques_ordenados = [];
     foreach ($turnos_db as $turno) {
         $nombre_turno = ucfirst(strtolower($turno['tur_nombre']));
         $bloques = [];
@@ -146,181 +209,424 @@ if (isset($_POST['generar_rhd_report'])) {
         $tiempoFin = new DateTime($turno['tur_horaFin']);
         while ($tiempoActual < $tiempoFin) {
             $inicioBloque = clone $tiempoActual;
+            $hora_db_key = $inicioBloque->format('H:i');
+            $todos_los_bloques_ordenados[] = $hora_db_key;
+            
             $tiempoActual->add(new DateInterval('PT40M'));
             $finBloque = ($tiempoActual > $tiempoFin) ? $tiempoFin : clone $tiempoActual;
-            $formatoDisplay = $inicioBloque->format('h:i a') . ' a ' . $finBloque->format('h:i a');
-            $formatoDBKey = $inicioBloque->format('H:i');
-            $bloques[$formatoDBKey] = $formatoDisplay;
+            $bloques[$hora_db_key] = $inicioBloque->format('h:i a') . ' a ' . $finBloque->format('h:i a');
         }
         $bloques_por_turno[$nombre_turno] = $bloques;
     }
+    $todos_los_bloques_ordenados = array_values(array_unique($todos_los_bloques_ordenados));
+    sort($todos_los_bloques_ordenados);
+
+    $occupancyMap = [];
+    $dayOccupancyCount = array_fill_keys(array_values($day_map), 0);
     
-    $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-    @page { margin: 25px; } body { font-family: sans-serif; font-size: 7px; } table { width: 100%; border-collapse: collapse; margin-bottom: 8px;}
-    th, td { border: 1px solid black; padding: 5px; text-align: center; vertical-align: middle; }
-    .tabla-encabezado td { font-weight: bold; text-align: left; } .titulo-principal { font-size: 14px; font-weight: bold; text-align: center; margin-bottom: 10px; }
-    .titulo-seccion { font-weight: bold; text-align: center; background-color: #E0E0E0; } .sin-borde { border: none; }
-    .texto-izquierda { text-align: left; } .texto-centro { text-align: center; } 
-    .tabla-horario th { background-color: #E0E0E0; font-size: 7px; font-weight:bold; }
-    .tabla-horario td { height: 1px; font-size: 8px; line-height: 1.4; word-wrap: break-word; } 
-    .tabla-resumen td { height: auto; font-size: 8px; }
-    </style></head><body>';
-
-    
-    $imagePath = $_SERVER['DOCUMENT_ROOT'] . '/nuevo gestion docente/Sistema-de-Gestion-Docente/public/assets/img/logo_uptaeb.png';
-    $imageData = base64_encode(file_get_contents($imagePath));
-    $imageSrc = 'data:image/png;base64,' . $imageData;
-
-    $html .= '<table class="sin-borde"><tr>
-        <td width="80%" class="sin-borde" style="padding:0;">
-            <div class="titulo-principal">HORARIO DEL PERSONAL DOCENTE</div>
-        </td>
-        <td width="20%" class="sin-borde texto-centro" style="vertical-align:top;">
-            <img src="' . $imageSrc . '" width="90px">
-        </td>
-    </tr></table>';
-
-    $html .= '<table class="tabla-encabezado">
-        <tr>
-            <td style="width:15%">1. PNF/CARRERA:</td><td style="width:35%" colspan="2">INFORMATICA</td>
-            <td style="width:15%">2. LAPSO:</td><td style="width:35%" colspan="2">' . htmlspecialchars($anio) . '-' . toRoman($fase) . '</td>
-        </tr>
-        <tr>
-            <td>3. PROFESOR(A):</td><td colspan="2">'.htmlspecialchars($infoDocente['nombreCompleto']).'</td>
-            <td>4. CÉDULA:</td><td colspan="2">'.htmlspecialchars($infoDocente['doc_cedula']).'</td>
-        </tr>
-        <tr>
-            <td>5. DEDICACIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_dedicacion']).'</td>
-            <td>6. CONDICIÓN:</td><td>'.htmlspecialchars($infoDocente['doc_condicion']).'</td>
-            <td>7. CATEGORIA:</td><td>'.htmlspecialchars($infoDocente['categoria']).'</td>
-        </tr>
-        <tr>
-            <td>8. TITULO DE PREGRADO:</td><td colspan="2">'.htmlspecialchars($infoDocente['pregrado_titulo'] ?? 'N/A').'</td>
-            <td>9. TITULO DE POSTGRADO:</td><td colspan="2">'.htmlspecialchars($infoDocente['postgrado_titulo'] ?? 'N/A').'</td>
-        </tr>
-    </table>';
-
-    $html .= '<table><tr><td colspan="6" class="titulo-seccion">ACTIVIDADES ACADÉMICAS</td></tr>
-        <tr style="font-size:9px; font-weight:bold;"><td width="44%">10. Unidad Curricular</td><td width="12%">11. Código</td><td width="15%">13. Sección</td><td width="8%">14. Ambiente</td><td width="14%">15. Eje</td><td width="7%">16. FASE</td></tr>';
-    
-    if (!empty($asignacionesAcademicas)) {
-        foreach($asignacionesAcademicas as $item) {
-            $html .= '<tr><td class="texto-izquierda">'.htmlspecialchars($item['uc_nombre']).'</td><td>'.htmlspecialchars($item['uc_codigo']).'</td><td>'.nl2br(htmlspecialchars($item['secciones'])).'</td><td>'.nl2br(htmlspecialchars($item['ambientes'])).'</td><td>'.htmlspecialchars($item['eje_nombre']).'</td><td>'.htmlspecialchars($item['uc_periodo']).'</td></tr>';
+    foreach ($gridData as $dia => $horas) {
+        foreach ($horas as $hora => $clases) {
+            if (!empty($clases)) {
+                $dayOccupancyCount[$dia] += $clases[0]['span'];
+                $span = $clases[0]['span'];
+                $currentTime = new DateTime($hora);
+                for ($i = 0; $i < $span; $i++) {
+                    $occupancyMap[$dia][$currentTime->format('H:i')] = true;
+                    $currentTime->add(new DateInterval('PT40M'));
+                }
+            }
         }
-    } else { $html .= '<tr><td colspan="6">No hay asignaciones académicas para este período.</td></tr>'; }
-    $html .= '</table>';
+    }
     
-    $html .= '<table><tr><td colspan="3" class="titulo-seccion">CREACIÓN INTELECTUAL, INTEGRACIÓN COMUNIDAD, GESTIÓN ACADÉMICA Y OTRAS ACTIVIDADES</td></tr>
-        <tr style="font-weight:bold; font-size:9px;"><td width="40%">17. Tipo de Actividad</td><td width="40%">18. Descripción (Horas)</td><td width="20%">19. Dependencia</td></tr>
-        <tr><td class="texto-izquierda">CREACIÓN INTELECTUAL</td><td>'.($otrasActividades['act_creacion_intelectual'] ?? 0).'</td><td></td></tr>
-        <tr><td class="texto-izquierda">INTEGRACIÓN COMUNIDAD</td><td>'.($otrasActividades['act_integracion_comunidad'] ?? 0).'</td><td></td></tr>
-        <tr><td class="texto-izquierda">GESTIÓN ACADEMICA</td><td>'.($otrasActividades['act_gestion_academica'] ?? 0).'</td><td></td></tr>
-        <tr><td class="texto-izquierda">OTRAS ACT. ACADEMICAS</td><td>'.($otrasActividades['act_otras'] ?? 0).'</td><td></td></tr>
-    </table>';
+    asort($dayOccupancyCount);
+    $diasDisponibles = array_keys($dayOccupancyCount);
+
+    $actividadesParaColocar = [
+        ['nombre' => 'CREACIÓN INTELECTUAL', 'horas' => $otrasActividades['act_creacion_intelectual'] ?? 0],
+        ['nombre' => 'INTEGRACIÓN COMUNIDAD', 'horas' => $otrasActividades['act_integracion_comunidad'] ?? 0],
+        ['nombre' => 'GESTIÓN ACADÉMICA', 'horas' => $otrasActividades['act_gestion_academica'] ?? 0],
+    ];
+
+    foreach ($actividadesParaColocar as $actividad) {
+        $horasParaColocar = intval($actividad['horas']);
+        if ($horasParaColocar <= 0) continue;
+        
+        $actividadColocada = false;
+        $dia_asignado = array_shift($diasDisponibles); 
+        if ($dia_asignado === null) break;
+
+        foreach ($bloques_por_turno as $turno => $bloques) {
+            if ($actividadColocada) break;
+            if (!isset($activeShifts[$turno])) continue;
+
+            foreach ($todos_los_bloques_ordenados as $index => $hora_db) {
+                if (!array_key_exists($hora_db, $bloques)) continue;
+                if ($horasParaColocar <= 0) break;
+
+                $bloqueLibreEncontrado = true;
+                for ($i = 0; $i < $horasParaColocar; $i++) {
+                    $indiceFuturo = $index + $i;
+                    if (!isset($todos_los_bloques_ordenados[$indiceFuturo]) || !empty($occupancyMap[$dia_asignado][$todos_los_bloques_ordenados[$indiceFuturo]])) {
+                        $bloqueLibreEncontrado = false;
+                        break;
+                    }
+                }
+
+                if ($bloqueLibreEncontrado) {
+                    $gridData[$dia_asignado][$hora_db][] = ['content' => $actividad['nombre'], 'span' => $horasParaColocar,'type' => 'activity'];
+                    
+                    for ($i = 0; $i < $horasParaColocar; $i++) {
+                        $occupancyMap[$dia_asignado][$todos_los_bloques_ordenados[$index + $i]] = true;
+                    }
+                    
+                    $actividadColocada = true;
+                    break; 
+                }
+            }
+        }
+    }
     
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle("Horario Docente");
+
+    $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_PORTRAIT);
+    $sheet->getPageSetup()->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+    $sheet->getPageMargins()->setTop(0.5)->setRight(0.5)->setLeft(0.5)->setBottom(0.5);
+    
+    $styleBold = ['font' => ['bold' => true]];
+    $styleCenter = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleLeft = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleSectionHeader = ['font' => ['bold' => true, 'color' => ['argb' => 'FF000000']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE0E0E0']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    $allBorders = ['borders' => [ 'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']], ],];
+
+    $sheet->getColumnDimension('A')->setWidth(18);
+    $sheet->getColumnDimension('B')->setWidth(25);
+    $sheet->getColumnDimension('C')->setWidth(15);
+    $sheet->getColumnDimension('D')->setWidth(15);
+    $sheet->getColumnDimension('E')->setWidth(15);
+    $sheet->getColumnDimension('F')->setWidth(20);
+    $sheet->getColumnDimension('G')->setWidth(15);
+    $sheet->getColumnDimension('H')->setWidth(20); 
+
+
+    $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/Sistema-de-Gestion-Docente\public\assets\img\logo_uptaeb.png';
+
+
+    if (file_exists($logoPath)) {
+    $drawing = new Drawing();
+    $drawing->setName('Logo')->setDescription('Logo UPTAEB')->setPath($logoPath);
+   
+    $drawing->setResizeProportional(false); 
+    
+   
+    $drawing->setHeight(40); 
+    $drawing->setWidth(50);
+    $drawing->setCoordinates('H1');
+
+    $drawing->setOffsetX(40); 
+    $drawing->setOffsetY(5); 
+    $drawing->setWorksheet($sheet);
+    
+    $sheet->getRowDimension(1)->setRowHeight(25);
+}
+    $sheet->mergeCells('A2:H2')->setCellValue('A2', 'HORARIO DEL PERSONAL DOCENTE');
+    $sheet->getStyle('A2')->applyFromArray($styleBold)->getFont()->setSize(16);
+    $sheet->getStyle('A2')->applyFromArray($styleCenter);
+
+    $row = 3;
+    $sheet->setCellValue('A'.$row, '1. PNF/CARRERA');
+    $sheet->mergeCells('B'.$row.':F'.$row)->setCellValue('B'.$row, 'INFORMÁTICA');
+    $sheet->setCellValue('G'.$row, '2. LAPSO');
+    $sheet->setCellValue('H'.$row, toRoman($fase) . '-' . $anio);
+
+    $row = 4;
+    $sheet->setCellValue('A'.$row, '3. PROFESOR(A)');
+    $sheet->mergeCells('B'.$row.':F'.$row)->setCellValue('B'.$row, $infoDocente['nombreCompleto']);
+    $sheet->setCellValue('G'.$row, '4. CÉDULA');
+    $sheet->setCellValue('H'.$row, $infoDocente['doc_cedula']);
+    $sheet->getStyle('H'.$row)->applyFromArray($styleLeft);
+    
+$sheet->getStyle('H3')->applyFromArray($styleCenter); 
+$sheet->getStyle('H4')->applyFromArray($styleCenter); 
+$sheet->getStyle('H5')->applyFromArray($styleCenter);
+    $row = 5;
+    $sheet->setCellValue('A'.$row, '5. DEDICACIÓN');
+    $sheet->setCellValue('B'.$row, $infoDocente['doc_dedicacion']);
+    $sheet->setCellValue('C'.$row, '6. CONDICIÓN');
+    $sheet->mergeCells('D'.$row.':F'.$row)->setCellValue('D'.$row, $infoDocente['doc_condicion']);
+    $sheet->setCellValue('G'.$row, '7. CATEGORÍA');
+    $sheet->setCellValue('H'.$row, $infoDocente['categoria']);
+
+    
+    $row = 6;
+    $sheet->mergeCells('A'.$row.':A'.($row + 1))->setCellValue('A'.$row, "8. TÍTULO DE\nPREGRADO");
+    $sheet->getStyle('A'.$row)->getAlignment()->setWrapText(true);
+    
+     $sheet->mergeCells('B'.$row.':C'.($row + 1));
+    
+    $titulosPregrado = str_replace(', ', "\n", $infoDocente['pregrado_titulo'] ?? '');
+    $sheet->setCellValue('B'.$row, $titulosPregrado);
+    
+    $sheet->getStyle('B'.$row)->applyFromArray($styleCenter)->getAlignment()->setWrapText(true);
+
+  
+    $sheet->mergeCells('D'.$row.':D'.($row + 1))->setCellValue('D'.$row, '9. POSTGRADO');
+    $sheet->mergeCells('E'.$row.':H'.($row + 1));
+    
+    $titulosPostgrado = str_replace(', ', "\n", $infoDocente['postgrado_titulo'] ?? '');
+    $sheet->setCellValue('E'.$row, $titulosPostgrado);
+    
+    $sheet->getStyle('E'.$row)->applyFromArray($styleCenter)->getAlignment()->setWrapText(true);
+
+
+    $sheet->getStyle('B3')->applyFromArray($styleBold); 
+$sheet->getStyle('H3')->applyFromArray($styleBold); 
+$sheet->getStyle('B4')->applyFromArray($styleBold); 
+$sheet->getStyle('H4')->applyFromArray($styleBold); 
+$sheet->getStyle('B5')->applyFromArray($styleBold); 
+$sheet->getStyle('D5')->applyFromArray($styleBold); 
+$sheet->getStyle('H5')->applyFromArray($styleBold); 
+$sheet->getStyle('B6')->applyFromArray($styleBold); 
+$sheet->getStyle('E6')->applyFromArray($styleBold); 
+
+    $sheet->getStyle('A3:H7')->applyFromArray($allBorders);
+    $sheet->getStyle('A3:A7')->applyFromArray($styleBold);
+    $sheet->getStyle('C5')->applyFromArray($styleBold);
+    $sheet->getStyle('G3:G5')->applyFromArray($styleBold);
+    $sheet->getStyle('D6:D7')->applyFromArray($styleBold);
+
+    $row = 9;
+    
+    $startRow = $row;
+    $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, 'ACTIVIDADES ACADÉMICAS')->getStyle('A'.$row)->applyFromArray($styleSectionHeader);
+    $row++;
+    $sheet->mergeCells('A'.$row.':B'.$row)->setCellValue('A'.$row, '10. Unidad Curricular');
+    $sheet->setCellValue('C'.$row, '11. Código')->setCellValue('D'.$row, '12. Sección')->setCellValue('E'.$row, '13. Ambiente')->setCellValue('F'.$row, '14. Eje');
+    $sheet->mergeCells('G'.$row.':H'.$row)->setCellValue('G'.$row, '15. FASE');
+    $sheet->getStyle('A'.$row.':H'.$row)->applyFromArray($styleBold)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    $row++;
+
+    if (!empty($asignacionesAcademicas)) {
+        foreach ($asignacionesAcademicas as $item) {
+            $sheet->mergeCells('A'.$row.':B'.$row)->setCellValue('A'.$row, $item['uc_nombre']);
+            $sheet->setCellValue('C'.$row, $item['uc_codigo']);
+            
+            $seccionesCrudas = explode(', ', $item['secciones']);
+            $seccionesConPrefijo = [];
+            foreach ($seccionesCrudas as $sec) {
+                if (!empty(trim($sec))) {
+                    $primerCaracter = substr(trim($sec), 0, 1);
+                    $prefijo = (in_array($primerCaracter, ['3', '4'])) ? 'IIN' : 'IN';
+                    $seccionesConPrefijo[] = $prefijo . trim($sec);
+                }
+            }
+            $seccionesFormateadas = implode(', ', $seccionesConPrefijo);
+            $sheet->setCellValue('D'.$row, $seccionesFormateadas);
+            
+            $sheet->setCellValue('E'.$row, $item['ambientes']);
+            $sheet->setCellValue('F'.$row, $item['eje_nombre']);
+            $sheet->mergeCells('G'.$row.':H'.$row)->setCellValue('G'.$row, $item['uc_periodo']);
+            $sheet->getStyle('D'.$row.':E'.$row)->getAlignment()->setWrapText(true);
+            $row++;
+        }
+    } else {
+        $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, 'No hay asignaciones académicas para este período.');
+        $row++;
+    }
+    $firstDataRow = $startRow + 2;
+    $lastDataRow = $row - 1;
+    
+    if ($lastDataRow >= $firstDataRow) {
+        
+        $sheet->getStyle('A'.$firstDataRow.':H'.$lastDataRow)->applyFromArray($styleCenter);
+    }
+    $sheet->getStyle('A'.$startRow.':H'.($row - 1))->applyFromArray($allBorders);
+    $row++;
+
+    $startRow = $row;
+    $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, 'CREACIÓN INTELECTUAL, INTEGRACIÓN COMUNIDAD, GESTIÓN ACADÉMICA Y OTRAS ACTIVIDADES')->getStyle('A'.$row)->applyFromArray($styleSectionHeader);
+    $row++;
+    $sheet->mergeCells('A'.$row.':C'.$row)->setCellValue('A'.$row, '16. Tipo de Actividad');
+    $sheet->mergeCells('D'.$row.':F'.$row)->setCellValue('D'.$row, '17. Descripción (Horas)');
+    $sheet->mergeCells('G'.$row.':H'.$row)->setCellValue('G'.$row, '18. Dependencia');
+    $sheet->getStyle('A'.$row.':H'.$row)->applyFromArray($styleBold)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    $row++;
+    $otras = ['CREACIÓN INTELECTUAL' => $otrasActividades['act_creacion_intelectual'] ?? 0, 'INTEGRACIÓN COMUNIDAD' => $otrasActividades['act_integracion_comunidad'] ?? 0, 'GESTIÓN ACADÉMICA' => $otrasActividades['act_gestion_academica'] ?? 0, 'OTRAS ACT. ACADÉMICAS' => $otrasActividades['act_otras'] ?? 0];
+    foreach($otras as $label => $valor) {
+        $sheet->mergeCells('A'.$row.':C'.$row)->setCellValue('A'.$row, $label);
+        $sheet->mergeCells('D'.$row.':F'.$row)->setCellValue('D'.$row, $valor);
+        $sheet->mergeCells('G'.$row.':H'.$row);
+        $row++;
+    }
+    $firstDataRow = $startRow + 2;
+    $lastDataRow = $row - 1;
+    if ($lastDataRow >= $firstDataRow) {
+        
+        $sheet->getStyle('A'.$firstDataRow.':H'.$lastDataRow)->applyFromArray($styleCenter);
+    }
+
+    $sheet->getStyle('A'.$startRow.':H'.($row - 1))->applyFromArray($allBorders);
+    $row += 2;
+
+    $startRowHorario = $row;
+    uksort($activeShifts, function($a, $b) use ($shiftOrder) { return ($shiftOrder[$a] ?? 99) <=> ($shiftOrder[$b] ?? 99); });
+    $turnosString = implode(' / ', array_map('mb_strtoupper', array_keys($activeShifts)));
+    
+    $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, '19. HORARIO: ' . $turnosString)->getStyle('A'.$row)->applyFromArray($styleSectionHeader);
+    $row++;
     
     $diasDeLaSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    
-    uksort($activeShifts, function($a, $b) use ($shiftOrder) {
-        return ($shiftOrder[$a] ?? 99) <=> ($shiftOrder[$b] ?? 99);
-    });
-    $turnosString = implode(' / ', array_map('mb_strtoupper', array_keys($activeShifts)));
-
-    $html .= '<table class="tabla-horario">';
-    
-    $html .= '<tr><th colspan="8" class="titulo-seccion" style="padding: 4px 8px;">
-                <div style="float: left; text-align: left;">20. HORARIO</div>
-                <div style="float: right; text-align: center; width: 80%;">'.$turnosString.'</div>
-                <div style="clear: both;"></div>
-            </th></tr>';
-
-    $html .= '<tr><th width="15%">Hora</th>';
-    foreach ($diasDeLaSemana as $dia) { $html .= '<th width="12.14%">'.$dia.'</th>'; }
-    $html .= '<th width="12.14%">Observación</th></tr>';
+    $sheet->setCellValue('A'.$row, 'Hora');
+    $sheet->setCellValue('B'.$row, 'Lunes');
+    $sheet->setCellValue('C'.$row, 'Martes');
+    $sheet->setCellValue('D'.$row, 'Miércoles');
+    $sheet->setCellValue('E'.$row, 'Jueves');
+    $sheet->setCellValue('F'.$row, 'Viernes');
+    $sheet->setCellValue('G'.$row, 'Sábado');
+    $sheet->setCellValue('H'.$row, 'Observación');
+    $sheet->getStyle('A'.$row.':H'.$row)->applyFromArray($styleBold)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    $row++;
     
     $celdasOcupadas = [];
-
     foreach ($bloques_por_turno as $nombreTurno => $bloques) {
         if (!isset($activeShifts[$nombreTurno])) continue;
 
-        if ($nombreTurno != array_key_first($activeShifts)) {
-                $html .= '<tr><td colspan="8" class="titulo-seccion" style="font-weight: bold;">'.mb_strtoupper($nombreTurno, 'UTF-8').'</td></tr>';
+        if ($nombreTurno != array_key_first(array_filter($bloques_por_turno, fn($key) => isset($activeShifts[$key]), ARRAY_FILTER_USE_KEY))) {
+             $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, mb_strtoupper($nombreTurno, 'UTF-8'))->getStyle('A'.$row)->applyFromArray($styleSectionHeader);
+             $row++;
         }
         
-        ksort($bloques);
-        
         foreach($bloques as $hora_db => $rango_hora) {
-            $html .= '<tr><td>'.$rango_hora.'</td>';
+            $sheet->setCellValue('A'.$row, $rango_hora);
+            $colIndex = 1;
             foreach($diasDeLaSemana as $dia) {
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
                 if (isset($celdasOcupadas[$dia][$hora_db])) {
+                    $colIndex++;
                     continue;
                 }
 
                 $clases_en_celda = $gridData[$dia][$hora_db] ?? null;
-
                 if ($clases_en_celda) {
                     $primera_clase = $clases_en_celda[0];
                     $span = $primera_clase['span'];
-                    $rowspan = $span > 1 ? ' rowspan="'.$span.'"' : '';
                     
                     if ($span > 1) {
+                        $sheet->mergeCells($colLetter.$row.':'.$colLetter.($row + $span - 1));
                         $horaActual = new DateTime($hora_db);
                         for ($i = 1; $i < $span; $i++) {
                             $horaActual->add(new DateInterval('PT40M'));
                             $celdasOcupadas[$dia][$horaActual->format('H:i')] = true;
                         }
                     }
-
+                    
                     $contenidos = [];
                     foreach ($clases_en_celda as $clase) {
-                        $contenidos[] = '<div style="padding: 3px 0;">' . $clase['content'] . '</div>';
+                        $contenidos[] = $clase['content'];
                     }
-                    $contenido_final = implode('<div style="border-top: 1px solid #ccc; margin: 1px auto; width: 80%;"></div>', $contenidos);
-                    
-                    $html .= '<td'.$rowspan.'>'.$contenido_final.'</td>';
+                    $contenido_final = implode("\n----\n", $contenidos);
+                    $sheet->getCell($colLetter.$row)->setValue($contenido_final);
 
-                } else {
-                    $html .= '<td></td>';
+                    if (isset($primera_clase['type']) && $primera_clase['type'] === 'class') {
+    $sheet->getStyle($colLetter.$row)->applyFromArray($styleBold);
+}
                 }
+                $sheet->getStyle($colLetter.$row)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_CENTER)->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $colIndex++;
             }
-            $html .= '<td></td></tr>';
+            $sheet->getRowDimension($row)->setRowHeight(35);
+            $row++;
         }
     }
-    $html .= '</table>';
-
-    $totalHorasClase = array_sum(array_column($asignacionesAcademicas, 'totalHorasClase'));
-    $granTotalHoras = $totalHorasClase + ($otrasActividades['act_creacion_intelectual'] ?? 0) + ($otrasActividades['act_integracion_comunidad'] ?? 0) + ($otrasActividades['act_gestion_academica'] ?? 0) + ($otrasActividades['act_otras'] ?? 0);
-
-    $html .= '<table class="tabla-encabezado">
-        <tr>
-            <td class="titulo-seccion" style="width:25%; text-align:left;">21. OBSERVACIONES:</td>
-            <td class="texto-izquierda">'.htmlspecialchars($infoDocente['doc_observacion'] ?? 'Ninguna.').'</td>
-        </tr>
-    </table>';
+    $sheet->getStyle('A'.$startRowHorario.':H'.($row-1))->applyFromArray($allBorders);
     
-    $html .= '<table class="sin-borde" style="margin-top: 8px; font-size:9px;"><tr><td width="50%" class="sin-borde texto-izquierda" style="vertical-align:top;"><table class="tabla-resumen">
-        <tr><td class="texto-izquierda" style="font-weight: bold;">22. TOTAL (Horas Clases + Horas Adm.)</td><td style="font-weight: bold;">'.$granTotalHoras.'</td></tr>
-        <tr><td class="texto-izquierda">22.1 Horas Clases</td><td>'.$totalHorasClase.'</td></tr>
-        <tr><td class="texto-izquierda">22.2 Creación Intelectual (CI)</td><td>'.($otrasActividades['act_creacion_intelectual'] ?? 0).'</td></tr>
-        <tr><td class="texto-izquierda">22.3 Integración Comunidad (IC)</td><td>'.($otrasActividades['act_integracion_comunidad'] ?? 0).'</td></tr>
-        <tr><td class="texto-izquierda">22.4 Gestión Académica (GA)</td><td>'.($otrasActividades['act_gestion_academica'] ?? 0).'</td></tr>
-        <tr><td class="texto-izquierda">22.5 Otras Act. Académicas (OAA)</td><td>'.($otrasActividades['act_otras'] ?? 0).'</td></tr>
-        </table></td>
-        <td width="50%" class="sin-borde" style="vertical-align: bottom;"><table class="sin-borde">
-        <tr><td class="texto-centro sin-borde"><br><br>____________________<br>23. Firma del Profesor</td><td class="texto-centro sin-borde"><br><br>____________________<br>25. Vo Bo (Coordinador de PNF o Jefe Dpto)<br>Firma y Sello</td></tr>
-        <tr><td class="texto-izquierda sin-borde" style="padding-top:10px;">24. Fecha:</td><td class="sin-borde"></td></tr>
-        </table></td></tr></table>';
-    $html .= '</body></html>';
+    $startRowObs = $row;
+    $sheet->setCellValue('A'.$row, '20. Observaciones:');
+    $sheet->getStyle('A'.$row)->applyFromArray($styleBold)->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
+    $sheet->mergeCells('B'.$row.':H'.$row);
+    $sheet->setCellValue('B'.$row, ($infoDocente['doc_observacion'] ?? 'Ninguna.'));
+    $sheet->getStyle('B'.$row)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
+    $sheet->getRowDimension($row)->setRowHeight(25);
+    $sheet->getStyle('A'.$startRowObs.':H'.$row)->applyFromArray($allBorders);
+    $row++;
 
-    $opciones = new Options();
-    $opciones->set('isHtml5ParserEnabled', true);
-    $opciones->set('isRemoteEnabled', true);
-    $dompdf = new Dompdf($opciones);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-    if (ob_get_length()) ob_end_clean();
-    $dompdf->stream("HorarioDocente_".$cedulaDocenteSeleccionada.".pdf", ["Attachment" => false]);
+    
+    $row++; 
+
+   
+    $totalHorasClase = array_sum(array_column($asignacionesAcademicas, 'totalHorasClase'));
+    $totalHorasClase += $otrasActividades['act_academicas'] ?? 0;
+    $creacionIntelectual = $otrasActividades['act_creacion_intelectual'] ?? 0;
+    $integracionComunidad = $otrasActividades['act_integracion_comunidad'] ?? 0;
+    $asesoriaAcademica = $otrasActividades['act_otras'] ?? 0;
+    $gestionAcademica = $otrasActividades['act_gestion_academica'] ?? 0;
+    $otrasActAcademicas = 0;
+    $granTotalHoras = $totalHorasClase + $creacionIntelectual + $integracionComunidad + $asesoriaAcademica + $gestionAcademica + $otrasActAcademicas;
+    
+    $startRowFinal = $row;
+    $endRowFinal = $startRowFinal + 6;
+
+    
+    $sheet->mergeCells('A'.$startRowFinal.':B'.$startRowFinal)->setCellValue('A'.$startRowFinal, '21. TOTAL (Horas Clases + Horas Adm.)');
+    $sheet->setCellValue('C'.$startRowFinal, $granTotalHoras);
+    $sheet->mergeCells('A'.($startRowFinal+1).':B'.($startRowFinal+1))->setCellValue('A'.($startRowFinal+1), '21.1 Horas Clases');
+    $sheet->setCellValue('C'.($startRowFinal+1), $totalHorasClase);
+    $sheet->mergeCells('A'.($startRowFinal+2).':B'.($startRowFinal+2))->setCellValue('A'.($startRowFinal+2), '21.2 Creación Intelectual (CI)');
+    $sheet->setCellValue('C'.($startRowFinal+2), $creacionIntelectual);
+    $sheet->mergeCells('A'.($startRowFinal+3).':B'.($startRowFinal+3))->setCellValue('A'.($startRowFinal+3), '21.3 Integración Comunidad (IC)');
+    $sheet->setCellValue('C'.($startRowFinal+3), $integracionComunidad);
+    $sheet->mergeCells('A'.($startRowFinal+4).':B'.($startRowFinal+4))->setCellValue('A'.($startRowFinal+4), '21.4 Asesoría Académica (AA)');
+    $sheet->setCellValue('C'.($startRowFinal+4), $asesoriaAcademica);
+    $sheet->mergeCells('A'.($startRowFinal+5).':B'.($startRowFinal+5))->setCellValue('A'.($startRowFinal+5), '21.5 Gestión Académica (GA)');
+    $sheet->setCellValue('C'.($startRowFinal+5), $gestionAcademica);
+    $sheet->mergeCells('A'.($startRowFinal+6).':B'.($startRowFinal+6))->setCellValue('A'.($startRowFinal+6), '21.6 Otras Act. Académicas (OAA)');
+    $sheet->setCellValue('C'.($startRowFinal+6), $otrasActAcademicas);
+
+    
+    $sheet->mergeCells('D'.$startRowFinal.':E'.$startRowFinal)->setCellValue('D'.$startRowFinal, '22. Firma del Profesor');
+    
+    
+    $sheet->mergeCells('D'.($startRowFinal + 1).':E'.($endRowFinal - 1));
+
+    
+    $sheet->setCellValue('D'.$endRowFinal, '23. Fecha:'); 
+                                                        
+
+    $sheet->mergeCells('F'.$startRowFinal.':H'.$startRowFinal)->setCellValue('F'.$startRowFinal, '24. Vo Bo (Coordinador de PNF o Jefe Dpto)');
+    $sheet->mergeCells('F'.($startRowFinal + 1).':H'.($startRowFinal + 1))->setCellValue('F'.($startRowFinal + 1), 'Firma y Sello');
+    $sheet->mergeCells('F'.($startRowFinal + 2).':H'.$endRowFinal);
+    
+    
+    $finalRange = 'A'.$startRowFinal.':H'.$endRowFinal;
+    $sheet->getStyle($finalRange)->applyFromArray($allBorders);
+    
+    
+    $sheet->getStyle('C33')->applyFromArray($styleBold);
+   
+    $sheet->getStyle('A'.$startRowFinal.':B'.$endRowFinal)->applyFromArray($styleBold); 
+    $sheet->getStyle('D'.$startRowFinal)->applyFromArray($styleBold); 
+    $sheet->getStyle('F'.$startRowFinal)->applyFromArray($styleBold);
+  
+    $sheet->getStyle('H'.$startRowFinal)->applyFromArray($styleBold);  
+    $sheet->getStyle('D'.$endRowFinal)->applyFromArray($styleBold);   
+     
+     $sheet->getStyle('C'.$startRowFinal.':C'.$endRowFinal)->applyFromArray($styleCenter);
+    
+    $sheet->getStyle('A'.$startRowFinal.':H'.$endRowFinal)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+    
+    $sheet->getStyle('F'.($startRowFinal + 1))->applyFromArray($styleCenter);
+    $sheet->getStyle('F'.($startRowFinal + 1))->applyFromArray($styleBold);
+    
+
+    $fileName = "HorarioDocente_" . $cedulaDocenteSeleccionada . ".xlsx";
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $fileName . '"');
+    header('Cache-Control: max-age=0');
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
     exit;
 
 } else {

@@ -57,6 +57,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <thead>
                             <tr>
                                 <th>Coordinación</th>
+                                <th>Hora de Descarga</th>
                                 <th style="width: 20%;">Acciones</th>
                             </tr>
                         </thead>
@@ -83,6 +84,11 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <label for="coordinacionNombre" class="form-label">Nombre de la Coordinación</label>
                                     <input class="form-control" type="text" id="coordinacionNombre" name="coordinacionNombre" required placeholder="Ej: Proyecto">
                                     <span id="scoordinacionNombre" class="text-danger"></span>
+                                </div>
+                                <div class="col-12">
+                                    <label for="coordinacionHoraDescarga" class="form-label">Hora de Descarga</label>
+                                    <input class="form-control" type="number" id="coordinacionHoraDescarga" name="coordinacionHoraDescarga" min="1" max="24" placeholder="Ej: 8">
+                                    <span id="scoordinacionHoraDescarga" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center mt-4">

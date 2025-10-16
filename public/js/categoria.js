@@ -68,6 +68,7 @@ function crearDT() {
 }
 
 let originalNombreCategoria = '';
+let originalDescripcionCategoria = '';
 
 $(document).ready(function () {
   Listar();
@@ -90,9 +91,10 @@ $("#categoriaNombre").on("keydown keyup", function () {
     datos.append('accion', 'existe');
     datos.append('categoriaNombre', $("#categoriaNombre").val());
     if ($("#proceso").text() === "MODIFICAR") {
-    datos.append("categoriaExcluir", originalNombreCategoria); 
-}
-enviaAjax(datos, 'existe');
+      datos.append("categoriaExcluir", originalNombreCategoria);
+      verificarCambios();
+    }
+    enviaAjax(datos, 'existe');
   }
 });
 
@@ -107,10 +109,13 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
     $("#scategoriaDescripcion"),
     "El formato permite de 5 a 100 carácteres. Ej:Esta categoría..."
   );
+  if ($("#proceso").text() === "MODIFICAR") {
+    verificarCambios();
+  }
 });
 
   $("#proceso").on("click", function () {
-    if ($(this).text() == "REGISTRAR") {
+    if ($(this).text() == "GUARDAR") {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
@@ -146,7 +151,7 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
         );
       } else {
         
-        Swal.fire({
+        const swalInstance = Swal.fire({
           title: "¿Está seguro de eliminar esta categoría?",
           text: "Esta acción no se puede deshacer.",
           icon: "warning",
@@ -155,7 +160,21 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
           cancelButtonColor: "#d33",
           confirmButtonText: "Sí, eliminar",
           cancelButtonText: "Cancelar",
-        }).then((result) => {
+          focusConfirm: true,
+          allowOutsideClick: false,
+          allowEscapeKey: true,
+          didOpen: () => {
+            const popup = Swal.getPopup();
+            popup.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') {
+                e.stopPropagation();
+                Swal.clickConfirm();
+              }
+            });
+          }
+        });
+        
+        swalInstance.then((result) => {
           if (result.isConfirmed) {
             var datos = new FormData();
             datos.append("accion", "eliminar");
@@ -178,18 +197,34 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("REGISTRAR");
+    $("#proceso").text("GUARDAR");
     $("#modal1").modal("show");
     $("#scategoriaNombre").show();
-        $(
-      "#categoriaDescripcion, #categoriaNombre"
-    ).prop("disabled", false);
+    $("#categoriaDescripcion, #categoriaNombre").prop("disabled", false);
   });
 
   $('#modal1').on('hidden.bs.modal', function () {
     $("#proceso").prop("disabled", false);
     $("#scategoriaNombre").text("").css("color", "");
     $("#scategoriaDescripcion").text("").css("color", "");
+  });
+
+  $('#modal1').on('shown.bs.modal', function () {
+    $("#categoriaNombre").focus();
+  });
+
+  $('#modal1').on('keydown', function(e) {
+    if (e.which === 13) {
+      if ($("#proceso").text() === "ELIMINAR" && $('.swal2-container').length) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      if (!$("#proceso").prop("disabled")) {
+        e.preventDefault();
+        $("#proceso").click();
+      }
+    }
   });
 });
 
@@ -221,6 +256,7 @@ function validarenvio() {
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
   originalNombreCategoria = $(linea).find("td:eq(0)").text();
+  originalDescripcionCategoria = $(linea).find("td:eq(1)").text();
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
@@ -228,6 +264,7 @@ function pone(pos, accion) {
     $("#categoriaDescripcion").prop("disabled", false);
     $("#scategoriaNombre").text("").show();
     $("#scategoriaDescripcion").text("").show();
+    $("#proceso").prop("disabled", true);
   } else {
     $("#proceso").text("ELIMINAR");
     $("#categoriaNombre, #categoriaDescripcion").prop("disabled", true);
@@ -269,19 +306,21 @@ function enviaAjax(datos, accion) {
           $("#resultadoconsulta").empty();
           let tabla = "";
           $.each(lee.mensaje, function (index, item) {
-            const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-            
-            tabla += `
-              <tr>
-                <td>${item.cat_nombre}</td>
-                <td>${item.cat_descripcion}</td>
-                <td class="text-center">
-                  ${btnModificar}
-                  ${btnEliminar}
-                </td>
-              </tr>
-            `;
+            if (item.cat_estado == 1) {
+              const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+              const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" data-codigo="${item.cat_id}" data-tipo="${item.cat_nombre}" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+              
+              tabla += `
+                <tr>
+                  <td>${item.cat_nombre}</td>
+                  <td>${item.cat_descripcion}</td>
+                  <td class="text-center">
+                    ${btnModificar}
+                    ${btnEliminar}
+                  </td>
+                </tr>
+              `;
+            }
           });
           $("#resultadoconsulta").html(tabla);
           crearDT();
@@ -334,6 +373,19 @@ function enviaAjax(datos, accion) {
     },
     complete: function () {},
   });
+}
+
+function verificarCambios() {
+  const nombreActual = $("#categoriaNombre").val();
+  const descripcionActual = $("#categoriaDescripcion").val();
+  
+  if (nombreActual === originalNombreCategoria && descripcionActual === originalDescripcionCategoria) {
+    $("#proceso").prop("disabled", true);
+  } else {
+    if ($("#scategoriaNombre").text() === "" || $("#scategoriaNombre").css("color") !== "rgb(255, 0, 0)") {
+      $("#proceso").prop("disabled", false);
+    }
+  }
 }
 
 function limpia() {

@@ -24,9 +24,9 @@ if (!function_exists('tiene_permiso_accion')) {
 
 $puede_registrar = tiene_permiso_accion('malla curricular', 'registrar', $permisos);
 $puede_modificar = tiene_permiso_accion('malla curricular', 'modificar', $permisos);
-$puede_eliminar = tiene_permiso_accion('malla curricular', 'eliminar', $permisos);
 
-if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
+
+if (!$puede_registrar && !$puede_modificar) {
     header('Location: ?pagina=principal');
     exit();
 }
@@ -77,7 +77,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <th>Nombre</th>
                                 <th>Cohorte</th>
                                 <th>Descripción</th>
-                                <th>Activa</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -103,7 +103,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <legend class="w-auto px-2 h6">Datos de la Malla</legend>
                                     <div class="row">
                                         <div class="col-md-6 mb-3"><label for="mal_codigo" class="form-label">Código</label><input class="form-control" type="text" id="mal_codigo" name="mal_codigo" placeholder="Ej: PNF-INF-2024" required>
-                                        <span id="smalcodigo" class="small validation-span"></span></div>
+                                            <input type="hidden" id="mal_codigo_original" name="mal_codigo_original" value="">
+                                            <span id="smalcodigo" class="small validation-span"></span></div>
                                         <div class="col-md-6 mb-3"><label for="mal_nombre" class="form-label">Nombre</label><input class="form-control" type="text" id="mal_nombre" name="mal_nombre" placeholder="Ej: Malla 2024" required><span id="smalnombre" class="small validation-span"></span></div>
                                         <div class="col-md-6 mb-3"><label for="mal_cohorte" class="form-label">Cohorte</label><input class="form-control" type="text" id="mal_cohorte" name="mal_cohorte" placeholder="Número de la cohorte. Ej: 4" required><span id="smalcohorte" class="small validation-span"></span></div>
                                         <div class="col-md-6 mb-3"><label for="mal_descripcion" class="form-label">Descripción</label><input class="form-control" type="text" id="mal_descripcion" name="mal_descripcion" placeholder="Descripción breve de la malla" required><span id="smaldescripcion" class="small validation-span"></span></div>
@@ -136,7 +137,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         <div class="modal fade" tabindex="-1" role="dialog" id="modalVerMalla">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
-                    <div class="modal-header bg-info text-dark">
+                    <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title" id="modalVerMallaTitulo">Detalles de la Malla</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -153,8 +154,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
     <script>
         const PERMISOS = {
-            modificar: <?php echo json_encode($puede_modificar); ?>,
-            eliminar: <?php echo json_encode($puede_eliminar); ?>
+            modificar: <?php echo json_encode($puede_modificar); ?>
         };
     </script>
     <script src="vendor/select2/select2/dist/js/select2.min.js"></script>

@@ -6,21 +6,20 @@ class Turno extends Connection
     private $nombreTurno;
     private $horaInicio;
     private $horaFin;
+    private $nombreTurnoOriginal;
 
-    public function __construct($nombreTurno = null, $horaInicio = null, $horaFin = null)
+    public function __construct()
     {
         parent::__construct();
-        $this->nombreTurno = $nombreTurno;
-        $this->horaInicio = $horaInicio;
-        $this->horaFin = $horaFin;
     }
 
     public function getNombreTurno() { return $this->nombreTurno; }
-    public function setNombreTurno($nombreTurno) { $this->nombreTurno = $nombreTurno; }
+    public function setNombreTurno($nombreTurno) { $this->nombreTurno = trim($nombreTurno); }
     public function getHoraInicio() { return $this->horaInicio; }
     public function setHoraInicio($horaInicio) { $this->horaInicio = $horaInicio; }
     public function getHoraFin() { return $this->horaFin; }
     public function setHoraFin($horaFin) { $this->horaFin = $horaFin; }
+    public function setNombreTurnoOriginal($nombre) { $this->nombreTurnoOriginal = trim($nombre); }
 
     public function Registrar()
     {
@@ -44,8 +43,7 @@ class Turno extends Connection
 
         try {
             $stmt_check = $co->prepare("SELECT tur_estado FROM tbl_turno WHERE tur_nombre = :nombreTurno");
-            $stmt_check->bindParam(':nombreTurno', $this->nombreTurno, PDO::PARAM_STR);
-            $stmt_check->execute();
+            $stmt_check->execute([':nombreTurno' => $this->nombreTurno]);
             
             $turnoExistente = $stmt_check->fetch(PDO::FETCH_ASSOC);
 
@@ -54,30 +52,30 @@ class Turno extends Connection
                     $r['resultado'] = 'error';
                     $r['mensaje'] = 'ERROR: El turno ya existe y se encuentra activo.';
                 } else {
-                    $stmt_update = $co->prepare(
-                        "UPDATE tbl_turno SET tur_horaInicio = :horaInicio, tur_horaFin = :horaFin, tur_estado = 1 WHERE tur_nombre = :nombreTurno"
-                    );
-                    $stmt_update->bindParam(':horaInicio', $this->horaInicio, PDO::PARAM_STR);
-                    $stmt_update->bindParam(':horaFin', $this->horaFin, PDO::PARAM_STR);
-                    $stmt_update->bindParam(':nombreTurno', $this->nombreTurno, PDO::PARAM_STR);
-                    $stmt_update->execute();
+                    $co->prepare("UPDATE tbl_turno SET tur_horaInicio = :horaInicio, tur_horaFin = :horaFin, tur_estado = 1 WHERE tur_nombre = :nombreTurno")
+                       ->execute([
+                           ':horaInicio' => $this->horaInicio,
+                           ':horaFin' => $this->horaFin,
+                           ':nombreTurno' => $this->nombreTurno
+                       ]);
                     $r['resultado'] = 'registrar';
                     $r['mensaje'] = '¡Turno Registrado Correctamente!';
                 }
             } else {
-                $stmt_insert = $co->prepare(
-                    "INSERT INTO tbl_turno(tur_nombre, tur_horaInicio, tur_horaFin, tur_estado) VALUES (:nombreTurno, :horaInicio, :horaFin, 1)"
-                );
-                $stmt_insert->bindParam(':nombreTurno', $this->nombreTurno, PDO::PARAM_STR);
-                $stmt_insert->bindParam(':horaInicio', $this->horaInicio, PDO::PARAM_STR);
-                $stmt_insert->bindParam(':horaFin', $this->horaFin, PDO::PARAM_STR);
-                $stmt_insert->execute();
+                $co->prepare("INSERT INTO tbl_turno(tur_nombre, tur_horaInicio, tur_horaFin, tur_estado) VALUES (:nombreTurno, :horaInicio, :horaFin, 1)")
+                   ->execute([
+                       ':nombreTurno' => $this->nombreTurno,
+                       ':horaInicio' => $this->horaInicio,
+                       ':horaFin' => $this->horaFin
+                   ]);
                 $r['resultado'] = 'registrar';
                 $r['mensaje'] = '¡Turno Registrado Correctamente!';
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = "Error en la operación: " . $e->getMessage();
+        } finally {
+            $co = null;
         }
         
         return $r;
@@ -87,31 +85,52 @@ class Turno extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = [];
         try {
             $stmt = $co->query("SELECT 
                                 tur_nombre, 
                                 DATE_FORMAT(tur_horaInicio, '%h:%i %p') AS hora_inicio_12h, 
                                 DATE_FORMAT(tur_horaInicio, '%H:%i') AS hora_inicio_24h, 
                                 DATE_FORMAT(tur_horaFin, '%h:%i %p') AS hora_fin_12h,
-                                DATE_FORMAT(tur_horaFin, '%H:%i') AS hora_fin_24h
+                                DATE_FORMAT(tur_horaFin, '%H:%i') AS hora_fin_24h,
+                                tur_estado
                             FROM tbl_turno 
-                            WHERE tur_estado = 1 
                             ORDER BY tur_horaInicio ASC");
             
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $r['resultado'] = 'consultar';
-            $r['mensaje'] = $data;
+            $r['mensaje'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
+        } finally {
+            $co = null;
         }
         return $r;
     }
 
     public function Modificar()
     {
-        $r = array();
+        $r = [];
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        try {
+            $stmt = $co->prepare("SELECT tur_nombre, tur_horaInicio, tur_horaFin FROM tbl_turno WHERE tur_nombre = :nombreOriginal");
+            $stmt->execute([':nombreOriginal' => $this->nombreTurnoOriginal]);
+            $datosOriginales = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$datosOriginales) {
+                return ['resultado' => 'error', 'mensaje' => 'El turno no existe.'];
+            }
+            
+            if ($datosOriginales['tur_nombre'] === $this->nombreTurno && 
+                $datosOriginales['tur_horaInicio'] === $this->horaInicio &&
+                $datosOriginales['tur_horaFin'] === $this->horaFin) {
+                return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
+            }
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        }
         
         $solapamiento = $this->chequearSolapamiento();
         if(isset($solapamiento['solapamiento']) && $solapamiento['solapamiento'] === true){
@@ -126,19 +145,21 @@ class Turno extends Connection
             return $r;
         }
 
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
-            $stmt = $co->prepare("UPDATE tbl_turno SET tur_horaInicio = :horaInicio, tur_horaFin = :horaFin WHERE tur_nombre = :nombreTurno");
-            $stmt->bindParam(':horaInicio', $this->horaInicio, PDO::PARAM_STR);
-            $stmt->bindParam(':horaFin', $this->horaFin, PDO::PARAM_STR);
-            $stmt->bindParam(':nombreTurno', $this->nombreTurno, PDO::PARAM_STR);
-            $stmt->execute();
+            $co->prepare("UPDATE tbl_turno SET tur_nombre = :nombreTurno, tur_horaInicio = :horaInicio, tur_horaFin = :horaFin WHERE tur_nombre = :nombreOriginal")
+               ->execute([
+                   ':nombreTurno' => $this->nombreTurno,
+                   ':horaInicio' => $this->horaInicio,
+                   ':horaFin' => $this->horaFin,
+                   ':nombreOriginal' => $this->nombreTurnoOriginal
+               ]);
             $r['resultado'] = 'modificar';
             $r['mensaje'] = '¡Turno Modificado Correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = "Error al modificar: " . $e->getMessage();
+        } finally {
+            $co = null;
         }
         return $r;
     }
@@ -147,16 +168,35 @@ class Turno extends Connection
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
+        $r = [];
+        
         try {
-            $stmt = $co->prepare("UPDATE tbl_turno SET tur_estado = 0 WHERE tur_nombre = :nombreTurno");
-            $stmt->bindParam(':nombreTurno', $this->nombreTurno, PDO::PARAM_STR);
-            $stmt->execute();
+            $stmt = $co->prepare("SELECT tur_estado FROM tbl_turno WHERE tur_nombre = :nombreTurno");
+            $stmt->execute([':nombreTurno' => $this->nombreTurno]);
+            $turno = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$turno) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'El turno que intenta eliminar no existe.';
+                return $r;
+            }
+
+            if ($turno['tur_estado'] == 0) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'El turno ya está desactivado.';
+                return $r;
+            }
+            
+            $co->prepare("UPDATE tbl_turno SET tur_estado = 0 WHERE tur_nombre = :nombreTurno")
+               ->execute([':nombreTurno' => $this->nombreTurno]);
+            
             $r['resultado'] = 'eliminar';
             $r['mensaje'] = '¡Turno Eliminado Correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = "Error al eliminar: " . $e->getMessage();
+        } finally {
+            $co = null;
         }
         return $r;
     }
@@ -176,15 +216,17 @@ class Turno extends Connection
                 $sql .= " AND tur_nombre != :nombreTurno";
             }
 
-            $stmt = $co->prepare($sql);
-            $stmt->bindParam(':horaInicio', $this->horaInicio, PDO::PARAM_STR);
-            $stmt->bindParam(':horaFin', $this->horaFin, PDO::PARAM_STR);
+            $params = [
+                ':horaInicio' => $this->horaInicio,
+                ':horaFin' => $this->horaFin
+            ];
 
             if (!empty($this->nombreTurno)) {
-                $stmt->bindParam(':nombreTurno', $this->nombreTurno, PDO::PARAM_STR);
+                $params[':nombreTurno'] = $this->nombreTurno;
             }
 
-            $stmt->execute();
+            $stmt = $co->prepare($sql);
+            $stmt->execute($params);
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($resultado) {

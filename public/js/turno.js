@@ -1,6 +1,7 @@
 let nombresExistentes = [];
 let solapamientoDetectado = false;
 let timeoutValidacion = null;
+let originalNombreTurno = '';
 let originalHoraInicio = '';
 let originalHoraFin = '';
 
@@ -42,7 +43,7 @@ $(document).ready(function () {
     });
 
     $("#proceso").on("click", function () {
-        if ($(this).text() === "REGISTRAR") {
+        if ($(this).text() === "GUARDAR") {
             procesarRegistro();
         } else {
             procesarModificacion();
@@ -54,9 +55,27 @@ $(document).ready(function () {
         $('#turnonombre option').each(function() {
             $(this).prop('disabled', nombresExistentes.includes($(this).val()));
         });
-        $("#proceso").text("REGISTRAR");
+        $("#proceso").text("GUARDAR");
         $(".modal-title").text("Registrar Turno");
         $("#modal1").modal("show");
+    });
+
+    $('#modal1').on('shown.bs.modal', function () {
+        $("#turnonombre").focus();
+    });
+
+    $('#modal1').on('keydown', function(e) {
+        if (e.which === 13) {
+            if ($('.swal2-container').length) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            if (!$("#proceso").prop("disabled")) {
+                e.preventDefault();
+                $("#proceso").click();
+            }
+        }
     });
 
     $("#btnConfirmarEliminar").on("click", function() {
@@ -84,6 +103,7 @@ function procesarModificacion() {
         var datos = new FormData();
         datos.append("accion", "modificar");
         datos.append("turnoid", $("#turnoid").val());
+        datos.append("turnonombre", $("#turnonombre").val());
         datos.append("horaInicio", $("#horaInicio").val());
         datos.append("horafin", $("#horafin").val());
         enviaAjax(datos, function(respuesta) {
@@ -95,7 +115,7 @@ function procesarModificacion() {
 }
 
 function procesarEliminacion() {
-    Swal.fire({
+    const swalInstance = Swal.fire({
         title: "¿Está seguro que quieres Eliminar este turno?",
         text: "Esta acción no se puede deshacer.",
         icon: "warning",
@@ -104,7 +124,21 @@ function procesarEliminacion() {
         cancelButtonColor: "#3085d6",
         confirmButtonText: "Sí, eliminar",
         cancelButtonText: "Cancelar",
-    }).then((result) => {
+        focusConfirm: true,
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+        didOpen: () => {
+            const popup = Swal.getPopup();
+            popup.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.stopPropagation();
+                    Swal.clickConfirm();
+                }
+            });
+        }
+    });
+    
+    swalInstance.then((result) => {
         if (result.isConfirmed) {
             var datos = new FormData();
             datos.append("accion", "eliminar");
@@ -293,18 +327,20 @@ function enviaAjax(datos, callbackExito) {
             $("#resultadoconsulta").empty();
             nombresExistentes = []; 
             $.each(lee.mensaje, function (index, item) {
-                nombresExistentes.push(item.tur_nombre); 
-            const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                $("#resultadoconsulta").append(`<tr data-horainicio-24h="${item.hora_inicio_24h}" data-horafin-24h="${item.hora_fin_24h}">
-                    <td>${item.tur_nombre}</td>
-                    <td>${item.hora_inicio_12h}</td>
-                    <td>${item.hora_fin_12h}</td>
-                    <td>
-                            ${btnModificar}
-                  ${btnEliminar}
-                     </td>
-                     </tr>`);
+                if (item.tur_estado == 1) {
+                    nombresExistentes.push(item.tur_nombre); 
+                    const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                    const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                    $("#resultadoconsulta").append(`<tr data-horainicio-24h="${item.hora_inicio_24h}" data-horafin-24h="${item.hora_fin_24h}">
+                        <td>${item.tur_nombre}</td>
+                        <td>${item.hora_inicio_12h}</td>
+                        <td>${item.hora_fin_12h}</td>
+                        <td>
+                                ${btnModificar}
+                      ${btnEliminar}
+                         </td>
+                         </tr>`);
+                }
             });
             crearDT();
         } else if (lee.resultado === "error") {
