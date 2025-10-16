@@ -64,7 +64,7 @@ function abreviarNombreUC($nombre) {
         'Redes Avanzadas' => 'RED AVANZ',
         'Seguridad Informática' => 'SEG INF',
         
-        
+
         'Actividades Acreditable I' => 'AA-I',
         'Actividades Acreditables II' => 'AA-II',
         'Actividades Acreditables III' => 'AA-III',
