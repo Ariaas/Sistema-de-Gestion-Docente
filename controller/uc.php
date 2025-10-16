@@ -13,7 +13,6 @@ require_once("model/" . $pagina . ".php");
 $u = new UC();
 $ejes = $u->obtenerEje();
 $areas = $u->obtenerArea();
-$docentes = $u->obtenerDocente();
 
 if (is_file("views/" . $pagina . ".php")) {
 
@@ -31,31 +30,15 @@ if (is_file("views/" . $pagina . ".php")) {
         $accion = $_POST['accion'];
         if ($accion == 'consultar') {
             echo json_encode($u->Listar());
-        } elseif ($accion == 'consultarAsignacion') {
-            echo json_encode($u->Listar());
-        } elseif ($accion == 'ver_docentes') {
-            $docentesAsignados = $u->obtenerDocentesPorUc($_POST['codigo']);
-            echo json_encode(['resultado' => 'ok', 'mensaje' => $docentesAsignados]);
-        } elseif ($accion == 'cargar_docentes_para_asignar') {
-            $docentesDisponibles = $u->obtenerDocentesNoAsignados($_POST['codigo']);
-            echo json_encode([
-                'resultado' => 'ok',
-                'disponibles' => $docentesDisponibles
-            ]);
-        } elseif ($accion == 'asignar') {
-            $asignacionesJSON = $_POST['asignaciones'];
-            $ucsJSON = $_POST['ucs'];
-            echo json_encode($u->Asignar($asignacionesJSON, $ucsJSON));
-            $bitacora->registrarAccion($usu_id, 'Asignar', 'Unidad Curricular');
-        } elseif ($accion == 'quitar') {
-            echo json_encode($u->Quitar());
-
-            $bitacora->registrarAccion($usu_id, 'Quitar', 'Unidad Curricular');
         } elseif ($accion == 'eliminar') {
             $u->setcodigoUC($_POST['codigoUC']);
             echo  json_encode($u->Eliminar());
 
             $bitacora->registrarAccion($usu_id, 'eliminar', 'Unidad Curricular');
+        } elseif ($accion == 'activar') {
+            $u->setcodigoUC($_POST['codigoUC']);
+            echo json_encode($u->Activar());
+            $bitacora->registrarAccion($usu_id, 'activar', 'Unidad Curricular');
         } elseif ($accion == 'existe') {
             $codigoUC = $_POST['codigoUC'];
             $codigoExcluir = isset($_POST['codigoExcluir']) ? $_POST['codigoExcluir'] : null;
@@ -63,19 +46,12 @@ if (is_file("views/" . $pagina . ".php")) {
             $resultado = $u->Existe($codigoUC, $codigoExcluir);
             echo json_encode($resultado);
         } elseif ($accion == 'verificar_horario') {
-            if (isset($_POST['uc_codigo'])) {
-                $respuesta = $u->verificarEnHorario($_POST['uc_codigo']);
+            $codigo = isset($_POST['uc_codigo']) ? $_POST['uc_codigo'] : (isset($_POST['codigoUC']) ? $_POST['codigoUC'] : null);
+            if ($codigo !== null && $codigo !== '') {
+                $respuesta = $u->verificarEnHorario($codigo);
             } else {
                 $respuesta["resultado"] = "error";
                 $respuesta["mensaje"] = "Código de UC no proporcionado.";
-            }
-            echo json_encode($respuesta);
-        } elseif ($accion == 'verificar_docente_horario') {
-            if (isset($_POST['uc_codigo']) && isset($_POST['doc_cedula'])) {
-                $respuesta = $u->verificarDocenteEnHorario($_POST['uc_codigo'], $_POST['doc_cedula']);
-            } else {
-                $respuesta["resultado"] = "error";
-                $respuesta["mensaje"] = "Código de UC o Cédula de Docente no proporcionado.";
             }
             echo json_encode($respuesta);
         } else {
@@ -86,7 +62,6 @@ if (is_file("views/" . $pagina . ".php")) {
             $u->setejeUC($_POST['ejeUC']);
             $u->setareaUC($_POST['areaUC']);
             $u->setperiodoUC($_POST['periodoUC']);
-            $u->setelectivaUC($_POST['electivaUC']);
 
             if ($accion == 'registrar') {
                 echo  json_encode($u->Registrar());

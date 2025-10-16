@@ -57,6 +57,7 @@ if (is_file("views/" . $pagina . ".php")) {
 
                 case 'registrar':
                     $o->setNombre($_POST['coordinacionNombre'] ?? '');
+                    $o->setHoraDescarga($_POST['coordinacionHoraDescarga'] ?? null);
                     echo json_encode($o->Registrar());
                     $bitacora->registrarAccion($usu_id, 'registrar', 'Coordinacion');
                     break;
@@ -64,6 +65,7 @@ if (is_file("views/" . $pagina . ".php")) {
                 case 'modificar':
                     $o->setNombre($_POST['coordinacionNombre'] ?? '');
                     $o->setOriginalNombre($_POST['coordinacionOriginalNombre'] ?? '');
+                    $o->setHoraDescarga($_POST['coordinacionHoraDescarga'] ?? null);
                     echo json_encode($o->Modificar());
                     $bitacora->registrarAccion($usu_id, 'modificar', 'Coordinacion');
                     break;

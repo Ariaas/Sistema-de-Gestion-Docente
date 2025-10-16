@@ -40,6 +40,7 @@ function crearDT() {
 }
 
 let originalNombreCoordinacion = "";
+let originalHoraDescarga = null;
 
 $(document).ready(function () {
   Listar();
@@ -62,13 +63,8 @@ $(document).ready(function () {
       return;
     }
 
-    if (
-      originalNombreCoordinacion !== "" &&
-      nombreActual === originalNombreCoordinacion
-    ) {
-      $("#scoordinacionNombre").text("No se han realizado cambios.").show();
-      $("#proceso").prop("disabled", true);
-      return;
+    if ($("#proceso").text() === "MODIFICAR") {
+      verificarCambios();
     }
 
     var datos = new FormData();
@@ -84,16 +80,30 @@ $(document).ready(function () {
     let accion = $("#proceso").text();
 
     if (accion === "ELIMINAR") {
-      Swal.fire({
+      const swalInstance = Swal.fire({
         title: "¿Está seguro que quieres Eliminar esta coordinación?",
         text: "Esta acción no se puede deshacer.",
         icon: "warning",
+        focusConfirm: true,
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+        didOpen: () => {
+          const popup = Swal.getPopup();
+          popup.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.stopPropagation();
+              Swal.clickConfirm();
+            }
+          });
+        },
         showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
         confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar",
-      }).then((result) => {
+        cancelButtonText: "Cancelar"
+      });
+      
+      swalInstance.then((result) => {
         if (result.isConfirmed) {
           var datos = new FormData();
           datos.append("accion", "eliminar");
@@ -125,7 +135,7 @@ $(document).ready(function () {
     modalTitle.text("Formulario de Registro de Coordinación");
 
     $("#proceso")
-      .text("REGISTRAR")
+      .text("GUARDAR")
       .removeClass("btn-danger btn-warning")
       .addClass("btn-primary");
     $("#proceso").prop("disabled", false);
@@ -136,6 +146,24 @@ $(document).ready(function () {
   $("#modal1").on("hidden.bs.modal", function () {
     $("#proceso").prop("disabled", false);
     $("#scoordinacionNombre").text("").css("color", "");
+  });
+
+  $('#modal1').on('shown.bs.modal', function () {
+    $("#coordinacionNombre").focus();
+  });
+
+  $('#modal1').on('keydown', function(e) {
+    if (e.which === 13) {
+      if ($("#proceso").text() === "ELIMINAR" && $('.swal2-container').length) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      if (!$("#proceso").prop("disabled")) {
+        e.preventDefault();
+        $("#f").submit();
+      }
+    }
   });
 });
 
@@ -159,9 +187,16 @@ function validarenvio() {
   return true;
 }
 
+  $("#coordinacionHoraDescarga").on("keyup change", function() {
+    if ($("#proceso").text() === "MODIFICAR") {
+      verificarCambios();
+    }
+  });
+
 function pone(pos, accion) {
   let linea = $(pos).closest("tr");
   originalNombreCoordinacion = $(linea).find("td:eq(0)").text();
+  originalHoraDescarga = $(linea).find("td:eq(1)").text();
 
   let modalHeader = $("#modal1 .modal-header");
   let modalTitle = $("#modal1 .modal-title");
@@ -186,6 +221,7 @@ function pone(pos, accion) {
   }
 
   $("#coordinacionNombre").val(originalNombreCoordinacion);
+  $("#coordinacionHoraDescarga").val(originalHoraDescarga);
 
   if (accion !== 0) {
     $("#scoordinacionNombre").hide();
@@ -210,21 +246,24 @@ function enviaAjax(datos) {
           destruyeDT();
           $("#resultadoconsulta").empty();
           $.each(lee.mensaje, function (index, item) {
-            const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${
-              !PERMISOS.modificar ? "disabled" : ""
-            }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${
-              !PERMISOS.eliminar ? "disabled" : ""
-            }><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-            $("#resultadoconsulta").append(`
-              <tr>
-                <td>${item.cor_nombre}</td>
-                <td>
-                      ${btnModificar}
-                  ${btnEliminar}
-                </td>
-              </tr>
-            `);
+            if (item.cor_estado == 1) {
+              const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${
+                !PERMISOS.modificar ? "disabled" : ""
+              }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+              const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${
+                !PERMISOS.eliminar ? "disabled" : ""
+              }><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+              $("#resultadoconsulta").append(`
+                <tr>
+                  <td>${item.cor_nombre}</td>
+                  <td>${item.coor_hora_descarga || 'N/A'}</td>
+                  <td>
+                        ${btnModificar}
+                    ${btnEliminar}
+                  </td>
+                </tr>
+              `);
+            }
           });
           crearDT();
         } else if (
@@ -269,11 +308,29 @@ function enviaAjax(datos) {
   });
 }
 
+function verificarCambios() {
+  const nombreActual = $("#coordinacionNombre").val();
+  const horaActual = $("#coordinacionHoraDescarga").val();
+  
+  if (nombreActual === originalNombreCoordinacion && horaActual == originalHoraDescarga) {
+    $("#proceso").prop("disabled", true);
+    $("#scoordinacionNombre").text("No se han realizado cambios.").show();
+  } else {
+    if ($("#scoordinacionNombre").text() !== "El nombre de la coordinación ya existe.") {
+      $("#proceso").prop("disabled", false);
+      $("#scoordinacionNombre").text("").hide();
+    }
+  }
+}
+
 function limpia() {
   $("#coordinacionNombre").val("").prop("disabled", false);
+  $("#coordinacionHoraDescarga").val("");
   $("#scoordinacionNombre").text("");
+  $("#scoordinacionHoraDescarga").text("");
   $("#proceso").prop("disabled", false);
   originalNombreCoordinacion = "";
+  originalHoraDescarga = null;
 }
 
 function validarkeypress(er, e) {

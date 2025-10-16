@@ -54,8 +54,8 @@ if (!$puede_registrar) {
 
             <div class="card p-4 shadow-sm bg-light rounded">
                 <form method="post" action="" id="fReporteUc" target="_blank">
-                    <div class="row g-3 mb-4 justify-content-center">
-                        <div class="col-md-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                             <label for="anio_id" class="form-label">Filtrar por Año:</label>
                             <select class="form-select form-select-sm" name="anio_id" id="anio_id">
                                 <option value="" selected>-- Seleccione un Año --</option>
@@ -68,7 +68,7 @@ if (!$puede_registrar) {
                                 <?php endif; ?>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                             <label for="trayecto" class="form-label">Filtrar por Trayecto:</label>
                             <select class="form-select form-select-sm" name="trayecto" id="trayecto">
                                 <option value="">Todos los Trayectos</option>
@@ -81,7 +81,16 @@ if (!$puede_registrar) {
                                 <?php endif; ?>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
+                            <label for="fase" class="form-label">Filtrar por Fase:</label>
+                            <select class="form-select form-select-sm" name="fase" id="fase">
+                                <option value="">Todas las Fases</option>
+                                <option value="Anual">Anual</option>
+                                <option value="Fase I">Fase I</option>
+                                <option value="Fase II">Fase II</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                             <label for="ucurricular" class="form-label">Filtrar por U.C.:</label>
                             <select class="form-select form-select-sm" name="ucurricular" id="ucurricular">
                                 <option value="">Todas las Unidades</option>
