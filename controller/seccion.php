@@ -18,7 +18,9 @@ $acciones_json_validas = [
     'registrar_seccion',
     'eliminar_seccion_y_horario',
     'validar_clase_en_vivo',
-    'unir_horarios'
+    'unir_horarios',
+    'verificar_codigo_seccion',
+    'duplicar_anio_anterior'
 ];
 
 if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $acciones_json_validas))) {
@@ -35,7 +37,23 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
         $_SESSION['reporte_promocion'] = $reporte_promocion;
     }
 
-    $anios = $o->obtenerAnios();
+   $mostrar_prompt_duplicar = false;
+$anio_activo = $o->obtenerAnioActivo();
+
+if ($anio_activo) {
+    $existen_secciones_actual = $o->existenSeccionesParaAnio($anio_activo);
+
+
+    if (!$existen_secciones_actual) {
+        $anio_anterior = $anio_activo - 1;
+        $existen_secciones_anterior = $o->existenSeccionesParaAnio($anio_anterior);
+
+      
+        if ($existen_secciones_anterior) {
+            $mostrar_prompt_duplicar = true;
+        }
+    }
+}
     if (is_file("views/" . $pagina . ".php")) {
         require_once("views/" . $pagina . ".php");
     } else {
@@ -53,6 +71,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
             case 'obtener_datos_selects':
                 $respuesta = [
                     'resultado' => 'ok',
+                    'anio_activo' => $o->obtenerAnioActivo(), 
                     'ucs' => $o->obtenerUnidadesCurriculares(),
                     'espacios' => $o->obtenerEspacios(),
                     'docentes' => $o->obtenerDocentes(),
@@ -66,57 +85,61 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 list($anio_anio, $anio_tipo) = explode('|', $anioCompuesto . '|');
                 $codigoSeccion = $_POST['codigoSeccion'] ?? null;
                 $cantidadSeccion = $_POST['cantidadSeccion'] ?? null;
-                $trayecto = is_string($codigoSeccion) ? substr($codigoSeccion, 0, 1) : null;
                 $respuesta = $o->RegistrarSeccion(
                     $codigoSeccion,
                     $cantidadSeccion,
                     $anio_anio,
                     $anio_tipo
                 );
-                if ($respuesta['resultado'] === 'registrar_seccion_ok' && $codigoSeccion && $trayecto) {
-                    $resultado_horario = $o->CrearHorarioAleatorio($codigoSeccion, $trayecto);
-                    $respuesta['horario_aleatorio'] = $resultado_horario;
-                }
                 break;
 
             case 'consultar_agrupado':
                 $respuesta = $o->ListarAgrupado();
                 break;
 
-            case 'consultar_detalles':
-                $respuesta = $o->ConsultarDetalles($_POST['sec_codigo'] ?? null);
-                break;
+           case 'consultar_detalles':
+    $respuesta = $o->ConsultarDetalles($_POST['sec_codigo'] ?? null, $_POST['ani_anio'] ?? null);
+    break;
 
             case 'obtener_uc_por_docente':
-                $doc_cedula = $_POST['doc_cedula'] ?? null;
-                $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null;
-                $trayecto_seccion = null;
+                    $doc_cedula = $_POST['doc_cedula'] ?? null;
+                    $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null;
+                    $trayecto_seccion = null;
 
-                if ($sec_codigo_actual) {
-                    $trayecto_seccion = substr($sec_codigo_actual, 0, 1);
-                }
+                    if ($sec_codigo_actual) {
+                       
+                        $numericPart = preg_replace('/^\D+/', '', $sec_codigo_actual);
+                        if (strlen($numericPart) > 0) {
+                           
+                            $trayecto_seccion = substr($numericPart, 0, 1);
+                        }
+                    }
 
-                $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion);
-                $respuesta = [
-                    'resultado' => 'ok',
-                    'ucs_docente' => $resultado_uc['data'],
-                    'mensaje_uc' => $resultado_uc['mensaje']
-                ];
-                break;
+                    $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion);
+                    $respuesta = [
+                        'resultado' => 'ok',
+                        'ucs_docente' => $resultado_uc['data'],
+                        'mensaje_uc' => $resultado_uc['mensaje']
+                    ];
+                    break;
 
-            case 'modificar':
+         case 'modificar':
                 $forzar = isset($_POST['forzar_guardado']) && $_POST['forzar_guardado'] === 'true';
                 $respuesta = $o->Modificar(
                     $_POST['sec_codigo'] ?? null,
+                    $_POST['ani_anio'] ?? null, 
                     $_POST['items_horario'] ?? '[]',
                     $_POST['cantidadSeccion'] ?? null,
                     $forzar
                 );
                 break;
 
-            case 'eliminar_seccion_y_horario':
-                $respuesta = $o->EliminarSeccionYHorario($_POST['sec_codigo'] ?? null);
-                break;
+           case 'eliminar_seccion_y_horario':
+                    $respuesta = $o->EliminarSeccionYHorario(
+                        $_POST['sec_codigo'] ?? null, 
+                        $_POST['ani_anio'] ?? null 
+                    );
+                    break;
 
             case 'validar_clase_en_vivo':
                  $espacio = isset($_POST['espacio']) ? json_decode($_POST['espacio'], true) : null;
@@ -130,12 +153,28 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     $_POST['sec_codigo'] ?? null
                 );
                 break;
+            
+            case 'verificar_codigo_seccion':
+                $anioCompuesto = $_POST['anioId'] ?? null;
+                list($anio_anio, $anio_tipo) = explode('|', $anioCompuesto . '|');
+                $codigoSeccion = $_POST['codigoSeccion'] ?? null;
+
+                $existe = false;
+                if($codigoSeccion && $anio_anio && $anio_tipo) {
+                   $existe = $o->VerificarCodigoSeccion($codigoSeccion, $anio_anio, $anio_tipo);
+                }
+                $respuesta = ['resultado' => 'ok', 'existe' => $existe];
+                break;
 
             case 'unir_horarios':
                 $respuesta = $o->UnirHorarios(
                     $_POST['id_seccion_origen'] ?? null,
                     $_POST['secciones_a_unir'] ?? []
                 );
+                break;
+                
+            case 'duplicar_anio_anterior':
+                $respuesta = $o->duplicarSeccionesAnioAnterior();
                 break;
         }
     } catch (Exception $e) {

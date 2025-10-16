@@ -49,7 +49,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         data-count-espacios="<?= $countEspacios ?? 0 ?>"
         data-count-turnos="<?= $countTurnos ?? 0 ?>"
         data-count-anios="<?= $countAnios ?? 0 ?>"
-        data-count-mallas="<?= $countMallas ?? 0 ?>">
+        data-count-mallas="<?= $countMallas ?? 0 ?>"
+        data-mostrar-prompt-duplicar="<?= htmlspecialchars(json_encode($mostrar_prompt_duplicar), ENT_QUOTES, 'UTF-8') ?>">
 
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Sección</h2>
@@ -88,11 +89,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required minlength="4" maxlength="4" pattern="\d{4}" title="El código debe contener exactamente 4 números." oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-
-                                        <div id="alerta-turno" class="form-text text-danger p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
-
-                                        <div id="alerta-cohorte" class="form-text text-muted p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
+                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required title="El código debe tener un prefijo de 2-3 letras y luego números (ej: IN1101)." oninput="this.value = this.value.toUpperCase()">
+                                        <div id="alerta-codigo" class="form-text text-danger p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
@@ -123,7 +121,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center">
-                                <button type="submit" class="btn btn-primary me-2" id="btnGuardarSeccion">Guardar y Continuar</button>
+                                <button type="submit" class="btn btn-primary me-2" id="btnGuardarSeccion">REGISTRAR Y CONTINUAR</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
@@ -143,6 +141,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <form method="post" id="form-horario" autocomplete="off">
                             <input type="hidden" name="accion" id="accion">
                             <input type="hidden" name="sec_codigo" id="sec_codigo_hidden">
+                            <input type="hidden" id="ani_anio_hidden" name="ani_anio">
                             
                             <div class="row align-items-end">
                                 <div class="col-md-4 mb-3">
@@ -318,8 +317,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="invalid-feedback">Debe seleccionar una sección de origen.</div>
                             </div>
                             <div class="modal-footer justify-content-center">
-                                <button type="submit" class="btn btn-primary" id="btnConfirmarUnion">Confirmar y Unir Horarios</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" id="btnConfirmarUnion">UNIR HORARIOS</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
                     </div>

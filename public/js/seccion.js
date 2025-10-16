@@ -13,15 +13,28 @@ function muestraMensaje(tipo, tiempo, titulo, mensaje) {
     }
 }
 
-function getPrefijoSeccion(codigo) {
-    if (!codigo) return 'IN';
-    const trayecto = String(codigo).charAt(0);
-    if (trayecto === '3' || trayecto === '4') {
-        return 'IIN';
+function getScheduleStateString() {
+    const cantidad = $("#cantidadSeccionModificar").val();
+    let clases = [];
+    for (const claseArray of horarioContenidoGuardado.values()) {
+        claseArray.forEach(claseObj => clases.push(claseObj.data));
     }
-    return 'IN';
-}
+    clases.sort((a, b) => (a.dia + a.hora_inicio).localeCompare(b.dia + b.hora_inicio));
 
+    
+    const bloques = bloquesDeLaTablaActual;
+
+    return JSON.stringify({ cantidad, clases, bloques });
+}
+function checkForScheduleChanges() {
+    const initialState = $('#modal-horario').data('initial-state');
+    const currentState = getScheduleStateString();
+    if (initialState !== currentState) {
+        $("#proceso").prop("disabled", false);
+    } else {
+        $("#proceso").prop("disabled", true);
+    }
+}
 
 function formatTime12Hour(time24) {
     if (!time24) return "";
@@ -37,64 +50,38 @@ function formatTime12Hour(time24) {
 let currentClickedCell = null;
 let horarioContenidoGuardado = new Map();
 let bloquesDeLaTablaActual = [];
-let allUcs = [],
-    allEspacios = [],
-    allDocentes = [],
-    allSecciones = [],
-    allTurnos = [],
-    allCohortes = [],
-    ocupacionGlobalCompleta = [];
+let allUcs = [], allEspacios = [], allDocentes = [], allSecciones = [], allTurnos = [], allCohortes = [], ocupacionGlobalCompleta = [];
 let modalDataLoaded = false;
 let isSplittingProcess = false;
 let hasSaved = false;
-
 
 function checkForConflicts(newClassDetails) {
     const { docId, espIdJson, dia, secId, horaInicioNueva, horaFinNueva } = newClassDetails;
     const foundConflicts = []; 
     if (!dia) return { hasConflict: false };
-
     const espId = (espIdJson && espIdJson.startsWith('{')) ? JSON.parse(espIdJson) : null;
     const espKey = espId ? `${espId.numero}|${espId.tipo}|${espId.edificio}` : null;
-    
     for (const claseExistente of ocupacionGlobalCompleta) {
         if (claseExistente.sec_codigo == secId) continue;
-
         if (normalizeDayKey(claseExistente.dia) === normalizeDayKey(dia)) {
             const inicioExistente = claseExistente.hora_inicio.substring(0, 5);
             const finExistente = claseExistente.hora_fin.substring(0, 5);
-            
             const haySolapamiento = (horaInicioNueva < finExistente && horaFinNueva > inicioExistente);
-
             if (haySolapamiento) {
-                const prefijo = getPrefijoSeccion(claseExistente.sec_codigo);
-                const seccionConflicto = `<strong>${prefijo}${claseExistente.sec_codigo}</strong>`;
-                
-            
+                const seccionConflicto = `<strong>${claseExistente.sec_codigo}</strong>`;
                 if (docId && String(claseExistente.doc_cedula) == docId) {
-                    foundConflicts.push({ 
-                        type: 'docente',
-                        message: `<b>Conflicto:</b> Docente ya asignado en sección ${seccionConflicto} a esta hora.`
-                    });
+                    foundConflicts.push({ type: 'docente', message: `<b>Conflicto:</b> Docente ya asignado en sección ${seccionConflicto} a esta hora.` });
                 }
-                
-           
                 const claseExistenteEspKey = `${claseExistente.esp_numero}|${claseExistente.esp_tipo}|${claseExistente.esp_edificio}`;
                 if (espKey && claseExistenteEspKey === espKey) {
-                    foundConflicts.push({ 
-                        type: 'espacio',
-                        message: `<b>Conflicto:</b> Espacio ya ocupado por la sección ${seccionConflicto} a esta hora.`
-                    });
+                    foundConflicts.push({ type: 'espacio', message: `<b>Conflicto:</b> Espacio ya ocupado por la sección ${seccionConflicto} a esta hora.` });
                 }
             }
         }
     }
-   
-    return { 
-        hasConflict: foundConflicts.length > 0, 
-        messages: foundConflicts 
-    };
+    return { hasConflict: foundConflicts.length > 0, messages: foundConflicts };
 }
+
 
 
 function Listar() {
@@ -112,20 +99,7 @@ function destruyeDT() {
 function crearDT() {
     if (!$.fn.DataTable.isDataTable("#tablaListadoHorarios")) {
         $("#tablaListadoHorarios").DataTable({
-            language: {
-                lengthMenu: "Mostrar _MENU_ registros",
-                zeroRecords: "No hay horarios registrados",
-                info: "Mostrando _PAGE_ de _PAGES_",
-                infoEmpty: "No hay registros disponibles",
-                infoFiltered: "(filtrado de _MAX_ registos totales)",
-                search: "Buscar:",
-                paginate: {
-                    first: "Primero",
-                    last: "Último",
-                    next: "Siguiente",
-                    previous: "Anterior"
-                },
-            },
+            language: { lengthMenu: "Mostrar _MENU_ registros", zeroRecords: "No hay horarios registrados", info: "Mostrando _PAGE_ de _PAGES_", infoEmpty: "No hay registros disponibles", infoFiltered: "(filtrado de _MAX_ registos totales)", search: "Buscar:", paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" } },
             responsive: true,
             autoWidth: false
         });
@@ -137,133 +111,87 @@ function normalizeDayKey(day) {
     return day.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function construirBloquesParaHorario(clases, turnoSeleccionado) {
+    const bloquesMap = new Map();
+    clases.forEach(clase => {
+        bloquesMap.set(clase.hora_inicio, { tur_horainicio: clase.hora_inicio, tur_horafin: clase.hora_fin });
+    });
+    const bloquesTurno = allTurnos.filter(turno => {
+        const horaInicio = parseInt(turno.tur_horainicio.substring(0, 2), 10);
+        if (turnoSeleccionado === 'todos') return true;
+        if (turnoSeleccionado === 'mañana') return horaInicio < 13;
+        if (turnoSeleccionado === 'tarde') return horaInicio >= 13 && horaInicio < 18;
+        if (turnoSeleccionado === 'noche') return horaInicio >= 18;
+        return false;
+    });
+    bloquesTurno.forEach(turnoDefault => {
+        const inicioDefault = turnoDefault.tur_horainicio;
+        const finDefault = turnoDefault.tur_horafin;
+        let seSolapa = false;
+        for (const bloqueExistente of bloquesMap.values()) {
+            if (inicioDefault < bloqueExistente.tur_horafin && finDefault > bloqueExistente.tur_horainicio) {
+                seSolapa = true;
+                break;
+            }
+        }
+        if (!seSolapa) {
+            bloquesMap.set(inicioDefault, turnoDefault);
+        }
+    });
+    return Array.from(bloquesMap.values()).sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+}
+
 function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaHorario", isViewOnly = false) {
     const tbody = $(`${targetTableId} tbody`);
     tbody.empty();
-
-    const bloquesTurno = allTurnos.filter(turno => {
-        const horaInicio = parseInt(turno.tur_horainicio.substring(0, 2), 10);
-        if (filtroTurno === 'todos') return true;
-        if (filtroTurno === 'mañana') return horaInicio < 13;
-        if (filtroTurno === 'tarde') return horaInicio >= 13 && horaInicio < 18;
-        if (filtroTurno === 'noche') return horaInicio >= 18;
-        return false;
-    });
-
-    const todosLosBloquesMap = new Map();
-
-    bloquesTurno.forEach(b => {
-        todosLosBloquesMap.set(b.tur_horainicio, {
-            tur_horainicio: b.tur_horainicio,
-            tur_horafin: b.tur_horafin,
-            isCustom: false
-        });
-    });
-
-    for (const claseArray of horarioContenidoGuardado.values()) {
-        if (Array.isArray(claseArray) && claseArray.length > 0) {
-            const clase = claseArray[0];
-            const horaInicio = clase.data.hora_inicio;
-            if (clase.data && horaInicio && !todosLosBloquesMap.has(horaInicio)) {
-                todosLosBloquesMap.set(horaInicio, {
-                    tur_horainicio: horaInicio,
-                    tur_horafin: clase.data.hora_fin,
-                    isCustom: true
-                });
-            }
-        }
-    }
-
-    const bloquesDeLaTabla = Array.from(todosLosBloquesMap.values())
-        .sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
-
-    if (targetTableId === "#tablaHorario") {
-        bloquesDeLaTablaActual = bloquesDeLaTabla;
-    }
-
+    const bloquesDeLaTabla = bloquesDeLaTablaActual;
     const horarioMapeado = new Map();
     for (const [key, claseArray] of horarioContenidoGuardado.entries()) {
         if (Array.isArray(claseArray) && claseArray.length > 0) {
             horarioMapeado.set(key, claseArray);
         }
     }
-
     const celdasProcesadas = new Set();
     const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-
     bloquesDeLaTabla.forEach((bloque, rowIndex) => {
         const row = $("<tr>");
-
-        const celdaHora = $("<td>").css({
-            'display': 'flex',
-            'justify-content': 'center',
-            'align-items': 'center'
-        });
-
+        const celdaHora = $("<td>").css({ 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'padding': '0.5rem' });
         const textoHora = $("<span>").text(`${formatTime12Hour(bloque.tur_horainicio)} - ${formatTime12Hour(bloque.tur_horafin)}`);
-        celdaHora.append(textoHora);
-
-        if (bloque.isCustom && !isViewOnly) {
-            const botonEliminar = $("<button type='button' class='btn btn-sm btn-eliminar-fila-personalizada' title='Eliminar esta fila'>")
-                .html('<img src="public/assets/icons/trash.svg" alt="Eliminar" style="height: 1em; opacity: 0.6; margin-left: 8px;">')
-                .data('franja-inicio', bloque.tur_horainicio)
-                .css({
-                    'border': 'none',
-                    'background': 'transparent',
-                    'padding': '0 5px'
-                });
-            celdaHora.append(botonEliminar);
+        if (!isViewOnly) {
+            const containerBotones = $('<div class="d-inline-flex">');
+            const botonEditar = $("<button type='button' class='btn btn-sm btn-editar-fila' title='Editar esta franja horaria'>").html('<img src="public/assets/icons/edit.svg" alt="Editar" style="height: 1em; opacity: 0.6;">').data('franja-inicio', bloque.tur_horainicio).css({ 'border': 'none', 'background': 'transparent', 'padding': '0 5px' });
+            const botonEliminar = $("<button type='button' class='btn btn-sm btn-eliminar-fila' title='Eliminar esta fila'>").html('<img src="public/assets/icons/trash.svg" alt="Eliminar" style="height: 1em; opacity: 0.6;">').data('franja-inicio', bloque.tur_horainicio).css({ 'border': 'none', 'background': 'transparent', 'padding': '0 5px' });
+            containerBotones.append(botonEditar, botonEliminar);
+            celdaHora.append(textoHora, containerBotones);
+        } else {
+            celdaHora.css('justify-content', 'center').append(textoHora);
         }
         row.append(celdaHora);
-
         dias.forEach((dia) => {
             const dia_key = normalizeDayKey(dia);
             const key_actual = `${bloque.tur_horainicio.substring(0, 5)}-${dia_key}`;
-
-            if (celdasProcesadas.has(key_actual)) {
-                return;
-            }
-
+            if (celdasProcesadas.has(key_actual)) return;
             const cell = $("<td>").attr("data-franja-inicio", bloque.tur_horainicio).attr("data-dia-nombre", dia);
             cell.css('vertical-align', 'top');
-            if (!isViewOnly) {
-                cell.addClass("celda-horario");
-            }
-
+            if (!isViewOnly) cell.addClass("celda-horario");
             if (horarioMapeado.has(key_actual)) {
                 const claseArray = horarioMapeado.get(key_actual);
-
                 if (Array.isArray(claseArray) && claseArray.length > 0) {
                     const primeraClase = claseArray[0].data;
-                    let bloques_span = 1;
-                    const horaFinClaseStr = primeraClase.hora_fin.substring(0, 5);
-                    for (let i = rowIndex + 1; i < bloquesDeLaTabla.length; i++) {
-                        const bloqueSiguiente = bloquesDeLaTabla[i];
-                        if (bloqueSiguiente.tur_horainicio.substring(0, 5) < horaFinClaseStr) {
-                            bloques_span++;
-                        } else {
-                            break;
-                        }
-                    }
-
+                    const bloques_span = primeraClase.bloques_span || 1;
                     let combinedHtml;
                     if (claseArray.length > 1) {
                         let columna1 = `<td style="width: 50%; vertical-align: top; border-right: 1px solid #dee2e6; padding: 2px;">`;
                         let columna2 = `<td style="width: 50%; vertical-align: top; padding: 2px;">`;
-
-                        if (claseArray[0]) columna1 += generarCellContent(claseArray[0].data);
-                        if (claseArray[1]) columna2 += generarCellContent(claseArray[1].data);
-
+                        if (claseArray[0]) columna1 += generarCellContent(claseArray[0].data, isViewOnly);
+                        if (claseArray[1]) columna2 += generarCellContent(claseArray[1].data, isViewOnly);
                         columna1 += '</td>';
                         columna2 += '</td>';
                         combinedHtml = `<table style="width: 100%; border: none; height: 100%;"><tbody><tr>${columna1}${columna2}</tr></tbody></table>`;
-
                     } else {
-                        combinedHtml = generarCellContent(claseArray[0].data);
+                        combinedHtml = generarCellContent(primeraClase, isViewOnly);
                     }
-
                     cell.html(combinedHtml).data("horario-data", claseArray.map(c => c.data));
-
                     if (bloques_span > 1) {
                         cell.attr("rowspan", bloques_span);
                         for (let i = 1; i < bloques_span; i++) {
@@ -279,13 +207,12 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
         });
         tbody.append(row);
     });
-
     if (!isViewOnly) {
         $("#tablaHorario tbody").off("click").on("click", ".celda-horario", onCeldaHorarioClick);
     }
 }
 
-function generarCellContent(clase) {
+function generarCellContent(clase, isViewOnly = false) {
     const uc_nombre_completo = clase.uc_codigo ? (allUcs.find(u => u.uc_codigo == clase.uc_codigo)?.uc_nombre || `UC Inválida`) : '<i>(Sin UC)</i>';
     const uc = abreviarNombreLargo(uc_nombre_completo, 25);
 
@@ -310,21 +237,24 @@ function generarCellContent(clase) {
     const subgrupoId = clase.subgrupo || 'default';
     const subgrupoDisplay = clase.subgrupo ? `<span class="badge bg-primary-soft text-primary me-2">G(${clase.subgrupo})</span>` : '';
 
-    const editButton = `
+   
+    const editButton = isViewOnly ? '' : `
         <button type="button" class="btn btn-light btn-edit-icon" title="Gestionar este bloque" style="border: none; padding: 4px 8px; line-height: 1;">
             <img src="public/assets/icons/edit.svg" style="width: 1.1em; height: 1.1em; opacity: 0.7;">
         </button>
     `;
 
+    const cursorStyle = isViewOnly ? '' : 'cursor: pointer;';
+  
+
     return `<div class="subgroup-item p-1" style="display: flex; align-items: center; justify-content: space-between;" data-subgrupo-id="${subgrupoId}">
-                <div class="subgroup-content" style="cursor: pointer; flex-grow: 1;">
+                <div class="subgroup-content" style="${cursorStyle} flex-grow: 1;">
                     <p class="m-0" style="font-size:0.8em;">${subgrupoDisplay}<strong>${uc}</strong></p>
                     <small class="text-muted" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>
                 </div>
                 ${editButton}
             </div>`;
 }
-
 
 function abreviarNombreLargo(nombre, longitudMaxima = 25) {
     if (typeof nombre !== 'string' || nombre.length <= longitudMaxima) {
@@ -407,59 +337,42 @@ function renderizarModalClaseUnica(claseData, franjaInicio, diaNombre) {
     `;
     modalBody.html(html);
 }
+function populateUcSelectForModal(ucSelect, ucToSelect) {
+    const secCodigo = $("#sec_codigo_hidden").val();
+    ucSelect.empty().append('<option value="">Cargando UCs...</option>').prop("disabled", true);
 
-function inicializarFiltroUcPorDocente(docenteSelect, ucSelect) {
-    docenteSelect.on("change", function() {
-        const docCedula = $(this).val();
-        const ucToSelect = ucSelect.data('uc-to-select-after-filter');
+    const datos = new FormData();
+    datos.append("accion", "obtener_uc_por_docente");
+    datos.append("sec_codigo_actual", secCodigo);
+    
 
-        if (!docCedula) {
-            ucSelect.empty().append('<option value="">Seleccione una UC</option>');
-            const secCodigo = $("#sec_codigo_hidden").val();
-            const trayecto = secCodigo ? String(secCodigo).charAt(0) : null;
-            
-            const ucsFiltradas = trayecto ? allUcs.filter(uc => uc.uc_trayecto == trayecto) : allUcs;
-            
-            ucsFiltradas.forEach(uc => ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`));
-
-            ucSelect.prop("disabled", false).trigger('change');
-            return;
-        }
-
-        const datos = new FormData();
-        datos.append("accion", "obtener_uc_por_docente");
-        datos.append("doc_cedula", docCedula);
-        datos.append("sec_codigo_actual", $("#sec_codigo_hidden").val());
-
-        $.ajax({
-            url: "",
-            type: "POST",
-            data: datos,
-            contentType: false,
-            processData: false,
-            success: function(respuesta) {
-                ucSelect.empty();
-                if (respuesta.resultado === 'ok' && respuesta.ucs_docente.length > 0) {
-                    ucSelect.append('<option value="">Seleccionar UC</option>');
-                    respuesta.ucs_docente.forEach(uc => {
-                        let faseTexto = uc.uc_periodo ? ` (${uc.uc_periodo})` : '';
-                        ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}${faseTexto}</option>`);
-                    });
-                    ucSelect.prop("disabled", false);
-                } else {
-                    const mensaje = respuesta.mensaje_uc || "No hay UCs asignadas";
-                    ucSelect.append(`<option value="">${mensaje}</option>`).prop("disabled", true);
-                }
-
-                if (ucToSelect) {
-                    ucSelect.val(ucToSelect).trigger('change');
-                    ucSelect.data('uc-to-select-after-filter', null);
-                }
-            },
-            error: function() {
-                ucSelect.empty().append('<option value="">Error al cargar UCs</option>').prop("disabled", true);
+    $.ajax({
+        url: "",
+        type: "POST",
+        data: datos,
+        contentType: false,
+        processData: false,
+        success: function(respuesta) {
+            ucSelect.empty();
+            if (respuesta.resultado === 'ok' && respuesta.ucs_docente.length > 0) {
+                ucSelect.append('<option value="">Seleccionar UC</option>');
+                respuesta.ucs_docente.forEach(uc => {
+                    let faseTexto = uc.uc_periodo ? ` (${uc.uc_periodo})` : '';
+                    ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}${faseTexto}</option>`);
+                });
+                ucSelect.prop("disabled", false);
+            } else {
+                const mensaje = respuesta.mensaje_uc || "No hay UCs disponibles para este trayecto/fase";
+                ucSelect.append(`<option value="">${mensaje}</option>`).prop("disabled", true);
             }
-        });
+
+            if (ucToSelect) {
+                ucSelect.val(ucToSelect).trigger('change');
+            }
+        },
+        error: function() {
+            ucSelect.empty().append('<option value="">Error al cargar UCs</option>').prop("disabled", true);
+        }
     });
 }
 
@@ -487,6 +400,7 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
         opcionesDuracion += `<option value="${i}">${i} Bloque${i > 1 ? 's' : ''} (${i * 40} min)</option>`;
     }
 
+   
     const formHtml = `
         <form id="formularioEntradaHorario" autocomplete="off" novalidate>
             <input type="hidden" id="formContext" value="simple">
@@ -494,14 +408,14 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
             <div class="mb-3"><label class="form-label">Franja Horaria:</label><input type="text" class="form-control" id="franjaHorariaDisplay" value="${formatTime12Hour(turnoCompleto.tur_horainicio)} - ${formatTime12Hour(turnoCompleto.tur_horafin)}" readonly></div>
             <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" value="${diaNombre}" readonly></div>
             <div class="mb-3">
-                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
-                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;"></select>
-                <div id="docente-conflicto-info" class="form-text text-danger mt-1"></div>
-            </div>
-            <div class="mb-3">
                 <label for="modalSeleccionarUc" class="form-label">Unidad Curricular</label>
                 <select class="form-select" id="modalSeleccionarUc" style="width: 100%;"></select>
                 <div id="uc-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
+                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;"></select>
+                <div id="docente-conflicto-info" class="form-text text-danger mt-1"></div>
             </div>
             <div class="mb-3">
                 <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab)</label>
@@ -520,27 +434,24 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
             </div>
         </form>
     `;
+
     modalBody.html(formHtml);
 
     const select2Config = {
         theme: "bootstrap-5",
         dropdownParent: $('#modalEntradaHorario .modal-content')
     };
-
+    
+   
     const ucSelect = $("#modalSeleccionarUc");
-    ucSelect.empty().append('<option value="">Seleccione una UC o un docente para filtrar</option>');
-    const secCodigo = $("#sec_codigo_hidden").val();
-    const trayecto = secCodigo ? String(secCodigo).charAt(0) : null;
-    
-    const ucsFiltradas = trayecto ? allUcs.filter(uc => uc.uc_trayecto == trayecto) : allUcs;
-    
-    ucsFiltradas.forEach(uc => ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`));
+    populateUcSelectForModal(ucSelect, claseData ? claseData.uc_codigo : null); 
     ucSelect.select2(select2Config);
 
     const docenteSelect = $("#modalSeleccionarDocente");
     docenteSelect.empty().append('<option value="">Seleccionar Docente</option>');
     allDocentes.forEach(doc => docenteSelect.append(`<option value="${doc.doc_cedula}">${doc.doc_nombre} ${doc.doc_apellido}</option>`));
     docenteSelect.select2(select2Config);
+
 
     const espacioSelect = $("#modalSeleccionarEspacio");
     espacioSelect.empty().append('<option value="">Seleccionar Espacio</option>');
@@ -551,12 +462,13 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
         ...select2Config,
         minimumResultsForSearch: Infinity
     });
-
-    inicializarFiltroUcPorDocente(docenteSelect, ucSelect);
+    
+ 
     
     $("#modalSeleccionarDocente, #modalSeleccionarUc, #modalSeleccionarEspacio, #modalDuracionSubgrupo").on('change', function() {
         validarBloqueEnTiempoReal();
     });
+   
 
     $("#modalDuracionSubgrupo").on('change', function() {
         const bloquesSeleccionados = parseInt($(this).val(), 10);
@@ -569,7 +481,7 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
 
     if (claseData) {
         $("#modalDuracionSubgrupo").val(claseData.bloques_span).trigger('change');
-        ucSelect.data('uc-to-select-after-filter', claseData.uc_codigo);
+       
         $("#modalSeleccionarDocente").val(claseData.doc_cedula).trigger('change');
         if (claseData.espacio && claseData.espacio.numero) {
             $("#modalSeleccionarEspacio").val(JSON.stringify(claseData.espacio)).trigger('change');
@@ -578,7 +490,6 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
         $("#modalDuracionSubgrupo").val(maxBloques >= 2 ? '2' : '1').trigger('change');
     }
 }
-
 
 function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
     const modalBody = $("#modal-body-gestion-clase");
@@ -595,6 +506,7 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
 
     const mostrarBotonVolver = clasesEnCelda.length > 0;
 
+
     const formHtml = `
         <form id="formularioEntradaHorario" autocomplete="off" novalidate>
             <input type="hidden" id="formContext" value="subgrupo">
@@ -608,24 +520,25 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
                 <div class="invalid-feedback">Este identificador ya existe o está vacío.</div>
             </div>
             <div class="mb-3">
-                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
-                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;"></select>
-                 <div id="docente-conflicto-info" class="form-text text-danger mt-1"></div>
-            </div>
-            <div class="mb-3">
                 <label for="modalSeleccionarUc" class="form-label">Unidad Curricular</label>
                 <select class="form-select" id="modalSeleccionarUc" style="width: 100%;"></select>
                 <div id="uc-conflicto-info" class="form-text text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+                <label for="modalSeleccionarDocente" class="form-label">Docente</label>
+                <select class="form-select" id="modalSeleccionarDocente" style="width: 100%;"></select>
+                 <div id="docente-conflicto-info" class="form-text text-danger mt-1"></div>
             </div>
             <div class="mb-3">
                 <label for="modalSeleccionarEspacio" class="form-label">Espacio (Aula/Lab)</label>
                 <select class="form-select" id="modalSeleccionarEspacio" style="width: 100%;"></select>
                 <div id="espacio-conflicto-info" class="form-text text-danger mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-primary">${esEdicion ? 'Guardar Cambios' : 'Añadir Subgrupo'}</button>
-            ${mostrarBotonVolver ? '<button type="button" class="btn btn-secondary" id="btn-volver-a-lista">Volver a la lista</button>' : ''}
+            <button type="submit" class="btn btn-primary">${esEdicion ? 'GUARDAR CAMBIOS' : 'Añadir Subgrupo'}</button>
+            ${mostrarBotonVolver ? '<button type="button" class="btn btn-secondary" id="btn-volver-a-lista">VOLVER A LA LISTA</button>' : ''}
         </form>
     `;
+   
     modalBody.html(formHtml);
 
     const select2Config = {
@@ -633,14 +546,9 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
         dropdownParent: $('#modalEntradaHorario .modal-content')
     };
 
+   
     const ucSelect = $("#modalSeleccionarUc");
-    ucSelect.empty().append('<option value="">Seleccione una UC o un docente para filtrar</option>');
-    const secCodigo = $("#sec_codigo_hidden").val();
-    const trayecto = secCodigo ? String(secCodigo).charAt(0) : null;
-    
-    const ucsFiltradas = trayecto ? allUcs.filter(uc => uc.uc_trayecto == trayecto) : allUcs;
-    
-    ucsFiltradas.forEach(uc => ucSelect.append(`<option value="${uc.uc_codigo}">${uc.uc_nombre}</option>`));
+    populateUcSelectForModal(ucSelect, claseData ? claseData.uc_codigo : null); 
     ucSelect.select2(select2Config);
 
     const docenteSelect = $("#modalSeleccionarDocente");
@@ -648,20 +556,22 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
     allDocentes.forEach(doc => docenteSelect.append(`<option value="${doc.doc_cedula}">${doc.doc_nombre} ${doc.doc_apellido}</option>`));
     docenteSelect.select2(select2Config);
 
+
     const espacioSelect = $("#modalSeleccionarEspacio");
     espacioSelect.empty().append('<option value="">Seleccionar Espacio</option>');
     allEspacios.forEach(esp => espacioSelect.append(`<option value='${JSON.stringify({numero: esp.numero, tipo: esp.tipo, edificio: esp.edificio})}'>${esp.numero} (${esp.tipo} - ${esp.edificio})</option>`));
     espacioSelect.select2(select2Config);
 
-    inicializarFiltroUcPorDocente(docenteSelect, ucSelect);
+
     
     $("#modalSeleccionarDocente, #modalSeleccionarUc, #modalSeleccionarEspacio, #modalSubgrupo").on('change keyup', function() {
         validarBloqueEnTiempoReal();
     });
+ 
 
     if (claseData) {
         $("#modalSubgrupo").val(claseData.subgrupo);
-        ucSelect.data('uc-to-select-after-filter', claseData.uc_codigo);
+    
         $("#modalSeleccionarDocente").val(claseData.doc_cedula).trigger('change');
         if (claseData.espacio && claseData.espacio.numero) {
             $("#modalSeleccionarEspacio").val(JSON.stringify(claseData.espacio)).trigger('change');
@@ -970,6 +880,8 @@ function procederConGuardadoLocal() {
     horarioContenidoGuardado.set(key_horario, nuevaListaClases);
     inicializarTablaHorario($("#filtro_turno").val(), "#tablaHorario", false);
     $("#modalEntradaHorario").modal("hide");
+
+    checkForScheduleChanges();
 }
 
 function eliminarSubgrupo(subgrupoId) {
@@ -1002,6 +914,7 @@ function eliminarSubgrupo(subgrupoId) {
 
             inicializarTablaHorario($("#filtro_turno").val(), "#tablaHorario", false);
             $("#modalEntradaHorario").modal("hide");
+            checkForScheduleChanges(); 
         }
     });
 }
@@ -1045,7 +958,8 @@ function procederConGuardado() {
         const datos = new FormData();
         datos.append("accion", accion);
         datos.append("sec_codigo", $("#sec_codigo_hidden").val());
-
+        datos.append("ani_anio", $("#ani_anio_hidden").val());
+        
         if (accion === 'modificar') {
             datos.append("cantidadSeccion", $("#cantidadSeccionModificar").val());
         }
@@ -1055,8 +969,7 @@ function procederConGuardado() {
             claseArray.forEach(claseObj => clasesAEnviar.push(claseObj.data));
         }
 
-       clasesAEnviar = clasesAEnviar.filter(item => item && item.dia && item.hora_inicio && item.hora_fin);
-
+        clasesAEnviar = clasesAEnviar.filter(item => item && item.dia && item.hora_inicio && item.hora_fin);
         clasesAEnviar.forEach(item => {
             item.hora_inicio = item.hora_inicio.substring(0, 5);
             item.hora_fin = item.hora_fin.substring(0, 5);
@@ -1065,7 +978,6 @@ function procederConGuardado() {
         datos.append("items_horario", JSON.stringify(clasesAEnviar));
         enviaAjax(datos, $("#proceso"));
     };
-
     ejecutarGuardado();
 }
 
@@ -1088,20 +1000,22 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, an
         ani_tipo: anioTipo
     });
     let turnoSeleccionado = 'mañana';
-    if (secCodigo && secCodigo.length > 1) {
-        const segundoDigito = secCodigo.toString().charAt(1);
-        if (segundoDigito === '2') turnoSeleccionado = 'tarde';
-        else if (segundoDigito === '3') turnoSeleccionado = 'noche';
-        else if (['1', '4', '0'].includes(segundoDigito)) turnoSeleccionado = 'mañana';
+    if (secCodigo && secCodigo.length > 3) {
+        const primerDigito = secCodigo.toString().match(/\d/);
+        if (primerDigito) {
+            const digito = primerDigito[0];
+            if (digito === '2') turnoSeleccionado = 'tarde';
+            else if (digito === '3') turnoSeleccionado = 'noche';
+            else if (['1', '4', '0'].includes(digito)) turnoSeleccionado = 'mañana';
+        }
     }
-    const prefijo = getPrefijoSeccion(secCodigo);
-    const textoSeccion = `${prefijo}${secCodigo} (${secCantidad} Est.) (Año ${anioTexto})`;
+    const textoSeccion = `${secCodigo} (${secCantidad} Est.) (Año ${anioTexto})`;
     $("#seccion_principal_id").empty().append(`<option value="${secCodigo}" selected>${textoSeccion}</option>`).prop('disabled', true);
     $("#cantidadSeccionModificar").val(secCantidad);
     $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
-    $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario para la sección ${prefijo}${secCodigo}`);
+    $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario para la sección ${secCodigo}`);
     $("#accion").val("modificar");
-    $("#proceso").text("GUARDAR HORARIO").data("action-type", "modificar").addClass("btn-success");
+    $("#proceso").text("REGISTRAR").data("action-type", "modificar").addClass("btn-success");
     $("#sec_codigo_hidden").val(secCodigo);
     $("#modal-horario").data("mode", "registrar");
     inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
@@ -1194,22 +1108,25 @@ function enviaAjax(datos, boton) {
                             sec_id: s.sec_codigo
                         }));
                         respuesta.mensaje.forEach(item => {
-                            const prefijo = getPrefijoSeccion(item.sec_codigo);
-                            const botones_accion = `
-                               <button class="btn btn-icon btn-info ver-horario" data-sec-codigo="${item.sec_codigo}" title="Ver Horario">
-                                 <img src="public/assets/icons/eye.svg" alt="Ver Horario">
-                               </button>
-                               <button class="btn btn-icon btn-warning modificar-horario" data-sec-codigo="${item.sec_codigo}" title="Modificar Horario"> 
-                                 <img src="public/assets/icons/edit.svg" alt="Modificar">
-                               </button>
-                               <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" title="Eliminar Horario">
-                                 <img src="public/assets/icons/trash.svg" alt="Eliminar">
-                               </button>`;
+                           const botones_accion = `<button class="btn btn-icon btn-info ver-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button><button class="btn btn-icon btn-warning modificar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button><button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
 
-                            $("#resultadoconsulta").append(`<tr><td>${prefijo}${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
+                            $("#resultadoconsulta").append(`<tr><td>${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
                     }
                     crearDT();
+                } else if (respuesta.resultado === 'registrar_seccion_ok') {
+                    $('#modalRegistroSeccion').modal('hide');
+                    muestraMensaje("success", 2000, "¡ÉXITO!", respuesta.mensaje);
+
+                    const anioTexto = $('#anioId option:selected').text();
+                    const anioValue = $('#anioId').val();
+
+                    abrirModalHorarioParaNuevaSeccion(
+                        respuesta.nuevo_codigo,
+                        respuesta.nueva_cantidad,
+                        anioTexto,
+                        anioValue
+                    );
                 } else if (respuesta.resultado.endsWith("_ok")) {
                     $('.modal').modal('hide');
                     muestraMensaje("success", 4000, "¡ÉXITO!", respuesta.mensaje);
@@ -1249,6 +1166,19 @@ function enviaAjax(datos, boton) {
 }
 
 $(document).ready(function() {
+    $('#cantidadSeccionModificar').on('input', checkForScheduleChanges);
+
+    $('#modalEntradaHorario').on('show.bs.modal', function() {
+        const mainScheduleModalInstance = bootstrap.Modal.getInstance(document.getElementById('modal-horario'));
+        if (mainScheduleModalInstance) {
+            mainScheduleModalInstance._config.keyboard = false;
+        }
+    }).on('hidden.bs.modal', function() {
+        const mainScheduleModalInstance = bootstrap.Modal.getInstance(document.getElementById('modal-horario'));
+        if (mainScheduleModalInstance) {
+            mainScheduleModalInstance._config.keyboard = true;
+        }
+    });
 
     const modalBody = $("#modal-body-gestion-clase");
 
@@ -1325,6 +1255,7 @@ $(document).ready(function() {
                 const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
                 inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
                 muestraMensaje("success", 3000, "Horario Limpiado", "Se han eliminado todas las clases. Presione 'Guardar Cambios' para hacer la acción permanente.");
+                checkForScheduleChanges();
             }
         });
     });
@@ -1352,6 +1283,8 @@ $(document).ready(function() {
             allCohortes = respuesta.cohortes.map(c => parseInt(c, 10)) || [];
             ocupacionGlobalCompleta = respuesta.horarios_existentes || [];
             modalDataLoaded = true;
+           
+
             Listar();
         },
         error: function() {
@@ -1359,6 +1292,31 @@ $(document).ready(function() {
             muestraMensaje("error", 0, "Error Crítico", "No se pudieron cargar los datos iniciales.");
         }
     });
+
+const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
+    if (mostrarPrompt === true) {
+        const anioActivo = new Date().getFullYear(); 
+        const anioAnterior = anioActivo - 1;
+
+        Swal.fire({
+            title: `Bienvenido al Año Académico ${anioActivo}`,
+            html: `Hemos detectado que no hay secciones registradas para este año. ¿Desea duplicar la estructura de horarios del año <b>${anioAnterior}</b>?<br><br><small class="text-muted"><b>Nota:</b> Se copiarán las unidades curriculares, pero los <b>docentes y espacios</b> quedarán vacíos para ser asignados.</small>`,
+            icon: 'question',
+            showDenyButton: true,
+            confirmButtonText: 'SÍ, DUPLICAR',
+            denyButtonText: 'NO, EMPEZAR DE CERO',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const datos = new FormData();
+                datos.append("accion", "duplicar_anio_anterior");
+                enviaAjax(datos, null);
+            } else if (result.isDenied) {
+                muestraMensaje('info', 4000, 'Entendido', 'Comenzará el año académico desde cero.');
+            }
+        });
+    }
 
     $(document).on('click', '.ver-horario, .modificar-horario, .eliminar-horario, #btnIniciarRegistro, #btnAbrirModalUnir', function(e) {
         if (!modalDataLoaded && !$(this).prop('disabled')) {
@@ -1369,14 +1327,82 @@ $(document).ready(function() {
     });
 
     $('#btnIniciarRegistro').on('click', function() {
-    $("#formRegistroSeccion")[0].reset();
-    $("#alerta-cohorte").hide();
-    $("#btnGuardarSeccion").prop("disabled", true); 
-    $("#modalRegistroSeccion").modal("show");
-});
-$('#formRegistroSeccion').on('input change', function() {
-    validarFormularioRegistro();
-});
+        $("#formRegistroSeccion")[0].reset();
+        $("#alerta-codigo").hide();
+        $("#btnGuardarSeccion").prop("disabled", true);
+        $("#modalRegistroSeccion").modal("show");
+    });
+
+    const codigoInput = $('#codigoSeccion');
+    const anioInput = $('#anioId');
+    const cantidadInput = $('#cantidadSeccion');
+    const guardarBtn = $('#btnGuardarSeccion');
+    const alertaCodigo = $('#alerta-codigo');
+
+    function validarCodigoSeccion() {
+        const codigo = codigoInput.val();
+        const anio = anioInput.val();
+        
+        guardarBtn.prop('disabled', true);
+        alertaCodigo.hide();
+
+        const formatoValido = /^[A-Z]{2,3}\d+$/.test(codigo);
+
+        if (codigo.length === 0) {
+            return;
+        }
+
+        if (!formatoValido) {
+            alertaCodigo.html(`<strong>Formato inválido.</strong> Debe tener un prefijo de 2-3 letras y luego números.`).show();
+            return;
+        }
+
+        if (!anio) {
+             alertaCodigo.html(`Seleccione un año académico para verificar la disponibilidad del código.`).show();
+             return;
+        }
+        
+        const datos = new FormData();
+        datos.append("accion", "verificar_codigo_seccion");
+        datos.append("codigoSeccion", codigo);
+        datos.append("anioId", anio);
+
+        $.ajax({
+            url: "",
+            type: "POST",
+            data: datos,
+            contentType: false,
+            processData: false,
+            success: function(respuesta) {
+                if (respuesta.resultado === 'ok') {
+                    if(respuesta.existe) {
+                        alertaCodigo.html(`<strong>Código no disponible.</strong> Ya existe una sección con este código para el año seleccionado.`).show();
+                    } else {
+                        alertaCodigo.hide();
+                        if (cantidadInput.val() !== '') {
+                            guardarBtn.prop('disabled', false);
+                        }
+                    }
+                } else {
+                    alertaCodigo.html(`Error al validar el código. Intente de nuevo.`).show();
+                }
+            },
+            error: function() {
+                 alertaCodigo.html(`Error de conexión al validar el código.`).show();
+            }
+        });
+    }
+
+    codigoInput.on('keyup', validarCodigoSeccion);
+    anioInput.on('change', validarCodigoSeccion);
+    cantidadInput.on('keyup', function() {
+        if (!alertaCodigo.is(':visible') && codigoInput.val() && anioInput.val() && cantidadInput.val() !== '') {
+             guardarBtn.prop('disabled', false);
+        } else {
+             guardarBtn.prop('disabled', true);
+        }
+    });
+
 
     $('#cantidadSeccionModificar').on('input', function() {
         const input = $(this);
@@ -1395,8 +1421,8 @@ $('#formRegistroSeccion').on('input change', function() {
         container.empty();
         const gruposCompatibles = allSecciones.reduce((acc, seccion) => {
             const codigoStr = seccion.sec_codigo.toString();
-            const trayecto = codigoStr.charAt(0);
-            const turno = codigoStr.charAt(1);
+            const trayecto = codigoStr.match(/\d/)[0];
+            const turno = codigoStr.match(/\d/g)[1];
             const turnosNombres = {
                 '1': 'Mañana',
                 '2': 'Tarde',
@@ -1420,8 +1446,7 @@ $('#formRegistroSeccion').on('input change', function() {
                 hayGrupos = true;
                 container.append(`<h6 class="text-primary mt-2">${grupo.nombre}</h6>`);
                 grupo.secciones.forEach(s => {
-                    const prefijo = getPrefijoSeccion(s.sec_codigo);
-                    const checkboxHtml = `<div class="form-check"><input class="form-check-input" type="checkbox" name="secciones_a_unir[]" value="${s.sec_codigo}" id="check_sec_${s.sec_codigo}" data-group-key="${key}"><label class="form-check-label" for="check_sec_${s.sec_codigo}">${prefijo}${s.sec_codigo} (${s.sec_cantidad} Est.)</label></div>`;
+                    const checkboxHtml = `<div class="form-check"><input class="form-check-input" type="checkbox" name="secciones_a_unir[]" value="${s.sec_codigo}" id="check_sec_${s.sec_codigo}" data-group-key="${key}"><label class="form-check-label" for="check_sec_${s.sec_codigo}">${s.sec_codigo} (${s.sec_cantidad} Est.)</label></div>`;
                     container.append(checkboxHtml);
                 });
                 container.append('<hr class="my-2">');
@@ -1433,79 +1458,97 @@ $('#formRegistroSeccion').on('input change', function() {
     });
 
     $(document).on('click', '.ver-horario, .modificar-horario, .eliminar-horario', function() {
-        const sec_codigo = $(this).data('sec-codigo');
-        const isView = $(this).hasClass('ver-horario');
-        const isModify = $(this).hasClass('modificar-horario');
-        const isDelete = $(this).hasClass('eliminar-horario');
-        const seccionData = allSecciones.find(s => s.sec_codigo == sec_codigo);
-        if (!seccionData) return;
+    const sec_codigo = $(this).data('sec-codigo');
+    const ani_anio = $(this).data('ani-anio');
+    const isView = $(this).hasClass('ver-horario');
+    const isModify = $(this).hasClass('modificar-horario');
+    const isDelete = $(this).hasClass('eliminar-horario');
+    const seccionData = allSecciones.find(s => s.sec_codigo == sec_codigo);
+    if (!seccionData) return;
 
-        let turnoSeleccionado = 'todos';
-        if (seccionData.sec_codigo) {
-            const segundoDigito = seccionData.sec_codigo.toString().charAt(1);
-            if (['1', '4', '0'].includes(segundoDigito)) turnoSeleccionado = 'mañana';
-            else if (segundoDigito === '2') turnoSeleccionado = 'tarde';
-            else if (segundoDigito === '3') turnoSeleccionado = 'noche';
-        }
+    let turnoSeleccionado = 'todos';
+    const codigoNumerico = seccionData.sec_codigo.toString().replace(/^\D+/g, '');
+    if (codigoNumerico.length > 0) {
+        const primerDigito = codigoNumerico.charAt(0);
+        if (['1', '4', '0'].includes(primerDigito)) turnoSeleccionado = 'mañana';
+        else if (primerDigito === '2') turnoSeleccionado = 'tarde';
+        else if (primerDigito === '3') turnoSeleccionado = 'noche';
+    }
 
-        const datos = new FormData();
-        datos.append("accion", "consultar_detalles");
-        datos.append("sec_codigo", sec_codigo);
-        $.ajax({
-            url: "",
-            type: "POST",
-            data: datos,
-            contentType: false,
-            processData: false,
-            success: function(respuesta) {
-                if (respuesta.resultado === 'ok' && Array.isArray(respuesta.mensaje)) {
-                    horarioContenidoGuardado.clear();
-                    respuesta.mensaje.forEach(clase => {
-                        const inicio = new Date(`1970-01-01T${clase.hora_inicio}`);
-                        const fin = new Date(`1970-01-01T${clase.hora_fin}`);
-                        const diffMinutes = (fin - inicio) / (1000 * 60);
-                        clase.bloques_span = Math.round(diffMinutes / 40) || 1;
+    const datos = new FormData();
+    datos.append("accion", "consultar_detalles");
+    datos.append("sec_codigo", sec_codigo);
+    datos.append("ani_anio", ani_anio);
+   $.ajax({
+    url: "",
+    type: "POST",
+    data: datos,
+    contentType: false,
+    processData: false,
+    success: function(respuesta) {
+        if (respuesta.resultado === 'ok' && Array.isArray(respuesta.mensaje)) {
+            horarioContenidoGuardado.clear();
 
-                        const dia_key = normalizeDayKey(clase.dia);
-                        const key = `${clase.hora_inicio.substring(0, 5)}-${dia_key}`;
-                        if (!horarioContenidoGuardado.has(key)) {
-                            horarioContenidoGuardado.set(key, []);
+            const bloquesParaEstaTabla = construirBloquesParaHorario(respuesta.mensaje, turnoSeleccionado);
+            bloquesDeLaTablaActual = bloquesParaEstaTabla;
+
+            respuesta.mensaje.forEach(clase => {
+                const startIndex = bloquesParaEstaTabla.findIndex(b => b.tur_horainicio === clase.hora_inicio);
+                let span = 1;
+                if (startIndex > -1) {
+                    let currentEndTime = bloquesParaEstaTabla[startIndex].tur_horafin;
+                    for (let i = startIndex + 1; i < bloquesParaEstaTabla.length; i++) {
+                        if (currentEndTime === bloquesParaEstaTabla[i].tur_horainicio && bloquesParaEstaTabla[i].tur_horafin <= clase.hora_fin) {
+                            span++;
+                            currentEndTime = bloquesParaEstaTabla[i].tur_horafin;
+                        } else {
+                            break;
                         }
-                        horarioContenidoGuardado.get(key).push({
-                            data: clase,
-                            html: generarCellContent(clase)
-                        });
-                    });
-
-                    const prefijo = getPrefijoSeccion(seccionData.sec_codigo);
-                    const seccionTexto = `${prefijo}${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio})`;
-                    if (isDelete) {
-                        $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> ${prefijo}${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio}</p>`);
-                        inicializarTablaHorario(turnoSeleccionado, "#tablaEliminarHorario", true);
-                        $("#btnProcederEliminacion").data('sec-codigo', sec_codigo);
-                        $("#modalConfirmarEliminar").modal('show');
-                    } else if (isView) {
-                        $("#modalVerHorarioTitle").text(`Horario: ${seccionTexto}`);
-                        inicializarTablaHorario(turnoSeleccionado, "#tablaVerHorario", true);
-                        $("#modalVerHorario").modal("show");
-                    } else if (isModify) {
-                        limpiaModalPrincipal();
-                        $("#sec_codigo_hidden").val(sec_codigo);
-                        $("#seccion_principal_id").html(`<option value="${sec_codigo}">${seccionTexto}</option>`).prop('disabled', true);
-                        $("#cantidadSeccionModificar").val(seccionData.sec_cantidad);
-                        $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
-                        $("#modalHorarioGlobalTitle").text(`Modificar Horario: ${prefijo}${seccionData.sec_codigo}`);
-                        $("#accion").val("modificar");
-                        $("#proceso").text("GUARDAR CAMBIOS").addClass("btn-primary");
-                        inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
-                        $("#modal-horario").modal("show");
                     }
                 }
+                clase.bloques_span = span;
+
+                const dia_key = normalizeDayKey(clase.dia);
+                const key = `${clase.hora_inicio.substring(0, 5)}-${dia_key}`;
+                if (!horarioContenidoGuardado.has(key)) {
+                    horarioContenidoGuardado.set(key, []);
+                }
+                horarioContenidoGuardado.get(key).push({ data: clase });
+            });
+
+            const seccionTexto = `${seccionData.sec_codigo} (${seccionData.sec_cantidad} Est.) (Año ${seccionData.ani_anio})`;
+
+            if (isDelete) {
+                $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> ${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio}</p>`);
+                inicializarTablaHorario(turnoSeleccionado, "#tablaEliminarHorario", true);
+                $("#btnProcederEliminacion").data('sec-codigo', sec_codigo).data('ani-anio', ani_anio);  
+                $("#modalConfirmarEliminar").modal('show');
+            } else if (isView) {
+                $("#modalVerHorarioTitle").text(`Horario: ${seccionTexto}`);
+                inicializarTablaHorario(turnoSeleccionado, "#tablaVerHorario", true);
+                $("#modalVerHorario").modal("show");
+            } else if (isModify) {
+                limpiaModalPrincipal();
+                $("#sec_codigo_hidden").val(sec_codigo);
+                $("#ani_anio_hidden").val(ani_anio);
+                $("#seccion_principal_id").html(`<option value="${sec_codigo}">${seccionTexto}</option>`).prop('disabled', true);
+                $("#cantidadSeccionModificar").val(seccionData.sec_cantidad);
+                $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
+                $("#modalHorarioGlobalTitle").text(`MODIFICAR Horario: ${seccionData.sec_codigo}`);
+                $("#accion").val("modificar");
+                $("#proceso").text("MODIFICAR").addClass("btn-primary");
+                inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
+                $("#proceso").prop("disabled", true);
+                $('#modal-horario').data('initial-state', getScheduleStateString());
+                $("#modal-horario").modal("show");
             }
-        });
-    });
+        }
+    }
+});
+});
 
     $('#filtro_turno').on("change", function() {
+        bloquesDeLaTablaActual = []; 
         inicializarTablaHorario($(this).val(), "#tablaHorario", false);
     });
 
@@ -1538,10 +1581,9 @@ $('#formRegistroSeccion').on('input change', function() {
         $('#modalConfirmarEliminar').modal('hide');
         setTimeout(() => {
             const seccion = allSecciones.find(s => s.sec_codigo == sec_codigo);
-            const prefijo = getPrefijoSeccion(seccion.sec_codigo);
             Swal.fire({
                 title: '¿Está realmente seguro?',
-                html: `Esta acción es irreversible y eliminará permanentemente la sección <strong>${prefijo}${seccion.sec_codigo}</strong>.`,
+                html: `Esta acción es irreversible y eliminará permanentemente la sección <strong>${seccion.sec_codigo}</strong>.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -1549,10 +1591,13 @@ $('#formRegistroSeccion').on('input change', function() {
                 confirmButtonText: 'Sí, confirmar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
-                if (result.isConfirmed) {
+               if (result.isConfirmed) {
+                  
+                    const seccion = allSecciones.find(s => s.sec_codigo == sec_codigo); 
                     const datos = new FormData();
                     datos.append("accion", "eliminar_seccion_y_horario");
                     datos.append("sec_codigo", sec_codigo);
+                    datos.append("ani_anio", seccion.ani_anio); 
                     enviaAjax(datos, null);
                 }
             });
@@ -1586,8 +1631,7 @@ $('#formRegistroSeccion').on('input change', function() {
         seleccionados.each(function() {
             const seccion = allSecciones.find(s => s.sec_codigo == $(this).val());
             if (seccion) {
-                const prefijo = getPrefijoSeccion(seccion.sec_codigo);
-                selectorOrigen.append(`<option value="${seccion.sec_codigo}">${prefijo}${seccion.sec_codigo}</option>`);
+                selectorOrigen.append(`<option value="${seccion.sec_codigo}">${seccion.sec_codigo}</option>`);
             }
         });
     });
@@ -1607,198 +1651,213 @@ $('#formRegistroSeccion').on('input change', function() {
         }
         $(this).addClass('was-validated');
     });
-
-    $(document).on('click', '#btnAnadirFilaHorario', async function(e) {
-    e.preventDefault();
-
-    let horaInicioSugerida = "13:00";
-    let horaFinSugerida = "13:40";
-    const ultimaFila = $("#tablaHorario tbody tr:last");
-
-    if (ultimaFila.length > 0) {
-
-        const franjaTexto = ultimaFila.find('td:first span').text();
-        const partes = franjaTexto.split(' - ');
-        if (partes.length === 2) {
-            const horaFinUltimoBloque = partes[1].trim();
-            const parse12HourTime = (timeStr) => {
-                const [time, modifier] = timeStr.split(' ');
-                let [hours, minutes] = time.split(':').map(Number);
-                if (modifier && modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
-                if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
-                const date = new Date();
-                date.setHours(hours, minutes, 0, 0);
-                return date;
-            };
-            try {
-                const fechaInicio = parse12HourTime(horaFinUltimoBloque);
-                horaInicioSugerida = fechaInicio.toTimeString().substring(0, 5);
-                fechaInicio.setMinutes(fechaInicio.getMinutes() + 40);
-                horaFinSugerida = fechaInicio.toTimeString().substring(0, 5);
-            } catch (error) {
-                console.error("Error al parsear hora:", error);
-            }
-        }
-    }
-
-  
-    const validarBloqueHorario = (inicioNuevo, finNuevo) => {
+    
+   
+    const validarBloqueHorario = (inicioNuevo, finNuevo, ignorarInicio = null) => {
         if (!inicioNuevo || !finNuevo) return `Debes especificar una hora de inicio y fin.`;
         if (inicioNuevo >= finNuevo) return `La hora de inicio debe ser anterior a la hora de fin.`;
-        const horaMinima = "07:00";
-        const horaMaxima = "23:59";
-        if (inicioNuevo < horaMinima || finNuevo > horaMaxima) return `El horario debe estar entre las 7:00 a. m. y las 12:00 a. m.`;
-        let haySolapamiento = false;
-        $("#tablaHorario tbody tr").each(function() {
-            const cellText = $(this).find('td:first span').text();
-            const [startText, endText] = cellText.split(' - ');
-            if (!startText || !endText) return;
 
-            const to24Hour = timeStr => {
-                const [time, modifier] = timeStr.trim().split(' ');
-                let [hours, minutes] = time.split(':');
-                if (hours === '12') {
-                    hours = '00';
-                }
-                if (modifier.toUpperCase() === 'PM') {
-                    hours = parseInt(hours, 10) + 12;
-                }
-                return `${String(hours).padStart(2, '0')}:${minutes}`;
-            };
-
-            const inicioExistente = to24Hour(startText);
-            const finExistente = to24Hour(endText);
-
-            if (inicioExistente && finExistente && (inicioNuevo < finExistente && finNuevo > inicioExistente)) {
-                haySolapamiento = true;
+        let haySolapamiento = bloquesDeLaTablaActual.some(bloque => {
+           
+            if (bloque.tur_horainicio === ignorarInicio) {
                 return false;
             }
+            const inicioExistente = bloque.tur_horainicio.substring(0, 5);
+            const finExistente = bloque.tur_horafin.substring(0, 5);
+         
+            return (inicioNuevo < finExistente && finNuevo > inicioExistente);
         });
+
         if (haySolapamiento) return 'El bloque horario se solapa con un bloque existente.';
         return null;
     };
 
-    const {
-        value: formValues,
-        isConfirmed
-    } = await Swal.fire({
-        title: 'Añadir Nuevo Bloque Horario',
-        html: `
-            <p class="text-muted">Introduce la hora de inicio y fin para la nueva fila del horario.</p>
-            <div class="form-floating mb-2">
-                <input type="time" id="swal-hora-inicio" class="form-control" value="${horaInicioSugerida}" step="1800">
-                <label for="swal-hora-inicio">Hora de Inicio</label>
-            </div>
-            <div class="form-floating">
-                <input type="time" id="swal-hora-fin" class="form-control" value="${horaFinSugerida}" step="1800">
-                <label for="swal-hora-fin">Hora de Fin</label>
-            </div>`,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Añadir Fila',
-        cancelButtonText: 'Cancelar',
-        didOpen: () => {
-            const inicioInput = document.getElementById('swal-hora-inicio');
-            const finInput = document.getElementById('swal-hora-fin');
-            const confirmButton = Swal.getConfirmButton();
+   
+    const abrirModalGestionFila = async (franjaAEditar = null) => {
+        
+        let horaInicioSugerida = "13:00";
+        let horaFinSugerida = "13:40";
 
-            function onInput() {
-                const error = validarBloqueHorario(inicioInput.value, finInput.value);
-                if (error) {
-                    Swal.showValidationMessage(error);
-                    confirmButton.disabled = true;
-                } else {
-                    Swal.resetValidationMessage();
-                    confirmButton.disabled = false;
+        if (franjaAEditar) {
+            const bloque = bloquesDeLaTablaActual.find(b => b.tur_horainicio === franjaAEditar);
+            if (bloque) {
+                horaInicioSugerida = bloque.tur_horainicio.substring(0, 5);
+                horaFinSugerida = bloque.tur_horafin.substring(0, 5);
+            }
+        } else if (bloquesDeLaTablaActual.length > 0) {
+            const ultimoBloque = bloquesDeLaTablaActual[bloquesDeLaTablaActual.length - 1];
+            const fechaFin = new Date(`1970-01-01T${ultimoBloque.tur_horafin}`);
+            horaInicioSugerida = fechaFin.toTimeString().substring(0, 5);
+            fechaFin.setMinutes(fechaFin.getMinutes() + 40);
+            horaFinSugerida = fechaFin.toTimeString().substring(0, 5);
+        }
+
+        const { value: formValues, isConfirmed } = await Swal.fire({
+            title: franjaAEditar ? 'Editar Bloque Horario' : 'Añadir Nuevo Bloque Horario',
+            html: `
+                <p class="text-muted">Introduce la hora de inicio y fin para la franja horaria.</p>
+                <div class="form-floating mb-2">
+                    <input type="time" id="swal-hora-inicio" class="form-control" value="${horaInicioSugerida}" step="600">
+                    <label for="swal-hora-inicio">Hora de Inicio</label>
+                </div>
+                <div class="form-floating">
+                    <input type="time" id="swal-hora-fin" class="form-control" value="${horaFinSugerida}" step="600">
+                    <label for="swal-hora-fin">Hora de Fin</label>
+                </div>`,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: franjaAEditar ? 'GUARDAR CAMBIOS' : 'AÑADIR FILA',
+            cancelButtonText: 'CANCELAR',
+            didOpen: () => {
+                const inicioInput = document.getElementById('swal-hora-inicio');
+                const finInput = document.getElementById('swal-hora-fin');
+                const confirmButton = Swal.getConfirmButton();
+
+                function onInput() {
+                    const error = validarBloqueHorario(inicioInput.value, finInput.value, franjaAEditar);
+                    if (error) {
+                        Swal.showValidationMessage(error);
+                        confirmButton.disabled = true;
+                    } else {
+                        Swal.resetValidationMessage();
+                        confirmButton.disabled = false;
+                    }
                 }
+                inicioInput.addEventListener('input', onInput);
+                finInput.addEventListener('input', onInput);
+                onInput();
+            },
+            preConfirm: () => {
+                const inicio = document.getElementById('swal-hora-inicio').value;
+                const fin = document.getElementById('swal-hora-fin').value;
+                if (validarBloqueHorario(inicio, fin, franjaAEditar)) {
+                    return false;
+                }
+                return { inicio, fin };
             }
-            inicioInput.addEventListener('input', onInput);
-            finInput.addEventListener('input', onInput);
-            onInput();
-        },
-        preConfirm: () => {
-            const inicio = document.getElementById('swal-hora-inicio').value;
-            const fin = document.getElementById('swal-hora-fin').value;
-            if (validarBloqueHorario(inicio, fin)) {
-                return false;
+        });
+
+        if (isConfirmed && formValues) {
+            const nuevoInicio = formValues.inicio + ':00';
+            const nuevoFin = formValues.fin + ':00';
+            const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+
+              if (franjaAEditar) {  
+            const bloqueIndex = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaAEditar);
+            if (bloqueIndex > -1) {
+                const oldBlock = { ...bloquesDeLaTablaActual[bloqueIndex] };
+                
+                bloquesDeLaTablaActual[bloqueIndex].tur_horainicio = nuevoInicio;
+                bloquesDeLaTablaActual[bloqueIndex].tur_horafin = nuevoFin;
+                bloquesDeLaTablaActual.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+                
+                const llavesAMover = [];
+                horarioContenidoGuardado.forEach((value, key) => {
+                    if (key.startsWith(oldBlock.tur_horainicio.substring(0, 5))) {
+                        llavesAMover.push({ oldKey: key, value });
+                    }
+                });
+
+                llavesAMover.forEach(item => {
+                    const newKey = nuevoInicio.substring(0, 5) + item.oldKey.substring(5);
+                    const updatedValue = item.value.map(v => {
+                        const span = v.data.bloques_span;
+                        const newStartIndex = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === nuevoInicio);
+                        
+                        let newEndIndex = newStartIndex + span - 1;
+                        let newHoraFin = (newEndIndex < bloquesDeLaTablaActual.length) ? bloquesDeLaTablaActual[newEndIndex].tur_horafin : nuevoFin;
+                        let newSpan = span;
+
+                        if (newEndIndex >= bloquesDeLaTablaActual.length) {
+                            newSpan = 1; newHoraFin = nuevoFin;
+                        } else {
+                            for (let i = newStartIndex; i < newEndIndex; i++) {
+                                if (bloquesDeLaTablaActual[i].tur_horafin !== bloquesDeLaTablaActual[i+1].tur_horainicio) {
+                                    newSpan = 1; newHoraFin = nuevoFin; break;
+                                }
+                            }
+                        }
+                        
+                        return { ...v, data: { ...v.data, hora_inicio: nuevoInicio, hora_fin: newHoraFin, bloques_span: newSpan }};
+                    });
+                    
+                    horarioContenidoGuardado.delete(item.oldKey);
+                    horarioContenidoGuardado.set(newKey, updatedValue);
+                });
             }
-            return {
-                inicio,
-                fin
-            };
-        }
-    });
-
-    if (isConfirmed && formValues) {
-     
-        const nuevoBloqueVacio = {
-            data: {
-                hora_inicio: formValues.inicio + ':00',
-                hora_fin: formValues.fin + ':00',
-                isCustomEmptyRow: true 
-            }
-        };
-        
-       
-        const claveBloqueNuevo = `${formValues.inicio}-custom`;
-        
-       
-        horarioContenidoGuardado.set(claveBloqueNuevo, [nuevoBloqueVacio]);
-
-        const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
-        inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-
-        
-
-        $("#filtro_turno").prop('disabled', true);
-        muestraMensaje("success", 2500, "Fila Añadida", "El nuevo bloque horario ha sido agregado.");
-    }
-});
-
-    $(document).on('click', '.btn-eliminar-fila-personalizada', function() {
-        const franjaInicio = $(this).data('franja-inicio');
-
-        const keysToDelete = [];
-        for (const key of horarioContenidoGuardado.keys()) {
-            if (key.startsWith(franjaInicio.substring(0, 5))) {
-                keysToDelete.push(key);
-            }
-        }
-        keysToDelete.forEach(key => horarioContenidoGuardado.delete(key));
-
-        const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
-        inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-
-        muestraMensaje("info", 2000, "Fila Eliminada", "El bloque horario y sus clases han sido eliminados.");
-    });
-});
-function validarFormularioRegistro() {
-    const codigoInput = $('#codigoSeccion');
-    const anioInput = $('#anioId');
-    const cantidadInput = $('#cantidadSeccion');
-    const guardarBtn = $('#btnGuardarSeccion');
-    const alertaCohorte = $('#alerta-cohorte');
-
-    const codigo = codigoInput.val();
-    let cohorteValido = false;
-
-    if (codigo.length === 4) {
-        const cohorte = parseInt(codigo.charAt(3), 10);
-        if (allCohortes.includes(cohorte)) {
-            alertaCohorte.html(`Cohorte <strong>${cohorte}</strong> válido.`).removeClass('text-danger').addClass('text-muted').show();
-            cohorteValido = true;
         } else {
-            const cohortesPermitidos = allCohortes.join(', ');
-            alertaCohorte.html(`<strong>Cohorte no válido.</strong> El cohorte ${cohorte} no existe. Permitidos: ${cohortesPermitidos}`).removeClass('text-muted').addClass('text-danger').show();
+                bloquesDeLaTablaActual.push({ tur_horainicio: nuevoInicio, tur_horafin: nuevoFin });
+            }
+            
+            bloquesDeLaTablaActual.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+            inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
+            checkForScheduleChanges();
+            muestraMensaje("success", 2500, "Éxito", `El bloque horario ha sido ${franjaAEditar ? 'modificado' : 'agregado'}.`);
         }
-    } else {
-        alertaCohorte.hide();
-    }
+    };
 
-  
-    if (codigo.length === 4 && anioInput.val() && cantidadInput.val() !== '' && cohorteValido) {
-        guardarBtn.prop('disabled', false);
-    } else {
-        guardarBtn.prop('disabled', true);
-    }
-}
+    
+    $(document).on('click', '#btnAnadirFilaHorario', function(e) {
+        e.preventDefault();
+        abrirModalGestionFila(null);
+    });
+
+    
+    $(document).on('click', '.btn-editar-fila', function(e) {
+        e.preventDefault();
+        const franjaInicio = $(this).data('franja-inicio');
+        abrirModalGestionFila(franjaInicio);
+    });
+
+   
+    $(document).on('click', '.btn-eliminar-fila', function() {
+        const franjaInicio = $(this).data('franja-inicio');
+        const inicioCorto = franjaInicio.substring(0, 5);
+        
+        let clasesEnLaFila = false;
+        horarioContenidoGuardado.forEach((value, key) => {
+            if (key.startsWith(inicioCorto)) {
+                clasesEnLaFila = true;
+            }
+        });
+
+        const procederEliminacion = () => {
+            bloquesDeLaTablaActual = bloquesDeLaTablaActual.filter(b => b.tur_horainicio !== franjaInicio);
+            
+            const llavesAEliminar = [];
+            horarioContenidoGuardado.forEach((value, key) => {
+                if (key.startsWith(inicioCorto)) {
+                    llavesAEliminar.push(key);
+                }
+            });
+            llavesAEliminar.forEach(key => horarioContenidoGuardado.delete(key));
+
+            const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+            inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
+            checkForScheduleChanges();
+            muestraMensaje("info", 2000, "Fila Eliminada", "El bloque horario y sus clases han sido eliminados.");
+        };
+
+        if (clasesEnLaFila) {
+            Swal.fire({
+                title: '¿Está seguro?',
+                text: "Esta fila contiene clases asignadas. ¡Eliminarla también borrará esas clases del horario!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'SÍ, ELIMINAR',
+                cancelButtonText: 'CANCELAR'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    procederEliminacion();
+                }
+            });
+        } else {
+            procederEliminacion();
+        }
+    });
+
+
+});
+
