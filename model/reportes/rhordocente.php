@@ -16,7 +16,7 @@ class ReporteHorarioDocente extends Connection
     
     public function getAniosActivos() {
         try {
-            $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
+            $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC";
             $stmt = $this->con()->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -32,7 +32,7 @@ class ReporteHorarioDocente extends Connection
     }
     public function obtenerDocentes() {
         try {
-            $p = $this->con()->prepare("SELECT doc_cedula, CONCAT(doc_apellido, ', ', doc_nombre) as nombreCompleto FROM tbl_docente WHERE doc_estado = 1 ORDER BY doc_apellido ASC, doc_nombre ASC");
+            $p = $this->con()->prepare("SELECT doc_cedula, CONCAT(doc_apellido, ' ', doc_nombre) as nombreCompleto FROM tbl_docente WHERE doc_estado = 1 ORDER BY doc_apellido ASC, doc_nombre ASC");
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return false; }
@@ -42,7 +42,7 @@ class ReporteHorarioDocente extends Connection
         try {
             $sql = "SELECT 
                             d.doc_cedula, 
-                            CONCAT(d.doc_apellido, ', ', d.doc_nombre) AS nombreCompleto, 
+                            CONCAT(d.doc_apellido, ' ', d.doc_nombre) AS nombreCompleto, 
                             d.doc_dedicacion, 
                             d.doc_condicion, 
                             d.doc_observacion,
@@ -148,6 +148,7 @@ class ReporteHorarioDocente extends Connection
                             uh.sec_codigo,
                             uh.subgrupo, 
                             u.uc_nombre,
+                            u.uc_codigo,
                             CASE
                                 WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
                                 WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)

@@ -22,9 +22,9 @@ if (!function_exists('tiene_permiso_accion')) {
     }
 }
 
-$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
-$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
-$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
+$puede_registrar = tiene_permiso_accion('titulo', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('titulo', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('titulo', 'eliminar', $permisos);
 
 if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     header('Location: ?pagina=principal');

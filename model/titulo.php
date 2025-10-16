@@ -41,58 +41,30 @@ class Titulo extends Connection
         $this->originalNombreTitulo = $originalNombreTitulo;
     }
 
-    public function Registrar()
+     public function Registrar()
     {
-        $r = array();
-
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijotitulo AND tit_nombre = :nombretitulo AND tit_estado = 1");
-        $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
-        $stmt->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
-        $stmt->execute();
-        $existeActivo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($existeActivo) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = '¡ERROR! <br/> El título colocado ya existe!.';
-            return $r;
+        if ($this->existeActivo($co)) {
+            return ['resultado' => 'error', 'mensaje' => '¡ERROR! <br/> El título colocado ya existe!.'];
         }
 
-        $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijotitulo AND tit_nombre = :nombretitulo AND tit_estado = 0");
-        $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
-        $stmt->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
-        $stmt->execute();
-        $existeInactivo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($existeInactivo) {
-            $stmtReactivar = $co->prepare("UPDATE tbl_titulo SET tit_estado = 1 WHERE tit_prefijo = :prefijotitulo AND tit_nombre = :nombretitulo");
-            $stmtReactivar->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
-            $stmtReactivar->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
-            $stmtReactivar->execute();
-
-            $r['resultado'] = 'registrar';
-            $r['mensaje'] = '¡Registro Incluido! <br/> Se registró el título correctamente.';
-            $co = null;
-            return $r;
+        if ($this->existeInactivo($co)) {
+            return $this->reactivar($co);
         }
 
         try {
-            $stmt = $co->prepare("INSERT INTO tbl_titulo(tit_prefijo, tit_nombre, tit_estado) VALUES (:prefijotitulo, :nombretitulo, 1)");
-            $stmt->bindParam(':prefijotitulo', $this->prefijoTitulo, PDO::PARAM_STR);
-            $stmt->bindParam(':nombretitulo', $this->nombreTitulo, PDO::PARAM_STR);
+            $stmt = $co->prepare("INSERT INTO tbl_titulo(tit_prefijo, tit_nombre, tit_estado) VALUES (:prefijo, :nombre, 1)");
+            $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);
+            $stmt->bindParam(':nombre', $this->nombreTitulo, PDO::PARAM_STR);
             $stmt->execute();
-
-            $r['resultado'] = 'registrar';
-            $r['mensaje'] = '¡Registro Incluido! <br/> Se registró el título correctamente!';
+            return ['resultado' => 'registrar', 'mensaje' => '¡Registro Incluido! <br/> Se registró el título correctamente!'];
         } catch (Exception $e) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = $e->getMessage();
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
-        $co = null;
-        return $r;
     }
+
 
     public function Consultar()
     {
@@ -218,4 +190,35 @@ class Titulo extends Connection
             return true;
         }
     }
+
+      private function existeActivo(PDO $co): bool
+    {
+        $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 1");
+        $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);
+        $stmt->bindParam(':nombre', $this->nombreTitulo, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetchColumn() !== false;
+    }
+
+    
+    private function existeInactivo(PDO $co): bool
+    {
+        $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 0");
+        $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);
+        $stmt->bindParam(':nombre', $this->nombreTitulo, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetchColumn() !== false;
+    }
+
+    
+    private function reactivar(PDO $co): array
+    {
+        $stmt = $co->prepare("UPDATE tbl_titulo SET tit_estado = 1 WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre");
+        $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);
+        $stmt->bindParam(':nombre', $this->nombreTitulo, PDO::PARAM_STR);
+        $stmt->execute();
+        return ['resultado' => 'registrar', 'mensaje' => '¡Registro Incluido! <br/> Se registró el título correctamente!'];
+    }
+
+    
 }
