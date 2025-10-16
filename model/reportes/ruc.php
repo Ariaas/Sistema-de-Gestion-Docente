@@ -49,7 +49,6 @@ require_once('model/dbconnection.php');
                 CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS `Nombre Completo del Docente`
             FROM
                 uc_horario uh
-                uc_horario uh
             INNER JOIN
                 tbl_uc u ON uh.uc_codigo = u.uc_codigo
             INNER JOIN
