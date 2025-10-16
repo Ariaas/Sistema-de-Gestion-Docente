@@ -77,7 +77,7 @@ if (!$puede_registrar && !$puede_modificar) {
                                 <th>Nombre</th>
                                 <th>Cohorte</th>
                                 <th>Descripción</th>
-                                <th>Estatus</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
