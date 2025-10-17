@@ -77,6 +77,11 @@ if (!isset($_SESSION['name'])) {
                         <label for="correoUsuario" class="form-label">Correo</label>
                         <input type="email" class="form-control" id="correoUsuario" name="correoUsuario" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="contraseniaPerfil" class="form-label">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="contraseniaPerfil" name="contraseniaPerfil" autocomplete="new-password" placeholder="Dejar vacío para no cambiar">
+                        <span id="scontraseniaPerfil" class="form-text"></span>
+                    </div>
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                     </div>

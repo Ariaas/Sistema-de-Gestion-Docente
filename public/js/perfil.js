@@ -1,7 +1,28 @@
+let estadoInicialPerfil = null;
+
 function Listar() {
     var datos = new FormData();
     datos.append('accion', 'consultar');
     enviaAjax(datos);
+}
+
+function obtenerEstadoActualPerfil() {
+    return {
+        nombre: $('#nombreUsuario').val(),
+        correo: $('#correoUsuario').val(),
+        contrasenia: $('#contraseniaPerfil').val(),
+        foto: $('#fotoPerfil').attr('src')
+    };
+}
+
+function verificarCambiosPerfil() {
+    if (!estadoInicialPerfil) return;
+    const actual = obtenerEstadoActualPerfil();
+    let haCambiado = actual.nombre !== estadoInicialPerfil.nombre ||
+        actual.correo !== estadoInicialPerfil.correo ||
+        (actual.contrasenia.length > 0) ||
+        actual.foto !== estadoInicialPerfil.foto;
+    $('#formPerfil button[type="submit"], #formPerfil #btnGuardarPerfil, #formPerfil .btn-primary').prop('disabled', !haCambiado);
 }
 
 function validarPerfil() {
@@ -25,7 +46,7 @@ function validarPerfil() {
 $(document).ready(function () {
     Listar();
 
-    $('.perfil-foto-label, #fotoPerfil').on('click', function(e) {
+    $('.perfil-foto-label, #fotoPerfil').on('click', function (e) {
         e.preventDefault();
         $('#fotoPerfilInput').click();
     });
@@ -36,6 +57,10 @@ $(document).ready(function () {
             var datos = new FormData();
             datos.append('accion', 'modificar');
             datos.append('correoUsuario', $('#correoUsuario').val());
+
+            if ($('#contraseniaPerfil').val().length > 0) {
+                datos.append('contraseniaUsuario', $('#contraseniaPerfil').val());
+            }
 
             if ($('#fotoPerfilInput')[0].files.length > 0) {
                 let file = $('#fotoPerfilInput')[0].files[0];
@@ -52,6 +77,13 @@ $(document).ready(function () {
         }
     });
 
+    $('#formPerfil input, #formPerfil textarea').on('input change', function () {
+        verificarCambiosPerfil();
+    });
+    $('#fotoPerfilInput').on('change', function () {
+        setTimeout(verificarCambiosPerfil, 200); 
+    });
+
     $('#fotoPerfilInput').on('change', function () {
         if (this.files && this.files[0]) {
             let reader = new FileReader();
@@ -62,7 +94,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#correoUsuario').on('keyup change', function() {
+    $('#correoUsuario').on('keyup change', function () {
         const correo = $(this).val();
         const regexCorreo = /^[a-zA-Z0-9._-]{5,30}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
         $('#correoUsuario').removeClass('is-invalid');
@@ -85,7 +117,7 @@ $(document).ready(function () {
             data: datos,
             processData: false,
             cache: false,
-            success: function(respuesta) {
+            success: function (respuesta) {
                 try {
                     const lee = JSON.parse(respuesta);
                     $('#correoUsuario').removeClass('is-invalid');
@@ -94,9 +126,23 @@ $(document).ready(function () {
                         $('#correoUsuario').addClass('is-invalid');
                         $('#correoUsuario').after('<div class="invalid-feedback d-block">' + lee.mensaje + '</div>');
                     }
-                } catch (e) {}
+                } catch (e) { }
             }
         });
+    });
+
+    $("#contraseniaPerfil").on("keyup keydown", function () {
+        $("#scontraseniaPerfil").css("color", "");
+        if ($(this).val().length > 0) {
+            validarkeyup(
+                /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]).{8,30}$/,
+                $(this),
+                $("#scontraseniaPerfil"),
+                "Debe tener entre 8-30 caracteres, al menos una mayúscula y un carácter especial."
+            );
+        } else {
+            $("#scontraseniaPerfil").text("");
+        }
     });
 });
 
@@ -120,6 +166,13 @@ function enviaAjax(datos) {
                         ? lee.mensaje.usu_foto
                         : 'public/assets/icons/user-circle.svg';
                     $('#fotoPerfil').attr('src', foto + '?v=' + new Date().getTime());
+                    estadoInicialPerfil = {
+                        nombre: lee.mensaje.usu_nombre,
+                        correo: lee.mensaje.usu_correo,
+                        contrasenia: '',
+                        foto: $('#fotoPerfil').attr('src')
+                    };
+                    verificarCambiosPerfil();
                 } else if (lee.resultado === 'modificar') {
                     muestraMensaje('info', 4000, 'PERFIL', lee.mensaje);
                     Listar();

@@ -57,8 +57,14 @@ if (is_file("views/" . $pagina . ".php")) {
                 }
             }
             $p->set_fotoPerfil($fotoPerfil);
-            $_SESSION['usu_foto'] = $fotoPerfil;
-            echo json_encode($p->Modificar());
+
+            $contrasenia = !empty($_POST['contraseniaUsuario']) ? $_POST['contraseniaUsuario'] : null;
+            $resultado = $p->Modificar($contrasenia);
+
+            if ($fotoPerfil) {
+                $_SESSION['usu_foto'] = $fotoPerfil;
+            }
+            echo json_encode($resultado);
             $bitacora->registrarAccion($usu_id, 'modificó su perfil', 'perfil');
         } else if ($_POST['accion'] === 'existe_correo_perfil') {
             require_once('model/perfil.php');

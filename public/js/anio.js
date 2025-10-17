@@ -205,6 +205,9 @@ $(document).ready(function () {
     }
   });
 
+  $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").on("input change", function () {
+    verificarCambiosAnio();
+  });
 });
 
 function existeAnio() {
@@ -228,6 +231,7 @@ $("#tipoAnio").on("change", function () {
 
 function validarFechas() {
   let esValido = true;
+  const tipoAnio = $("#tipoAnio").val();
   const ap1 = $("#aniAperturaFase1").val();
   const c1 = $("#aniCierraFase1").val();
   const ap2 = $("#aniAperturaFase2").val();
@@ -240,7 +244,10 @@ function validarFechas() {
   });
 
   if (ap1 && c1 && new Date(c1) <= new Date(ap1)) {
-    $("#saniCierraFase1").text("Debe ser posterior a la apertura de la fase 1.").css("color", "red").show();
+    let mensaje = tipoAnio === "intensivo"
+      ? "Debe ser posterior a la apertura del año."
+      : "Debe ser posterior a la apertura de la fase 1.";
+    $("#saniCierraFase1").text(mensaje).css("color", "red").show();
     esValido = false;
   }
 
@@ -328,6 +335,30 @@ function validarenvio() {
   return esValido;
 }
 
+let estadoInicialAnio = null;
+
+function obtenerEstadoActualAnio() {
+  return {
+    aniAnio: $("#aniAnio").val(),
+    tipoAnio: $("#tipoAnio").val(),
+    aniAperturaFase1: $("#aniAperturaFase1").val(),
+    aniCierraFase1: $("#aniCierraFase1").val(),
+    aniAperturaFase2: $("#aniAperturaFase2").val(),
+    aniCierraFase2: $("#aniCierraFase2").val()
+  };
+}
+
+function verificarCambiosAnio() {
+  if (!estadoInicialAnio) return;
+  const actual = obtenerEstadoActualAnio();
+  let haCambiado = actual.aniAnio !== estadoInicialAnio.aniAnio ||
+    actual.tipoAnio !== estadoInicialAnio.tipoAnio ||
+    actual.aniAperturaFase1 !== estadoInicialAnio.aniAperturaFase1 ||
+    actual.aniCierraFase1 !== estadoInicialAnio.aniCierraFase1 ||
+    actual.aniAperturaFase2 !== estadoInicialAnio.aniAperturaFase2 ||
+    actual.aniCierraFase2 !== estadoInicialAnio.aniCierraFase2;
+  $("#proceso").prop("disabled", !haCambiado);
+}
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
@@ -339,6 +370,15 @@ function pone(pos, accion) {
     $("#aniId").prop("disabled", false);
     $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
     $('#tipoAnio option[value="regular"], #tipoAnio option[value="intensivo"]').prop('disabled', false);
+    estadoInicialAnio = {
+      aniAnio: $(linea).find("td:eq(1)").text(),
+      tipoAnio: $(linea).find("td:eq(2)").text(),
+      aniAperturaFase1: convertirFecha($(linea).find("td:eq(3)").text()),
+      aniCierraFase1: convertirFecha($(linea).find("td:eq(4)").text()),
+      aniAperturaFase2: convertirFecha($(linea).find("td:eq(5)").text()),
+      aniCierraFase2: convertirFecha($(linea).find("td:eq(6)").text())
+    };
+    setTimeout(verificarCambiosAnio, 200);
   } else {
     $("#proceso").text("ELIMINAR");
     $("#aniId, #aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
@@ -386,11 +426,10 @@ function enviaAjax(datos, accion) {
         if (accion === 'existe') {
           if (lee.resultado === 'existe') {
             $("#saniAnio").text(lee.mensaje).css("color", "red").show();
-            $("#proceso").prop("disabled", true);
           } else {
             $("#saniAnio").text("").hide();
-            $("#proceso").prop("disabled", false);
           }
+          verificarCambiosAnio(); 
           return;
         }
         if (lee.resultado === "consultar") {

@@ -71,7 +71,7 @@ class Perfil extends Connection_bitacora
         return $r;
     }
 
-    public function Modificar()
+    public function Modificar($contraseniaUsuario = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -81,6 +81,10 @@ class Perfil extends Connection_bitacora
             if (!empty($this->fotoPerfil)) {
                 $query .= ", usu_foto = :fotoPerfil";
             }
+            if (!empty($contraseniaUsuario)) {
+                $hashedPassword = password_hash($contraseniaUsuario, PASSWORD_DEFAULT);
+                $query .= ", usu_contrasenia = :contraseniaUsuario";
+            }
             $query .= " WHERE usu_id = :usuarioId";
 
             $stmt = $co->prepare($query);
@@ -88,6 +92,9 @@ class Perfil extends Connection_bitacora
             $stmt->bindParam(':correoUsuario', $this->correoUsuario, PDO::PARAM_STR);
             if (!empty($this->fotoPerfil)) {
                 $stmt->bindParam(':fotoPerfil', $this->fotoPerfil, PDO::PARAM_STR);
+            }
+            if (!empty($contraseniaUsuario)) {
+                $stmt->bindParam(':contraseniaUsuario', $hashedPassword, PDO::PARAM_STR);
             }
             $stmt->bindParam(':usuarioId', $this->usuarioId, PDO::PARAM_INT);
 
