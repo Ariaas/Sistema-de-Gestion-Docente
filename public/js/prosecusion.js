@@ -119,7 +119,6 @@ $(document).ready(function () {
   destruyeDT("#tablaseccion");
   crearDT("#tablaseccion");
 
-  // Limpiar Select2 cuando se cierre el modal
   $('#modalProsecusion').on('hidden.bs.modal', function () {
     if ($("#origenProsecusion").hasClass("select2-hidden-accessible")) {
       $("#origenProsecusion").select2('destroy');
@@ -207,7 +206,6 @@ function enviaAjax(datos) {
         } else if (lee.resultado === 'opcionesDestinoManual') {
           const selectDestino = $("#destinoManual");
 
-          // Destruir Select2 si ya existe
           if (selectDestino.hasClass("select2-hidden-accessible")) {
             selectDestino.select2('destroy');
           }
@@ -225,7 +223,6 @@ function enviaAjax(datos) {
             $("#confirmarProsecusion").prop("disabled", true);
           }
 
-          // Inicializar Select2 después de cargar opciones
           selectDestino.select2({
             dropdownParent: $('#modalProsecusion'),
             theme: "bootstrap-5",
@@ -322,7 +319,6 @@ $(document).on("click", "#btnProsecusion", function () {
       let lee = JSON.parse(respuesta);
       let $select = $("#origenProsecusion");
 
-      // Destruir Select2 si ya existe
       if ($select.hasClass("select2-hidden-accessible")) {
         $select.select2('destroy');
       }
@@ -339,7 +335,6 @@ $(document).on("click", "#btnProsecusion", function () {
         $("#confirmarProsecusion").prop("disabled", true);
       }
 
-      // Inicializar Select2 con configuración similar a sección
       $select.select2({
         dropdownParent: $('#modalProsecusion'),
         theme: "bootstrap-5",
@@ -431,7 +426,6 @@ function cargarOpcionesDestinoManual() {
       $("#confirmarProsecusion").prop("disabled", true);
     }
 
-    // Inicializar Select2
     selectDestino.select2({
       dropdownParent: $('#modalProsecusion'),
       theme: "bootstrap-5",
