@@ -112,35 +112,37 @@ function normalizeDayKey(day) {
 }
 
 function construirBloquesParaHorario(clases, turnoSeleccionado) {
-    const bloquesMap = new Map();
-    clases.forEach(clase => {
-        bloquesMap.set(clase.hora_inicio, { tur_horainicio: clase.hora_inicio, tur_horafin: clase.hora_fin });
-    });
-    const bloquesTurno = allTurnos.filter(turno => {
-        const horaInicio = parseInt(turno.tur_horainicio.substring(0, 2), 10);
-        if (turnoSeleccionado === 'todos') return true;
-        if (turnoSeleccionado === 'mañana') return horaInicio < 13;
-        if (turnoSeleccionado === 'tarde') return horaInicio >= 13 && horaInicio < 18;
-        if (turnoSeleccionado === 'noche') return horaInicio >= 18;
-        return false;
-    });
-    bloquesTurno.forEach(turnoDefault => {
-        const inicioDefault = turnoDefault.tur_horainicio;
-        const finDefault = turnoDefault.tur_horafin;
-        let seSolapa = false;
-        for (const bloqueExistente of bloquesMap.values()) {
-            if (inicioDefault < bloqueExistente.tur_horafin && finDefault > bloqueExistente.tur_horainicio) {
-                seSolapa = true;
-                break;
-            }
-        }
-        if (!seSolapa) {
-            bloquesMap.set(inicioDefault, turnoDefault);
-        }
-    });
-    return Array.from(bloquesMap.values()).sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
-}
+    if (!clases || clases.length === 0) {
+        return [];
+    }
 
+    let minTime = '23:59:59';
+    let maxTime = '00:00:00';
+
+    clases.forEach(clase => {
+        const horaInicioCompleta = (clase.hora_inicio && clase.hora_inicio.length === 5) ? clase.hora_inicio + ':00' : clase.hora_inicio;
+        const horaFinCompleta = (clase.hora_fin && clase.hora_fin.length === 5) ? clase.hora_fin + ':00' : clase.hora_fin;
+
+        if (horaInicioCompleta && horaInicioCompleta < minTime) {
+            minTime = horaInicioCompleta;
+        }
+        if (horaFinCompleta && horaFinCompleta > maxTime) {
+            maxTime = horaFinCompleta;
+        }
+    });
+
+    if (minTime > maxTime) {
+        return [];
+    }
+
+    const bloquesNecesarios = allTurnos.filter(turnoBase => {
+        return turnoBase.tur_horainicio >= minTime && turnoBase.tur_horainicio < maxTime;
+    });
+
+    bloquesNecesarios.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+
+    return bloquesNecesarios;
+}
 function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaHorario", isViewOnly = false) {
     const tbody = $(`${targetTableId} tbody`);
     tbody.empty();
@@ -1108,11 +1110,12 @@ function enviaAjax(datos, boton) {
                             sec_id: s.sec_codigo
                         }));
                         respuesta.mensaje.forEach(item => {
-                           const botones_accion = `<button class="btn btn-icon btn-info ver-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button>
-                           <button class="btn btn-icon btn-secondary generar-reporte" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Generar Reporte del Horario"><img src="public/assets/icons/printer.svg" alt="Generar Reporte"></button>
-                           
-                           <button class="btn btn-icon btn-warning modificar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button><button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-
+                          const botones_accion = `
+        <button class="btn btn-icon btn-info ver-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button>
+        <button class="btn btn-icon btn-secondary generar-reporte me-1" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Generar Reporte del Horario"><img src="public/assets/icons/printer.svg" alt="Generar Reporte"></button>
+        <button class="btn btn-icon btn-warning modificar-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+        <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
+    `;
                             $("#resultadoconsulta").append(`<tr><td>${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
                     }
