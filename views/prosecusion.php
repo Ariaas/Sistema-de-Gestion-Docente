@@ -37,7 +37,8 @@ if (!$puede_realizar_prosecusion) {
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <title>Prosecusion</title>
 </head>
 
@@ -145,7 +146,7 @@ if (!$puede_realizar_prosecusion) {
                         <form id="formProsecusion">
                             <div class="mb-3">
                                 <label for="origenProsecusion" class="form-label">Sección de Origen</label>
-                                <select class="form-select" id="origenProsecusion"></select>
+                                <select id="origenProsecusion" class="form-select" style="width:100%"></select>
                             </div>
                             <div class="mb-3">
                                 <label for="tipoProsecusion" class="form-label">Tipo de prosecusión</label>
@@ -156,7 +157,7 @@ if (!$puede_realizar_prosecusion) {
                             </div>
                             <div class="mb-3" id="destinoManualContainer" style="display:none;">
                                 <label for="destinoManual" class="form-label">Sección destino</label>
-                                <select class="form-select" id="destinoManual"></select>
+                                <select class="form-select" id="destinoManual" style="width:100%"></select>
                             </div>
                             <div class="mb-3">
                                 <label for="cantidadProsecusion" class="form-label">Cantidad de estudiantes</label>
@@ -173,6 +174,7 @@ if (!$puede_realizar_prosecusion) {
         </div>
     </main>
     <?php require_once("public/components/footer.php"); ?>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/prosecusion.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
