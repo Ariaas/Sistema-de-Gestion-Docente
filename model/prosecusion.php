@@ -318,7 +318,6 @@ class Prosecusion extends Connection
         try {
             $co->beginTransaction();
 
-            // Obtener la cantidad prosecusionada
             $stmtCantidadPro = $co->prepare("SELECT pro_cantidad FROM tbl_prosecusion WHERE sec_origen = ? AND sec_promocion = ?");
             $stmtCantidadPro->execute([$sec_origen, $sec_promocion]);
             $cantidad_prosecusionada = (int)$stmtCantidadPro->fetchColumn();

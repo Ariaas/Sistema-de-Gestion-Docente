@@ -33,7 +33,6 @@ if (isset($_POST['generar_reporte_rod'])) {
     $queryData = $oReporte->obtenerDatosReporte();
 
     if (empty($queryData)) {
-        // Código para reporte sin resultados
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle("Sin Datos");
@@ -80,12 +79,11 @@ if (isset($_POST['generar_reporte_rod'])) {
         if ($row['uc_nombre']) {
             $asignacion = [
                 'uc_nombre' => $row['uc_nombre'],
-                'sec_codigo' => $row['sec_codigo'], // La consulta ya agrupa las secciones
+                'sec_codigo' => $row['sec_codigo'],
                 'uc_horas' => (int)($row['uc_horas'] ?? 0)
             ];
             $reportData[$docenteId]['asignaciones'][] = $asignacion;
 
-            // Se suma el total de horas de la asignación.
             $reportData[$docenteId]['horas_asignadas'] += $asignacion['uc_horas'];
         }
     }
@@ -147,7 +145,6 @@ if (isset($_POST['generar_reporte_rod'])) {
         if (!empty($docente['asignaciones'])) {
             $tempFila = $startRowTeacher;
             foreach ($docente['asignaciones'] as $asig) {
-                // Para mejor formato en Excel, reemplazamos ' - ' con saltos de línea.
                 $seccionesFormateadas = str_replace(' - ', "\n", $asig['sec_codigo']);
 
                 $sheet->setCellValue("K{$tempFila}", $asig['uc_nombre']);
