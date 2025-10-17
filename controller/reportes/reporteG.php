@@ -34,59 +34,29 @@ if (is_file("views/reportes/reporteG.php")) {
 
                 switch ($tipo_reporte) {
                     case 'seccion':
-                        $seccion_codigo = $_POST['seccion_codigo'] ?? '';
-                        if (empty($seccion_codigo)) {
-                            echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una sección.']);
-                            exit;
-                        }
-                        
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorSeccion($seccion_codigo, $anio, $tipo);
+                        $datos = $reporteModel->obtenerDatosReporteTodasLasSecciones($anio, $tipo);
                         break;
-                    case 'uc':
-                        $uc_codigo = $_POST['uc_codigo'] ?? '';
-                        if (empty($uc_codigo)) {
-                            echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione una Unidad Curricular.']);
-                            exit;
-                        }
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorUC($uc_codigo, $anio, $tipo);
+                    case 'trayecto':
+                        $datos = $reporteModel->obtenerDatosReportePorTrayecto($anio, $tipo);
                         break;
-                    default: 
-                        $datos = $reporteModel->obtenerDatosEstadisticosPorAnio($anio, $tipo);
+                    default: // 'general'
+                        $datos = $reporteModel->obtenerDatosReporteGeneral($anio, $tipo);
                         break;
                 }
 
-                if ($datos !== false && $datos !== null) {
+                if ($datos !== false && !empty($datos) && (isset($datos[0]['cantidad']) && $datos[0]['cantidad'] !== null)) {
                     echo json_encode(['success' => true, 'datos' => $datos]);
                 } else {
                     echo json_encode(['success' => false, 'mensaje' => 'No se encontraron datos para los filtros seleccionados.']);
-                }
-                break;
-
-            case 'obtener_secciones':
-                if (!empty($anio) && !empty($tipo)) {
-                    $secciones = $reporteModel->obtenerSeccionesAgrupadasPorAnio($anio, $tipo);
-                    echo json_encode($secciones);
-                } else {
-                    echo json_encode([]);
-                }
-                break;
-
-            case 'obtener_uc':
-                if (!empty($anio) && !empty($tipo)) {
-                    $ucs = $reporteModel->obtenerUCPorAnio($anio, $tipo);
-                    echo json_encode($ucs);
-                } else {
-                    echo json_encode([]);
                 }
                 break;
         }
         exit;
     }
 
-    $anios = $reporteModel->obtenerAnios();
+    $anio_activo = $reporteModel->obtenerAnioActivo();
     $hayDatos = $reporteModel->verificarDatosGenerales();
     require_once("views/reportes/reporteG.php");
 } else {
     echo "Página en construcción: reporteG.php";
 }
-?>
