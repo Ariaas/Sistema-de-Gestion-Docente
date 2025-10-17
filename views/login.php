@@ -105,8 +105,11 @@
                         <input type="hidden" id="codigoClave" name="codigoClave">
                         <label for="nuevaClave1" class="form-label">Nueva contraseña</label>
                         <input type="password" class="form-control" id="nuevaClave1" name="nuevaClave1" required>
+                        <span id="snuevaClave1" class="form-text text-danger"></span>
+                        <br>
                         <label for="nuevaClave2" class="form-label mt-2">Repita la nueva contraseña</label>
                         <input type="password" class="form-control" id="nuevaClave2" name="nuevaClave2" required>
+                        <span id="snuevaClave2" class="form-text text-danger"></span>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-success">Actualizar contraseña</button>

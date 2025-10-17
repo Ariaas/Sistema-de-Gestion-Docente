@@ -60,8 +60,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <th style="display: none;">ID</th>
                                 <th>Año</th>
                                 <th>Tipo</th>
-                                <th>Apertura Fase 1</th>
-                                <th>Cierre Fase 1</th>
+                                <th>Apertura de año / Fase 1</th>
+                                <th>Cierre de año / Fase 1</th>
                                 <th>Apertura Fase 2</th>
                                 <th>Cierre Fase 2</th>
                                 <th>Activo</th>
@@ -162,7 +162,9 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                     </div>
                     <div class="modal-body">
                         <p><strong>Apertura Fase 1 (PER):</strong> <span id="perApertura1"></span></p>
+                        <p><strong>Cierre Fase 1 (PER):</strong> <span id="perCierre1"></span></p>
                         <p><strong>Apertura Fase 2 (PER):</strong> <span id="perApertura2"></span></p>
+                        <p><strong>Cierre Fase 2 (PER):</strong> <span id="perCierre2"></span></p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
