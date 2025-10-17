@@ -39,8 +39,7 @@ class Rod extends Connection
                 $params[strval($key)] = $periodo;
             }
 
-            // --- INICIO DE LA CONSULTA SQL COMPLETA ---
-            // Esta consulta está diseñada en dos partes principales para manejar la lógica de las secciones unidas.
+           
             $sql_asignaciones = "
             WITH HorasPorBloqueUnico AS (
                 -- Paso 1: Identifica bloques de enseñanza únicos (profesor, materia, hora) y calcula sus horas una sola vez.
@@ -87,7 +86,7 @@ class Rod extends Connection
             GROUP BY hbu.doc_cedula, hbu.uc_codigo, u.uc_nombre
             ";
 
-            // --- Consulta Principal que une toda la información del docente con sus asignaciones calculadas ---
+            
             $fullQuery = "
             SELECT
                 d.doc_cedula,

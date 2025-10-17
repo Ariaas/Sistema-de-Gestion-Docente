@@ -160,15 +160,11 @@ if (isset($_POST['generar_aulario_report'])) {
                 $nombreTurno = $franja['turno'];
                 $nombreTurnoNormalizado = strtolower($nombreTurno);
 
-                // ===== INICIO DE LA CORRECCIÓN =====
-                // Esta condición ahora verifica dos cosas:
-                // 1. Si una clase INICIA en esta franja horaria.
-                // 2. Si la franja está OCUPADA por una clase que inició antes (celda combinada).
-                // Solo si ambas son falsas, se ocultará la fila en los turnos de tarde/noche.
+               
                 if ($nombreTurnoNormalizado === 'tarde' || $nombreTurnoNormalizado === 'noche') {
                     $filaTieneContenido = false;
 
-                    // Verifica si una clase INICIA en esta fila
+                  
                     foreach ($days_of_week as $day) {
                         if (isset($gridData[$day][$dbStartTimeKey])) {
                             $filaTieneContenido = true;
@@ -176,7 +172,7 @@ if (isset($_POST['generar_aulario_report'])) {
                         }
                     }
 
-                    // Si no, verifica si la fila está OCUPADA por una clase anterior (merge)
+                   
                     if (!$filaTieneContenido) {
                         $estaOcupadaPorMerge = false;
                         for ($colNumCheck = 1; $colNumCheck <= count($days_of_week); $colNumCheck++) {
@@ -195,7 +191,7 @@ if (isset($_POST['generar_aulario_report'])) {
                         continue;
                     }
                 }
-                // ===== FIN DE LA CORRECCIÓN =====
+                
 
                 $sheet->setCellValue('A' . $currentRow, $displaySlot);
                 $sheet->getStyle('A' . $currentRow)->applyFromArray($styleTimeColumn);

@@ -317,7 +317,7 @@ function enviaAjax(datos, accion) {
           });
           crearDT();
         }
-        ////////
+      
         else if (lee.resultado == "registrar") {
           muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
           if (

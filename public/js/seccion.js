@@ -1108,7 +1108,10 @@ function enviaAjax(datos, boton) {
                             sec_id: s.sec_codigo
                         }));
                         respuesta.mensaje.forEach(item => {
-                           const botones_accion = `<button class="btn btn-icon btn-info ver-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button><button class="btn btn-icon btn-warning modificar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button><button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                           const botones_accion = `<button class="btn btn-icon btn-info ver-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button>
+                           <button class="btn btn-icon btn-secondary generar-reporte" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Generar Reporte del Horario"><img src="public/assets/icons/printer.svg" alt="Generar Reporte"></button>
+                           
+                           <button class="btn btn-icon btn-warning modificar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button><button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
 
                             $("#resultadoconsulta").append(`<tr><td>${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
@@ -1166,6 +1169,38 @@ function enviaAjax(datos, boton) {
 }
 
 $(document).ready(function() {
+
+   
+$(document).on('click', '.generar-reporte', function() {
+    const secCodigo = $(this).data('sec-codigo');
+    const anioAnio = $(this).data('ani-anio');
+
+    
+    $('#reporteSeccionCodigo').text(secCodigo);
+    $('#reporte_sec_codigo_hidden').val(secCodigo);
+    $('#reporte_ani_anio_hidden').val(anioAnio);
+
+
+    $('#modalReporteHorario').modal('show');
+});
+
+$(document).on('click', '.btn-generar-reporte-tipo', function() {
+    
+    const secCodigo = $('#reporte_sec_codigo_hidden').val();
+    const anioAnio = $('#reporte_ani_anio_hidden').val();
+    const formato = $(this).data('tipo');
+
+    
+    $('#form_reporte_sec_codigo').val(secCodigo);
+    $('#form_reporte_ani_anio').val(anioAnio);
+    $('#form_reporte_formato').val(formato);
+
+
+    $('#formGenerarReporte').submit();
+
+   
+    $('#modalReporteHorario').modal('hide');
+});
     $('#cantidadSeccionModificar').on('input', checkForScheduleChanges);
 
     $('#modalEntradaHorario').on('show.bs.modal', function() {

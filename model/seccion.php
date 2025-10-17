@@ -101,7 +101,7 @@ public function obtenerTodosLosHorarios() {
     public function obtenerCohortesMalla()
     {
         try {
-            return $this->Con()->query("SELECT DISTINCT mal_cohorte FROM tbl_malla WHERE mal_estado = 1 AND mal_activa = 1")->fetchAll(PDO::FETCH_COLUMN, 0);
+            return $this->Con()->query("SELECT DISTINCT mal_cohorte FROM tbl_malla WHERE mal_activa = 1")->fetchAll(PDO::FETCH_COLUMN, 0);
         } catch (Exception $e) {
             error_log("Error al obtener cohortes: " . $e->getMessage());
             return [];
@@ -142,7 +142,7 @@ public function obtenerTodosLosHorarios() {
             foreach ($secciones_a_procesar as $seccion) {
                 $co->beginTransaction();
                 try {
-                    $horario_actual_result = $this->ConsultarDetalles($seccion['sec_codigo']);
+                    $horario_actual_result = $this->ConsultarDetalles($seccion['sec_codigo'], $anio_activo['ani_anio']);
                     $horario_actual = $horario_actual_result['mensaje'] ?? [];
                     $nuevo_horario_seccion = [];
                     $clases_procesadas = 0;
@@ -319,13 +319,15 @@ public function obtenerTodosLosHorarios() {
         $stmt_update_grupo->execute($params);
 
 
-        $clases_origen_result = $this->ConsultarDetalles($sec_codigo_origen);
+       
+$clases_origen_result = $this->ConsultarDetalles($sec_codigo_origen, $seccion_origen_data['ani_anio']);
         $clases_origen = $clases_origen_result['mensaje'] ?? [];
         $codigos_destinos = array_filter($sec_codigos_a_unir, function ($codigo) use ($sec_codigo_origen) {
             return $codigo != $sec_codigo_origen;
         });
         foreach ($codigos_destinos as $codigo_destino) {
-            $this->EliminarDependenciasDeSeccion($codigo_destino, $co);
+            $anio_academico = $seccion_origen_data['ani_anio'];
+$this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
             
             if (!empty($clases_origen)) {
                 $hora_principal_para_turno = $clases_origen[0]['hora_inicio'] ?? '08:00:00';
@@ -335,22 +337,24 @@ public function obtenerTodosLosHorarios() {
                     ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
                 ]);
 
-                $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :doc_cedula, :sec_codigo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
+                $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :doc_cedula, :sec_codigo, :ani_anio, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
                 $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo) VALUES (:doc_cedula, :sec_codigo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
                 $docentes_procesados = [];
                 foreach ($clases_origen as $item) {
                     $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
                     $stmt_uh->execute([
-                        ':uc_codigo' => $item['uc_codigo'],
-                        ':doc_cedula' => $item['doc_cedula'],
-                        ':sec_codigo' => $codigo_destino,
-                        ':esp_numero' => $espacio['numero'],
-                        ':esp_tipo' => $espacio['tipo'],
-                        ':esp_edificio' => $espacio['edificio'],
-                        ':dia' => $item['dia'],
-                        ':inicio' => $item['hora_inicio'],
-                        ':fin' => $item['hora_fin']
-                    ]);
+        ':uc_codigo'    => $item['uc_codigo'],
+        ':doc_cedula'   => $item['doc_cedula'],
+        ':sec_codigo'   => $codigo_destino,
+        ':ani_anio'     => $anio_academico, 
+        ':subgrupo'     => $item['subgrupo'],   
+        ':esp_numero'   => $espacio['numero'],
+        ':esp_tipo'     => $espacio['tipo'],
+        ':esp_edificio' => $espacio['edificio'],
+        ':dia'          => $item['dia'],
+        ':inicio'       => $item['hora_inicio'],
+        ':fin'          => $item['hora_fin']
+    ]);
 
                     if (!in_array($item['doc_cedula'], $docentes_procesados)) {
                         $stmt_doc->execute([':doc_cedula' => $item['doc_cedula'], ':sec_codigo' => $codigo_destino]);
@@ -399,7 +403,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                 $co->rollBack();
                 return ['resultado' => 'error', 'mensaje' => '¡ERROR! La sección con ese código ya existe para el año académico seleccionado.'];
             } else {
-                $this->EliminarDependenciasDeSeccion($codigoSeccion, $co);
+                $this->EliminarDependenciasDeSeccion($codigoSeccion, $anio_anio, $co);
                 $stmtSeccion = $co->prepare(
                     "UPDATE tbl_seccion SET sec_cantidad = :cantidad, ani_anio = :anio, ani_tipo = :tipo, sec_estado = 1 WHERE sec_codigo = :codigo"
                 );
@@ -696,7 +700,9 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     }
 }
 
-  public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_externo = null)
+ 
+
+public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_externo = null)
 {
     $co = $co_externo ?? $this->Con();
     $es_transaccion_interna = ($co_externo === null);
@@ -704,12 +710,21 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     try {
         if ($es_transaccion_interna) $co->beginTransaction();
         
-        $params = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
+       
+        $params_con_anio = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
+        
+       
+        $params_sin_anio = [':sec_codigo' => $sec_codigo];
 
    
-        $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params);
-        $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params);
-        $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params);
+        
+        $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+        
+       
+        $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
+        
+        
+        $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
 
         if ($es_transaccion_interna) $co->commit();
     } catch (Exception $e) {
@@ -718,8 +733,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     }
 }
 
-   public function ConsultarDetalles($sec_codigo, $ani_anio)
-{
+   public function ConsultarDetalles($sec_codigo, $ani_anio){
     if (!$sec_codigo || !$ani_anio) {
         return ['resultado' => 'error', 'mensaje' => 'Falta el código o el año de la sección.'];
     }
@@ -942,7 +956,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     public function contarMallasActivas()
     {
         try {
-            return (int) $this->Con()->query("SELECT COUNT(*) FROM tbl_malla WHERE mal_estado = 1 AND mal_activa = 1")->fetchColumn();
+            return (int) $this->Con()->query("SELECT COUNT(*) FROM tbl_malla WHERE mal_activa = 1")->fetchColumn();
         } catch (Exception $e) {
             error_log("Error al contar mallas activas: " . $e->getMessage());
             return 0;
@@ -1051,7 +1065,90 @@ public function duplicarSeccionesAnioAnterior() {
         error_log("Error en duplicarSeccionesAnioAnterior: " . $e->getMessage());
         return ['resultado' => 'error', 'mensaje' => 'Ocurrió un error en el servidor al intentar duplicar las secciones: ' . $e->getMessage()];
     }
+
 }
 
+public function obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio)
+{
+    if (!$sec_codigo || !$ani_anio) {
+        return ['resultado' => 'error', 'mensaje' => 'Faltan datos de la sección.'];
+    }
+
+    try {
+        $co = $this->Con();
+
+       
+        $stmt_grupo = $co->prepare("SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+        $stmt_grupo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+        $grupo_id = $stmt_grupo->fetchColumn();
+
+   
+        if ($grupo_id) {
+            $stmt_secciones_grupo = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = :grupo_id AND ani_anio = :ani_anio");
+            $stmt_secciones_grupo->execute([':grupo_id' => $grupo_id, ':ani_anio' => $ani_anio]);
+            $secciones_a_incluir = $stmt_secciones_grupo->fetchAll(PDO::FETCH_COLUMN);
+        } else {
+            $secciones_a_incluir = [$sec_codigo];
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($secciones_a_incluir), '?'));
+
+        $sql = "SELECT 
+                    uh.sec_codigo,
+                    s.grupo_union_id,
+                    uh.subgrupo,
+                    u.uc_trayecto,
+                    uh.hor_dia,
+                    uh.hor_horainicio,
+                    uh.hor_horafin,
+                    u.uc_nombre,
+                    CONCAT(d.doc_nombre, ' ', d.doc_apellido) as docente_nombre,
+                    CASE
+                        WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
+                        ELSE CONCAT(uh.esp_edificio, ' - ', uh.esp_tipo, ' ', uh.esp_numero)
+                    END AS espacio_nombre
+                FROM uc_horario uh
+                JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+                LEFT JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
+                WHERE uh.ani_anio = ? AND uh.sec_codigo IN ($placeholders)
+                ORDER BY uh.hor_horainicio, uh.hor_dia";
+
+        $params = array_merge([$ani_anio], $secciones_a_incluir);
+        $stmt_horario = $co->prepare($sql);
+        $stmt_horario->execute($params);
+        $horario_items = $stmt_horario->fetchAll(PDO::FETCH_ASSOC);
+
+        
+        $secciones_data = [];
+        foreach($horario_items as $item){
+            $secciones_data[$item['sec_codigo']] = true;
+        }
+
+
+        foreach ($horario_items as &$item) {
+        
+        if (strlen($item['hor_horainicio']) === 5) {
+            $item['hor_horainicio'] .= ':00';
+        }
+        
+        if (strlen($item['hor_horafin']) === 5) {
+            $item['hor_horafin'] .= ':00';
+        }
+    }
+
+        return [
+            'resultado' => 'ok', 
+            'secciones' => array_keys($secciones_data), 
+            'horario'   => $horario_items,
+            'anio'      => $ani_anio,
+            'turnos'    => $this->obtenerTurnos()
+        ];
+
+    } catch (Exception $e) {
+        error_log("Error en obtenerDatosCompletosHorarioParaReporte: " . $e->getMessage());
+        return ['resultado' => 'error', 'mensaje' => "Error al consultar los datos del reporte."];
+    }
+}
 }
 ?>

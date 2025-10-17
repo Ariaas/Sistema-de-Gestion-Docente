@@ -309,7 +309,7 @@ $(document).ready(function() {
     $("#registrar").on("click", function() { if ($(this).is(':disabled')) return; limpiaModal1(); $("#accion").val("registrar"); $("#mal_codigo_original").val(''); $("#mal_codigo").prop('disabled', false); $("#modal1Titulo").text("Registrar Malla (Paso 1 de 2)"); $("#proceso").text("GUARDAR"); $("#modal1").modal("show"); });
     
    
-    // Handler para activar una malla desactivada
+ 
     $(document).on('click', '.btn-activar-malla', function(e) {
         e.preventDefault();
         const codigo = $(this).data('codigo');

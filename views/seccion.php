@@ -325,6 +325,41 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="modalReporteHorario" tabindex="-1" aria-labelledby="modalReporteHorarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalReporteHorarioLabel">Generar Reporte de Horario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-center mb-4">Descargar horario para la sección <strong id="reporteSeccionCodigo"></strong> en formato:</p>
+                
+                <input type="hidden" id="reporte_sec_codigo_hidden">
+                <input type="hidden" id="reporte_ani_anio_hidden">
+
+                <div class="d-grid gap-2 col-8 mx-auto">
+                    <button type="button" class="btn btn-danger btn-generar-reporte-tipo" data-tipo="pdf">
+                        <img src="public/assets/icons/pdf.svg" alt="PDF" style="height: 1.2em; margin-right: 8px;"> Generar PDF
+                    </button>
+                    <button type="button" class="btn btn-success btn-generar-reporte-tipo" data-tipo="excel">
+                        <img src="public/assets/icons/excel.svg" alt="Excel" style="height: 1.2em; margin-right: 8px;"> Generar Excel
+                    </button>
+                    <button type="button" class="btn btn-primary btn-generar-reporte-tipo" data-tipo="word">
+                        <img src="public/assets/icons/word.svg" alt="Word" style="height: 1.2em; margin-right: 8px;"> Generar Word
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="formGenerarReporte" action="?pagina=seccion" method="POST" target="_blank" style="display: none;">
+    <input type="hidden" name="accion" value="generar_reporte">
+    <input type="hidden" id="form_reporte_sec_codigo" name="sec_codigo">
+    <input type="hidden" id="form_reporte_ani_anio" name="ani_anio">
+    <input type="hidden" id="form_reporte_formato" name="formato">
+</form>
     </main>
     <script>
         const PERMISOS = {

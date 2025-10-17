@@ -66,7 +66,7 @@ $(document).ready(function () {
     }
   });
 
-  //////////////////////////////VALIDACIONES/////////////////////////////////////
+
 
   $("#numeroEspacio").on("keypress", function (e) {
     validarkeypress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\b]*$/, e);
@@ -179,7 +179,7 @@ $(document).ready(function () {
   });
 
 
-  //////////////////////////////BOTONES/////////////////////////////////////
+ 
 
   $("#proceso").on("click", function () {
     if ($(this).prop("disabled")) return; 
@@ -271,7 +271,7 @@ $(document).ready(function () {
   });
 });
 
-//////////////////////////////VALIDACIONES ANTES DEL ENVIO/////////////////////////////////////
+
 
 function validarenvio() {
   let esValido = true;

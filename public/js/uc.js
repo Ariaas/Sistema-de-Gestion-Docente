@@ -4,10 +4,10 @@ function Listar() {
   enviaAjax(datos);
 }
 
-// seguimiento de modificación: cuando se abre modal en modo MODIFICAR,
-// deshabilitamos el botón hasta que el usuario cambie algún campo.
-var __uc_modTracking = false; // true mientras el modal está en modo modificar
-var __uc_userModified = false; // true cuando el usuario cambió algún campo
+
+
+var __uc_modTracking = false; 
+var __uc_userModified = false; 
 
 function destruyeDT(selector) {
   if ($.fn.DataTable.isDataTable(selector)) {
@@ -124,7 +124,7 @@ $(document).ready(function () {
   destruyeDT("#tablauc");
   crearDT("#tablauc");
 
-  // Asignación de docentes eliminada: handlers removidos
+  
 
   $("#proceso").on("click", function () {
     let ejeVal = $("#ejeUC").val();
@@ -150,7 +150,7 @@ $(document).ready(function () {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "modificar");
         datos.append("codigoUCOriginal", originalCodigoUC);
-        // campo 'electiva' eliminado del formulario; no se añade al FormData
+        
         if ($("#ejeUC option:selected").prop("disabled")) {
           datos.set("ejeUC", $("#ejeUC option:selected").val());
         }
@@ -163,7 +163,6 @@ $(document).ready(function () {
       if (validarenvio()) {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "registrar");
-        // campo 'electiva' eliminado del formulario; no se añade al FormData
         if ($("#ejeUC option:selected").prop("disabled")) {
           datos.set("ejeUC", $("#ejeUC option:selected").val());
         }
@@ -422,7 +421,7 @@ function validarenvio() {
     $("#speriodoUC").text("").hide();
   }
 
-  // Lógica relacionada con 'electiva' eliminada (campo eliminado del formulario)
+  
 
   return esValido;
 }
@@ -438,7 +437,7 @@ function pone(pos, accion) {
       "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
     ).prop("disabled", false);
   } else {
-    // botón de proceso en modo DESACTIVAR: solo texto (sin icono)
+    
     $("#proceso").text("DESACTIVAR");
     $("#modal1 .modal-title").text("Desactivar Unidad Curricular");
     $(
@@ -503,7 +502,7 @@ function pone(pos, accion) {
 
   $("#creditosUC").val(linea.data("creditos"));
   $("#periodoUC").val(linea.data("periodo"));
-  // El campo 'electiva' fue eliminado; no se setea checkbox
+  
 
   if (accion == 0) {
     $("#codigoUC, #nombreUC, #creditosUC").trigger("keyup");
@@ -574,7 +573,7 @@ function enviaAjax(datos, accion = "") {
           $("#resultadoconsulta1").empty();
           let tabla = "";
           lee.mensaje.forEach((item) => {
-            // el campo 'electiva' ya no se muestra; se omite
+           
             let periodoTexto =
               item.uc_periodo === "anual"
                 ? "Anual"
@@ -587,7 +586,7 @@ function enviaAjax(datos, accion = "") {
               item.uc_trayecto == 0 || item.uc_trayecto === "0"
                 ? "Inicial"
                 : item.uc_trayecto;
-            // Botones icon-only (solo SVG) para una interfaz más compacta
+            
             const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" aria-label="Modificar" ${
               !PERMISOS.modificar ? "disabled" : ""
             }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
@@ -599,7 +598,7 @@ function enviaAjax(datos, accion = "") {
             }" ${
               !PERMISOS.eliminar ? "disabled" : ""
             }><img src="public/assets/icons/check.svg" alt="Activar"></button>`;
-            // Botón de asignar removido según nueva especificación
+            
             const btnDetalles = `<button class="btn btn-icon btn-info btn-detalles-uc" title="Ver Detalles" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${periodoTexto}"><img src="public/assets/icons/eye.svg" alt="Ver Detalles"></button>`;
             const estadoTexto =
               item.uc_estado == 1 || item.uc_estado === "1"
@@ -644,7 +643,7 @@ function enviaAjax(datos, accion = "") {
             $("#ucVerMasEje").text($(this).data("eje"));
             $("#ucVerMasCreditos").text($(this).data("creditos"));
             $("#ucVerMasPeriodo").text($(this).data("periodo"));
-            // detalle 'electiva' eliminado
+            
             $("#modalVerMasUC").modal("show");
           });
 
@@ -657,9 +656,9 @@ function enviaAjax(datos, accion = "") {
             $("#detallesUcEje").text(data.eje);
             $("#detallesUcCreditos").text(data.creditos);
             $("#detallesUcPeriodo").text(data.periodo);
-            // detalle 'electiva' eliminado
+            
             $("#ucDetallesNombreModal").text(data.nombre);
-            // Ya no se muestran docentes asignados en los detalles según nueva especificación
+            
             $("#modalDetallesUC").modal("show");
           });
 
@@ -683,7 +682,7 @@ function enviaAjax(datos, accion = "") {
           }
           Listar();
         } else if (lee.resultado == "eliminar") {
-          // Mostrar como desactivada
+          
           muestraMensaje("success", 4000, "DESACTIVAR", lee.mensaje);
           if (
             lee.mensaje.includes("eliminó la unidad curricular") ||
@@ -720,7 +719,7 @@ function enviaAjax(datos, accion = "") {
   });
 }
 
-// Handler para activar una UC desactivada
+
 $(document).on("click", ".btn-activar", function (e) {
   e.preventDefault();
   const codigo = $(this).data("codigo");
@@ -763,8 +762,7 @@ function limpia() {
   $("#ejeUC").val("");
   $("#areaUC").val("");
   $("#periodoUC").val("");
-  // campo 'electiva' eliminado
-
+  
   $(
     "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC"
   )
@@ -772,4 +770,4 @@ function limpia() {
     .hide();
 }
 
-// Eliminadas funciones y handlers relacionados con asignación de docentes
+

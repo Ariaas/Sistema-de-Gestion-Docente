@@ -69,7 +69,7 @@ let originalNombreArea = '';
 $(document).ready(function () {
   Listar();
 
-  //////////////////////////////VALIDACIONES/////////////////////////////////////
+  
 
   $("#areaNombre").on("keypress", function (e) {
     validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ,#\b\s-]*$/, e);
@@ -100,7 +100,7 @@ $(document).ready(function () {
     validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
   });
 
-  //////////////////////////////BOTONES/////////////////////////////////////
+  
 
   $("#proceso").on("click", function () {
     let accion = $(this).text();
