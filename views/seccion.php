@@ -325,10 +325,12 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="modalReporteHorario" tabindex="-1" aria-labelledby="modalReporteHorarioLabel" aria-hidden="true">
+     
+     
+<div class="modal fade" id="modalReporteHorario" tabindex="-1" aria-labelledby="modalReporteHorarioLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalReporteHorarioLabel">Generar Reporte de Horario</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -340,13 +342,14 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                 <div class="d-grid gap-2 col-8 mx-auto">
                     <button type="button" class="btn btn-danger btn-generar-reporte-tipo" data-tipo="pdf">
-                        <img src="public/assets/icons/pdf.svg" alt="PDF" style="height: 1.2em; margin-right: 8px;"> Generar PDF
+                        <img src="public/assets/icons/filetype-pdf.svg"  alt="PDF" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1);"> Generar PDF
+             
                     </button>
                     <button type="button" class="btn btn-success btn-generar-reporte-tipo" data-tipo="excel">
-                        <img src="public/assets/icons/excel.svg" alt="Excel" style="height: 1.2em; margin-right: 8px;"> Generar Excel
+                        <img src="public/assets/icons/file-earmark-spreadsheet.svg" alt="Excel" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1)"> Generar Excel
                     </button>
                     <button type="button" class="btn btn-primary btn-generar-reporte-tipo" data-tipo="word">
-                        <img src="public/assets/icons/word.svg" alt="Word" style="height: 1.2em; margin-right: 8px;"> Generar Word
+                        <img src="public/assets/icons/file-earmark-word.svg" alt="Word" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1)"> Generar Word
                     </button>
                 </div>
             </div>
