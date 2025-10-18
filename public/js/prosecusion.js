@@ -189,13 +189,13 @@ function enviaAjax(datos) {
           destruyeDT("#tablaseccion");
           $("#resultadoconsulta1").empty();
           $.each(lee.mensaje, function (index, item) {
-            const pro_id = `${item.origen_codigo}-${item.destino_codigo}`;
+            const pro_id = `${item.origen_codigo}-${item.ani_origen}-${item.destino_codigo}-${item.ani_destino}`;
             $("#resultadoconsulta1").append(`
               <tr>
                 <td>${item.origen_codigo} (${item.pro_cantidad} estudiantes)</td>
-                <td>${item.origen_anio}</td>
+                <td>${item.ani_origen}</td>
                 <td>${item.destino_codigo}</td>
-                <td>${item.destino_anio}</td>
+                <td>${item.ani_destino}</td>
                 <td>
                   <button class="btn btn-danger btn-sm eliminar-prosecusion" data-id="${pro_id}">Eliminar</button>
                 </td>
@@ -213,14 +213,17 @@ function enviaAjax(datos) {
           selectDestino.empty();
           $("#destinoManualContainer").show();
 
+          $("#mensaje-manual").remove();
+
           if (lee.mensaje.length > 0) {
             lee.mensaje.forEach(function (opcion) {
               selectDestino.append(new Option(`${opcion.sec_codigo} (${opcion.ani_anio})`, opcion.sec_codigo));
             });
             $("#confirmarProsecusion").prop("disabled", false);
           } else {
-            selectDestino.append(new Option("No hay destino válido", ""));
+            selectDestino.append(new Option("No hay secciones disponibles", ""));
             $("#confirmarProsecusion").prop("disabled", true);
+            selectDestino.after(`<div id="mensaje-manual" class="text-danger mt-1" style="font-size: 0.875em;">No hay sección de destino con las características necesarias</div>`);
           }
 
           selectDestino.select2({
@@ -277,7 +280,7 @@ $(document).on("click", ".eliminar-prosecusion", function () {
   const pro_id = $(this).data("id");
   Swal.fire({
     title: '¿Está seguro?',
-    text: "Esta acción eliminará la prosecusión y reactivará la sección de origen. ¡No se puede deshacer!",
+    text: "Esta acción eliminará la prosecusión y devolverá los estudiantes a la sección destino. ¡No se puede deshacer!",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -315,6 +318,7 @@ $(document).on("click", "#btnProsecusion", function () {
     success: function (respuesta) {
       $("#tipoProsecusion").val("automatico");
       $("#destinoManualContainer").hide();
+      $("#mensaje-automatico, #mensaje-manual").remove();
 
       let lee = JSON.parse(respuesta);
       let $select = $("#origenProsecusion");
@@ -326,9 +330,10 @@ $(document).on("click", "#btnProsecusion", function () {
       $select.empty();
       if (lee.resultado === "consultarSeccionesOrigen" && lee.mensaje.length > 0) {
         lee.mensaje.forEach(function (item) {
-          $select.append(`<option value="${item.sec_codigo}">${item.sec_codigo} (${item.ani_anio})</option>`);
+          const disponible = item.sec_cantidad - (item.cantidad_prosecusionada || 0);
+          $select.append(`<option value="${item.sec_codigo}">${item.sec_codigo} (${item.ani_anio}) - ${disponible} estudiantes disponibles</option>`);
         });
-        $("#confirmarProsecusion").prop("disabled", false);
+        $("#confirmarProsecusion").prop("disabled", true); 
       } else {
         $select.append('<option value="">No hay secciones disponibles</option>');
         $("#cantidadProsecusion").val(0);
@@ -351,10 +356,42 @@ $(document).on("click", "#btnProsecusion", function () {
 $("#origenProsecusion").on("change", function () {
   actualizarCantidadProsecusion();
 
-  if ($("#tipoProsecusion").val() === "manual") {
+  const tipoProsecusion = $("#tipoProsecusion").val();
+  if (tipoProsecusion === "manual") {
     cargarOpcionesDestinoManual();
+  } else {
+    verificarDestinoAutomatico();
   }
 });
+
+function verificarDestinoAutomatico() {
+  const seccionOrigenCodigo = $("#origenProsecusion").val();
+  if (!seccionOrigenCodigo) return;
+
+  const datos = new FormData();
+  datos.append("accion", "verificarDestinoAutomatico");
+  datos.append("seccionOrigenCodigo", seccionOrigenCodigo);
+
+  $.ajax({
+    url: "",
+    type: "POST",
+    data: datos,
+    contentType: false,
+    processData: false,
+    success: function (respuesta) {
+      let res = JSON.parse(respuesta);
+
+      $("#mensaje-automatico").remove();
+
+      if (res.existe) {
+        $("#confirmarProsecusion").prop("disabled", false);
+      } else {
+        $("#confirmarProsecusion").prop("disabled", true);
+        $("#tipoProsecusion").after(`<div id="mensaje-automatico" class="text-danger mt-1" style="font-size: 0.875em;">No hay sección de destino automática disponible para esta sección</div>`);
+      }
+    }
+  });
+}
 
 function actualizarCantidadProsecusion() {
   const seccionOrigenCodigo = $("#origenProsecusion").val();
@@ -416,22 +453,25 @@ function cargarOpcionesDestinoManual() {
     selectDestino.empty();
     $("#destinoManualContainer").show();
 
+    $("#mensaje-manual").remove();
+
     if (lee.resultado === 'opcionesDestinoManual' && lee.mensaje.length > 0) {
       lee.mensaje.forEach(function (opcion) {
         selectDestino.append(new Option(`${opcion.sec_codigo} (${opcion.ani_anio})`, opcion.sec_codigo));
       });
       $("#confirmarProsecusion").prop("disabled", false);
-    } else {
-      selectDestino.append(new Option("No hay destino válido", ""));
-      $("#confirmarProsecusion").prop("disabled", true);
-    }
 
-    selectDestino.select2({
-      dropdownParent: $('#modalProsecusion'),
-      theme: "bootstrap-5",
-      placeholder: "Seleccione una sección destino",
-      width: '100%'
-    });
+      selectDestino.select2({
+        dropdownParent: $('#modalProsecusion'),
+        theme: "bootstrap-5",
+        placeholder: "Seleccione una sección destino",
+        width: '100%'
+      });
+    } else {
+      selectDestino.append(new Option("No hay secciones disponibles", ""));
+      $("#confirmarProsecusion").prop("disabled", true);
+      $("#destinoManual").after(`<div id="mensaje-manual" class="text-danger mt-1" style="font-size: 0.875em;">No hay sección de destino con las características necesarias</div>`);
+    }
   }).fail(function () {
     $("#destinoManualContainer").hide();
     muestraMensaje("error", 4000, "ERROR!", "No se pudo contactar al servidor.");
@@ -440,10 +480,16 @@ function cargarOpcionesDestinoManual() {
 
 
 $("#tipoProsecusion").on("change", function () {
+  $("#mensaje-automatico, #mensaje-manual").remove();
+
   if ($(this).val() === "manual") {
     cargarOpcionesDestinoManual();
   } else {
     $("#destinoManualContainer").hide();
+    const seccionOrigenCodigo = $("#origenProsecusion").val();
+    if (seccionOrigenCodigo) {
+      verificarDestinoAutomatico();
+    }
   }
 });
 

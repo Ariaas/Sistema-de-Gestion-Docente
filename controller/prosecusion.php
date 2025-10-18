@@ -29,6 +29,9 @@ if (is_file("views/" . $pagina . ".php")) {
         } else if ($accion == 'verificar_estado') {
             echo json_encode($p->VerificarEstado());
             exit;
+        } else if ($accion == 'verificarDestinoAutomatico') {
+            echo json_encode($p->verificarDestinoAutomatico($_POST['seccionOrigenCodigo']));
+            exit;
         } else if ($accion == 'obtenerOpcionesDestinoManual') {
             echo json_encode($p->obtenerOpcionesDestinoManual($_POST['seccionOrigenCodigo']));
             exit;
