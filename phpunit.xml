@@ -5,10 +5,11 @@
          colors="true">
     <testsuites>
         <testsuite name="Unit">
-            <directory>test</directory> </testsuite>
-    </testsuites>
-    <source>
+            <directory>test</directory>
+        </testsuite> </testsuites>
+    <coverage>
         <include>
-            <directory>model</directory> </include>
-    </source>
+            <directory>model</directory>
+        </include>
+    </coverage>
 </phpunit>
