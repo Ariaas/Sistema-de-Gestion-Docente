@@ -516,7 +516,11 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
 
         $stmt_esp = $co->prepare($sql_esp);
         
-        $params_esp = array_merge([$espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
+       $params_esp = array_merge(
+            [$espacio['numero'], $espacio['tipo'] ?? null, $espacio['edificio'] ?? null], 
+            $secciones_a_excluir, 
+            [$dia, $hora_fin, $hora_inicio]
+        );
         $stmt_esp->execute($params_esp);
         $conflicto_espacio = $stmt_esp->fetch(PDO::FETCH_ASSOC);
 
