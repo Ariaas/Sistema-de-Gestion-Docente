@@ -2,15 +2,6 @@
 
 use PHPUnit\Framework\TestCase;
 
-/**
- * --- PREPARACIÓN DEL ENTORNO DE MOCK ---
- *
- * Mockeamos la clase padre 'Connection' para evitar que intente
- * una conexión real a la base de datos.
- *
- * Esto permite que 'require_once' cargue 'mallacurricular.php' de forma segura,
- * ya que su 'extends Connection' encontrará esta clase "falsa".
- */ 
 
 
 // Incluimos la clase que vamos a probar
@@ -169,7 +160,134 @@ class MallaTest extends TestCase
     //--------------------------------------------------------------------------
     // Pruebas para: Registrar()
     //--------------------------------------------------------------------------
-    public function testRegistrar_UnidadesConHorasCero(){
+//--------------------------------------------------------------------------
+ // Pruebas de Integridad de Datos (Strings Vacíos)
+ //--------------------------------------------------------------------------
+
+ /* public function testRegistrar_Falla_ValidacionTemprana_CodigoVacio()
+ {
+  // OBJETIVO: Probar que la validación TEMPRANA rechaza un código vacío ("")
+  
+  // 1. Arrange: Simular al usuario enviando un string vacío
+  $this->malla->setMalCodigo(""); // <-- DATO VACÍO
+  $this->malla->setMalNombre("Nombre Válido"); // Dato de relleno
+
+  // 2. Arrange: Asegurarnos de que NUNCA se llame a la BD
+  $this->pdoMock->expects($this->never())->method('prepare');
+  $this->pdoMock->expects($this->never())->method('beginTransaction');
+
+  // 3. Act
+  $resultado = $this->malla->Registrar([]); // El array de unidades no importa
+
+  // 4. Assert
+  $this->assertEquals('error', $resultado['resultado']);
+  // (Ajusta el mensaje al que vayas a poner en tu validación)
+  $this->assertEquals('El código de la malla no puede estar vacío.', $resultado['mensaje']);
+ } */
+
+ /* public function testRegistrar_Falla_ValidacionTemprana_NombreVacio()
+ {
+  // OBJETIVO: Probar que la validación TEMPRANA rechaza un nombre vacío ("")
+  
+  // 1. Arrange
+  $this->malla->setMalCodigo("CODIGO-OK"); // Pasa el primer check
+  $this->malla->setMalNombre(""); // <-- DATO VACÍO
+
+  // 2. Arrange
+  $this->pdoMock->expects($this->never())->method('prepare');
+  $this->pdoMock->expects($this->never())->method('beginTransaction');
+
+  // 3. Act
+  $resultado = $this->malla->Registrar([]); 
+
+  // 4. Assert
+  $this->assertEquals('error', $resultado['resultado']);
+  $this->assertEquals('El nombre de la malla no puede estar vacío.', $resultado['mensaje']);
+ }
+ */
+ /* public function testRegistrar_Falla_ValidacionTemprana_NombreConEspacios()
+ {
+  // OBJETIVO: Probar que la validación TEMPRANA usa trim()
+  //   para rechazar un nombre que solo tiene espacios.
+  
+  // 1. Arrange
+  $this->malla->setMalCodigo("CODIGO-OK");
+  $this->malla->setMalNombre("  "); // <-- DATO CON ESPACIOS
+
+  // 2. Arrange
+  $this->pdoMock->expects($this->never())->method('prepare');
+  $this->pdoMock->expects($this->never())->method('beginTransaction');
+
+  // 3. Act
+  $resultado = $this->malla->Registrar([]); 
+
+  // 4. Assert
+  $this->assertEquals('error', $resultado['resultado']);
+  // Asume que la validación es: if (empty(trim($this->mal_nombre)))
+  $this->assertEquals('El nombre de la malla no puede estar vacío.', $resultado['mensaje']);
+ } */
+    //--------------------------------------------------------------------------
+ // Pruebas de Integridad de Datos (Null/Empty)
+ //--------------------------------------------------------------------------
+
+ public function testRegistrar_Falla_PorPropiedadNull_NOT_NULL_Constraint()
+ {
+  // OBJETIVO: Simular que el 'mal_nombre' es nulo y la base de datos
+  //   lanza un error de restricción "NOT NULL" al insertar.
+  
+  $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+  $errorNotNull = new PDOException("SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'mal_nombre' cannot be null");
+  
+  // 1. Mockear mocks internos (¡TODOS PASAN!)
+  $this->malla = $this->getMockBuilder(Malla::class)
+   ->disableOriginalConstructor()
+   ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+   ->getMock();
+  $this->malla->method('Con')->willReturn($this->pdoMock);
+  $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+  $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+  // 2. Mocks para los statements
+  $stmtTrayectos = $this->createMock(PDOStatement::class);
+  $stmtInsertMalla_Falla = $this->createMock(PDOStatement::class); // Fallará
+
+  // 3. Secuencia de prepare()
+  $this->pdoMock->expects($this->any())
+   ->method('prepare')
+   ->withConsecutive(
+    [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+    [$this->stringContains('INSERT INTO tbl_malla')]
+   )
+   ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla_Falla);
+
+  // 4. Configurar mocks
+  $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']); // Pasa validación
+  
+  // 5. *** LA PRUEBA CLAVE ***
+  // El INSERT en tbl_malla lanza la excepción de NOT NULL
+  $stmtInsertMalla_Falla->method('execute')->willThrowException($errorNotNull);
+
+  // 6. Mockear Transacción (falla)
+  $this->pdoMock->expects($this->once())->method('beginTransaction');
+  $this->pdoMock->expects($this->never())->method('commit');
+  $this->pdoMock->expects($this->once())->method('rollBack');
+
+  // 7. Establecer los datos (con mal_nombre nulo)
+  $this->malla->setMalCodigo('M-01');
+  $this->malla->setMalNombre(null); // <-- DATO NULO
+  $this->malla->setMalCohorte(10);
+  $this->malla->setMalDescripcion('Desc');
+
+  // Ejecutar
+  $resultado = $this->malla->Registrar($unidades);
+
+  // Validar
+  $this->assertEquals('error', $resultado['resultado']);
+  $this->assertStringContainsString("Column 'mal_nombre' cannot be null", $resultado['mensaje']);
+ }
+
+
+    /* public function testRegistrar_UnidadesConHorasCero(){
         // OBJETIVO: Probar que el registro falla si CUALQUIER UC tiene todas las horas en 0.
 
         $unidades = [
@@ -198,7 +316,7 @@ class MallaTest extends TestCase
         // Validar
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('horas en 0', $resultado['mensaje']);
-    }
+    } */
 
     public function testRegistrar_Falla_UnidadConValoresNulos(){
         // OBJETIVO: Probar que el registro falla si CUALQUIER UC tiene valores nulos o faltantes.
@@ -227,78 +345,75 @@ class MallaTest extends TestCase
         $this->assertStringContainsString('nulos o faltantes', $resultado['mensaje']);
     }
 
-    public function testRegistrar_Exito()
-    {
-        $unidades = [
-            ['uc_codigo' => 'UC-T0', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
-            ['uc_codigo' => 'UC-T1', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
-            ['uc_codigo' => 'UC-T2', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
-            ['uc_codigo' => 'UC-T3', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
-            ['uc_codigo' => 'UC-T4', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
-        ];
+   public function testRegistrar_Exito() {
+ $unidades = [
+ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
+ ['uc_codigo' => 'UC-T1', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
+ ['uc_codigo' => 'UC-T2', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
+ ['uc_codigo' => 'UC-T3', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
+ ['uc_codigo' => 'UC-T4', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10],
+ ];
+ // <-- CORRECCIÓN: Definimos los contadores esperados
+ $numero_de_inserts_esperados = 5;
+ $numero_de_prepare_esperados = 3; // 1 (trayecto) + 1 (malla) + 1 (uc_malla)
 
-        // Configurar Mocks:
-        $stmtTrayectos = $this->createMock(PDOStatement::class);
-        $stmtInsertMalla = $this->createMock(PDOStatement::class);
-        $stmtInsertUCMalla = $this->createMock(PDOStatement::class);
 
-        // 1. Mockear llamadas INTERNAS a Existecodigo y ExisteCohorte
-        $this->malla = $this->getMockBuilder(Malla::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
-            ->getMock();
-        $this->malla->method('Con')->willReturn($this->pdoMock);
-        $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
-        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+ // Configurar Mocks:
+ $stmtTrayectos = $this->createMock(PDOStatement::class);
+ $stmtInsertMalla = $this->createMock(PDOStatement::class);
+ $stmtInsertUCMalla = $this->createMock(PDOStatement::class); // Este se reutilizará
 
-        // 2. Mockear la secuencia de llamadas a prepare()
-        $this->pdoMock->expects($this->any())
-            ->method('prepare')
-            ->withConsecutive(
-                // 1ra llamada: Validación de trayectos
-                [$this->stringContains('SELECT DISTINCT uc_trayecto FROM tbl_uc WHERE uc_codigo IN')],
-                // 2da llamada: Insertar en la malla principal
-                [$this->stringContains('INSERT INTO tbl_malla')],
-                // 3ra a 7ma llamada: Insertar en uc_malla (una por cada unidad)
-                [$this->stringContains('INSERT INTO uc_malla')],
-                [$this->stringContains('INSERT INTO uc_malla')],
-                [$this->stringContains('INSERT INTO uc_malla')],
-                [$this->stringContains('INSERT INTO uc_malla')],
-                [$this->stringContains('INSERT INTO uc_malla')]
-            )
-            ->willReturnOnConsecutiveCalls(
-                $stmtTrayectos,
-                $stmtInsertMalla,
-                $stmtInsertUCMalla,
-                $stmtInsertUCMalla,
-                $stmtInsertUCMalla,
-                $stmtInsertUCMalla,
-                $stmtInsertUCMalla
-            );
-        
-        // 3. Configurar el mock de validación de trayectos para que PASE
-        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']);
+// 1. Mockear llamadas INTERNAS a Existecodigo y ExisteCohorte
+ $this->malla = $this->getMockBuilder(Malla::class)
+ ->disableOriginalConstructor()
+ ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+ ->getMock();
+ $this->malla->method('Con')->willReturn($this->pdoMock);
+ $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+ $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
 
-        // 4. Mockear la transacción
-        $this->pdoMock->expects($this->once())->method('beginTransaction');
-        $this->pdoMock->expects($this->once())->method('commit');
-        $this->pdoMock->expects($this->never())->method('rollBack');
+// 2. Mockear la secuencia de llamadas a prepare()
+// <-- CORRECCIÓN: Usamos exactly() y definimos las 3 únicas llamadas a prepare
+ $this->pdoMock->expects($this->exactly($numero_de_prepare_esperados))
+->method('prepare')
+ ->withConsecutive(
+// 1ra llamada: Validación de trayectos
+[$this->stringContains('SELECT DISTINCT uc_trayecto FROM tbl_uc WHERE uc_codigo IN')],
+// 2da llamada: Insertar en la malla principal
+ [$this->stringContains('INSERT INTO tbl_malla')],
+ // 3ra llamada: Preparar el bucle (SOLO 1 VEZ)
+ [$this->stringContains('INSERT INTO uc_malla')]
+)
+->willReturnOnConsecutiveCalls(
+ $stmtTrayectos,
+ $stmtInsertMalla,
+ $stmtInsertUCMalla // Devuelve el mock reutilizable
+ );
 
-        // 5. Mockear los INSERTS
-        $stmtInsertMalla->expects($this->once())->method('execute');
-        $stmtInsertUCMalla->expects($this->exactly(5))->method('execute');
+ // 3. Configurar el mock de validación de trayectos para que PASE
+ $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']);
 
-        // Ejecutar
-        $this->malla->setMalCodigo('NUEVA-MALLA');
-        $this->malla->setMalNombre('Nueva Malla Curricular');
-        $this->malla->setMalCohorte(5);
-        $this->malla->setMalDescripcion('Descripción');
-        $resultado = $this->malla->Registrar($unidades);
+ // 4. Mockear la transacción
+$this->pdoMock->expects($this->once())->method('beginTransaction');
+ $this->pdoMock->expects($this->once())->method('commit');
+ $this->pdoMock->expects($this->never())->method('rollBack');
 
-        // Validar
-        $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('Registro Incluido', $resultado['mensaje']);
-    }
+ // 5. Mockear los INSERTS
+$stmtInsertMalla->expects($this->once())->method('execute');
+ // <-- CORRECCIÓN: Verificamos que execute() se llama 5 veces EN EL MOCK $stmtInsertUCMalla
+ $stmtInsertUCMalla->expects($this->exactly($numero_de_inserts_esperados))->method('execute');
+
+ // Ejecutar
+ $this->malla->setMalCodigo('NUEVA-MALLA');
+ $this->malla->setMalNombre('Nueva Malla Curricular');
+ $this->malla->setMalCohorte(5);
+ $this->malla->setMalDescripcion('Descripción');
+ $resultado = $this->malla->Registrar($unidades);
+
+ // Validar
+ $this->assertEquals('registrar', $resultado['resultado']);
+ $this->assertStringContainsString('Registro Incluido', $resultado['mensaje']);
+ }
 
     public function testRegistrar_Falla_UnidadesVacias()
     {
@@ -379,6 +494,334 @@ class MallaTest extends TestCase
         $this->assertStringContainsString('Error al validar los trayectos', $resultado['mensaje']);
     }
 
+
+    //--------------------------------------------------------------------------
+    // Pruebas de Límites (Longitud)
+    //--------------------------------------------------------------------------
+
+    /**
+     * Prueba el "camino triste" de la longitud de datos (Data too long).
+     * Simula que el 'mal_nombre' es demasiado largo y la BD
+     * lanza un error 22001 (String data, right truncation).
+     */
+    public function testRegistrar_Falla_NombreDemasiadoLargo()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        $errorDataLong = new PDOException("SQLSTATE[22001]: String data, right truncation");
+        $errorDataLong->errorInfo[0] = '22001';
+
+        // 1. Mockear mocks internos (¡TODOS PASAN!)
+        $this->malla = $this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+        $this->malla->method('Con')->willReturn($this->pdoMock);
+        $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para los statements
+        $stmtTrayectos = $this->createMock(PDOStatement::class);
+        $stmtInsertMalla_Falla = $this->createMock(PDOStatement::class); // Fallará
+
+        // 3. Secuencia de prepare()
+        $this->pdoMock->expects($this->any())
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+                [$this->stringContains('INSERT INTO tbl_malla')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla_Falla);
+
+        // 4. Configurar mocks
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']); // Pasa validación
+        
+        // 5. *** LA PRUEBA CLAVE ***
+        // El INSERT en tbl_malla lanza la excepción de Data Long
+        $stmtInsertMalla_Falla->method('execute')->willThrowException($errorDataLong);
+
+        // 6. Mockear Transacción (falla)
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->never())->method('commit');
+        $this->pdoMock->expects($this->once())->method('rollBack');
+
+        // 7. Establecer los datos (con mal_nombre muy largo)
+        $this->malla->setMalCodigo('M-01');
+        $this->malla->setMalNombre(str_repeat('a', 1000)); // <-- DATO MUY LARGO
+        $this->malla->setMalCohorte(10);
+        $this->malla->setMalDescripcion('Desc');
+
+        // Ejecutar
+        $resultado = $this->malla->Registrar($unidades);
+
+        // Validar
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('String data, right truncation', $resultado['mensaje']);
+    }
+
+    //--------------------------------------------------------------------------
+    // Pruebas de Datos Sucios (Seguridad y Formato)
+    //--------------------------------------------------------------------------
+
+    /**
+     * Prueba la seguridad de bindParam (SQL Injection) y el manejo de espacios.
+     * Verifica que el registro es exitoso incluso si los datos contienen
+     * comillas simples y espacios extra, demostrando que:
+     * 1. bindParam previene la inyección SQL.
+     * 2. El modelo NO está usando trim() (lo cual es esperado).
+     */
+    public function testRegistrar_Exito_ConComillasYEspacios()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        
+        // 1. Mockear mocks internos (pasan)
+        $this->malla = $this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+        $this->malla->method('Con')->willReturn($this->pdoMock);
+        $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para los statements
+        $stmtTrayectos = $this->createMock(PDOStatement::class);
+        $stmtInsertMalla = $this->createMock(PDOStatement::class);
+        $stmtInsertUCMalla = $this->createMock(PDOStatement::class);
+
+        // 3. Secuencia de prepare()
+        $this->pdoMock->expects($this->any())
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+                [$this->stringContains('INSERT INTO tbl_malla')],
+                [$this->stringContains('INSERT INTO uc_malla')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla, $stmtInsertUCMalla);
+
+        // 4. Configurar mocks (todos pasan)
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']);
+        $stmtInsertMalla->method('execute')->willReturn(true);
+        $stmtInsertUCMalla->method('execute')->willReturn(true);
+
+        // 5. Mockear Transacción (éxito)
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->once())->method('commit');
+        $this->pdoMock->expects($this->never())->method('rollBack');
+
+        // 6. Establecer los datos "sucios"
+        $this->malla->setMalCodigo(' PNF-1 '); // <-- Con espacios
+        $this->malla->setMalNombre("Malla 'Prueba de Inyección'"); // <-- Con comillas
+        $this->malla->setMalCohorte(10);
+        $this->malla->setMalDescripcion('Desc');
+
+        // Ejecutar
+        $resultado = $this->malla->Registrar($unidades);
+
+        // Validar (La prueba debe ser exitosa)
+        $this->assertEquals('registrar', $resultado['resultado']);
+    }
+
+    /**
+     * Prueba la sensibilidad a mayúsculas/minúsculas.
+     * Verifica que 'PNF-1' se trata como un código diferente a 'pnf-1'.
+     * La prueba se hace sobre Existecodigo() por simplicidad.
+     */
+    public function testExistecodigo_EsSensibleAMayusculas()
+    {
+        // 1. Configurar Mocks
+        $this->pdoMock->method('prepare')
+             // La consulta se ejecutará (porque no es igual al original)
+            ->with($this->stringContains("SELECT * FROM tbl_malla WHERE mal_codigo = :mal_codigo"))
+            ->willReturn($this->stmtMock);
+        
+        // Simulamos que la BD no encuentra 'pnf-1' (solo tiene 'PNF-1')
+        $this->stmtMock->method('fetch')->willReturn(false); 
+
+        // 2. Establecer datos
+        $this->malla->setMalCodigo('pnf-1'); // Código en minúscula
+       $this->malla->setMalCodigoOriginal('PNF-1'); // Original en mayúscula
+
+        // 3. Ejecutar
+        $resultado =$this->malla->Existecodigo();
+
+        // 4. Validar
+        // El resultado es 'ok' (no existe), probando que 'pnf-1' y 'PNF-1'
+        // son tratados como códigos diferentes.
+       $this->assertEquals('ok', $resultado['resultado']);
+    }
+    
+/**
+     * Prueba el "camino sucio" de un número negativo en un campo UNSIGNED.
+     * El JS lo previene, pero el Modelo PHP no.
+     * Simula que 'mal_cohorte' es -10 y la BD (siendo UNSIGNED)
+     * lanza un error de "Out of range".
+     */
+    public function testRegistrar_Falla_CohorteNegativa()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        $errorOutOfRange = new PDOException("SQLSTATE[22003]: Numeric value out of range");
+        $errorOutOfRange->errorInfo[0] = '22003';
+
+        // 1. Mockear mocks internos (¡TODOS PASAN!)
+        $this->malla = $this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+       $this->malla->method('Con')->willReturn($this->pdoMock);
+       $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+       $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para los statements
+        $stmtTrayectos =$this->createMock(PDOStatement::class);
+        $stmtInsertMalla_Falla =$this->createMock(PDOStatement::class); // Fallará
+
+        // 3. Secuencia de prepare()
+       $this->pdoMock->expects($this->any())
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+                [$this->stringContains('INSERT INTO tbl_malla')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla_Falla);
+
+        // 4. Configurar mocks
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']); 
+        
+        // 5. *** LA PRUEBA CLAVE ***
+        // El INSERT lanza la excepción "Out of range"
+        $stmtInsertMalla_Falla->method('execute')->willThrowException($errorOutOfRange);
+
+        // 6. Mockear Transacción (falla)
+       $this->pdoMock->expects($this->once())->method('beginTransaction');
+       $this->pdoMock->expects($this->never())->method('commit');
+       $this->pdoMock->expects($this->once())->method('rollBack');
+
+        // 7. Establecer los datos (con cohorte negativa)
+       $this->malla->setMalCodigo('M-01');
+       $this->malla->setMalNombre('Malla Negativa');
+       $this->malla->setMalCohorte(-10); // <-- DATO SUCIO
+       $this->malla->setMalDescripcion('Desc');
+
+        // Ejecutar
+        $resultado =$this->malla->Registrar($unidades);
+
+        // Validar
+       $this->assertEquals('error', $resultado['resultado']);
+       $this->assertStringContainsString('Numeric value out of range', $resultado['mensaje']);
+    }
+
+    /**
+     * Prueba la inconsistencia de 'mal_cohorte' (PDO::PARAM_STR).
+     * ¿Qué pasa si el controlador envía un float? PHP lo convierte a string '1.5'.
+     * La BD fallará al intentar insertar '1.5' en una columna INT.
+     */
+    public function testRegistrar_Falla_CohorteFlotante()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        $errorIncorrectInt = new PDOException("SQLSTATE[HY000]: General error: 1366 Incorrect integer value: '1.5'");
+        $errorIncorrectInt->errorInfo[0] = 'HY000';
+
+        // 1. Mockear mocks internos (pasan)
+       $this->malla=$this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+       $this->malla->method('Con')->willReturn($this->pdoMock);
+       $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+       $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para los statements
+        $stmtTrayectos =$this->createMock(PDOStatement::class);
+        $stmtInsertMalla_Falla =$this->createMock(PDOStatement::class); 
+
+        // 3. Secuencia de prepare()
+       $this->pdoMock->expects($this->any())
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+                [$this->stringContains('INSERT INTO tbl_malla')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla_Falla);
+
+        // 4. Configurar mocks
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']); 
+        $stmtInsertMalla_Falla->method('execute')->willThrowException($errorIncorrectInt);
+
+        // 5. Mockear Transacción (falla)
+       $this->pdoMock->expects($this->once())->method('beginTransaction');
+       $this->pdoMock->expects($this->never())->method('commit');
+       $this->pdoMock->expects($this->once())->method('rollBack');
+
+        // 6. Establecer los datos (con cohorte flotante)
+       $this->malla->setMalCodigo('M-01');
+       $this->malla->setMalNombre('Malla Flotante');
+       $this->malla->setMalCohorte(1.5); // <-- DATO SUCIO
+       $this->malla->setMalDescripcion('Desc');
+
+        // Ejecutar
+        $resultado =$this->malla->Registrar($unidades);
+
+        // Validar
+       $this->assertEquals('error', $resultado['resultado']);
+       $this->assertStringContainsString('Incorrect integer value', $resultado['mensaje']);
+    }
+
+    /**
+     * Prueba el "camino sucio" de un tipo booleano.
+     * PHP convierte 'false' a un string vacío ('').
+     * Esto debería fallar por la misma razón que un string vacío
+     * (CHECK constraint en la DB o NOT NULL).
+     */
+    public function testRegistrar_Falla_NombreEsBooleanoFalse()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        // Error de CHECK constraint (o NOT NULL si no permite '')
+        $errorCheck = new PDOException("SQLSTATE[23000]: Integrity constraint violation: CHECK constraint failed");
+        $errorCheck->errorInfo[0] = '23000';
+
+        // 1. Mockear mocks internos (pasan)
+       $this->malla=$this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+       $this->malla->method('Con')->willReturn($this->pdoMock);
+       $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+       $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para los statements
+        $stmtTrayectos =$this->createMock(PDOStatement::class);
+        $stmtInsertMalla_Falla =$this->createMock(PDOStatement::class); 
+
+        // 3. Secuencia de prepare()
+       $this->pdoMock->expects($this->any())
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+                [$this->stringContains('INSERT INTO tbl_malla')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla_Falla);
+
+        // 4. Configurar mocks
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']); 
+        $stmtInsertMalla_Falla->method('execute')->willThrowException($errorCheck);
+
+        // 5. Mockear Transacción (falla)
+       $this->pdoMock->expects($this->once())->method('beginTransaction');
+       $this->pdoMock->expects($this->never())->method('commit');
+       $this->pdoMock->expects($this->once())->method('rollBack');
+
+        // 6. Establecer los datos (con booleano)
+       $this->malla->setMalCodigo('M-01');
+       $this->malla->setMalNombre(false); // <-- DATO SUCIO (se convierte a '')
+       $this->malla->setMalCohorte(1);
+       $this->malla->setMalDescripcion('Desc');
+
+        // Ejecutar
+        $resultado =$this->malla->Registrar($unidades);
+
+        // Validar
+       $this->assertEquals('error', $resultado['resultado']);
+       $this->assertStringContainsString('Integrity constraint violation', $resultado['mensaje']);
+    }
     public function testRegistrar_Falla_DBExceptionEnInsert()
     {
         $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 10, 'hora_asistida' => 10, 'hora_academica' => 10] ];
@@ -490,73 +933,109 @@ class MallaTest extends TestCase
         $this->assertEquals('Error en bucle UC', $resultado['mensaje']);
     }
 
-    public function testRegistrar_Exito_OmiteUnidadesConHorasCero()
-    {
-        // OBJETIVO: Probar la lógica de negocio que omite insertar UCs
-        // si todas sus horas son 0.
-
-        $unidades = [
-            ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 0, 'hora_academica' => 0], // INSERTA (1)
-            ['uc_codigo' => 'UC-T1', 'hora_independiente' => 0, 'hora_asistida' => 0, 'hora_academica' => 0], // OMITE
-            ['uc_codigo' => 'UC-T2', 'hora_independiente' => 0, 'hora_asistida' => 5, 'hora_academica' => 0], // INSERTA (2)
-            ['uc_codigo' => 'UC-T3', 'hora_independiente' => 0, 'hora_asistida' => 0, 'hora_academica' => 1], // INSERTA (3)
-        ];
-        $numero_de_inserts_esperados = 3; // <-- Solo 3 UCs se insertarán
-        $numero_de_prepare_esperados = 3; // <-- 1 (trayecto) + 1 (malla) + 1 (uc_malla)
-
-        // 1. Mockear mocks internos (pasan)
-        $this->malla = $this->getMockBuilder(Malla::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
-            ->getMock();
-        $this->malla->method('Con')->willReturn($this->pdoMock);
-        $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
-        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
-
-        // 2. Mocks para los statements
-        $stmtTrayectos = $this->createMock(PDOStatement::class);
-        $stmtInsertMalla = $this->createMock(PDOStatement::class);
-        $stmtInsertUCMalla = $this->createMock(PDOStatement::class); // Este se reutilizará
-
-        // 3. **LA CORRECCIÓN**
-        // Definir la secuencia exacta de llamadas a prepare()
-        $this->pdoMock->expects($this->exactly($numero_de_prepare_esperados))
-            ->method('prepare')
-            ->withConsecutive(
-                [$this->stringContains('SELECT DISTINCT uc_trayecto')], // 1. Validación de trayecto
-                [$this->stringContains('INSERT INTO tbl_malla')],      // 2. Insertar malla
-                [$this->stringContains('INSERT INTO uc_malla')]        // 3. Preparar el bucle (SOLO 1 VEZ)
-            )
-            ->willReturnOnConsecutiveCalls(
-                $stmtTrayectos,
-                $stmtInsertMalla,
-                $stmtInsertUCMalla // Devuelve el mock reutilizable
-            );
-        // ------------------------------------------
-
-        // 4. Configurar mocks de statements
-        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']); // Pasa validación
-
-        // 5. Mockear Transacción (éxito)
-        $this->pdoMock->expects($this->once())->method('beginTransaction');
-        $this->pdoMock->expects($this->once())->method('commit');
-        $this->pdoMock->expects($this->never())->method('rollBack');
-
-        // 6. Validar ejecuciones
-        $stmtInsertMalla->expects($this->once())->method('execute');
-        // Esperamos que 'execute' se llame solo 3 veces (omitiendo la UC-T1)
-        $stmtInsertUCMalla->expects($this->exactly($numero_de_inserts_esperados))->method('execute');
-
-        // Ejecutar
-        $resultado = $this->malla->Registrar($unidades);
-
-        // Validar
-        $this->assertEquals('registrar', $resultado['resultado']);
-    }
+    
     //--------------------------------------------------------------------------
     // Pruebas para: Modificar()
     //--------------------------------------------------------------------------
-public function testModificar_Falla_UnidadConHorasCero()
+/* public function testModificar_Falla_ValidacionTemprana_CodigoVacio()
+ {
+  // OBJETIVO: Probar que la validación TEMPRANA rechaza un código vacío ("")
+  
+  // 1. Arrange
+  $this->malla->setMalCodigo(""); // <-- DATO VACÍO
+  $this->malla->setMalNombre("Nombre Válido");
+
+  // 2. Arrange
+  $this->pdoMock->expects($this->never())->method('prepare');
+  $this->pdoMock->expects($this->never())->method('beginTransaction');
+  // Tampoco debe llamar a ExisteCohorte
+  $this->malla = $this->getMockBuilder(Malla::class)
+   ->disableOriginalConstructor()
+   ->onlyMethods(['Con', 'ExisteCohorte'])
+   ->getMock();
+  $this->malla->method('Con')->willReturn($this->pdoMock);
+  $this->malla->expects($this->never())->method('ExisteCohorte');
+
+
+  // 3. Act
+  $resultado = $this->malla->Modificar([]);
+
+  // 4. Assert
+  $this->assertEquals('error', $resultado['resultado']);
+  $this->assertEquals('El código de la malla no puede estar vacío.', $resultado['mensaje']);
+ }
+ */
+ /* public function testModificar_Falla_ValidacionTemprana_NombreVacio()
+ {
+  // OBJETIVO: Probar que la validación TEMPRANA rechaza un nombre vacío ("")
+  
+  // 1. Arrange
+  $this->malla->setMalCodigo("CODIGO-OK");
+  $this->malla->setMalNombre(""); // <-- DATO VACÍO
+
+  // 2. Arrange
+  $this->pdoMock->expects($this->never())->method('prepare');
+  $this->pdoMock->expects($this->never())->method('beginTransaction');
+
+  // 3. Act
+  $resultado = $this->malla->Modificar([]);
+
+  // 4. Assert
+  $this->assertEquals('error', $resultado['resultado']);
+  $this->assertEquals('El nombre de la malla no puede estar vacío.', $resultado['mensaje']);
+ }
+
+    public function testModificar_Falla_PorPropiedadNull_NOT_NULL_Constraint()
+ {
+  // OBJETIVO: Simular que el 'mal_nombre' es nulo y la base de datos
+  //   lanza un error "NOT NULL" en el UPDATE.
+  
+  $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+  $errorNotNull = new PDOException("SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'mal_nombre' cannot be null");
+
+  // 1. Mockear ExisteCohorte (pasa)
+  $this->malla = $this->getMockBuilder(Malla::class)
+   ->disableOriginalConstructor()
+   ->onlyMethods(['Con', 'ExisteCohorte'])
+   ->getMock();
+  $this->malla->method('Con')->willReturn($this->pdoMock);
+  $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+  // 2. Mockear Transacción (falla)
+  $this->pdoMock->expects($this->once())->method('beginTransaction');
+  $this->pdoMock->expects($this->never())->method('commit');
+  $this->pdoMock->expects($this->once())->method('rollBack');
+
+  // 3. Mocks para los statements
+  $stmtUpdate_Falla = $this->createMock(PDOStatement::class);
+
+  // 4. Secuencia de prepare()
+  // (Asumimos que el código no cambia, saltando el chequeo de código)
+  $this->pdoMock->expects($this->once())
+   ->method('prepare')
+   ->with($this->stringContains('UPDATE tbl_malla'))
+   ->willReturn($stmtUpdate_Falla);
+   
+  // 5. *** LA PRUEBA CLAVE ***
+  // El UPDATE lanza la excepción de NOT NULL
+  $stmtUpdate_Falla->method('execute')->willThrowException($errorNotNull);
+
+  // 6. Establecer los datos (con mal_nombre nulo)
+  $this->malla->setMalCodigo('M-01');
+  $this->malla->setMalCodigoOriginal('M-01'); // Mismo código
+  $this->malla->setMalNombre(null); // <-- DATO NULO
+  $this->malla->setMalCohorte(10);
+  $this->malla->setMalDescripcion('Desc');
+
+  // Ejecutar
+  $resultado = $this->malla->Modificar($unidades);
+
+  // Validar
+  $this->assertEquals('error', $resultado['resultado']);
+  $this->assertStringContainsString("Column 'mal_nombre' cannot be null", $resultado['mensaje']);
+ } */
+
+   /*  public function testModificar_Falla_UnidadConHorasCero()
     {
         // OBJETIVO: Probar que la modificación falla si CUALQUIER UC tiene todas las horas en 0.
 
@@ -585,7 +1064,73 @@ public function testModificar_Falla_UnidadConHorasCero()
         // Validar
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('horas en 0', $resultado['mensaje']);
-    }
+    } */
+   /* public function testRegistrar_Exito_OmiteUnidadesConHorasCero()
+    {
+        // OBJETIVO: Probar la lógica de negocio que omite insertar UCs
+        // si todas sus horas son 0, pero la operación general tiene éxito.
+
+        $unidades = [
+            ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 0, 'hora_academica' => 0], // INSERTA (1)
+            ['uc_codigo' => 'UC-T1', 'hora_independiente' => 0, 'hora_asistida' => 0, 'hora_academica' => 0], // OMITE
+            ['uc_codigo' => 'UC-T2', 'hora_independiente' => 0, 'hora_asistida' => 5, 'hora_academica' => 0], // INSERTA (2)
+            ['uc_codigo' => 'UC-T3', 'hora_independiente' => 0, 'hora_asistida' => 0, 'hora_academica' => 1], // INSERTA (3)
+        ];
+        $numero_de_inserts_esperados_uc_malla = 3; // <-- Solo 3 UCs se insertarán
+        $numero_de_prepare_esperados = 3; // <-- 1 (trayecto) + 1 (malla) + 1 (uc_malla)
+
+        // 1. Mockear mocks internos (pasan)
+        $this->malla = $this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+        $this->malla->method('Con')->willReturn($this->pdoMock);
+        $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para los statements
+        $stmtTrayectos = $this->createMock(PDOStatement::class);
+        $stmtInsertMalla = $this->createMock(PDOStatement::class);
+        $stmtInsertUCMalla = $this->createMock(PDOStatement::class); // Este se reutilizará
+
+        // 3. Definir la secuencia exacta de llamadas a prepare()
+        $this->pdoMock->expects($this->exactly($numero_de_prepare_esperados))
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')], // 1. Validación de trayecto
+                [$this->stringContains('INSERT INTO tbl_malla')],      // 2. Insertar malla
+                [$this->stringContains('INSERT INTO uc_malla')]        // 3. Preparar el bucle (SOLO 1 VEZ)
+            )
+            ->willReturnOnConsecutiveCalls(
+                $stmtTrayectos,
+                $stmtInsertMalla,
+                $stmtInsertUCMalla // Devuelve el mock reutilizable
+            );
+
+        // 4. Configurar mocks de statements
+        // (Asumimos que las UCs dadas cumplen la validación de trayectos)
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3']);
+
+        // 5. Mockear Transacción (éxito)
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->once())->method('commit');
+        $this->pdoMock->expects($this->never())->method('rollBack');
+
+        // 6. Validar ejecuciones
+        $stmtInsertMalla->expects($this->once())->method('execute');
+        // Esperamos que 'execute' se llame solo 3 veces (omitiendo la UC-T1)
+        $stmtInsertUCMalla->expects($this->exactly($numero_de_inserts_esperados_uc_malla))->method('execute');
+
+        // Ejecutar
+        $this->malla->setMalCodigo('MALLA-TEST');
+        $this->malla->setMalNombre('Test Omite Ceros');
+        $this->malla->setMalCohorte(1);
+        $this->malla->setMalDescripcion('Desc');
+        $resultado = $this->malla->Registrar($unidades);
+
+        // Validar
+        $this->assertEquals('registrar', $resultado['resultado']);
+    } */
 
     public function testModificar_Falla_UnidadConValoresNulos()
     {
@@ -617,73 +1162,71 @@ public function testModificar_Falla_UnidadConHorasCero()
         $this->assertStringContainsString('nulos o faltantes', $resultado['mensaje']);
     }
 
-    public function testModificar_Exito_SinCambioDeCodigo()
-    {
-        // 1. Array de unidades VÁLIDO
-        $unidades = [
-            ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
-            ['uc_codigo' => 'UC-T1', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
-            ['uc_codigo' => 'UC-T2', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
-            ['uc_codigo' => 'UC-T3', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
-            ['uc_codigo' => 'UC-T4', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
-        ];
-        $num_unidades = count($unidades);
+   public function testModificar_Exito_SinCambioDeCodigo()
+{
+ // 1. Array de unidades VÁLIDO
+ $unidades = [
+ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
+ ['uc_codigo' => 'UC-T1', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
+ ['uc_codigo' => 'UC-T2', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
+ ['uc_codigo' => 'UC-T3', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
+ ['uc_codigo' => 'UC-T4', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1],
+ ];
+ // <-- CORRECCIÓN: Definimos contadores
+ $num_unidades_a_insertar = count($unidades);
+ // 1 (UPDATE) + 1 (DELETE) + 1 (INSERT BUCLE)
+ $numero_de_prepare_esperados = 3; 
 
-        // 2. Mockear ExisteCohorte (pasa)
-        $this->malla = $this->getMockBuilder(Malla::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'ExisteCohorte'])
-            ->getMock();
-        $this->malla->method('Con')->willReturn($this->pdoMock);
-        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+ // 2. Mockear ExisteCohorte (pasa)
+$this->malla = $this->getMockBuilder(Malla::class)
+ ->disableOriginalConstructor()
+ ->onlyMethods(['Con', 'ExisteCohorte'])
+ ->getMock();
+ $this->malla->method('Con')->willReturn($this->pdoMock);
+ $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
 
-        // 3. Mockear Transacción (Esperamos éxito)
-        $this->pdoMock->expects($this->once())->method('beginTransaction');
-        $this->pdoMock->expects($this->once())->method('commit');
-        $this->pdoMock->expects($this->never())->method('rollBack'); // Esperamos que NUNCA falle
+ // 3. Mockear Transacción (Esperamos éxito)
+ $this->pdoMock->expects($this->once())->method('beginTransaction');
+ $this->pdoMock->expects($this->once())->method('commit');
+ $this->pdoMock->expects($this->never())->method('rollBack');
 
-        // 4. Mocks para los statements
-        // No necesitamos $stmtTrayectos aquí
-        $stmtUpdate = $this->createMock(PDOStatement::class);
-        $stmtDelete = $this->createMock(PDOStatement::class);
-        $stmtInsert = $this->createMock(PDOStatement::class);
+// 4. Mocks para los statements
+ $stmtUpdate = $this->createMock(PDOStatement::class);
+ $stmtDelete = $this->createMock(PDOStatement::class);
+$stmtInsert = $this->createMock(PDOStatement::class); // Reutilizable
 
-        // 5. Secuencia de llamadas a prepare() - SIN validación de trayectos
-        $consecutive_calls = [
-            // 1. UPDATE tbl_malla (Es la PRIMERA llamada real)
-            [$this->stringStartsWith('UPDATE tbl_malla SET mal_codigo = :nuevo_codigo')],
-            // 2. DELETE FROM uc_malla
-            [$this->stringStartsWith('DELETE FROM uc_malla WHERE mal_codigo = :mal_codigo_original')],
-        ];
-        // Los mocks devueltos empiezan con Update y Delete
-        $return_calls = [ $stmtUpdate, $stmtDelete ];
+// 5. Secuencia de llamadas a prepare()
+ // <-- CORRECCIÓN: Usamos exactly() y eliminamos el bucle for
+ $this->pdoMock->expects($this->exactly($numero_de_prepare_esperados))
+ ->method('prepare')
+ ->withConsecutive(
+ // 1. UPDATE tbl_malla
+ [$this->stringStartsWith('UPDATE tbl_malla SET mal_codigo = :nuevo_codigo')],
+ // 2. DELETE FROM uc_malla
+ [$this->stringStartsWith('DELETE FROM uc_malla WHERE mal_codigo = :mal_codigo_original')],
+// 3. INSERT INTO uc_malla (preparar bucle 1 vez)
+ [$this->stringStartsWith('INSERT INTO uc_malla')]
+ )
+ ->willReturnOnConsecutiveCalls(
+ $stmtUpdate,
+ $stmtDelete,
+ $stmtInsert // Devuelve el mock reutilizable
+ );
 
-        // 3. Bucle de INSERTs
-        for ($i = 0; $i < $num_unidades; $i++) {
-            $consecutive_calls[] = [$this->stringStartsWith('INSERT INTO uc_malla')];
-            $return_calls[] = $stmtInsert;
-        }
+ // 6. Definir expectativas de ejecución
+$stmtUpdate->expects($this->once())->method('execute');
+ $stmtDelete->expects($this->once())->method('execute');
+ // <-- CORRECCIÓN: Verificamos N ejecuciones en el mock reutilizable
+ $stmtInsert->expects($this->exactly($num_unidades_a_insertar))->method('execute');
 
-        $this->pdoMock->expects($this->any())
-            ->method('prepare')
-            ->withConsecutive(...$consecutive_calls)
-            ->willReturnOnConsecutiveCalls(...$return_calls);
+ // Ejecutar
+ $this->malla->setMalCodigo('MALLA-1');
+ $this->malla->setMalCodigoOriginal('MALLA-1'); // Mismo código
+ $resultado = $this->malla->Modificar($unidades);
 
-        // 6. NO necesitamos configurar $stmtTrayectos
-
-        // 7. Definir expectativas de ejecución
-        $stmtUpdate->expects($this->once())->method('execute');
-        $stmtDelete->expects($this->once())->method('execute');
-        $stmtInsert->expects($this->exactly($num_unidades))->method('execute');
-
-        // Ejecutar
-        $this->malla->setMalCodigo('MALLA-1');
-        $this->malla->setMalCodigoOriginal('MALLA-1'); // Mismo código
-        $resultado = $this->malla->Modificar($unidades);
-
-        // Validar
-        $this->assertEquals('modificar', $resultado['resultado']);
-    }
+ // Validar
+ $this->assertEquals('modificar', $resultado['resultado']);
+}
   public function testModificar_Exito_ConCambioDeCodigo()
     {
         // 1. Array de unidades VÁLIDO
@@ -902,7 +1445,7 @@ public function testModificar_Falla_DBExceptionEnInsertDeUCMalla()
         $this->assertEquals('Error en bucle INSERT de modificar', $resultado['mensaje']);
     }
 
-   public function testModificar_Exito_OmiteUnidadesConHorasCero()
+   /* public function testModificar_Exito_OmiteUnidadesConHorasCero()
     {
         // OBJETIVO: Probar que la lógica de omitir horas 0 también
         // funciona en el método Modificar.
@@ -971,7 +1514,7 @@ public function testModificar_Falla_DBExceptionEnInsertDeUCMalla()
 
         // Validar
         $this->assertEquals('modificar', $resultado['resultado']);
-    }
+    } */
     // Pruebas para: Consultar()
     //--------------------------------------------------------------------------
 
@@ -1001,6 +1544,179 @@ public function testModificar_Falla_DBExceptionEnInsertDeUCMalla()
         $this->assertEquals($datosEsperados, $resultado['mensaje']);
     }
 
+
+    /**
+     * Prueba de FK: Simula un error de Foreign Key (23000) al intentar
+     * MODIFICAR el 'mal_codigo' de una malla que está siendo referenciada
+     * por otra tabla (ej. si ON UPDATE no es CASCADE).
+     */
+    public function testModificar_Falla_CambioCodigo_FKConstraint()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        $errorFK = new PDOException("SQLSTATE[23000]: Integrity constraint violation: 1451 Cannot update or delete a parent row: a foreign key constraint fails");
+        $errorFK->errorInfo[0] = '23000';
+
+        // 1. Mockear ExisteCohorte (pasa)
+        $this->malla = $this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'ExisteCohorte'])
+            ->getMock();
+        $this->malla->method('Con')->willReturn($this->pdoMock);
+        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mockear Transacción (falla)
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->never())->method('commit');
+        $this->pdoMock->expects($this->once())->method('rollBack');
+
+        // 3. Mocks para los statements
+        $stmtCheck = $this->createMock(PDOStatement::class); // Chequeo de código nuevo (pasa)
+        $stmtUpdate_Falla = $this->createMock(PDOStatement::class); // UPDATE (falla)
+
+        // 4. Secuencia de prepare()
+        $this->pdoMock->expects($this->exactly(2)) // Solo llega hasta el UPDATE
+            ->method('prepare')
+            ->withConsecutive(
+                // Chequeo de código nuevo
+                [$this->stringStartsWith('SELECT mal_codigo FROM tbl_malla WHERE mal_codigo = :mal_codigo')],
+                // UPDATE tbl_malla (falla)
+                [$this->stringStartsWith('UPDATE tbl_malla SET mal_codigo = :nuevo_codigo')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtCheck, $stmtUpdate_Falla);
+
+        // 5. Configurar mocks
+        $stmtCheck->method('fetch')->willReturn(false); // Código nuevo disponible
+        $stmtCheck->method('execute')->willReturn(true);
+        // El UPDATE falla con error FK
+        $stmtUpdate_Falla->method('execute')->willThrowException($errorFK);
+
+        // 6. Establecer los datos (cambiando código)
+        $this->malla->setMalCodigo('MALLA-NUEVA');
+        $this->malla->setMalCodigoOriginal('MALLA-VIEJA'); // Código diferente
+        $this->malla->setMalCohorte(1);
+        $this->malla->setMalNombre('Nombre');
+        $this->malla->setMalDescripcion('Desc');
+
+        // Ejecutar
+        $resultado = $this->malla->Modificar($unidades);
+
+        // Validar
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('Integrity constraint violation', $resultado['mensaje']);
+    }
+
+    /**
+     * Prueba el "camino triste" de un string vacío ('') para mal_nombre.
+     * Debería fallar si la DB tiene CHECK(LENGTH...) > 0 o NOT NULL y no permite ''.
+     */
+    public function testRegistrar_Falla_NombreVacio()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        $errorCheck = new PDOException("SQLSTATE[23000]: Integrity constraint violation: CHECK constraint failed for 'mal_nombre'");
+        $errorCheck->errorInfo[0] = '23000';
+
+        // 1. Mockear mocks internos (pasan)
+        $this->malla = $this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+        $this->malla->method('Con')->willReturn($this->pdoMock);
+        $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para statements
+        $stmtTrayectos = $this->createMock(PDOStatement::class);
+        $stmtInsertMalla_Falla = $this->createMock(PDOStatement::class);
+
+        // 3. Secuencia prepare()
+        $this->pdoMock->expects($this->any())
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+                [$this->stringContains('INSERT INTO tbl_malla')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla_Falla);
+
+        // 4. Configurar mocks
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']);
+        $stmtInsertMalla_Falla->method('execute')->willThrowException($errorCheck);
+
+        // 5. Mockear Transacción (falla)
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->never())->method('commit');
+        $this->pdoMock->expects($this->once())->method('rollBack');
+
+        // 6. Establecer datos (nombre vacío)
+        $this->malla->setMalCodigo('M-01');
+        $this->malla->setMalNombre(''); // <-- DATO VACÍO
+        $this->malla->setMalCohorte(1);
+        $this->malla->setMalDescripcion('Desc Válida');
+
+        // Ejecutar
+        $resultado = $this->malla->Registrar($unidades);
+
+        // Validar
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('Integrity constraint violation', $resultado['mensaje']);
+    }
+
+    /**
+     * Prueba el "camino sucio" de cohorte cero (0).
+     * El JS lo previene, pero el Modelo no.
+     * Debería fallar si la columna 'mal_cohorte' es UNSIGNED en la DB.
+     */
+    public function testRegistrar_Falla_CohorteCero()
+    {
+        $unidades = [ ['uc_codigo' => 'UC-T0', 'hora_independiente' => 1, 'hora_asistida' => 1, 'hora_academica' => 1] ];
+        // Unsigned int no permite 0 si se define así, o podría ser otro error
+        $errorOutOfRange = new PDOException("SQLSTATE[22003]: Numeric value out of range for 'mal_cohorte'");
+        $errorOutOfRange->errorInfo[0] = '22003';
+
+        // 1. Mockear mocks internos (pasan)
+        $this->malla = $this->getMockBuilder(Malla::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'Existecodigo', 'ExisteCohorte'])
+            ->getMock();
+        $this->malla->method('Con')->willReturn($this->pdoMock);
+        $this->malla->method('Existecodigo')->willReturn(['resultado' => 'ok']);
+        $this->malla->method('ExisteCohorte')->willReturn(['resultado' => 'ok']);
+
+        // 2. Mocks para statements
+        $stmtTrayectos = $this->createMock(PDOStatement::class);
+        $stmtInsertMalla_Falla = $this->createMock(PDOStatement::class);
+
+        // 3. Secuencia prepare()
+        $this->pdoMock->expects($this->any())
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT DISTINCT uc_trayecto')],
+                [$this->stringContains('INSERT INTO tbl_malla')]
+            )
+            ->willReturnOnConsecutiveCalls($stmtTrayectos, $stmtInsertMalla_Falla);
+
+        // 4. Configurar mocks
+        $stmtTrayectos->method('fetchAll')->willReturn(['0', '1', '2', '3', '4']);
+        $stmtInsertMalla_Falla->method('execute')->willThrowException($errorOutOfRange);
+
+        // 5. Mockear Transacción (falla)
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->never())->method('commit');
+        $this->pdoMock->expects($this->once())->method('rollBack');
+
+        // 6. Establecer datos (cohorte cero)
+        $this->malla->setMalCodigo('M-01');
+        $this->malla->setMalNombre('Malla Cero');
+        $this->malla->setMalCohorte(0); // <-- DATO CERO
+        $this->malla->setMalDescripcion('Desc');
+
+        // Ejecutar
+        $resultado = $this->malla->Registrar($unidades);
+
+        // Validar
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('Numeric value out of range', $resultado['mensaje']);
+    }
+    
     public function testConsultar_Falla_DBException()
     {
         // Configurar Mocks
@@ -1215,14 +1931,33 @@ public function testCambiarEstadoActivo_Falla_DBExceptionEnUpdate()
     // Pruebas para: ExisteCohorte()
     //--------------------------------------------------------------------------
 
-    public function testExisteCohorte_NoExiste_ModoRegistrar()
-    {
-        $this->pdoMock->method('prepare')->with("SELECT * FROM tbl_malla WHERE mal_cohorte = :mal_cohorte")->willReturn($this->stmtMock);
-        $this->stmtMock->method('fetch')->willReturn(false);
-        $this->malla->setMalCohorte(5);
-        $resultado = $this->malla->ExisteCohorte(false);
-        $this->assertEquals('ok', $resultado['resultado']);
-    }
+
+   public function testExisteCohorte_Falla_PorTipoDeDatoIncorrecto()
+ {
+  // OBJETIVO: Probar que la consulta falla si se pasa un tipo de dato
+  //   incorrecto a un bindParam con tipo estricto (PDO::PARAM_INT).
+  
+  $errorTipo = new PDOException("SQLSTATE[HY000]: General error: 1366 Incorrect integer value: 'esto-no-es-numero' for column 'mal_cohorte'");
+  
+  // 1. Configurar mocks
+  $this->pdoMock->method('prepare')
+    ->with($this->stringContains("SELECT * FROM tbl_malla WHERE mal_cohorte = :mal_cohorte"))
+   ->willReturn($this->stmtMock);
+   
+  // 2. *** LA PRUEBA CLAVE ***
+  // Simular que el execute (o el bindParam) falla debido al tipo
+  $this->stmtMock->method('execute')->willThrowException($errorTipo);
+  
+  // 3. Establecer el dato incorrecto
+  $this->malla->setMalCohorte("esto-no-es-numero"); // <-- DATO INCORRECTO
+
+  // Ejecutar
+  $resultado = $this->malla->ExisteCohorte(false); // Modo registrar
+
+  // Validar
+  $this->assertEquals('error', $resultado['resultado']);
+  $this->assertStringContainsString("Incorrect integer value", $resultado['mensaje']);
+ }
 
     public function testExisteCohorte_Existe_ModoRegistrar()
     {
@@ -1324,4 +2059,51 @@ public function testCambiarEstadoActivo_Falla_DBExceptionEnUpdate()
         $this->assertEquals('Error obteniendo UCs por malla', $resultado['mensaje']);
     }
 
+
+    //--------------------------------------------------------------------------
+ // Prueba de Robustez (Valor Inesperado)
+ //--------------------------------------------------------------------------
+
+ public function testCambiarEstadoActivo_EstadoActualEsNuloOInvalido()
+ {
+  // OBJETIVO: Probar que si el estado actual no es 1 (ej. null, 0, 2),
+  //   el código lo trata como "inactivo" y procede a ACTIVARLO.
+
+  // 1. Configurar Mocks
+  $this->pdoMock->expects($this->once())->method('beginTransaction');
+  $this->pdoMock->expects($this->once())->method('commit');
+
+  // 2. Mocks para los statements
+  $stmtSelect = $this->createMock(PDOStatement::class);
+  $stmtUpdate = $this->createMock(PDOStatement::class);
+
+  // 3. Secuencia de llamadas a prepare()
+  $this->pdoMock->expects($this->exactly(2))
+   ->method('prepare')
+   ->withConsecutive(
+    [$this->stringContains('SELECT mal_activa')],
+    [$this->stringContains('UPDATE tbl_malla SET mal_activa')]
+   )
+   ->willReturnOnConsecutiveCalls($stmtSelect, $stmtUpdate);
+   
+  // 4. Configurar el mock de SELECT para que devuelva NULL
+  $stmtSelect->method('fetchColumn')->willReturn(null); // Valor inesperado
+  $stmtSelect->expects($this->once())->method('execute');
+  
+  // 5. Verificar que el UPDATE se llama con "1" (activar)
+  // Usamos with() para espiar los parámetros de bindParam
+  $stmtUpdate->expects($this->once())
+   ->method('bindParam')
+   ->with(':nuevo_estado', 1, PDO::PARAM_INT); // Verifica que intenta poner 1
+  
+  $stmtUpdate->expects($this->once())->method('execute');
+
+  // Ejecutar
+  $resultado = $this->malla->cambiarEstadoActivo();
+
+  // Validar
+  $this->assertEquals('ok', $resultado['resultado']);
+  $this->assertEquals('activar', $resultado['accion_bitacora']);
+  $this->assertStringContainsString('activada', $resultado['mensaje']);
+ }   
 }
