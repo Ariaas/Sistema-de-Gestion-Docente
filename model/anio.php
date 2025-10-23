@@ -68,6 +68,56 @@ class Anio extends Connection
     {
         $r = array();
 
+        if (!is_int($this->aniAnio) || $this->aniAnio <= 0 || $this->aniAnio > 2100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año es inválido.';
+            return $r;
+        }
+
+        $tipoValido = ['regular', 'intensivo'];
+        $tipoTrim = is_string($this->aniTipo) ? trim($this->aniTipo) : $this->aniTipo;
+        if (!is_string($tipoTrim) || !in_array($tipoTrim, $tipoValido, true) || $this->aniTipo !== $tipoTrim) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo de año es inválido.';
+            return $r;
+        }
+        $this->aniTipo = $tipoTrim;
+
+        if (!is_array($this->fases) || empty($this->fases)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Las fases son obligatorias y deben ser un arreglo.';
+            return $r;
+        }
+        if (trim($this->aniTipo) === 'regular' && count($this->fases) < 2) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año regular debe tener dos fases.';
+            return $r;
+        }
+        foreach ($this->fases as $fase) {
+            if (!isset($fase['numero']) || !is_int($fase['numero']) || $fase['numero'] <= 0) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Cada fase debe tener un número válido.';
+                return $r;
+            }
+            if (empty($fase['apertura']) || empty($fase['cierre'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Cada fase debe tener fecha de apertura y cierre.';
+                return $r;
+            }
+            $apertura = date_create($fase['apertura']);
+            $cierre = date_create($fase['cierre']);
+            if (!$apertura || !$cierre) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Formato de fecha inválido en las fases.';
+                return $r;
+            }
+            if ($cierre <= $apertura) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La fecha de cierre debe ser posterior a la apertura.';
+                return $r;
+            }
+        }
+
         if (!$this->MallaActiva()) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'No se puede registrar un nuevo año si no hay una malla curricular activa.';
@@ -251,6 +301,11 @@ class Anio extends Connection
     public function Modificar($anioOriginal, $tipoOriginal)
     {
         $r = array();
+        if ($anioOriginal === null || $tipoOriginal === null) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Parámetros originales nulos.';
+            return $r;
+        }
         if (!$this->Existe($this->aniAnio, $this->aniTipo, $anioOriginal, $tipoOriginal)) {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -366,6 +421,11 @@ class Anio extends Connection
     public function Eliminar()
     {
         $r = array();
+        if ($this->aniAnio === null || $this->aniTipo === null) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Año o tipo nulo.';
+            return $r;
+        }
         if ($this->Existe($this->aniAnio, $this->aniTipo)) {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
