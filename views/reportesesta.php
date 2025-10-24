@@ -50,17 +50,50 @@ if (!$puede_registrar) {
 
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
 
-                  <div class="col">
+                <div class="col">
                     <a href="?pagina=reporteG" class="dashboard-card">
                         <div class="icon-circle">
                             <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
                         </div>
-                        <h5>Reporte General</h5>
+                        <h5>Reporte General de Estudiantes</h5>
                     </a>
                 </div>
 
+                <div class="col">
+                    <a href="?pagina=reporteD" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
+                        </div>
+                        <h5>Reporte de Horas Docentes</h5>
+                    </a>
+                </div>
 
-               
+                <div class="col">
+                    <a href="?pagina=reporteA" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
+                        </div>
+                        <h5>Reporte de Uso de Aulas</h5>
+                    </a>
+                </div>
+
+                <div class="col">
+                    <a href="?pagina=reporteM" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
+                        </div>
+                        <h5>Reporte de Días con Más Aulas Asignadas</h5>
+                    </a>
+                </div>
+                <div class="col">
+                    <a href="?pagina=reporteP" class="dashboard-card">
+                        <div class="icon-circle">
+                            <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
+                        </div>
+                        <h5>Reporte de Prosecución Estudiantil</h5>
+                    </a>
+                </div>
+
         </section>
     </main>
     <?php require_once("public/components/footer.php"); ?>

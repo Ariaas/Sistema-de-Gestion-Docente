@@ -1,0 +1,127 @@
+<?php
+require_once('model/dbconnection.php');
+
+class Reporte extends Connection
+{
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    public function obtenerAnioActivo()
+    {
+        $p = $this->Con()->prepare(
+            "SELECT ani_anio, ani_tipo, CONCAT(ani_anio, '|', ani_tipo) as anio_completo 
+             FROM tbl_anio 
+             WHERE ani_estado = 1 AND ani_activo = 1 
+             LIMIT 1"
+        );
+        $p->execute();
+        return $p->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function verificarDatosDocentesConHoras()
+    {
+        try {
+            
+            $anio_activo = $this->obtenerAnioActivo();
+            if (!$anio_activo) {
+                return false; 
+            }
+
+            $anio = $anio_activo['ani_anio'];
+            $tipo = $anio_activo['ani_tipo']; 
+
+            
+            $periodos_permitidos = ($tipo == '1') ? ['FASE I', 'ANUAL', 'anual', '0'] : ['FASE II', 'ANUAL', 'anual'];
+
+            $params = [':anio_anio' => $anio];
+            $placeholders = [];
+            foreach ($periodos_permitidos as $index => $periodo) {
+                $key = ":periodo_" . $index;
+                $placeholders[] = $key;
+                $params[strval($key)] = $periodo;
+            }
+
+            $sql = "SELECT COUNT(DISTINCT uh.doc_cedula) 
+                    FROM uc_horario uh
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE s.ani_anio = :anio_anio
+                      AND s.sec_estado = 1
+                      AND uh.doc_cedula IS NOT NULL
+                      AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
+
+            $p = $this->Con()->prepare($sql);
+            $p->execute($params);
+            return $p->fetchColumn() > 0;
+        } catch (Exception $e) {
+            error_log("Error en verificarDatosDocentesConHoras: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function obtenerDatosReporteHorasDocente($anio, $tipo, $min_horas = 0)
+    {
+
+        $periodos_permitidos = ($tipo == '1') ? ['FASE I', 'ANUAL', 'anual', '0'] : ['FASE II', 'ANUAL', 'anual'];
+
+        $params = [
+            ':anio_anio' => $anio,
+            ':min_horas' => $min_horas
+        ];
+        $placeholders = [];
+        foreach ($periodos_permitidos as $index => $periodo) {
+            $key = ":periodo_" . $index;
+            $placeholders[] = $key;
+            $params[strval($key)] = $periodo;
+        }
+
+        $sql = "
+            SELECT 
+                CONCAT(total_horas, ' horas') AS etiqueta, 
+                COUNT(doc_cedula) AS cantidad
+            FROM (
+                
+                WITH HorasPorBloqueUnico AS (
+                    -- Identifica bloques de enseñanza únicos (profesor, materia, hora)
+                    SELECT DISTINCT
+                        uh.doc_cedula,
+                        uh.uc_codigo,
+                        uh.hor_dia,
+                        uh.hor_horainicio,
+                        uh.hor_horafin,
+                        
+                        ROUND(TIMESTAMPDIFF(MINUTE, STR_TO_DATE(uh.hor_horainicio, '%H:%i'), STR_TO_DATE(uh.hor_horafin, '%H:%i')) / 40) AS horas_bloque
+                    FROM uc_horario uh
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE
+                        s.ani_anio = :anio_anio 
+                        AND s.sec_estado = 1
+                        AND uh.doc_cedula IS NOT NULL
+                        AND u.uc_periodo IN (" . implode(', ', $placeholders) . ") 
+                )
+                
+                SELECT
+                    hbu.doc_cedula,
+                    SUM(hbu.horas_bloque) AS total_horas
+                FROM HorasPorBloqueUnico hbu
+                WHERE hbu.doc_cedula IS NOT NULL
+                GROUP BY hbu.doc_cedula
+            ) AS total_horas_docente
+            WHERE total_horas > :min_horas 
+            GROUP BY total_horas
+            ORDER BY total_horas ASC
+        ";
+
+        try {
+            $p = $this->Con()->prepare($sql);
+            $p->execute($params); 
+            return $p->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error en obtenerDatosReporteHorasDocente: " . $e->getMessage());
+            return false;
+        }
+    }
+}
