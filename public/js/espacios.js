@@ -444,7 +444,7 @@ function enviaAjax(datos, tipo_accion_local = null) {
           crearDT();
         }
         else if (lee.resultado == "registrar") {
-          muestraMensaje("success", 4000, "GUARDAR", lee.mensaje);
+          muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
             "Registro Incluido!<br/>Se registró el espacio correctamente!"

@@ -4,6 +4,12 @@ require_once('model/dbconnection.php');
 class Seccion extends Connection
 {
 
+      public function __construct()
+    {
+        parent::__construct();
+    }
+
+
 public function obtenerTodosLosHorarios() {
     try {
        
@@ -62,11 +68,7 @@ public function obtenerTodosLosHorarios() {
         return $total ? (int)$total : 0;
     }
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
+  
     private function determinarFaseActual()
     {
         try {
@@ -424,7 +426,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
 
         return [
             'resultado' => 'registrar_seccion_ok',
-            'mensaje' => '¡Se registró la sección correctamente!',
+            'mensaje' => 'Registro Incluido!<br/>Se registró la sección correctamente!',
             'nuevo_codigo' => $codigoSeccion,
             'nueva_cantidad' => $cantidadInt
         ];
@@ -534,7 +536,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     return ['conflicto' => false];
 }
 
-  public function Modificar($sec_codigo, $ani_anio, $items_horario_json, $cantidadSeccion, $forzar = false)
+  public function Modificar($sec_codigo, $ani_anio, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar')
 {
     if (empty($sec_codigo) || empty($ani_anio) || !isset($cantidadSeccion)) {
         return ['resultado' => 'error', 'mensaje' => 'Faltan datos clave (código, año o cantidad) para modificar la sección.'];
@@ -637,6 +639,9 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co);
 
         if (!empty($items_horario)) {
+            $stmt_horario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, hor_estado, tur_nombre) VALUES (:sec_codigo, 1, :tur_nombre) ON DUPLICATE KEY UPDATE hor_estado = 1");
+            $stmt_horario->execute([':sec_codigo' => $sec_codigo, ':tur_nombre' => 'Mañana']);
+            
             $stmt_uh = $co->prepare(
                 "INSERT INTO uc_horario (sec_codigo, ani_anio, uc_codigo, doc_cedula, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) 
                  VALUES (:sec_codigo, :ani_anio, :uc_codigo, :doc_cedula, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)"
@@ -648,6 +653,10 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                 $uc_codigo = !empty($item['uc_codigo']) ? $item['uc_codigo'] : null;
                 $subgrupo = !empty($item['subgrupo']) ? trim($item['subgrupo']) : null;
                 if ($subgrupo === '') $subgrupo = null;
+
+                if ($uc_codigo === null) {
+                    continue;
+                }
 
                 $stmt_uh->execute([
                     ':sec_codigo'   => $sec_codigo,
@@ -666,7 +675,12 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         }
 
         $co->commit();
-        return ['resultado' => 'modificar_ok', 'mensaje' => '¡Horario actualizado correctamente!'];
+        
+        if ($modo_operacion === 'registrar') {
+            return ['resultado' => 'modificar_ok', 'mensaje' => 'Registro Incluido!<br/>Se registró el horario correctamente!'];
+        } else {
+            return ['resultado' => 'modificar_ok', 'mensaje' => 'Registro Modificado!<br/>Se modificó el horario correctamente!'];
+        }
 
     } catch (Exception $e) {
         if ($co->inTransaction()) {
@@ -693,7 +707,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         $stmt->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
         
         $co->commit();
-        return ['resultado' => 'eliminar_seccion_y_horario_ok', 'mensaje' => '¡Sección y todos sus datos asociados han sido eliminados permanentemente!'];
+        return ['resultado' => 'eliminar_ok', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó la sección correctamente!'];
     } catch (Exception $e) {
         if ($co->inTransaction()) $co->rollBack();
         return ['resultado' => 'error', 'mensaje' => '¡ERROR!<br/>' . $e->getMessage()];

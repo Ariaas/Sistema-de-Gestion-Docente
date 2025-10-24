@@ -33,30 +33,30 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'consultar_paso2') {
             $doc_cedula = $_POST['doc_cedula'] ?? 0;
             $horas = $p->ObtenerHorasActividad($doc_cedula);
-            $preferencias = $p->ObtenerPreferenciasHorario($doc_cedula);
             echo json_encode([
                 'resultado' => 'ok_paso2',
-                'horas' => $horas['mensaje'],
-                'preferencias' => $preferencias['mensaje']
+                'horas' => $horas['mensaje']
             ]);
         } elseif ($accion == 'consultar_datos_adicionales') {
             $doc_cedula = $_POST['doc_cedula'] ?? 0;
             $horas = $p->ObtenerHorasActividad($doc_cedula);
-            $preferencias = $p->ObtenerPreferenciasHorario($doc_cedula);
             echo json_encode([
                 'resultado' => 'ok_datos_adicionales',
-                'horas' => $horas['mensaje'],
-                'preferencias' => $preferencias['mensaje']
+                'horas' => $horas['mensaje']
             ]);
         } elseif ($accion == 'eliminar') {
             $p->setCedula($_POST['cedulaDocente']);
             echo json_encode($p->Eliminar());
             if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
+        } elseif ($accion == 'activar') {
+            $p->setCedula($_POST['cedulaDocente']);
+            echo json_encode($p->Activar());
+            if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'activar', 'docente');
         } elseif ($accion == 'Existe') {
-            echo json_encode(['existe' => $p->Existe($_POST['cedulaDocente'])]);
+            echo json_encode(['resultado' => 'Existe', 'existe' => $p->Existe($_POST['cedulaDocente'])]);
             exit;
         } elseif ($accion == 'existe_correo') {
-            echo json_encode($p->existeCorreo($_POST['correoDocente'], $_POST['cedulaDocente'] ?? null));
+            echo json_encode(['resultado' => 'existe_correo', 'existe' => $p->existeCorreo($_POST['correoDocente'], $_POST['cedulaDocente'] ?? null)]);
             exit;
         } elseif ($accion == 'incluir' || $accion == 'modificar') {
             $p->setCategoriaNombre($_POST['categoria']);
@@ -88,7 +88,6 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setIntegracionComunidad((int)($_POST['actIntegracion'] ?? 0));
             $p->setGestionAcademica((int)($_POST['actGestion'] ?? 0));
             $p->setOtras((int)($_POST['actOtras'] ?? 0));
-            $p->setPreferencias($_POST['preferencia'] ?? []);
 
             if ($accion == 'incluir') {
                 echo json_encode($p->Registrar());

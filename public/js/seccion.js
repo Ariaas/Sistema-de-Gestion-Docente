@@ -1,16 +1,12 @@
-function muestraMensaje(tipo, tiempo, titulo, mensaje) {
-    if (typeof Swal !== 'undefined' && Swal.fire) {
-        Swal.fire({
-            icon: tipo,
-            title: titulo,
-            html: mensaje,
-            timer: tiempo,
-            timerProgressBar: true,
-            showConfirmButton: false
-        });
-    } else {
-        alert(`${titulo}: ${mensaje.replace(/<br\/>/g, "\n")}`);
-    }
+function muestraMensaje(tipo, duracion, titulo, mensaje) {
+    Swal.fire({ 
+        icon: tipo, 
+        title: titulo, 
+        html: mensaje, 
+        timer: duracion, 
+        timerProgressBar: true,
+        showConfirmButton: false
+    });
 }
 
 function getScheduleStateString() {
@@ -143,6 +139,55 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
 
     return bloquesNecesarios;
 }
+
+function detectarTurnoPorHorario(clases) {
+    if (!clases || clases.length === 0) {
+        return 'mañana';
+    }
+
+    let minTime = '23:59:59';
+    clases.forEach(clase => {
+        const horaInicioCompleta = (clase.hora_inicio && clase.hora_inicio.length === 5) ? clase.hora_inicio + ':00' : clase.hora_inicio;
+        if (horaInicioCompleta && horaInicioCompleta < minTime) {
+            minTime = horaInicioCompleta;
+        }
+    });
+
+    const horaInicio = minTime.substring(0, 5);
+    if (horaInicio >= '06:00' && horaInicio < '12:00') {
+        return 'mañana';
+    } else if (horaInicio >= '12:00' && horaInicio < '18:00') {
+        return 'tarde';
+    } else {
+        return 'noche';
+    }
+}
+
+function generarBloquesPorDefecto(turno) {
+    if (!allTurnos || allTurnos.length === 0) {
+        return [];
+    }
+
+    let rangoInicio, rangoFin;
+    if (turno === 'mañana') {
+        rangoInicio = '06:00:00';
+        rangoFin = '12:00:00';
+    } else if (turno === 'tarde') {
+        rangoInicio = '12:00:00';
+        rangoFin = '18:00:00';
+    } else {
+        rangoInicio = '18:00:00';
+        rangoFin = '23:59:59';
+    }
+
+    const bloquesFiltrados = allTurnos.filter(turnoBase => {
+        return turnoBase.tur_horainicio >= rangoInicio && turnoBase.tur_horainicio < rangoFin;
+    });
+
+    bloquesFiltrados.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+
+    return bloquesFiltrados;
+}
 function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaHorario", isViewOnly = false) {
     const tbody = $(`${targetTableId} tbody`);
     tbody.empty();
@@ -175,7 +220,16 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
             if (celdasProcesadas.has(key_actual)) return;
             const cell = $("<td>").attr("data-franja-inicio", bloque.tur_horainicio).attr("data-dia-nombre", dia);
             cell.css('vertical-align', 'top');
-            if (!isViewOnly) cell.addClass("celda-horario");
+            if (!isViewOnly) {
+                cell.addClass("celda-horario");
+                cell.css({
+                    'cursor': 'pointer',
+                    'user-select': 'none',
+                    '-webkit-user-select': 'none',
+                    '-moz-user-select': 'none',
+                    '-ms-user-select': 'none'
+                });
+            }
             if (horarioMapeado.has(key_actual)) {
                 const claseArray = horarioMapeado.get(key_actual);
                 if (Array.isArray(claseArray) && claseArray.length > 0) {
@@ -957,12 +1011,14 @@ function onCeldaHorarioClick(e) {
 function procederConGuardado() {
     const ejecutarGuardado = () => {
         const accion = $("#accion").val();
+        const modoModal = $("#modal-horario").data("mode");
         const datos = new FormData();
         datos.append("accion", accion);
         datos.append("sec_codigo", $("#sec_codigo_hidden").val());
         datos.append("ani_anio", $("#ani_anio_hidden").val());
+        datos.append("modo_operacion", modoModal);
         
-        if (accion === 'modificar') {
+        if (accion === 'modificar' || accion === 'registrar') {
             datos.append("cantidadSeccion", $("#cantidadSeccionModificar").val());
         }
 
@@ -1002,24 +1058,28 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, an
         ani_tipo: anioTipo
     });
     let turnoSeleccionado = 'mañana';
-    if (secCodigo && secCodigo.length > 3) {
-        const primerDigito = secCodigo.toString().match(/\d/);
-        if (primerDigito) {
-            const digito = primerDigito[0];
-            if (digito === '2') turnoSeleccionado = 'tarde';
-            else if (digito === '3') turnoSeleccionado = 'noche';
-            else if (['1', '4', '0'].includes(digito)) turnoSeleccionado = 'mañana';
+    if (secCodigo) {
+        const digitos = secCodigo.toString().match(/\d/g);
+        if (digitos && digitos.length >= 2) {
+            const segundoDigito = digitos[1];
+            if (segundoDigito === '1') turnoSeleccionado = 'mañana';
+            else if (segundoDigito === '2') turnoSeleccionado = 'tarde';
+            else if (segundoDigito === '3') turnoSeleccionado = 'noche';
+            else turnoSeleccionado = 'mañana';
         }
     }
-    const textoSeccion = `${secCodigo} (${secCantidad} Est.) (Año ${anioTexto})`;
-    $("#seccion_principal_id").empty().append(`<option value="${secCodigo}" selected>${textoSeccion}</option>`).prop('disabled', true);
+    const turnoTexto = turnoSeleccionado.charAt(0).toUpperCase() + turnoSeleccionado.slice(1);
     $("#cantidadSeccionModificar").val(secCantidad);
-    $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
-    $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario para la sección ${secCodigo}`);
+    $("#filtro_turno").val(turnoSeleccionado);
+    $("#modalHorarioGlobalTitle").text(`Paso 2: Registrar Horario - ${secCodigo} | Año ${anioTexto} | Turno ${turnoTexto}`);
     $("#accion").val("modificar");
-    $("#proceso").text("REGISTRAR").data("action-type", "modificar").addClass("btn-success");
+    $("#proceso").text("REGISTRAR HORARIO").data("action-type", "modificar").addClass("btn-success");
     $("#sec_codigo_hidden").val(secCodigo);
+    $("#ani_anio_hidden").val(anioAnio);
     $("#modal-horario").data("mode", "registrar");
+    
+    bloquesDeLaTablaActual = generarBloquesPorDefecto(turnoSeleccionado);
+    
     inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
     $("#modal-horario").modal("show");
 }
@@ -1122,7 +1182,7 @@ function enviaAjax(datos, boton) {
                     crearDT();
                 } else if (respuesta.resultado === 'registrar_seccion_ok') {
                     $('#modalRegistroSeccion').modal('hide');
-                    muestraMensaje("success", 2000, "¡ÉXITO!", respuesta.mensaje);
+                    muestraMensaje("success", 3000, "REGISTRAR", respuesta.mensaje);
 
                     const anioTexto = $('#anioId option:selected').text();
                     const anioValue = $('#anioId').val();
@@ -1133,9 +1193,46 @@ function enviaAjax(datos, boton) {
                         anioTexto,
                         anioValue
                     );
+                } else if (respuesta.resultado === 'modificar_ok') {
+                    $('.modal').modal('hide');
+                    
+                    const modoModal = $("#modal-horario").data("mode");
+                    const tituloAlerta = (modoModal === "registrar") ? "REGISTRAR" : "MODIFICAR";
+                    muestraMensaje("success", 3000, tituloAlerta, respuesta.mensaje);
+
+                    const datosGlobales = new FormData();
+                    datosGlobales.append("accion", "obtener_datos_selects");
+                    $.ajax({
+                        url: "",
+                        type: "POST",
+                        data: datosGlobales,
+                        contentType: false,
+                        processData: false,
+                        success: function(r) {
+                            ocupacionGlobalCompleta = r.horarios_existentes || [];
+                            Listar();
+                        }
+                    });
+                } else if (respuesta.resultado === 'eliminar_ok') {
+                    $('.modal').modal('hide');
+                    muestraMensaje("success", 3000, "ELIMINAR", respuesta.mensaje);
+
+                    const datosGlobales = new FormData();
+                    datosGlobales.append("accion", "obtener_datos_selects");
+                    $.ajax({
+                        url: "",
+                        type: "POST",
+                        data: datosGlobales,
+                        contentType: false,
+                        processData: false,
+                        success: function(r) {
+                            ocupacionGlobalCompleta = r.horarios_existentes || [];
+                            Listar();
+                        }
+                    });
                 } else if (respuesta.resultado.endsWith("_ok")) {
                     $('.modal').modal('hide');
-                    muestraMensaje("success", 4000, "¡ÉXITO!", respuesta.mensaje);
+                    muestraMensaje("success", 3000, "¡ÉXITO!", respuesta.mensaje);
 
                     const datosGlobales = new FormData();
                     datosGlobales.append("accion", "obtener_datos_selects");
@@ -1284,7 +1381,7 @@ $(document).on('click', '.btn-generar-reporte-tipo', function() {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
             confirmButtonText: 'Sí, limpiar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
@@ -1392,6 +1489,18 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
 
         if (!formatoValido) {
             alertaCodigo.html(`<strong>Formato inválido.</strong> Debe tener un prefijo de 2-3 letras y luego números.`).show();
+            return;
+        }
+
+        const digitos = codigo.match(/\d/g);
+        if (digitos && digitos.length >= 4) {
+            const cohorte = parseInt(digitos[3], 10);
+            if (!allCohortes.includes(cohorte)) {
+                alertaCodigo.html(`<strong>Cohorte no existe.</strong> El cohorte ${cohorte} no está registrado en el sistema.`).show();
+                return;
+            }
+        } else {
+            alertaCodigo.html(`<strong>Formato incompleto.</strong> El código debe tener al menos 4 dígitos.`).show();
             return;
         }
 
@@ -1504,13 +1613,14 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
     const seccionData = allSecciones.find(s => s.sec_codigo == sec_codigo);
     if (!seccionData) return;
 
-    let turnoSeleccionado = 'todos';
-    const codigoNumerico = seccionData.sec_codigo.toString().replace(/^\D+/g, '');
-    if (codigoNumerico.length > 0) {
-        const primerDigito = codigoNumerico.charAt(0);
-        if (['1', '4', '0'].includes(primerDigito)) turnoSeleccionado = 'mañana';
-        else if (primerDigito === '2') turnoSeleccionado = 'tarde';
-        else if (primerDigito === '3') turnoSeleccionado = 'noche';
+    let turnoSeleccionado = 'mañana';
+    const digitos = seccionData.sec_codigo.toString().match(/\d/g);
+    if (digitos && digitos.length >= 2) {
+        const segundoDigito = digitos[1];
+        if (segundoDigito === '1') turnoSeleccionado = 'mañana';
+        else if (segundoDigito === '2') turnoSeleccionado = 'tarde';
+        else if (segundoDigito === '3') turnoSeleccionado = 'noche';
+        else turnoSeleccionado = 'mañana';
     }
 
     const datos = new FormData();
@@ -1527,7 +1637,11 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
         if (respuesta.resultado === 'ok' && Array.isArray(respuesta.mensaje)) {
             horarioContenidoGuardado.clear();
 
-            const bloquesParaEstaTabla = construirBloquesParaHorario(respuesta.mensaje, turnoSeleccionado);
+            if (respuesta.mensaje.length > 0) {
+                turnoSeleccionado = detectarTurnoPorHorario(respuesta.mensaje);
+            }
+
+            const bloquesParaEstaTabla = generarBloquesPorDefecto(turnoSeleccionado);
             bloquesDeLaTablaActual = bloquesParaEstaTabla;
 
             respuesta.mensaje.forEach(clase => {
@@ -1567,14 +1681,16 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                 $("#modalVerHorario").modal("show");
             } else if (isModify) {
                 limpiaModalPrincipal();
+                const turnoTexto = turnoSeleccionado.charAt(0).toUpperCase() + turnoSeleccionado.slice(1);
+                const anioTipo = seccionData.ani_tipo === 'regular' ? 'Regular' : 'Intensivo';
                 $("#sec_codigo_hidden").val(sec_codigo);
                 $("#ani_anio_hidden").val(ani_anio);
-                $("#seccion_principal_id").html(`<option value="${sec_codigo}">${seccionTexto}</option>`).prop('disabled', true);
                 $("#cantidadSeccionModificar").val(seccionData.sec_cantidad);
-                $("#filtro_turno").val(turnoSeleccionado).prop('disabled', true);
-                $("#modalHorarioGlobalTitle").text(`MODIFICAR Horario: ${seccionData.sec_codigo}`);
+                $("#filtro_turno").val(turnoSeleccionado);
+                $("#modalHorarioGlobalTitle").text(`MODIFICAR Horario - ${seccionData.sec_codigo} | Año ${seccionData.ani_anio} (${anioTipo}) | Turno ${turnoTexto}`);
                 $("#accion").val("modificar");
                 $("#proceso").text("MODIFICAR").addClass("btn-primary");
+                $("#modal-horario").data("mode", "modificar");
                 inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
                 $("#proceso").prop("disabled", true);
                 $('#modal-horario').data('initial-state', getScheduleStateString());
@@ -1586,8 +1702,19 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
 });
 
     $('#filtro_turno').on("change", function() {
-        bloquesDeLaTablaActual = []; 
-        inicializarTablaHorario($(this).val(), "#tablaHorario", false);
+        const turnoSeleccionado = $(this).val();
+        const clasesExistentes = [];
+        for (const claseArray of horarioContenidoGuardado.values()) {
+            claseArray.forEach(claseObj => clasesExistentes.push(claseObj.data));
+        }
+        
+        if (clasesExistentes.length > 0) {
+            bloquesDeLaTablaActual = construirBloquesParaHorario(clasesExistentes, turnoSeleccionado);
+        } else {
+            bloquesDeLaTablaActual = generarBloquesPorDefecto(turnoSeleccionado);
+        }
+        
+        inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
     });
 
     $('#modal-horario, #modalVerHorario, #modalConfirmarEliminar, #modalUnirHorarios').on('hidden.bs.modal', function() {
@@ -1620,13 +1747,13 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
         setTimeout(() => {
             const seccion = allSecciones.find(s => s.sec_codigo == sec_codigo);
             Swal.fire({
-                title: '¿Está realmente seguro?',
+                title: '¿Está seguro de eliminar esta sección?',
                 html: `Esta acción es irreversible y eliminará permanentemente la sección <strong>${seccion.sec_codigo}</strong>.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, confirmar',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                if (result.isConfirmed) {

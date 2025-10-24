@@ -1,6 +1,21 @@
 $(document).ready(function() {
     let cachedTeacherData = null;
 
+    $('#titulos, #coordinaciones').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Seleccione...',
+        allowClear: false,
+        width: '100%',
+        closeOnSelect: false
+    });
+
+    $('#titulos, #coordinaciones').on('select2:unselecting', function(e) {
+        const currentValues = $(this).val() || [];
+        if (currentValues.length <= 1) {
+            e.preventDefault();
+        }
+    });
+
     function setErrorText(spanElement, message) {
         if (message) {
             spanElement.text(message).removeClass('text-danger').addClass('text-secondary');
@@ -14,16 +29,20 @@ $(document).ready(function() {
         const modalTitle = $('#modal-title');
         footer.empty();
 
-        $('#step1-docente, #step2-academico, #step3-actividad, #step4-preferencias').hide();
-        
+        $('#step1-docente, #step2-academico, #step3-actividad').hide();
         const nombreDocente = $('#nombreDocente').val() + ' ' + $('#apellidoDocente').val();
 
         if (step === 1) {
             $('#step1-docente').show();
             const accion = $('#accion').val();
-            modalTitle.text(accion === 'incluir' ? "Paso 1: Datos Personales" : "Paso 1: Modificar Datos Personales");
-            footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-1">SIGUIENTE</button>');
+            if (accion === 'desactivar') {
+                footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
+                footer.append('<button type="button" class="btn btn-danger" id="btn-desactivar">DESACTIVAR</button>');
+            } else {
+                modalTitle.text(accion === 'incluir' ? "Paso 1: Datos Personales" : "Paso 1: Modificar Datos Personales");
+                footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
+                footer.append('<button type="button" class="btn btn-primary" id="btn-next-1">SIGUIENTE</button>');
+            }
         } else if (step === 2) {
             $('#step2-academico').show();
             modalTitle.text("Paso 2: Datos Académicos");
@@ -33,19 +52,12 @@ $(document).ready(function() {
             $('#step3-actividad').show();
             modalTitle.text('Paso 3: Actividades');
             $('#nombreDocenteHoras').text(nombreDocente);
-            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">ATRÁS</button>');
-            footer.append('<button type="button" class="btn btn-primary" id="btn-next-3">SIGUIENTE</button>');
-        } else if (step === 4) {
-            $('#step4-preferencias').show();
-            modalTitle.text('Paso 4: Preferencias de Horario');
-            $('#nombreDocentePreferencias').text(nombreDocente);
             const finalButtonText = ($('#accion').val() === 'incluir') ? "REGISTRAR" : "MODIFICAR";
-            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-4">ATRÁS</button>');
+            footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">ATRÁS</button>');
             footer.append(`<button type="button" class="btn btn-success" id="btn-final-submit">${finalButtonText}</button>`);
         }
     }
 
- 
     $(document).on('click', '#btn-next-1', function() {
         mostrarErroresPaso1();
         if (validarenvioPaso1()) {
@@ -63,45 +75,33 @@ $(document).ready(function() {
         }
     });
     
-    $(document).on('click', '#btn-next-3', function() {
-        if(validarPaso3()){
-            setModalStep(4);
-        }
-    });
-
     $(document).on('click', '#btn-prev-2', function() { setModalStep(1); });
     $(document).on('click', '#btn-prev-3', function() { setModalStep(2); });
-    $(document).on('click', '#btn-prev-4', function() { setModalStep(3); });
+
+    $(document).on('click', '#btn-desactivar', function() {
+        const datos = new FormData();
+        datos.append("accion", "eliminar");
+        datos.append("cedulaDocente", $('#cedulaDocente').val());
+        enviaAjax(datos);
+    });
 
     $(document).on('click', '#btn-final-submit', function() {
-        if (validarPaso4()) {
-            cachedTeacherData = new FormData($('#f')[0]);
-            if ($('#accion').val() === 'modificar') {
-                cachedTeacherData.append('cedulaDocente', $('#cedulaDocente').val());
-            }
-
-            $('#step3-actividad .horas-input').each(function() {
-                const valor = $(this).val() === '' ? '0' : $(this).val();
-                cachedTeacherData.append($(this).attr('name'), valor);
-            });
-
-            $('#step4-preferencias .dia-preferencia-check').each(function() {
-                if ($(this).is(':checked')) {
-                    const dia = $(this).val();
-                    cachedTeacherData.append(`preferencia[${dia}][activado]`, 'on');
-                    cachedTeacherData.append(`preferencia[${dia}][inicio]`, $(`#inicio-${dia}`).val());
-                    cachedTeacherData.append(`preferencia[${dia}][fin]`, $(`#fin-${dia}`).val());
-                }
-            });
-
-            enviaAjax(cachedTeacherData);
+        cachedTeacherData = new FormData($('#f')[0]);
+        if ($('#accion').val() === 'modificar') {
+            cachedTeacherData.append('cedulaDocente', $('#cedulaDocente').val());
         }
+
+        $('#step3-actividad .horas-input').each(function() {
+            const valor = $(this).val() === '' ? '0' : $(this).val();
+            cachedTeacherData.append($(this).attr('name'), valor);
+        });
+
+        enviaAjax(cachedTeacherData);
     });
     
     $('#modal1').on('hidden.bs.modal', function() { limpia(); });
 
-    $(document).on('click', '.btn-info', function() { 
-
+    $(document).on('click', '.btn-info', function() {
         const fila = $(this).closest('tr');
         const cedula = fila.data('cedula');
         const nombre = fila.find('td:eq(1)').text() + ' ' + fila.find('td:eq(2)').text();
@@ -122,16 +122,6 @@ $(document).ready(function() {
         enviaAjax(datos);
     });
 
-    $(document).on('change', '.dia-preferencia-check', function() {
-        const isChecked = $(this).is(':checked');
-        const row = $(this).closest('.row');
-        row.find('.hora-preferencia').prop('disabled', !isChecked);
-        if(!isChecked) {
-            row.find('.hora-preferencia').val('');
-            validarFilaHorario(row); 
-        }
-        mostrarErroresPaso4();
-    });
 
     function verificarRequisitosIniciales() {
         const mainContent = $(".main-content");
@@ -178,16 +168,11 @@ $(document).ready(function() {
         }
     }
     function mostrarErroresPaso2() {
-      
     }
     
     function mostrarErroresPaso3() {
         validarCamposHoraria();
         validarCargaHoraria();
-    }
-
-    function mostrarErroresPaso4() {
-        setErrorText($('#spreferencias'),''); 
     }
 
     function validarenvioPaso1() {
@@ -218,14 +203,6 @@ $(document).ready(function() {
     }
 
     function validarenvioPaso2() {
-        return true;
-    }
-
-    function validarPaso3() {
-        return true;
-    }
-
-    function validarPaso4() {
         return true;
     }
 
@@ -320,65 +297,17 @@ $(document).ready(function() {
 
     $(document).on('click', '.btn-edit', function() { pone(this, 'modificar'); });
     
-    $(document).on('click', '.btn-delete', function() {
-        const fila = $(this).closest("tr");
-        const cedula = fila.data("cedula"); 
-        Swal.fire({
-            title: "¿Está seguro de eliminar este docente?", text: "Esta acción no se puede deshacer.", icon: "warning",
-            showCancelButton: true, confirmButtonColor: "#d33", cancelButtonColor: "#3085d6",
-            confirmButtonText: "Sí, eliminar", cancelButtonText: "Cancelar",
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const datos = new FormData();
-                datos.append("accion", "eliminar");
-                datos.append("cedulaDocente", cedula);
-                enviaAjax(datos);
-            }
-        });
-    });
+    $(document).on('click', '.btn-delete', function() { pone(this, 'desactivar'); });
     
     function validarCargaHoraria() {
-        const dedicacion = $('#dedicacion').val();
-        const spanTotal = $("#sHorasTotales");
-        const botonSiguiente = $("#btn-next-3");
-    
-        spanTotal.text('');
-        botonSiguiente.prop('disabled', false);
-    
-        if (!dedicacion) {
-            botonSiguiente.prop('disabled', true);
-            return;
-        }
-    
-        let totalCarga = 0;
         $('.horas-input').each(function() {
             if ($(this).val() !== '') {
                 let valor = parseInt($(this).val());
                 if(valor < 0) { 
-                    $(this).val(''); 
-                    valor = 0;
-                }
-                if (!isNaN(valor)) {
-                    totalCarga += valor;
+                    $(this).val('0'); 
                 }
             }
         });
-    
-        let maxHoras = 0;
-        switch (String(dedicacion).toLowerCase()) {
-            case 'exclusiva': maxHoras = 42; break;
-            case 'tiempo completo': maxHoras = 36; break;
-            case 'medio tiempo': maxHoras = 21; break;
-            case 'tiempo convencional': maxHoras = 7; break;
-        }
-    
-        if (maxHoras > 0 && totalCarga > maxHoras) {
-            spanTotal.text(`Error: El total de horas (${totalCarga}) supera el límite de ${maxHoras} para esta dedicación.`);
-            botonSiguiente.prop('disabled', true);
-        } else {
-            spanTotal.text('');
-            botonSiguiente.prop('disabled', false);
-        }
     }
 
     $('.horas-input').on('input', function() {
@@ -397,35 +326,77 @@ $(document).ready(function() {
         return true;
     }
 
-    $("#cedulaDocente, #nombreDocente, #apellidoDocente, #correoDocente").on("keyup", function() {
-        const id = $(this).attr('id');
-        const el = $(this);
-        if (id === 'cedulaDocente') {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            let esValido = validarkeyup(/^[0-9]{7,8}$/, el, $("#scedulaDocente"), "Cédula inválida (7-8 dígitos).");
-            if (esValido && $("#accion").val() === "incluir" && /^[0-9]{7,8}$/.test(this.value)) {
-                const datos = new FormData();
-                datos.append('accion', 'Existe');
-                datos.append('cedulaDocente', $(this).val());
-                enviaAjax(datos);
-            }
-        } else if (id === 'nombreDocente' || id === 'apellidoDocente') {
-            this.value = this.value.replace(/[0-9]/g, '');
-            validarkeyup(/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/, el, $("#s" + id), "Formato inválido.");
-        } else if (id === 'correoDocente') {
-            let esValido = validarkeyup(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, el, $("#scorreoDocente"), "Correo inválido.");
-            if(esValido && el.val()){
-                const datos = new FormData();
-                datos.append('accion', 'existe_correo');
-                datos.append('correoDocente', $('#correoDocente').val());
-                datos.append('cedulaDocente', $('#cedulaDocente').val()); 
-                enviaAjax(datos);
-            }
+    $("#cedulaDocente").on("keyup", function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        const spanCedula = $("#scedulaDocente");
+        
+        if (this.value.length === 0) {
+            spanCedula.text("").removeClass('text-danger text-secondary');
+            return;
+        }
+        
+        if (!/^[0-9]{7,8}$/.test(this.value)) {
+            spanCedula.text("Cédula inválida (7-8 dígitos).").removeClass('text-danger').addClass('text-secondary');
+            return;
+        }
+        
+        spanCedula.text("").removeClass('text-danger text-secondary');
+        
+        if (!$(this).prop('disabled')) {
+            const datos = new FormData();
+            datos.append('accion', 'Existe');
+            datos.append('cedulaDocente', this.value);
+            enviaAjax(datos);
         }
     }).on("blur", function() {
-        const el = $(this);
-        if (!el.val()) {
-            setErrorText($("#s" + el.attr('id')), "Este campo es requerido.");
+        if (!$(this).val()) {
+            $("#scedulaDocente").text("Este campo es requerido.").removeClass('text-secondary').addClass('text-danger');
+        }
+    });
+
+    $("#nombreDocente, #apellidoDocente").on("keyup", function() {
+        this.value = this.value.replace(/[0-9]/g, '');
+        const spanId = $("#s" + $(this).attr('id'));
+        
+        if (this.value.length === 0) {
+            spanId.text("").removeClass('text-danger text-secondary');
+            return;
+        }
+        
+        if (!/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/.test(this.value)) {
+            spanId.text("Formato inválido.").removeClass('text-danger').addClass('text-secondary');
+        } else {
+            spanId.text("").removeClass('text-danger text-secondary');
+        }
+    }).on("blur", function() {
+        if (!$(this).val()) {
+            $("#s" + $(this).attr('id')).text("Este campo es requerido.").removeClass('text-secondary').addClass('text-danger');
+        }
+    });
+
+    $("#correoDocente").on("keyup", function() {
+        const spanCorreo = $("#scorreoDocente");
+        
+        if (this.value.length === 0) {
+            spanCorreo.text("").removeClass('text-danger text-secondary');
+            return;
+        }
+        
+        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(this.value)) {
+            spanCorreo.text("Correo inválido.").removeClass('text-danger').addClass('text-secondary');
+            return;
+        }
+        
+        spanCorreo.text("").removeClass('text-danger text-secondary');
+        
+        const datos = new FormData();
+        datos.append('accion', 'existe_correo');
+        datos.append('correoDocente', this.value);
+        datos.append('cedulaDocente', $('#cedulaDocente').val());
+        enviaAjax(datos);
+    }).on("blur", function() {
+        if (!$(this).val()) {
+            $("#scorreoDocente").text("Este campo es requerido.").removeClass('text-secondary').addClass('text-danger');
         }
     });
     
@@ -485,52 +456,58 @@ $(document).ready(function() {
         $("#prefijoCedula").val(prefijo);
         $("#cedulaDocente").val(cedula);
         
-        $("#nombreDocente").val(fila.find("td:eq(1)").text().trim());
-        $("#apellidoDocente").val(fila.find("td:eq(2)").text().trim());
+        if (accion === 'desactivar') {
+            $("#modal-title").text(`Desactivar Docente - ${prefijo}-${cedula}`);
+            $("form#f :input").prop('disabled', true);
+            $("#proceso").text("DESACTIVAR");
+        } else {
+            $("#modal-title").text(`Modificar Docente - ${prefijo}-${cedula}`);
+            $("#prefijoCedula").closest('.col-md-2').hide();
+            $("#cedulaDocente").closest('.col-md-4').hide();
+            $("#nombreDocente").closest('.col-md-6').removeClass('col-md-6').addClass('col-md-12');
+            $("form#f :input").prop('disabled', false);
+            $("#cedulaDocente").prop('disabled', true);
+        }
+        
+        $("#apellidoDocente").val(fila.find("td:eq(1)").text().trim());
+        $("#nombreDocente").val(fila.find("td:eq(2)").text().trim());
         $("#correoDocente").val(fila.find("td:eq(3)").text().trim());
         $('#categoria').val(fila.find("td:eq(4)").text().trim());
         $('#dedicacion').val(fila.find("td:eq(5)").text().trim());
         
         $('#condicion').val(fila.data('condicion')).trigger('change');
         
-        
         const anioConcurso = fila.data('anio-concurso');
         if (anioConcurso) $('#anioConcurso').val(anioConcurso.substring(0, 7));
 
-     
         $('#fechaIngreso').val(fila.data('fecha-ingreso'));
 
         $("#observacionesDocente").val(fila.data('observacion'));
 
         const titulosIds = fila.data('titulos-ids');
         const coordinacionesIds = fila.data('coordinaciones-ids');
-        if (titulosIds) titulosIds.split(',').forEach(id => { if (id) $(`input[name='titulos[]'][value="${id.trim()}"]`).prop('checked', true); });
-        if (coordinacionesIds) coordinacionesIds.split(',').forEach(id => { if (id) $(`input[name='coordinaciones[]'][value="${id.trim()}"]`).prop('checked', true); });
+        if (titulosIds) $('#titulos').val(titulosIds.split(',')).trigger('change');
+        if (coordinacionesIds) $('#coordinaciones').val(coordinacionesIds.split(',')).trigger('change');
         
-        $("form#f :input").prop('disabled', false);
-        $("#cedulaDocente").prop('disabled', true);
         setModalStep(1);
         $("#modal1").modal("show");
     }
 
     function limpia() {
-        $("form#f, #form-paso3, #form-paso4")[0].reset();
+        $("form#f, #form-paso3")[0].reset();
         $('#actAcademicas, #actCreacion, #actIntegracion, #actGestion, #actOtras').val('');
-        $('#step3-actividad .text-danger, #step4-preferencias .text-danger').text('');
-        $('.dia-preferencia-check').prop('checked', false);
-        $('.hora-preferencia').val('').prop('disabled', true);
+        $('#step3-actividad .text-danger').text('');
         $("form#f :input").prop('disabled', false);
         $(".text-danger, .text-secondary").text("").removeClass('text-danger text-secondary');
         $('#concurso-fields-wrapper').hide();
         cachedTeacherData = null;
         
+        $("#prefijoCedula").closest('.col-md-2').show();
+        $("#cedulaDocente").closest('.col-md-4').show();
+        $("#nombreDocente").closest('.col-md-12').removeClass('col-md-12').addClass('col-md-6');
         
-        $('#filtroTitulos, #filtroCoordinaciones').val('');
-        
-   
-        $('#titulos-container .form-check').show();
-        $('#coordinaciones-container .form-check').show();
-       
+        $('#titulos').val(null).trigger('change');
+        $('#coordinaciones').val(null).trigger('change');
 
         setModalStep(1);
     }
@@ -538,40 +515,6 @@ $(document).ready(function() {
     function muestraMensaje(tipo, duracion, titulo, mensaje) {
         Swal.fire({ icon: tipo, title: titulo, html: mensaje, timer: duracion, timerProgressBar: true });
     }
-
-    function validarFilaHorario(rowElement) {
-        const errorSpan = rowElement.find('.error-hora-preferencia');
-        const inicioInput = rowElement.find('input[id^="inicio-"]');
-        const finInput = rowElement.find('input[id^="fin-"]');
-        const inicio = inicioInput.val();
-        const fin = finInput.val();
-        
-        errorSpan.text('');
-
-        if (!inicio || !fin) {
-            return false;
-        }
-
-        const horaMinima = '07:00';
-        const horaMaxima = '23:00';
-
-        if (inicio >= fin) {
-            errorSpan.text('La hora de inicio debe ser anterior a la de fin.');
-            return false;
-        }
-
-        if (inicio < horaMinima || fin > horaMaxima || inicio > horaMaxima || fin < horaMinima) {
-            errorSpan.text('El horario debe ser entre 07:00 AM y 11:00 PM.');
-            return false;
-        }
-
-        return true;
-    }
-
-    $(document).on('change', '.hora-preferencia', function() {
-        const row = $(this).closest('.row');
-        validarFilaHorario(row);
-    });
 
     function enviaAjax(datos) {
         $.ajax({
@@ -581,8 +524,11 @@ $(document).ready(function() {
                 try {
                     const lee = JSON.parse(respuesta);
                     if (lee.resultado === 'Existe') {
-                         if (lee.existe) { setErrorText($("#scedulaDocente"), "Cédula ya registrada."); }
-                         else { setErrorText($("#scedulaDocente"), ""); }
+                         if (lee.existe) { 
+                             $("#scedulaDocente").text("Cédula ya registrada.").removeClass('text-secondary').addClass('text-danger');
+                         } else { 
+                             $("#scedulaDocente").text("").removeClass('text-danger text-secondary');
+                         }
                     } else if ((lee.resultado === 'existe' || lee.resultado === 'existe_docente') && lee.mensaje) {
                         setErrorText($("#scorreoDocente"), lee.mensaje);
                     } else if (lee.resultado === 'no_existe') {
@@ -598,18 +544,30 @@ const btnModificar = `<button class="btn btn-icon btn-edit" title="Modificar Doc
                           <img src="public/assets/icons/edit.svg" alt="Modificar">
                       </button>`;
 
-const btnEliminar = `<button class="btn btn-icon btn-delete" title="Eliminar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}>
-                         <img src="public/assets/icons/trash.svg" alt="Eliminar">
+const btnDesactivar = `<button class="btn btn-icon btn-delete" title="Desactivar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}>
+                         <img src="public/assets/icons/power.svg" alt="Desactivar">
                      </button>`;
 
-const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Horario Docente">
-                         <img src="public/assets/icons/eye.svg" alt="Ver Horario Docente">
+const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar Docente" data-cedula="${item.doc_cedula}">
+                         <img src="public/assets/icons/check.svg" alt="Activar">
                      </button>`;
 
+const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Datos Adicionales">
+                         <img src="public/assets/icons/eye.svg" alt="Ver Datos">
+                     </button>`;
+
+const estadoBadge = item.doc_estado == '1' 
+    ? '<span class="uc-badge activa">Activo</span>' 
+    : '<span class="uc-badge desactivada">Inactivo</span>';
+
+const botonesAccion = item.doc_estado == '1'
+    ? `${btnModificar} ${btnDesactivar} ${btnVerDatos}`
+    : btnActivar;
                             
                             $("#resultadoconsulta").append(`
                                 <tr 
                                     data-cedula="${item.doc_cedula}"
+                                    data-prefijo="${item.doc_prefijo}"
                                     data-condicion="${item.doc_condicion || ''}"
                                     data-titulos-ids="${item.titulos_ids || ''}" 
                                     data-coordinaciones-ids="${item.coordinaciones_ids || ''}"
@@ -621,13 +579,14 @@ const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorar
                                     data-fecha-ingreso="${item.doc_ingreso || ''}"
                                 >
                                     <td>${item.doc_prefijo}-${item.doc_cedula}</td>
-                                    <td>${item.doc_nombre}</td>
                                     <td>${item.doc_apellido}</td>
+                                    <td>${item.doc_nombre}</td>
                                     <td>${item.doc_correo}</td>
                                     <td>${item.cat_nombre}</td>
                                     <td>${item.doc_dedicacion || 'N/A'}</td>
                                     <td>${item.doc_condicion || 'N/A'}</td>
-                                    <td class="text-nowrap"> ${btnModificar} ${btnEliminar} ${btnVerDatos} </td>
+                                    <td>${estadoBadge}</td>
+                                    <td class="text-nowrap"> ${botonesAccion} </td>
                                 </tr>`);
                         });
                         crearDT();
@@ -638,14 +597,6 @@ const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorar
                         $('#actIntegracion').val(horas.act_integracion_comunidad !== '0' ? horas.act_integracion_comunidad : '');
                         $('#actGestion').val(horas.act_gestion_academica !== '0' ? horas.act_gestion_academica : '');
                         $('#actOtras').val(horas.act_otras !== '0' ? horas.act_otras : '');
-
-                        const preferencias = lee.preferencias;
-                        $('.dia-preferencia-check').prop('checked', false).trigger('change');
-                        for (const dia in preferencias) {
-                            $(`#check-${dia}`).prop('checked', true).trigger('change');
-                            $(`#inicio-${dia}`).val(preferencias[dia].inicio);
-                            $(`#fin-${dia}`).val(preferencias[dia].fin);
-                        }
                         setModalStep(3);
                     } else if (lee.resultado === 'ok_datos_adicionales') {
                         const horas = lee.horas;
@@ -654,24 +605,10 @@ const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorar
                         $('#verHorasIntegracion').text(horas.act_integracion_comunidad || '0');
                         $('#verHorasGestion').text(horas.act_gestion_academica || '0');
                         $('#verHorasOtras').text(horas.act_otras || '0');
-                        const preferencias = lee.preferencias;
-                        const container = $('#verPreferenciasContainer');
-                        container.empty();
-                        if (Object.keys(preferencias).length > 0) {
-                            let html = '<ul class="list-group">';
-                            for (const dia in preferencias) {
-                                const inicio = preferencias[dia].inicio ? new Date('1970-01-01T' + preferencias[dia].inicio).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : 'No especificado';
-                                const fin = preferencias[dia].fin ? new Date('1970-01-01T' + preferencias[dia].fin).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : 'No especificado';
-                                html += `<li class="list-group-item"><strong>${dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> De ${inicio} a ${fin}</li>`;
-                            }
-                            html += '</ul>';
-                            container.html(html);
-                        } else {
-                            container.html('<p class="text-muted">No hay preferencias de horario registradas.</p>');
-                        }
                         $('#modalVerDatos').modal('show');
-                    } else if (['incluir', 'modificar', 'eliminar'].includes(lee.resultado)) {
-                         muestraMensaje("success", 3000, "¡ÉXITO!", lee.mensaje);
+                    } else if (['incluir', 'modificar', 'eliminar', 'activar'].includes(lee.resultado)) {
+                         const titulo = lee.resultado === 'eliminar' ? 'DESACTIVAR' : lee.resultado === 'activar' ? 'ACTIVAR' : '¡ÉXITO!';
+                         muestraMensaje("success", 3000, titulo, lee.mensaje);
                          $("#modal1").modal("hide");
                          Listar();
                     } else if(lee.resultado === 'error') {
@@ -683,21 +620,118 @@ const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorar
         });
     }
 
-    function setupFilter(inputId, containerId) {
-        $(document).on('keyup', inputId, function() {
-            const filterValue = $(this).val().toLowerCase();
-            const items = $(containerId).find('.form-check');
-            items.each(function() {
-                const labelText = $(this).find('label').text().toLowerCase();
-                if (labelText.includes(filterValue)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
+});
+
+$(document).on("click", ".btn-activar", function(e) {
+    e.preventDefault();
+    const cedula = $(this).data("cedula");
+    Swal.fire({
+        title: "¿Está seguro de activar este docente?",
+        text: "El docente pasará a estar activo.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Sí, activar",
+        cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var datos = new FormData();
+            datos.append("accion", "activar");
+            datos.append("cedulaDocente", cedula);
+            $.ajax({
+                url: "",
+                type: "POST",
+                contentType: false,
+                data: datos,
+                processData: false,
+                cache: false,
+                success: function(respuesta) {
+                    try {
+                        const lee = JSON.parse(respuesta);
+                        if (lee.resultado === 'activar') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ACTIVAR',
+                                html: lee.mensaje,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            
+                            var datosListar = new FormData();
+                            datosListar.append("accion", "consultar");
+                            $.ajax({
+                                url: "",
+                                type: "POST",
+                                contentType: false,
+                                data: datosListar,
+                                processData: false,
+                                cache: false,
+                                success: function(resp) {
+                                    try {
+                                        const data = JSON.parse(resp);
+                                        if (data.resultado === 'consultar') {
+                                            if ($.fn.DataTable.isDataTable("#tabladocente")) {
+                                                $("#tabladocente").DataTable().destroy();
+                                            }
+                                            $("#resultadoconsulta").empty();
+                                            
+                                            data.mensaje.forEach(item => {
+                                                const btnModificar = `<button class="btn btn-icon btn-edit" title="Modificar Docente" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                                                const btnDesactivar = `<button class="btn btn-icon btn-delete" title="Desactivar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/power.svg" alt="Desactivar"></button>`;
+                                                const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar Docente" data-cedula="${item.doc_cedula}"><img src="public/assets/icons/check.svg" alt="Activar"></button>`;
+                                                const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Datos Adicionales"><img src="public/assets/icons/eye.svg" alt="Ver Datos"></button>`;
+                                                const estadoBadge = item.doc_estado == '1' ? '<span class="uc-badge activa">Activo</span>' : '<span class="uc-badge desactivada">Inactivo</span>';
+                                                const botonesAccion = item.doc_estado == '1' ? `${btnModificar} ${btnDesactivar} ${btnVerDatos}` : btnActivar;
+                                                
+                                                $("#resultadoconsulta").append(`
+                                                    <tr data-cedula="${item.doc_cedula}" data-prefijo="${item.doc_prefijo}" data-condicion="${item.doc_condicion || ''}" data-titulos-ids="${item.titulos_ids || ''}" data-coordinaciones-ids="${item.coordinaciones_ids || ''}" data-titulos-texto="${item.titulos || ''}" data-coordinaciones-texto="${item.coordinaciones || ''}" data-observacion="${item.doc_observacion || ''}" data-anio-concurso="${item.doc_anio_concurso || ''}" data-tipo-concurso="${item.doc_tipo_concurso || ''}" data-fecha-ingreso="${item.doc_ingreso || ''}">
+                                                        <td>${item.doc_prefijo}-${item.doc_cedula}</td>
+                                                        <td>${item.doc_apellido}</td>
+                                                        <td>${item.doc_nombre}</td>
+                                                        <td>${item.doc_correo}</td>
+                                                        <td>${item.cat_nombre}</td>
+                                                        <td>${item.doc_dedicacion || 'N/A'}</td>
+                                                        <td>${item.doc_condicion || 'N/A'}</td>
+                                                        <td>${estadoBadge}</td>
+                                                        <td class="text-nowrap">${botonesAccion}</td>
+                                                    </tr>
+                                                `);
+                                            });
+                                            
+                                            $("#tabladocente").DataTable({
+                                                paging: true, lengthChange: true, searching: true, ordering: true, info: true,
+                                                autoWidth: false, responsive: true, scrollX: true,
+                                                language: {
+                                                    lengthMenu: "Mostrar _MENU_ registros",
+                                                    zeroRecords: "No se encontraron resultados",
+                                                    info: "Mostrando _PAGE_ de _PAGES_",
+                                                    infoEmpty: "No hay registros disponibles",
+                                                    infoFiltered: "(filtrado de _MAX_ registros totales)",
+                                                    search: "Buscar:",
+                                                    paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" }
+                                                },
+                                                order: [[1, "asc"]],
+                                                dom: "<'row'<'col-sm-12 col-md-2'l><'col-sm-12 col-md-6'B><'col-sm-12 col-md-4'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+                                            });
+                                        }
+                                    } catch (e) {
+                                        console.error("Error:", e);
+                                    }
+                                }
+                            });
+                        } else if (lee.resultado === 'error') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'ERROR',
+                                html: lee.mensaje,
+                                timer: 6000,
+                                timerProgressBar: true
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Error:", e);
+                    }
                 }
             });
-        });
-    }
-
-    setupFilter('#filtroTitulos', '#titulos-container');
-    setupFilter('#filtroCoordinaciones', '#coordinaciones-container');
+        }
+    });
 });

@@ -688,12 +688,14 @@ if ($anio_activo) {
 
          case 'modificar':
                 $forzar = isset($_POST['forzar_guardado']) && $_POST['forzar_guardado'] === 'true';
+                $modo_operacion = $_POST['modo_operacion'] ?? 'modificar';
                 $respuesta = $o->Modificar(
                     $_POST['sec_codigo'] ?? null,
                     $_POST['ani_anio'] ?? null, 
                     $_POST['items_horario'] ?? '[]',
                     $_POST['cantidadSeccion'] ?? null,
-                    $forzar
+                    $forzar,
+                    $modo_operacion
                 );
                 break;
 

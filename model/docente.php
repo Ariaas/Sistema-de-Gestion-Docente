@@ -157,7 +157,6 @@ class Docente extends Connection
             }
 
             $this->_guardarActividad($co);
-            $this->_guardarPreferenciasHorario($co);
 
             $co->commit();
             $r['resultado'] = 'ok';
@@ -214,11 +213,10 @@ class Docente extends Connection
             }
 
             $this->_guardarActividad($co);
-            $this->_guardarPreferenciasHorario($co);
 
             $co->commit();
             $r['resultado'] = 'incluir';
-            $r['mensaje'] = '¡Registro Incluido!<br/> Se registró el docente, actividades y preferencias correctamente';
+            $r['mensaje'] = '¡Registro Incluido!<br/> Se registró el docente correctamente';
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';
@@ -234,7 +232,7 @@ class Docente extends Connection
             $resultado_actualizacion = $this->_actualizarDatosDocente();
             if ($resultado_actualizacion['resultado'] === 'ok') {
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = '¡Registro Modificado!<br/> Se modificó el docente, actividades y preferencias correctamente';
+                $r['mensaje'] = '¡Registro Modificado!<br/> Se modificó el docente correctamente';
             } else {
                 return $resultado_actualizacion;
             }
@@ -250,33 +248,40 @@ class Docente extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
+        
         if ($this->existe($this->doc_cedula)) {
             try {
-                $co->beginTransaction();
-
-                $stmt_act = $co->prepare("UPDATE tbl_actividad SET act_estado = 0 WHERE doc_cedula = :doc_cedula");
-                $stmt_act->execute([':doc_cedula' => $this->doc_cedula]);
-
-                $stmt_pref = $co->prepare("DELETE FROM tbl_docente_preferencia WHERE doc_cedula = :doc_cedula");
-                $stmt_pref->execute([':doc_cedula' => $this->doc_cedula]);
-
-                $stmt_uc = $co->prepare("DELETE FROM uc_docente WHERE doc_cedula = :doc_cedula");
-                $stmt_uc->execute([':doc_cedula' => $this->doc_cedula]);
-
                 $stmt = $co->prepare("UPDATE tbl_docente SET doc_estado = 0 WHERE doc_cedula = :doc_cedula");
                 $stmt->execute([':doc_cedula' => $this->doc_cedula]);
 
-                $co->commit();
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = '¡Registro Eliminado!<br/> Se eliminó el docente y sus datos asociados correctamente';
+                $r['mensaje'] = '¡Registro Desactivado!<br/> Se desactivó el docente correctamente';
             } catch (Exception $e) {
-                $co->rollBack();
                 $r['resultado'] = 'error';
-                $r['mensaje'] = 'No se puede eliminar. Puede que esté asociado a otros registros.';
+                $r['mensaje'] = $e->getMessage();
             }
         } else {
             $r['resultado'] = 'error';
-            $r['mensaje'] = '¡ERROR!<br/> El docente no existe o ya está eliminado.';
+            $r['mensaje'] = '¡ERROR!<br/> El docente no existe o ya está desactivado.';
+        }
+        return $r;
+    }
+
+    public function Activar()
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+
+        try {
+            $stmt = $co->prepare("UPDATE tbl_docente SET doc_estado = 1 WHERE doc_cedula = :doc_cedula");
+            $stmt->execute([':doc_cedula' => $this->doc_cedula]);
+
+            $r['resultado'] = 'activar';
+            $r['mensaje'] = '¡Registro Reactivado!<br/> Se activó el docente correctamente';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
         }
         return $r;
     }
@@ -288,7 +293,7 @@ class Docente extends Connection
         $r = array();
 
         try {
-            $stmt = $co->prepare("SELECT d.doc_prefijo, d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo, d.doc_dedicacion, d.doc_condicion, d.doc_ingreso, d.doc_anio_concurso, d.doc_tipo_concurso, d.doc_observacion, d.cat_nombre FROM tbl_docente d WHERE d.doc_estado = 1");
+            $stmt = $co->prepare("SELECT d.doc_prefijo, d.doc_cedula, d.doc_nombre, d.doc_apellido, d.doc_correo, d.doc_dedicacion, d.doc_condicion, d.doc_ingreso, d.doc_anio_concurso, d.doc_tipo_concurso, d.doc_observacion, d.cat_nombre, d.doc_estado FROM tbl_docente d");
             $stmt->execute();
             $docentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

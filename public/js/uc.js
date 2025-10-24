@@ -159,7 +159,7 @@ $(document).ready(function () {
         }
         enviaAjax(datos);
       }
-    } else if ($(this).text() == "GUARDAR") {
+    } else if ($(this).text() == "REGISTRAR") {
       if (validarenvio()) {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "registrar");
@@ -246,8 +246,11 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("GUARDAR");
+    $("#proceso").text("REGISTRAR");
     $("#modal1 .modal-title").text("Registrar Unidad Curricular");
+    $("#codigoUC").closest('.col-md-4').show();
+    $("#nombreUC").closest('.col-md-6').removeClass('col-md-6').addClass('col-md-4');
+    $("#creditosUC").closest('.col-md-6').removeClass('col-md-6').addClass('col-md-4');
     $(
       "#codigoUC, #nombreUC, #independienteUC, #asistidaUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #academicaUC"
     ).prop("disabled", false);
@@ -432,10 +435,15 @@ function pone(pos, accion) {
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
-    $("#modal1 .modal-title").text("Modificar Unidad Curricular");
+    const codigoUC = linea.data("codigo");
+    $("#modal1 .modal-title").text("Modificar Unidad Curricular - " + codigoUC);
+    $("#codigoUC").closest('.col-md-4').hide();
+    $("#nombreUC").closest('.col-md-4').removeClass('col-md-4').addClass('col-md-6');
+    $("#creditosUC").closest('.col-md-4').removeClass('col-md-4').addClass('col-md-6');
     $(
-      "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
+      "#nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
     ).prop("disabled", false);
+    $("#scodigoUC").hide();
   } else {
     
     $("#proceso").text("DESACTIVAR");

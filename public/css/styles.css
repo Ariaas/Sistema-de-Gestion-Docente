@@ -1084,3 +1084,85 @@ footer {
   background-color: #6c757d !important;
   transform: none !important;
 }
+
+/* Estilos personalizados para SweetAlert2 */
+.swal-custom-popup {
+  border-radius: 1.5rem !important;
+  padding: 2rem 1.5rem !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.swal-custom-title {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #2d3748 !important;
+  margin-bottom: 0.5rem !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+.swal-custom-text {
+  font-size: 1.05rem !important;
+  color: #4a5568 !important;
+  line-height: 1.6 !important;
+  margin-top: 1rem !important;
+}
+
+.swal-custom-button {
+  border-radius: 0.75rem !important;
+  padding: 0.75rem 2.5rem !important;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  text-transform: capitalize !important;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important;
+  transition: all 0.3s ease !important;
+  border: none !important;
+}
+
+.swal-custom-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4) !important;
+}
+
+.swal2-icon {
+  border-width: 3px !important;
+  width: 80px !important;
+  height: 80px !important;
+  margin: 1rem auto 1.5rem !important;
+}
+
+.swal2-icon.swal2-success {
+  border-color: #10b981 !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: #10b981 !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.swal2-icon.swal2-error {
+  border-color: #ef4444 !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  background-color: #ef4444 !important;
+}
+
+.swal2-icon.swal2-warning {
+  border-color: #f59e0b !important;
+  color: #f59e0b !important;
+}
+
+.swal2-icon.swal2-info {
+  border-color: #3b82f6 !important;
+  color: #3b82f6 !important;
+}
+
+.swal2-timer-progress-bar {
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa) !important;
+  height: 4px !important;
+}

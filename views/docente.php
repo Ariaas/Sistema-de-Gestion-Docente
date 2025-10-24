@@ -38,6 +38,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Docente</title>
+    <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -60,12 +62,13 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <thead>
                             <tr>
                                 <th>Cédula</th>
-                                <th>Nombre</th>
                                 <th>Apellido</th>
+                                <th>Nombre</th>
                                 <th>Correo</th>
                                 <th>Categoría</th>
                                 <th>Dedicación</th>
                                 <th>Condición</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -88,7 +91,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                             <div id="step1-docente" style="display: none;">
                                 <div class="row g-3">
-                                    <div class="col-md-2">
+                                    <div class="col-md-2" style="min-width: 90px;">
                                         <label for="prefijoCedula" class="form-label">Prefijo</label>
                                         <select class="form-select" name="prefijoCedula" id="prefijoCedula" required>
                                             <option value="V">V</option>
@@ -147,7 +150,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                             <option value="" disabled selected>Seleccione...</option>
                                             <option value="Ordinario">Ordinario</option>
                                             <option value="Contratado por Credenciales">Contratado por Credenciales</option>
-                                            <option value="Contratado por Situaciones Inesperadas">Contratado por Situaciones Inesperadas</option>
                                             <option value="Suplente">Suplente</option>
                                         </select>
                                         <span id="scondicion" class="text-danger"></span>
@@ -174,39 +176,26 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Títulos <span class="text-danger">*</span></label>
-                                        <input type="text" id="filtroTitulos" class="form-control mb-2" placeholder="Buscar título...">
-                                        
-                                        <div id="titulos-container" class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                        <select class="form-select" id="titulos" name="titulos[]" multiple="multiple" required>
                                             <?php foreach ($titulos as $titulo):
                                                 $value = htmlspecialchars($titulo['tit_prefijo'] . '::' . $titulo['tit_nombre']);
-                                                $id = "titulo_" . htmlspecialchars($titulo['tit_prefijo'] . '_' . $titulo['tit_nombre']);
+                                                $text = htmlspecialchars($titulo['tit_prefijo'] . ' ' . $titulo['tit_nombre']);
                                             ?>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="titulos[]" id="<?= $id ?>" value="<?= $value ?>">
-                                                    <label class="form-check-label" for="<?= $id ?>">
-                                                        <?= htmlspecialchars($titulo['tit_prefijo'] . ' ' . $titulo['tit_nombre']) ?>
-                                                    </label>
-                                                </div>
+                                                <option value="<?= $value ?>"><?= $text ?></option>
                                             <?php endforeach; ?>
-                                        </div>
+                                        </select>
                                         <span id="stitulos" class="text-danger"></span>
                                     </div>
 
                                     <div class="col-md-6">
                                         <label class="form-label">Coordinaciones</label>
-                                        <input type="text" id="filtroCoordinaciones" class="form-control mb-2" placeholder="Buscar coordinación...">
-                                        
-                                        <div id="coordinaciones-container" class="border p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                        <select class="form-select" id="coordinaciones" name="coordinaciones[]" multiple="multiple">
                                             <?php foreach ($coordinaciones as $coordinacion):
                                                 $value = htmlspecialchars($coordinacion['cor_nombre']);
-                                                $id = "coordinacion_" . str_replace(' ', '_', $value);
                                             ?>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="coordinaciones[]" id="<?= $id ?>" value="<?= $value ?>">
-                                                    <label class="form-check-label" for="<?= $id ?>"><?= $value ?></label>
-                                                </div>
+                                                <option value="<?= $value ?>"><?= $value ?></option>
                                             <?php endforeach; ?>
-                                        </div>
+                                        </select>
                                         <span id="scoordinaciones" class="text-danger"></span>
                                     </div>
                                 </div>
@@ -390,6 +379,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         };
     </script>
     <?php require_once("public/components/footer.php"); ?>
+    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/docente.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>

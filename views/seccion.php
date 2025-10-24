@@ -87,19 +87,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <input type="hidden" name="accion" value="registrar_seccion">
                             <div class="mb-4">
                                 <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required title="El código debe tener un prefijo de 2-3 letras y luego números (ej: IN1101)." oninput="this.value = this.value.toUpperCase()">
-                                        <div id="alerta-codigo" class="form-text text-danger p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="cantidadSeccion" class="form-label">Cantidad de Estudiantes <span class="text-danger">*</span></label>
-                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required min="0" max="99" value="0">
-                                        <div id="cantidad-seccion-error" class="form-text text-muted" style="display: none;">La cantidad debe ser un número entre 0 y 99.</div>
-                                    </div>
-                                </div>
-                                <div class="row mt-3">
-                                    <div class="col-md-12">
+                                    <div class="col-md-5">
                                         <label for="anioId" class="form-label">Año <span class="text-danger">*</span></label>
                                         <select class="form-select" name="anioId" id="anioId" required>
                                             <option value="" disabled selected>Seleccione un año</option>
@@ -109,14 +97,24 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                                                     $value = htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo'], ENT_QUOTES);
 
-
-                                                    $text = htmlspecialchars($anio['ani_anio'], ENT_QUOTES);
+                                                    $tipoTexto = $anio['ani_tipo'] === 'regular' ? 'Regular' : 'Intensivo';
+                                                    $text = htmlspecialchars($anio['ani_anio'] . ' (' . $tipoTexto . ')', ENT_QUOTES);
 
                                                     echo "<option value='{$value}'>{$text}</option>";
                                                 }
                                             }
                                             ?>
                                         </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="codigoSeccion" class="form-label">Código <span class="text-danger">*</span></label>
+                                        <input class="form-control" type="text" id="codigoSeccion" name="codigoSeccion" required title="El código debe tener un prefijo de 2-3 letras y luego números (ej: IN1101)." oninput="this.value = this.value.toUpperCase()">
+                                        <div id="alerta-codigo" class="form-text text-danger p-1 mt-1 text-center" style="display:none; font-size: 0.85em;"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="cantidadSeccion" class="form-label">Estudiantes <span class="text-danger">*</span></label>
+                                        <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required min="0" max="99" value="0">
+                                        <div id="cantidad-seccion-error" class="form-text text-muted" style="display: none;">La cantidad debe ser un número entre 0 y 99.</div>
                                     </div>
                                 </div>
                             </div>
@@ -143,29 +141,17 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <input type="hidden" name="sec_codigo" id="sec_codigo_hidden">
                             <input type="hidden" id="ani_anio_hidden" name="ani_anio">
                             
-                            <div class="row align-items-end">
-                                <div class="col-md-4 mb-3">
-                                    <label for="seccion_principal_id" class="form-label">Sección</label>
-                                    <select class="form-select" id="seccion_principal_id" name="seccion_id_display" disabled>
-                                        <option value=""></option>
-                                    </select>
+                            <input type="hidden" id="filtro_turno">
+                            <div class="d-flex justify-content-between align-items-center mb-4 px-4 py-3 bg-light rounded">
+                                <div style="flex: 0 0 220px;">
+                                    <label for="cantidadSeccionModificar" class="form-label fw-bold mb-2">Estudiantes <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="cantidadSeccionModificar" name="cantidadSeccion" required min="0" max="99" placeholder="0-99">
+                                    <div id="cantidad-seccion-modificar-error" class="form-text text-muted" style="display: none;">Debe ser entre 0 y 99</div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="cantidadSeccionModificar" class="form-label">Estudiantes <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="cantidadSeccionModificar" name="cantidadSeccion" required min="0" max="99">
-                                    <div id="cantidad-seccion-modificar-error" class="form-text text-muted" style="display: none;">La cantidad debe ser un número entre 0 y 99.</div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="filtro_turno" class="form-label">Turno de la Sección</label>
-                                    <select class="form-select" id="filtro_turno" disabled>
-                                        <option value="mañana">Turno Mañana</option>
-                                        <option value="tarde">Turno Tarde</option>
-                                        <option value="noche">Turno Noche</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-1 mb-3">
-                                     <button type="button" class="btn btn-warning w-100" id="btnLimpiarHorario" title="Limpiar todo el horario">
-                                        <img src="public/assets/icons/escoba.svg" alt="Limpiar" style="width: 20px; height: 20px;">
+                                <div class="ms-4">
+                                     <button type="button" class="btn btn-warning" id="btnLimpiarHorario" title="Limpiar todo el horario" style="padding: 0.5rem 1.5rem;">
+                                        <img src="public/assets/icons/escoba.svg" alt="Limpiar" style="width: 18px; height: 18px; margin-right: 8px;">
+                                        <span>Limpiar Horario</span>
                                     </button>
                                 </div>
                             </div>
@@ -265,9 +251,9 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             </table>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-danger" id="btnProcederEliminacion">Eliminar</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-danger" id="btnProcederEliminacion">ELIMINAR</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                     </div>
                 </div>
             </div>
