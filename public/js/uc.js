@@ -7,7 +7,8 @@ function Listar() {
 
 
 var __uc_modTracking = false; 
-var __uc_userModified = false; 
+var __uc_userModified = false;
+var initialFormState = null; 
 
 function destruyeDT(selector) {
   if ($.fn.DataTable.isDataTable(selector)) {
@@ -117,12 +118,28 @@ function verificarRequisitosIniciales() {
   }
 }
 
+function checkFormChanges() {
+  if ($("#proceso").text() !== "MODIFICAR" || initialFormState === null) {
+    return;
+  }
+
+  const currentFormState = $("#f").serialize();
+  
+  if (currentFormState !== initialFormState) {
+    $("#proceso").prop('disabled', false);
+  } else {
+    $("#proceso").prop('disabled', true);
+  }
+}
+
 $(document).ready(function () {
   Listar();
   verificarRequisitosIniciales();
 
   destruyeDT("#tablauc");
   crearDT("#tablauc");
+
+  $('#f').on('input change', 'input, select, textarea', checkFormChanges);
 
   
 
@@ -318,6 +335,7 @@ $(document).ready(function () {
   $("#modal1").on("hidden.bs.modal", function () {
     $("#proceso").prop("disabled", false);
     $("#scodigoUC").text("");
+    initialFormState = null;
   });
 
   $("#modal1").on("show.bs.modal", function () {
@@ -515,6 +533,11 @@ function pone(pos, accion) {
   if (accion == 0) {
     $("#codigoUC, #nombreUC, #creditosUC").trigger("keyup");
     $("#trayectoUC, #ejeUC, #areaUC, #periodoUC").trigger("change");
+    
+    setTimeout(function() {
+      initialFormState = $("#f").serialize();
+      $("#proceso").prop('disabled', true);
+    }, 100);
   }
 
   $("#modal1").modal("show");
