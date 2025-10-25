@@ -31,14 +31,14 @@ class Login extends Connection_bitacora
     }
 
 
-    function existe()
+   public function existe()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
             $p = $co->prepare("SELECT usu_id,usu_cedula, usu_nombre, usu_contrasenia, usu_foto, usu_estado, usu_docente FROM tbl_usuario 
-            WHERE usu_nombre = :username AND usu_estado = 1");
+            WHERE usu_nombre = BINARY :username AND usu_estado = 1");
             $p->bindParam(':username', $this->nombreUsuario);
 
             $p->execute();
