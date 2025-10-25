@@ -64,7 +64,7 @@ function gestionarBotonGuardar() {
         haySeleccionados = true;
         $(this).find('.horas-input').each(function() {
             const valor = $(this).val();
-            if (valor === null || valor.trim() === '') {
+            if (valor === null || valor.trim() === '' || valorNum === 0) {
                 todoValido = false;
             }
         });
@@ -179,10 +179,10 @@ function agregarUnidadAlDOM(uc) {
     const fila = `
         <tr data-uc_codigo="${uc_codigo}" data-trayecto="${uc_trayecto}">
             <td class="align-middle text-start">${uc_nombre}</td>
-            <td><input type="text" class="form-control form-control-sm text-center horas-input h-indep" value="0"></td>
-            <td><input type="text" class="form-control form-control-sm text-center horas-input h-asist" value="0"></td>
-            <td><input type="text" class="form-control form-control-sm text-center h-total bg-light" value="0" readonly></td>
-            <td><input type="text" class="form-control form-control-sm text-center horas-input h-acad" value="0"></td>
+            <td><input type="text" class="form-control form-control-sm text-center horas-input h-indep" value=""></td>
+            <td><input type="text" class="form-control form-control-sm text-center horas-input h-asist" value=""></td>
+            <td><input type="text" class="form-control form-control-sm text-center h-total bg-light" value="" readonly></td>
+            <td><input type="text" class="form-control form-control-sm text-center horas-input h-acad" value=""></td>
             <td class="align-middle"><button type="button" class="btn btn-danger btn-sm btn-remover-uc">X</button></td>
         </tr>`;
     tabPane.find('tbody').append(fila);
@@ -459,28 +459,64 @@ function validarenvio() {
         muestraMensaje("error", 4000, "ERROR", "Por favor, corrija los campos marcados en el primer paso.");
         return false;
     }
+
+    
     const trayectosRequeridos = ['0', '1', '2', '3', '4'];
     const trayectosSeleccionados = new Set();
     $('#contenedorAcordeonUC tbody tr').each(function() {
         trayectosSeleccionados.add($(this).data('trayecto').toString());
     });
+    
     const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
     if (trayectosFaltantes.length > 0) {
         const nombresFaltantes = trayectosFaltantes.map(t => (t === '0' ? 'Inicial' : `Trayecto ${t}`));
         muestraMensaje("error", 7000, "Validación Fallida", "Debe agregar al menos una unidad curricular de los siguientes trayectos: <strong>" + nombresFaltantes.join(', ') + "</strong>.");
         return false;
     }
-    let horasValidas = true;
-    $('#contenedorAcordeonUC tbody tr').find('.horas-input').each(function() {
-        if ($(this).val().trim() === '') {
-            horasValidas = false;
-        }
+
+    
+    let primerErrorHoras = ""; 
+
+    
+    $('#contenedorAcordeonUC tbody tr').each(function() {
+        if (primerErrorHoras !== "") return false; 
+
+        const fila = $(this);
+        const ucNombre = fila.find('td:first').text(); 
+
+        
+        fila.find('.horas-input').each(function() {
+            const input = $(this);
+            const valorTrim = input.val().trim();
+            const valorNum = parseInt(valorTrim, 10);
+
+            let tipoHora = "";
+            if (input.hasClass('h-indep')) tipoHora = "Horas Independientes";
+            else if (input.hasClass('h-asist')) tipoHora = "Horas Asistidas";
+            else if (input.hasClass('h-acad')) tipoHora = "Horas Académicas";
+
+            
+            if (valorTrim === '') {
+                primerErrorHoras = `El campo "<strong>${tipoHora}</strong>" de la unidad "<strong>${ucNombre}</strong>" no puede estar vacío.`;
+                return false; 
+            }
+
+            
+            if (isNaN(valorNum) || valorNum === 0) {
+                primerErrorHoras = `El campo "<strong>${tipoHora}</strong>" de la unidad "<strong>${ucNombre}</strong>" debe ser un número mayor que 0.`;
+                return false; 
+            }
+        });
     });
-    if (!horasValidas) {
-        muestraMensaje("error", 4000, "ERROR", "Debe completar todas las horas de las unidades curriculares agregadas.");
+
+    
+    if (primerErrorHoras !== "") {
+       
+        muestraMensaje("error", 6000, "Atención", primerErrorHoras);
         return false;
     }
-    return true;
+
+    return true; 
 }
 
 function pone(pos, accionBtn) {

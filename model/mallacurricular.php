@@ -178,7 +178,7 @@ class Malla extends Connection
 
             $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_codigo, uc_codigo, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_codigo, :uc_codigo, :hora_ind, :hora_asis, :hora_acad)");
             foreach ($unidades as $uc) {
-                if ($uc['hora_independiente'] > 0 || $uc['hora_asistida'] > 0 || $uc['hora_academica'] > 0) {
+                if ($uc['hora_independiente'] > 0 && $uc['hora_asistida'] > 0 && $uc['hora_academica'] > 0) {
                     $stmt_pensum->bindParam(':mal_codigo', $codigo_actual, PDO::PARAM_STR);
                     $stmt_pensum->bindParam(':uc_codigo', $uc['uc_codigo'], PDO::PARAM_STR);
                     $stmt_pensum->bindParam(':hora_ind', $uc['hora_independiente'], PDO::PARAM_INT);
