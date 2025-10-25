@@ -1,5 +1,7 @@
 $(document).ready(function() {
     let cachedTeacherData = null;
+    let originalFormF = null; 
+    let originalFormPaso3 = null; 
 
     $('#titulos, #coordinaciones').select2({
         theme: 'bootstrap-5',
@@ -9,12 +11,6 @@ $(document).ready(function() {
         closeOnSelect: false
     });
 
-    $('#titulos, #coordinaciones').on('select2:unselecting', function(e) {
-        const currentValues = $(this).val() || [];
-        if (currentValues.length <= 1) {
-            e.preventDefault();
-        }
-    });
 
     function setErrorText(spanElement, message) {
         if (message) {
@@ -22,6 +18,18 @@ $(document).ready(function() {
         } else {
             spanElement.text("").removeClass('text-secondary');
         }
+    }
+    
+    function checkFormChanges() {
+        if ($('#accion').val() !== 'modificar' || originalFormF === null || originalFormPaso3 === null) {
+            return;
+        }
+
+        const currentFormF = $('#f').serialize();
+        const currentFormPaso3 = $('#form-paso3').serialize();
+
+        const hasChanged = (currentFormF !== originalFormF) || (currentFormPaso3 !== originalFormPaso3);
+        $('#btn-final-submit').prop('disabled', !hasChanged);
     }
 
     function setModalStep(step) {
@@ -55,6 +63,11 @@ $(document).ready(function() {
             const finalButtonText = ($('#accion').val() === 'incluir') ? "REGISTRAR" : "MODIFICAR";
             footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">ATRÁS</button>');
             footer.append(`<button type="button" class="btn btn-success" id="btn-final-submit">${finalButtonText}</button>`);
+            
+            if ($('#accion').val() === 'modificar') {
+                $('#btn-final-submit').prop('disabled', true);
+                checkFormChanges(); 
+            }
         }
     }
 
@@ -144,7 +157,7 @@ $(document).ready(function() {
         }
     }
 
-   
+    
     function mostrarErroresPaso1() {
         if (!$('#cedulaDocente').val()) { setErrorText($('#scedulaDocente'), 'La cédula es requerida.'); }
         if (!$('#nombreDocente').val()) { setErrorText($('#snombreDocente'), 'El nombre es requerido.'); }
@@ -239,12 +252,12 @@ $(document).ready(function() {
         switch(seleccion) {
             case 'Ordinario':
                 tipoConcursoInput.val('Oposición');
-               
+                
                 concursoWrapper.slideDown();
                 break;
             case 'Contratado por Credenciales':
                 tipoConcursoInput.val('Credenciales');
-           
+               
                 concursoWrapper.slideDown();
                 break;
             default:
@@ -444,6 +457,12 @@ $(document).ready(function() {
     
     $("input[name='coordinaciones[]']").on("change", function() { setErrorText($("#scoordinaciones"), ""); });
     
+    
+    $('#f').on('input change', 'input, select, textarea', checkFormChanges);
+    $('#form-paso3').on('input change', 'input, select, textarea', checkFormChanges);
+    
+    $('#titulos, #coordinaciones').on('change', checkFormChanges);
+
 
     function pone(pos, accion) {
         limpia();
@@ -464,7 +483,7 @@ $(document).ready(function() {
             $("#modal-title").text(`Modificar Docente - ${prefijo}-${cedula}`);
             $("#prefijoCedula").closest('.col-md-2').hide();
             $("#cedulaDocente").closest('.col-md-4').hide();
-            $("#nombreDocente").closest('.col-md-6').removeClass('col-md-6').addClass('col-md-12');
+            
             $("form#f :input").prop('disabled', false);
             $("#cedulaDocente").prop('disabled', true);
         }
@@ -489,6 +508,10 @@ $(document).ready(function() {
         if (titulosIds) $('#titulos').val(titulosIds.split(',')).trigger('change');
         if (coordinacionesIds) $('#coordinaciones').val(coordinacionesIds.split(',')).trigger('change');
         
+        if (accion === 'modificar') {
+            originalFormF = $('#f').serialize(); 
+        }
+
         setModalStep(1);
         $("#modal1").modal("show");
     }
@@ -502,9 +525,11 @@ $(document).ready(function() {
         $('#concurso-fields-wrapper').hide();
         cachedTeacherData = null;
         
+        originalFormF = null; 
+        originalFormPaso3 = null;
+        
         $("#prefijoCedula").closest('.col-md-2').show();
         $("#cedulaDocente").closest('.col-md-4').show();
-        $("#nombreDocente").closest('.col-md-12').removeClass('col-md-12').addClass('col-md-6');
         
         $('#titulos').val(null).trigger('change');
         $('#coordinaciones').val(null).trigger('change');
@@ -542,19 +567,19 @@ $(document).ready(function() {
 
 const btnModificar = `<button class="btn btn-icon btn-edit" title="Modificar Docente" ${!PERMISOS.modificar ? 'disabled' : ''}>
                           <img src="public/assets/icons/edit.svg" alt="Modificar">
-                      </button>`;
+                        </button>`;
 
 const btnDesactivar = `<button class="btn btn-icon btn-delete" title="Desactivar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}>
                          <img src="public/assets/icons/power.svg" alt="Desactivar">
-                     </button>`;
+                       </button>`;
 
 const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar Docente" data-cedula="${item.doc_cedula}">
                          <img src="public/assets/icons/check.svg" alt="Activar">
-                     </button>`;
+                       </button>`;
 
 const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Datos Adicionales">
                          <img src="public/assets/icons/eye.svg" alt="Ver Datos">
-                     </button>`;
+                       </button>`;
 
 const estadoBadge = item.doc_estado == '1' 
     ? '<span class="uc-badge activa">Activo</span>' 
@@ -597,6 +622,11 @@ const botonesAccion = item.doc_estado == '1'
                         $('#actIntegracion').val(horas.act_integracion_comunidad !== '0' ? horas.act_integracion_comunidad : '');
                         $('#actGestion').val(horas.act_gestion_academica !== '0' ? horas.act_gestion_academica : '');
                         $('#actOtras').val(horas.act_otras !== '0' ? horas.act_otras : '');
+                        
+                        if ($('#accion').val() === 'modificar') {
+                            originalFormPaso3 = $('#form-paso3').serialize();
+                        }
+
                         setModalStep(3);
                     } else if (lee.resultado === 'ok_datos_adicionales') {
                         const horas = lee.horas;
@@ -607,10 +637,10 @@ const botonesAccion = item.doc_estado == '1'
                         $('#verHorasOtras').text(horas.act_otras || '0');
                         $('#modalVerDatos').modal('show');
                     } else if (['incluir', 'modificar', 'eliminar', 'activar'].includes(lee.resultado)) {
-                         const titulo = lee.resultado === 'eliminar' ? 'DESACTIVAR' : lee.resultado === 'activar' ? 'ACTIVAR' : '¡ÉXITO!';
-                         muestraMensaje("success", 3000, titulo, lee.mensaje);
-                         $("#modal1").modal("hide");
-                         Listar();
+                          const titulo = lee.resultado === 'eliminar' ? 'DESACTIVAR' : lee.resultado === 'activar' ? 'ACTIVAR' : '¡ÉXITO!';
+                          muestraMensaje("success", 3000, titulo, lee.mensaje);
+                          $("#modal1").modal("hide");
+                          Listar();
                     } else if(lee.resultado === 'error') {
                         muestraMensaje("error", 6000, "ERROR", lee.mensaje || "Ocurrió un error.");
                     }

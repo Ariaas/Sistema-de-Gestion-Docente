@@ -43,7 +43,7 @@ $(document).ready(function () {
     });
 
     $("#proceso").on("click", function () {
-        if ($(this).text() === "GUARDAR") {
+        if ($(this).text() === "REGISTRAR") {
             procesarRegistro();
         } else {
             procesarModificacion();
@@ -55,7 +55,7 @@ $(document).ready(function () {
         $('#turnonombre option').each(function() {
             $(this).prop('disabled', nombresExistentes.includes($(this).val()));
         });
-        $("#proceso").text("GUARDAR");
+        $("#proceso").text("REGISTRAR");
         $(".modal-title").text("Registrar Turno");
         $("#modal1").modal("show");
     });

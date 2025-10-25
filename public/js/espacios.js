@@ -116,7 +116,7 @@ $(document).ready(function () {
       datos.append("numeroEspacio", valor);
       datos.append("edificioEspacio", $("#edificio").val());
       datos.append("tipoEspacio", $("#tipoEspacio").val());
-      if ($("#proceso").text() === "GUARDAR") {
+      if ($("#proceso").text() === "REGISTRAR") {
         datos.append("numeroEspacioExcluir", originalNumero);
         datos.append("edificioEspacioExcluir", originalEdificio);
         datos.append("tipoEspacioExcluir", originalTipo);
@@ -143,7 +143,7 @@ $(document).ready(function () {
       datos.append("numeroEspacio", valor);
       datos.append("edificioEspacio", edificio);
       datos.append("tipoEspacio", tipo);
-      if ($("#proceso").text() === "GUARDAR") {
+      if ($("#proceso").text() === "REGISTRAR") {
         datos.append("numeroEspacioExcluir", originalNumero);
         datos.append("edificioEspacioExcluir", originalEdificio);
         datos.append("tipoEspacioExcluir", originalTipo);
@@ -169,7 +169,7 @@ $(document).ready(function () {
       datos.append("numeroEspacio", valor);
       datos.append("edificioEspacio", edificio);
       datos.append("tipoEspacio", tipo);
-      if ($("#proceso").text() === "GUARDAR") {
+      if ($("#proceso").text() === "REGISTRAR") {
         datos.append("numeroEspacioExcluir", originalNumero);
         datos.append("edificioEspacioExcluir", originalEdificio);
         datos.append("tipoEspacioExcluir", originalTipo);
@@ -183,7 +183,7 @@ $(document).ready(function () {
 
   $("#proceso").on("click", function () {
     if ($(this).prop("disabled")) return; 
-    if ($(this).text() == "GUARDAR") {
+    if ($(this).text() == "REGISTRAR") {
       if ($("#snumeroEspacio").text() === "El espacio ya existe.") {
         $("#snumeroEspacio").css("color", "red");
         return;
@@ -255,7 +255,7 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("GUARDAR");
+    $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#snumeroEspacio").text('').css('color', '');
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);

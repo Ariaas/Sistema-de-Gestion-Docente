@@ -115,7 +115,7 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
 });
 
   $("#proceso").on("click", function () {
-    if ($(this).text() == "GUARDAR") {
+    if ($(this).text() == "REGISTRAR") {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
@@ -197,7 +197,7 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("GUARDAR");
+    $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#scategoriaNombre").show();
     $("#categoriaDescripcion, #categoriaNombre").prop("disabled", false);

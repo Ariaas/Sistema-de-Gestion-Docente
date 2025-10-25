@@ -56,7 +56,7 @@ function listarRegistros() {
                        class="btn btn-icon btn-info" 
                        title="Descargar Acta Final" 
                        download>
-                        <img src="public/assets/icons/file-earmark-down2.svg">
+                         <img src="public/assets/icons/file-earmark-down2.svg">
                     </a>`;
                 
                 const btnEliminarRegistro = `<button class="btn btn-icon btn-delete btn-eliminar" title="Eliminar Registro" data-uc-codigo="${item.uc_codigo}" data-sec-codigo="${item.sec_codigo}" data-uc-nombre="${item.uc_nombre}" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}"><img src="public/assets/icons/trash.svg"></button>`;
@@ -130,11 +130,26 @@ function eliminarRegistro(uc_codigo, sec_codigo, uc_nombre, anio, tipo) {
             
             enviaAjax(datos, function(response) {
                 if (response.success) {
-                    Swal.fire('¡Eliminado!', response.mensaje, 'success').then(() => {
+                    
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ELIMINADO',
+                        text: '¡Eliminación Exitosa!',
+                        html: response.mensaje,
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#695eef' 
+                    }).then(() => {
                         listarRegistros();
                     });
                 } else {
-                    Swal.fire('Error', response.mensaje, 'error');
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.mensaje,
+                        confirmButtonText: 'Aceptar'
+                    });
                 }
             });
         }
@@ -161,10 +176,12 @@ function verificarRegistroExistente() {
 
     enviaAjax(datos, function(response) {
         if (response.existe) {
+            
             Swal.fire({
                 icon: 'warning',
                 title: 'Registro Duplicado',
                 text: 'Ya existe un registro con el mismo año, sección y unidad curricular. No se puede crear de nuevo.',
+                confirmButtonText: 'Aceptar'
             });
             submitButton.prop('disabled', true); 
         } else {
@@ -183,6 +200,10 @@ $(document).ready(function () {
 
     $('#btnNuevoRegistro').click(() => {
         $('#formRegistro')[0].reset();
+        
+
+        $('#anio').val("").trigger('change'); 
+        
         $('#docente').val(null).trigger('change');
         $('#seccion').prop('disabled', true).html('<option value="" disabled selected>Seleccione año y docente</option>');
         $('#ucurricular').prop('disabled', true).html('<option value="" disabled selected>Seleccione una sección primero</option>');
@@ -243,14 +264,25 @@ $(document).ready(function () {
             enviaAjax(new FormData(this), function (response) {
                 if (response.success) {
                     $('#modalRegistroNotas').modal('hide');
+                    
+                    
                     Swal.fire({
-                        icon: 'success', title: '¡Registrado!', text: response.mensaje, timer: 2000, showConfirmButton: false
+                        icon: 'success',
+                        title: 'REGISTRADO',
+                        text: '¡Inclusión Exitosa!',
+                        html: response.mensaje, 
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#695eef' 
                     }).then(() => {
                         listarRegistros();
                     });
                 } else {
+                    
                     Swal.fire({
-                        icon: 'error', title: 'Error', text: response.mensaje
+                        icon: 'error', 
+                        title: 'Error', 
+                        text: response.mensaje,
+                        confirmButtonText: 'Aceptar'
                     });
                 }
             });

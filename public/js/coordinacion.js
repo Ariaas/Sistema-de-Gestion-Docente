@@ -135,7 +135,7 @@ $(document).ready(function () {
     modalTitle.text("Formulario de Registro de Coordinación");
 
     $("#proceso")
-      .text("GUARDAR")
+      .text("REGISTRAR")
       .removeClass("btn-danger btn-warning")
       .addClass("btn-primary");
     $("#proceso").prop("disabled", false);

@@ -24,7 +24,7 @@ if (is_file("views/reportes/reporteM.php")) {
 
         switch ($accion) {
             case 'generar_reporte':
-                // CAMBIO: Valor predeterminado y lógica de casos actualizados
+             
                 $tipo_reporte = $_POST['tipo_reporte'] ?? 'dias_distribucion';
                 $datos = null;
 
@@ -33,7 +33,7 @@ if (is_file("views/reportes/reporteM.php")) {
                     exit;
                 }
 
-                // CAMBIO: Se llaman los nuevos casos del modelo
+              
                 switch ($tipo_reporte) {
                     case 'dias_distribucion':
                         $datos = $reporteModel->obtenerDatosReporteDias($anio, $tipo, 'all');
@@ -54,7 +54,7 @@ if (is_file("views/reportes/reporteM.php")) {
                     if ($totalCantidad > 0) {
                         echo json_encode(['success' => true, 'datos' => $datos]);
                     } else {
-                        // CAMBIO: Mensaje de error actualizado
+                      
                         echo json_encode(['success' => false, 'mensaje' => 'No se encontraron asignaciones para el año y período seleccionados.']);
                     }
                 } else {

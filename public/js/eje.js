@@ -118,7 +118,7 @@ $(document).ready(function () {
       datos.append("ejeNombreOriginal", originalNombreEje); 
       enviaAjax(datos);
     }
-  } else if (accion === "GUARDAR") {
+  } else if (accion === "REGISTRAR") {
     $("#sejeNombre").show();
     $("#sejeDescripcion").show();
     if (validarenvio()) {
@@ -193,7 +193,7 @@ $(document).ready(function () {
 
   $("#registrar").on("click", function () {
     limpia();
-    $("#proceso").text("GUARDAR");
+    $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
     $("#sejeNombre").show();
     $("#sejeDescripcion").show();

@@ -39,7 +39,7 @@ if (is_file("views/reportes/reporteG.php")) {
                     case 'trayecto':
                         $datos = $reporteModel->obtenerDatosReportePorTrayecto($anio, $tipo);
                         break;
-                    default: // 'general'
+                    default: 
                         $datos = $reporteModel->obtenerDatosReporteGeneral($anio, $tipo);
                         break;
                 }

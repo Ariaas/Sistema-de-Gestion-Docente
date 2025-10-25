@@ -30,9 +30,9 @@ function formatSectionsFromArray($sectionsArray, $wrapAfter = 2) {
     foreach($sectionsArray as $sec_codigo){
         $trayectoNum = substr($sec_codigo, 0, 1);
         if (in_array($trayectoNum, ['0', '1', '2'])) {
-            $formattedSections[] = 'IN' . $sec_codigo;
+            $formattedSections[] = $sec_codigo;
         } elseif (in_array($trayectoNum, ['3', '4'])) {
-            $formattedSections[] = 'IIN' . $sec_codigo;
+            $formattedSections[] = $sec_codigo;
         } else {
             $formattedSections[] = $sec_codigo;
         }

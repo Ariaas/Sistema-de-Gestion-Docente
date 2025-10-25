@@ -27,14 +27,14 @@ if (isset($_POST['generar_rmalla_report'])) {
         $html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">';
         $html .= '<title>' . htmlspecialchars($reportTitle) . '</title>';
         $html .= '<style>
-            @page { margin: 15px; } /* Márgenes reducidos */
-            body { font-family: Arial, Helvetica, sans-serif; font-size: 7px; color: #333; } /* Fuente más pequeña */
+            @page { margin: 15px; } 
+            body { font-family: Arial, Helvetica, sans-serif; font-size: 7px; color: #333; } 
             .page-container { page-break-inside: avoid; } 
-            .header { text-align: center; margin-bottom: 10px; } /* Margen inferior reducido */
+            .header { text-align: center; margin-bottom: 10px; } 
             .header h1 { font-size: 12px; margin: 0; }
             .header h2 { font-size: 10px; margin: 0; font-weight: normal; }
-            .report-table { width: 100%; border-collapse: collapse; margin-top: 5px; } /* Margen superior reducido */
-            .report-table th, .report-table td { border: 1px solid #000; padding: 2px; text-align: center; } /* Padding reducido */
+            .report-table { width: 100%; border-collapse: collapse; margin-top: 5px; } 
+            .report-table th, .report-table td { border: 1px solid #000; padding: 2px; text-align: center; } 
             .report-table th { background-color: #e0e0e0; font-weight: bold; font-size: 7px; }
             .trayecto-header td { background-color: #c0c0c0; text-align: left; font-weight: bold; padding-left: 4px; }
             .subtotal-row td { background-color: #f0f0f0; font-weight: bold; }
@@ -45,7 +45,7 @@ if (isset($_POST['generar_rmalla_report'])) {
 
         if ($mallasData && count($mallasData) > 0) {
             foreach ($mallasData as $malla) {
-                // Contenedor principal para evitar saltos de página
+              
                 $html .= '<div class="page-container">';
 
                 $html .= '<div class="header">';
@@ -104,7 +104,7 @@ if (isset($_POST['generar_rmalla_report'])) {
                 $html .= '<tr class="subtotal-row" style="background-color: #a0a0a0;"><td colspan="2" class="text-left">TOTAL GENERAL</td><td>' . $totalHteGeneral . '</td><td>' . $totalHtaGeneral . '</td><td>' . $totalHtiGeneral . '</td><td>' . $totalUcGeneral . '</td><td colspan="2"></td><td>' . $totalHorasAcadGeneral . '</td></tr>';
                 $html .= '</tbody></table>';
 
-                // Cierre del contenedor principal
+                
                 $html .= '</div>';
             }
         } else {

@@ -129,8 +129,7 @@ if (isset($_POST['generar_seccion_report'])) {
             $sheetTitleText = "";
             $nombresSecciones = [];
             foreach ($codigosDeSeccion as $codigo) {
-                $prefijo = (substr($codigo, 0, 1) === '3' || substr($codigo, 0, 1) === '4') ? 'IIN' : 'IN';
-                $nombresSecciones[] = $prefijo . $codigo;
+                $nombresSecciones[] = $codigo;
             }
             if (count($nombresSecciones) > 1) {
                 $tituloSeccion .= "es " . implode(' - ', $nombresSecciones);

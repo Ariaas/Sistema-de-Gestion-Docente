@@ -24,7 +24,7 @@ if (is_file("views/reportes/reporteA.php")) {
 
         switch ($accion) {
             case 'generar_reporte':
-                // CAMBIO: Valor predeterminado
+                
                 $tipo_reporte = $_POST['tipo_reporte'] ?? 'aulas_distribucion';
                 $datos = null;
 
@@ -33,7 +33,7 @@ if (is_file("views/reportes/reporteA.php")) {
                     exit;
                 }
 
-                // CAMBIO: Se agregan los nuevos casos
+                
                 switch ($tipo_reporte) {
                     case 'aulas_distribucion':
                         $datos = $reporteModel->obtenerDatosReporteAulas($anio, $tipo, 'all');

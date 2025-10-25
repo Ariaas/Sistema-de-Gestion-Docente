@@ -174,8 +174,8 @@ if (isset($_POST['generar_rhd_report'])) {
             foreach($secciones_unicas as $sec){
                 if (!empty(trim($sec))) {
                     $primerCaracter = substr(trim($sec), 0, 1);
-                    $prefijo = (in_array($primerCaracter, ['3', '4'])) ? 'IIN' : 'IN';
-                    $seccionesFormateadas .= $prefijo . trim($sec) . ', ';
+
+                    $seccionesFormateadas .=  trim($sec) . ', ';
                 }
             }
             $seccionesFormateadas = rtrim($seccionesFormateadas, ', ');
@@ -417,8 +417,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
             foreach ($seccionesCrudas as $sec) {
                 if (!empty(trim($sec))) {
                     $primerCaracter = substr(trim($sec), 0, 1);
-                    $prefijo = (in_array($primerCaracter, ['3', '4'])) ? 'IIN' : 'IN';
-                    $seccionesConPrefijo[] = $prefijo . trim($sec);
+                    $seccionesConPrefijo[] = trim($sec);
                 }
             }
             $seccionesFormateadas = implode(', ', $seccionesConPrefijo);

@@ -24,7 +24,7 @@ if (is_file("views/reportes/reporteD.php")) {
 
         switch ($accion) {
             case 'generar_reporte':
-                $tipo_reporte = $_POST['tipo_reporte'] ?? 'docente_distribucion'; // Valor predeterminado cambiado
+                $tipo_reporte = $_POST['tipo_reporte'] ?? 'docente_distribucion'; 
                 $datos = null;
 
                 if (empty($anio) || empty($tipo)) {
@@ -34,18 +34,18 @@ if (is_file("views/reportes/reporteD.php")) {
 
                 switch ($tipo_reporte) {
                     case 'docente_distribucion':
-                        $datos = $reporteModel->obtenerDatosReporteHorasDocente($anio, $tipo, 0); // Todas las horas
+                        $datos = $reporteModel->obtenerDatosReporteHorasDocente($anio, $tipo, 0); 
                         break;
                     case 'docente_mayor_a_diez':
-                        $datos = $reporteModel->obtenerDatosReporteHorasDocente($anio, $tipo, 10); // Horas > 10
+                        $datos = $reporteModel->obtenerDatosReporteHorasDocente($anio, $tipo, 10);
                         break;
-                    default: // Valor predeterminado por si acaso
+                    default: 
                         $datos = $reporteModel->obtenerDatosReporteHorasDocente($anio, $tipo, 0);
                         break;
                 }
 
                 if ($datos !== false && !empty($datos)) {
-                    // Verificar si la suma total de cantidades es mayor a 0
+       
                     $totalCantidad = array_sum(array_column($datos, 'cantidad'));
                     if ($totalCantidad > 0) {
                         echo json_encode(['success' => true, 'datos' => $datos]);
@@ -61,7 +61,7 @@ if (is_file("views/reportes/reporteD.php")) {
     }
 
     $anio_activo = $reporteModel->obtenerAnioActivo();
-    // La verificación de datos generales ahora debe basarse en la existencia de asignaciones a docentes
+   
     $hayDatos = $reporteModel->verificarDatosDocentesConHoras(); 
     require_once("views/reportes/reporteD.php");
 } else {

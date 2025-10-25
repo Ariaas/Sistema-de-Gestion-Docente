@@ -22,9 +22,9 @@ function getTrayectoFromCode($sec_codigo) {
 function formatSeccionCode($sec_codigo) {
     $primerDigito = substr($sec_codigo, 0, 1);
     if (in_array($primerDigito, ['0', '1', '2'])) {
-        return 'IN' . $sec_codigo;
+        return  $sec_codigo;
     } elseif (in_array($primerDigito, ['3', '4'])) {
-        return 'IIN' . $sec_codigo;
+        return  $sec_codigo;
     }
     return $sec_codigo; 
 }

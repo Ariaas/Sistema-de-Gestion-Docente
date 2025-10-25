@@ -69,21 +69,21 @@ if (!$puede_registrar && !$puede_modificar) {
             </div>
 
             <div class="datatable-ui w-100" id="tablaMallaPrincipalContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
-                
-                    <table class="table table-striped table-hover w-100" id="tablamalla">
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Nombre</th>
-                                <th>Cohorte</th>
-                                <th>Descripción</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultadoconsulta"></tbody>
-                    </table>
-               
+
+                <table class="table table-striped table-hover w-100" id="tablamalla">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Cohorte</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultadoconsulta"></tbody>
+                </table>
+
             </div>
         </section>
 
@@ -104,7 +104,8 @@ if (!$puede_registrar && !$puede_modificar) {
                                     <div class="row">
                                         <div class="col-md-6 mb-3"><label for="mal_codigo" class="form-label">Código</label><input class="form-control" type="text" id="mal_codigo" name="mal_codigo" placeholder="Ej: PNF-INF-2024" required>
                                             <input type="hidden" id="mal_codigo_original" name="mal_codigo_original" value="">
-                                            <span id="smalcodigo" class="small validation-span"></span></div>
+                                            <span id="smalcodigo" class="small validation-span"></span>
+                                        </div>
                                         <div class="col-md-6 mb-3"><label for="mal_nombre" class="form-label">Nombre</label><input class="form-control" type="text" id="mal_nombre" name="mal_nombre" placeholder="Ej: Malla 2024" required><span id="smalnombre" class="small validation-span"></span></div>
                                         <div class="col-md-6 mb-3"><label for="mal_cohorte" class="form-label">Cohorte</label><input class="form-control" type="text" id="mal_cohorte" name="mal_cohorte" placeholder="Número de la cohorte. Ej: 4" required><span id="smalcohorte" class="small validation-span"></span></div>
                                         <div class="col-md-6 mb-3"><label for="mal_descripcion" class="form-label">Descripción</label><input class="form-control" type="text" id="mal_descripcion" name="mal_descripcion" placeholder="Descripción breve de la malla" required><span id="smaldescripcion" class="small validation-span"></span></div>
@@ -126,7 +127,7 @@ if (!$puede_registrar && !$puede_modificar) {
                             </div>
                             <div id="botones-pagina1" class="modal-footer justify-content-end mt-4"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary" id="btn-siguiente">Siguiente &raquo;</button></div>
                             <div id="botones-pagina2" class="modal-footer justify-content-between mt-4" style="display: none;"><button type="button" class="btn btn-secondary" id="btn-anterior">&laquo; Anterior</button>
-                                <div><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary px-4" id="proceso" disabled>GUARDAR</button></div>
+                                <div><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button><button type="button" class="btn btn-primary px-4" id="proceso" disabled>REGISTRAR</button></div>
                             </div>
                         </form>
                     </div>

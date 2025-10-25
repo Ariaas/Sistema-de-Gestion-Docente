@@ -23,9 +23,7 @@ use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
 
-/**
- * Replica la lógica de abreviación de tu módulo de sección.
- */
+
 function _abreviarNombreLargo($nombre) {
     if (!is_string($nombre) || empty($nombre)) return 'N/A';
     if (stripos($nombre, 'matemática') !== false) return 'Matemática' . _extraerNumeral($nombre);
@@ -42,9 +40,7 @@ function _abreviarNombreLargo($nombre) {
     return $nombre;
 }
 
-/**
- * Función auxiliar para extraer numerales romanos.
- */
+
 function _extraerNumeral($cadena) {
     $partes = explode(' ', $cadena);
     $ultimoTermino = end($partes);
@@ -55,9 +51,7 @@ function _extraerNumeral($cadena) {
     return '';
 }
 
-/**
- * Analiza si todas las clases de una columna dinámica comparten el mismo espacio.
- */
+
 function _analizarEspaciosPorColumna($horario, $columnasHeader) {
     $espaciosPorColumna = [];
     foreach($columnasHeader as $idx => $colInfo) {
@@ -76,9 +70,7 @@ function _analizarEspaciosPorColumna($horario, $columnasHeader) {
     return $espaciosPorColumna;
 }
 
-/**
- * Prepara las columnas dinámicas y la cuadrícula de datos.
- */
+
 function _prepararColumnasYGrid($horario) {
     $day_map = ['LUNES' => 'Lunes', 'MARTES' => 'Martes', 'MIÉRCOLES' => 'Miércoles', 'JUEVES' => 'Jueves', 'VIERNES' => 'Viernes', 'SÁBADO' => 'Sábado'];
     $day_order = array_flip(array_keys($day_map));
@@ -132,9 +124,7 @@ function _prepararColumnasYGrid($horario) {
     return ['columnas' => $columnasHeader, 'grid' => $horarioGrid];
 }
 
-/**
- * Formatea el nombre del espacio.
- */
+
 function _formatearEspacio($espacio_nombre) {
     if (empty($espacio_nombre)) return '';
     if (stripos($espacio_nombre, 'LAB ') === 0) return $espacio_nombre;
@@ -145,9 +135,7 @@ function _formatearEspacio($espacio_nombre) {
 }
 
 
-/**
- * ✅ VERSIÓN FINAL: Genera el reporte PDF con el diseño exacto de la imagen.
- */
+
 function generarReportePDF($secciones_codigos, $horario, $anio, $turnos) {
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos para generar el reporte.");
@@ -192,8 +180,7 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos) {
     sort($secciones_codigos);
     $nombresSecciones = [];
     foreach ($secciones_codigos as $codigo) {
-        $prefijo = (substr($codigo, 0, 1) === '3' || substr($codigo, 0, 1) === '4') ? 'IIN' : 'IN';
-        $nombresSecciones[] = $prefijo . $codigo;
+        $nombresSecciones[] = $codigo;
     }
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones);
 

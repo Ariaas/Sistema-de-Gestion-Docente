@@ -64,7 +64,10 @@ function crearDT() {
   }
 }
 
-let originalNombreArea = ''; 
+let originalNombreArea = '';
+
+let originalDescripcionArea = ''; 
+
 
 $(document).ready(function () {
   Listar();
@@ -93,11 +96,27 @@ $(document).ready(function () {
           datos.append('areaExcluir', originalNombreArea);
       }
       enviaAjax(datos, 'existe');
+    } 
+
+    else if (formatoValido === 0) {
+       $("#proceso").prop("disabled", true);
     }
+   
+    else if ($("#proceso").text() === "MODIFICAR") {
+       verificarCambiosYValidacion();
+    }
+  
   });
 
   $("#areaDescripcion").on("keyup", function() {
-    validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
+  
+    let formatoValido = validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
+    
+
+    if ($("#proceso").text() === "MODIFICAR") {
+      verificarCambiosYValidacion();
+    }
+
   });
 
   
@@ -156,6 +175,7 @@ $(document).ready(function () {
     $("#modal1").modal("show");
     $("#sareaNombre").show();
     $("#sareaDescripcion").show();
+    $("#proceso").prop("disabled", false);
   });
 
   $('#modal1').on('hidden.bs.modal', function () {
@@ -190,6 +210,7 @@ function validarenvio() {
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
   originalNombreArea = $(linea).find("td:eq(0)").text(); 
+  originalDescripcionArea = $(linea).find("td:eq(1)").text();
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
@@ -197,11 +218,15 @@ function pone(pos, accion) {
     $("#areaDescripcion").prop("disabled", false);
     $("#sareaNombre").text("").show();
     $("#sareaDescripcion").text("").show();
+    $("#proceso").prop("disabled", true);
+
   } else {
     $("#proceso").text("ELIMINAR");
     $("#areaNombre, #areaDescripcion").prop("disabled", true);
     $("#sareaNombre").hide();
     $("#sareaDescripcion").hide();
+    $("#proceso").prop("disabled", false);
+
   }
   
   $("#areaNombre").val($(linea).find("td:eq(0)").text());
@@ -229,7 +254,15 @@ function enviaAjax(datos, accion) {
             $("#sareaNombre").text(lee.mensaje).css("color", "red");
             $("#proceso").prop("disabled", true);
           } else {
-            $("#proceso").prop("disabled", false);
+
+            if ($("#proceso").text() === "MODIFICAR") {
+
+              verificarCambiosYValidacion();
+            } else {
+
+              $("#proceso").prop("disabled", false);
+            }
+           
           }
           return;
         }
@@ -269,10 +302,10 @@ function enviaAjax(datos, accion) {
             $("#modal1").modal("hide");
             Listar();
           }
-        }else if (lee.resultado == "existe") {		
+        }else if (lee.resultado == "existe") {     
           if (lee.mensaje == 'El área ya existe!') {
             muestraMensaje('info', 4000,'Atención!', lee.mensaje);
-          }	
+          } 
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
@@ -310,4 +343,23 @@ function limpia() {
   $("#areaDescripcion").prop('disabled', false);
   $("#sareaNombre").text("");
   $("#sareaDescripcion").text("");
+  originalNombreArea = ''; 
+  originalDescripcionArea = ''; 
+}
+
+function verificarCambiosYValidacion() {
+  
+  if ($("#proceso").text() !== "MODIFICAR") {
+    return;
+  }
+
+  let nombreActual = $("#areaNombre").val();
+  let descripcionActual = $("#areaDescripcion").val();
+  
+  let hayCambios = (nombreActual !== originalNombreArea || descripcionActual !== originalDescripcionArea);
+
+  let nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/.test(nombreActual);
+  let descValida = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/.test(descripcionActual);
+
+  $("#proceso").prop("disabled", !(hayCambios && nombreValido && descValida));
 }

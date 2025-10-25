@@ -64,12 +64,14 @@ if (!isset($_SESSION['name'])) {
                                 <div class="col-md-6 mb-3">
                                     <label for="anio" class="form-label">Año Académico</label>
                                     <select class="form-select" name="anio" id="anio" required>
-                                        <option value="" disabled>Seleccione un año</option>
+
+                                        <option value="" disabled selected>Seleccione un año</option>
+
                                         <?php foreach ($anios as $anio) {
                                             $valor_compuesto = $anio['ani_anio'] . ':' . $anio['ani_tipo'];
-                                            $texto_opcion = $anio['ani_anio'];
-                                            $selected = ($anio_seleccionado == $valor_compuesto) ? 'selected' : '';
-                                            echo "<option value='{$valor_compuesto}' {$selected}>{$texto_opcion}</option>";
+                                            $texto_opcion = $anio['ani_anio'] . ' (' . ucfirst($anio['ani_tipo']) . ')';
+
+                                            echo "<option value='{$valor_compuesto}'>{$texto_opcion}</option>";
                                         } ?>
                                     </select>
                                     <div class="invalid-feedback">Por favor, seleccione un año académico.</div>
@@ -112,7 +114,7 @@ if (!isset($_SESSION['name'])) {
                             </div>
 
                             <div class="modal-footer justify-content-center">
-                                <button type="submit" class="btn btn-primary">GUARDAR</button>
+                                <button type="submit" class="btn btn-primary">REGISTRAR</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>

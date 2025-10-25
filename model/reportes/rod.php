@@ -42,8 +42,7 @@ class Rod extends Connection
            
             $sql_asignaciones = "
             WITH HorasPorBloqueUnico AS (
-                -- Paso 1: Identifica bloques de enseñanza únicos (profesor, materia, hora) y calcula sus horas una sola vez.
-                -- Esto evita contar las horas múltiples veces para secciones unidas.
+.
                 SELECT DISTINCT
                     uh.doc_cedula,
                     uh.uc_codigo,
@@ -60,14 +59,13 @@ class Rod extends Connection
                     AND uh.doc_cedula IS NOT NULL
                     AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")
             )
-            -- Paso 2: Agrupa los resultados por profesor y materia para obtener el total de horas asignadas
-            -- y también genera una lista de todas las secciones asociadas.
+
             SELECT
                 hbu.doc_cedula,
                 u.uc_nombre,
                 SUM(hbu.horas_bloque) AS uc_horas,
                 (
-                    -- Esta subconsulta crea la cadena de texto con todas las secciones (unidas o no) para una materia y docente.
+                    
                     SELECT GROUP_CONCAT(DISTINCT
                         CASE
                             WHEN u_inner.uc_trayecto IN ('0', '1', '2') THEN CONCAT('IN', s_inner.sec_codigo)

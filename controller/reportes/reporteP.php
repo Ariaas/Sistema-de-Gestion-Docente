@@ -17,7 +17,7 @@ if (is_file("views/reportes/reporteP.php")) {
         header('Content-Type: application/json');
         $accion = $_POST['accion'];
 
-        // CAMBIO: Se usa 'anio_origen' directamente (ya no hay 'anio_completo')
+       
         $anio = $_POST['anio_origen'] ?? 0;
 
         switch ($accion) {
@@ -25,13 +25,13 @@ if (is_file("views/reportes/reporteP.php")) {
                 $tipo_reporte = $_POST['tipo_reporte'] ?? 'general';
                 $datos = null;
 
-                // CAMBIO: Se valida solo el año
+               
                 if (empty($anio)) {
                     echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione un año académico.']);
                     exit;
                 }
 
-                // CAMBIO: Se elimina el parámetro '$tipo' de todas las llamadas
+                
                 switch ($tipo_reporte) {
                     case 'seccion':
                         $datos = $reporteModel->obtenerDatosReporteTodasLasSecciones($anio);
@@ -39,7 +39,7 @@ if (is_file("views/reportes/reporteP.php")) {
                     case 'trayecto':
                         $datos = $reporteModel->obtenerDatosReportePorTrayecto($anio);
                         break;
-                    default: // 'general'
+                    default: 
                         $datos = $reporteModel->obtenerDatosReporteGeneral($anio);
                         break;
                 }

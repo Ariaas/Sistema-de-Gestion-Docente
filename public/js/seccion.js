@@ -1474,71 +1474,81 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
     const guardarBtn = $('#btnGuardarSeccion');
     const alertaCodigo = $('#alerta-codigo');
 
-    function validarCodigoSeccion() {
-        const codigo = codigoInput.val();
-        const anio = anioInput.val();
-        
-        guardarBtn.prop('disabled', true);
-        alertaCodigo.hide();
+   function validarCodigoSeccion() {
+  
+      const codigo = codigoInput.val().toUpperCase(); 
+    const anio = anioInput.val();
+    
+    guardarBtn.prop('disabled', true);
+    alertaCodigo.hide();
 
-        const formatoValido = /^[A-Z]{2,3}\d+$/.test(codigo);
-
-        if (codigo.length === 0) {
-            return;
-        }
-
-        if (!formatoValido) {
-            alertaCodigo.html(`<strong>Formato inválido.</strong> Debe tener un prefijo de 2-3 letras y luego números.`).show();
-            return;
-        }
-
-        const digitos = codigo.match(/\d/g);
-        if (digitos && digitos.length >= 4) {
-            const cohorte = parseInt(digitos[3], 10);
-            if (!allCohortes.includes(cohorte)) {
-                alertaCodigo.html(`<strong>Cohorte no existe.</strong> El cohorte ${cohorte} no está registrado en el sistema.`).show();
-                return;
-            }
-        } else {
-            alertaCodigo.html(`<strong>Formato incompleto.</strong> El código debe tener al menos 4 dígitos.`).show();
-            return;
-        }
-
-        if (!anio) {
-             alertaCodigo.html(`Seleccione un año académico para verificar la disponibilidad del código.`).show();
-             return;
-        }
-        
-        const datos = new FormData();
-        datos.append("accion", "verificar_codigo_seccion");
-        datos.append("codigoSeccion", codigo);
-        datos.append("anioId", anio);
-
-        $.ajax({
-            url: "",
-            type: "POST",
-            data: datos,
-            contentType: false,
-            processData: false,
-            success: function(respuesta) {
-                if (respuesta.resultado === 'ok') {
-                    if(respuesta.existe) {
-                        alertaCodigo.html(`<strong>Código no disponible.</strong> Ya existe una sección con este código para el año seleccionado.`).show();
-                    } else {
-                        alertaCodigo.hide();
-                        if (cantidadInput.val() !== '') {
-                            guardarBtn.prop('disabled', false);
-                        }
-                    }
-                } else {
-                    alertaCodigo.html(`Error al validar el código. Intente de nuevo.`).show();
-                }
-            },
-            error: function() {
-                 alertaCodigo.html(`Error de conexión al validar el código.`).show();
-            }
-        });
+    if (codigo.length === 0) {
+        return;
     }
+
+
+    const match = codigo.match(/^([A-Z]{2,3})(\d+)$/);
+
+  
+    if (!match) {
+        alertaCodigo.html(`<strong>Formato inválido.</strong> Debe tener un prefijo de 2-3 letras y luego números (Ej: IN111).`).show();
+        return;
+    }
+
+    const prefix = match[1]; 
+    const numericPart = match[2]; 
+    const firstDigit = numericPart.charAt(0); 
+
+    if (['0', '1', '2'].includes(firstDigit)) {
+        if (prefix !== 'IN') {
+            alertaCodigo.html(`<strong>Error de formato:</strong> Las secciones que inician con 0, 1, o 2 deben tener el prefijo <strong>IN</strong>.`).show();
+            return;
+        }
+    } 
+
+    else if (['3', '4'].includes(firstDigit)) {
+        if (prefix !== 'IIN') {
+            alertaCodigo.html(`<strong>Error de formato:</strong> Las secciones que inician con 3 o 4 deben tener el prefijo <strong>IIN</strong>.`).show();
+            return;
+        }
+    }
+
+    if (!anio) {
+         alertaCodigo.html(`Seleccione un año académico para verificar la disponibilidad del código.`).show();
+         return;
+    }
+    
+    
+    const datos = new FormData();
+    datos.append("accion", "verificar_codigo_seccion");
+    datos.append("codigoSeccion", codigo); 
+    datos.append("anioId", anio);
+
+    $.ajax({
+        url: "",
+        type: "POST",
+        data: datos,
+        contentType: false,
+        processData: false,
+        success: function(respuesta) {
+            if (respuesta.resultado === 'ok') {
+                if(respuesta.existe) {
+                    alertaCodigo.html(`<strong>Código no disponible.</strong> Ya existe una sección con este código para el año seleccionado.`).show();
+                } else {
+                    alertaCodigo.hide();
+                    if (cantidadInput.val() !== '') {
+                        guardarBtn.prop('disabled', false);
+                    }
+                }
+            } else {
+                alertaCodigo.html(`Error al validar el código. Intente de nuevo.`).show();
+            }
+        },
+        error: function() {
+             alertaCodigo.html(`Error de conexión al validar el código.`).show();
+        }
+    });
+}
 
     codigoInput.on('keyup', validarCodigoSeccion);
     anioInput.on('change', validarCodigoSeccion);

@@ -50,13 +50,13 @@ if (is_file("views/" . $pagina . ".php")) {
                 $bitacora->registrarAccion($usu_id, 'eliminar acta', 'Archivo');
                 break;
 
-           
+
             case 'verificar_existencia':
                 $anio_compuesto = isset($_POST['anio_compuesto']) ? explode(':', $_POST['anio_compuesto']) : [null, null];
                 $uc_codigo = $_POST['uc_codigo'] ?? null;
                 $sec_codigo_str = $_POST['sec_codigo'] ?? '';
 
-                
+
                 $primera_seccion = explode(',', $sec_codigo_str)[0];
 
                 $existe = $modelo->verificarExistencia($anio_compuesto[0], $anio_compuesto[1], $uc_codigo, $primera_seccion);
@@ -86,19 +86,8 @@ if (is_file("views/" . $pagina . ".php")) {
     $anios = $obj->obtenerAnios();
     $docentes = $obj->obtenerDocentes();
     $alerta_datos = "";
-
     $anio_seleccionado = '';
-    $current_year = date('Y');
-    foreach ($anios as $a) {
-        if ($a['ani_anio'] == $current_year) {
-            $anio_seleccionado = $a['ani_anio'] . ':' . $a['ani_tipo'];
-            break;
-        }
-    }
-
-    if ($anio_seleccionado == '' && !empty($anios)) {
-        $anio_seleccionado = $anios[0]['ani_anio'] . ':' . $anios[0]['ani_tipo'];
-    }
+ 
 
     require_once("views/" . $pagina . ".php");
 } else {
