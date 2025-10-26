@@ -94,45 +94,29 @@ $(document).ready(function () {
       datos.append('areaNombre', $(this).val());
       if ($("#proceso").text() === "MODIFICAR") {
           datos.append('areaExcluir', originalNombreArea);
+          verificarCambios();
       }
       enviaAjax(datos, 'existe');
-    } 
-
-    else if (formatoValido === 0) {
-       $("#proceso").prop("disabled", true);
     }
-   
-    else if ($("#proceso").text() === "MODIFICAR") {
-       verificarCambiosYValidacion();
-    }
-  
   });
 
   $("#areaDescripcion").on("keyup", function() {
-  
-    let formatoValido = validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/, $(this), $("#sareaDescripcion"), "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría...");
+    validarkeyup(
+      /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
+      $(this),
+      $("#sareaDescripcion"),
+      "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría..."
+    );
     
-
     if ($("#proceso").text() === "MODIFICAR") {
-      verificarCambiosYValidacion();
+      verificarCambios();
     }
-
   });
 
   
 
   $("#proceso").on("click", function () {
-    let accion = $(this).text();
-    if (accion === "MODIFICAR") {
-      if (validarenvio()) {
-        var datos = new FormData();
-        datos.append("accion", "modificar");
-        datos.append("areaNombre", $("#areaNombre").val());
-        datos.append("areaDescripcion", $("#areaDescripcion").val());
-        datos.append("areaNombreOriginal", originalNombreArea); 
-        enviaAjax(datos);
-      }
-    } else if (accion === "REGISTRAR") {
+    if ($(this).text() == "REGISTRAR") {
       if (validarenvio()) {
         var datos = new FormData();
         datos.append("accion", "registrar");
@@ -140,32 +124,41 @@ $(document).ready(function () {
         datos.append("areaDescripcion", $("#areaDescripcion").val());
         enviaAjax(datos);
       }
-    } else if (accion === "ELIMINAR") {
-        Swal.fire({
-          title: "¿Está seguro de eliminar esta área?",
-          text: "Esta acción no se puede deshacer.",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#3085d6",
-          cancelButtonColor: "#d33",
-          confirmButtonText: "Sí, eliminar",
-          cancelButtonText: "Cancelar",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            var datos = new FormData();
-            datos.append("accion", "eliminar");
-            datos.append("areaNombre", $("#areaNombre").val());
-            enviaAjax(datos);
-          } else {
-            muestraMensaje(
-              "error",
-              2000,
-              "INFORMACIÓN",
-              "La eliminación ha sido cancelada."
-            );
-            $("#modal1").modal("hide");
-          }
-        });
+    } else if ($(this).text() == "MODIFICAR") {
+      if (validarenvio()) {
+        var datos = new FormData();
+        datos.append("accion", "modificar");
+        datos.append("areaNombre", $("#areaNombre").val());
+        datos.append("areaDescripcion", $("#areaDescripcion").val());
+        datos.append("areaNombreOriginal", originalNombreArea);
+        enviaAjax(datos);
+      }
+    } else if ($(this).text() == "ELIMINAR") {
+      Swal.fire({
+        title: "¿Está seguro de eliminar esta área?",
+        text: "Esta acción no se puede deshacer.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          var datos = new FormData();
+          datos.append("accion", "eliminar");
+          datos.append("areaNombre", $("#areaNombre").val());
+          enviaAjax(datos);
+        } else {
+          muestraMensaje(
+            "error",
+            2000,
+            "INFORMACIÓN",
+            "La eliminación ha sido cancelada."
+          );
+          $("#modal1").modal("hide");
+        }
+      });
     }
   });
 
@@ -254,15 +247,8 @@ function enviaAjax(datos, accion) {
             $("#sareaNombre").text(lee.mensaje).css("color", "red");
             $("#proceso").prop("disabled", true);
           } else {
-
-            if ($("#proceso").text() === "MODIFICAR") {
-
-              verificarCambiosYValidacion();
-            } else {
-
-              $("#proceso").prop("disabled", false);
-            }
-           
+            $("#sareaNombre").text("");
+            $("#proceso").prop("disabled", false);
           }
           return;
         }
@@ -347,19 +333,15 @@ function limpia() {
   originalDescripcionArea = ''; 
 }
 
-function verificarCambiosYValidacion() {
+function verificarCambios() {
+  const nombreActual = $("#areaNombre").val();
+  const descripcionActual = $("#areaDescripcion").val();
   
-  if ($("#proceso").text() !== "MODIFICAR") {
-    return;
+  if (nombreActual === originalNombreArea && descripcionActual === originalDescripcionArea) {
+    $("#proceso").prop("disabled", true);
+  } else {
+    if ($("#sareaNombre").text() === "" || $("#sareaNombre").css("color") !== "rgb(255, 0, 0)") {
+      $("#proceso").prop("disabled", false);
+    }
   }
-
-  let nombreActual = $("#areaNombre").val();
-  let descripcionActual = $("#areaDescripcion").val();
-  
-  let hayCambios = (nombreActual !== originalNombreArea || descripcionActual !== originalDescripcionArea);
-
-  let nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/.test(nombreActual);
-  let descValida = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/.test(descripcionActual);
-
-  $("#proceso").prop("disabled", !(hayCambios && nombreValido && descValida));
 }

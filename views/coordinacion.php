@@ -87,12 +87,12 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 </div>
                                 <div class="col-12">
                                     <label for="coordinacionHoraDescarga" class="form-label">Hora de Descarga</label>
-                                    <input class="form-control" type="number" id="coordinacionHoraDescarga" name="coordinacionHoraDescarga" min="1" max="24" placeholder="Ej: 8">
+                                    <input class="form-control" type="number" id="coordinacionHoraDescarga" name="coordinacionHoraDescarga" min="1" max="99" placeholder="Ej: 8">
                                     <span id="scoordinacionHoraDescarga" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="modal-footer justify-content-center mt-4">
-                                <button type="submit" class="btn btn-primary px-4 me-2" id="proceso">REGISTRAR</button>
+                                <button type="button" class="btn btn-primary px-4 me-2" id="proceso">REGISTRAR</button>
                                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">CANCELAR</button>
                             </div>
                         </form>
@@ -109,6 +109,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     </script>
     <?php require_once("public/components/footer.php"); ?>
     <script type="text/javascript" src="public/js/coordinacion.js"></script>
+    <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
 
 </html>

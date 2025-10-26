@@ -34,6 +34,12 @@ class Coordinacion extends Connection
     
     public function setHoraDescarga($hora)
     {
+        if ($hora !== null && $hora !== '') {
+            $hora = intval($hora);
+            if ($hora < 1 || $hora > 99) {
+                throw new Exception('La hora de descarga debe estar entre 1 y 99.');
+            }
+        }
         $this->coor_hora_descarga = $hora;
     }
 
@@ -109,10 +115,12 @@ class Coordinacion extends Connection
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
         
-        if ($this->Existe($this->cor_nombre)) {
-            $r['resultado'] = 'error';
-            $r['mensaje'] = ' El nuevo nombre de la coordinación ya está en uso.';
-            return $r;
+        if ($this->original_cor_nombre !== $this->cor_nombre) {
+            if ($this->Existe($this->cor_nombre)) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = ' El nuevo nombre de la coordinación ya está en uso.';
+                return $r;
+            }
         }
         
         try {

@@ -18,9 +18,9 @@ if (!function_exists('tiene_permiso')) {
         return !empty($permisos_array[strtolower($modulo)]);
     }
 }
-
 require_once 'public/components/head.php';
 ?>
+<title>Panel de Control - Sistema de Gestión Docente</title>
 
 <body class="d-flex flex-column min-vh-100">
     <?php require_once 'public/components/sidebar.php'; ?>

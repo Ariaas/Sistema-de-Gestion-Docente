@@ -188,76 +188,6 @@ $(document).ready(function () {
         }
         enviaAjax(datos);
       }
-    } else if ($(this).text() == "DESACTIVAR") {
-      var codigoUC = $("#codigoUC").val();
-      var datosVerificacion = new FormData();
-      datosVerificacion.append("accion", "verificar_horario");
-      datosVerificacion.append("codigoUC", codigoUC);
-
-      $.ajax({
-        async: true,
-        url: "",
-        type: "POST",
-        contentType: false,
-        data: datosVerificacion,
-        processData: false,
-        cache: false,
-        success: function (respuesta) {
-          try {
-            var lee = JSON.parse(respuesta);
-            let titulo = "¿Está seguro de desactivar esta unidad curricular?";
-            let texto =
-              "Esta acción puede desactivar la unidad curricular y ocultarla de la lista principal.";
-
-            if (lee.resultado === "en_horario") {
-              titulo = "¡Atención!";
-              texto =
-                "Esta unidad curricular está en un horario. Si la desactiva, se quitará del horario también. ¿Desea continuar?";
-            }
-
-            Swal.fire({
-              title: titulo,
-              text: texto,
-              icon: "warning",
-              showCancelButton: true,
-              confirmButtonColor: "#3085d6",
-              cancelButtonColor: "#d33",
-              confirmButtonText: "Sí, desactivar",
-              cancelButtonText: "Cancelar",
-            }).then((result) => {
-              if (result.isConfirmed) {
-                var datos = new FormData();
-                datos.append("accion", "eliminar");
-                datos.append("codigoUC", codigoUC);
-                enviaAjax(datos);
-              } else {
-                muestraMensaje(
-                  "info",
-                  2000,
-                  "INFORMACIÓN",
-                  "La desactivación ha sido cancelada."
-                );
-                $("#modal1").modal("hide");
-              }
-            });
-          } catch (e) {
-            muestraMensaje(
-              "error",
-              5000,
-              "¡Error en la operación!",
-              "No se pudo verificar el estado de la unidad curricular."
-            );
-          }
-        },
-        error: function () {
-          muestraMensaje(
-            "error",
-            5000,
-            "¡Error de conexión!",
-            "No se pudo comunicar con el servidor."
-          );
-        },
-      });
     }
   });
 
@@ -462,75 +392,62 @@ function pone(pos, accion) {
       "#nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
     ).prop("disabled", false);
     $("#scodigoUC").hide();
-  } else {
-    
-    $("#proceso").text("DESACTIVAR");
-    $("#modal1 .modal-title").text("Desactivar Unidad Curricular");
-    $(
-      "#codigoUC, #nombreUC, #trayectoUC, #ejeUC, #areaUC, #creditosUC, #periodoUC, #electivaUC"
-    ).prop("disabled", true);
-    $(
-      "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC"
-    ).hide();
-  }
 
-  $("#codigoUC").val(linea.data("codigo"));
-  $("#nombreUC").val(linea.data("nombre"));
-  $("#trayectoUC").val(linea.data("trayecto"));
+    $("#codigoUC").val(linea.data("codigo"));
+    $("#nombreUC").val(linea.data("nombre"));
+    $("#trayectoUC").val(linea.data("trayecto"));
 
-  const ejeValor = linea.data("eje");
-  const $ejeUC = $("#ejeUC");
-  $ejeUC.find("option").each(function () {
-    if ($(this).text().includes("(eliminado)")) {
-      $(this).remove();
+    const ejeValor = linea.data("eje");
+    const $ejeUC = $("#ejeUC");
+    $ejeUC.find("option").each(function () {
+      if ($(this).text().includes("(eliminado)")) {
+        $(this).remove();
+      }
+    });
+    if (
+      $ejeUC.find("option[value='" + ejeValor + "']").length === 0 &&
+      ejeValor
+    ) {
+      $ejeUC.prepend(
+        $("<option>", {
+          value: ejeValor,
+          text: ejeValor + " (eliminado)",
+          disabled: true,
+          selected: true,
+        })
+      );
+    } else {
+      $ejeUC.val(ejeValor);
+      $("#seje").text("").hide();
     }
-  });
-  if (
-    $ejeUC.find("option[value='" + ejeValor + "']").length === 0 &&
-    ejeValor
-  ) {
-    $ejeUC.prepend(
-      $("<option>", {
-        value: ejeValor,
-        text: ejeValor + " (eliminado)",
-        disabled: true,
-        selected: true,
-      })
-    );
-  } else {
-    $ejeUC.val(ejeValor);
-    $("#seje").text("").hide();
-  }
 
-  const areaValor = linea.data("area");
-  const $areaUC = $("#areaUC");
-  $areaUC.find("option").each(function () {
-    if ($(this).text().includes("(eliminado)")) {
-      $(this).remove();
+    const areaValor = linea.data("area");
+    const $areaUC = $("#areaUC");
+    $areaUC.find("option").each(function () {
+      if ($(this).text().includes("(eliminado)")) {
+        $(this).remove();
+      }
+    });
+    if (
+      $areaUC.find("option[value='" + areaValor + "']").length === 0 &&
+      areaValor
+    ) {
+      $areaUC.prepend(
+        $("<option>", {
+          value: areaValor,
+          text: areaValor + " (eliminado)",
+          disabled: true,
+          selected: true,
+        })
+      );
+    } else {
+      $areaUC.val(areaValor);
+      $("#sarea").text("").hide();
     }
-  });
-  if (
-    $areaUC.find("option[value='" + areaValor + "']").length === 0 &&
-    areaValor
-  ) {
-    $areaUC.prepend(
-      $("<option>", {
-        value: areaValor,
-        text: areaValor + " (eliminado)",
-        disabled: true,
-        selected: true,
-      })
-    );
-  } else {
-    $areaUC.val(areaValor);
-    $("#sarea").text("").hide();
-  }
 
-  $("#creditosUC").val(linea.data("creditos"));
-  $("#periodoUC").val(linea.data("periodo"));
-  
+    $("#creditosUC").val(linea.data("creditos"));
+    $("#periodoUC").val(linea.data("periodo"));
 
-  if (accion == 0) {
     $("#codigoUC, #nombreUC, #creditosUC").trigger("keyup");
     $("#trayectoUC, #ejeUC, #areaUC, #periodoUC").trigger("change");
     
@@ -538,9 +455,72 @@ function pone(pos, accion) {
       initialFormState = $("#f").serialize();
       $("#proceso").prop('disabled', true);
     }, 100);
-  }
 
-  $("#modal1").modal("show");
+    $("#modal1").modal("show");
+  } else if (accion == 1) {
+    // Desactivar directamente sin abrir modal
+    var codigoUC = linea.data("codigo");
+    var datosVerificacion = new FormData();
+    datosVerificacion.append("accion", "verificar_horario");
+    datosVerificacion.append("codigoUC", codigoUC);
+
+    $.ajax({
+      async: true,
+      url: "",
+      type: "POST",
+      contentType: false,
+      data: datosVerificacion,
+      processData: false,
+      cache: false,
+      success: function (respuesta) {
+        try {
+          var lee = JSON.parse(respuesta);
+          let titulo = "¿Está seguro de desactivar esta unidad curricular?";
+          let texto =
+            "Esta acción puede desactivar la unidad curricular y ocultarla de la lista principal.";
+
+          if (lee.resultado === "en_horario") {
+            titulo = "¡Atención!";
+            texto =
+              "Esta unidad curricular está en un horario. Si la desactiva, se quitará del horario también. ¿Desea continuar?";
+          }
+
+          Swal.fire({
+            title: titulo,
+            text: texto,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Sí, desactivar",
+            cancelButtonText: "Cancelar",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              var datos = new FormData();
+              datos.append("accion", "eliminar");
+              datos.append("codigoUC", codigoUC);
+              enviaAjax(datos);
+            }
+          });
+        } catch (e) {
+          muestraMensaje(
+            "error",
+            5000,
+            "¡Error en la operación!",
+            "No se pudo verificar el estado de la unidad curricular."
+          );
+        }
+      },
+      error: function () {
+        muestraMensaje(
+          "error",
+          5000,
+          "¡Error de conexión!",
+          "No se pudo comunicar con el servidor."
+        );
+      },
+    });
+  }
 }
 
 function enviaAjax(datos, accion = "") {

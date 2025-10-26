@@ -58,32 +58,63 @@ $(document).ready(function () {
       "El nombre debe tener entre 5 y 30 caracteres."
     );
 
-    if (!formatoValido) {
-      $("#proceso").prop("disabled", true);
-      return;
+    if (formatoValido === 1) {
+      var datos = new FormData();
+      datos.append('accion', 'existe');
+      datos.append('coordinacionNombre', nombreActual);
+      if ($("#proceso").text() === "MODIFICAR") {
+        datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
+        verificarCambios();
+      }
+      enviaAjax(datos);
     }
+  });
 
+  $("#coordinacionHoraDescarga").on("keypress", function(e) {
+    validarkeypress(/^[0-9\b]*$/, e);
+  });
+
+  $("#coordinacionHoraDescarga").on("keyup keydown", function () {
+    $("#scoordinacionHoraDescarga").css("color", "");
+    validarkeyup(
+      /^([1-9]|[1-9][0-9])$/,
+      $(this),
+      $("#scoordinacionHoraDescarga"),
+      "Debe ser un número entre 1 y 99."
+    );
     if ($("#proceso").text() === "MODIFICAR") {
       verificarCambios();
     }
-
-    var datos = new FormData();
-    datos.append("accion", "existe");
-    datos.append("coordinacionNombre", nombreActual);
-    datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
-    enviaAjax(datos);
   });
 
-  $("#f").on("submit", function (event) {
-    event.preventDefault();
-
-    let accion = $("#proceso").text();
-
-    if (accion === "ELIMINAR") {
+  $("#proceso").on("click", function () {
+    if ($(this).text() == "REGISTRAR") {
+      if (validarenvio()) {
+        var datos = new FormData();
+        datos.append("accion", "registrar");
+        datos.append("coordinacionNombre", $("#coordinacionNombre").val());
+        datos.append("coordinacionHoraDescarga", $("#coordinacionHoraDescarga").val());
+        enviaAjax(datos);
+      }
+    } else if ($(this).text() == "MODIFICAR") {
+      if (validarenvio()) {
+        var datos = new FormData();
+        datos.append("accion", "modificar");
+        datos.append("coordinacionNombre", $("#coordinacionNombre").val());
+        datos.append("coordinacionHoraDescarga", $("#coordinacionHoraDescarga").val());
+        datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
+        enviaAjax(datos);
+      }
+    } else if ($(this).text() == "ELIMINAR") {
       const swalInstance = Swal.fire({
-        title: "¿Está seguro que quieres Eliminar esta coordinación?",
+        title: "¿Está seguro de eliminar esta coordinación?",
         text: "Esta acción no se puede deshacer.",
         icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
         focusConfirm: true,
         allowOutsideClick: false,
         allowEscapeKey: true,
@@ -95,12 +126,7 @@ $(document).ready(function () {
               Swal.clickConfirm();
             }
           });
-        },
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar"
+        }
       });
       
       swalInstance.then((result) => {
@@ -109,43 +135,31 @@ $(document).ready(function () {
           datos.append("accion", "eliminar");
           datos.append("coordinacionNombre", $("#coordinacionNombre").val());
           enviaAjax(datos);
+        } else {
+          muestraMensaje(
+            "error",
+            2000,
+            "INFORMACIÓN",
+            "La eliminación ha sido cancelada."
+          );
+          $("#modal1").modal("hide");
         }
       });
-      return;
-    }
-
-    if (validarenvio()) {
-      var datos = new FormData($("#f")[0]);
-      if (accion === "MODIFICAR") {
-        datos.append("accion", "modificar");
-        datos.append("coordinacionOriginalNombre", originalNombreCoordinacion);
-      } else {
-        datos.append("accion", "registrar");
-      }
-      enviaAjax(datos);
     }
   });
 
   $("#registrar").on("click", function () {
     limpia();
-    let modalHeader = $("#modal1 .modal-header");
-    let modalTitle = $("#modal1 .modal-title");
-
-    modalHeader.removeClass("bg-danger").addClass("bg-primary");
-    modalTitle.text("Formulario de Registro de Coordinación");
-
-    $("#proceso")
-      .text("REGISTRAR")
-      .removeClass("btn-danger btn-warning")
-      .addClass("btn-primary");
-    $("#proceso").prop("disabled", false);
-    $("#scoordinacionNombre").text("").hide();
+    $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
+    $("#scoordinacionNombre").show();
+    $("#coordinacionNombre, #coordinacionHoraDescarga").prop("disabled", false);
   });
 
-  $("#modal1").on("hidden.bs.modal", function () {
+  $('#modal1').on('hidden.bs.modal', function () {
     $("#proceso").prop("disabled", false);
     $("#scoordinacionNombre").text("").css("color", "");
+    $("#scoordinacionHoraDescarga").text("").css("color", "");
   });
 
   $('#modal1').on('shown.bs.modal', function () {
@@ -161,71 +175,60 @@ $(document).ready(function () {
       }
       if (!$("#proceso").prop("disabled")) {
         e.preventDefault();
-        $("#f").submit();
+        $("#proceso").click();
       }
     }
   });
 });
 
 function validarenvio() {
-  if ($("#proceso").is(":disabled")) {
-    Swal.fire({
-      icon: "error",
-      title: "Acción no permitida",
-      text: "Por favor, corrija los errores en el formulario antes de continuar.",
-    });
-    return false;
+  let esValido = true;
+
+  if (validarkeyup(
+    /^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
+    $("#coordinacionNombre"),
+    $("#scoordinacionNombre"),
+    "El nombre debe tener entre 5 y 30 caracteres."
+  ) == 0) {
+    if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del nombre de la coordinación es incorrecto.");
+    esValido = false;
   }
-  var nombre = $("#coordinacionNombre").val();
-  if (!nombre || nombre.trim() === "") {
-    $("#scoordinacionNombre")
-      .text("El nombre de la coordinación no puede estar vacío.")
-      .show();
-    $("#coordinacionNombre").focus();
-    return false;
+
+  const horaDescarga = $("#coordinacionHoraDescarga").val();
+  if (horaDescarga && validarkeyup(
+    /^([1-9]|[1-9][0-9])$/,
+    $("#coordinacionHoraDescarga"),
+    $("#scoordinacionHoraDescarga"),
+    "Debe ser un número entre 1 y 99."
+  ) == 0) {
+    if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato de la hora de descarga es incorrecto.");
+    esValido = false;
   }
-  return true;
+
+  return esValido;
 }
 
-  $("#coordinacionHoraDescarga").on("keyup change", function() {
-    if ($("#proceso").text() === "MODIFICAR") {
-      verificarCambios();
-    }
-  });
-
 function pone(pos, accion) {
-  let linea = $(pos).closest("tr");
+  linea = $(pos).closest("tr");
   originalNombreCoordinacion = $(linea).find("td:eq(0)").text();
   originalHoraDescarga = $(linea).find("td:eq(1)").text();
 
-  let modalHeader = $("#modal1 .modal-header");
-  let modalTitle = $("#modal1 .modal-title");
-  let procesoBtn = $("#proceso");
-
-  if (accion === 0) {
-    modalTitle.text("Formulario de Modificación de Coordinación");
-    procesoBtn.text("MODIFICAR");
-    procesoBtn.removeClass("btn-danger").addClass("btn-primary");
-
+  if (accion == 0) {
+    $("#proceso").text("MODIFICAR");
     $("#coordinacionNombre").prop("disabled", false);
-    procesoBtn.prop("disabled", true);
-    $("#scoordinacionNombre")
-      .text("Realice un cambio para poder modificar.")
-      .show();
+    $("#coordinacionHoraDescarga").prop("disabled", false);
+    $("#scoordinacionNombre").text("").show();
+    $("#scoordinacionHoraDescarga").text("").show();
+    $("#proceso").prop("disabled", true);
   } else {
-    modalTitle.text("Confirmar Eliminación de Coordinación");
-    procesoBtn.text("ELIMINAR");
-
-    $("#coordinacionNombre").prop("disabled", true);
-    procesoBtn.prop("disabled", false);
-  }
-
-  $("#coordinacionNombre").val(originalNombreCoordinacion);
-  $("#coordinacionHoraDescarga").val(originalHoraDescarga);
-
-  if (accion !== 0) {
+    $("#proceso").text("ELIMINAR");
+    $("#coordinacionNombre, #coordinacionHoraDescarga").prop("disabled", true);
     $("#scoordinacionNombre").hide();
+    $("#scoordinacionHoraDescarga").hide();
   }
+  $("#coordinacionNombre").val($(linea).find("td:eq(0)").text());
+  $("#coordinacionHoraDescarga").val($(linea).find("td:eq(1)").text());
+
   $("#modal1").modal("show");
 }
 
@@ -331,22 +334,4 @@ function limpia() {
   $("#proceso").prop("disabled", false);
   originalNombreCoordinacion = "";
   originalHoraDescarga = null;
-}
-
-function validarkeypress(er, e) {
-  let key = e.keyCode || e.which;
-  let teclado = String.fromCharCode(key);
-  if (!er.test(teclado)) {
-    e.preventDefault();
-  }
-}
-
-function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
-  if (etiqueta.val() === "" || !er.test(etiqueta.val())) {
-    etiquetamensaje.text(mensaje).show();
-    return false;
-  } else {
-    etiquetamensaje.hide().text("");
-    return true;
-  }
 }
