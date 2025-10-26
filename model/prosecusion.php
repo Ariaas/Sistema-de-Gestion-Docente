@@ -34,11 +34,21 @@ class Prosecusion extends Connection
     public function VerificarEstado()
     {
         $co = $this->Con();
-        $r = ['anio_activo_existe' => false];
+        $r = ['anio_activo_existe' => false, 'anio_activo' => null, 'anio_destino_existe' => false];
         try {
-            $stmtAnio = $co->query("SELECT COUNT(*) FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1");
-            if ($stmtAnio->fetchColumn() > 0) {
+            $stmtAnio = $co->query("SELECT ani_anio FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1");
+            $anio_activo = $stmtAnio->fetchColumn();
+
+            if ($anio_activo) {
                 $r['anio_activo_existe'] = true;
+                $r['anio_activo'] = intval($anio_activo);
+
+                $anio_destino = intval($anio_activo) + 1;
+                $stmtDestino = $co->prepare("SELECT COUNT(*) FROM tbl_anio WHERE ani_anio = ? AND ani_estado = 1");
+                $stmtDestino->execute([$anio_destino]);
+                if ($stmtDestino->fetchColumn() > 0) {
+                    $r['anio_destino_existe'] = true;
+                }
             }
         } catch (Exception $e) {
             $r['resultado'] = 'error';
@@ -75,7 +85,7 @@ class Prosecusion extends Connection
             $stmt2 = $co->prepare("
                 SELECT s.sec_codigo, a.ani_anio
                 FROM tbl_seccion s
-                INNER JOIN tbl_anio a ON s.ani_anio = a.ani_anio AND s.ani_tipo = a.ani_tipo
+                INNER JOIN tbl_anio a ON s.ani_anio = a.ani_anio
                 WHERE a.ani_anio = ? 
                   AND s.sec_estado = 1 
                   AND a.ani_tipo != 'intensivo'
@@ -126,7 +136,7 @@ class Prosecusion extends Connection
             $stmtDestino = $co->prepare("
                 SELECT s.sec_codigo 
                 FROM tbl_seccion s
-                INNER JOIN tbl_anio a ON s.ani_anio = a.ani_anio AND s.ani_tipo = a.ani_tipo
+                INNER JOIN tbl_anio a ON s.ani_anio = a.ani_anio
                 WHERE s.sec_codigo = ?
                   AND a.ani_anio = ?
                   AND s.sec_estado = 1
@@ -139,7 +149,6 @@ class Prosecusion extends Connection
                 $r['existe'] = true;
                 $r['seccion_destino'] = $seccionDestinoCodigo;
             }
-
         } catch (Exception $e) {
             $r['error'] = $e->getMessage();
         } finally {
@@ -204,52 +213,41 @@ class Prosecusion extends Connection
         }
 
         $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = ['resultado' => 'error', 'mensaje' => ''];
 
-        $calculo = $this->calcularCantidadProsecusion($seccionOrigenCodigo);
-        if (!$calculo['puede_prosecusionar']) {
-            return ['resultado' => 'error', 'mensaje' => $calculo['mensaje']];
-        }
-
-        if ($cantidad > $calculo['cantidad_disponible']) {
-            return ['resultado' => 'error', 'mensaje' => "Solo hay {$calculo['cantidad_disponible']} estudiantes disponibles para prosecusionar."];
-        }
-
-        if ($seccionDestinoCodigo === null) {
-            $stmtOrigen = $co->prepare("SELECT ani_anio FROM tbl_seccion WHERE sec_codigo = ?");
-            $stmtOrigen->execute([$seccionOrigenCodigo]);
-            $origenAnio = $stmtOrigen->fetchColumn();
-
-            if (!$origenAnio) {
-                return ['resultado' => 'error', 'mensaje' => 'Sección de origen no encontrada para prosecusión automática.'];
+        try {
+            if ($seccionDestinoCodigo === null) {
+                $primer_digito = substr($seccionOrigenCodigo, 0, 1);
+                $resto_codigo = substr($seccionOrigenCodigo, 1);
+                $nuevo_primer_digito = intval($primer_digito) + 1;
+                $seccionDestinoCodigo = $nuevo_primer_digito . $resto_codigo;
             }
 
-            $anioDestino = intval($origenAnio) + 1;
+            $stmtDestino = $co->prepare("SELECT sec_cantidad, ani_anio FROM tbl_seccion WHERE sec_codigo = ? AND sec_estado = 1");
+            $stmtDestino->execute([$seccionDestinoCodigo]);
+            $destino = $stmtDestino->fetch(PDO::FETCH_ASSOC);
 
-            $primer_digito = substr($seccionOrigenCodigo, 0, 1);
-            $resto_codigo = substr($seccionOrigenCodigo, 1);
-            $nuevo_primer_digito = intval($primer_digito) + 1;
-            $seccionDestinoCodigo = $nuevo_primer_digito . $resto_codigo;
+            if (!$destino) {
+                return ['resultado' => 'error', 'mensaje' => "La sección destino '{$seccionDestinoCodigo}' no existe o no está activa. No se puede realizar la prosecusión."];
+            }
+
+            $cantidadDestinoActual = (int)$destino['sec_cantidad'];
+            $nuevaCantidadTotal = $cantidadDestinoActual + $cantidad;
+
+            if ($nuevaCantidadTotal > 45 && !$confirmarExceso) {
+                return [
+                    'resultado' => 'confirmacion_requerida',
+                    'mensaje' => "La sección destino {$seccionDestinoCodigo} tendrá {$nuevaCantidadTotal} estudiantes, superando el límite de 45. ¿Está seguro de que desea continuar?"
+                ];
+            }
+
+            return $this->ProsecusionSeccion($seccionOrigenCodigo, $seccionDestinoCodigo, $cantidad);
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => 'Error: ' . $e->getMessage()];
+        } finally {
+            $co = null;
         }
-
-        $stmtDestino = $co->prepare("SELECT sec_cantidad, ani_anio FROM tbl_seccion WHERE sec_codigo = ? AND sec_estado = 1");
-        $stmtDestino->execute([$seccionDestinoCodigo]);
-        $destino = $stmtDestino->fetch(PDO::FETCH_ASSOC);
-
-        if (!$destino) {
-            return ['resultado' => 'error', 'mensaje' => "La sección destino '{$seccionDestinoCodigo}' no existe o no está activa. No se puede realizar la prosecusión."];
-        }
-        
-        $cantidadDestinoActual = (int)$destino['sec_cantidad'];
-        $nuevaCantidadTotal = $cantidadDestinoActual + $cantidad;
-
-        if ($nuevaCantidadTotal > 45 && !$confirmarExceso) {
-            return [
-                'resultado' => 'confirmacion_requerida',
-                'mensaje' => "La sección destino {$seccionDestinoCodigo} tendrá {$nuevaCantidadTotal} estudiantes, superando el límite de 45. ¿Está seguro de que desea continuar?"
-            ];
-        }
-
-        return $this->ProsecusionSeccion($seccionOrigenCodigo, $seccionDestinoCodigo, $cantidad);
     }
 
     public function ProsecusionSeccion($seccionOrigenCodigo, $seccionDestinoCodigo, $cantidadFinal)
@@ -363,7 +361,7 @@ class Prosecusion extends Connection
             $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $data = array_map(function($item) {
+            $data = array_map(function ($item) {
                 $item['cantidad_disponible'] = $item['sec_cantidad'] - $item['cantidad_prosecusionada'];
                 return $item;
             }, $data);
@@ -389,7 +387,7 @@ class Prosecusion extends Connection
         }
 
         $partes = explode('-', $this->pro_id);
-        
+
         if (count($partes) < 4) {
             return ['resultado' => 'error', 'mensaje' => 'Formato de ID inválido.'];
         }

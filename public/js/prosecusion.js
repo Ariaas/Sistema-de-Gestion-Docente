@@ -80,16 +80,17 @@ function verificarRequisitosIniciales() {
         let warning = "";
         const prosecusionBtn = $("#btnProsecusion");
 
-        if (prosecusionBtn.is(':disabled') && !prosecusionBtn.attr('title')) {
-          warning = "No tiene permisos para realizar una prosecusión.";
-        }
-
-        if (warning) {
+        if (!lee.anio_destino_existe && lee.anio_activo_existe) {
+          warning = "No existe el año " + (lee.anio_activo + 1) + " en el sistema. Cree el año antes de realizar una prosecusión.";
           prosecusionBtn.prop("disabled", true).attr("title", warning);
-          $("#prosecusion-warning").text(warning);
+          $("#prosecusion-warning").text(warning).show();
+        } else if (prosecusionBtn.is(':disabled') && !prosecusionBtn.attr('title')) {
+          warning = "No tiene permisos para realizar una prosecusión.";
+          prosecusionBtn.prop("disabled", true).attr("title", warning);
+          $("#prosecusion-warning").text(warning).show();
         } else {
           prosecusionBtn.prop("disabled", false).attr("title", "");
-          $("#prosecusion-warning").text("");
+          $("#prosecusion-warning").text("").hide();
         }
       } catch (e) {
         console.error("Error al procesar la respuesta de verificación:", e, respuesta);
@@ -253,16 +254,26 @@ function enviaAjax(datos) {
             cancelButtonText: 'Cancelar'
           }).then((result) => {
             if (result.isConfirmed) {
-              datos.append('confirmar_exceso', 'true');
+              const tipo = $("#tipoProsecusion").val();
+              const seccionOrigenCodigo = $("#origenProsecusion").val();
+              const cantidad = $("#cantidadProsecusion").val();
+              let datos = new FormData();
+              datos.append("accion", "prosecusion");
+              datos.append("seccionOrigenCodigo", seccionOrigenCodigo);
+              datos.append("cantidad", cantidad);
+              datos.append("confirmarExceso", true);
+
+              if (tipo === "manual") {
+                const destinoCodigo = $("#destinoManual").val();
+                datos.append("seccionDestinoCodigo", destinoCodigo);
+              }
               enviaAjax(datos);
             }
           });
-        } else if (lee.resultado == "error") {
-          muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
         }
       } catch (e) {
-        console.error("Error en análisis JSON:", e, respuesta);
-        alert("Error en JSON " + e.name + ": " + e.message + "\nRespuesta: " + respuesta);
+        console.error("Error al procesar respuesta AJAX:", e, respuesta);
+        muestraMensaje("error", 3000, "ERROR", "Error procesando respuesta del servidor");
       }
     },
     error: function (request, status, err) {
@@ -333,11 +344,12 @@ $(document).on("click", "#btnProsecusion", function () {
           const disponible = item.sec_cantidad - (item.cantidad_prosecusionada || 0);
           $select.append(`<option value="${item.sec_codigo}">${item.sec_codigo} (${item.ani_anio}) - ${disponible} estudiantes disponibles</option>`);
         });
-        $("#confirmarProsecusion").prop("disabled", true); 
+        $("#confirmarProsecusion").prop("disabled", true);
       } else {
         $select.append('<option value="">No hay secciones disponibles</option>');
         $("#cantidadProsecusion").val(0);
         $("#confirmarProsecusion").prop("disabled", true);
+        $select.after(`<div id="mensaje-sin-secciones" class="text-danger mt-2" style="font-size: 0.875em;">No hay secciones válidas para prosecusionar. Todas las secciones tienen 0 estudiantes.</div>`);
       }
 
       $select.select2({
