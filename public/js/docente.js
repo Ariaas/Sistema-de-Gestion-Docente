@@ -43,14 +43,9 @@ $(document).ready(function() {
         if (step === 1) {
             $('#step1-docente').show();
             const accion = $('#accion').val();
-            if (accion === 'desactivar') {
-                footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
-                footer.append('<button type="button" class="btn btn-danger" id="btn-desactivar">DESACTIVAR</button>');
-            } else {
-                modalTitle.text(accion === 'incluir' ? "Paso 1: Datos Personales" : "Paso 1: Modificar Datos Personales");
-                footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
-                footer.append('<button type="button" class="btn btn-primary" id="btn-next-1">SIGUIENTE</button>');
-            }
+            modalTitle.text(accion === 'incluir' ? "Paso 1: Datos Personales" : "Paso 1: Modificar Datos Personales");
+            footer.append('<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>');
+            footer.append('<button type="button" class="btn btn-primary" id="btn-next-1">SIGUIENTE</button>');
         } else if (step === 2) {
             $('#step2-academico').show();
             modalTitle.text("Paso 2: Datos Académicos");
@@ -90,13 +85,6 @@ $(document).ready(function() {
     
     $(document).on('click', '#btn-prev-2', function() { setModalStep(1); });
     $(document).on('click', '#btn-prev-3', function() { setModalStep(2); });
-
-    $(document).on('click', '#btn-desactivar', function() {
-        const datos = new FormData();
-        datos.append("accion", "eliminar");
-        datos.append("cedulaDocente", $('#cedulaDocente').val());
-        enviaAjax(datos);
-    });
 
     $(document).on('click', '#btn-final-submit', function() {
         cachedTeacherData = new FormData($('#f')[0]);
@@ -465,28 +453,45 @@ $(document).ready(function() {
 
 
     function pone(pos, accion) {
-        limpia();
-        $("#accion").val(accion);
         const fila = $(pos).closest("tr");
-
         const cedulaCompleta = fila.find("td:eq(0)").text().trim();
         const [prefijo, cedula] = cedulaCompleta.split('-');
+        
+        if (accion === 'desactivar') {
+            // Desactivar directamente sin abrir modal
+            Swal.fire({
+                title: '¿Está seguro de desactivar este docente?',
+                text: `Docente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, desactivar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const datos = new FormData();
+                    datos.append("accion", "eliminar");
+                    datos.append("cedulaDocente", cedula);
+                    enviaAjax(datos);
+                }
+            });
+            return;
+        }
+        
+        // Para modificar
+        limpia();
+        $("#accion").val(accion);
         
         $("#prefijoCedula").val(prefijo);
         $("#cedulaDocente").val(cedula);
         
-        if (accion === 'desactivar') {
-            $("#modal-title").text(`Desactivar Docente - ${prefijo}-${cedula}`);
-            $("form#f :input").prop('disabled', true);
-            $("#proceso").text("DESACTIVAR");
-        } else {
-            $("#modal-title").text(`Modificar Docente - ${prefijo}-${cedula}`);
-            $("#prefijoCedula").closest('.col-md-2').hide();
-            $("#cedulaDocente").closest('.col-md-4').hide();
-            
-            $("form#f :input").prop('disabled', false);
-            $("#cedulaDocente").prop('disabled', true);
-        }
+        $("#modal-title").text(`Modificar Docente - ${prefijo}-${cedula}`);
+        $("#prefijoCedula").closest('.col-md-2').hide();
+        $("#cedulaDocente").closest('.col-md-4').hide();
+        
+        $("form#f :input").prop('disabled', false);
+        $("#cedulaDocente").prop('disabled', true);
         
         $("#apellidoDocente").val(fila.find("td:eq(1)").text().trim());
         $("#nombreDocente").val(fila.find("td:eq(2)").text().trim());
