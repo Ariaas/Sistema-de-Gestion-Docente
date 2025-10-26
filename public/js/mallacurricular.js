@@ -58,22 +58,37 @@ function crearDT(selector = "#tablamalla", config = {}) {
 }
 
 function gestionarBotonGuardar() {
-    let haySeleccionados = false;
-    let todoValido = true;
-    $('#contenedorAcordeonUC tbody tr').each(function() {
-        haySeleccionados = true;
-        $(this).find('.horas-input').each(function() {
-            const valor = $(this).val();
-            if (valor === null || valor.trim() === '' || valorNum === 0) {
-                todoValido = false;
-            }
-        });
-    });
-    if (haySeleccionados && todoValido) {
-        $("#proceso").prop('disabled', false);
-    } else {
-        $("#proceso").prop('disabled', true);
+ let todoValido = true;
+
+ const trayectosRequeridos = ['0', '1', '2', '3', '4'];
+ const trayectosSeleccionados = new Set();
+ $('#contenedorAcordeonUC tbody tr').each(function() {
+  trayectosSeleccionados.add($(this).data('trayecto').toString());
+ });
+ const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
+ if (trayectosFaltantes.length > 0) {
+  todoValido = false;
+ }
+
+ 
+ if (todoValido) { 
+  $('#contenedorAcordeonUC tbody tr').each(function() {
+   $(this).find('.horas-input').each(function() {
+    const valorTrim = $(this).val().trim();
+    const valorNum = parseInt(valorTrim, 10);
+    if (valorTrim === '' || isNaN(valorNum) || valorNum === 0) {
+     todoValido = false;
+     return false; 
     }
+   });
+   if (!todoValido) {
+    return false; 
+   }
+  });
+ }
+ 
+
+ $("#proceso").prop('disabled', !todoValido);
 }
 
 function actualizarSelectUC() {
@@ -122,30 +137,58 @@ function obtenerEstadoActualUCs() {
 }
 
 function verificarCambiosParaModificar() {
-    if (cargandoUnidades) return;
-    if ($("#accion").val() !== 'modificar' || !estadoInicialModificar) {
-        return;
-    }
-    const estadoActual = {
-        codigo: $("#mal_codigo").val(),
-        nombre: $("#mal_nombre").val(),
-        cohorte: $("#mal_cohorte").val(),
-        descripcion: $("#mal_descripcion").val(),
-        unidades: obtenerEstadoActualUCs()
-    };
-    const haCambiado = JSON.stringify(estadoInicialModificar) !== JSON.stringify(estadoActual);
-    let todoValido = true;
-    if (haCambiado) {
-        if ($("#mal_codigo").hasClass('is-invalid') || $("#mal_codigo").val().trim() === '') {
-            todoValido = false;
-        }
-        estadoActual.unidades.forEach(uc => {
-            if (uc.hora_independiente === null || uc.hora_asistida === null || uc.hora_academica === null) {
-                todoValido = false;
+ if (cargandoUnidades) return;
+ if ($("#accion").val() !== 'modificar' || !estadoInicialModificar) {
+  return;
+ }
+
+ 
+ const estadoActual = {
+  codigo: $("#mal_codigo").val(),
+  nombre: $("#mal_nombre").val(),
+  cohorte: $("#mal_cohorte").val(),
+  descripcion: $("#mal_descripcion").val(),
+  unidades: obtenerEstadoActualUCs()
+ };
+ const haCambiado = JSON.stringify(estadoInicialModificar) !== JSON.stringify(estadoActual);
+
+ 
+ const pagina1Valida = validarPagina1();
+ 
+let pagina2Valida = true;
+const trayectosRequeridos = ['0', '1', '2', '3', '4'];
+const trayectosSeleccionados = new Set();
+
+$('#contenedorAcordeonUC tbody tr').each(function() {
+  trayectosSeleccionados.add($(this).data('trayecto').toString());
+ });
+ const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
+
+ if (trayectosFaltantes.length > 0) {
+  pagina2Valida = false;
+ }
+
+ if (pagina2Valida) {
+    $('#contenedorAcordeonUC tbody tr').each(function() {
+        $(this).find('.horas-input').each(function() {
+        const valorTrim = $(this).val().trim();
+        const valorNum = parseInt(valorTrim, 10);
+        
+        if (valorTrim === '' || isNaN(valorNum) || valorNum === 0) {
+        pagina2Valida = false;
+        return false; 
             }
-        });
-    }
-    $("#proceso").prop('disabled', !haCambiado || !todoValido);
+            });
+if (!pagina2Valida) {
+     return false; 
+   }
+  });
+ }
+
+ const todoValido = pagina1Valida && pagina2Valida;
+
+
+ $("#proceso").prop('disabled', !haCambiado || !todoValido);
 }
 
 
