@@ -477,7 +477,7 @@ function pone(pos, accion) {
           var lee = JSON.parse(respuesta);
           let titulo = "¿Está seguro de desactivar esta unidad curricular?";
           let texto =
-            "Esta acción puede desactivar la unidad curricular y ocultarla de la lista principal.";
+            "";
 
           if (lee.resultado === "en_horario") {
             titulo = "¡Atención!";

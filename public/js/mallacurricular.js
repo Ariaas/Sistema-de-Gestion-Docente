@@ -598,7 +598,7 @@ function pone(pos, accionBtn) {
     } else if (accionBtn === 1) {
         Swal.fire({
             title: '¿Está seguro de desactivar esta malla?',
-            text: 'Esta acción puede desactivar la malla y ocultarla de la lista principal.',
+            text: '',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
