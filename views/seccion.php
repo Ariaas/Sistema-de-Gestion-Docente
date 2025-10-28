@@ -359,7 +359,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     </script>
     <?php require_once("public/components/footer.php"); ?>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="public/js/seccion.js?v=FINAL"></script>
+    <script src="public/js/seccion.js?v=ULTIMO_DIGITO_FIX"></script>
 </body>
 
 </html>

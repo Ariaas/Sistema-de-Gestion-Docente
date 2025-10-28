@@ -639,11 +639,13 @@ if ($anio_activo) {
                 list($anio_anio, $anio_tipo) = explode('|', $anioCompuesto . '|');
                 $codigoSeccion = $_POST['codigoSeccion'] ?? null;
                 $cantidadSeccion = $_POST['cantidadSeccion'] ?? null;
+                $forzar_cohorte = isset($_POST['forzar_cohorte']) && $_POST['forzar_cohorte'] === 'true';
                 $respuesta = $o->RegistrarSeccion(
                     $codigoSeccion,
                     $cantidadSeccion,
                     $anio_anio,
-                    $anio_tipo
+                    $anio_tipo,
+                    $forzar_cohorte
                 );
                 break;
 

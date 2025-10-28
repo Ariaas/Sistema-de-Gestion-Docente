@@ -377,7 +377,7 @@ $this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
     }
 }
     
-public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo)
+public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo, $forzar_cohorte = false)
 {
     if (empty($codigoSeccion) || !isset($cantidadSeccion) || $cantidadSeccion === '' || empty($anio_anio) || empty($anio_tipo)) {
         return ['resultado' => 'error', 'mensaje' => 'Todos los campos de la sección son obligatorios.'];
@@ -391,14 +391,20 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     $numericPart = preg_replace('/^\D+/', '', $codigoSeccion);
     $codigoSeccion = $prefix . $numericPart;
     
-    // Validar que exista la Cohorte 3 activa (requerida para todas las secciones)
-    $co = $this->Con();
-    $stmt_malla = $co->prepare("SELECT mal_codigo, mal_nombre FROM tbl_malla WHERE mal_cohorte = 3 AND mal_activa = 1");
-    $stmt_malla->execute();
-    $malla_cohorte3 = $stmt_malla->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$malla_cohorte3) {
-        return ['resultado' => 'error', 'mensaje' => "No se puede crear la sección. La Cohorte 3 debe estar creada y activa en la malla para poder registrar secciones."];
+    // Validar que exista la cohorte correspondiente al último dígito
+    if (!$forzar_cohorte) {
+        $numeroCohorte = (int)substr($numericPart, -1);
+        $co = $this->Con();
+        $stmt_malla = $co->prepare("SELECT mal_codigo, mal_nombre FROM tbl_malla WHERE mal_cohorte = :cohorte AND mal_activa = 1");
+        $stmt_malla->execute([':cohorte' => $numeroCohorte]);
+        $malla = $stmt_malla->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$malla) {
+            return [
+                'resultado' => 'confirmar_cohorte',
+                'mensaje' => "<b>Advertencia:</b> La Cohorte {$numeroCohorte} no está creada o no está activa en la malla.<br/><br/>¿Desea registrar la sección de todas formas?"
+            ];
+        }
     }
 
     $cantidadInt = filter_var($cantidadSeccion, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 99]]);

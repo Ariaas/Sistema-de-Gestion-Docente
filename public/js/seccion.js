@@ -1162,6 +1162,22 @@ function enviaAjax(datos, boton) {
                             enviaAjax(datos, boton);
                         }
                     });
+                } else if (respuesta.resultado === 'confirmar_cohorte') {
+                    Swal.fire({
+                        title: 'Confirmación Requerida',
+                        html: respuesta.mensaje,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Sí, Crear',
+                        cancelButtonText: 'No, Corregir'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            datos.append("forzar_cohorte", "true");
+                            enviaAjax(datos, boton);
+                        }
+                    });
                 } else if (respuesta.resultado == "consultar_agrupado") {
                     destruyeDT();
                     $("#resultadoconsulta").empty();
@@ -1525,13 +1541,13 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
          return;
     }
     
-    
-    
-    let cohorte3Valida = false;
+    // Validar que exista la cohorte correspondiente al último dígito (advertencia, no bloquea)
+    const ultimoDigito = parseInt(numericPart.charAt(3));
+    let cohorteExiste = false;
     
     const datosMalla = new FormData();
     datosMalla.append("accion", "verificar_malla");
-    datosMalla.append("numeroMalla", 3); 
+    datosMalla.append("numeroMalla", ultimoDigito);
     
     $.ajax({
         url: "",
@@ -1542,15 +1558,14 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
         async: false,
         success: function(respuestaMalla) {
             if (respuestaMalla.resultado === 'ok') {
-                cohorte3Valida = respuestaMalla.existe;
+                cohorteExiste = respuestaMalla.existe;
             }
         }
     });
     
-    if (!cohorte3Valida) {
-        alertaCodigo.html(`<strong>No se puede crear la sección.</strong> La Cohorte 3 debe estar creada y activa en la malla.`).show();
-        guardarBtn.prop('disabled', true);
-        return;
+    if (!cohorteExiste) {
+        alertaCodigo.html(`<strong>Cohorte no encontrada.</strong> No existe la Cohorte ${ultimoDigito} creada en la malla. `).show();
+        // No retornamos, permitimos continuar
     }
     
     const datos = new FormData();
@@ -1568,10 +1583,15 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
             if (respuesta.resultado === 'ok') {
                 if(respuesta.existe) {
                     alertaCodigo.html(`<strong>Código no disponible.</strong> Ya existe una sección con este código para el año seleccionado.`).show();
+                    guardarBtn.prop('disabled', true);
                 } else {
-                    alertaCodigo.hide();
+                    // Si no existe el código, habilitar el botón (incluso si la Cohorte 3 no existe)
                     if (cantidadInput.val() !== '') {
                         guardarBtn.prop('disabled', false);
+                    }
+                    // Si la Cohorte 3 no existe, mantener la alerta pero permitir continuar
+                    if (cohorte3Existe) {
+                        alertaCodigo.hide();
                     }
                 }
             } else {
@@ -1587,8 +1607,9 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
     codigoInput.on('keyup', validarCodigoSeccion);
     anioInput.on('change', validarCodigoSeccion);
     cantidadInput.on('keyup', function() {
-        if (!alertaCodigo.is(':visible') && codigoInput.val() && anioInput.val() && cantidadInput.val() !== '') {
-             guardarBtn.prop('disabled', false);
+        // Habilitar botón si hay código, año y cantidad (la validación de código ya se encarga del resto)
+        if (codigoInput.val() && anioInput.val() && cantidadInput.val() !== '') {
+            validarCodigoSeccion();
         } else {
              guardarBtn.prop('disabled', true);
         }
