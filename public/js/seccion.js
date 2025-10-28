@@ -583,7 +583,7 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
                 <select class="form-select" id="modalSeleccionarEspacio" style="width: 100%;"></select>
                 <div id="espacio-conflicto-info" class="form-text text-danger mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-primary">${esEdicion ? 'GUARDAR CAMBIOS' : 'Añadir Subgrupo'}</button>
+            <button type="submit" class="btn btn-primary">${esEdicion ? 'GUARDAR CAMBIOS' : 'AÑADIR SUBGRUPO'}</button>
             ${mostrarBotonVolver ? '<button type="button" class="btn btn-secondary" id="btn-volver-a-lista">VOLVER A LA LISTA</button>' : ''}
         </form>
     `;

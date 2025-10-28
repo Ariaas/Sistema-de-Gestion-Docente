@@ -129,7 +129,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
         </div>
 
-      <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario">
+      <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
