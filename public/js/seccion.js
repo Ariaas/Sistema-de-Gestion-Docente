@@ -441,14 +441,7 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
     const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
     let maxBloques = 0;
     if (indiceInicio !== -1) {
-        maxBloques = 1;
-        for (let i = indiceInicio; i < bloquesDeLaTablaActual.length - 1; i++) {
-            if (bloquesDeLaTablaActual[i].tur_horafin === bloquesDeLaTablaActual[i + 1].tur_horainicio) {
-                maxBloques++;
-            } else {
-                break;
-            }
-        }
+        maxBloques = bloquesDeLaTablaActual.length - indiceInicio;
     }
 
     let opcionesDuracion = '';
@@ -1713,11 +1706,12 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                 const startIndex = bloquesParaEstaTabla.findIndex(b => b.tur_horainicio === clase.hora_inicio);
                 let span = 1;
                 if (startIndex > -1) {
-                    let currentEndTime = bloquesParaEstaTabla[startIndex].tur_horafin;
                     for (let i = startIndex + 1; i < bloquesParaEstaTabla.length; i++) {
-                        if (currentEndTime === bloquesParaEstaTabla[i].tur_horainicio && bloquesParaEstaTabla[i].tur_horafin <= clase.hora_fin) {
+                        if (bloquesParaEstaTabla[i].tur_horafin <= clase.hora_fin) {
                             span++;
-                            currentEndTime = bloquesParaEstaTabla[i].tur_horafin;
+                        } else if (bloquesParaEstaTabla[i].tur_horainicio < clase.hora_fin) {
+                            span++;
+                            break;
                         } else {
                             break;
                         }
@@ -2000,12 +1994,6 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
 
                         if (newEndIndex >= bloquesDeLaTablaActual.length) {
                             newSpan = 1; newHoraFin = nuevoFin;
-                        } else {
-                            for (let i = newStartIndex; i < newEndIndex; i++) {
-                                if (bloquesDeLaTablaActual[i].tur_horafin !== bloquesDeLaTablaActual[i+1].tur_horainicio) {
-                                    newSpan = 1; newHoraFin = nuevoFin; break;
-                                }
-                            }
                         }
                         
                         return { ...v, data: { ...v.data, hora_inicio: nuevoInicio, hora_fin: newHoraFin, bloques_span: newSpan }};
