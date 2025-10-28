@@ -705,6 +705,7 @@ function validarBloqueEnTiempoReal() {
     datosValidacion.append("espacio", $("#modalSeleccionarEspacio").val());
     datosValidacion.append("dia", diaNombre);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
+    datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
     datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
     datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
     
@@ -804,6 +805,7 @@ function guardarClase() {
     datosValidacion.append("espacio", espVal);
     datosValidacion.append("dia", diaNombre);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
+    datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
     datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
     datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
 

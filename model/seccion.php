@@ -500,22 +500,30 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         }
     }
     
- public function ValidarClaseEnVivo($doc_cedula, $uc_codigo, $espacio, $dia, $hora_inicio, $hora_fin, $sec_codigo)
+ public function ValidarClaseEnVivo($doc_cedula, $uc_codigo, $espacio, $dia, $hora_inicio, $hora_fin, $sec_codigo, $ani_anio = null)
 {
     $co = $this->Con();
     $conflictos = [];
 
+    if ($ani_anio === null) {
+        $stmt_anio = $co->prepare("SELECT ani_anio FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 LIMIT 1");
+        $stmt_anio->execute();
+        $ani_anio = $stmt_anio->fetchColumn();
+        if (!$ani_anio) {
+            return ['conflicto' => false];
+        }
+    }
    
-    $stmt_grupo = $co->prepare("SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = ?");
-    $stmt_grupo->execute([$sec_codigo]);
+    $stmt_grupo = $co->prepare("SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = ? AND ani_anio = ?");
+    $stmt_grupo->execute([$sec_codigo, $ani_anio]);
     $grupo_id = $stmt_grupo->fetchColumn();
 
     $secciones_a_excluir = [$sec_codigo]; 
 
    
     if ($grupo_id) {
-        $stmt_secciones_grupo = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = ?");
-        $stmt_secciones_grupo->execute([$grupo_id]);
+        $stmt_secciones_grupo = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = ? AND ani_anio = ?");
+        $stmt_secciones_grupo->execute([$grupo_id, $ani_anio]);
         $secciones_hermanas = $stmt_secciones_grupo->fetchAll(PDO::FETCH_COLUMN);
         $secciones_a_excluir = array_unique(array_merge($secciones_a_excluir, $secciones_hermanas));
     }
@@ -527,14 +535,19 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         
         $sql_doc = "SELECT uh.sec_codigo, d.doc_nombre, d.doc_apellido
                     FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
                     JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
-                    WHERE s.sec_estado = 1 AND uh.doc_cedula = ? AND uh.sec_codigo NOT IN ($placeholders_exclusion)
-                    AND uh.hor_dia = ? AND uh.hor_horainicio < ? AND uh.hor_horafin > ?";
+                    WHERE s.sec_estado = 1 
+                    AND uh.ani_anio = ?
+                    AND uh.doc_cedula = ? 
+                    AND uh.sec_codigo NOT IN ($placeholders_exclusion)
+                    AND uh.hor_dia = ? 
+                    AND uh.hor_horainicio < ? 
+                    AND uh.hor_horafin > ?";
         
         $stmt_doc = $co->prepare($sql_doc);
        
-        $params_doc = array_merge([$doc_cedula], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
+        $params_doc = array_merge([$ani_anio, $doc_cedula], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
         $stmt_doc->execute($params_doc);
         
         $conflictos_docente = $stmt_doc->fetchAll(PDO::FETCH_ASSOC);
@@ -550,14 +563,21 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         
         $sql_esp = "SELECT uh.sec_codigo, d.doc_nombre, d.doc_apellido
                     FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
                     LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
-                    WHERE s.sec_estado = 1 AND uh.esp_numero = ? AND uh.esp_tipo = ? AND uh.esp_edificio = ?
-                    AND uh.sec_codigo NOT IN ($placeholders_exclusion) AND uh.hor_dia = ? AND uh.hor_horainicio < ? AND uh.hor_horafin > ?";
+                    WHERE s.sec_estado = 1 
+                    AND uh.ani_anio = ?
+                    AND uh.esp_numero = ? 
+                    AND uh.esp_tipo = ? 
+                    AND uh.esp_edificio = ?
+                    AND uh.sec_codigo NOT IN ($placeholders_exclusion) 
+                    AND uh.hor_dia = ? 
+                    AND uh.hor_horainicio < ? 
+                    AND uh.hor_horafin > ?";
 
         $stmt_esp = $co->prepare($sql_esp);
         
-        $params_esp = array_merge([$espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
+        $params_esp = array_merge([$ani_anio, $espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
         $stmt_esp->execute($params_esp);
         $conflicto_espacio = $stmt_esp->fetch(PDO::FETCH_ASSOC);
 
