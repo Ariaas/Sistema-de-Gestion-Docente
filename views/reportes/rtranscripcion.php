@@ -37,9 +37,9 @@ if (!$puede_registrar) {
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php");  ?>
     <title>Reporte de Transcripción</title>
-     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
-    
+
 </head>
 
 <body>
@@ -79,7 +79,7 @@ if (!$puede_registrar) {
                         <div class="row">
                             <div class="col-12 text-center">
                                 <button type="submit" class="btn btn-success btn-lg px-5" name="generar_transcripcion" id="generar_transcripcion_btn">
-                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte EXCEL
+                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
                                 </button>
                             </div>
                         </div>
@@ -90,8 +90,8 @@ if (!$puede_registrar) {
     </main>
     <?php require_once("public/components/footer.php");  ?>
 </body>
-  <script type="text/javascript" src="public/js/validacion.js"></script>
-    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
+<script type="text/javascript" src="public/js/validacion.js"></script>
+<script src="vendor/select2/select2/dist/js/select2.min.js"></script>
 <script src="public/js/rtranscripcion.js"></script>
 
 </html>

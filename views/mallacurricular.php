@@ -70,19 +70,21 @@ if (!$puede_registrar && !$puede_modificar) {
 
             <div class="datatable-ui w-100" id="tablaMallaPrincipalContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
 
-                <table class="table table-striped table-hover w-100" id="tablamalla">
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Nombre</th>
-                            <th>Cohorte</th>
-                            <th>Descripción</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultadoconsulta"></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover w-100" id="tablamalla">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Cohorte</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultadoconsulta"></tbody>
+                    </table>
+                </div>
 
             </div>
         </section>

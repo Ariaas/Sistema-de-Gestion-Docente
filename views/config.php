@@ -77,7 +77,7 @@ $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedu
                             <div class="icon-circle">
                                 <img src="public/assets/icons/building-solid.svg" alt="Gestionar Area">
                             </div>
-                            <h5>Gestionar Area</h5>
+                            <h5>Gestionar Área</h5>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -99,7 +99,7 @@ $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedu
                             <div class="icon-circle">
                                 <img src="public/assets/icons/folder-solid.svg" alt="Gestionar Eje">
                             </div>
-                            <h5>Gestionar Eje</h5>
+                            <h5>Gestionar Eje Integrador</h5>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -121,7 +121,7 @@ $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedu
                             <div class="icon-circle">
                                 <img src="public/assets/icons/folder-open-solid.svg" alt="Resguardar Notas">
                             </div>
-                            <h5>Resguardar Notas</h5>
+                            <h5>Cargar Notas Definitivas</h5>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -132,7 +132,7 @@ $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedu
                             <div class="icon-circle">
                                 <img src="public/assets/icons/book-solid.svg" alt="Gestionar Prosecución">
                             </div>
-                            <h5>Gestionar Prosecución</h5>
+                            <h5>Gestionar Prosecusión</h5>
                         </a>
                     </div>
                 <?php endif; ?>

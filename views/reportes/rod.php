@@ -1,4 +1,3 @@
-
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -32,15 +31,17 @@ if (!$puede_registrar) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
-    
+
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
 
     <title>Reporte de Organización Docente</title>
 </head>
+
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
@@ -79,7 +80,7 @@ if (!$puede_registrar) {
                         <div class="row">
                             <div class="col-12 text-center">
                                 <button type="submit" class="btn btn-success btn-lg px-5" name="generar_reporte_rod" id="generar_reporte_rod_btn">
-                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte EXCEL
+                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
                                 </button>
                             </div>
                         </div>
@@ -89,9 +90,10 @@ if (!$puede_registrar) {
         </div>
     </main>
     <?php require_once("public/components/footer.php"); ?>
-    
+
     <script type="text/javascript" src="public/js/validacion.js"></script>
     <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script src="public/js/rod.js"></script>
 </body>
+
 </html>

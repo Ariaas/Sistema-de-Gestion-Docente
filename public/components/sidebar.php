@@ -36,12 +36,19 @@ if (!function_exists('tiene_permiso_accion')) {
 
 
 $gestion_items = [
-    'Docentes' => 'docente',
-    'Espacio' => 'espacios',
-    'Seccion' => 'seccion',
-    'Unidad Curricular' => 'uc',
-    'Malla Curricular' => 'mallacurricular'
-    /* 'Horario Docente' => 'horariodocente'*/
+    'Gestionar Docente' => 'docente',
+    'Gestionar Espacio' => 'espacios',
+    'Gestionar Seccion' => 'seccion',
+    'Gestionar Unidad Curricular' => 'uc',
+    'Gestionar Malla Curricular' => 'mallacurricular'
+];
+
+$permisos_gestion = [
+    'Gestionar Docente' => 'Docentes',
+    'Gestionar Espacio' => 'Espacio',
+    'Gestionar Seccion' => 'Seccion',
+    'Gestionar Unidad Curricular' => 'Unidad Curricular',
+    'Gestionar Malla Curricular' => 'Malla Curricular'
 ];
 
 $reportes_estadisticos_items = [
@@ -58,8 +65,8 @@ $config_permisos = ['Coordinacion', 'Area', 'Categoria', 'Eje', 'Titulo', 'Notas
 $tiene_permiso_gestion = false;
 $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedula']);
 
-foreach (array_keys($gestion_items) as $permiso) {
-    if (tiene_permiso($permiso, $permisos)) {
+foreach ($permisos_gestion as $permiso_key) {
+    if (tiene_permiso($permiso_key, $permisos)) {
         $tiene_permiso_gestion = true;
         break;
     }
@@ -115,11 +122,11 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
 
                 <?php if ($tiene_permiso_gestion): ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle <?php echo is_active($paginas_gestion, $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gestión</a>
+                        <a class="nav-link dropdown-toggle <?php echo is_active($paginas_gestion, $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gestionar</a>
                         <ul class="dropdown-menu">
                             <?php foreach ($gestion_items as $nombre => $pagina): ?>
-                                <?php if (tiene_permiso($nombre, $permisos)): ?>
-                                    <li><a class="dropdown-item <?php echo is_active($pagina, $pagina_actual); ?>" href="?pagina=<?php echo $pagina; ?>"><?php echo $nombre === 'Unidad Curricular' ? 'Unidades C.' : $nombre; ?></a></li>
+                                <?php if (tiene_permiso($permisos_gestion[$nombre], $permisos)): ?>
+                                    <li><a class="dropdown-item <?php echo is_active($pagina, $pagina_actual); ?>" href="?pagina=<?php echo $pagina; ?>"><?php echo $nombre; ?></a></li>
                                 <?php endif; ?>
                             <?php endforeach; ?>
                         </ul>
@@ -128,12 +135,12 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
 
                 <?php if ($tiene_permiso_admin) : ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes', 'archivo'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administración</a>
+                        <a class="nav-link dropdown-toggle <?php echo is_active(['mantenimiento', 'config', 'reportes', 'archivo'], $pagina_actual); ?>" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administrar</a>
                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                             <?php if ($docente_asignado): ?>
                             <?php endif; ?>
                             <?php if ($tiene_permiso_config_subitem): ?>
-                                <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configuración</a></li>
+                                <li><a class="dropdown-item <?php echo is_active('config', $pagina_actual); ?>" href="?pagina=config">Configurar</a></li>
                             <?php endif; ?>
                             <?php if ($tiene_permiso_mantenimiento_subitem): ?>
                                 <li><a class="dropdown-item <?php echo is_active('mantenimiento', $pagina_actual); ?>" href="?pagina=mantenimiento">Mantenimiento</a></li>
@@ -144,10 +151,10 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
               
                  <?php if ($tiene_permiso_reportes_estadisticos): ?>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <?php echo is_active(['reportesnor', 'reportesesta'], $pagina_actual); ?>" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Reportes</a>
+                    <a class="nav-link dropdown-toggle <?php echo is_active(['reportesnor', 'reportesesta'], $pagina_actual); ?>" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gestionar Reportes</a>
                     <ul class="dropdown-menu" aria-labelledby="reportesDropdown">
                         <li><a class="dropdown-item <?php echo is_active('reportesnor', $pagina_actual); ?>" href="?pagina=reportesnor">Reportes Organización Docente</a></li>
-                        <li><a class="dropdown-item <?php echo is_active('reportesesta', $pagina_actual); ?>" href="?pagina=reportesesta">Reportes estadísticos</a></li>
+                        <li><a class="dropdown-item <?php echo is_active('reportesesta', $pagina_actual); ?>" href="?pagina=reportesesta">Reportes Estadísticos</a></li>
                     </ul>
                 </li>
                     <?php endif; ?>

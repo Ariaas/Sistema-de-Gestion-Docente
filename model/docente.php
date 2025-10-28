@@ -255,14 +255,14 @@ class Docente extends Connection
                 $stmt->execute([':doc_cedula' => $this->doc_cedula]);
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = '¡Registro Desactivado!<br/> Se desactivó el docente correctamente';
+                $r['mensaje'] = '¡Registro Inactivo!<br/> Se cambio el estado del docente correctamente';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
             }
         } else {
             $r['resultado'] = 'error';
-            $r['mensaje'] = '¡ERROR!<br/> El docente no existe o ya está desactivado.';
+            $r['mensaje'] = '¡ERROR!<br/> El docente no existe o ya está inactivo.';
         }
         return $r;
     }
@@ -278,7 +278,7 @@ class Docente extends Connection
             $stmt->execute([':doc_cedula' => $this->doc_cedula]);
 
             $r['resultado'] = 'activar';
-            $r['mensaje'] = '¡Registro Reactivado!<br/> Se activó el docente correctamente';
+            $r['mensaje'] = '¡Registro Activo!<br/> Se cambio el estado del docente correctamente';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();

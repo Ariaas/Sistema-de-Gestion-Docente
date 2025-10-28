@@ -31,15 +31,23 @@ if (!$puede_registrar) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
     <title>Reporte de Horarios de las secciones</title>
     <style>
-        .form-label { font-weight: 500; }
-        .required-mark { color: red; margin-left: 2px; }
+        .form-label {
+            font-weight: 500;
+        }
+
+        .required-mark {
+            color: red;
+            margin-left: 2px;
+        }
     </style>
 </head>
+
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
 
@@ -101,7 +109,7 @@ if (!$puede_registrar) {
                     <div class="row">
                         <div class="col-12 text-center">
                             <button type="submit" class="btn btn-success btn-lg px-5" id="generar_seccion_btn" name="generar_seccion_report">
-                                <i class="fas fa-file-excel me-2"></i>Generar Horarios Excel
+                                <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
                             </button>
                         </div>
                     </div>
@@ -113,4 +121,5 @@ if (!$puede_registrar) {
     <?php require_once("public/components/footer.php"); ?>
     <script type="text/javascript" src="public/js/rseccion.js"></script>
 </body>
+
 </html>

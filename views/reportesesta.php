@@ -55,7 +55,7 @@ if (!$puede_registrar) {
                         <div class="icon-circle">
                             <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
                         </div>
-                        <h5>Reporte General de Estudiantes</h5>
+                        <h5>Reporte General Estudiantes</h5>
                     </a>
                 </div>
 
@@ -64,7 +64,7 @@ if (!$puede_registrar) {
                         <div class="icon-circle">
                             <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
                         </div>
-                        <h5>Reporte de Horas Docentes</h5>
+                        <h5>Reporte Horas Docentes</h5>
                     </a>
                 </div>
 
@@ -73,7 +73,7 @@ if (!$puede_registrar) {
                         <div class="icon-circle">
                             <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
                         </div>
-                        <h5>Reporte de Uso de Aulas</h5>
+                        <h5>Reporte Uso de Aulas</h5>
                     </a>
                 </div>
 
@@ -82,7 +82,7 @@ if (!$puede_registrar) {
                         <div class="icon-circle">
                             <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
                         </div>
-                        <h5>Reporte de Días con Más Aulas Asignadas</h5>
+                        <h5>Reporte Días con Más Aulas Asignadas</h5>
                     </a>
                 </div>
                 <div class="col">
@@ -90,7 +90,7 @@ if (!$puede_registrar) {
                         <div class="icon-circle">
                             <img src="public/assets/icons/book-solid.svg" alt="Reporte General">
                         </div>
-                        <h5>Reporte de Prosecución Estudiantil</h5>
+                        <h5>Reporte Prosecusión Estudiantil</h5>
                     </a>
                 </div>
 

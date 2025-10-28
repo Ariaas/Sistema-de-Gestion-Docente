@@ -458,7 +458,7 @@ function pone(pos, accion) {
 
     $("#modal1").modal("show");
   } else if (accion == 1) {
-    // Desactivar directamente sin abrir modal
+    
     var codigoUC = linea.data("codigo");
     var datosVerificacion = new FormData();
     datosVerificacion.append("accion", "verificar_horario");

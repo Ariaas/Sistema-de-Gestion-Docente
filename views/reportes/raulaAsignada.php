@@ -31,14 +31,18 @@ if (!$puede_registrar) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
     <title>Reporte de Asignación de Aulas</title>
     <style>
-        .form-label { font-weight: 500; }
+        .form-label {
+            font-weight: 500;
+        }
     </style>
 </head>
+
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
 
@@ -70,7 +74,7 @@ if (!$puede_registrar) {
                         <div class="row">
                             <div class="col-12 text-center mt-3">
                                 <button type="submit" class="btn btn-success btn-lg px-5" id="generar_asignacion_aulas_btn" name="generar_asignacion_aulas_report">
-                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte EXCEL
+                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
                                 </button>
                             </div>
                         </div>
@@ -82,6 +86,7 @@ if (!$puede_registrar) {
 
     <?php require_once("public/components/footer.php"); ?>
 
-    <script type="text/javascript" src="public/js/raulaAsignada.js"></script> 
+    <script type="text/javascript" src="public/js/raulaAsignada.js"></script>
 </body>
+
 </html

@@ -69,7 +69,7 @@ if (!$puede_registrar) {
                         <div class="row mt-4">
                             <div class="col-12 text-center">
                                 <button type="submit" class="btn btn-success btn-lg px-5" name="generar_reporte" id="generar_reporte_btn">
-                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte EXCEL
+                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
                                 </button>
                             </div>
                         </div>
@@ -78,7 +78,7 @@ if (!$puede_registrar) {
             </section>
         </div>
     </main>
-    
+
     <?php require_once("public/components/footer.php"); ?>
     <script src="public/js/rcuentacupos.js"></script>
 </body>

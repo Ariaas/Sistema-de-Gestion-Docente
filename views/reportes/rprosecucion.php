@@ -31,10 +31,12 @@ if (!$puede_registrar) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Reporte de Prosecución Académica</title>
 </head>
+
 <body class="d-flex flex-column min-vh-100">
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0">
@@ -61,7 +63,7 @@ if (!$puede_registrar) {
 
                     <div class="text-center">
                         <button type="submit" name="generar_reporte_prosecucion" class="btn btn-success btn-lg px-5">
-                             <i class="fas fa-file-excel me-2"></i>Generar Reporte
+                            <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
                         </button>
                     </div>
                 </form>
@@ -70,4 +72,5 @@ if (!$puede_registrar) {
     </main>
     <?php require_once("public/components/footer.php"); ?>
 </body>
+
 </html>

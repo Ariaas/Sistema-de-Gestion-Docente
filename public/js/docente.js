@@ -116,7 +116,7 @@ $(document).ready(function() {
         $('#verObservaciones').text(fila.data('observacion') || 'Sin observaciones');
 
         $('#verHorasAcademicas, #verHorasCreacion, #verHorasIntegracion, #verHorasGestion, #verHorasOtras').text('0');
-        $('#verPreferenciasContainer').html('<p class="text-muted">No hay preferencias registradas.</p>');
+
         const datos = new FormData();
         datos.append('accion', 'consultar_datos_adicionales');
         datos.append('doc_cedula', cedula);
@@ -147,12 +147,45 @@ $(document).ready(function() {
 
     
     function mostrarErroresPaso1() {
-        if (!$('#cedulaDocente').val()) { setErrorText($('#scedulaDocente'), 'La cédula es requerida.'); }
-        if (!$('#nombreDocente').val()) { setErrorText($('#snombreDocente'), 'El nombre es requerido.'); }
-        if (!$('#apellidoDocente').val()) { setErrorText($('#sapellidoDocente'), 'El apellido es requerido.'); }
-        if (!$('#correoDocente').val()) { setErrorText($('#scorreoDocente'), 'El correo es requerido.'); }
-        if (!$('#categoria').val()) { setErrorText($('#scategoria'), 'Debe seleccionar una categoría.'); }
-        if (!$('#dedicacion').val()) { setErrorText($('#sdedicacion'), 'Debe seleccionar una dedicación.'); }
+        const cedulaVal = $('#cedulaDocente').val();
+        const nombreVal = $('#nombreDocente').val();
+        const apellidoVal = $('#apellidoDocente').val();
+        const correoVal = $('#correoDocente').val();
+        const categoriaVal = $('#categoria').val();
+        const dedicacionVal = $('#dedicacion').val();
+        
+        if (!cedulaVal) {
+            setErrorText($('#scedulaDocente'), 'La cédula debe tener entre 7 y 8 dígitos.');
+        } else if (!/^[0-9]{7,8}$/.test(cedulaVal)) {
+            setErrorText($('#scedulaDocente'), 'La cédula debe tener entre 7 y 8 dígitos.');
+        }
+        
+        if (!nombreVal) {
+            setErrorText($('#snombreDocente'), 'El nombre debe tener entre 3 y 30 caracteres.');
+        } else if (!/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/.test(nombreVal)) {
+            setErrorText($('#snombreDocente'), 'El nombre debe tener entre 3 y 30 caracteres.');
+        }
+        
+        if (!apellidoVal) {
+            setErrorText($('#sapellidoDocente'), 'El apellido debe tener entre 3 y 30 caracteres.');
+        } else if (!/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/.test(apellidoVal)) {
+            setErrorText($('#sapellidoDocente'), 'El apellido debe tener entre 3 y 30 caracteres.');
+        }
+        
+        if (!correoVal) {
+            setErrorText($('#scorreoDocente'), 'Debe ingresar un correo electrónico válido.');
+        } else if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(correoVal)) {
+            setErrorText($('#scorreoDocente'), 'Debe ingresar un correo electrónico válido.');
+        }
+        
+        if (!categoriaVal) {
+            setErrorText($('#scategoria'), 'Debe seleccionar una categoría.');
+        }
+        
+        if (!dedicacionVal) {
+            setErrorText($('#sdedicacion'), 'Debe seleccionar una dedicación.');
+        }
+        
         const anioConcursoInput = $('#anioConcurso');
         if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
             setErrorText($('#sanioConcurso'), 'El mes y año de concurso es requerido.');
@@ -306,13 +339,46 @@ $(document).ready(function() {
                 let valor = parseInt($(this).val());
                 if(valor < 0) { 
                     $(this).val('0'); 
+                } else if(valor > 99) {
+                    $(this).val('99');
                 }
             }
         });
     }
 
     $('.horas-input').on('input', function() {
+        let valor = $(this).val();
+        valor = valor.replace(/[^0-9]/g, '');
+        
+        if (valor.length > 2) {
+            valor = valor.substring(0, 2);
+        }
+        
+        let numero = parseInt(valor);
+        if (!isNaN(numero)) {
+            if (numero < 0) {
+                valor = '0';
+            } else if (numero > 99) {
+                valor = '99';
+            }
+        }
+        
+        $(this).val(valor);
         mostrarErroresPaso3();
+    });
+    
+    $('.horas-input').on('blur', function() {
+        if ($(this).val() === '') {
+            $(this).val('0');
+        }
+    });
+    
+    $('.horas-input').on('keypress', function(e) {
+        const charCode = e.which ? e.which : e.keyCode;
+        if (charCode < 48 || charCode > 57) {
+            e.preventDefault();
+            return false;
+        }
     });
     
     $('#dedicacion').on('change', validarCargaHoraria);
@@ -337,7 +403,7 @@ $(document).ready(function() {
         }
         
         if (!/^[0-9]{7,8}$/.test(this.value)) {
-            spanCedula.text("Cédula inválida (7-8 dígitos).").removeClass('text-danger').addClass('text-secondary');
+            spanCedula.text("La cédula debe tener entre 7 y 8 dígitos.").removeClass('text-danger').addClass('text-secondary');
             return;
         }
         
@@ -351,7 +417,7 @@ $(document).ready(function() {
         }
     }).on("blur", function() {
         if (!$(this).val()) {
-            $("#scedulaDocente").text("Este campo es requerido.").removeClass('text-secondary').addClass('text-danger');
+            setErrorText($("#scedulaDocente"), "La cédula debe tener entre 7 y 8 dígitos.");
         }
     });
 
@@ -365,13 +431,15 @@ $(document).ready(function() {
         }
         
         if (!/^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]{3,30}$/.test(this.value)) {
-            spanId.text("Formato inválido.").removeClass('text-danger').addClass('text-secondary');
+            const fieldName = $(this).attr('id') === 'nombreDocente' ? 'nombre' : 'apellido';
+            spanId.text(`El ${fieldName} debe tener entre 3 y 30 caracteres.`).removeClass('text-danger').addClass('text-secondary');
         } else {
             spanId.text("").removeClass('text-danger text-secondary');
         }
     }).on("blur", function() {
         if (!$(this).val()) {
-            $("#s" + $(this).attr('id')).text("Este campo es requerido.").removeClass('text-secondary').addClass('text-danger');
+            const fieldName = $(this).attr('id') === 'nombreDocente' ? 'nombre' : 'apellido';
+            setErrorText($("#s" + $(this).attr('id')), `El ${fieldName} debe tener entre 3 y 30 caracteres.`);
         }
     });
 
@@ -384,7 +452,7 @@ $(document).ready(function() {
         }
         
         if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(this.value)) {
-            spanCorreo.text("Correo inválido.").removeClass('text-danger').addClass('text-secondary');
+            spanCorreo.text("Debe ingresar un correo electrónico válido.").removeClass('text-danger').addClass('text-secondary');
             return;
         }
         
@@ -397,14 +465,15 @@ $(document).ready(function() {
         enviaAjax(datos);
     }).on("blur", function() {
         if (!$(this).val()) {
-            $("#scorreoDocente").text("Este campo es requerido.").removeClass('text-secondary').addClass('text-danger');
+            setErrorText($("#scorreoDocente"), "Debe ingresar un correo electrónico válido.");
         }
     });
     
     $("#categoria, #dedicacion").on("change", function() {
         const el = $(this);
+        const fieldName = el.attr('id') === 'categoria' ? 'categoría' : 'dedicación';
         if (!el.val()) {
-             setErrorText($("#s" + el.attr('id')), "Debe seleccionar una opción.");
+             setErrorText($("#s" + el.attr('id')), `Debe seleccionar una ${fieldName}.`);
         } else {
             setErrorText($("#s" + el.attr('id')), "");
         }
@@ -458,15 +527,15 @@ $(document).ready(function() {
         const [prefijo, cedula] = cedulaCompleta.split('-');
         
         if (accion === 'desactivar') {
-            // Desactivar directamente sin abrir modal
+            
             Swal.fire({
-                title: '¿Está seguro de desactivar este docente?',
+                title: '¿Está seguro de cambiar el estado de este docente?',
                 text: `Docente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Sí, desactivar',
+                confirmButtonText: 'Sí, cambiar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -479,7 +548,7 @@ $(document).ready(function() {
             return;
         }
         
-        // Para modificar
+        
         limpia();
         $("#accion").val(accion);
         
@@ -567,32 +636,29 @@ $(document).ready(function() {
                         destruyeDT();
                         $("#resultadoconsulta").empty();
                         lee.mensaje.forEach(item => {
+                            const btnModificar = `<button class="btn btn-icon btn-edit" title="Modificar Docente" ${!PERMISOS.modificar ? 'disabled' : ''}>
+                                                  <img src="public/assets/icons/edit.svg" alt="Modificar">
+                                                </button>`;
 
+                            const btnDesactivar = `<button class="btn btn-icon btn-delete" title="Desactivar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}>
+                                                     <img src="public/assets/icons/power.svg" alt="Desactivar">
+                                                   </button>`;
 
+                            const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar Docente" data-cedula="${item.doc_cedula}">
+                                                     <img src="public/assets/icons/check.svg" alt="Activar">
+                                                   </button>`;
 
-const btnModificar = `<button class="btn btn-icon btn-edit" title="Modificar Docente" ${!PERMISOS.modificar ? 'disabled' : ''}>
-                          <img src="public/assets/icons/edit.svg" alt="Modificar">
-                        </button>`;
+                            const btnVerDatos = `<button class="btn btn-icon btn-info" title="Ver Datos Adicionales">
+                                                     <img src="public/assets/icons/eye.svg" alt="Ver Datos">
+                                                   </button>`;
 
-const btnDesactivar = `<button class="btn btn-icon btn-delete" title="Desactivar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}>
-                         <img src="public/assets/icons/power.svg" alt="Desactivar">
-                       </button>`;
+                            const estadoBadge = item.doc_estado == '1' 
+                                ? '<span class="uc-badge activa">Activo</span>' 
+                                : '<span class="uc-badge desactivada">Inactivo</span>';
 
-const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar Docente" data-cedula="${item.doc_cedula}">
-                         <img src="public/assets/icons/check.svg" alt="Activar">
-                       </button>`;
-
-const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Datos Adicionales">
-                         <img src="public/assets/icons/eye.svg" alt="Ver Datos">
-                       </button>`;
-
-const estadoBadge = item.doc_estado == '1' 
-    ? '<span class="uc-badge activa">Activo</span>' 
-    : '<span class="uc-badge desactivada">Inactivo</span>';
-
-const botonesAccion = item.doc_estado == '1'
-    ? `${btnModificar} ${btnDesactivar} ${btnVerDatos}`
-    : btnActivar;
+                            const botonesAccion = item.doc_estado == '1'
+                                ? `${btnModificar} ${btnDesactivar} ${btnVerDatos}`
+                                : btnActivar;
                             
                             $("#resultadoconsulta").append(`
                                 <tr 
@@ -661,11 +727,13 @@ $(document).on("click", ".btn-activar", function(e) {
     e.preventDefault();
     const cedula = $(this).data("cedula");
     Swal.fire({
-        title: "¿Está seguro de activar este docente?",
+        title: "¿Está seguro de cambiar el estado de este docente?",
         text: "El docente pasará a estar activo.",
         icon: "question",
         showCancelButton: true,
-        confirmButtonText: "Sí, activar",
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: "Sí, cambiar",
         cancelButtonText: "Cancelar"
     }).then((result) => {
         if (result.isConfirmed) {
@@ -713,7 +781,7 @@ $(document).on("click", ".btn-activar", function(e) {
                                                 const btnModificar = `<button class="btn btn-icon btn-edit" title="Modificar Docente" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
                                                 const btnDesactivar = `<button class="btn btn-icon btn-delete" title="Desactivar Docente" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/power.svg" alt="Desactivar"></button>`;
                                                 const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar Docente" data-cedula="${item.doc_cedula}"><img src="public/assets/icons/check.svg" alt="Activar"></button>`;
-                                                const btnVerDatos = `<button class="btn btn-icon btn-info" onclick='poneVerHorario(this)' title="Ver Datos Adicionales"><img src="public/assets/icons/eye.svg" alt="Ver Datos"></button>`;
+                                                const btnVerDatos = `<button class="btn btn-icon btn-info" title="Ver Datos Adicionales"><img src="public/assets/icons/eye.svg" alt="Ver Datos"></button>`;
                                                 const estadoBadge = item.doc_estado == '1' ? '<span class="uc-badge activa">Activo</span>' : '<span class="uc-badge desactivada">Inactivo</span>';
                                                 const botonesAccion = item.doc_estado == '1' ? `${btnModificar} ${btnDesactivar} ${btnVerDatos}` : btnActivar;
                                                 

@@ -53,11 +53,11 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
-            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1200px;">
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
                 <button class="btn btn-success px-4" id="registrar" <?php if (!isset($puede_registrar) || !$puede_registrar) echo 'disabled'; ?>>Registrar Docente</button>
             </div>
-            <div class="datatable-ui w-100" style="max-width: 1200px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
-                <div class="table-responsive" style="overflow-x: hidden;">
+            <div class="datatable-ui w-100" id="tablaMallaPrincipalContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+                <div class="table-responsive">
                     <table class="table table-striped table-hover w-100" id="tabladocente">
                         <thead>
                             <tr>
@@ -224,27 +224,27 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="actAcademicas" class="form-label">Horas Académicas</label>
-                                        <input class="form-control horas-input" type="number" id="actAcademicas" name="actAcademicas" min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actAcademicas" name="actAcademicas" min="0" max="99" value="0">
                                         <span id="sactAcademicas" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actCreacion" class="form-label">Horas de Creación Intelectual</label>
-                                        <input class="form-control horas-input" type="number" id="actCreacion" name="actCreacion" min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actCreacion" name="actCreacion" min="0" max="99" value="0">
                                         <span id="sactCreacion" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actIntegracion" class="form-label">Horas de Integración a la Comunidad</label>
-                                        <input class="form-control horas-input" type="number" id="actIntegracion" name="actIntegracion" min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actIntegracion" name="actIntegracion" min="0" max="99" value="0">
                                         <span id="sactIntegracion" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actGestion" class="form-label">Horas de Gestión Académica</label>
-                                        <input class="form-control horas-input" type="number" id="actGestion" name="actGestion" min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actGestion" name="actGestion" min="0" max="99" value="0">
                                         <span id="sactGestion" class="text-danger"></span>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="actOtras" class="form-label">Otras Horas de Actividad (Opcional)</label>
-                                        <input class="form-control horas-input" type="number" id="actOtras" name="actOtras" min="0" value="0">
+                                        <input class="form-control horas-input" type="number" id="actOtras" name="actOtras" min="0" max="99" value="0">
                                     </div>
                                     <div class="col-12 text-center mt-3">
                                         <span id="sHorasTotales" class="text-danger fw-bold d-block"></span>
@@ -357,11 +357,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     </li>
                                 </ul>
                             </div>
-                        </div>
-                        <hr>
-                        <h6 class="text-primary">Preferencia de Horario para Clases</h6>
-                        <div id="verPreferenciasContainer">
-                            <p class="text-muted">No hay preferencias registradas.</p>
                         </div>
                     </div>
                     <div class="modal-footer">

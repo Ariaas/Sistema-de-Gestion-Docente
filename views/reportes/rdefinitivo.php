@@ -32,14 +32,15 @@ if (!$puede_registrar) {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
-    
+
 
     <title>Reporte Definitivo EMITC</title>
 
-     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
 </head>
 
@@ -82,7 +83,7 @@ if (!$puede_registrar) {
                         <div class="row">
                             <div class="col-12 text-center">
                                 <button type="submit" class="btn btn-success btn-lg px-5" name="generar_definitivo_emit" id="generar_btn">
-                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte EXCEL
+                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
                                 </button>
                             </div>
                         </div>
@@ -93,8 +94,9 @@ if (!$puede_registrar) {
     </main>
     <?php require_once("public/components/footer.php"); ?>
 
-     <script type="text/javascript" src="public/js/validacion.js"></script>
+    <script type="text/javascript" src="public/js/validacion.js"></script>
     <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/rdefinitivo.js"></script>
 </body>
+
 </html>

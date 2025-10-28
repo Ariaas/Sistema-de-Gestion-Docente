@@ -37,7 +37,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Títulos</title>
+    <title>Título</title>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -45,7 +45,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0">
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
-            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Títulos</h2>
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Título</h2>
             <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
                 <button class="btn btn-success px-4" id="registrar">Registrar Título</button>
             </div>
@@ -69,7 +69,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Formulario de Títulos</h5>
+                        <h5 class="modal-title">Formulario de Título</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
