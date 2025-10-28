@@ -57,12 +57,12 @@ if (!$puede_registrar) {
                     <div class="row g-3 mb-4">
                         <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                             <label for="anio_id" class="form-label">Filtrar por Año:</label>
-                            <select class="form-select form-select-sm" name="anio_id" id="anio_id">
+                            <select class="form-select form-select-sm" name="anio_completo" id="anio_completo">
                                 <option value="" selected>-- Seleccione un Año --</option>
                                 <?php if (!empty($listaAnios)): ?>
                                     <?php foreach ($listaAnios as $anio): ?>
-                                        <option value="<?= htmlspecialchars($anio['ani_anio']) ?>">
-                                            <?= htmlspecialchars($anio['ani_anio']) ?>
+                                        <option value="<?= htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo']) ?>">
+                                            <?= htmlspecialchars($anio['anio_completo']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>

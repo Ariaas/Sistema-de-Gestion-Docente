@@ -66,10 +66,7 @@ class AularioReport extends Connection
                             u.uc_nombre,
                             uh.subgrupo,
                             uh.sec_codigo,
-                            CASE
-                                WHEN SUBSTRING(uh.sec_codigo, 1, 1) IN ('3', '4') THEN CONCAT('IIN', uh.sec_codigo)
-                                ELSE CONCAT('IN', uh.sec_codigo)
-                            END AS sec_codigo_formatted,
+                            uh.sec_codigo AS sec_codigo_formatted,
                             uh.doc_cedula,
                             CONCAT(d.doc_nombre, ' ', d.doc_apellido) as NombreCompletoDocente
                         FROM

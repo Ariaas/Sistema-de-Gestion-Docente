@@ -15,7 +15,7 @@ class MallaReport extends Connection
     {
         $co = $this->con();
         try {
-            $sql = "SELECT mal_codigo, mal_nombre, mal_cohorte FROM tbl_malla WHERE mal_estado = 1 ORDER BY mal_nombre";
+            $sql = "SELECT mal_codigo, mal_nombre, mal_cohorte FROM tbl_malla WHERE mal_activa = 1 ORDER BY mal_nombre";
             $stmt = $co->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -50,7 +50,7 @@ class MallaReport extends Connection
                     LEFT JOIN
                         tbl_eje e ON u.eje_nombre = e.eje_nombre
                     WHERE 
-                        m.mal_estado = 1 AND u.uc_estado = 1 AND m.mal_codigo = :mal_codigo
+                        m.mal_activa = 1 AND u.uc_estado = 1 AND m.mal_codigo = :mal_codigo
                     ORDER BY 
                         m.mal_nombre, u.uc_trayecto, u.uc_nombre";
             

@@ -4,6 +4,7 @@ require_once('model/dbconnection.php');
  class Ruc extends Connection 
  { 
     private $anio_id;  
+    private $ani_tipo;
     private $trayecto; 
     private $nombreUnidad; 
     private $fase; 
@@ -16,6 +17,11 @@ require_once('model/dbconnection.php');
     public function set_anio($valor)
     {
         $this->anio_id = $valor;
+    }
+
+    public function set_ani_tipo($valor)
+    {
+        $this->ani_tipo = $valor;
     }
 
     public function set_trayecto($valor)
@@ -38,23 +44,22 @@ require_once('model/dbconnection.php');
         $co = $this->con();
         try {
         
-            $sqlBase = "SELECT DISTINCT
+            $sqlBase = "SELECT
                 u.uc_trayecto AS `Número de Trayecto`,
-                CASE 
-                    WHEN LEFT(s.sec_codigo, 1) IN ('0', '1', '2') THEN CONCAT('IN', s.sec_codigo)
-                    WHEN LEFT(s.sec_codigo, 1) IN ('3', '4') THEN CONCAT('IIN', s.sec_codigo)
-                    ELSE s.sec_codigo
-                END AS `Código de Sección`,
-                u.uc_nombre AS `Nombre de la Unidad Curricular`,
-                CONCAT(d.doc_nombre, ' ', d.doc_apellido) AS `Nombre Completo del Docente`
+                COALESCE(u.uc_nombre, 'Sin asignar') AS `Nombre de la Unidad Curricular`,
+                GROUP_CONCAT(DISTINCT s.sec_codigo ORDER BY s.sec_codigo SEPARATOR '\n') AS `Código de Sección`,
+                COALESCE(GROUP_CONCAT(DISTINCT CONCAT(d.doc_nombre, ' ', d.doc_apellido) ORDER BY d.doc_apellido, d.doc_nombre SEPARATOR '\n'), 'Sin asignar') AS `Nombre Completo del Docente`,
+                s.ani_tipo AS `Tipo de Año`
             FROM
-                uc_horario uh
-            INNER JOIN
+                tbl_seccion s
+            LEFT JOIN
+                uc_horario uh ON uh.sec_codigo = s.sec_codigo 
+                    AND uh.ani_anio = s.ani_anio
+                    AND (uh.ani_tipo = s.ani_tipo OR (uh.ani_tipo IS NULL AND s.ani_tipo IS NOT NULL) OR (uh.ani_tipo IS NOT NULL AND s.ani_tipo IS NULL))
+            LEFT JOIN
                 tbl_uc u ON uh.uc_codigo = u.uc_codigo
-            INNER JOIN
+            LEFT JOIN
                 tbl_docente d ON uh.doc_cedula = d.doc_cedula
-            INNER JOIN
-                tbl_seccion s ON uh.sec_codigo = s.sec_codigo
             ";
 
             $conditions = [];
@@ -67,7 +72,16 @@ require_once('model/dbconnection.php');
                 $conditions[] = "s.ani_anio IN (SELECT ani_anio FROM tbl_anio WHERE ani_activo = 1)";
             }
             
+            if (!empty($this->ani_tipo)) {
+                $conditions[] = "s.ani_tipo = :ani_tipo";
+                $params[':ani_tipo'] = $this->ani_tipo;
+                error_log("RUC Model - Filtrando por ani_tipo: " . $this->ani_tipo);
+            } else {
+                error_log("RUC Model - ani_tipo está vacío");
+            }
+            
             $conditions[] = "s.sec_estado = 1";
+            $conditions[] = "uh.uc_codigo IS NOT NULL";
 
             if (isset($this->trayecto) && $this->trayecto !== '') {
                 $conditions[] = "u.uc_trayecto = :trayecto_id";
@@ -88,7 +102,8 @@ require_once('model/dbconnection.php');
                 $sqlBase .= " WHERE " . implode(" AND ", $conditions);
             }
 
-            $sqlBase .= " ORDER BY u.uc_trayecto, s.sec_codigo, u.uc_nombre";
+            $sqlBase .= " GROUP BY COALESCE(s.grupo_union_id, CONCAT(s.sec_codigo, '-', s.ani_anio, '-', s.ani_tipo)), u.uc_codigo, u.uc_trayecto, u.uc_nombre, s.ani_tipo";
+            $sqlBase .= " ORDER BY s.ani_tipo, u.uc_trayecto, u.uc_nombre, s.sec_codigo";
 
             $resultado = $co->prepare($sqlBase);
             $resultado->execute($params);
@@ -104,7 +119,7 @@ require_once('model/dbconnection.php');
     { 
         $co = $this->con(); 
         try { 
-            $p = $co->prepare("SELECT DISTINCT ani_anio FROM tbl_anio WHERE ani_activo = 1 ORDER BY ani_anio DESC"); 
+            $p = $co->prepare("SELECT ani_anio, ani_tipo, CONCAT(ani_anio, ' - ', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_activo = 1 ORDER BY ani_anio DESC, ani_tipo ASC"); 
             $p->execute(); 
             return $p->fetchAll(PDO::FETCH_ASSOC); 
         } catch (PDOException $e) { 

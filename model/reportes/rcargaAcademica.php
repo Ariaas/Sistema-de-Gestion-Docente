@@ -37,11 +37,7 @@ class Carga extends Connection
             $sqlBase = "SELECT
                             u.uc_trayecto AS 'Número de Trayecto',
                             u.uc_nombre AS 'Nombre de la Unidad Curricular',
-                            CASE 
-                                WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
-                                WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
-                                ELSE s.sec_codigo
-                            END AS 'Código de Sección',
+                            s.sec_codigo AS 'Código de Sección',
                             (
                                 SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
                                 FROM docente_horario dh

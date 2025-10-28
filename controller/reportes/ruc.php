@@ -22,7 +22,8 @@
     exit; 
  }
  function toRoman($number) { 
-    if ($number == 0) return 'INICIAL'; 
+    if ($number == 0) return 'INICIAL';
+    if ($number == -1 || $number < 0) return 'N/A';
     $map = ['M' => 1000, 'CM' => 900, 'D' => 500, 'CD' => 400, 'C' => 100, 'XC' => 90, 'L' => 50, 'XL' => 40, 'X' => 10, 'IX' => 9, 'V' => 5, 'IV' => 4, 'I' => 1]; 
     $returnValue = ''; 
     while ($number > 0) { 
@@ -83,7 +84,14 @@
  if (isset($_POST['validar_datos'])) {
     header('Content-Type: application/json');
     
-    $oUc->set_anio($_POST['anio_id'] ?? ''); 
+    // Separar año y tipo del valor combinado
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio_id = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    
+    $oUc->set_anio($anio_id); 
+    $oUc->set_ani_tipo($ani_tipo);
     $oUc->set_trayecto($_POST['trayecto'] ?? ''); 
     $oUc->set_fase($_POST['fase'] ?? ''); 
     $oUc->set_nombreUnidad($_POST['ucurricular'] ?? ''); 
@@ -98,8 +106,20 @@
  }
 
  if (isset($_POST['generar_uc'])) { 
+    
+    // Separar año y tipo del valor combinado
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio_id = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    
+    // Debug: verificar valores recibidos
+    error_log("RUC - Año completo recibido: " . $anio_completo);
+    error_log("RUC - Año separado: " . $anio_id);
+    error_log("RUC - Tipo separado: " . $ani_tipo);
 
-    $oUc->set_anio($_POST['anio_id'] ?? ''); 
+    $oUc->set_anio($anio_id); 
+    $oUc->set_ani_tipo($ani_tipo);
     $oUc->set_trayecto($_POST['trayecto'] ?? ''); 
     $oUc->set_fase($_POST['fase'] ?? ''); 
     $oUc->set_nombreUnidad($_POST['ucurricular'] ?? ''); 
@@ -148,30 +168,43 @@
    
     $datosAgrupados = []; 
     foreach ($datosReporte as $fila) { 
-        $trayecto = $fila['Número de Trayecto']; 
+        $trayecto = $fila['Número de Trayecto'] ?? 'sin_asignar';
+        $ani_tipo = $fila['Tipo de Año'] ?? 'Regular';
         $seccion = $fila['Código de Sección']; 
         $uc = $fila['Nombre de la Unidad Curricular']; 
         $docente = $fila['Nombre Completo del Docente'] ?? 'NO ASIGNADO'; 
         
+        $clave_agrupacion = $trayecto . '_' . $ani_tipo;
+        
         if ($seccion) { 
-            $datosAgrupados[$trayecto][$seccion][] = [ 
+            $datosAgrupados[$clave_agrupacion][$seccion][] = [ 
                 'uc' => $uc, 
-                'docente' => $docente 
+                'docente' => $docente,
+                'trayecto' => $trayecto,
+                'ani_tipo' => $ani_tipo
             ]; 
         } 
     } 
-    ksort($datosAgrupados, SORT_NUMERIC); 
+    uksort($datosAgrupados, function($a, $b) {
+        if ($a === 'sin_asignar') return 1;
+        if ($b === 'sin_asignar') return -1;
+        return $a <=> $b;
+    }); 
 
     $rowOffset = 1; $colOffset = 1; $bloquesEnFila = 0; $alturaMaximaFila = 0; 
 
    
-    function renderizarBloqueSeccion($sheet, $numTrayecto, $secciones, $startRow, $startCol, &$styles) { 
+    function renderizarBloqueSeccion($sheet, $numTrayecto, $ani_tipo, $secciones, $startRow, $startCol, &$styles) { 
         $filaActual = $startRow; 
-        $label = "TRAYECTO " . toRoman($numTrayecto); 
+        $label = ($numTrayecto === 'sin_asignar') ? "SIN ASIGNAR" : "TRAYECTO " . toRoman($numTrayecto);
+        if ($ani_tipo && $ani_tipo !== 'Regular') {
+            $label .= " ({$ani_tipo})";
+        } 
 
         $colSeccion = Coordinate::stringFromColumnIndex($startCol); 
-        $colUC      = Coordinate::stringFromColumnIndex($startCol + 1); 
-        $colDocente = Coordinate::stringFromColumnIndex($startCol + 2); 
+        $colTipo    = Coordinate::stringFromColumnIndex($startCol + 1);
+        $colUC      = Coordinate::stringFromColumnIndex($startCol + 2); 
+        $colDocente = Coordinate::stringFromColumnIndex($startCol + 3); 
 
         $rangeTitulo = "{$colSeccion}{$filaActual}:{$colDocente}{$filaActual}"; 
         $sheet->mergeCells($rangeTitulo)->setCellValue($colSeccion.$filaActual, $label); 
@@ -181,6 +214,7 @@
 
         $filaCabeceras = $filaActual; 
         $sheet->setCellValue($colSeccion.$filaActual, "SECCION"); 
+        $sheet->setCellValue($colTipo.$filaActual, "TIPO"); 
         $sheet->setCellValue($colUC.$filaActual, "UNIDAD CURRICULAR"); 
         $sheet->setCellValue($colDocente.$filaActual, "DOCENTE"); 
         $sheet->getStyle("{$colSeccion}{$filaActual}:{$colDocente}{$filaActual}")->applyFromArray($styles['header_columnas']); 
@@ -190,6 +224,7 @@
             $filaInicioSeccion = $filaActual; 
             
             foreach ($registros as $registro) { 
+                $sheet->setCellValue($colTipo.$filaActual, $ani_tipo ?? 'Regular');
                 $sheet->setCellValue($colUC.$filaActual, $registro['uc']); 
                 $sheet->setCellValue($colDocente.$filaActual, $registro['docente']); 
                 $filaActual++; 
@@ -200,6 +235,10 @@
             
             if ($filaInicioSeccion < $filaFinSeccion) { 
                 $sheet->mergeCells("{$colSeccion}{$filaInicioSeccion}:{$colSeccion}{$filaFinSeccion}"); 
+            }
+            
+            if ($filaInicioSeccion < $filaFinSeccion) { 
+                $sheet->mergeCells("{$colTipo}{$filaInicioSeccion}:{$colTipo}{$filaFinSeccion}"); 
             } 
         } 
 
@@ -215,28 +254,36 @@
         'bordes' => $styleBordes, 'centrado' => $styleCentrado 
     ]; 
      
-    foreach ($datosAgrupados as $numTrayecto => $secciones) { 
-        if ($numTrayecto > 0 && $bloquesEnFila >= 2) { 
+    foreach ($datosAgrupados as $clave_agrupacion => $secciones) {
+        $primer_registro = reset($secciones);
+        $primer_item = reset($primer_registro);
+        $numTrayecto = $primer_item['trayecto'];
+        $ani_tipo = $primer_item['ani_tipo'];
+        
+        if ($numTrayecto !== 'sin_asignar' && is_numeric($numTrayecto) && $numTrayecto > 0 && $bloquesEnFila >= 2) { 
             $rowOffset += $alturaMaximaFila + 2; 
             $colOffset = 1; 
             $bloquesEnFila = 0; 
             $alturaMaximaFila = 0; 
         } 
 
-        $alturaBloqueActual = renderizarBloqueSeccion($sheet, $numTrayecto, $secciones, $rowOffset, $colOffset, $estilos); 
+        $alturaBloqueActual = renderizarBloqueSeccion($sheet, $numTrayecto, $ani_tipo, $secciones, $rowOffset, $colOffset, $estilos); 
 
         $alturaMaximaFila = max($alturaMaximaFila, $alturaBloqueActual); 
-        $colOffset += 4; 
+        $colOffset += 5; 
         $bloquesEnFila++; 
     } 
 
-    $sheet->getColumnDimension('A')->setWidth(15); 
-    $sheet->getColumnDimension('B')->setWidth(45); 
-    $sheet->getColumnDimension('C')->setWidth(35); 
-    $sheet->getColumnDimension('E')->setWidth(15); 
-    $sheet->getColumnDimension('F')->setWidth(45); 
-    $sheet->getColumnDimension('G')->setWidth(35); 
-    $sheet->getColumnDimension('I')->setWidth(15); 
+    $sheet->getColumnDimension('A')->setWidth(15);
+    $sheet->getColumnDimension('B')->setWidth(12);
+    $sheet->getColumnDimension('C')->setWidth(45); 
+    $sheet->getColumnDimension('D')->setWidth(35);
+    $sheet->getColumnDimension('F')->setWidth(15);
+    $sheet->getColumnDimension('G')->setWidth(12);
+    $sheet->getColumnDimension('H')->setWidth(45); 
+    $sheet->getColumnDimension('I')->setWidth(35);
+    $sheet->getColumnDimension('K')->setWidth(15);
+    $sheet->getColumnDimension('L')->setWidth(12); 
     $sheet->getColumnDimension('J')->setWidth(45); 
     $sheet->getColumnDimension('K')->setWidth(35); 
 

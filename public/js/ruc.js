@@ -4,13 +4,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.jQuery) {
         $(document).ready(function() {
             try {
-                $('#anio_id').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Año" });
+                $('#anio_completo').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Año" });
                 $('#trayecto').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Trayecto" });
                 $('#fase').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Fase" });
                 $('#ucurricular').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Unidad" });
                 
-                $('#anio_id').on('change', function() {
-                    const anioSeleccionado = $(this).val();
+                $('#anio_completo').on('change', function() {
+                    const anioCompleto = $(this).val();
+                    const anioSeleccionado = anioCompleto.split('|')[0];
                     
                     if (anioSeleccionado) {
                         fetch(`?pagina=ruc&action=obtener_fase_actual&anio=${anioSeleccionado}`)
@@ -124,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   
     const generarBtnUc = document.getElementById("generar_uc");
-    const anioSelect = document.getElementById("anio_id");
+    const anioSelect = document.getElementById("anio_completo");
     const ucSelect = document.getElementById("ucurricular");
     const formReporteUc = document.getElementById("fReporteUc");
 

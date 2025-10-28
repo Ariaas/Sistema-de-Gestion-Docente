@@ -55,11 +55,7 @@ class DefinitivoEmit extends Connection
                                 LIMIT 1
                             ) AS CedulaDocente,
                             u.uc_nombre AS NombreUnidadCurricular,
-                            CASE 
-                                WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
-                                WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
-                                ELSE s.sec_codigo
-                            END AS NombreSeccion
+                            s.sec_codigo AS NombreSeccion
                         FROM
                             uc_horario uh
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo

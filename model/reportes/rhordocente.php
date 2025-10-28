@@ -47,14 +47,14 @@ class ReporteHorarioDocente extends Connection
                             d.doc_condicion, 
                             d.doc_observacion,
                             d.cat_nombre AS categoria,
-                            (SELECT GROUP_CONCAT(t.tit_prefijo, ' ', t.tit_nombre SEPARATOR ', ') 
+                            (SELECT GROUP_CONCAT(DISTINCT CONCAT(td.tit_prefijo, ' ', td.tit_nombre) ORDER BY td.tit_prefijo, td.tit_nombre SEPARATOR ', ') 
                              FROM titulo_docente td 
-                             JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre 
-                             WHERE td.doc_cedula = d.doc_cedula AND t.tit_prefijo NOT IN ('Msc.', 'Dr.', 'Esp.')) AS pregrado_titulo,
-                            (SELECT GROUP_CONCAT(t.tit_prefijo, ' ', t.tit_nombre SEPARATOR ', ') 
+                             WHERE td.doc_cedula = d.doc_cedula 
+                             AND td.tit_prefijo IN ('Ing.', 'Lic.', 'Prof.', 'Tec.', 'TSU', 'T.S.U.', 'Abg.', 'Arq.')) AS pregrado_titulo,
+                            (SELECT GROUP_CONCAT(DISTINCT CONCAT(td.tit_prefijo, ' ', td.tit_nombre) ORDER BY td.tit_prefijo, td.tit_nombre SEPARATOR ', ') 
                              FROM titulo_docente td 
-                             JOIN tbl_titulo t ON td.tit_prefijo = t.tit_prefijo AND td.tit_nombre = t.tit_nombre 
-                             WHERE td.doc_cedula = d.doc_cedula AND t.tit_prefijo IN ('Msc.', 'Dr.', 'Esp.')) AS postgrado_titulo
+                             WHERE td.doc_cedula = d.doc_cedula 
+                             AND td.tit_prefijo IN ('Msc.', 'MSc.', 'M.Sc.', 'Dr.', 'PhD', 'PhD.', 'Ph.D.', 'Ph.D', 'Esp.', 'Dra.')) AS postgrado_titulo
                         FROM tbl_docente d 
                         WHERE d.doc_cedula = :cedula_docente";
             $stmt = $this->con()->prepare($sql);

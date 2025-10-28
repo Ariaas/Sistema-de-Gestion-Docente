@@ -31,8 +31,8 @@ class Transcripcion extends Connection
                 u.uc_nombre AS `NombreUnidadCurricular`,
                 GROUP_CONCAT(
                     DISTINCT CASE 
-                        WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('IN', s.sec_codigo)
-                        WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('IIN', s.sec_codigo)
+                        WHEN u.uc_trayecto IN (0, 1, 2) THEN CONCAT('', s.sec_codigo)
+                        WHEN u.uc_trayecto IN (3, 4) THEN CONCAT('', s.sec_codigo)
                         ELSE s.sec_codigo
                     END ORDER BY s.sec_codigo SEPARATOR ','
                 ) AS `NombreSeccion`
