@@ -1541,7 +1541,7 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
          return;
     }
     
-    // Validar que exista la cohorte correspondiente al último dígito (advertencia, no bloquea)
+   
     const ultimoDigito = parseInt(numericPart.charAt(3));
     let cohorteExiste = false;
     
@@ -1565,7 +1565,7 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
     
     if (!cohorteExiste) {
         alertaCodigo.html(`<strong>Cohorte no encontrada.</strong> No existe la Cohorte ${ultimoDigito} creada en la malla. `).show();
-        // No retornamos, permitimos continuar
+ 
     }
     
     const datos = new FormData();
@@ -1585,11 +1585,11 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                     alertaCodigo.html(`<strong>Código no disponible.</strong> Ya existe una sección con este código para el año seleccionado.`).show();
                     guardarBtn.prop('disabled', true);
                 } else {
-                    // Si no existe el código, habilitar el botón (incluso si la Cohorte 3 no existe)
+                 
                     if (cantidadInput.val() !== '') {
                         guardarBtn.prop('disabled', false);
                     }
-                    // Si la Cohorte 3 no existe, mantener la alerta pero permitir continuar
+                  
                     if (cohorte3Existe) {
                         alertaCodigo.hide();
                     }
@@ -1607,7 +1607,7 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
     codigoInput.on('keyup', validarCodigoSeccion);
     anioInput.on('change', validarCodigoSeccion);
     cantidadInput.on('keyup', function() {
-        // Habilitar botón si hay código, año y cantidad (la validación de código ya se encarga del resto)
+       
         if (codigoInput.val() && anioInput.val() && cantidadInput.val() !== '') {
             validarCodigoSeccion();
         } else {

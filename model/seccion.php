@@ -391,7 +391,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     $numericPart = preg_replace('/^\D+/', '', $codigoSeccion);
     $codigoSeccion = $prefix . $numericPart;
     
-    // Validar que exista la cohorte correspondiente al último dígito
+   
     if (!$forzar_cohorte) {
         $numeroCohorte = (int)substr($numericPart, -1);
         $co = $this->Con();
