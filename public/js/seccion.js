@@ -1526,15 +1526,12 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
     }
     
     
-    const ultimoDigito = parseInt(numericPart.charAt(3));
-  
     
-    let mallaValida = false;
-    
+    let cohorte3Valida = false;
     
     const datosMalla = new FormData();
     datosMalla.append("accion", "verificar_malla");
-    datosMalla.append("numeroMalla", ultimoDigito);
+    datosMalla.append("numeroMalla", 3); 
     
     $.ajax({
         url: "",
@@ -1544,16 +1541,14 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
         processData: false,
         async: false,
         success: function(respuestaMalla) {
-          
             if (respuestaMalla.resultado === 'ok') {
-                mallaValida = respuestaMalla.existe;
+                cohorte3Valida = respuestaMalla.existe;
             }
         }
     });
     
-  
-    if (!mallaValida) {
-        alertaCodigo.html(`<strong>Cohorte no encontrada.</strong> No existe la Cohorte ${ultimoDigito} creada.`).show();
+    if (!cohorte3Valida) {
+        alertaCodigo.html(`<strong>No se puede crear la sección.</strong> La Cohorte 3 debe estar creada y activa en la malla.`).show();
         guardarBtn.prop('disabled', true);
         return;
     }
