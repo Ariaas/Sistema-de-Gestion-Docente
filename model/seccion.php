@@ -45,21 +45,25 @@ public function obtenerTodosLosHorarios() {
     }
 }
 
-    private function _obtenerHorasAcademicasActuales($doc_cedula, $co, $seccion_a_excluir = null)
+    private function _obtenerHorasAcademicasActuales($doc_cedula, $co, $seccion_a_excluir = null, $ani_anio_excluir = null)
     {
         $sql = "
-            SELECT SUM(um.mal_hora_academica)
+            SELECT SUM(u.uc_creditos)
             FROM uc_horario uh
-            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
-            JOIN uc_malla um ON uh.uc_codigo = um.uc_codigo AND s.sec_estado = 1
-            JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo AND m.mal_activa = 1
-            WHERE uh.doc_cedula = :doc_cedula
+            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+            JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+            WHERE s.sec_estado = 1 AND uh.doc_cedula = :doc_cedula
         ";
         $params = [':doc_cedula' => $doc_cedula];
 
         if ($seccion_a_excluir !== null) {
             $sql .= " AND s.sec_codigo != :sec_codigo_excluir";
             $params[':sec_codigo_excluir'] = $seccion_a_excluir;
+        }
+        
+        if ($ani_anio_excluir !== null) {
+            $sql .= " AND s.ani_anio != :ani_anio_excluir";
+            $params[':ani_anio_excluir'] = $ani_anio_excluir;
         }
 
         $stmt = $co->prepare($sql);
@@ -227,16 +231,14 @@ public function obtenerTodosLosHorarios() {
 
         shuffle($todas_uc_f2);
 
-        $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
-        
         foreach ($todas_uc_f2 as $uc_f2_codigo) {
             $stmt_docentes_uc = $co->prepare("SELECT doc_cedula FROM uc_docente WHERE uc_codigo = ?");
             $stmt_docentes_uc->execute([$uc_f2_codigo]);
             $posibles_docentes = $stmt_docentes_uc->fetchAll(PDO::FETCH_COLUMN);
             shuffle($posibles_docentes);
             
-            $stmt_costo = $co->prepare("SELECT mal_hora_academica FROM uc_malla WHERE uc_codigo = :uc_codigo AND mal_codigo = :mal_codigo");
-            $stmt_costo->execute([':uc_codigo' => $uc_f2_codigo, ':mal_codigo' => $active_malla]);
+            $stmt_costo = $co->prepare("SELECT uc_creditos FROM tbl_uc WHERE uc_codigo = :uc_codigo");
+            $stmt_costo->execute([':uc_codigo' => $uc_f2_codigo]);
             $costo_uc = (int)$stmt_costo->fetchColumn();
 
             foreach ($posibles_docentes as $docente_id) {
@@ -333,9 +335,11 @@ $this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
             
             if (!empty($clases_origen)) {
                 $hora_principal_para_turno = $clases_origen[0]['hora_inicio'] ?? '08:00:00';
-                $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, tur_nombre, hor_estado) VALUES (:sec_codigo, :tur_nombre, 1)");
+                $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_nombre, 1)");
                 $stmt_hor->execute([
                     ':sec_codigo' => $codigo_destino,
+                    ':ani_anio' => $anio_academico,
+                    ':ani_tipo' => $seccion_origen_data['ani_tipo'],
                     ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
                 ]);
 
@@ -379,13 +383,23 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         return ['resultado' => 'error', 'mensaje' => 'Todos los campos de la sección son obligatorios.'];
     }
 
-    if (!preg_match('/^[a-zA-Z]{2,3}\d+$/', $codigoSeccion)) {
-        return ['resultado' => 'error', 'mensaje' => 'Formato de código inválido. Debe tener un prefijo de 2 o 3 letras seguido de números (ej: IN1101, IIN3104).'];
+    if (!preg_match('/^[a-zA-Z]{2,3}\d{4}$/', $codigoSeccion)) {
+        return ['resultado' => 'error', 'mensaje' => 'Formato de código inválido. Debe tener 2-3 letras seguido de exactamente 4 dígitos (ej: IN1101, IIN3104).'];
     }
     
     $prefix = strtoupper(substr($codigoSeccion, 0, preg_match('/^\D+/', $codigoSeccion, $matches) ? strlen($matches[0]) : 0));
     $numericPart = preg_replace('/^\D+/', '', $codigoSeccion);
     $codigoSeccion = $prefix . $numericPart;
+    
+    $numeroMalla = (int)substr($numericPart, -1);
+    $co = $this->Con();
+    $stmt_malla = $co->prepare("SELECT mal_codigo, mal_nombre FROM tbl_malla WHERE mal_cohorte = :cohorte AND mal_activa = 1");
+    $stmt_malla->execute([':cohorte' => $numeroMalla]);
+    $malla = $stmt_malla->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$malla) {
+        return ['resultado' => 'error', 'mensaje' => "Cohorte no encontrada. No existe la Cohorte {$numeroMalla} creada en la malla."];
+    }
 
     $cantidadInt = filter_var($cantidadSeccion, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 99]]);
     if ($cantidadInt === false) {
@@ -403,7 +417,8 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         if ($seccion_existente) {
             if ($seccion_existente['sec_estado'] == 1) {
                 $co->rollBack();
-                return ['resultado' => 'error', 'mensaje' => '¡ERROR! La sección con ese código ya existe para el año académico seleccionado.'];
+                $tipoTexto = $anio_tipo === 'regular' ? 'Regular' : 'Intensivo';
+                return ['resultado' => 'error', 'mensaje' => "¡ERROR! La sección {$codigoSeccion} ya existe para el año {$anio_anio} ({$tipoTexto}).<br/>Puede registrar esta misma sección en un período diferente (Regular/Intensivo)."];
             } else {
                 $this->EliminarDependenciasDeSeccion($codigoSeccion, $anio_anio, $co);
                 $stmtSeccion = $co->prepare(
@@ -448,6 +463,19 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         } catch (Exception $e) {
             error_log("Error en VerificarCodigoSeccion: " . $e->getMessage());
             return true;
+        }
+    }
+
+    public function VerificarMallaExiste($numeroMalla)
+    {
+        try {
+            $co = $this->Con();
+            $stmt = $co->prepare("SELECT mal_codigo, mal_nombre FROM tbl_malla WHERE mal_cohorte = :cohorte AND mal_activa = 1");
+            $stmt->execute([':cohorte' => (int)$numeroMalla]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        } catch (Exception $e) {
+            error_log("Error en VerificarMallaExiste: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -569,19 +597,16 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         }
 
         $horas_por_docente = [];
-        $active_malla = $co->query("SELECT mal_codigo FROM tbl_malla WHERE mal_activa = 1 LIMIT 1")->fetchColumn();
-        if ($active_malla) {
-            foreach ($items_horario as $item) {
-                if (!empty($item['doc_cedula']) && !empty($item['uc_codigo'])) {
-                    if (!isset($horas_por_docente[$item['doc_cedula']])) {
-                        $horas_por_docente[$item['doc_cedula']] = 0;
-                    }
-                    $stmt_horas_uc = $co->prepare("SELECT mal_hora_academica FROM uc_malla WHERE uc_codigo = :uc_codigo AND mal_codigo = :mal_codigo");
-                    $stmt_horas_uc->execute([':uc_codigo' => $item['uc_codigo'], ':mal_codigo' => $active_malla]);
-                    $horas_uc = $stmt_horas_uc->fetchColumn();
-                    if ($horas_uc) {
-                        $horas_por_docente[$item['doc_cedula']] += (int)$horas_uc;
-                    }
+        foreach ($items_horario as $item) {
+            if (!empty($item['doc_cedula']) && !empty($item['uc_codigo'])) {
+                if (!isset($horas_por_docente[$item['doc_cedula']])) {
+                    $horas_por_docente[$item['doc_cedula']] = 0;
+                }
+                $stmt_horas_uc = $co->prepare("SELECT uc_creditos FROM tbl_uc WHERE uc_codigo = :uc_codigo");
+                $stmt_horas_uc->execute([':uc_codigo' => $item['uc_codigo']]);
+                $horas_uc = $stmt_horas_uc->fetchColumn();
+                if ($horas_uc) {
+                    $horas_por_docente[$item['doc_cedula']] += (int)$horas_uc;
                 }
             }
         }
@@ -639,8 +664,16 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co);
 
         if (!empty($items_horario)) {
-            $stmt_horario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, hor_estado, tur_nombre) VALUES (:sec_codigo, 1, :tur_nombre) ON DUPLICATE KEY UPDATE hor_estado = 1");
-            $stmt_horario->execute([':sec_codigo' => $sec_codigo, ':tur_nombre' => 'Mañana']);
+            $hora_principal = $items_horario[0]['hora_inicio'] ?? '08:00:00';
+            $turno_nombre = $this->getTurnoEnum($hora_principal);
+            
+            $stmt_horario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_nombre, 1) ON DUPLICATE KEY UPDATE hor_estado = 1, tur_nombre = :tur_nombre");
+            
+            $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+            $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $ani_tipo = $stmt_tipo->fetchColumn() ?: 'regular';
+            
+            $stmt_horario->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo, ':tur_nombre' => $turno_nombre]);
             
             $stmt_uh = $co->prepare(
                 "INSERT INTO uc_horario (sec_codigo, ani_anio, uc_codigo, doc_cedula, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) 
@@ -919,12 +952,12 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
         }
     }
     
-    private function getTurnoEnum($hora_inicio)
+    public function getTurnoEnum($hora_inicio)
     {
         $hour = intval(substr($hora_inicio, 0, 2));
-        if ($hour >= 18) return 'noche';
-        if ($hour >= 13) return 'tarde';
-        return 'mañana';
+        if ($hour >= 18) return 'Noche';
+        if ($hour >= 13) return 'Tarde';
+        return 'Mañana';
     }
 
     public function contarDocentes()

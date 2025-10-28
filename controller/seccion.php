@@ -303,7 +303,7 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
 
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
-    $nombresSecciones = array_map(function($c) { return (substr($c,0,1)==='3'||substr($c,0,1)==='4'?'IIN':'IN').$c; }, $secciones_codigos);
+    $nombresSecciones = $secciones_codigos; 
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones) . " ({$anio})";
 
     $lastColLetter = chr(65 + count($columnasHeader));
@@ -319,17 +319,18 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
         $colLetter = chr(66 + $idx);
         $sheet->getColumnDimension($colLetter)->setWidth(25);
         
-        $richText = new RichText();
-        $run = $richText->createTextRun(ucfirst(mb_strtolower($colInfo['dia'])));
-        $run->getFont()->setBold(true);
-
+        
+        $headerText = ucfirst(mb_strtolower($colInfo['dia']));
+        
         if ($colInfo['subgrupo']) {
-            $richText->createText("\n(Grupo " . htmlspecialchars($colInfo['subgrupo']) . ")");
+            $headerText .= "\n(Grupo " . htmlspecialchars($colInfo['subgrupo']) . ")";
         }
         if (isset($espaciosPorColumna[$idx])) {
-            $richText->createText("\n" . _formatearEspacio($espaciosPorColumna[$idx]));
+            $headerText .= "\n" . _formatearEspacio($espaciosPorColumna[$idx]);
         }
-        $sheet->getCell($colLetter . '2')->setValue($richText);
+        
+        $sheet->getCell($colLetter . '2')->setValue($headerText);
+        $sheet->getStyle($colLetter . '2')->getAlignment()->setWrapText(true);
     }
     
     $currentRow = 3;
@@ -354,19 +355,21 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
                     if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) $rowspan++;
                 }
 
-                $richText = new RichText();
+            
                 $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
-                $uc_run = $richText->createTextRun($subgrupo_texto . _abreviarNombreLargo($clase['uc_nombre']));
-                $uc_run->getFont()->setBold(true)->setSize(11);
-
-                $info_adicional = $clase['docente_nombre'] ?: '(Sin Docente)';
+                $texto_completo = $subgrupo_texto . _abreviarNombreLargo($clase['uc_nombre']);
+                $texto_completo .= "\n" . ($clase['docente_nombre'] ?: '(Sin Docente)');
+                
+               
                 if (!isset($espaciosPorColumna[$idx])) {
                     $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
-                    if ($espacio_formateado) $info_adicional .= "\n" . $espacio_formateado;
+                    if ($espacio_formateado) {
+                        $texto_completo .= "\n" . $espacio_formateado;
+                    }
                 }
-                $richText->createText("\n" . $info_adicional);
 
-                $sheet->getCell($cellAddress)->setValue($richText);
+                $sheet->getCell($cellAddress)->setValue($texto_completo);
+                $sheet->getStyle($cellAddress)->getAlignment()->setWrapText(true);
                 
                 if ($rowspan > 1) {
                     $endRow = $currentRow + $rowspan - 1;
@@ -425,7 +428,7 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos) {
 
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
-    $nombresSecciones = array_map(function($c) { return (substr($c,0,1)==='3'||substr($c,0,1)==='4'?'IIN':'IN').$c; }, $secciones_codigos);
+    $nombresSecciones = $secciones_codigos; 
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones) . " ({$anio})";
     $section->addText($tituloSeccion, ['bold' => true, 'size' => 16], ['alignment' => Jc::CENTER]);
     $section->addTextBreak(1);
@@ -570,6 +573,7 @@ $acciones_json_validas = [
     'validar_clase_en_vivo',
     'unir_horarios',
     'verificar_codigo_seccion',
+    'verificar_malla',
     'duplicar_anio_anterior'
 ];
 
@@ -715,6 +719,17 @@ if ($anio_activo) {
                 if($codigoSeccion && $anio_anio && $anio_tipo) {
                    $existe = $o->VerificarCodigoSeccion($codigoSeccion, $anio_anio, $anio_tipo);
                 }
+                $respuesta = ['resultado' => 'ok', 'existe' => $existe];
+                break;
+            
+            case 'verificar_malla':
+                $numeroMalla = $_POST['numeroMalla'] ?? null;
+                $existe = false;
+                
+                if ($numeroMalla !== null) {
+                    $existe = $o->VerificarMallaExiste($numeroMalla);
+                }
+                
                 $respuesta = ['resultado' => 'ok', 'existe' => $existe];
                 break;
 

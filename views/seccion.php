@@ -66,6 +66,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <th>Código de Sección</th>
                                 <th>Cantidad de Estudiantes</th>
                                 <th>Año</th>
+                                <th>Tipo</th>
                                 <th style="width: 150px;">Acciones</th>
                             </tr>
                         </thead>

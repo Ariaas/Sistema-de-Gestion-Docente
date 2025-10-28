@@ -1170,13 +1170,14 @@ function enviaAjax(datos, boton) {
                             sec_id: s.sec_codigo
                         }));
                         respuesta.mensaje.forEach(item => {
+                          const tipoTexto = item.ani_tipo === 'regular' ? 'Regular' : 'Intensivo';
                           const botones_accion = `
         <button class="btn btn-icon btn-info ver-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button>
         <button class="btn btn-icon btn-secondary generar-reporte me-1" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Generar Reporte del Horario"><img src="public/assets/icons/printer.svg" alt="Generar Reporte"></button>
         <button class="btn btn-icon btn-warning modificar-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
         <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
     `;
-                            $("#resultadoconsulta").append(`<tr><td>${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
+                            $("#resultadoconsulta").append(`<tr><td>${item.sec_codigo}</td><td>${item.sec_cantidad||'N/A'}</td><td>${item.ani_anio||'N/A'}</td><td>${tipoTexto}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
                     }
                     crearDT();
@@ -1487,16 +1488,22 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
     }
 
 
-    const match = codigo.match(/^([A-Z]{2,3})(\d+)$/);
+    const match = codigo.match(/^([A-Z]{2,3})(\d{4})$/);
 
   
     if (!match) {
-        alertaCodigo.html(`<strong>Formato inválido.</strong> Debe tener un prefijo de 2-3 letras y luego números (Ej: IN111).`).show();
+        alertaCodigo.html(`<strong>Formato inválido.</strong> Debe tener 2-3 letras seguido de exactamente 4 dígitos (Ej: IN1101, IIN3104).`).show();
         return;
     }
 
     const prefix = match[1]; 
-    const numericPart = match[2]; 
+    const numericPart = match[2];
+    
+
+    if (numericPart.length > 4) {
+        alertaCodigo.html(`<strong>Error:</strong> El código no puede tener más de 4 dígitos numéricos.`).show();
+        return;
+    } 
     const firstDigit = numericPart.charAt(0); 
 
     if (['0', '1', '2'].includes(firstDigit)) {
@@ -1518,6 +1525,38 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
          return;
     }
     
+    
+    const ultimoDigito = parseInt(numericPart.charAt(3));
+  
+    
+    let mallaValida = false;
+    
+    
+    const datosMalla = new FormData();
+    datosMalla.append("accion", "verificar_malla");
+    datosMalla.append("numeroMalla", ultimoDigito);
+    
+    $.ajax({
+        url: "",
+        type: "POST",
+        data: datosMalla,
+        contentType: false,
+        processData: false,
+        async: false,
+        success: function(respuestaMalla) {
+          
+            if (respuestaMalla.resultado === 'ok') {
+                mallaValida = respuestaMalla.existe;
+            }
+        }
+    });
+    
+  
+    if (!mallaValida) {
+        alertaCodigo.html(`<strong>Cohorte no encontrada.</strong> No existe la Cohorte ${ultimoDigito} creada.`).show();
+        guardarBtn.prop('disabled', true);
+        return;
+    }
     
     const datos = new FormData();
     datos.append("accion", "verificar_codigo_seccion");
