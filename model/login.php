@@ -176,7 +176,13 @@ class Login extends Connection_bitacora
     public function validarCaptcha($token)
     {
         $secret = '6LeahHErAAAAAE7NIWRPVeJGe6Gq6IB2M3laWOY0';
-        $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret}&response={$token}");
+        
+        $response = @file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret}&response={$token}");
+        
+        if ($response === false) {
+            return false;
+        }
+        
         $result = json_decode($response, true);
         return $result['success'] ?? false;
     }

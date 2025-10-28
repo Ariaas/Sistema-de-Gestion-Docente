@@ -708,7 +708,8 @@ if ($anio_activo) {
                     $_POST['dia'] ?? null,
                     $_POST['hora_inicio'] ?? null,
                     $_POST['hora_fin'] ?? null,
-                    $_POST['sec_codigo'] ?? null
+                    $_POST['sec_codigo'] ?? null,
+                    $_POST['ani_anio'] ?? null
                 );
                 break;
             

@@ -176,7 +176,7 @@ public function obtenerTodosLosHorarios() {
                     }
 
                     if ($clases_procesadas > 0) {
-                        $this->Modificar($seccion['sec_codigo'], json_encode($nuevo_horario_seccion), $seccion['sec_cantidad']);
+                        $this->Modificar($seccion['sec_codigo'], $anio_activo['ani_anio'], json_encode($nuevo_horario_seccion), $seccion['sec_cantidad']);
                     }
 
                     $co->commit();
@@ -344,7 +344,7 @@ $this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
                 ]);
 
                 $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :doc_cedula, :sec_codigo, :ani_anio, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
-                $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo) VALUES (:doc_cedula, :sec_codigo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
+                $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo, ani_anio, ani_tipo) VALUES (:doc_cedula, :sec_codigo, :ani_anio, :ani_tipo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
                 $docentes_procesados = [];
                 foreach ($clases_origen as $item) {
                     $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
@@ -363,7 +363,12 @@ $this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
     ]);
 
                     if (!in_array($item['doc_cedula'], $docentes_procesados)) {
-                        $stmt_doc->execute([':doc_cedula' => $item['doc_cedula'], ':sec_codigo' => $codigo_destino]);
+                        $stmt_doc->execute([
+                            ':doc_cedula' => $item['doc_cedula'], 
+                            ':sec_codigo' => $codigo_destino,
+                            ':ani_anio' => $anio_academico,
+                            ':ani_tipo' => $seccion_origen_data['ani_tipo']
+                        ]);
                         $docentes_procesados[] = $item['doc_cedula'];
                     }
                 }
@@ -495,22 +500,30 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         }
     }
     
- public function ValidarClaseEnVivo($doc_cedula, $uc_codigo, $espacio, $dia, $hora_inicio, $hora_fin, $sec_codigo)
+ public function ValidarClaseEnVivo($doc_cedula, $uc_codigo, $espacio, $dia, $hora_inicio, $hora_fin, $sec_codigo, $ani_anio = null)
 {
     $co = $this->Con();
     $conflictos = [];
 
+    if ($ani_anio === null) {
+        $stmt_anio = $co->prepare("SELECT ani_anio FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 LIMIT 1");
+        $stmt_anio->execute();
+        $ani_anio = $stmt_anio->fetchColumn();
+        if (!$ani_anio) {
+            return ['conflicto' => false];
+        }
+    }
    
-    $stmt_grupo = $co->prepare("SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = ?");
-    $stmt_grupo->execute([$sec_codigo]);
+    $stmt_grupo = $co->prepare("SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = ? AND ani_anio = ?");
+    $stmt_grupo->execute([$sec_codigo, $ani_anio]);
     $grupo_id = $stmt_grupo->fetchColumn();
 
     $secciones_a_excluir = [$sec_codigo]; 
 
    
     if ($grupo_id) {
-        $stmt_secciones_grupo = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = ?");
-        $stmt_secciones_grupo->execute([$grupo_id]);
+        $stmt_secciones_grupo = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = ? AND ani_anio = ?");
+        $stmt_secciones_grupo->execute([$grupo_id, $ani_anio]);
         $secciones_hermanas = $stmt_secciones_grupo->fetchAll(PDO::FETCH_COLUMN);
         $secciones_a_excluir = array_unique(array_merge($secciones_a_excluir, $secciones_hermanas));
     }
@@ -522,14 +535,19 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         
         $sql_doc = "SELECT uh.sec_codigo, d.doc_nombre, d.doc_apellido
                     FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
                     JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
-                    WHERE s.sec_estado = 1 AND uh.doc_cedula = ? AND uh.sec_codigo NOT IN ($placeholders_exclusion)
-                    AND uh.hor_dia = ? AND uh.hor_horainicio < ? AND uh.hor_horafin > ?";
+                    WHERE s.sec_estado = 1 
+                    AND uh.ani_anio = ?
+                    AND uh.doc_cedula = ? 
+                    AND uh.sec_codigo NOT IN ($placeholders_exclusion)
+                    AND uh.hor_dia = ? 
+                    AND uh.hor_horainicio < ? 
+                    AND uh.hor_horafin > ?";
         
         $stmt_doc = $co->prepare($sql_doc);
        
-        $params_doc = array_merge([$doc_cedula], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
+        $params_doc = array_merge([$ani_anio, $doc_cedula], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
         $stmt_doc->execute($params_doc);
         
         $conflictos_docente = $stmt_doc->fetchAll(PDO::FETCH_ASSOC);
@@ -545,14 +563,21 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         
         $sql_esp = "SELECT uh.sec_codigo, d.doc_nombre, d.doc_apellido
                     FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
                     LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
-                    WHERE s.sec_estado = 1 AND uh.esp_numero = ? AND uh.esp_tipo = ? AND uh.esp_edificio = ?
-                    AND uh.sec_codigo NOT IN ($placeholders_exclusion) AND uh.hor_dia = ? AND uh.hor_horainicio < ? AND uh.hor_horafin > ?";
+                    WHERE s.sec_estado = 1 
+                    AND uh.ani_anio = ?
+                    AND uh.esp_numero = ? 
+                    AND uh.esp_tipo = ? 
+                    AND uh.esp_edificio = ?
+                    AND uh.sec_codigo NOT IN ($placeholders_exclusion) 
+                    AND uh.hor_dia = ? 
+                    AND uh.hor_horainicio < ? 
+                    AND uh.hor_horafin > ?";
 
         $stmt_esp = $co->prepare($sql_esp);
         
-        $params_esp = array_merge([$espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
+        $params_esp = array_merge([$ani_anio, $espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
         $stmt_esp->execute($params_esp);
         $conflicto_espacio = $stmt_esp->fetch(PDO::FETCH_ASSOC);
 
@@ -686,6 +711,14 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                  VALUES (:sec_codigo, :ani_anio, :uc_codigo, :doc_cedula, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)"
             );
             
+            $stmt_doc = $co->prepare(
+                "INSERT INTO docente_horario (doc_cedula, sec_codigo, ani_anio, ani_tipo) 
+                 VALUES (:doc_cedula, :sec_codigo, :ani_anio, :ani_tipo) 
+                 ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo"
+            );
+            
+            $docentes_procesados = [];
+            
             foreach ($items_horario as $item) {
                 $espacio = $item['espacio'] ?? ['numero' => null, 'tipo' => null, 'edificio' => null];
                 $doc_cedula = !empty($item['doc_cedula']) ? $item['doc_cedula'] : null;
@@ -710,6 +743,16 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                     ':inicio'       => $item['hora_inicio'],
                     ':fin'          => $item['hora_fin']
                 ]);
+                
+                if ($doc_cedula !== null && !in_array($doc_cedula, $docentes_procesados)) {
+                    $stmt_doc->execute([
+                        ':doc_cedula' => $doc_cedula,
+                        ':sec_codigo' => $sec_codigo,
+                        ':ani_anio'   => $ani_anio,
+                        ':ani_tipo'   => $ani_tipo
+                    ]);
+                    $docentes_procesados[] = $doc_cedula;
+                }
             }
         }
 
@@ -763,19 +806,21 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
     try {
         if ($es_transaccion_interna) $co->beginTransaction();
         
-       
-        $params_con_anio = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
+        $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+        $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+        $ani_tipo = $stmt_tipo->fetchColumn();
         
-       
+        $params_con_anio = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
+        $params_con_tipo = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo];
         $params_sin_anio = [':sec_codigo' => $sec_codigo];
-
-   
         
         $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
         
-       
-        $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
-        
+        if ($ani_tipo) {
+            $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo")->execute($params_con_tipo);
+        } else {
+            $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
+        }
         
         $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
 

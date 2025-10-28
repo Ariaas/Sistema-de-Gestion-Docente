@@ -46,13 +46,13 @@ $(document).ready(function () {
   Listar();
 
   $("#coordinacionNombre").on("keypress", function (e) {
-    validarkeypress(/^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+    validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ,#\b\s-]*$/, e);
   });
 
   $("#coordinacionNombre").on("keyup", function () {
     const nombreActual = $(this).val();
     const formatoValido = validarkeyup(
-      /^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
+      /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/,
       $(this),
       $("#scoordinacionNombre"),
       "El nombre debe tener entre 5 y 30 caracteres."
@@ -185,7 +185,7 @@ function validarenvio() {
   let esValido = true;
 
   if (validarkeyup(
-    /^[A-Za-z\b\s\u00f1\u00d1\u00E0-\u00FC-]{5,30}$/,
+    /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/,
     $("#coordinacionNombre"),
     $("#scoordinacionNombre"),
     "El nombre debe tener entre 5 y 30 caracteres."
