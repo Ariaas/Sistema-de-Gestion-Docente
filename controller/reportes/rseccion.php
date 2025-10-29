@@ -39,15 +39,30 @@ $oReporte = new SeccionReport();
 
 if (isset($_POST['generar_seccion_report'])) {
 
-    $anio = $_POST['anio_id'] ?? '';
+    // Separar año y tipo del valor combinado
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    
     $fase = $_POST['fase_id'] ?? '';
     $trayecto_filtrado = $_POST['trayecto_id'] ?? '';
 
-    if (empty($anio) || empty($fase)) {
-        die("Error: Debe seleccionar un Año y una Fase.");
+    // Verificar si es intensivo
+    $esIntensivo = strtolower($ani_tipo) === 'intensivo';
+
+    // Validar campos requeridos
+    if (empty($anio) || empty($ani_tipo)) {
+        die("Error: Debe seleccionar un Año y Tipo.");
+    }
+
+    // Solo requerir fase si NO es intensivo
+    if (!$esIntensivo && empty($fase)) {
+        die("Error: Debe seleccionar una Fase para años regulares.");
     }
 
     $oReporte->setAnio($anio);
+    $oReporte->setAniTipo($ani_tipo);
     $oReporte->setFase($fase);
     $oReporte->setTrayecto($trayecto_filtrado);
 
@@ -137,6 +152,11 @@ if (isset($_POST['generar_seccion_report'])) {
             } else {
                 $tituloSeccion .= " " . $nombresSecciones[0];
                 $sheetTitleText = $nombresSecciones[0];
+            }
+            
+            // Agregar (Intensivo) al título si el año es intensivo
+            if ($ani_tipo && strtolower($ani_tipo) === 'intensivo') {
+                $tituloSeccion .= " (Intensivo)";
             }
 
             $safeSheetTitle = substr(preg_replace('/[\\\\\/?*\[\]:]/', '', $sheetTitleText), 0, 31);
@@ -340,7 +360,11 @@ if (isset($_POST['generar_seccion_report'])) {
     }
 
     if (ob_get_length()) ob_end_clean();
-    $outputFileName = "Reporte_Horarios_Seccion.xlsx";
+    $outputFileName = "Reporte_Horarios_Seccion";
+    if ($ani_tipo && strtolower($ani_tipo) === 'intensivo') {
+        $outputFileName .= "_Intensivo";
+    }
+    $outputFileName .= ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $outputFileName . '"');
     header('Cache-Control: max-age=0');

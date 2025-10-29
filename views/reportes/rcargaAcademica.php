@@ -36,9 +36,16 @@ if (!$puede_registrar) {
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
     <title>Reportes de Carga Académica</title>
+    <style>
+        .form-label {
+            font-weight: 500;
+        }
 
-    <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
-    <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
+        .required-mark {
+            color: red;
+            margin-left: 2px;
+        }
+    </style>
 </head>
 
 <body>
@@ -48,44 +55,47 @@ if (!$puede_registrar) {
         <div class="container" style="width: 85%; max-width: 900px;">
             <section class="py-3">
                 <div class="text-center mb-4">
-                    <h2 class="text-primary">Reportes de Carga Académica por Sección</h2>
+                    <h2 class="text-primary">Reportes de Carga Académica</h2>
                 </div>
 
                 <div class="card p-4 shadow-sm bg-light rounded">
-                    <form method="post" action="" id="fReporteUnidadCurricular">
-                        <div class="row g-3 mb-4 align-items-center">
-
+                    <form method="post" action="" id="fReporteUnidadCurricular" target="_blank">
+                        <div class="row g-3 mb-4 justify-content-center">
                             <div class="col-md-4">
-                                <label for="anio_id" class="form-label">Filtrar por Año:</label>
-                                <select class="form-select" name="anio_id" id="anio_id">
-                                    <option value="" selected>-- Seleccione un Año --</option>
-                                    <?php if (!empty($listaAnios)): ?>
-                                        <?php foreach ($listaAnios as $anio): ?>
-                                            <option value="<?= htmlspecialchars($anio['ani_anio']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
+                                <label for="anio_completo" class="form-label">Año Académico<span class="required-mark">*</span></label>
+                                <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
+                                    <option value="">-- Seleccione un Año --</option>
+                                    <?php
+                                    if (!empty($listaAnios)) {
+                                        foreach ($listaAnios as $anio) {
+                                            echo "<option value='" . htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo']) . "'>" . htmlspecialchars($anio['anio_completo']) . "</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4" id="fase_container">
+                                <label for="fase_id" class="form-label">Fase<span class="required-mark">*</span></label>
+                                <select class="form-select form-select-sm" name="fase_id" id="fase_id" required>
+                                    <option value="">-- Seleccione una Fase --</option>
+                                    <?php
+                                    if (!empty($listaFases)) {
+                                        foreach ($listaFases as $fase) {
+                                            echo "<option value='" . htmlspecialchars($fase['fase_numero']) . "'>Fase " . htmlspecialchars($fase['fase_numero']) . "</option>";
+                                        }
+                                    }
+                                    ?>
                                 </select>
                             </div>
 
                             <div class="col-md-4">
-                                <label for="trayecto" class="form-label">Filtrar por Trayecto:</label>
-                                <select class="form-select" name="trayecto" id="trayecto">
-                                    <option value="">Todos los Trayectos</option>
+                                <label for="trayecto" class="form-label">Trayecto</label>
+                                <select class="form-select form-select-sm" name="trayecto" id="trayecto">
+                                    <option value="">-- Todos los Trayectos --</option>
                                     <?php if (!empty($trayectos)): ?>
                                         <?php foreach ($trayectos as $Trayecto): ?>
                                             <option value="<?= htmlspecialchars($Trayecto['tra_id']) ?>"><?= htmlspecialchars($Trayecto['tra_numero']) ?></option>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label for="seccion" class="form-label">Filtrar por Sección:</label>
-                                <select class="form-select" name="seccion" id="seccion">
-                                    <option value="">Todas las Secciones</option>
-                                    <?php if (!empty($secciones)): ?>
-                                        <?php foreach ($secciones as $Seccion): ?>
-                                            <option value="<?= htmlspecialchars($Seccion['sec_codigo']) ?>"><?= htmlspecialchars($Seccion['sec_codigo']) ?></option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>
@@ -106,8 +116,6 @@ if (!$puede_registrar) {
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
-    <script type="text/javascript" src="public/js/validacion.js"></script>
-    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/rcargaAcademica.js"></script>
 </body>
 

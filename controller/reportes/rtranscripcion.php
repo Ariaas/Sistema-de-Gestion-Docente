@@ -16,15 +16,30 @@ $oReporte = new Transcripcion();
 
 if (isset($_POST['generar_transcripcion'])) {
 
-    $anioId = $_POST['anio_id'] ?? null;
-    $fase = $_POST['fase'] ?? '';
+    // Separar año y tipo del valor combinado
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    
+    $fase = $_POST['fase_id'] ?? '';
 
-    if (empty($anioId)) {
-        die("Error: Debe seleccionar un año académico para generar el reporte.");
+    // Verificar si es intensivo
+    $esIntensivo = strtolower($ani_tipo) === 'intensivo';
+    
+    // Validar campos requeridos
+    if (empty($anio) || empty($ani_tipo)) {
+        die("Error: Debe seleccionar un Año y Tipo.");
+    }
+    
+    // Solo requerir fase si NO es intensivo
+    if (!$esIntensivo && empty($fase)) {
+        die("Error: Debe seleccionar una Fase para años regulares.");
     }
 
-    $oReporte->set_anio($anioId);
-    $oReporte->set_fase($fase);
+    $oReporte->setAnio($anio);
+    $oReporte->setAniTipo($ani_tipo);
+    $oReporte->setFase($fase);
     $reportData = $oReporte->obtenerTranscripciones();
     
     $groupedData = [];
@@ -134,7 +149,11 @@ if (isset($_POST['generar_transcripcion'])) {
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Transcripcion_Asignacion_Secciones.xlsx";
+    $fileName = "Transcripcion_Asignacion_Secciones";
+    if ($esIntensivo) {
+        $fileName .= "_Intensivo";
+    }
+    $fileName .= ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -142,6 +161,7 @@ if (isset($_POST['generar_transcripcion'])) {
     exit;
 
 } else {
-    $listaAnios = $oReporte->obtenerAnios();
+    $listaAnios = $oReporte->getAniosActivos();
+    $listaFases = $oReporte->getFases();
     require_once("views/reportes/rtranscripcion.php");
 }

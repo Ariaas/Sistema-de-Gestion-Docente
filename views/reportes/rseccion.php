@@ -62,20 +62,20 @@ if (!$puede_registrar) {
                 <form method="post" action="" id="fReporteSeccion" target="_blank">
                     <div class="row g-3 mb-4 justify-content-center">
                         <div class="col-md-4">
-                            <label for="anio_id" class="form-label">Año Académico<span class="required-mark">*</span></label>
-                            <select class="form-select form-select-sm" name="anio_id" id="anio_id" required>
+                            <label for="anio_completo" class="form-label">Año Académico<span class="required-mark">*</span></label>
+                            <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
                                 <option value="">-- Seleccione un Año --</option>
                                 <?php
                                 if (!empty($listaAnios)) {
                                     foreach ($listaAnios as $anio) {
-                                        echo "<option value='" . htmlspecialchars($anio['ani_anio']) . "'>" . htmlspecialchars($anio['ani_anio'] . ' (' . $anio['ani_tipo'] . ')') . "</option>";
+                                        echo "<option value='" . htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo']) . "'>" . htmlspecialchars($anio['anio_completo']) . "</option>";
                                     }
                                 }
                                 ?>
                             </select>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-4" id="fase_container">
                             <label for="fase_id" class="form-label">Fase<span class="required-mark">*</span></label>
                             <select class="form-select form-select-sm" name="fase_id" id="fase_id" required>
                                 <option value="">-- Seleccione una Fase --</option>

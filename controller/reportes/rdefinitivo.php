@@ -33,7 +33,14 @@ $oDefinitivo = new DefinitivoEmit();
 $vistaFormulario = "views/reportes/rdefinitivo.php";
 
 if (isset($_POST['generar_definitivo_emit'])) {
-    $oDefinitivo->set_anio($_POST['anio_id'] ?? '');
+    // Separar el año y tipo del campo combinado
+    $anioCompleto = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anioCompleto);
+    $anio = $partes[0] ?? '';
+    $aniTipo = $partes[1] ?? '';
+    
+    $oDefinitivo->set_anio($anio);
+    $oDefinitivo->set_ani_tipo($aniTipo);
     $oDefinitivo->set_fase($_POST['fase'] ?? '');
     $datosReporte = $oDefinitivo->obtenerDatosDefinitivoEmit();
 
@@ -79,8 +86,8 @@ if (isset($_POST['generar_definitivo_emit'])) {
     $styleData = ['font' => ['size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleDataCentered = ['font' => ['size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
 
-    $currentYear = $_POST['anio_id'] ?? date('Y');
-    $sheet->mergeCells('A1:D1')->setCellValue('A1', "ORGANIZACION DOCENTE $currentYear");
+    $tipoTexto = ($aniTipo === 'intensivo') ? ' - INTENSIVO' : '';
+    $sheet->mergeCells('A1:D1')->setCellValue('A1', "ORGANIZACION DOCENTE $anio$tipoTexto");
     $sheet->getStyle('A1:D1')->applyFromArray($styleTitle);
     $sheet->mergeCells('A2:D2')->setCellValue('A2', "PNF en Informática");
     $sheet->getStyle('A2:D2')->applyFromArray($styleTitle);
@@ -147,7 +154,20 @@ if (isset($_POST['generar_definitivo_emit'])) {
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Definitivo_EMIT_" . date('Y-m-d_H-i') . ".xlsx";
+    
+    $fileName = "Definitivo_" . $anio;
+    
+    // Agregar fase si fue seleccionada (solo para años regulares)
+    $selectedFase = $_POST['fase'] ?? '';
+    if (!empty($selectedFase) && $aniTipo !== 'intensivo') {
+        $fileName .= "_Fase" . $selectedFase;
+    }
+    
+    if ($aniTipo === 'intensivo') {
+        $fileName .= "_Intensivo";
+    }
+    $fileName .= ".xlsx";
+    
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');

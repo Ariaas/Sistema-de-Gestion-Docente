@@ -4,6 +4,7 @@ require_once('model/dbconnection.php');
 class DefinitivoEmit extends Connection
 {
     private $anio_id;
+    private $ani_tipo;
     private $fase;
 
     public function __construct()
@@ -14,6 +15,11 @@ class DefinitivoEmit extends Connection
     public function set_anio($valor)
     {
         $this->anio_id = trim($valor);
+    }
+
+    public function set_ani_tipo($valor)
+    {
+        $this->ani_tipo = trim($valor);
     }
 
     public function set_fase($valor)
@@ -29,28 +35,34 @@ class DefinitivoEmit extends Connection
             $sqlBase = "SELECT
                             (
                                 SELECT d.doc_cedula
-                                FROM uc_docente ud
-                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                FROM uc_horario uh2
+                                JOIN tbl_docente d ON uh2.doc_cedula = d.doc_cedula
+                                WHERE uh2.uc_codigo = uh.uc_codigo 
+                                AND uh2.sec_codigo = uh.sec_codigo
+                                AND uh2.ani_anio = uh.ani_anio
+                                AND uh2.ani_tipo = uh.ani_tipo
                                 ORDER BY d.doc_ingreso ASC
                                 LIMIT 1
                             ) AS IDDocente,
-                             (
+                            (
                                 SELECT CONCAT(d.doc_nombre, ' ', d.doc_apellido)
-                                FROM uc_docente ud
-                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                FROM uc_horario uh2
+                                JOIN tbl_docente d ON uh2.doc_cedula = d.doc_cedula
+                                WHERE uh2.uc_codigo = uh.uc_codigo 
+                                AND uh2.sec_codigo = uh.sec_codigo
+                                AND uh2.ani_anio = uh.ani_anio
+                                AND uh2.ani_tipo = uh.ani_tipo
                                 ORDER BY d.doc_ingreso ASC
                                 LIMIT 1
                             ) AS NombreCompletoDocente,
                             (
                                 SELECT d.doc_cedula
-                                FROM uc_docente ud
-                                JOIN docente_horario dh ON ud.doc_cedula = dh.doc_cedula
-                                JOIN tbl_docente d ON ud.doc_cedula = d.doc_cedula
-                                WHERE ud.uc_codigo = u.uc_codigo AND dh.sec_codigo = s.sec_codigo
+                                FROM uc_horario uh2
+                                JOIN tbl_docente d ON uh2.doc_cedula = d.doc_cedula
+                                WHERE uh2.uc_codigo = uh.uc_codigo 
+                                AND uh2.sec_codigo = uh.sec_codigo
+                                AND uh2.ani_anio = uh.ani_anio
+                                AND uh2.ani_tipo = uh.ani_tipo
                                 ORDER BY d.doc_ingreso ASC
                                 LIMIT 1
                             ) AS CedulaDocente,
@@ -59,7 +71,9 @@ class DefinitivoEmit extends Connection
                         FROM
                             uc_horario uh
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
+                            AND uh.ani_anio = s.ani_anio 
+                            AND uh.ani_tipo = s.ani_tipo
                         ";
             
             $conditions = ["s.sec_estado = 1"];
@@ -70,7 +84,13 @@ class DefinitivoEmit extends Connection
                 $params[':anio_id'] = $this->anio_id;
             }
 
-            if (!empty($this->fase)) {
+            if (!empty($this->ani_tipo)) {
+                $conditions[] = "s.ani_tipo = :ani_tipo";
+                $params[':ani_tipo'] = $this->ani_tipo;
+            }
+
+            // Solo aplicar filtro de fase si NO es intensivo
+            if (!empty($this->fase) && strtolower($this->ani_tipo) !== 'intensivo') {
                 $fase_condition = '';
                 switch ($this->fase) {
                     case '1':
@@ -103,7 +123,7 @@ class DefinitivoEmit extends Connection
     {
         $co = $this->con();
         try {
-            $p = $co->prepare("SELECT * FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC");
+            $p = $co->prepare("SELECT ani_anio, ani_tipo, CONCAT(ani_anio, ' - ', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo ASC");
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {

@@ -36,6 +36,8 @@ if (!$puede_registrar) {
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
     <title>Reporte de Aulario (Horario por Aula)</title>
+    <link href="vendor/select2/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         .form-label {
             font-weight: 500;
@@ -60,26 +62,26 @@ if (!$puede_registrar) {
 
             <div class="card p-4 shadow-sm bg-light rounded">
                 <form method="post" action="" id="fReporteAulario" target="_blank">
-                    <div class="row g-3 mb-4 justify-content-center">
+                    <div class="row g-3 justify-content-center mb-4">
 
-                        <div class="col-md-6">
-                            <label for="anio_id" class="form-label">Año Académico<span class="required-mark">*</span></label>
-                            <select class="form-select form-select-sm" name="anio_id" id="anio_id" required>
-                                <option value="">-- Seleccione un Año --</option>
+                        <div class="col-md-4">
+                            <label for="anio_completo" class="form-label">Año Académico<span class="required-mark">*</span></label>
+                            <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
+                                <option value="">-- Seleccione --</option>
                                 <?php
                                 if (!empty($listaAnios)) {
                                     foreach ($listaAnios as $anio) {
-                                        echo "<option value='" . htmlspecialchars($anio['ani_anio']) . "'>" . htmlspecialchars($anio['ani_anio'] . ' (' . $anio['ani_tipo'] . ')') . "</option>";
+                                        echo "<option value='" . htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo']) . "'>" . htmlspecialchars($anio['anio_completo']) . "</option>";
                                     }
                                 }
                                 ?>
                             </select>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4" id="fase_container">
                             <label for="fase_id" class="form-label">Fase<span class="required-mark">*</span></label>
                             <select class="form-select form-select-sm" name="fase_id" id="fase_id" required>
-                                <option value="">-- Seleccione una Fase --</option>
+                                <option value="">-- Seleccione --</option>
                                 <?php
                                 if (!empty($listaFases)) {
                                     foreach ($listaFases as $fase) {
@@ -90,9 +92,9 @@ if (!$puede_registrar) {
                             </select>
                         </div>
 
-                        <div class="col-md-12">
+                        <div class="col-md-4">
                             <label for="espacio_id" class="form-label">Aula (Opcional)</label>
-                            <select class="form-select form-select-sm" name="espacio_id" id="espacio_id">
+                            <select class="form-select" name="espacio_id" id="espacio_id">
                                 <option value="">-- Todas las Aulas --</option>
                                 <?php
                                 if (!empty($listaEspacios)) {
@@ -107,9 +109,6 @@ if (!$puede_registrar) {
                         </div>
 
                     </div>
-
-                    <hr class="my-4">
-
                     <div class="row">
                         <div class="col-12 text-center">
                             <button type="submit" class="btn btn-success btn-lg px-5" id="generar_aulario_btn" name="generar_aulario_report">
@@ -123,6 +122,7 @@ if (!$puede_registrar) {
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
+    <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/raulario.js"></script>
 </body>
 

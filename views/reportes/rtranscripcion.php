@@ -53,26 +53,28 @@ if (!$puede_registrar) {
                 </div>
 
                 <div class="card p-4 shadow-sm bg-light rounded">
-                    <form method="post" action="" target="_blank">
+                    <form method="post" action="" target="_blank" id="fReporteTranscripcion">
                         <div class="row g-3 justify-content-center mb-4">
                             <div class="col-md-6">
-                                <label for="anio_id" class="form-label">Filtrar por Año Académico:</label>
-                                <select class="form-select" name="anio_id" id="anio_id" required>
-                                    <option value="" disabled selected>-- Seleccione un Año --</option>
+                                <label for="anio_completo" class="form-label">Año Académico<span style="color:red;">*</span></label>
+                                <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
+                                    <option value="">-- Seleccione --</option>
                                     <?php if (!empty($listaAnios)): ?>
                                         <?php foreach ($listaAnios as $anio): ?>
-                                            <option value="<?= htmlspecialchars($anio['ani_anio']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
+                                            <option value="<?= htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo']) ?>"><?= htmlspecialchars($anio['anio_completo']) ?></option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label for="fase" class="form-label">Filtrar por Fase (Opcional):</label>
-                                <select class="form-select" name="fase" id="fase">
-                                    <option value="">-- Todas las Fases --</option>
-                                    <option value="1">Fase I</option>
-                                    <option value="2">Fase II</option>
-                                    <option value="Anual">Anual</option>
+                            <div class="col-md-6" id="fase_container">
+                                <label for="fase_id" class="form-label">Fase<span style="color:red;">*</span></label>
+                                <select class="form-select form-select-sm" name="fase_id" id="fase_id" required>
+                                    <option value="">-- Seleccione --</option>
+                                    <?php if (!empty($listaFases)): ?>
+                                        <?php foreach ($listaFases as $fase): ?>
+                                            <option value="<?= htmlspecialchars($fase['fase_numero']) ?>">Fase <?= htmlspecialchars($fase['fase_numero']) ?></option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </select>
                             </div>
                         </div>

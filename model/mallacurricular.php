@@ -34,7 +34,43 @@ class Malla extends Connection
     public function getMalCodigoOriginal(){ return $this->mal_codigo_original; }
     public function setMalCodigoOriginal($mal_codigo_original){ $this->mal_codigo_original = $mal_codigo_original; }
 
-    
+    /**
+     * Valida que todas las unidades curriculares tengan horas válidas (mayores a 0 y no nulas)
+     * @param array $unidades Array de unidades curriculares con sus horas
+     * @return array Resultado de la validación con 'resultado' y 'mensaje'
+     */
+    private function validarHorasUnidades($unidades)
+    {
+        $errores = [];
+        
+        foreach ($unidades as $index => $uc) {
+            $uc_codigo = isset($uc['uc_codigo']) ? $uc['uc_codigo'] : 'Desconocida';
+            
+            // Validar hora_independiente
+            if (!isset($uc['hora_independiente']) || $uc['hora_independiente'] === null || $uc['hora_independiente'] === '' || $uc['hora_independiente'] <= 0) {
+                $errores[] = "La unidad curricular '{$uc_codigo}' tiene horas independientes inválidas (debe ser mayor a 0).";
+            }
+            
+            // Validar hora_asistida
+            if (!isset($uc['hora_asistida']) || $uc['hora_asistida'] === null || $uc['hora_asistida'] === '' || $uc['hora_asistida'] <= 0) {
+                $errores[] = "La unidad curricular '{$uc_codigo}' tiene horas asistidas inválidas (debe ser mayor a 0).";
+            }
+            
+            // Validar hora_academica
+            if (!isset($uc['hora_academica']) || $uc['hora_academica'] === null || $uc['hora_academica'] === '' || $uc['hora_academica'] <= 0) {
+                $errores[] = "La unidad curricular '{$uc_codigo}' tiene horas académicas inválidas (debe ser mayor a 0).";
+            }
+        }
+        
+        if (!empty($errores)) {
+            return [
+                'resultado' => 'error',
+                'mensaje' => 'Error de validación de horas:<br/>' . implode('<br/>', $errores)
+            ];
+        }
+        
+        return ['resultado' => 'ok'];
+    }
 
     public function verificarCondicionesParaRegistrar()
     {
@@ -82,6 +118,11 @@ class Malla extends Connection
             return ['resultado' => 'error', 'mensaje' => 'No se han proporcionado unidades curriculares para registrar.'];
         }
 
+        // Validar que todas las horas sean mayores a 0 y no nulas
+        $validacion_horas = $this->validarHorasUnidades($unidades);
+        if ($validacion_horas['resultado'] === 'error') {
+            return $validacion_horas;
+        }
         
         try {
             $codigos_uc = array_column($unidades, 'uc_codigo');
@@ -120,7 +161,7 @@ class Malla extends Connection
 
             $stmt_pensum = $co->prepare("INSERT INTO uc_malla (mal_codigo, uc_codigo, mal_hora_independiente, mal_hora_asistida, mal_hora_academica) VALUES (:mal_codigo, :uc_codigo, :hora_ind, :hora_asis, :hora_acad)");
             foreach ($unidades as $uc) {
-                if ($uc['hora_independiente'] > 0 || $uc['hora_asistida'] > 0 || $uc['hora_academica'] > 0) {
+                if ($uc['hora_independiente'] > 0 && $uc['hora_asistida'] > 0 && $uc['hora_academica'] > 0) {
                     $stmt_pensum->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
                     $stmt_pensum->bindParam(':uc_codigo', $uc['uc_codigo'], PDO::PARAM_STR);
                     $stmt_pensum->bindParam(':hora_ind', $uc['hora_independiente'], PDO::PARAM_INT);
@@ -147,6 +188,17 @@ class Malla extends Connection
         $r = array();
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        if (empty($unidades)) {
+            return ['resultado' => 'error', 'mensaje' => 'No se han proporcionado unidades curriculares para modificar.'];
+        }
+
+        // Validar que todas las horas sean mayores a 0 y no nulas
+        $validacion_horas = $this->validarHorasUnidades($unidades);
+        if ($validacion_horas['resultado'] === 'error') {
+            return $validacion_horas;
+        }
+        
         $check_cohorte = $this->ExisteCohorte(true);
         if (isset($check_cohorte['resultado']) && $check_cohorte['resultado'] === 'existe') {
             return $check_cohorte;

@@ -58,24 +58,23 @@ if (!$puede_registrar) {
                         <div class="row g-3 mb-4 justify-content-center">
 
                             <div class="col-md-6">
-                                <label for="anio_id" class="form-label">Filtrar por Año:</label>
-                                <select class="form-select" name="anio_id" id="anio_id">
-                                    <option value="" selected>-- Seleccione un Año --</option>
+                                <label for="anio_completo" class="form-label">Año Académico: <span class="text-danger">*</span></label>
+                                <select class="form-select" name="anio_completo" id="anio_completo" required>
+                                    <option value="" selected>-- Seleccione --</option>
                                     <?php if (!empty($listaAnios)): ?>
                                         <?php foreach ($listaAnios as $anio): ?>
-                                            <option value="<?= htmlspecialchars($anio['ani_anio']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
+                                            <option value="<?= htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo']) ?>"><?= htmlspecialchars($anio['anio_completo']) ?></option>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="fase_container">
                                 <label for="fase" class="form-label">Filtrar por Fase:</label>
                                 <select class="form-select" name="fase" id="fase">
                                     <option value="">-- Todas las Fases --</option>
                                     <option value="1">Fase I</option>
                                     <option value="2">Fase II</option>
-                                    <option value="Anual">Anual</option>
                                 </select>
                             </div>
                         </div>

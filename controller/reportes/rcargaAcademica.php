@@ -53,9 +53,32 @@ $oUc = new Carga();
 
 if (isset($_POST['generar_uc'])) {
 
-    $oUc->set_anio($_POST['anio_id'] ?? '');
-    $oUc->set_trayecto($_POST['trayecto'] ?? '');
-    $oUc->set_seccion($_POST['seccion'] ?? '');
+    // Separar año y tipo del valor combinado
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    
+    $fase = $_POST['fase_id'] ?? '';
+    $trayecto_filtrado = $_POST['trayecto'] ?? '';
+
+    // Verificar si es intensivo
+    $esIntensivo = strtolower($ani_tipo) === 'intensivo';
+
+    // Validar campos requeridos
+    if (empty($anio) || empty($ani_tipo)) {
+        die("Error: Debe seleccionar un Año y Tipo.");
+    }
+
+    // Solo requerir fase si NO es intensivo
+    if (!$esIntensivo && empty($fase)) {
+        die("Error: Debe seleccionar una Fase para años regulares.");
+    }
+
+    $oUc->setAnio($anio);
+    $oUc->setAniTipo($ani_tipo);
+    $oUc->setFase($fase);
+    $oUc->set_trayecto($trayecto_filtrado);
     $datosReporte = $oUc->obtenerUnidadesCurriculares();
 
     if (empty($datosReporte)) {
@@ -85,7 +108,13 @@ if (isset($_POST['generar_uc'])) {
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle("CARGA ACADEMICA");
+    
+    // Agregar (Intensivo) al título si el año es intensivo
+    $tituloHoja = "CARGA ACADEMICA";
+    if ($esIntensivo) {
+        $tituloHoja .= " (Intensivo)";
+    }
+    $sheet->setTitle($tituloHoja);
 
     $styleHeaderPrincipal = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleHeaderColumnas = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
@@ -254,15 +283,22 @@ if (isset($_POST['generar_uc'])) {
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Carga_Academica_Agrupada.xlsx";
+    
+    // Agregar _Intensivo al nombre del archivo si es intensivo
+    $fileName = "Carga_Academica";
+    if ($esIntensivo) {
+        $fileName .= "_Intensivo";
+    }
+    $fileName .= ".xlsx";
+    
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
     $writer->save('php://output');
     exit;
 } else {
-    $listaAnios = $oUc->obtenerAnios();
+    $listaAnios = $oUc->getAniosActivos();
+    $listaFases = $oUc->getFases();
     $trayectos = $oUc->obtenerTrayectos();
-    $secciones = $oUc->obtenerSecciones();
     require_once($vistaFormularioUc);
 }

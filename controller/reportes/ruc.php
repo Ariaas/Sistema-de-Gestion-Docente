@@ -197,14 +197,13 @@
     function renderizarBloqueSeccion($sheet, $numTrayecto, $ani_tipo, $secciones, $startRow, $startCol, &$styles) { 
         $filaActual = $startRow; 
         $label = ($numTrayecto === 'sin_asignar') ? "SIN ASIGNAR" : "TRAYECTO " . toRoman($numTrayecto);
-        if ($ani_tipo && $ani_tipo !== 'Regular') {
-            $label .= " ({$ani_tipo})";
+        if ($ani_tipo && strtolower($ani_tipo) === 'intensivo') {
+            $label .= " (Intensivo)";
         } 
 
         $colSeccion = Coordinate::stringFromColumnIndex($startCol); 
-        $colTipo    = Coordinate::stringFromColumnIndex($startCol + 1);
-        $colUC      = Coordinate::stringFromColumnIndex($startCol + 2); 
-        $colDocente = Coordinate::stringFromColumnIndex($startCol + 3); 
+        $colUC      = Coordinate::stringFromColumnIndex($startCol + 1); 
+        $colDocente = Coordinate::stringFromColumnIndex($startCol + 2); 
 
         $rangeTitulo = "{$colSeccion}{$filaActual}:{$colDocente}{$filaActual}"; 
         $sheet->mergeCells($rangeTitulo)->setCellValue($colSeccion.$filaActual, $label); 
@@ -214,7 +213,6 @@
 
         $filaCabeceras = $filaActual; 
         $sheet->setCellValue($colSeccion.$filaActual, "SECCION"); 
-        $sheet->setCellValue($colTipo.$filaActual, "TIPO"); 
         $sheet->setCellValue($colUC.$filaActual, "UNIDAD CURRICULAR"); 
         $sheet->setCellValue($colDocente.$filaActual, "DOCENTE"); 
         $sheet->getStyle("{$colSeccion}{$filaActual}:{$colDocente}{$filaActual}")->applyFromArray($styles['header_columnas']); 
@@ -224,7 +222,6 @@
             $filaInicioSeccion = $filaActual; 
             
             foreach ($registros as $registro) { 
-                $sheet->setCellValue($colTipo.$filaActual, $ani_tipo ?? 'Regular');
                 $sheet->setCellValue($colUC.$filaActual, $registro['uc']); 
                 $sheet->setCellValue($colDocente.$filaActual, $registro['docente']); 
                 $filaActual++; 
@@ -235,10 +232,6 @@
             
             if ($filaInicioSeccion < $filaFinSeccion) { 
                 $sheet->mergeCells("{$colSeccion}{$filaInicioSeccion}:{$colSeccion}{$filaFinSeccion}"); 
-            }
-            
-            if ($filaInicioSeccion < $filaFinSeccion) { 
-                $sheet->mergeCells("{$colTipo}{$filaInicioSeccion}:{$colTipo}{$filaFinSeccion}"); 
             } 
         } 
 
@@ -270,26 +263,27 @@
         $alturaBloqueActual = renderizarBloqueSeccion($sheet, $numTrayecto, $ani_tipo, $secciones, $rowOffset, $colOffset, $estilos); 
 
         $alturaMaximaFila = max($alturaMaximaFila, $alturaBloqueActual); 
-        $colOffset += 5; 
+        $colOffset += 4; 
         $bloquesEnFila++; 
     } 
 
     $sheet->getColumnDimension('A')->setWidth(15);
-    $sheet->getColumnDimension('B')->setWidth(12);
-    $sheet->getColumnDimension('C')->setWidth(45); 
-    $sheet->getColumnDimension('D')->setWidth(35);
-    $sheet->getColumnDimension('F')->setWidth(15);
-    $sheet->getColumnDimension('G')->setWidth(12);
-    $sheet->getColumnDimension('H')->setWidth(45); 
-    $sheet->getColumnDimension('I')->setWidth(35);
-    $sheet->getColumnDimension('K')->setWidth(15);
-    $sheet->getColumnDimension('L')->setWidth(12); 
+    $sheet->getColumnDimension('B')->setWidth(45); 
+    $sheet->getColumnDimension('C')->setWidth(35);
+    $sheet->getColumnDimension('E')->setWidth(15);
+    $sheet->getColumnDimension('F')->setWidth(45); 
+    $sheet->getColumnDimension('G')->setWidth(35);
+    $sheet->getColumnDimension('I')->setWidth(15);
     $sheet->getColumnDimension('J')->setWidth(45); 
     $sheet->getColumnDimension('K')->setWidth(35); 
 
     $writer = new Xlsx($spreadsheet); 
     if (ob_get_length()) ob_end_clean(); 
-    $fileName = "Reporte_Unidad_Curricular.xlsx"; 
+    $fileName = "Reporte_Unidad_Curricular";
+    if ($ani_tipo && strtolower($ani_tipo) === 'intensivo') {
+        $fileName .= "_Intensivo";
+    }
+    $fileName .= ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
     header('Content-Disposition: attachment;filename="' . $fileName . '"'); 
     header('Cache-Control: max-age=0'); 

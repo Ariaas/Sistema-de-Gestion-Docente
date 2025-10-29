@@ -3,18 +3,19 @@ require_once('model/dbconnection.php');
 
 class SeccionReport extends Connection
 {
-    private $anio, $fase, $trayecto;
+    private $anio, $ani_tipo, $fase, $trayecto;
 
     public function __construct() { parent::__construct(); }
 
     public function setAnio($valor) { $this->anio = trim($valor); }
+    public function setAniTipo($valor) { $this->ani_tipo = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
     public function setTrayecto($valor) { $this->trayecto = trim($valor); }
     
     
     public function getAniosActivos() {
         try {
-            $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC";
+            $sql = "SELECT ani_anio, ani_tipo, CONCAT(ani_anio, ' - ', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo ASC";
             $stmt = $this->con()->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -43,19 +44,34 @@ class SeccionReport extends Connection
   
 public function getHorariosFiltrados()
 {
-    if (empty($this->anio) || empty($this->fase)) return [];
+    // Validar campos requeridos
+    if (empty($this->anio) || empty($this->ani_tipo)) return [];
+    
+    // Si es intensivo, no se requiere fase
+    $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+    
+    if (!$esIntensivo && empty($this->fase)) return [];
 
     $allowed_periods = [];
-    if ($this->fase == 1) {
-        $allowed_periods = ['Fase I', 'Anual', 'anual', '0'];
-    } elseif ($this->fase == 2) {
-        $allowed_periods = ['Fase II', 'Anual', 'anual'];
+    
+    // Si es intensivo, incluir todos los periodos
+    if ($esIntensivo) {
+        $allowed_periods = ['Fase I', 'Fase II', 'Anual', 'anual', '0'];
+    } else {
+        // Lógica normal para años regulares
+        if ($this->fase == 1) {
+            $allowed_periods = ['Fase I', 'Anual', 'anual', '0'];
+        } elseif ($this->fase == 2) {
+            $allowed_periods = ['Fase II', 'Anual', 'anual'];
+        }
     }
 
     if (empty($allowed_periods)) return [];
     
     try {
-        $params = [':anio_param' => $this->anio];
+        $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
+        
+        error_log("SeccionReport - Año: " . $this->anio . ", Tipo: " . $this->ani_tipo . ", Fase: " . $this->fase);
         
         $sql_base = "SELECT
                         uh.sec_codigo,
@@ -76,11 +92,13 @@ public function getHorariosFiltrados()
                         END AS esp_codigo
                     FROM
                         uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
+                        AND uh.ani_anio = s.ani_anio
                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
                     WHERE
                         s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param
                         AND u.uc_estado = 1
                         AND s.sec_estado = 1";
         
@@ -101,10 +119,16 @@ public function getHorariosFiltrados()
         
         $sql_base .= " ORDER BY u.uc_trayecto ASC, uh.sec_codigo ASC, uh.hor_horainicio ASC, uh.subgrupo ASC";
         
+        error_log("SeccionReport SQL: " . $sql_base);
+        error_log("SeccionReport Params: " . print_r($params, true));
+        
         $stmt = $this->con()->prepare($sql_base);
         $stmt->execute($params);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        error_log("SeccionReport - Registros encontrados: " . count($result));
+        
+        return $result;
 
     } catch (PDOException $e) {
         error_log("Error en SeccionReport::getHorariosFiltrados: " . $e->getMessage());

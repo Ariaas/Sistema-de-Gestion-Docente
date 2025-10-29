@@ -40,15 +40,30 @@ $oAulario = new AularioReport();
 
 if (isset($_POST['generar_aulario_report'])) {
 
-    $anio = $_POST['anio_id'] ?? '';
+    // Separar año y tipo del valor combinado
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    
     $fase = $_POST['fase_id'] ?? '';
     $espacio_filtrado = $_POST['espacio_id'] ?? '';
 
-    if (empty($anio) || empty($fase)) {
-        die("Error: Debe seleccionar un Año y una Fase.");
+    // Verificar si es intensivo
+    $esIntensivo = strtolower($ani_tipo) === 'intensivo';
+    
+    // Validar campos requeridos
+    if (empty($anio) || empty($ani_tipo)) {
+        die("Error: Debe seleccionar un Año y Tipo.");
+    }
+    
+    // Solo requerir fase si NO es intensivo
+    if (!$esIntensivo && empty($fase)) {
+        die("Error: Debe seleccionar una Fase para años regulares.");
     }
 
     $oAulario->setAnio($anio);
+    $oAulario->setAniTipo($ani_tipo);
     $oAulario->setFase($fase);
     $oAulario->setEspacio($espacio_filtrado);
 
@@ -114,7 +129,16 @@ if (isset($_POST['generar_aulario_report'])) {
         ksort($dataGroupedByAula);
 
         foreach ($dataGroupedByAula as $espacioCodigo => $horarioData) {
-            $sheet = new Worksheet($spreadsheet, preg_replace('/[^A-Za-z0-9\-\. ]/', '', $espacioCodigo));
+            // Sanitizar el nombre de la hoja
+            $nombreHoja = preg_replace('/[^A-Za-z0-9\-\. ]/', '', $espacioCodigo);
+            // Si el nombre queda vacío después de sanitizar, usar un nombre por defecto
+            if (empty($nombreHoja)) {
+                $nombreHoja = 'Aula_' . substr(md5($espacioCodigo), 0, 8);
+            }
+            // Limitar a 31 caracteres (límite de Excel)
+            $nombreHoja = substr($nombreHoja, 0, 31);
+            
+            $sheet = new Worksheet($spreadsheet, $nombreHoja);
             $spreadsheet->addSheet($sheet);
             $sheet->getColumnDimension('A')->setWidth(20);
             foreach (range('B', 'G') as $col) {
@@ -141,7 +165,11 @@ if (isset($_POST['generar_aulario_report'])) {
                 $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
                 $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
                 $horaInicio = new DateTime($item['hor_horainicio']);
-                $gridData[$dia_key][$horaInicio->format('H:i:s')] = $item;
+                // Almacenar múltiples clases en el mismo horario
+                if (!isset($gridData[$dia_key][$horaInicio->format('H:i:s')])) {
+                    $gridData[$dia_key][$horaInicio->format('H:i:s')] = [];
+                }
+                $gridData[$dia_key][$horaInicio->format('H:i:s')][] = $item;
             }
 
             $headerRow = $currentRow;
@@ -206,24 +234,33 @@ if (isset($_POST['generar_aulario_report'])) {
                         continue;
                     }
 
-                    $clase = $gridData[$day][$dbStartTimeKey] ?? null;
-                    if ($clase) {
+                    $clases = $gridData[$day][$dbStartTimeKey] ?? null;
+                    if ($clases) {
                         $richText = new RichText();
-                        $secciones = implode(", ", array_unique($clase['sec_codigo_list']));
-                        $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
-                        $subgrupoTexto = $clase['subgrupo'] ? ' (Grupo: ' . $clase['subgrupo'] . ')' : '';
+                        
+                        // Procesar múltiples clases en el mismo horario
+                        foreach ($clases as $idx => $clase) {
+                            if ($idx > 0) {
+                                $richText->createText("\n- - - - - - - - -\n");
+                            }
+                            
+                            $secciones = implode(", ", array_unique($clase['sec_codigo_list']));
+                            $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
+                            $subgrupoTexto = $clase['subgrupo'] ? ' (Grupo: ' . $clase['subgrupo'] . ')' : '';
 
-                        $ucPart = $richText->createTextRun($ucAbreviada . $subgrupoTexto);
-                        $ucPart->getFont()->setBold(true);
+                            $ucPart = $richText->createTextRun($ucAbreviada . $subgrupoTexto);
+                            $ucPart->getFont()->setBold(true);
 
-                        $docente = $clase['NombreCompletoDocente'] ?? '(Sin Docente)';
-
-                        $richText->createText("\n" . $secciones . "\n" . $docente);
+                            $docente = $clase['NombreCompletoDocente'] ?? '(Sin Docente)';
+                            $richText->createText("\n" . $secciones . "\n" . $docente);
+                        }
 
                         $sheet->setCellValue($cellAddress, $richText);
 
-                        $horaInicioClase = new DateTime($clase['hor_horainicio']);
-                        $horaFinClase = new DateTime($clase['hor_horafin']);
+                        // Usar la primera clase para calcular el span
+                        $primeraClase = $clases[0];
+                        $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);
+                        $horaFinClase = new DateTime($primeraClase['hor_horafin']);
 
                         $minutosInicio = ($horaInicioClase->format('H') * 60) + $horaInicioClase->format('i');
                         $minutosFin = ($horaFinClase->format('H') * 60) + $horaFinClase->format('i');
@@ -254,12 +291,33 @@ if (isset($_POST['generar_aulario_report'])) {
     }
 
     if (ob_get_length()) ob_end_clean();
-    $outputFileName = "Reporte_Aulario_" . $anio . ".xlsx";
+    $outputFileName = "Reporte_Aulario";
+    if ($esIntensivo) {
+        $outputFileName .= "_Intensivo";
+    }
+    $outputFileName .= ".xlsx";
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $outputFileName . '"');
     header('Cache-Control: max-age=0');
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');
+    exit;
+} elseif (isset($_POST['action']) && $_POST['action'] === 'obtener_espacios_por_anio') {
+    // Endpoint AJAX para obtener espacios filtrados por año
+    header('Content-Type: application/json');
+    
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    
+    if (empty($anio) || empty($ani_tipo)) {
+        echo json_encode(['success' => false, 'message' => 'Año o tipo no válido']);
+        exit;
+    }
+    
+    $espacios = $oAulario->getEspaciosPorAnio($anio, $ani_tipo);
+    echo json_encode(['success' => true, 'espacios' => $espacios]);
     exit;
 } else {
     $listaAnios = $oAulario->getAniosActivos();

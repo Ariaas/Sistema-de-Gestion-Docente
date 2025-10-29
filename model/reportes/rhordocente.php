@@ -3,7 +3,7 @@ require_once('model/dbconnection.php');
 
 class ReporteHorarioDocente extends Connection 
 {
-    private $cedula_docente, $anio, $fase;
+    private $cedula_docente, $anio, $ani_tipo, $fase;
 
     public function __construct() {
         parent::__construct();
@@ -11,12 +11,13 @@ class ReporteHorarioDocente extends Connection
 
     public function set_cedula_docente($valor) { $this->cedula_docente = trim($valor); }
     public function setAnio($valor) { $this->anio = trim($valor); }
+    public function setAniTipo($valor) { $this->ani_tipo = trim($valor); }
     public function setFase($valor) { $this->fase = trim($valor); }
 
     
     public function getAniosActivos() {
         try {
-            $sql = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC";
+            $sql = "SELECT ani_anio, ani_tipo, CONCAT(ani_anio, ' - ', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo ASC";
             $stmt = $this->con()->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -36,6 +37,29 @@ class ReporteHorarioDocente extends Connection
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return false; }
+    }
+    
+    public function obtenerDocentesPorAnio($anio, $ani_tipo) {
+        if (empty($anio) || empty($ani_tipo)) return $this->obtenerDocentes();
+        
+        try {
+            $sql = "SELECT DISTINCT d.doc_cedula, CONCAT(d.doc_apellido, ' ', d.doc_nombre) as nombreCompleto 
+                    FROM tbl_docente d
+                    INNER JOIN uc_horario uh ON d.doc_cedula = uh.doc_cedula
+                    INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
+                        AND uh.ani_anio = s.ani_anio
+                    WHERE d.doc_estado = 1 
+                        AND s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param
+                    ORDER BY d.doc_apellido ASC, d.doc_nombre ASC";
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute([':anio_param' => $anio, ':ani_tipo_param' => $ani_tipo]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { 
+            error_log("Error en obtenerDocentesPorAnio: " . $e->getMessage());
+            return $this->obtenerDocentes(); 
+        }
     }
     public function obtenerInfoDocente() {
         if (empty($this->cedula_docente)) return false;
@@ -65,26 +89,42 @@ class ReporteHorarioDocente extends Connection
     public function obtenerOtrasActividades() {
         if (empty($this->cedula_docente)) return false;
         try {
-            $stmt = $this->con()->prepare("SELECT * FROM tbl_actividad WHERE doc_cedula = :cedula_docente");
+            $stmt = $this->con()->prepare("SELECT * FROM tbl_actividad WHERE doc_cedula = :cedula_docente AND act_estado = 1");
             $stmt->execute([':cedula_docente' => $this->cedula_docente]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) { return false; }
+        } catch (PDOException $e) { 
+            error_log("Error en obtenerOtrasActividades: " . $e->getMessage());
+            return false; 
+        }
     }
 
     private function get_allowed_periods() {
+        // Si es intensivo, incluir todos los periodos
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        
+        if ($esIntensivo) {
+            return ['Fase I', 'Fase II', 'Anual'];
+        }
+        
+        // Lógica normal para años regulares
         if ($this->fase == 1) {
-            return ['Fase I', 'Anual', 'anual', '0'];
+            return ['Fase I', 'Anual'];
         } elseif ($this->fase == 2) {
-            return ['Fase II', 'Anual', 'anual'];
+            return ['Fase II', 'Anual'];
         }
         return [];
     }
 
     public function obtenerAsignacionesAcademicas() {
-        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+        // Validar campos requeridos
+        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        // Si es intensivo, no se requiere fase
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
         
         try {
-            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
             $allowed_periods = $this->get_allowed_periods();
             
         
@@ -104,12 +144,15 @@ class ReporteHorarioDocente extends Connection
                             u.uc_periodo,
                             (SELECT um.mal_hora_academica FROM uc_malla um JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo WHERE um.uc_codigo = u.uc_codigo AND m.mal_activa = 1 LIMIT 1) as totalHorasClase
                         FROM uc_horario uh
-                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
+                            AND uh.ani_anio = s.ani_anio
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         LEFT JOIN tbl_eje e ON u.eje_nombre = e.eje_nombre
                         WHERE 
                             uh.doc_cedula = :cedula_docente
-                            AND s.ani_anio = :anio_param";
+                            AND uh.doc_cedula IS NOT NULL
+                            AND s.ani_anio = :anio_param
+                            AND s.ani_tipo = :ani_tipo_param";
 
             if (!empty($allowed_periods)) {
                 $placeholders = [];
@@ -126,7 +169,9 @@ class ReporteHorarioDocente extends Connection
             
             $stmt = $this->con()->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return $result;
         } catch (PDOException $e) { 
             error_log("Error en obtenerAsignacionesAcademicas: " . $e->getMessage());
             return []; 
@@ -134,10 +179,15 @@ class ReporteHorarioDocente extends Connection
     }
 
     public function obtenerDatosParrillaHorario() {
-        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->fase)) return [];
+        // Validar campos requeridos
+        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        // Si es intensivo, no se requiere fase
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
         
         try {
-            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio];
+            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
             $allowed_periods = $this->get_allowed_periods();
             
        
@@ -155,11 +205,14 @@ class ReporteHorarioDocente extends Connection
                                 ELSE uh.esp_numero
                             END AS esp_codigo_formatted
                         FROM uc_horario uh
-                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
+                            AND uh.ani_anio = s.ani_anio
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         WHERE 
                             uh.doc_cedula = :cedula_docente
-                            AND s.ani_anio = :anio_param";
+                            AND uh.doc_cedula IS NOT NULL
+                            AND s.ani_anio = :anio_param
+                            AND s.ani_tipo = :ani_tipo_param";
             
             if (!empty($allowed_periods)) {
                 $placeholders = [];
