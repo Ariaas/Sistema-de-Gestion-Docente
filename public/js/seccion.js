@@ -51,6 +51,10 @@ let modalDataLoaded = false;
 let isSplittingProcess = false;
 let hasSaved = false;
 
+let draggedClassData = null;
+let draggedClassKey = null;
+let draggedSubgrupoId = null;
+
 function checkForConflicts(newClassDetails) {
     const { docId, espIdJson, dia, secId, horaInicioNueva, horaFinNueva } = newClassDetails;
     const foundConflicts = []; 
@@ -265,6 +269,8 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
     });
     if (!isViewOnly) {
         $("#tablaHorario tbody").off("click").on("click", ".celda-horario", onCeldaHorarioClick);
+        
+        configurarDragAndDrop();
     }
 }
 
@@ -300,10 +306,11 @@ function generarCellContent(clase, isViewOnly = false) {
         </button>
     `;
 
-    const cursorStyle = isViewOnly ? '' : 'cursor: pointer;';
+    const cursorStyle = isViewOnly ? '' : 'cursor: grab;';
+    const draggableAttr = isViewOnly ? '' : 'draggable="true"';
   
 
-    return `<div class="subgroup-item p-1" style="display: flex; align-items: center; justify-content: space-between;" data-subgrupo-id="${subgrupoId}">
+    return `<div class="subgroup-item p-1 draggable-class" ${draggableAttr} style="display: flex; align-items: center; justify-content: space-between;" data-subgrupo-id="${subgrupoId}">
                 <div class="subgroup-content" style="${cursorStyle} flex-grow: 1;">
                     <p class="m-0" style="font-size:0.8em;">${subgrupoDisplay}<strong>${uc}</strong></p>
                     <small class="text-muted" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>
@@ -968,6 +975,265 @@ function eliminarSubgrupo(subgrupoId) {
             checkForScheduleChanges(); 
         }
     });
+}
+
+function configurarDragAndDrop() {
+    $("#tablaHorario .draggable-class").each(function() {
+        const $this = $(this);
+        
+        this.addEventListener('dragstart', function(e) {
+            const $cell = $this.closest('td.celda-horario');
+            const franjaInicio = $cell.data("franja-inicio");
+            const diaNombre = $cell.data("dia-nombre");
+            const subgrupoId = $this.data('subgrupo-id');
+            
+            const key_horario = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+            const clasesEnCelda = horarioContenidoGuardado.get(key_horario) || [];
+            
+            const claseData = clasesEnCelda.find(c => (c.data.subgrupo || 'default') === subgrupoId);
+            
+            if (claseData) {
+                draggedClassData = claseData.data;
+                draggedClassKey = key_horario;
+                draggedSubgrupoId = subgrupoId;
+                
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.innerHTML);
+                
+                $this.css('opacity', '0.5');
+                $this.css('cursor', 'grabbing');
+            }
+        });
+        
+        this.addEventListener('dragend', function(e) {
+            $this.css('opacity', '1');
+            $this.css('cursor', 'grab');
+        });
+    });
+    
+    $("#tablaHorario .celda-horario").each(function() {
+        const $cell = $(this);
+        
+        this.addEventListener('dragover', function(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            
+            $cell.addClass('drag-over');
+            return false;
+        });
+        
+        this.addEventListener('dragenter', function(e) {
+            $cell.addClass('drag-over');
+        });
+        
+        this.addEventListener('dragleave', function(e) {
+            $cell.removeClass('drag-over');
+        });
+        
+        this.addEventListener('drop', function(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            $cell.removeClass('drag-over');
+            
+            if (!draggedClassData) return false;
+            
+            const franjaInicio = $cell.data("franja-inicio");
+            const diaNombre = $cell.data("dia-nombre");
+            const key_destino = `${franjaInicio.substring(0, 5)}-${normalizeDayKey(diaNombre)}`;
+            
+            if (key_destino === draggedClassKey) {
+                draggedClassData = null;
+                draggedClassKey = null;
+                draggedSubgrupoId = null;
+                return false;
+            }
+            
+            const clasesEnDestino = horarioContenidoGuardado.get(key_destino) || [];
+            if (clasesEnDestino.length >= 2) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Celda llena',
+                    text: 'Esta celda ya tiene el máximo de 2 subgrupos. Elimine uno primero.',
+                    timer: 3000
+                });
+                draggedClassData = null;
+                draggedClassKey = null;
+                draggedSubgrupoId = null;
+                return false;
+            }
+            
+            const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
+            const bloques_span = draggedClassData.bloques_span || 1;
+            const indiceFin = indiceInicio + bloques_span - 1;
+            
+            if (indiceFin >= bloquesDeLaTablaActual.length) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Duración excedida',
+                    text: 'La duración de esta clase excede los bloques disponibles en este horario.',
+                    timer: 3000
+                });
+                draggedClassData = null;
+                draggedClassKey = null;
+                draggedSubgrupoId = null;
+                return false;
+            }
+            
+            const diaKey = normalizeDayKey(diaNombre);
+            let hayConflictoDeBloques = false;
+            let bloqueConflictivo = '';
+            
+            for (let i = indiceInicio; i <= indiceFin; i++) {
+                const bloqueActual = bloquesDeLaTablaActual[i];
+                const keyBloque = `${bloqueActual.tur_horainicio.substring(0, 5)}-${diaKey}`;
+                
+                const clasesEnBloque = horarioContenidoGuardado.get(keyBloque);
+                if (clasesEnBloque && clasesEnBloque.length > 0) {
+                    hayConflictoDeBloques = true;
+                    bloqueConflictivo = `${formatTime12Hour(bloqueActual.tur_horainicio)} - ${formatTime12Hour(bloqueActual.tur_horafin)}`;
+                    break;
+                }
+            }
+            
+            if (hayConflictoDeBloques) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Conflicto de bloques horarios',
+                    html: `No se puede mover la clase porque uno de sus bloques choca con otra clase existente.<br><br><strong>Bloque en conflicto:</strong> ${bloqueConflictivo}`,
+                    confirmButtonText: 'Entendido',
+                    timer: 4000
+                });
+                draggedClassData = null;
+                draggedClassKey = null;
+                draggedSubgrupoId = null;
+                return false;
+            }
+            
+            validarYMoverClase(draggedClassData, draggedClassKey, key_destino, diaNombre, franjaInicio, bloques_span);
+            
+            return false;
+        });
+    });
+}
+
+function validarYMoverClase(claseData, keyOrigen, keyDestino, diaNuevo, horaNueva, bloques_span) {
+    const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === horaNueva);
+    const indiceFin = indiceInicio + bloques_span - 1;
+    
+    const datosValidacion = new FormData();
+    datosValidacion.append("accion", "validar_clase_en_vivo");
+    datosValidacion.append("doc_cedula", claseData.doc_cedula || "");
+    datosValidacion.append("uc_codigo", claseData.uc_codigo || "");
+    datosValidacion.append("espacio", claseData.espacio ? JSON.stringify(claseData.espacio) : "");
+    datosValidacion.append("dia", diaNuevo);
+    datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
+    datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
+    datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
+    datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
+    
+    $.ajax({
+        url: "",
+        type: "POST",
+        data: datosValidacion,
+        contentType: false,
+        processData: false,
+        success: function(respuesta) {
+            const serverConflicts = (respuesta.conflicto && Array.isArray(respuesta.mensajes)) ? respuesta.mensajes : [];
+            
+            if (serverConflicts.length > 0) {
+                let mensajeHtml = "Se encontraron los siguientes conflictos:<ul class='text-start mt-2'>";
+                serverConflicts.forEach(c => { mensajeHtml += `<li>${c.mensaje}</li>`; });
+                mensajeHtml += "</ul><br>¿Desea mover la clase de todas formas?";
+                
+                Swal.fire({
+                    title: 'Conflictos detectados',
+                    html: mensajeHtml,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, mover',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        ejecutarMovimientoClase(claseData, keyOrigen, keyDestino, diaNuevo, horaNueva, bloques_span);
+                    } else {
+                        draggedClassData = null;
+                        draggedClassKey = null;
+                        draggedSubgrupoId = null;
+                    }
+                });
+            } else {
+                ejecutarMovimientoClase(claseData, keyOrigen, keyDestino, diaNuevo, horaNueva, bloques_span);
+            }
+        },
+        error: function() {
+            muestraMensaje("error", 5000, "Error de Conexión", "No se pudo validar la clase con el servidor.");
+            draggedClassData = null;
+            draggedClassKey = null;
+            draggedSubgrupoId = null;
+        }
+    });
+}
+
+function ejecutarMovimientoClase(claseData, keyOrigen, keyDestino, diaNuevo, horaNueva, bloques_span) {
+    const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === horaNueva);
+    const indiceFin = indiceInicio + bloques_span - 1;
+    const nuevaHoraFin = bloquesDeLaTablaActual[indiceFin].tur_horafin;
+    
+    const claseActualizada = {
+        ...claseData,
+        dia: diaNuevo,
+        hora_inicio: horaNueva,
+        hora_fin: nuevaHoraFin,
+        bloques_span: bloques_span
+    };
+    
+    let clasesOrigen = horarioContenidoGuardado.get(keyOrigen) || [];
+    clasesOrigen = clasesOrigen.filter(c => (c.data.subgrupo || 'default') !== draggedSubgrupoId);
+    
+    if (clasesOrigen.length > 0) {
+        if (clasesOrigen.length === 1) {
+            clasesOrigen[0].data.subgrupo = null;
+        }
+        horarioContenidoGuardado.set(keyOrigen, clasesOrigen);
+    } else {
+        horarioContenidoGuardado.delete(keyOrigen);
+    }
+    
+    let clasesDestino = horarioContenidoGuardado.get(keyDestino) || [];
+    
+    if (clasesDestino.length === 1 && !clasesDestino[0].data.subgrupo) {
+        clasesDestino[0].data.subgrupo = 'A';
+        claseActualizada.subgrupo = 'B';
+    } else if (clasesDestino.length === 1 && clasesDestino[0].data.subgrupo) {
+        const subgruposExistentes = clasesDestino.map(c => c.data.subgrupo);
+        claseActualizada.subgrupo = subgruposExistentes.includes('A') ? 'B' : 'A';
+    } else {
+        claseActualizada.subgrupo = null;
+    }
+    
+    clasesDestino.forEach(c => {
+        c.data.bloques_span = bloques_span;
+        c.data.hora_fin = nuevaHoraFin;
+    });
+    
+    clasesDestino.push({ data: claseActualizada });
+    horarioContenidoGuardado.set(keyDestino, clasesDestino);
+    
+    draggedClassData = null;
+    draggedClassKey = null;
+    draggedSubgrupoId = null;
+    
+    const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+    inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
+    checkForScheduleChanges();
+    
+    muestraMensaje("success", 2500, "Clase movida", "La clase se ha movido exitosamente al nuevo día y horario.");
 }
 
 function onCeldaHorarioClick(e) {

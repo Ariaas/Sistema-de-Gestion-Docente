@@ -1166,3 +1166,39 @@ footer {
   background: linear-gradient(90deg, #8b5cf6, #a78bfa) !important;
   height: 4px !important;
 }
+
+/* Estilos para Drag and Drop de Clases */
+.draggable-class {
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.draggable-class:active {
+  cursor: grabbing !important;
+}
+
+.draggable-class.dragging {
+  opacity: 0.5;
+  cursor: grabbing !important;
+}
+
+.celda-horario.drag-over {
+  background-color: #d1e7fd !important;
+  border: 2px dashed #0d6efd !important;
+  box-shadow: 0 0 10px rgba(13, 110, 253, 0.3) !important;
+}
+
+.subgroup-content {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.draggable-class[draggable="true"] .subgroup-content {
+  cursor: grab;
+}
+
+.draggable-class[draggable="true"]:active .subgroup-content {
+  cursor: grabbing;
+}
