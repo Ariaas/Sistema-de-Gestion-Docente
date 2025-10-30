@@ -17,8 +17,11 @@ function getScheduleStateString() {
     }
     clases.sort((a, b) => (a.dia + a.hora_inicio).localeCompare(b.dia + b.hora_inicio));
 
-    
-    const bloques = bloquesDeLaTablaActual;
+    const bloques = bloquesDeLaTablaActual.map(b => ({
+        tur_horainicio: b.tur_horainicio,
+        tur_horafin: b.tur_horafin,
+        _sintetico: b._sintetico || false
+    }));
 
     return JSON.stringify({ cantidad, clases, bloques });
 }
@@ -29,6 +32,69 @@ function checkForScheduleChanges() {
         $("#proceso").prop("disabled", false);
     } else {
         $("#proceso").prop("disabled", true);
+    }
+}
+
+function guardarBloquesPersonalizadosEnLocalStorage() {
+    const sec_codigo = $("#sec_codigo_hidden").val();
+    const ani_anio = $("#ani_anio_hidden").val();
+    
+    console.log('💾 Guardando bloques personalizados...', { sec_codigo, ani_anio });
+    console.log('📊 bloquesDeLaTablaActual:', bloquesDeLaTablaActual.length, 'bloques');
+    
+    if (!sec_codigo || !ani_anio) {
+        console.warn('⚠️ No se puede guardar: falta sec_codigo o ani_anio');
+        return;
+    }
+    
+    const bloquesPersonalizados = bloquesDeLaTablaActual.filter(bloque => {
+        const existeEnAllTurnos = allTurnos.some(t => t.tur_horainicio === bloque.tur_horainicio);
+        return !existeEnAllTurnos || bloque._sintetico;
+    });
+    
+    console.log('✅ Bloques personalizados a guardar:', bloquesPersonalizados.length);
+    bloquesPersonalizados.forEach(b => console.log('  -', b.tur_horainicio, '-', b.tur_horafin));
+    
+    const key = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
+    
+    if (bloquesPersonalizados.length > 0) {
+        localStorage.setItem(key, JSON.stringify(bloquesPersonalizados));
+        console.log('💾 Guardados en localStorage con key:', key);
+    } else {
+        localStorage.removeItem(key);
+        console.log('🗑️ No hay bloques personalizados, se limpió localStorage');
+    }
+}
+
+function guardarBloquesExcluidosEnLocalStorage(horaInicioExcluida) {
+    const sec_codigo = $("#sec_codigo_hidden").val();
+    const ani_anio = $("#ani_anio_hidden").val();
+    
+    console.log('🚫 Guardando bloque excluido:', horaInicioExcluida);
+    
+    if (!sec_codigo || !ani_anio) {
+        console.warn('⚠️ No se puede guardar bloque excluido: falta sec_codigo o ani_anio');
+        return;
+    }
+    
+    const key = `bloques_excluidos_${sec_codigo}_${ani_anio}`;
+    let bloquesExcluidos = [];
+    
+    const guardados = localStorage.getItem(key);
+    if (guardados) {
+        try {
+            bloquesExcluidos = JSON.parse(guardados);
+        } catch (e) {
+            console.error('Error al cargar bloques excluidos:', e);
+        }
+    }
+    
+    if (!bloquesExcluidos.includes(horaInicioExcluida)) {
+        bloquesExcluidos.push(horaInicioExcluida);
+        localStorage.setItem(key, JSON.stringify(bloquesExcluidos));
+        console.log('✅ Bloque excluido guardado. Total excluidos:', bloquesExcluidos.length);
+    } else {
+        console.log('ℹ️ Bloque ya estaba excluido');
     }
 }
 
@@ -115,54 +181,55 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
     const sec_codigo = $("#sec_codigo_hidden").val();
     const ani_anio = $("#ani_anio_hidden").val();
     let bloquesGuardados = [];
+    let bloquesExcluidos = [];
     
     if (sec_codigo && ani_anio) {
-        const key = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
-        const guardados = localStorage.getItem(key);
+        const keyPersonalizados = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
+        const guardados = localStorage.getItem(keyPersonalizados);
         if (guardados) {
             try {
                 bloquesGuardados = JSON.parse(guardados);
-                console.log(`📂 Cargados ${bloquesGuardados.length} bloques personalizados`);
             } catch (e) {
                 console.error('Error al cargar bloques personalizados:', e);
             }
         }
+        
+        const keyExcluidos = `bloques_excluidos_${sec_codigo}_${ani_anio}`;
+        const excluidos = localStorage.getItem(keyExcluidos);
+        if (excluidos) {
+            try {
+                bloquesExcluidos = JSON.parse(excluidos);
+            } catch (e) {
+                console.error('Error al cargar bloques excluidos:', e);
+            }
+        }
     }
     
-    if (!clases || clases.length === 0) {
-        if (bloquesGuardados.length > 0) {
-            return bloquesGuardados.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
-        }
-        return [];
-    }
-
-    let minTime = '23:59:59';
-    let maxTime = '00:00:00';
-
-    clases.forEach(clase => {
-        const horaInicioCompleta = (clase.hora_inicio && clase.hora_inicio.length === 5) ? clase.hora_inicio + ':00' : clase.hora_inicio;
-        const horaFinCompleta = (clase.hora_fin && clase.hora_fin.length === 5) ? clase.hora_fin + ':00' : clase.hora_fin;
-
-        if (horaInicioCompleta && horaInicioCompleta < minTime) {
-            minTime = horaInicioCompleta;
-        }
-        if (horaFinCompleta && horaFinCompleta > maxTime) {
-            maxTime = horaFinCompleta;
-        }
-    });
-    
-    bloquesGuardados.forEach(bloque => {
-        if (bloque.tur_horainicio < minTime) minTime = bloque.tur_horainicio;
-        if (bloque.tur_horafin > maxTime) maxTime = bloque.tur_horafin;
-    });
-
-    if (minTime > maxTime) {
-        return [];
+    let rangoInicio, rangoFin;
+    if (turnoSeleccionado === 'mañana') {
+        rangoInicio = '06:00:00';
+        rangoFin = '12:00:00';
+    } else if (turnoSeleccionado === 'tarde') {
+        rangoInicio = '12:00:00';
+        rangoFin = '18:00:00';
+    } else {
+        rangoInicio = '18:00:00';
+        rangoFin = '23:59:59';
     }
 
     const bloquesNecesarios = allTurnos.filter(turnoBase => {
-        return turnoBase.tur_horainicio >= minTime && turnoBase.tur_horainicio < maxTime;
+        if (turnoBase.tur_horainicio < rangoInicio || turnoBase.tur_horainicio >= rangoFin) {
+            return false;
+        }
+        const yaCubiertoPorGuardado = bloquesGuardados.some(bg => bg.tur_horainicio === turnoBase.tur_horainicio);
+        const estaExcluido = bloquesExcluidos.includes(turnoBase.tur_horainicio);
+        return !yaCubiertoPorGuardado && !estaExcluido;
     });
+    
+    if (!clases || clases.length === 0) {
+        const todosBloques = [...bloquesNecesarios, ...bloquesGuardados];
+        return todosBloques.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+    }
 
     const horariosUnicos = new Set();
     clases.forEach(clase => {
@@ -176,8 +243,9 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
         const horario = JSON.parse(horarioStr);
         const existeBloque = bloquesNecesarios.some(b => b.tur_horainicio === horario.inicio);
         const existeEnAllTurnos = allTurnos.some(b => b.tur_horainicio === horario.inicio);
+        const existeEnGuardados = bloquesGuardados.some(b => b.tur_horainicio === horario.inicio);
         
-        if (!existeBloque && !existeEnAllTurnos) {
+        if (!existeBloque && !existeEnAllTurnos && !existeEnGuardados) {
             bloquesSinteticos.push({
                 tur_horainicio: horario.inicio,
                 tur_horafin: horario.fin,
@@ -185,7 +253,6 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
                 tur_estado: 1,
                 _sintetico: true
             });
-            console.log(`🔧 Bloque sintético creado: ${horario.inicio} - ${horario.fin}`);
         }
     });
 
@@ -197,16 +264,6 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
 
     const todosBloques = [...bloquesNecesarios, ...bloquesSinteticos, ...bloquesGuardadosFiltrados];
     todosBloques.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
-
-    if (bloquesSinteticos.length > 0) {
-        const horariosCreados = bloquesSinteticos.map(b => b.tur_horainicio.substring(0, 5)).join(', ');
-        console.info(`✅ Se crearon ${bloquesSinteticos.length} bloques automáticos para: ${horariosCreados}`);
-    }
-    
-    if (bloquesGuardadosFiltrados.length > 0) {
-        const horariosRestaurados = bloquesGuardadosFiltrados.map(b => b.tur_horainicio.substring(0, 5)).join(', ');
-        console.info(`📂 Se restauraron ${bloquesGuardadosFiltrados.length} bloques guardados: ${horariosRestaurados}`);
-    }
 
     return todosBloques;
 }
@@ -539,8 +596,6 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
         <form id="formularioEntradaHorario" autocomplete="off" novalidate>
             <input type="hidden" id="formContext" value="simple">
             <input type="hidden" id="subgrupoOriginalId" value="default">
-            <div class="mb-3"><label class="form-label">Franja Horaria:</label><input type="text" class="form-control" id="franjaHorariaDisplay" value="${formatTime12Hour(turnoCompleto.tur_horainicio)} - ${formatTime12Hour(turnoCompleto.tur_horafin)}" readonly></div>
-            <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" value="${diaNombre}" readonly></div>
             <div class="mb-3">
                 <label for="modalSeleccionarUc" class="form-label">Unidad Curricular</label>
                 <select class="form-select" id="modalSeleccionarUc" style="width: 100%;"></select>
@@ -570,6 +625,18 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
     `;
 
     modalBody.html(formHtml);
+    
+    const actualizarTituloModal = () => {
+        const bloquesSeleccionados = parseInt($("#modalDuracionSubgrupo").val(), 10);
+        const indiceFin = indiceInicio + bloquesSeleccionados - 1;
+        let horaFin = turnoCompleto.tur_horafin;
+        if (indiceFin < bloquesDeLaTablaActual.length) {
+            horaFin = bloquesDeLaTablaActual[indiceFin].tur_horafin;
+        }
+        $("#modalEntradaHorario .modal-title").text(`Gestionar Bloque Horario | ${diaNombre} | ${formatTime12Hour(franjaInicio)} - ${formatTime12Hour(horaFin)}`);
+    };
+    
+    actualizarTituloModal();
 
     const select2Config = {
         theme: "bootstrap-5",
@@ -605,12 +672,7 @@ function abrirFormularioClaseSimple(claseData, franjaInicio, diaNombre) {
    
 
     $("#modalDuracionSubgrupo").on('change', function() {
-        const bloquesSeleccionados = parseInt($(this).val(), 10);
-        const indiceFin = indiceInicio + bloquesSeleccionados - 1;
-        if (indiceFin < bloquesDeLaTablaActual.length) {
-            const horaFin = bloquesDeLaTablaActual[indiceFin].tur_horafin;
-            $("#franjaHorariaDisplay").val(`${formatTime12Hour(franjaInicio)} - ${formatTime12Hour(horaFin)}`);
-        }
+        actualizarTituloModal();
     });
 
     if (claseData) {
@@ -640,14 +702,10 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
 
     const mostrarBotonVolver = clasesEnCelda.length > 0;
 
-
     const formHtml = `
         <form id="formularioEntradaHorario" autocomplete="off" novalidate>
             <input type="hidden" id="formContext" value="subgrupo">
             <input type="hidden" id="subgrupoOriginalId" value="${subgrupoOriginal}">
-            <div class="mb-3"><label class="form-label">Franja Horaria Completa:</label><input type="text" class="form-control" value="${textoFranjaCompleta}" readonly></div>
-            <div class="mb-3"><label class="form-label">Día:</label><input type="text" class="form-control" value="${diaNombre}" readonly></div>
-            <hr>
             <div class="mb-3">
                 <label for="modalSubgrupo" class="form-label">Identificador del Subgrupo <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="modalSubgrupo" placeholder="Ej: ${placeholderSubgrupo}" required>
@@ -674,6 +732,7 @@ function abrirFormularioSubgrupo(claseData, franjaInicio, diaNombre) {
     `;
    
     modalBody.html(formHtml);
+    $("#modalEntradaHorario .modal-title").text(`Gestionar Bloque Horario | ${diaNombre} | ${textoFranjaCompleta}`);
 
     const select2Config = {
         theme: "bootstrap-5",
@@ -1355,6 +1414,7 @@ function procederConGuardado() {
     const ejecutarGuardado = () => {
         const accion = $("#accion").val();
         const modoModal = $("#modal-horario").data("mode");
+        
         const datos = new FormData();
         datos.append("accion", accion);
         datos.append("sec_codigo", $("#sec_codigo_hidden").val());
@@ -1376,18 +1436,7 @@ function procederConGuardado() {
             item.hora_fin = item.hora_fin.substring(0, 5);
         });
 
-        const bloquesPersonalizados = bloquesDeLaTablaActual.filter(bloque => {
-            const existeEnAllTurnos = allTurnos.some(t => t.tur_horainicio === bloque.tur_horainicio);
-            return !existeEnAllTurnos || bloque._sintetico;
-        });
-        
-        if (bloquesPersonalizados.length > 0) {
-            const sec_codigo = $("#sec_codigo_hidden").val();
-            const ani_anio = $("#ani_anio_hidden").val();
-            const key = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
-            localStorage.setItem(key, JSON.stringify(bloquesPersonalizados));
-            console.log(`💾 Guardados ${bloquesPersonalizados.length} bloques personalizados`);
-        }
+        guardarBloquesPersonalizadosEnLocalStorage();
 
         datos.append("items_horario", JSON.stringify(clasesAEnviar));
         enviaAjax(datos, $("#proceso"));
@@ -1750,7 +1799,7 @@ $(document).on('click', '.btn-generar-reporte-tipo', function() {
         }
         Swal.fire({
             title: '¿Está seguro de limpiar el horario?',
-            text: "Esta acción eliminará todas las clases de la vista actual. Los cambios no serán permanentes hasta que guarde.",
+            text: "Esta acción eliminará todas las clases asignadas. Los bloques horarios personalizados se mantendrán. Los cambios no serán permanentes hasta que guarde.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -1761,19 +1810,10 @@ $(document).on('click', '.btn-generar-reporte-tipo', function() {
             if (result.isConfirmed) {
                 horarioContenidoGuardado.clear();
                 
-                const sec_codigo = $("#sec_codigo_hidden").val();
-                const ani_anio = $("#ani_anio_hidden").val();
-                if (sec_codigo && ani_anio) {
-                    const key = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
-                    localStorage.removeItem(key);
-                    console.log('🧹 Bloques personalizados eliminados');
-                }
-                
                 const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
-                bloquesDeLaTablaActual = generarBloquesPorDefecto(turnoActualFiltro);
                 inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-                muestraMensaje("success", 3000, "Horario Limpiado", "Se han eliminado todas las clases y bloques personalizados. Presione 'Guardar Cambios' para hacer la acción permanente.");
                 checkForScheduleChanges();
+                muestraMensaje("success", 3000, "Horario Limpiado", "Se han eliminado todas las clases asignadas. Los bloques horarios se mantienen. Presione 'MODIFICAR' para guardar los cambios.");
             }
         });
     });
@@ -2128,8 +2168,12 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                 $("#proceso").text("MODIFICAR").addClass("btn-primary");
                 $("#modal-horario").data("mode", "modificar");
                 inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
-                $("#proceso").prop("disabled", true);
-                $('#modal-horario').data('initial-state', getScheduleStateString());
+                
+                setTimeout(() => {
+                    $('#modal-horario').data('initial-state', getScheduleStateString());
+                    $("#proceso").prop("disabled", true);
+                }, 100);
+                
                 $("#modal-horario").modal("show");
             }
         }
@@ -2205,7 +2249,13 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
         }, 500);
     });
 
-    $("#proceso").on("click", function() {
+    $("#proceso").on("click", function(e) {
+        const boton = $(this);
+        if (boton.prop("disabled")) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
         procederConGuardado();
     });
 
@@ -2253,7 +2303,6 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
         $(this).addClass('was-validated');
     });
     
-   
     const validarBloqueHorario = (inicioNuevo, finNuevo, ignorarInicio = null) => {
         if (!inicioNuevo || !finNuevo) return `Debes especificar una hora de inicio y fin.`;
         if (inicioNuevo >= finNuevo) return `La hora de inicio debe ser anterior a la hora de fin.`;
@@ -2380,6 +2429,8 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                     horarioContenidoGuardado.set(newKey, updatedValue);
                 });
             }
+            
+            guardarBloquesPersonalizadosEnLocalStorage();
         } else {
                 const existeEnAllTurnos = allTurnos.some(t => t.tur_horainicio === nuevoInicio);
                 const nuevoBloque = { 
@@ -2398,6 +2449,7 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
             }
             
             bloquesDeLaTablaActual.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+            guardarBloquesPersonalizadosEnLocalStorage();
             inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
             checkForScheduleChanges();
             muestraMensaje("success", 2500, "Éxito", `El bloque horario ha sido ${franjaAEditar ? 'modificado' : 'agregado'}.`);
@@ -2430,6 +2482,14 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
         });
 
         const procederEliminacion = () => {
+            const bloqueEliminado = bloquesDeLaTablaActual.find(b => b.tur_horainicio === franjaInicio);
+            const esBloqueDeBD = bloqueEliminado && allTurnos.some(t => t.tur_horainicio === franjaInicio);
+            const esBloquePersonalizado = bloqueEliminado && (bloqueEliminado._sintetico || !esBloqueDeBD);
+            
+            if (esBloqueDeBD) {
+                guardarBloquesExcluidosEnLocalStorage(franjaInicio);
+            }
+            
             bloquesDeLaTablaActual = bloquesDeLaTablaActual.filter(b => b.tur_horainicio !== franjaInicio);
             
             const llavesAEliminar = [];
@@ -2440,6 +2500,10 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
             });
             llavesAEliminar.forEach(key => horarioContenidoGuardado.delete(key));
 
+            if (esBloquePersonalizado) {
+                guardarBloquesPersonalizadosEnLocalStorage();
+            }
+            
             const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
             inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
             checkForScheduleChanges();
