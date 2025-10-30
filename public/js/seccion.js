@@ -1193,20 +1193,6 @@ function configurarDragAndDrop() {
                 return false;
             }
             
-            const clasesEnDestino = horarioContenidoGuardado.get(key_destino) || [];
-            if (clasesEnDestino.length >= 2) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Celda llena',
-                    text: 'Esta celda ya tiene el máximo de 2 subgrupos. Elimine uno primero.',
-                    timer: 3000
-                });
-                draggedClassData = null;
-                draggedClassKey = null;
-                draggedSubgrupoId = null;
-                return false;
-            }
-            
             const indiceInicio = bloquesDeLaTablaActual.findIndex(b => b.tur_horainicio === franjaInicio);
             const bloques_span = draggedClassData.bloques_span || 1;
             const indiceFin = indiceInicio + bloques_span - 1;
@@ -1224,34 +1210,52 @@ function configurarDragAndDrop() {
                 return false;
             }
             
-            const diaKey = normalizeDayKey(diaNombre);
-            let hayConflictoDeBloques = false;
-            let bloqueConflictivo = '';
-            
-            for (let i = indiceInicio; i <= indiceFin; i++) {
-                const bloqueActual = bloquesDeLaTablaActual[i];
-                const keyBloque = `${bloqueActual.tur_horainicio.substring(0, 5)}-${diaKey}`;
-                
-                const clasesEnBloque = horarioContenidoGuardado.get(keyBloque);
-                if (clasesEnBloque && clasesEnBloque.length > 0) {
-                    hayConflictoDeBloques = true;
-                    bloqueConflictivo = `${formatTime12Hour(bloqueActual.tur_horainicio)} - ${formatTime12Hour(bloqueActual.tur_horafin)}`;
-                    break;
-                }
-            }
-            
-            if (hayConflictoDeBloques) {
+            const clasesEnDestino = horarioContenidoGuardado.get(key_destino) || [];
+            if (clasesEnDestino.length >= 2) {
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Conflicto de bloques horarios',
-                    html: `No se puede mover la clase porque uno de sus bloques choca con otra clase existente.<br><br><strong>Bloque en conflicto:</strong> ${bloqueConflictivo}`,
-                    confirmButtonText: 'Entendido',
-                    timer: 4000
+                    icon: 'warning',
+                    title: 'Celda llena',
+                    text: 'Esta celda ya tiene el máximo de 2 subgrupos. Elimine uno primero.',
+                    timer: 3000
                 });
                 draggedClassData = null;
                 draggedClassKey = null;
                 draggedSubgrupoId = null;
                 return false;
+            }
+            
+            if (bloques_span > 1) {
+                const diaKey = normalizeDayKey(diaNombre);
+                
+                for (let i = indiceInicio + 1; i <= indiceFin; i++) {
+                    const bloqueActual = bloquesDeLaTablaActual[i];
+                    const keyBloque = `${bloqueActual.tur_horainicio.substring(0, 5)}-${diaKey}`;
+                    const clasesEnBloque = horarioContenidoGuardado.get(keyBloque) || [];
+                    
+                    if (clasesEnBloque.length > 0) {
+                        const idsEnBloque = clasesEnBloque.map(c => 
+                            `${c.data.uc_codigo}-${c.data.doc_cedula}-${c.data.subgrupo || 'default'}`
+                        ).sort().join('|');
+                        
+                        const idsEnDestino = clasesEnDestino.map(c => 
+                            `${c.data.uc_codigo}-${c.data.doc_cedula}-${c.data.subgrupo || 'default'}`
+                        ).sort().join('|');
+                        
+                        if (idsEnBloque !== idsEnDestino) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Conflicto de bloques',
+                                html: `No se puede unir esta clase porque ocupa múltiples bloques y hay otras clases diferentes en el horario ${formatTime12Hour(bloqueActual.tur_horainicio)} - ${formatTime12Hour(bloqueActual.tur_horafin)}.<br><br>Libere todos los bloques necesarios primero.`,
+                                confirmButtonText: 'Entendido',
+                                timer: 5000
+                            });
+                            draggedClassData = null;
+                            draggedClassKey = null;
+                            draggedSubgrupoId = null;
+                            return false;
+                        }
+                    }
+                }
             }
             
             validarYMoverClase(draggedClassData, draggedClassKey, key_destino, diaNombre, franjaInicio, bloques_span);
