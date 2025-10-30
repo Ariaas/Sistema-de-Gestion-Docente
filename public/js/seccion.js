@@ -112,7 +112,27 @@ function normalizeDayKey(day) {
 }
 
 function construirBloquesParaHorario(clases, turnoSeleccionado) {
+    const sec_codigo = $("#sec_codigo_hidden").val();
+    const ani_anio = $("#ani_anio_hidden").val();
+    let bloquesGuardados = [];
+    
+    if (sec_codigo && ani_anio) {
+        const key = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
+        const guardados = localStorage.getItem(key);
+        if (guardados) {
+            try {
+                bloquesGuardados = JSON.parse(guardados);
+                console.log(`📂 Cargados ${bloquesGuardados.length} bloques personalizados`);
+            } catch (e) {
+                console.error('Error al cargar bloques personalizados:', e);
+            }
+        }
+    }
+    
     if (!clases || clases.length === 0) {
+        if (bloquesGuardados.length > 0) {
+            return bloquesGuardados.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+        }
         return [];
     }
 
@@ -129,6 +149,11 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
         if (horaFinCompleta && horaFinCompleta > maxTime) {
             maxTime = horaFinCompleta;
         }
+    });
+    
+    bloquesGuardados.forEach(bloque => {
+        if (bloque.tur_horainicio < minTime) minTime = bloque.tur_horainicio;
+        if (bloque.tur_horafin > maxTime) maxTime = bloque.tur_horafin;
     });
 
     if (minTime > maxTime) {
@@ -164,12 +189,23 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
         }
     });
 
-    const todosBloques = [...bloquesNecesarios, ...bloquesSinteticos];
+    const bloquesGuardadosFiltrados = bloquesGuardados.filter(bloqueGuardado => {
+        const existe = bloquesNecesarios.some(b => b.tur_horainicio === bloqueGuardado.tur_horainicio);
+        const existeSintetico = bloquesSinteticos.some(b => b.tur_horainicio === bloqueGuardado.tur_horainicio);
+        return !existe && !existeSintetico;
+    });
+
+    const todosBloques = [...bloquesNecesarios, ...bloquesSinteticos, ...bloquesGuardadosFiltrados];
     todosBloques.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
 
     if (bloquesSinteticos.length > 0) {
         const horariosCreados = bloquesSinteticos.map(b => b.tur_horainicio.substring(0, 5)).join(', ');
         console.info(`✅ Se crearon ${bloquesSinteticos.length} bloques automáticos para: ${horariosCreados}`);
+    }
+    
+    if (bloquesGuardadosFiltrados.length > 0) {
+        const horariosRestaurados = bloquesGuardadosFiltrados.map(b => b.tur_horainicio.substring(0, 5)).join(', ');
+        console.info(`📂 Se restauraron ${bloquesGuardadosFiltrados.length} bloques guardados: ${horariosRestaurados}`);
     }
 
     return todosBloques;
@@ -240,7 +276,9 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
         const celdaHora = $("<td>").css({ 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'padding': '0.5rem' });
         const textoHora = $("<span>").text(`${formatTime12Hour(bloque.tur_horainicio)} - ${formatTime12Hour(bloque.tur_horafin)}`);
         
-        
+        if (bloque._sintetico) {
+            textoHora.append(' <small style="color: #0dcaf0;" title="Bloque no está en la base de datos">⚡</small>');
+        }
         
         if (!isViewOnly) {
             const containerBotones = $('<div class="d-inline-flex">');
@@ -1338,6 +1376,19 @@ function procederConGuardado() {
             item.hora_fin = item.hora_fin.substring(0, 5);
         });
 
+        const bloquesPersonalizados = bloquesDeLaTablaActual.filter(bloque => {
+            const existeEnAllTurnos = allTurnos.some(t => t.tur_horainicio === bloque.tur_horainicio);
+            return !existeEnAllTurnos || bloque._sintetico;
+        });
+        
+        if (bloquesPersonalizados.length > 0) {
+            const sec_codigo = $("#sec_codigo_hidden").val();
+            const ani_anio = $("#ani_anio_hidden").val();
+            const key = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
+            localStorage.setItem(key, JSON.stringify(bloquesPersonalizados));
+            console.log(`💾 Guardados ${bloquesPersonalizados.length} bloques personalizados`);
+        }
+
         datos.append("items_horario", JSON.stringify(clasesAEnviar));
         enviaAjax(datos, $("#proceso"));
     };
@@ -1709,9 +1760,19 @@ $(document).on('click', '.btn-generar-reporte-tipo', function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 horarioContenidoGuardado.clear();
+                
+                const sec_codigo = $("#sec_codigo_hidden").val();
+                const ani_anio = $("#ani_anio_hidden").val();
+                if (sec_codigo && ani_anio) {
+                    const key = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
+                    localStorage.removeItem(key);
+                    console.log('🧹 Bloques personalizados eliminados');
+                }
+                
                 const turnoActualFiltro = $("#filtro_turno").val() || 'todos';
+                bloquesDeLaTablaActual = generarBloquesPorDefecto(turnoActualFiltro);
                 inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-                muestraMensaje("success", 3000, "Horario Limpiado", "Se han eliminado todas las clases. Presione 'Guardar Cambios' para hacer la acción permanente.");
+                muestraMensaje("success", 3000, "Horario Limpiado", "Se han eliminado todas las clases y bloques personalizados. Presione 'Guardar Cambios' para hacer la acción permanente.");
                 checkForScheduleChanges();
             }
         });
@@ -2320,7 +2381,20 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                 });
             }
         } else {
-                bloquesDeLaTablaActual.push({ tur_horainicio: nuevoInicio, tur_horafin: nuevoFin });
+                const existeEnAllTurnos = allTurnos.some(t => t.tur_horainicio === nuevoInicio);
+                const nuevoBloque = { 
+                    tur_horainicio: nuevoInicio, 
+                    tur_horafin: nuevoFin,
+                    tur_nombre: turnoActualFiltro.charAt(0).toUpperCase() + turnoActualFiltro.slice(1),
+                    tur_estado: 1
+                };
+                
+                if (!existeEnAllTurnos) {
+                    nuevoBloque._sintetico = true;
+                    console.log(`🔧 Bloque personalizado agregado: ${nuevoInicio} - ${nuevoFin}`);
+                }
+                
+                bloquesDeLaTablaActual.push(nuevoBloque);
             }
             
             bloquesDeLaTablaActual.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
