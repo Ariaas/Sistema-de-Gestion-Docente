@@ -343,7 +343,7 @@ $this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
                     ':tur_nombre' => $this->getTurnoEnum($hora_principal_para_turno)
                 ]);
 
-                $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :doc_cedula, :sec_codigo, :ani_anio, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
+                $stmt_uh = $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, ani_tipo, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (:uc_codigo, :doc_cedula, :sec_codigo, :ani_anio, :ani_tipo, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)");
                 $stmt_doc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo, ani_anio, ani_tipo) VALUES (:doc_cedula, :sec_codigo, :ani_anio, :ani_tipo) ON DUPLICATE KEY UPDATE sec_codigo=sec_codigo");
                 $docentes_procesados = [];
                 foreach ($clases_origen as $item) {
@@ -352,7 +352,8 @@ $this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
         ':uc_codigo'    => $item['uc_codigo'],
         ':doc_cedula'   => $item['doc_cedula'],
         ':sec_codigo'   => $codigo_destino,
-        ':ani_anio'     => $anio_academico, 
+        ':ani_anio'     => $anio_academico,
+        ':ani_tipo'     => $seccion_origen_data['ani_tipo'],
         ':subgrupo'     => $item['subgrupo'],   
         ':esp_numero'   => $espacio['numero'],
         ':esp_tipo'     => $espacio['tipo'],
@@ -707,8 +708,8 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
             $stmt_horario->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo, ':tur_nombre' => $turno_nombre]);
             
             $stmt_uh = $co->prepare(
-                "INSERT INTO uc_horario (sec_codigo, ani_anio, uc_codigo, doc_cedula, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) 
-                 VALUES (:sec_codigo, :ani_anio, :uc_codigo, :doc_cedula, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)"
+                "INSERT INTO uc_horario (sec_codigo, ani_anio, ani_tipo, uc_codigo, doc_cedula, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) 
+                 VALUES (:sec_codigo, :ani_anio, :ani_tipo, :uc_codigo, :doc_cedula, :subgrupo, :esp_numero, :esp_tipo, :esp_edificio, :dia, :inicio, :fin)"
             );
             
             $stmt_doc = $co->prepare(
@@ -733,6 +734,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                 $stmt_uh->execute([
                     ':sec_codigo'   => $sec_codigo,
                     ':ani_anio'     => $ani_anio,
+                    ':ani_tipo'     => $ani_tipo,
                     ':uc_codigo'    => $uc_codigo,
                     ':doc_cedula'   => $doc_cedula,
                     ':subgrupo'     => $subgrupo,
@@ -1128,7 +1130,7 @@ public function duplicarSeccionesAnioAnterior() {
 
        
         $stmt_horarios = $co->prepare(
-            "SELECT DISTINCT uh.sec_codigo, uh.uc_codigo, uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, uh.subgrupo
+            "SELECT DISTINCT uh.sec_codigo, uh.uc_codigo, uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, uh.subgrupo, s.ani_tipo
              FROM uc_horario uh
              JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
              WHERE s.ani_anio = ? AND uh.sec_codigo IN ($placeholders)"
@@ -1137,14 +1139,15 @@ public function duplicarSeccionesAnioAnterior() {
         $horarios_a_duplicar = $stmt_horarios->fetchAll(PDO::FETCH_ASSOC);
 
         $stmt_insert_hor = $co->prepare(
-            "INSERT INTO uc_horario (sec_codigo, ani_anio, uc_codigo, hor_dia, hor_horainicio, hor_horafin, subgrupo, doc_cedula, esp_numero, esp_tipo, esp_edificio) 
-             VALUES (:sec_codigo, :ani_anio, :uc_codigo, :dia, :inicio, :fin, :subgrupo, NULL, NULL, NULL, NULL)"
+            "INSERT INTO uc_horario (sec_codigo, ani_anio, ani_tipo, uc_codigo, hor_dia, hor_horainicio, hor_horafin, subgrupo, doc_cedula, esp_numero, esp_tipo, esp_edificio) 
+             VALUES (:sec_codigo, :ani_anio, :ani_tipo, :uc_codigo, :dia, :inicio, :fin, :subgrupo, NULL, NULL, NULL, NULL)"
         );
 
         foreach ($horarios_a_duplicar as $horario) {
             $stmt_insert_hor->execute([
                 ':sec_codigo' => $horario['sec_codigo'],
                 ':ani_anio'   => $anio_actual,
+                ':ani_tipo'   => $horario['ani_tipo'],
                 ':uc_codigo'  => $horario['uc_codigo'],
                 ':dia'        => $horario['hor_dia'],
                 ':inicio'     => $horario['hor_horainicio'],
