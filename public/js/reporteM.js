@@ -144,6 +144,16 @@ $(document).ready(function() {
                 
                 if (response.success && response.datos && response.datos.length > 0) {
                     currentResponseData = response.datos;
+                    
+                    
+                    const tipoReporte = $('#tipo_reporte').val();
+                    const cantidadDatos = response.datos.length;
+                    
+                    if (tipoReporte === 'dias_top3' && cantidadDatos < 3) {
+                        muestraMensaje('info', null, 'Datos Limitados', 
+                            `No hay suficientes datos para mostrar el Top 3. Se muestran ${cantidadDatos} día(s) con aulas asignadas.`);
+                    }
+                    
                     displayChart($('#tipo_grafico').val());
                 } else {
                     currentResponseData = null;

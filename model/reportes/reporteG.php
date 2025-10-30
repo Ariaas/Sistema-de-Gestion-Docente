@@ -11,12 +11,24 @@ class Reporte extends Connection
     public function verificarDatosGenerales()
     {
         try {
+            $anios_activos = $this->obtenerAnioActivo();
+            $anio = $anios_activos[0]['ani_anio'];
+            $tipo = $anios_activos[0]['ani_tipo'];
+
+           
+            if ($tipo == 'intensivo') {
+                $periodos_permitidos = ['FASE I', 'Fase I', 'ANUAL', 'anual', '0'];
+            } else {
+                
+                $periodos_permitidos = ['FASE I', 'Fase I', 'FASE II', 'Fase II', 'ANUAL', 'anual', '0'];
+            }
+
             $sql = "SELECT COUNT(s.sec_codigo) 
                     FROM tbl_seccion s
                     JOIN tbl_anio a ON s.ani_anio = a.ani_anio AND s.ani_tipo = a.ani_tipo
-                    WHERE a.ani_activo = 1 AND s.sec_cantidad > 0";
+                    WHERE a.ani_activo = 1 AND s.sec_cantidad > 0 AND a.ani_anio = :anio AND a.ani_tipo = :tipo";
             $p = $this->Con()->prepare($sql);
-            $p->execute();
+            $p->execute([':anio' => $anio, ':tipo' => $tipo]);
             return $p->fetchColumn() > 0;
         } catch (Exception $e) {
             return false;
@@ -29,14 +41,22 @@ class Reporte extends Connection
             "SELECT ani_anio, ani_tipo, CONCAT(ani_anio, '|', ani_tipo) as anio_completo 
              FROM tbl_anio 
              WHERE ani_estado = 1 AND ani_activo = 1 
-             LIMIT 1"
+             ORDER BY ani_anio DESC, ani_tipo ASC"
         );
         $p->execute();
-        return $p->fetch(PDO::FETCH_ASSOC);
+        return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function obtenerDatosReporteGeneral($anio, $tipo)
     {
+       
+        if ($tipo == 'intensivo') {
+            $periodos_permitidos = ['FASE I', 'Fase I', 'ANUAL', 'anual', '0'];
+        } else {
+            
+            $periodos_permitidos = ['FASE I', 'Fase I', 'FASE II', 'Fase II', 'ANUAL', 'anual', '0'];
+        }
+
         $sql = "SELECT 'Total Estudiantes' as etiqueta, SUM(sec_cantidad) as cantidad 
                 FROM tbl_seccion 
                 WHERE ani_anio = :anio AND ani_tipo = :tipo AND sec_estado = 1";

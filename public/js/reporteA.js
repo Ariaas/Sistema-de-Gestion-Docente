@@ -144,6 +144,19 @@ $(document).ready(function() {
                 
                 if (response.success && response.datos && response.datos.length > 0) {
                     currentResponseData = response.datos;
+                    
+                    
+                    const tipoReporte = $('#tipo_reporte').val();
+                    const cantidadDatos = response.datos.length;
+                    
+                    if (tipoReporte === 'aulas_top10' && cantidadDatos < 10) {
+                        muestraMensaje('info', null, 'Datos Limitados', 
+                            `No hay suficientes datos para mostrar el Top 10. Se muestran las ${cantidadDatos} aula(s) registrada(s).`);
+                    } else if (tipoReporte === 'aulas_top5' && cantidadDatos < 5) {
+                        muestraMensaje('info', null, 'Datos Limitados', 
+                            `No hay suficientes datos para mostrar el Top 5. Se muestran las ${cantidadDatos} aula(s) registrada(s).`);
+                    }
+                    
                     displayChart($('#tipo_grafico').val());
                 } else {
                     currentResponseData = null;

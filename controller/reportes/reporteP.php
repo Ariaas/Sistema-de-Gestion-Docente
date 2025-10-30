@@ -18,7 +18,7 @@ if (is_file("views/reportes/reporteP.php")) {
         $accion = $_POST['accion'];
 
        
-        $anio = $_POST['anio_origen'] ?? 0;
+        $anio_completo = $_POST['anio_origen'] ?? '';
 
         switch ($accion) {
             case 'generar_reporte':
@@ -26,21 +26,30 @@ if (is_file("views/reportes/reporteP.php")) {
                 $datos = null;
 
                
-                if (empty($anio)) {
+                if (empty($anio_completo)) {
                     echo json_encode(['success' => false, 'mensaje' => 'Por favor, seleccione un año académico.']);
                     exit;
                 }
 
+                // Separar año y tipo (formato: "2025|regular" o "2025|intensivo")
+                $partes = explode('|', $anio_completo);
+                if (count($partes) != 2) {
+                    echo json_encode(['success' => false, 'mensaje' => 'Formato de año inválido.']);
+                    exit;
+                }
+                $anio = $partes[0];
+                $tipo = $partes[1];
+
                 
                 switch ($tipo_reporte) {
                     case 'seccion':
-                        $datos = $reporteModel->obtenerDatosReporteTodasLasSecciones($anio);
+                        $datos = $reporteModel->obtenerDatosReporteTodasLasSecciones($anio, $tipo);
                         break;
                     case 'trayecto':
-                        $datos = $reporteModel->obtenerDatosReportePorTrayecto($anio);
+                        $datos = $reporteModel->obtenerDatosReportePorTrayecto($anio, $tipo);
                         break;
                     default: 
-                        $datos = $reporteModel->obtenerDatosReporteGeneral($anio);
+                        $datos = $reporteModel->obtenerDatosReporteGeneral($anio, $tipo);
                         break;
                 }
 

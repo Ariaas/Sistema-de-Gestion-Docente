@@ -41,11 +41,12 @@ if (!$puede_registrar) {
                             <div class="col-lg-4 col-md-6 mb-3">
                                 <label for="anio_reporte" class="form-label fw-bold">Año Académico Activo</label>
                                 <select class="form-select" id="anio_reporte" name="anio_completo" required>
-                                    <?php if ($anio_activo) {
-                                        $texto = "{$anio_activo['ani_anio']} - Periodo {$anio_activo['ani_tipo']}";
-                                        echo "<option value='{$anio_activo['anio_completo']}' selected>{$texto}</option>";
-                                    } else {
-                                        echo "<option value='' selected disabled>No hay año activo</option>";
+                                    <option value="" selected disabled>Seleccione un año</option>
+                                    <?php if (!empty($anio_activo)) {
+                                        foreach ($anio_activo as $anio) {
+                                            $texto = "{$anio['ani_anio']} - {$anio['ani_tipo']}";
+                                            echo "<option value='{$anio['anio_completo']}'>{$texto}</option>";
+                                        }
                                     } ?>
                                 </select>
                             </div>

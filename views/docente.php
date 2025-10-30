@@ -53,10 +53,10 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Docente</h2>
-            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1100px;">
+            <div class="w-100 d-flex justify-content-end mb-3" style="max-width: 1400px;">
                 <button class="btn btn-success px-4" id="registrar" <?php if (!isset($puede_registrar) || !$puede_registrar) echo 'disabled'; ?>>Registrar Docente</button>
             </div>
-            <div class="datatable-ui w-100" id="tablaMallaPrincipalContainer" style="max-width: 1100px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+            <div class="datatable-ui w-100" id="tablaMallaPrincipalContainer" style="max-width: 1400px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive">
                     <table class="table table-striped table-hover w-100" id="tabladocente">
                         <thead>
@@ -249,39 +249,6 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div class="col-12 text-center mt-3">
                                         <span id="sHorasTotales" class="text-danger fw-bold d-block"></span>
                                     </div>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div id="step4-preferencias" style="display: none;">
-                            <form id="form-paso4" onsubmit="return false">
-                                <p><strong>Docente:</strong> <span id="nombreDocentePreferencias" class="fw-bold"></span></p>
-                                <hr>
-                                <h5>Preferencia de Horario para Clases</h5>
-                                <span id="spreferencias" class="text-danger d-block mb-2"></span>
-                                <div id="preferencias-horario-container">
-                                    <?php $dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']; ?>
-                                    <?php foreach ($dias as $dia): ?>
-                                    <div class="row mb-2 align-items-center">
-                                        <div class="col-sm-3 col-md-2">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input dia-preferencia-check" type="checkbox" value="<?= $dia ?>" id="check-<?= $dia ?>" name="preferencia[<?= $dia ?>][activado]">
-                                                <label class="form-check-label" for="check-<?= $dia ?>"><?= ucfirst($dia) ?></label>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-4 col-md-5">
-                                            <label for="inicio-<?= $dia ?>" class="form-label visually-hidden">Desde:</label>
-                                            <input type="time" class="form-control hora-preferencia" id="inicio-<?= $dia ?>" name="preferencia[<?= $dia ?>][inicio]" disabled>
-                                        </div>
-                                        <div class="col-sm-4 col-md-5">
-                                            <label for="fin-<?= $dia ?>" class="form-label visually-hidden">Hasta:</label>
-                                            <input type="time" class="form-control hora-preferencia" id="fin-<?= $dia ?>" name="preferencia[<?= $dia ?>][fin]" disabled>
-                                        </div>
-                                        <div class="col-12">
-                                            <span class="text-danger error-hora-preferencia d-block text-center small"></span>
-                                        </div>
-                                    </div>
-                                    <?php endforeach; ?>
                                 </div>
                             </form>
                         </div>

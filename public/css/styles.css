@@ -226,7 +226,7 @@ table {
   border: 1.5px solid #e3eafc;
 }
 .datatable-ui .table-responsive {
-  overflow-x: auto;
+  overflow-x: visible;
   border-radius: 12px;
 }
 .datatable-ui table {

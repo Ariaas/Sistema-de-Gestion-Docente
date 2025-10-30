@@ -41,16 +41,12 @@ if (!$puede_registrar) {
                             <div class="col-lg-4 col-md-6 mb-3">
                                 <label for="anio_reporte" class="form-label fw-bold">Año Académico (Origen)</label>
                                 <select class="form-select" id="anio_reporte" name="anio_origen" required>
+                                    <option value="" selected disabled>Seleccione un año</option>
                                     <?php if (!empty($anios_disponibles)) {
-                                        
-                                        foreach ($anios_disponibles as $index => $anio) {
-                                            $texto = $anio['ani_origen'];
-                                            
-                                            $selected = ($index == 0) ? 'selected' : '';
-                                            echo "<option value='{$texto}' {$selected}>{$texto}</option>";
+                                        foreach ($anios_disponibles as $anio) {
+                                            $texto = "{$anio['ani_origen']} - {$anio['ani_tipo_origen']}";
+                                            echo "<option value='{$anio['anio_completo']}'>{$texto}</option>";
                                         }
-                                    } else {
-                                        echo "<option value='' selected disabled>No hay años con datos</option>";
                                     } ?>
                                 </select>
                             </div>

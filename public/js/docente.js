@@ -55,11 +55,13 @@ $(document).ready(function() {
             $('#step3-actividad').show();
             modalTitle.text('Paso 3: Actividades');
             $('#nombreDocenteHoras').text(nombreDocente);
-            const finalButtonText = ($('#accion').val() === 'incluir') ? "REGISTRAR" : "MODIFICAR";
+            const accion = $('#accion').val();
+            const finalButtonText = (accion === 'incluir') ? "REGISTRAR" : "MODIFICAR";
+            const buttonClass = (accion === 'incluir') ? "btn-success" : "btn-primary";
             footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">ATRÁS</button>');
-            footer.append(`<button type="button" class="btn btn-success" id="btn-final-submit">${finalButtonText}</button>`);
+            footer.append(`<button type="button" class="btn ${buttonClass}" id="btn-final-submit">${finalButtonText}</button>`);
             
-            if ($('#accion').val() === 'modificar') {
+            if (accion === 'modificar') {
                 $('#btn-final-submit').prop('disabled', true);
                 checkFormChanges(); 
             }

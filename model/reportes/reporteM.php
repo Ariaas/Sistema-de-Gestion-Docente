@@ -14,26 +14,33 @@ class Reporte extends Connection
             "SELECT ani_anio, ani_tipo, CONCAT(ani_anio, '|', ani_tipo) as anio_completo 
              FROM tbl_anio 
              WHERE ani_estado = 1 AND ani_activo = 1 
-             LIMIT 1"
+             ORDER BY ani_anio DESC, ani_tipo ASC"
         );
         $p->execute();
-        return $p->fetch(PDO::FETCH_ASSOC);
+        return $p->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function verificarDatosAulasAsignadas()
     {
         try {
-            $anio_activo = $this->obtenerAnioActivo();
-            if (!$anio_activo) {
+            $anios_activos = $this->obtenerAnioActivo();
+            if (empty($anios_activos)) {
                 return false;
             }
 
-            $anio = $anio_activo['ani_anio'];
-            $tipo = $anio_activo['ani_tipo'];
+            
+            $anio = $anios_activos[0]['ani_anio'];
+            $tipo = $anios_activos[0]['ani_tipo'];
 
-            $periodos_permitidos = ($tipo == '1') ? ['FASE I', 'ANUAL', 'anual', '0'] : ['FASE II', 'ANUAL', 'anual'];
+            
+            if ($tipo == 'intensivo') {
+                $periodos_permitidos = ['FASE I', 'Fase I', 'ANUAL', 'anual', '0'];
+            } else {
+                
+                $periodos_permitidos = ['FASE I', 'Fase I', 'FASE II', 'Fase II', 'ANUAL', 'anual', '0'];
+            }
 
-            $params = [':anio_anio' => $anio];
+            $params = [':anio_anio' => $anio, ':anio_tipo' => $tipo];
             $placeholders = [];
             foreach ($periodos_permitidos as $index => $periodo) {
                 $key = ":periodo_" . $index;
@@ -47,6 +54,7 @@ class Reporte extends Connection
                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     JOIN tbl_espacio e ON uh.esp_numero = e.esp_numero AND uh.esp_tipo = e.esp_tipo AND uh.esp_edificio = e.esp_edificio
                     WHERE s.ani_anio = :anio_anio
+                      AND s.ani_tipo = :anio_tipo
                       AND s.sec_estado = 1
                       AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")
                       AND e.esp_estado = 1 
@@ -63,9 +71,15 @@ class Reporte extends Connection
 
     public function obtenerDatosReporteDias($anio, $tipo, $limite_key = 'all')
     {
-        $periodos_permitidos = ($tipo == '1') ? ['FASE I', 'ANUAL', 'anual', '0'] : ['FASE II', 'ANUAL', 'anual'];
+        
+        if ($tipo == 'intensivo') {
+            $periodos_permitidos = ['FASE I', 'Fase I', 'ANUAL', 'anual', '0'];
+        } else {
+            
+            $periodos_permitidos = ['FASE I', 'Fase I', 'FASE II', 'Fase II', 'ANUAL', 'anual', '0'];
+        }
 
-        $params = [':anio_anio' => $anio];
+        $params = [':anio_anio' => $anio, ':anio_tipo' => $tipo];
         $placeholders = [];
         foreach ($periodos_permitidos as $index => $periodo) {
             $key = ":periodo_" . $index;
@@ -90,6 +104,7 @@ class Reporte extends Connection
             JOIN tbl_espacio e ON uh.esp_numero = e.esp_numero AND uh.esp_tipo = e.esp_tipo AND uh.esp_edificio = e.esp_edificio
             WHERE
                 s.ani_anio = :anio_anio
+                AND s.ani_tipo = :anio_tipo
                 AND s.sec_estado = 1
                 AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")
                 AND e.esp_estado = 1
