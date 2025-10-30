@@ -530,22 +530,63 @@ $(document).ready(function() {
         
         if (accion === 'desactivar') {
             
-            Swal.fire({
-                title: '¿Está seguro de cambiar el estado de este docente?',
-                text: `Docente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Sí, cambiar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const datos = new FormData();
-                    datos.append("accion", "eliminar");
-                    datos.append("cedulaDocente", cedula);
-                    enviaAjax(datos);
-                }
+            var datosVerificacion = new FormData();
+            datosVerificacion.append("accion", "verificar_horario");
+            datosVerificacion.append("cedulaDocente", cedula);
+
+            $.ajax({
+                async: true,
+                url: "",
+                type: "POST",
+                contentType: false,
+                data: datosVerificacion,
+                processData: false,
+                cache: false,
+                success: function (respuesta) {
+                    try {
+                        var lee = JSON.parse(respuesta);
+                        let titulo = "¿Está seguro de desactivar este docente?";
+                        let texto = `Docente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}`;
+
+                        if (lee.resultado === "en_horario") {
+                            titulo = "¡Atención!";
+                            texto = `Este docente está asignado a un horario. Si lo desactiva, se quitará del horario también. ¿Desea continuar?\n\nDocente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}`;
+                        }
+
+                        Swal.fire({
+                            title: titulo,
+                            text: texto,
+                            icon: "warning",
+                            showCancelButton: true,
+                            confirmButtonColor: "#3085d6",
+                            cancelButtonColor: "#d33",
+                            confirmButtonText: "Sí, desactivar",
+                            cancelButtonText: "Cancelar",
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                var datos = new FormData();
+                                datos.append("accion", "eliminar");
+                                datos.append("cedulaDocente", cedula);
+                                enviaAjax(datos);
+                            }
+                        });
+                    } catch (e) {
+                        muestraMensaje(
+                            "error",
+                            5000,
+                            "¡Error en la operación!",
+                            "No se pudo verificar el estado del docente."
+                        );
+                    }
+                },
+                error: function () {
+                    muestraMensaje(
+                        "error",
+                        5000,
+                        "¡Error de conexión!",
+                        "No se pudo comunicar con el servidor."
+                    );
+                },
             });
             return;
         }

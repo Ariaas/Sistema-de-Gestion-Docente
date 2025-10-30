@@ -44,14 +44,28 @@ if (is_file("views/" . $pagina . ".php")) {
                 'resultado' => 'ok_datos_adicionales',
                 'horas' => $horas['mensaje']
             ]);
+        } elseif ($accion == 'verificar_horario') {
+            $cedula = isset($_POST['doc_cedula']) ? $_POST['doc_cedula'] : (isset($_POST['cedulaDocente']) ? $_POST['cedulaDocente'] : null);
+            if ($cedula !== null && $cedula !== '') {
+                $respuesta = $p->verificarEnHorario($cedula);
+                echo json_encode($respuesta);
+            } else {
+                echo json_encode(['resultado' => 'error', 'mensaje' => 'Cédula no proporcionada']);
+            }
         } elseif ($accion == 'eliminar') {
             $p->setCedula($_POST['cedulaDocente']);
-            echo json_encode($p->Eliminar());
-            if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
+            $respuesta = $p->Eliminar();
+            if ($respuesta['resultado'] == 'ok') {
+                if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'eliminar', 'docente');
+            }
+            echo json_encode($respuesta);
         } elseif ($accion == 'activar') {
             $p->setCedula($_POST['cedulaDocente']);
-            echo json_encode($p->Activar());
-            if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'activar', 'docente');
+            $respuesta = $p->Activar();
+            if ($respuesta['resultado'] == 'ok') {
+                if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'activar', 'docente');
+            }
+            echo json_encode($respuesta);
         } elseif ($accion == 'Existe') {
             echo json_encode(['resultado' => 'Existe', 'existe' => $p->Existe($_POST['cedulaDocente'])]);
             exit;

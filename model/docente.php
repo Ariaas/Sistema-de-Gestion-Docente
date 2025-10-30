@@ -492,4 +492,25 @@ class Docente extends Connection
             }
         }
     }
+
+    public function verificarEnHorario($docCedula)
+    {
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        try {
+            $stmt = $co->prepare("SELECT COUNT(*) FROM docente_horario WHERE doc_cedula = :docCedula");
+            $stmt->execute([':docCedula' => $docCedula]);
+            $cantidad = $stmt->fetchColumn();
+
+            return [
+                'resultado' => $cantidad > 0 ? 'en_horario' : 'no_en_horario',
+                'mensaje' => $cantidad > 0 ? 'El docente está en un horario.' : 'El docente no está en un horario.'
+            ];
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
+        } finally {
+            $co = null;
+        }
+    }
 }

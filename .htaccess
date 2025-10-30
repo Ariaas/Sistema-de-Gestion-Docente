@@ -1,7 +1,7 @@
 Options -Indexes
 
 RewriteEngine On
-RewriteBase /Sistema-de-Gestion-Docente/
+
 
 
 
