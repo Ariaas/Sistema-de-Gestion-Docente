@@ -44,21 +44,21 @@ class SeccionReport extends Connection
   
 public function getHorariosFiltrados()
 {
-    // Validar campos requeridos
+    
     if (empty($this->anio) || empty($this->ani_tipo)) return [];
     
-    // Si es intensivo, no se requiere fase
+    
     $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
     
     if (!$esIntensivo && empty($this->fase)) return [];
 
     $allowed_periods = [];
     
-    // Si es intensivo, incluir todos los periodos
+    
     if ($esIntensivo) {
         $allowed_periods = ['Fase I', 'Fase II', 'Anual', 'anual', '0'];
     } else {
-        // Lógica normal para años regulares
+
         if ($this->fase == 1) {
             $allowed_periods = ['Fase I', 'Anual', 'anual', '0'];
         } elseif ($this->fase == 2) {

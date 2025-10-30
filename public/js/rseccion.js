@@ -1,10 +1,23 @@
 document.addEventListener('DOMContentLoaded', function () {
+    
+    if (window.jQuery) {
+        $(document).ready(function() {
+            try {
+                $('#anio_completo').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Año" });
+                $('#fase_id').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Fase" });
+                $('#trayecto_id').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Trayecto" });
+            } catch (e) {
+                console.error("Error al inicializar Select2.", e);
+            }
+        });
+    }
+
     const formReporte = document.getElementById("fReporteSeccion");
     const anioCompletoSelect = document.getElementById("anio_completo");
     const faseSelect = document.getElementById("fase_id");
     const faseContainer = document.getElementById("fase_container");
 
-    // Función para verificar si el año seleccionado es intensivo
+    
     function esAnioIntensivo() {
         if (!anioCompletoSelect || anioCompletoSelect.value === "") {
             return false;
@@ -14,23 +27,23 @@ document.addEventListener('DOMContentLoaded', function () {
         return tipoAnio === 'intensivo';
     }
 
-    // Función para mostrar/ocultar el select de fase
+    
     function toggleFaseSelect() {
         const esIntensivo = esAnioIntensivo();
         
         if (faseContainer) {
             if (esIntensivo) {
-                // Ocultar el contenedor de fase
+                
                 faseContainer.style.display = 'none';
-                // Remover el atributo required
+                
                 if (faseSelect) {
                     faseSelect.removeAttribute('required');
-                    faseSelect.value = ''; // Limpiar el valor
+                    faseSelect.value = ''; 
                 }
             } else {
-                // Mostrar el contenedor de fase
+                
                 faseContainer.style.display = 'block';
-                // Agregar el atributo required
+                
                 if (faseSelect) {
                     faseSelect.setAttribute('required', 'required');
                 }
@@ -38,10 +51,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Escuchar cambios en el select de año
+    
     if (anioCompletoSelect) {
         anioCompletoSelect.addEventListener('change', toggleFaseSelect);
-        // Ejecutar al cargar la página por si hay un valor preseleccionado
+        
         toggleFaseSelect();
     }
 
@@ -49,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formReporte.addEventListener("submit", function(event) {
             const esIntensivo = esAnioIntensivo();
             
-            // Validar año académico
+            
             if (!anioCompletoSelect || anioCompletoSelect.value === "") {
                 event.preventDefault(); 
                 Swal.fire({
@@ -61,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             }
 
-            // Validar fase solo si NO es intensivo
             if (!esIntensivo && (!faseSelect || faseSelect.value === "")) {
                 event.preventDefault(); 
                 Swal.fire({
@@ -73,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             }
 
-            // Si todo está bien, permitir el submit
+            
             return true;
         });
     }

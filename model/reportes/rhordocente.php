@@ -99,14 +99,14 @@ class ReporteHorarioDocente extends Connection
     }
 
     private function get_allowed_periods() {
-        // Si es intensivo, incluir todos los periodos
+        
         $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
         
         if ($esIntensivo) {
             return ['Fase I', 'Fase II', 'Anual'];
         }
         
-        // Lógica normal para años regulares
+        
         if ($this->fase == 1) {
             return ['Fase I', 'Anual'];
         } elseif ($this->fase == 2) {
@@ -116,10 +116,10 @@ class ReporteHorarioDocente extends Connection
     }
 
     public function obtenerAsignacionesAcademicas() {
-        // Validar campos requeridos
+        
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->ani_tipo)) return [];
         
-        // Si es intensivo, no se requiere fase
+        
         $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
         if (!$esIntensivo && empty($this->fase)) return [];
         
@@ -179,10 +179,10 @@ class ReporteHorarioDocente extends Connection
     }
 
     public function obtenerDatosParrillaHorario() {
-        // Validar campos requeridos
+        
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->ani_tipo)) return [];
         
-        // Si es intensivo, no se requiere fase
+        
         $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
         if (!$esIntensivo && empty($this->fase)) return [];
         

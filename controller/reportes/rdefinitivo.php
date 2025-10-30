@@ -33,7 +33,7 @@ $oDefinitivo = new DefinitivoEmit();
 $vistaFormulario = "views/reportes/rdefinitivo.php";
 
 if (isset($_POST['generar_definitivo_emit'])) {
-    // Separar el año y tipo del campo combinado
+    
     $anioCompleto = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anioCompleto);
     $anio = $partes[0] ?? '';
@@ -157,7 +157,7 @@ if (isset($_POST['generar_definitivo_emit'])) {
     
     $fileName = "Definitivo_" . $anio;
     
-    // Agregar fase si fue seleccionada (solo para años regulares)
+    
     $selectedFase = $_POST['fase'] ?? '';
     if (!empty($selectedFase) && $aniTipo !== 'intensivo') {
         $fileName .= "_Fase" . $selectedFase;

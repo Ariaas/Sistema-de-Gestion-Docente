@@ -1,7 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
-    $('#cedula_docente').select2({
-        theme: "bootstrap-5"
-    });
+    
+    if (window.jQuery) {
+        $(document).ready(function() {
+            try {
+                $('#anio_completo').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Año" });
+                $('#fase_id').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Fase" });
+                $('#cedula_docente').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Docente" });
+            } catch (e) {
+                console.error("Error al inicializar Select2.", e);
+            }
+        });
+    }
 
     const formulario = document.getElementById('fReporteHorDocente');
     const anioCompletoSelect = document.getElementById('anio_completo');
@@ -9,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const faseContainer = document.getElementById('fase_container');
     const selectorDocente = document.getElementById('cedula_docente');
 
-    // Función para verificar si el año seleccionado es intensivo
+    
     function esAnioIntensivo() {
         if (!anioCompletoSelect || anioCompletoSelect.value === "") {
             return false;
@@ -19,23 +28,22 @@ document.addEventListener('DOMContentLoaded', function () {
         return tipoAnio === 'intensivo';
     }
 
-    // Función para mostrar/ocultar el select de fase
+    
     function toggleFaseSelect() {
         const esIntensivo = esAnioIntensivo();
         
         if (faseContainer) {
             if (esIntensivo) {
-                // Ocultar el contenedor de fase
+                
                 faseContainer.style.display = 'none';
-                // Remover el atributo required
+                
                 if (faseSelect) {
                     faseSelect.removeAttribute('required');
-                    faseSelect.value = ''; // Limpiar el valor
+                    faseSelect.value = ''; 
                 }
             } else {
-                // Mostrar el contenedor de fase
                 faseContainer.style.display = 'block';
-                // Agregar el atributo required
+                
                 if (faseSelect) {
                     faseSelect.setAttribute('required', 'required');
                 }
@@ -43,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Función para cargar docentes filtrados por año
+    
     function cargarDocentesPorAnio() {
         const anioCompleto = anioCompletoSelect.value;
         
@@ -51,12 +59,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Mostrar loading en el select de docentes
+        
         if (selectorDocente) {
             const valorActual = selectorDocente.value;
             selectorDocente.disabled = true;
             
-            // Realizar petición AJAX
+           
             fetch('?pagina=rhordocente', {
                 method: 'POST',
                 headers: {
@@ -67,13 +75,13 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Limpiar select2
+                    
                     $('#cedula_docente').empty();
                     
-                    // Agregar opción por defecto
+                    
                     $('#cedula_docente').append(new Option('-- Seleccione --', '', true, true));
                     
-                    // Agregar docentes filtrados
+                    
                     data.docentes.forEach(docente => {
                         const option = new Option(
                             docente.nombreCompleto + ' (C.I: ' + docente.doc_cedula + ')',
@@ -84,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         $('#cedula_docente').append(option);
                     });
                     
-                    // Refrescar select2
+                    
                     $('#cedula_docente').trigger('change');
                     selectorDocente.disabled = false;
                 } else {
@@ -99,13 +107,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Escuchar cambios en el select de año
+    
     if (anioCompletoSelect) {
         anioCompletoSelect.addEventListener('change', function() {
             toggleFaseSelect();
             cargarDocentesPorAnio();
         });
-        // Ejecutar al cargar la página por si hay un valor preseleccionado
+        
         toggleFaseSelect();
     }
 
@@ -113,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formulario.addEventListener('submit', function(evento) {
             const esIntensivo = esAnioIntensivo();
 
-            // Validar año académico
+            
             if (!anioCompletoSelect || anioCompletoSelect.value === "") {
                 evento.preventDefault();
                 Swal.fire({
@@ -125,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             }
 
-            // Validar fase solo si NO es intensivo
+            
             if (!esIntensivo && (!faseSelect || faseSelect.value === "")) {
                 evento.preventDefault();
                 Swal.fire({
@@ -137,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             }
 
-            // Validar docente
+            
             if (!selectorDocente || selectorDocente.value === "") {
                 evento.preventDefault();
                 Swal.fire({

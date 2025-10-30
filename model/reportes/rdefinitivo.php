@@ -89,7 +89,7 @@ class DefinitivoEmit extends Connection
                 $params[':ani_tipo'] = $this->ani_tipo;
             }
 
-            // Solo aplicar filtro de fase si NO es intensivo
+            
             if (!empty($this->fase) && strtolower($this->ani_tipo) !== 'intensivo') {
                 $fase_condition = '';
                 switch ($this->fase) {

@@ -48,21 +48,21 @@ class AularioReport extends Connection
 
    public function getAulariosFiltrados()
     {
-        // Validar campos requeridos
+        
         if (empty($this->anio) || empty($this->ani_tipo)) return [];
         
-        // Si es intensivo, no se requiere fase
+        
         $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
         
         if (!$esIntensivo && empty($this->fase)) return [];
 
         $allowed_periods = [];
         
-        // Si es intensivo, incluir todos los periodos
+        
         if ($esIntensivo) {
             $allowed_periods = ['Fase I', 'Fase II', 'Anual', 'anual', '0'];
         } else {
-            // Lógica normal para años regulares
+            
             $allowed_periods = ($this->fase == 1) ? ['Fase I', 'anual', 'Anual', '0'] : ['Fase II', 'anual', 'Anual'];
         }
         
@@ -129,7 +129,7 @@ class AularioReport extends Connection
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             error_log("AularioReport - Registros encontrados: " . count($result));
             
-            // Log de las primeras 5 filas para debug
+            
             foreach (array_slice($result, 0, 5) as $idx => $row) {
                 error_log("AularioReport Row $idx: " . json_encode($row));
             }

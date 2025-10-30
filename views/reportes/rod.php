@@ -38,6 +38,7 @@ if (!$puede_registrar) {
 
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="public/css/reportes.css" />
 
     <title>Reporte de Organización Docente</title>
 </head>
@@ -45,48 +46,52 @@ if (!$puede_registrar) {
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
-        <div class="container" style="width: 85%; max-width: 900px;">
-            <section class="py-3">
-                <div class="text-center mb-4">
-                    <h2 class="text-primary">Reporte de Organización Docente (ROD)</h2>
-                    <p class="lead">Seleccione el año y la fase para generar el cuadro resumen.</p>
-                </div>
+        <div class="container" style="width: 85%; max-width: 950px;"> 
+            <div class="text-center mb-4">
+                <h2 class="text-primary">Reporte de Organización Docente (ROD)</h2>
+                <p class="text-muted">Seleccione el año y la fase para generar el cuadro resumen.</p>
+            </div>
 
-                <div class="card p-4 shadow-sm bg-light rounded">
-                    <form method="post" action="" id="fReporteRod">
-                        <div class="row g-3 justify-content-center mb-4">
-
-                            <div class="col-md-6">
-                                <label for="anio_id" class="form-label">Año Académico:</label>
-                                <select class="form-select" name="anio_id" id="anio_id" required>
-                                    <option value="" disabled selected>-- Seleccione un Año --</option>
-                                    <?php if (!empty($listaAnios)): ?>
-                                        <?php foreach ($listaAnios as $anio): ?>
-                                            <option value="<?= htmlspecialchars($anio['ani_anio']) ?>"><?= htmlspecialchars($anio['ani_anio']) ?></option>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="fase_id" class="form-label">Fase:</label>
-                                <select class="form-select" name="fase_id" id="fase_id" required>
-                                    <option value="" disabled selected>-- Seleccione una Fase --</option>
-                                    <option value="1">Fase I</option>
-                                    <option value="2">Fase II</option>
-                                </select>
-                            </div>
+            <div class="card p-4 shadow-sm bg-light rounded">
+                <form method="post" action="" id="fReporteRod">
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-sm-6 col-md-6">
+                            <label for="anio_completo" class="form-label">Año Académico:</label>
+                            <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
+                                <option value="" selected>-- Seleccione un Año --</option>
+                                <?php if (!empty($listaAnios)): ?>
+                                    <?php foreach ($listaAnios as $anio): ?>
+                                        <option value="<?= htmlspecialchars($anio['ani_anio'] . '|' . $anio['ani_tipo']) ?>">
+                                            <?= htmlspecialchars($anio['anio_completo']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
                         </div>
-                        <div class="row">
-                            <div class="col-12 text-center">
-                                <button type="submit" class="btn btn-success btn-lg px-5" name="generar_reporte_rod" id="generar_reporte_rod_btn">
-                                    <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
-                                </button>
-                            </div>
+                        <div class="col-12 col-sm-6 col-md-6" id="fase_container">
+                            <label for="fase_id" class="form-label">Fase:</label>
+                            <select class="form-select form-select-sm" name="fase_id" id="fase_id" required>
+                                <option value="" selected>-- Seleccione una Fase --</option>
+                                <?php if (!empty($listaFases)): ?>
+                                    <?php foreach ($listaFases as $fase): ?>
+                                        <option value="<?= htmlspecialchars($fase['fase_numero']) ?>">
+                                            Fase <?= htmlspecialchars($fase['fase_numero']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
                         </div>
-                    </form>
-                </div>
-            </section>
+                    </div>
+                    <hr class="my-4">
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-success btn-lg px-5" name="generar_reporte_rod" id="generar_reporte_rod_btn">
+                                <i class="fas fa-file-excel me-2"></i>Generar Reporte Excel
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </main>
     <?php require_once("public/components/footer.php"); ?>

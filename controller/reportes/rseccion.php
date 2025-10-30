@@ -39,7 +39,6 @@ $oReporte = new SeccionReport();
 
 if (isset($_POST['generar_seccion_report'])) {
 
-    // Separar año y tipo del valor combinado
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio = $partes[0] ?? '';
@@ -48,15 +47,15 @@ if (isset($_POST['generar_seccion_report'])) {
     $fase = $_POST['fase_id'] ?? '';
     $trayecto_filtrado = $_POST['trayecto_id'] ?? '';
 
-    // Verificar si es intensivo
+    
     $esIntensivo = strtolower($ani_tipo) === 'intensivo';
 
-    // Validar campos requeridos
+    
     if (empty($anio) || empty($ani_tipo)) {
         die("Error: Debe seleccionar un Año y Tipo.");
     }
 
-    // Solo requerir fase si NO es intensivo
+    
     if (!$esIntensivo && empty($fase)) {
         die("Error: Debe seleccionar una Fase para años regulares.");
     }
@@ -154,7 +153,7 @@ if (isset($_POST['generar_seccion_report'])) {
                 $sheetTitleText = $nombresSecciones[0];
             }
             
-            // Agregar (Intensivo) al título si el año es intensivo
+            
             if ($ani_tipo && strtolower($ani_tipo) === 'intensivo') {
                 $tituloSeccion .= " (Intensivo)";
             }

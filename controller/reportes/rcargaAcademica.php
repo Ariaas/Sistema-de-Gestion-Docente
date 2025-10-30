@@ -53,7 +53,7 @@ $oUc = new Carga();
 
 if (isset($_POST['generar_uc'])) {
 
-    // Separar año y tipo del valor combinado
+    
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio = $partes[0] ?? '';
@@ -62,15 +62,15 @@ if (isset($_POST['generar_uc'])) {
     $fase = $_POST['fase_id'] ?? '';
     $trayecto_filtrado = $_POST['trayecto'] ?? '';
 
-    // Verificar si es intensivo
+    
     $esIntensivo = strtolower($ani_tipo) === 'intensivo';
 
-    // Validar campos requeridos
+    
     if (empty($anio) || empty($ani_tipo)) {
         die("Error: Debe seleccionar un Año y Tipo.");
     }
 
-    // Solo requerir fase si NO es intensivo
+   
     if (!$esIntensivo && empty($fase)) {
         die("Error: Debe seleccionar una Fase para años regulares.");
     }
@@ -109,7 +109,7 @@ if (isset($_POST['generar_uc'])) {
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     
-    // Agregar (Intensivo) al título si el año es intensivo
+    
     $tituloHoja = "CARGA ACADEMICA";
     if ($esIntensivo) {
         $tituloHoja .= " (Intensivo)";
@@ -284,7 +284,7 @@ if (isset($_POST['generar_uc'])) {
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
     
-    // Agregar _Intensivo al nombre del archivo si es intensivo
+   
     $fileName = "Carga_Academica";
     if ($esIntensivo) {
         $fileName .= "_Intensivo";

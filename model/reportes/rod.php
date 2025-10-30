@@ -4,6 +4,7 @@ require_once('model/dbconnection.php');
 class Rod extends Connection
 {
     private $anio_id;
+    private $ani_tipo;
     private $fase_numero;
 
     public function __construct()
@@ -16,6 +17,11 @@ class Rod extends Connection
         $this->anio_id = $valor;
     }
 
+    public function set_ani_tipo($valor)
+    {
+        $this->ani_tipo = $valor;
+    }
+
     public function set_fase($valor)
     {
         $this->fase_numero = $valor;
@@ -23,15 +29,30 @@ class Rod extends Connection
 
     public function obtenerDatosReporte()
     {
-        if (empty($this->fase_numero) || empty($this->anio_id)) {
+        if (empty($this->anio_id) || empty($this->ani_tipo)) {
+            return [];
+        }
+        
+        
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        
+        
+        if (!$esIntensivo && empty($this->fase_numero)) {
             return [];
         }
 
         $co = $this->con();
         try {
-            $periodos_permitidos = ($this->fase_numero == 1) ? ['FASE I', 'ANUAL', 'anual', '0'] : ['FASE II', 'ANUAL', 'anual'];
+            
+            if ($esIntensivo) {
+                
+                $periodos_permitidos = ['FASE I', 'FASE II', 'ANUAL', 'anual', '0'];
+            } else {
+               
+                $periodos_permitidos = ($this->fase_numero == 1) ? ['FASE I', 'ANUAL', 'anual', '0'] : ['FASE II', 'ANUAL', 'anual'];
+            }
 
-            $params = [':anio_anio' => $this->anio_id];
+            $params = [':anio_anio' => $this->anio_id, ':ani_tipo' => $this->ani_tipo];
             $placeholders = [];
             foreach ($periodos_permitidos as $index => $periodo) {
                 $key = ":periodo_" . $index;
@@ -54,11 +75,12 @@ class Rod extends Connection
                 FROM uc_horario uh
                 INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
                     AND uh.ani_anio = s.ani_anio 
-                    AND (uh.ani_tipo = s.ani_tipo OR (uh.ani_tipo IS NULL AND s.ani_tipo IS NOT NULL) OR (uh.ani_tipo IS NOT NULL AND s.ani_tipo IS NULL))
+                    AND uh.ani_tipo = s.ani_tipo
                 INNER JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                 INNER JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
                 WHERE
                     s.ani_anio = :anio_anio
+                    AND s.ani_tipo = :ani_tipo
                     AND s.sec_estado = 1
                     AND uh.doc_cedula IS NOT NULL
                     AND d.doc_estado = 1
@@ -85,11 +107,12 @@ class Rod extends Connection
                     FROM uc_horario uh_inner
                     INNER JOIN tbl_seccion s_inner ON uh_inner.sec_codigo = s_inner.sec_codigo 
                         AND uh_inner.ani_anio = s_inner.ani_anio 
-                        AND (uh_inner.ani_tipo = s_inner.ani_tipo OR (uh_inner.ani_tipo IS NULL AND s_inner.ani_tipo IS NOT NULL) OR (uh_inner.ani_tipo IS NOT NULL AND s_inner.ani_tipo IS NULL))
+                        AND uh_inner.ani_tipo = s_inner.ani_tipo
                     INNER JOIN tbl_uc u_inner ON uh_inner.uc_codigo = u_inner.uc_codigo
                     WHERE uh_inner.doc_cedula = hsd.doc_cedula 
                         AND uh_inner.uc_codigo = hsd.uc_codigo 
                         AND s_inner.ani_anio = :anio_anio
+                        AND s_inner.ani_tipo = :ani_tipo
                         AND s_inner.sec_estado = 1
                 ) AS sec_codigo_formateado
             FROM HorasSinDuplicarSubgrupos hsd
@@ -160,7 +183,7 @@ class Rod extends Connection
     {
         $co = $this->con();
         try {
-            $p = $co->prepare("SELECT ani_anio FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC");
+            $p = $co->prepare("SELECT ani_anio, ani_tipo, CONCAT(ani_anio, ' - ', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo ASC");
             $p->execute();
             return $p->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {

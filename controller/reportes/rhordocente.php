@@ -106,7 +106,7 @@ function abreviarNombreUC($nombre) {
 $oReporteHorario = new ReporteHorarioDocente();
 
 if (isset($_POST['generar_rhd_report'])) {
-    // Separar año y tipo del valor combinado
+    
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio = $partes[0] ?? '';
@@ -115,15 +115,15 @@ if (isset($_POST['generar_rhd_report'])) {
     $fase = $_POST['fase_id'] ?? '';
     $cedulaDocenteSeleccionada = $_POST['cedula_docente'] ?? '';
     
-    // Verificar si es intensivo
+  
     $esIntensivo = strtolower($ani_tipo) === 'intensivo';
     
-    // Validar campos requeridos
+    
     if (empty($cedulaDocenteSeleccionada) || empty($anio) || empty($ani_tipo)) {
         die("Error: Debe seleccionar Año, Tipo y Docente.");
     }
     
-    // Solo requerir fase si NO es intensivo
+   
     if (!$esIntensivo && empty($fase)) {
         die("Error: Debe seleccionar una Fase para años regulares.");
     }
@@ -263,21 +263,21 @@ if (isset($_POST['generar_rhd_report'])) {
         ['nombre' => 'GESTIÓN ACADÉMICA', 'horas' => $otrasActividades['act_gestion_academica'] ?? 0],
     ];
 
-    // Algoritmo mejorado para colocar actividades
+ 
     foreach ($actividadesParaColocar as $actividad) {
         $horasRestantes = intval($actividad['horas']);
         if ($horasRestantes <= 0) continue;
         
-        // Intentar colocar las horas en diferentes días/turnos si es necesario
+        
         foreach ($diasDisponibles as $dia) {
             if ($horasRestantes <= 0) break;
             
-            // Buscar bloques libres consecutivos en cada turno activo
+            
             foreach ($bloques_por_turno as $turno => $bloques) {
                 if ($horasRestantes <= 0) break;
                 if (!isset($activeShifts[$turno])) continue;
                 
-                // Encontrar el rango de índices para este turno
+                
                 $indicesTurno = [];
                 foreach ($todos_los_bloques_ordenados as $index => $hora_db) {
                     if (array_key_exists($hora_db, $bloques)) {
@@ -285,39 +285,39 @@ if (isset($_POST['generar_rhd_report'])) {
                     }
                 }
                 
-                // Buscar bloques libres consecutivos en este turno
+               
                 $i = 0;
                 while ($i < count($indicesTurno) && $horasRestantes > 0) {
                     $index = $indicesTurno[$i];
                     $hora_db = $todos_los_bloques_ordenados[$index];
                     
-                    // Verificar si este bloque está libre
+                    
                     if (!empty($occupancyMap[$dia][$hora_db])) {
                         $i++;
                         continue;
                     }
                     
-                    // Contar cuántos bloques consecutivos están libres en este turno
+                    
                     $bloquesLibresConsecutivos = 0;
                     $j = $i;
                     while ($j < count($indicesTurno) && $bloquesLibresConsecutivos < $horasRestantes) {
                         $idx = $indicesTurno[$j];
                         $hora = $todos_los_bloques_ordenados[$idx];
                         
-                        // Verificar que sea consecutivo (diferencia de 1 en índice global)
+                       
                         if ($j > $i && $idx != $indicesTurno[$j-1] + 1) {
-                            break; // No es consecutivo, hay un salto
+                            break; 
                         }
                         
                         if (!empty($occupancyMap[$dia][$hora])) {
-                            break; // Bloque ocupado
+                            break; 
                         }
                         
                         $bloquesLibresConsecutivos++;
                         $j++;
                     }
                     
-                    // Si encontramos bloques libres, colocar la actividad
+                    
                     if ($bloquesLibresConsecutivos > 0) {
                         $bloquesAColocar = min($bloquesLibresConsecutivos, $horasRestantes);
                         
@@ -327,7 +327,7 @@ if (isset($_POST['generar_rhd_report'])) {
                             'type' => 'activity'
                         ];
                         
-                        // Marcar bloques como ocupados
+                        
                         for ($k = 0; $k < $bloquesAColocar; $k++) {
                             $idx = $indicesTurno[$i + $k];
                             $hora = $todos_los_bloques_ordenados[$idx];
@@ -397,7 +397,7 @@ if (isset($_POST['generar_rhd_report'])) {
     $sheet->mergeCells('B'.$row.':F'.$row)->setCellValue('B'.$row, 'INFORMÁTICA');
     $sheet->setCellValue('G'.$row, '2. LAPSO');
     
-    // Mostrar "Intensivo" si es intensivo, o "Fase X - Año" si es regular
+    
     if ($esIntensivo) {
         $sheet->setCellValue('H'.$row, 'Intensivo-' . $anio);
     } else {
@@ -618,7 +618,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     $row++; 
 
    
-    // Calcular horas de clase únicamente desde la malla curricular de las UCs asignadas
+    
     $totalHorasClase = array_sum(array_column($asignacionesAcademicas, 'totalHorasClase'));
     $creacionIntelectual = $otrasActividades['act_creacion_intelectual'] ?? 0;
     $integracionComunidad = $otrasActividades['act_integracion_comunidad'] ?? 0;
@@ -697,7 +697,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     exit;
 
 } elseif (isset($_POST['action']) && $_POST['action'] === 'obtener_docentes_por_anio') {
-    // Endpoint AJAX para obtener docentes filtrados por año
+    
     header('Content-Type: application/json');
     
     $anio_completo = $_POST['anio_completo'] ?? '';

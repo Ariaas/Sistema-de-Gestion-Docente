@@ -37,6 +37,7 @@ if (!$puede_registrar) {
     
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="public/css/reportes.css" />
 
     <title>Reporte de Unidades Curriculares</title>
 </head>

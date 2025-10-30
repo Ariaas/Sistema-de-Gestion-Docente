@@ -84,7 +84,7 @@
  if (isset($_POST['validar_datos'])) {
     header('Content-Type: application/json');
     
-    // Separar año y tipo del valor combinado
+    
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio_id = $partes[0] ?? '';
@@ -107,13 +107,13 @@
 
  if (isset($_POST['generar_uc'])) { 
     
-    // Separar año y tipo del valor combinado
+    
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio_id = $partes[0] ?? '';
     $ani_tipo = $partes[1] ?? '';
     
-    // Debug: verificar valores recibidos
+    
     error_log("RUC - Año completo recibido: " . $anio_completo);
     error_log("RUC - Año separado: " . $anio_id);
     error_log("RUC - Tipo separado: " . $ani_tipo);

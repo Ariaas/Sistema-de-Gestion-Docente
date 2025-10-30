@@ -57,7 +57,29 @@ function formatSectionsFromArray($sectionsArray, $wrapAfter = 2) {
 $oCuentaCupos = new CuentaCupos();
 
 if (isset($_POST['generar_reporte'])) {
-    $oCuentaCupos->set_anio($_POST['anio'] ?? '');
+    
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anioId = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    $faseNumero = $_POST['fase_id'] ?? null;
+    
+    
+    $esIntensivo = strtolower($ani_tipo) === 'intensivo';
+
+    
+    if (empty($anioId) || empty($ani_tipo)) {
+        die("Error: Debe seleccionar un Año Académico.");
+    }
+    
+   
+    if (!$esIntensivo && empty($faseNumero)) {
+        die("Error: Debe seleccionar una Fase para años regulares.");
+    }
+
+    $oCuentaCupos->set_anio($anioId);
+    $oCuentaCupos->set_ani_tipo($ani_tipo);
+    $oCuentaCupos->set_fase($faseNumero);
     $datosCrudos = $oCuentaCupos->obtenerCuentaCupos();
 
     if (empty($datosCrudos)) {
@@ -127,7 +149,14 @@ if (isset($_POST['generar_reporte'])) {
     $styleBordes = ['borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleCentrado = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
     
-    $sheet->mergeCells('A1:C1')->setCellValue('A1', 'MATRICULA TRAYECTO ' . htmlspecialchars($_POST['anio'] ?? ''));
+    
+    if ($esIntensivo) {
+        $tituloReporte = 'MATRICULA TRAYECTO ' . htmlspecialchars($anioId) . ' - INTENSIVO';
+    } else {
+        $tituloReporte = 'MATRICULA TRAYECTO ' . htmlspecialchars($anioId) . ' - FASE ' . htmlspecialchars($faseNumero);
+    }
+    
+    $sheet->mergeCells('A1:C1')->setCellValue('A1', $tituloReporte);
     $sheet->getStyle('A1')->applyFromArray($styleHeader);
     $sheet->mergeCells('A2:C2')->setCellValue('A2', 'UPTAEB');
     $sheet->getStyle('A2')->applyFromArray($styleHeader);
@@ -180,7 +209,13 @@ if (isset($_POST['generar_reporte'])) {
     
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Reporte_Cuenta_Cupos_" . date('Y-m-d') . ".xlsx";
+    
+    
+    if ($esIntensivo) {
+        $fileName = "Cuenta_Cupos_{$anioId}_Intensivo.xlsx";
+    } else {
+        $fileName = "Cuenta_Cupos_{$anioId}_Fase{$faseNumero}.xlsx";
+    }
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -189,6 +224,7 @@ if (isset($_POST['generar_reporte'])) {
 
 } else {
     $anios = $oCuentaCupos->obtenerAnios();
+    $fases = $oCuentaCupos->obtenerFases();
     require_once("views/reportes/rcuentacupos.php");
 }
 ?>

@@ -40,7 +40,7 @@ $oAulario = new AularioReport();
 
 if (isset($_POST['generar_aulario_report'])) {
 
-    // Separar año y tipo del valor combinado
+    
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio = $partes[0] ?? '';
@@ -49,15 +49,15 @@ if (isset($_POST['generar_aulario_report'])) {
     $fase = $_POST['fase_id'] ?? '';
     $espacio_filtrado = $_POST['espacio_id'] ?? '';
 
-    // Verificar si es intensivo
+    
     $esIntensivo = strtolower($ani_tipo) === 'intensivo';
     
-    // Validar campos requeridos
+    
     if (empty($anio) || empty($ani_tipo)) {
         die("Error: Debe seleccionar un Año y Tipo.");
     }
     
-    // Solo requerir fase si NO es intensivo
+   
     if (!$esIntensivo && empty($fase)) {
         die("Error: Debe seleccionar una Fase para años regulares.");
     }
@@ -129,13 +129,13 @@ if (isset($_POST['generar_aulario_report'])) {
         ksort($dataGroupedByAula);
 
         foreach ($dataGroupedByAula as $espacioCodigo => $horarioData) {
-            // Sanitizar el nombre de la hoja
+            
             $nombreHoja = preg_replace('/[^A-Za-z0-9\-\. ]/', '', $espacioCodigo);
-            // Si el nombre queda vacío después de sanitizar, usar un nombre por defecto
+            
             if (empty($nombreHoja)) {
                 $nombreHoja = 'Aula_' . substr(md5($espacioCodigo), 0, 8);
             }
-            // Limitar a 31 caracteres (límite de Excel)
+            
             $nombreHoja = substr($nombreHoja, 0, 31);
             
             $sheet = new Worksheet($spreadsheet, $nombreHoja);
@@ -165,7 +165,7 @@ if (isset($_POST['generar_aulario_report'])) {
                 $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
                 $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
                 $horaInicio = new DateTime($item['hor_horainicio']);
-                // Almacenar múltiples clases en el mismo horario
+                
                 if (!isset($gridData[$dia_key][$horaInicio->format('H:i:s')])) {
                     $gridData[$dia_key][$horaInicio->format('H:i:s')] = [];
                 }
@@ -238,7 +238,7 @@ if (isset($_POST['generar_aulario_report'])) {
                     if ($clases) {
                         $richText = new RichText();
                         
-                        // Procesar múltiples clases en el mismo horario
+                        
                         foreach ($clases as $idx => $clase) {
                             if ($idx > 0) {
                                 $richText->createText("\n- - - - - - - - -\n");
@@ -257,7 +257,7 @@ if (isset($_POST['generar_aulario_report'])) {
 
                         $sheet->setCellValue($cellAddress, $richText);
 
-                        // Usar la primera clase para calcular el span
+                        
                         $primeraClase = $clases[0];
                         $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);
                         $horaFinClase = new DateTime($primeraClase['hor_horafin']);
@@ -303,7 +303,7 @@ if (isset($_POST['generar_aulario_report'])) {
     $writer->save('php://output');
     exit;
 } elseif (isset($_POST['action']) && $_POST['action'] === 'obtener_espacios_por_anio') {
-    // Endpoint AJAX para obtener espacios filtrados por año
+    
     header('Content-Type: application/json');
     
     $anio_completo = $_POST['anio_completo'] ?? '';

@@ -14,13 +14,28 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 if (isset($_POST['generar_asignacion_aulas_report'])) {
     
-    if (!isset($_POST['ani_anio']) || empty($_POST['ani_anio'])) {
+    
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anio = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
+    $fase = $_POST['fase_id'] ?? '';
+    
+    
+    $esIntensivo = strtolower($ani_tipo) === 'intensivo';
+    
+    
+    if (empty($anio) || empty($ani_tipo)) {
         die("Error: Debe seleccionar un año académico.");
     }
     
-    $anio = $_POST['ani_anio'];
+    
+    if (!$esIntensivo && empty($fase)) {
+        die("Error: Debe seleccionar una Fase para años regulares.");
+    }
+    
     $oReporte = new AsignacionAulasReport();
-    $aulasData = $oReporte->getAulasConAsignaciones($anio);
+    $aulasData = $oReporte->getAulasConAsignaciones($anio, $ani_tipo, $fase);
 
     $ordenDias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     $dataPorDia = array_fill_keys($ordenDias, []);
@@ -36,7 +51,14 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle("Aulas Asignadas $anio");
+    
+    
+    if ($esIntensivo) {
+        $tituloHoja = "Aulas $anio Intensivo";
+    } else {
+        $tituloHoja = "Aulas $anio Fase $fase";
+    }
+    $sheet->setTitle($tituloHoja);
 
     
     $styleHeader = ['font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F81BD']]];
@@ -78,7 +100,13 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Reporte_Aulas_Asignadas_{$anio}_" . date('Y-m-d') . ".xlsx";
+    
+    
+    if ($esIntensivo) {
+        $fileName = "Aulas_{$anio}_Intensivo.xlsx";
+    } else {
+        $fileName = "Aulas_{$anio}_Fase{$fase}.xlsx";
+    }
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -88,6 +116,7 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
 } else {
     $oReporte = new AsignacionAulasReport();
     $anios = $oReporte->getAnios();
+    $fases = $oReporte->getFases();
     require_once("views/reportes/raulaAsignada.php");
 }
 ?>

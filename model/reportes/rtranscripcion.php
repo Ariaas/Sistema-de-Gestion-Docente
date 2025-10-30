@@ -24,10 +24,10 @@ class Transcripcion extends Connection
 
     public function obtenerTranscripciones()
     {
-        // Validar campos requeridos
+        
         if (empty($this->anio) || empty($this->ani_tipo)) return [];
         
-        // Si es intensivo, no se requiere fase
+        
         $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
         if (!$esIntensivo && empty($this->fase)) return [];
 
@@ -56,7 +56,7 @@ class Transcripcion extends Connection
             $conditions = [ "s.sec_estado = 1", "d.doc_estado = 1", "s.ani_anio = :anio_param", "uh.doc_cedula IS NOT NULL" ];
             $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
 
-            // Filtrado por periodos
+            
             $allowed_periods = [];
             if ($esIntensivo) {
                 $allowed_periods = ['Fase I', 'Fase II', 'Anual', 'anual', '0'];
@@ -126,7 +126,7 @@ class Transcripcion extends Connection
             $where_clauses = ["NOT EXISTS (SELECT 1 FROM docente_horario dh WHERE dh.sec_codigo = s.sec_codigo)", "s.ani_anio = :anio_param"];
             $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
 
-            // Filtrado por periodos
+            
             $allowed_periods = [];
             if (strtolower($this->ani_tipo) === 'intensivo') {
                 $allowed_periods = ['Fase I', 'Fase II', 'Anual', 'anual', '0'];

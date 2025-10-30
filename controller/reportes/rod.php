@@ -21,14 +21,28 @@ $vistaFormulario = "views/reportes/rod.php";
 
 if (isset($_POST['generar_reporte_rod'])) {
 
-    $anioId = $_POST['anio_id'] ?? null;
+    
+    $anio_completo = $_POST['anio_completo'] ?? '';
+    $partes = explode('|', $anio_completo);
+    $anioId = $partes[0] ?? '';
+    $ani_tipo = $partes[1] ?? '';
     $faseNumero = $_POST['fase_id'] ?? null;
+    
+    
+    $esIntensivo = strtolower($ani_tipo) === 'intensivo';
 
-    if (empty($anioId) || empty($faseNumero)) {
-        die("Error: Debe seleccionar un Año y una Fase para generar el reporte.");
+   
+    if (empty($anioId) || empty($ani_tipo)) {
+        die("Error: Debe seleccionar un Año Académico.");
+    }
+    
+    
+    if (!$esIntensivo && empty($faseNumero)) {
+        die("Error: Debe seleccionar una Fase para años regulares.");
     }
 
     $oReporte->set_anio($anioId);
+    $oReporte->set_ani_tipo($ani_tipo);
     $oReporte->set_fase($faseNumero);
     $queryData = $oReporte->obtenerDatosReporte();
 
@@ -100,7 +114,13 @@ if (isset($_POST['generar_reporte_rod'])) {
     $sheet->mergeCells('A2:N2')->setCellValue('A2', 'CUADRO RESUMEN ORGANIZACIÓN DOCENTE')->getStyle('A2:N2')->applyFromArray($headerStyle);
     $sheet->mergeCells('A3:C3')->setCellValue('A3', 'PNF: Informática');
     $sheet->getStyle('A3:C3')->applyFromArray($bottomBorderStyle);
-    $sheet->mergeCells('J3:M3')->setCellValue('J3', 'LAPSO: ' . toRoman($faseNumero) . '-' . $anioId);
+    
+    
+    if ($esIntensivo) {
+        $sheet->mergeCells('J3:M3')->setCellValue('J3', 'LAPSO: Intensivo-' . $anioId);
+    } else {
+        $sheet->mergeCells('J3:M3')->setCellValue('J3', 'LAPSO: ' . toRoman($faseNumero) . '-' . $anioId);
+    }
     $sheet->getStyle('J3:M3')->applyFromArray($bottomBorderStyle);
 
     $columnas = ['N°', 'APELLIDOS Y NOMBRES', 'C.I.', 'FECHA DE INGRESO', 'PERFIL PROFESIONAL', 'DEDICACION', 'HORAS ACADEMICAS', 'HORAS ASIGNADAS', 'HORAS DESCARGA', 'FALTA HORAS ACAD', 'UNIDAD CURRICULAR', 'AÑO DE CONCURSO', 'SECCIÓN', 'OBSERVACION'];
@@ -181,7 +201,13 @@ if (isset($_POST['generar_reporte_rod'])) {
 
     $writer = new Xlsx($spreadsheet);
     if (ob_get_length()) ob_end_clean();
-    $fileName = "Resumen_Organizacion_Docente.xlsx";
+    
+  
+    if ($esIntensivo) {
+        $fileName = "ROD_{$anioId}_Intensivo.xlsx";
+    } else {
+        $fileName = "ROD_{$anioId}_Fase{$faseNumero}.xlsx";
+    }
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
@@ -189,5 +215,6 @@ if (isset($_POST['generar_reporte_rod'])) {
     exit;
 } else {
     $listaAnios = $oReporte->obtenerAnios();
+    $listaFases = [['fase_numero' => 1], ['fase_numero' => 2]];
     require_once($vistaFormulario);
 }

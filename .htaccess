@@ -1,5 +1,46 @@
 Options -Indexes
 
 RewriteEngine On
-RewriteRule ^model/ - [F,L]
-RewriteRule ^controller/ - [F,L]
+RewriteBase /Sistema-de-Gestion-Docente/
+
+
+
+
+RewriteRule ^public/ - [L]
+
+
+RewriteCond %{REQUEST_URI} \.(css|js|map|json|woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|ico|webp)$ [NC]
+RewriteRule ^vendor/ - [L]
+
+
+
+RewriteRule ^model(/.*)?$ verificacion_acceso.php [L]
+RewriteRule ^controller(/.*)?$ verificacion_acceso.php [L]
+RewriteRule ^config(/.*)?$ verificacion_acceso.php [L]
+RewriteRule ^db(/.*)?$ verificacion_acceso.php [L]
+RewriteRule ^views(/.*)?$ verificacion_acceso.php [L]
+
+
+RewriteRule ^vendor/.*\.(php|phar|sh|bat|exe|sql)$ verificacion_acceso.php [L,NC]
+
+
+RewriteRule ^archivos_subidos(/.*)?$ verificacion_acceso.php [L]
+
+
+RewriteRule ^respaldos(/.*)?$ verificacion_acceso.php [L]
+
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+
+RewriteCond %{REQUEST_URI} ^/.*/(index|verificacion_acceso)\.php$ [NC]
+RewriteRule ^ - [L]
+
+
+RewriteCond %{QUERY_STRING} pagina=
+RewriteRule ^ - [L]
+
+
+RewriteRule ^(.+)$ verificacion_acceso.php?invalid_route=1 [L,QSA]
