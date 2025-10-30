@@ -1,5 +1,40 @@
 document.addEventListener('DOMContentLoaded', function () {
     
+    const anioCompletoSelect = document.getElementById('anio_completo');
+    const faseSelect = document.getElementById('fase');
+    const faseContainer = faseSelect ? faseSelect.closest('.col-12, .col-sm-6, .col-md-6, .col-lg-3') : null;
+    
+    // Función para verificar si el año seleccionado es intensivo
+    function esAnioIntensivo() {
+        if (!anioCompletoSelect || anioCompletoSelect.value === "") {
+            return false;
+        }
+        const partes = anioCompletoSelect.value.split('|');
+        const tipoAnio = partes[1] ? partes[1].toLowerCase() : '';
+        return tipoAnio === 'intensivo';
+    }
+
+    // Función para mostrar/ocultar el select de fase
+    function toggleFaseSelect() {
+        const esIntensivo = esAnioIntensivo();
+        
+        if (faseContainer) {
+            if (esIntensivo) {
+                // Ocultar el contenedor de fase
+                faseContainer.style.display = 'none';
+                
+                if (faseSelect) {
+                    faseSelect.value = ''; 
+                    if (window.jQuery && $('#fase').data('select2')) {
+                        $('#fase').val('').trigger('change');
+                    }
+                }
+            } else {
+                // Mostrar el contenedor de fase
+                faseContainer.style.display = 'block';
+            }
+        }
+    }
     
     if (window.jQuery) {
         $(document).ready(function() {
@@ -12,6 +47,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 $('#anio_completo').on('change', function() {
                     const anioCompleto = $(this).val();
                     const anioSeleccionado = anioCompleto.split('|')[0];
+                    
+                    // Primero ejecutar el toggle de fase según el tipo de año
+                    toggleFaseSelect();
                     
                     if (anioSeleccionado) {
                         fetch(`?pagina=ruc&action=obtener_fase_actual&anio=${anioSeleccionado}`)
@@ -67,6 +105,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     filtrarUCs();
                 });
+                
+                // Ejecutar toggle de fase al cargar la página
+                toggleFaseSelect();
             } catch (e) {
                 console.error("Error al inicializar Select2.", e);
             }

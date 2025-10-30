@@ -53,7 +53,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     
     if (anioCompletoSelect) {
-        anioCompletoSelect.addEventListener('change', toggleFaseSelect);
+        // Usar evento Select2 de jQuery en lugar de addEventListener nativo
+        if (window.jQuery) {
+            $('#anio_completo').on('change', function() {
+                toggleFaseSelect();
+            });
+        } else {
+            anioCompletoSelect.addEventListener('change', toggleFaseSelect);
+        }
         
         toggleFaseSelect();
     }

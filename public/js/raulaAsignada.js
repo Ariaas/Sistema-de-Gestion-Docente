@@ -52,9 +52,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   
     if (anioCompletoSelect) {
-        anioCompletoSelect.addEventListener('change', function() {
-            toggleFaseSelect();
-        });
+        
+        if (window.jQuery) {
+            $('#anio_completo').on('change', function() {
+                toggleFaseSelect();
+            });
+        } else {
+            anioCompletoSelect.addEventListener('change', function() {
+                toggleFaseSelect();
+            });
+        }
         
         toggleFaseSelect();
     }
