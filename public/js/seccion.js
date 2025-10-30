@@ -139,9 +139,40 @@ function construirBloquesParaHorario(clases, turnoSeleccionado) {
         return turnoBase.tur_horainicio >= minTime && turnoBase.tur_horainicio < maxTime;
     });
 
-    bloquesNecesarios.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+    const horariosUnicos = new Set();
+    clases.forEach(clase => {
+        const horaInicio = (clase.hora_inicio && clase.hora_inicio.length === 5) ? clase.hora_inicio + ':00' : clase.hora_inicio;
+        const horaFin = (clase.hora_fin && clase.hora_fin.length === 5) ? clase.hora_fin + ':00' : clase.hora_fin;
+        horariosUnicos.add(JSON.stringify({ inicio: horaInicio, fin: horaFin }));
+    });
 
-    return bloquesNecesarios;
+    const bloquesSinteticos = [];
+    horariosUnicos.forEach(horarioStr => {
+        const horario = JSON.parse(horarioStr);
+        const existeBloque = bloquesNecesarios.some(b => b.tur_horainicio === horario.inicio);
+        const existeEnAllTurnos = allTurnos.some(b => b.tur_horainicio === horario.inicio);
+        
+        if (!existeBloque && !existeEnAllTurnos) {
+            bloquesSinteticos.push({
+                tur_horainicio: horario.inicio,
+                tur_horafin: horario.fin,
+                tur_nombre: turnoSeleccionado.charAt(0).toUpperCase() + turnoSeleccionado.slice(1),
+                tur_estado: 1,
+                _sintetico: true
+            });
+            console.log(`🔧 Bloque sintético creado: ${horario.inicio} - ${horario.fin}`);
+        }
+    });
+
+    const todosBloques = [...bloquesNecesarios, ...bloquesSinteticos];
+    todosBloques.sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
+
+    if (bloquesSinteticos.length > 0) {
+        const horariosCreados = bloquesSinteticos.map(b => b.tur_horainicio.substring(0, 5)).join(', ');
+        console.info(`✅ Se crearon ${bloquesSinteticos.length} bloques automáticos para: ${horariosCreados}`);
+    }
+
+    return todosBloques;
 }
 
 function detectarTurnoPorHorario(clases) {
@@ -208,6 +239,9 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
         const row = $("<tr>");
         const celdaHora = $("<td>").css({ 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'padding': '0.5rem' });
         const textoHora = $("<span>").text(`${formatTime12Hour(bloque.tur_horainicio)} - ${formatTime12Hour(bloque.tur_horafin)}`);
+        
+        
+        
         if (!isViewOnly) {
             const containerBotones = $('<div class="d-inline-flex">');
             const botonEditar = $("<button type='button' class='btn btn-sm btn-editar-fila' title='Editar esta franja horaria'>").html('<img src="public/assets/icons/edit.svg" alt="Editar" style="height: 1em; opacity: 0.6;">').data('franja-inicio', bloque.tur_horainicio).css({ 'border': 'none', 'background': 'transparent', 'padding': '0 5px' });
@@ -275,7 +309,13 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
 }
 
 function generarCellContent(clase, isViewOnly = false) {
-    const uc_nombre_completo = clase.uc_codigo ? (allUcs.find(u => u.uc_codigo == clase.uc_codigo)?.uc_nombre || `UC Inválida`) : '<i>(Sin UC)</i>';
+    let uc_nombre_completo;
+    if (!clase.uc_codigo || clase.uc_codigo === '' || clase.uc_codigo === null) {
+        uc_nombre_completo = '<i>(Sin UC)</i>';
+    } else {
+        const ucEncontrada = allUcs.find(u => u.uc_codigo == clase.uc_codigo);
+        uc_nombre_completo = ucEncontrada ? ucEncontrada.uc_nombre : 'UC Inválida';
+    }
     const uc = abreviarNombreLargo(uc_nombre_completo, 25);
 
     const doc = clase.doc_cedula ? allDocentes.find(d => d.doc_cedula == clase.doc_cedula) : null;
@@ -320,7 +360,7 @@ function generarCellContent(clase, isViewOnly = false) {
 }
 
 function abreviarNombreLargo(nombre, longitudMaxima = 25) {
-    if (typeof nombre !== 'string' || nombre.length <= longitudMaxima) {
+    if (typeof nombre !== 'string' || nombre.length <= longitudMaxima || nombre.startsWith('<')) {
         return nombre;
     }
     const palabrasExcluidas = new Set(['de', 'y', 'a', 'del', 'la', 'los', 'las', 'en']);
@@ -429,7 +469,7 @@ function populateUcSelectForModal(ucSelect, ucToSelect) {
                 ucSelect.append(`<option value="">${mensaje}</option>`).prop("disabled", true);
             }
 
-            if (ucToSelect) {
+            if (ucToSelect && ucToSelect !== '' && ucToSelect !== null) {
                 ucSelect.val(ucToSelect).trigger('change');
             }
         },
@@ -784,7 +824,7 @@ function guardarClase() {
     }
 
 
-    if (ucVal) {
+    if (ucVal && ucVal !== '' && ucVal !== null) {
         const franjaInicioActual = franjaInicio.substring(0, 5);
         const diaKeyActual = normalizeDayKey(diaNombre);
 
@@ -797,7 +837,7 @@ function guardarClase() {
             }
 
             
-            if (claseArray.some(c => c.data.uc_codigo === ucVal)) {
+            if (claseArray.some(c => c.data.uc_codigo && c.data.uc_codigo === ucVal)) {
                 const nombreUc = allUcs.find(u => u.uc_codigo === ucVal)?.uc_nombre || ucVal;
                 localWarnings.push({ mensaje: `Advertencia: La UC <b>'${nombreUc}'</b> ya está asignada en esta sección.` });
                 break; 
@@ -807,9 +847,9 @@ function guardarClase() {
 
     const datosValidacion = new FormData();
     datosValidacion.append("accion", "validar_clase_en_vivo");
-    datosValidacion.append("doc_cedula", docVal);
-    datosValidacion.append("uc_codigo", ucVal);
-    datosValidacion.append("espacio", espVal);
+    datosValidacion.append("doc_cedula", docVal || "");
+    datosValidacion.append("uc_codigo", ucVal || "");
+    datosValidacion.append("espacio", espVal || "");
     datosValidacion.append("dia", diaNombre);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
     datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
@@ -896,11 +936,15 @@ function procederConGuardadoLocal() {
     const indiceFin = indiceInicio + bloques_span - 1;
     hora_fin = bloquesDeLaTablaActual[indiceFin].tur_horafin;
 
+    const ucValor = $("#modalSeleccionarUc").val();
+    const docValor = $("#modalSeleccionarDocente").val();
+    const espValor = $("#modalSeleccionarEspacio").val();
+    
     const nuevaClaseData = {
         subgrupo: subgrupoNuevo,
-        uc_codigo: $("#modalSeleccionarUc").val(),
-        doc_cedula: $("#modalSeleccionarDocente").val(),
-        espacio: $("#modalSeleccionarEspacio").val() ? JSON.parse($("#modalSeleccionarEspacio").val()) : null,
+        uc_codigo: ucValor || null,
+        doc_cedula: docValor || null,
+        espacio: espValor ? JSON.parse(espValor) : null,
         dia: diaNombre,
         hora_inicio: franjaInicio,
         hora_fin: hora_fin,
@@ -1126,9 +1170,9 @@ function validarYMoverClase(claseData, keyOrigen, keyDestino, diaNuevo, horaNuev
     
     const datosValidacion = new FormData();
     datosValidacion.append("accion", "validar_clase_en_vivo");
-    datosValidacion.append("doc_cedula", claseData.doc_cedula || "");
-    datosValidacion.append("uc_codigo", claseData.uc_codigo || "");
-    datosValidacion.append("espacio", claseData.espacio ? JSON.stringify(claseData.espacio) : "");
+    datosValidacion.append("doc_cedula", (claseData.doc_cedula && claseData.doc_cedula !== null) ? claseData.doc_cedula : "");
+    datosValidacion.append("uc_codigo", (claseData.uc_codigo && claseData.uc_codigo !== null && claseData.uc_codigo !== '') ? claseData.uc_codigo : "");
+    datosValidacion.append("espacio", (claseData.espacio && claseData.espacio.numero) ? JSON.stringify(claseData.espacio) : "");
     datosValidacion.append("dia", diaNuevo);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
     datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
@@ -1967,7 +2011,9 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                 turnoSeleccionado = detectarTurnoPorHorario(respuesta.mensaje);
             }
 
-            const bloquesParaEstaTabla = generarBloquesPorDefecto(turnoSeleccionado);
+            const bloquesParaEstaTabla = respuesta.mensaje.length > 0 
+                ? construirBloquesParaHorario(respuesta.mensaje, turnoSeleccionado)
+                : generarBloquesPorDefecto(turnoSeleccionado);
             bloquesDeLaTablaActual = bloquesParaEstaTabla;
 
             respuesta.mensaje.forEach(clase => {
@@ -1984,6 +2030,8 @@ const mostrarPrompt = $(".main-content").data("mostrar-prompt-duplicar");
                             break;
                         }
                     }
+                } else {
+                    console.warn(`No se encontró bloque para hora_inicio: ${clase.hora_inicio}`);
                 }
                 clase.bloques_span = span;
 

@@ -334,7 +334,8 @@ $clases_origen_result = $this->ConsultarDetalles($sec_codigo_origen, $seccion_or
 $this->EliminarDependenciasDeSeccion($codigo_destino, $anio_academico, $co);
             
             if (!empty($clases_origen)) {
-                $hora_principal_para_turno = $clases_origen[0]['hora_inicio'] ?? '08:00:00';
+                $horas_inicio = array_column($clases_origen, 'hora_inicio');
+                $hora_principal_para_turno = !empty($horas_inicio) ? min($horas_inicio) : '08:00:00';
                 $stmt_hor = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_nombre, 1)");
                 $stmt_hor->execute([
                     ':sec_codigo' => $codigo_destino,
@@ -696,7 +697,8 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co);
 
         if (!empty($items_horario)) {
-            $hora_principal = $items_horario[0]['hora_inicio'] ?? '08:00:00';
+            $horas_inicio = array_column($items_horario, 'hora_inicio');
+            $hora_principal = !empty($horas_inicio) ? min($horas_inicio) : '08:00:00';
             $turno_nombre = $this->getTurnoEnum($hora_principal);
             
             $stmt_horario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_nombre, 1) ON DUPLICATE KEY UPDATE hor_estado = 1, tur_nombre = :tur_nombre");
@@ -727,7 +729,11 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                 $subgrupo = !empty($item['subgrupo']) ? trim($item['subgrupo']) : null;
                 if ($subgrupo === '') $subgrupo = null;
 
-                if ($uc_codigo === null) {
+                $tiene_docente = ($doc_cedula !== null);
+                $tiene_uc = ($uc_codigo !== null);
+                $tiene_espacio = (!empty($espacio['numero']) || !empty($espacio['tipo']) || !empty($espacio['edificio']));
+                
+                if (!$tiene_docente && !$tiene_uc && !$tiene_espacio) {
                     continue;
                 }
 
@@ -857,11 +863,23 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
                 $item['hora_fin'] .= ':00';
             }
 
-            $item['espacio'] = [
-                'numero' => $item['esp_numero'],
-                'tipo' => $item['esp_tipo'],
-                'edificio' => $item['esp_edificio']
-            ];
+            if (!empty($item['esp_numero']) || !empty($item['esp_tipo']) || !empty($item['esp_edificio'])) {
+                $item['espacio'] = [
+                    'numero' => $item['esp_numero'],
+                    'tipo' => $item['esp_tipo'],
+                    'edificio' => $item['esp_edificio']
+                ];
+            } else {
+                $item['espacio'] = null;
+            }
+            
+            if (empty($item['uc_codigo'])) {
+                $item['uc_codigo'] = null;
+            }
+            if (empty($item['doc_cedula'])) {
+                $item['doc_cedula'] = null;
+            }
+            
             unset($item['esp_numero'], $item['esp_tipo'], $item['esp_edificio']);
         }
 
