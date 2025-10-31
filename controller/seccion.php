@@ -688,7 +688,8 @@ if ($anio_activo) {
                     $_POST['items_horario'] ?? '[]',
                     $_POST['cantidadSeccion'] ?? null,
                     $forzar,
-                    $modo_operacion
+                    $modo_operacion,
+                    $_POST['bloques_personalizados'] ?? '[]'
                 );
                 break;
 

@@ -597,7 +597,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     return ['conflicto' => false];
 }
 
-  public function Modificar($sec_codigo, $ani_anio, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar')
+  public function Modificar($sec_codigo, $ani_anio, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]')
 {
     if (empty($sec_codigo) || empty($ani_anio) || !isset($cantidadSeccion)) {
         return ['resultado' => 'error', 'mensaje' => 'Faltan datos clave (código, año o cantidad) para modificar la sección.'];
@@ -693,19 +693,24 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
 
         $stmt_update_seccion = $co->prepare("UPDATE tbl_seccion SET sec_cantidad = :cantidad WHERE sec_codigo = :codigo AND ani_anio = :anio");
         $stmt_update_seccion->execute([':cantidad' => $cantidadInt, ':codigo' => $sec_codigo, ':anio' => $ani_anio]);
+
+        $turno_nombre_existente = null;
+        $stmt_turno_existente = $co->prepare("SELECT tur_nombre FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio LIMIT 1");
+        $stmt_turno_existente->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+        $turno_nombre_existente = $stmt_turno_existente->fetchColumn() ?: null;
         
         $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co);
+
+        $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+        $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+        $ani_tipo = $stmt_tipo->fetchColumn() ?: 'regular';
 
         if (!empty($items_horario)) {
             $horas_inicio = array_column($items_horario, 'hora_inicio');
             $hora_principal = !empty($horas_inicio) ? min($horas_inicio) : '08:00:00';
-            $turno_nombre = $this->getTurnoEnum($hora_principal);
+            $turno_nombre = $turno_nombre_existente ?: $this->getTurnoEnum($hora_principal);
             
             $stmt_horario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_nombre, 1) ON DUPLICATE KEY UPDATE hor_estado = 1, tur_nombre = :tur_nombre");
-            
-            $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
-            $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
-            $ani_tipo = $stmt_tipo->fetchColumn() ?: 'regular';
             
             $stmt_horario->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo, ':tur_nombre' => $turno_nombre]);
             
@@ -761,6 +766,36 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                     ]);
                     $docentes_procesados[] = $doc_cedula;
                 }
+            }
+        }
+
+        $bloques_personalizados = json_decode($bloques_personalizados_json, true);
+        if (is_array($bloques_personalizados)) {
+            $stmt_delete_bloques = $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+            $stmt_delete_bloques->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+
+            $stmt_insert_bloque = $co->prepare(
+                "INSERT INTO tbl_bloque_personalizado (sec_codigo, ani_anio, ani_tipo, tur_horainicio, tur_horafin, bloque_sintetico)
+                 VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_horainicio, :tur_horafin, :bloque_sintetico)"
+            );
+
+            foreach ($bloques_personalizados as $bloque) {
+                if (!isset($bloque['tur_horainicio'], $bloque['tur_horafin'])) {
+                    continue;
+                }
+                $horaInicio = trim($bloque['tur_horainicio']);
+                $horaFin = trim($bloque['tur_horafin']);
+                if ($horaInicio === '' || $horaFin === '' || $horaInicio >= $horaFin) {
+                    continue;
+                }
+                $stmt_insert_bloque->execute([
+                    ':sec_codigo' => $sec_codigo,
+                    ':ani_anio' => $ani_anio,
+                    ':ani_tipo' => $ani_tipo,
+                    ':tur_horainicio' => $horaInicio,
+                    ':tur_horafin' => $horaFin,
+                    ':bloque_sintetico' => !empty($bloque['_sintetico']) ? 1 : 0
+                ]);
             }
         }
 
@@ -830,6 +865,8 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
             $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
         }
         
+        $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+        
         $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
 
         if ($es_transaccion_interna) $co->commit();
@@ -883,7 +920,50 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
             unset($item['esp_numero'], $item['esp_tipo'], $item['esp_edificio']);
         }
 
-        return ['resultado' => 'ok', 'mensaje' => $schedule_grid_items];
+        $turno_nombre = null;
+        try {
+            $stmt_turno = $this->Con()->prepare("SELECT tur_nombre FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio LIMIT 1");
+            $stmt_turno->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $turno_nombre = $stmt_turno->fetchColumn() ?: null;
+        } catch (Exception $e) {
+            error_log("Error al obtener turno de la sección: " . $e->getMessage());
+        }
+
+        if (!$turno_nombre) {
+            $turno_nombre = $this->inferirTurnoDesdeCodigo($sec_codigo);
+        }
+
+        $bloques_personalizados = [];
+        $hay_bloques_base = false;
+        try {
+            $sql_bloques = "SELECT tur_horainicio, tur_horafin, bloque_sintetico 
+                           FROM tbl_bloque_personalizado 
+                           WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
+            $stmt_bloques = $this->Con()->prepare($sql_bloques);
+            $stmt_bloques->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $bloques_personalizados = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
+            $hay_bloques_base = !empty($bloques_personalizados);
+            
+            foreach ($bloques_personalizados as &$bloque) {
+                if (strlen($bloque['tur_horainicio']) === 5) {
+                    $bloque['tur_horainicio'] .= ':00';
+                }
+                if (strlen($bloque['tur_horafin']) === 5) {
+                    $bloque['tur_horafin'] .= ':00';
+                }
+                $bloque['_sintetico'] = (bool)$bloque['bloque_sintetico'];
+                unset($bloque['bloque_sintetico']);
+            }
+        } catch (Exception $e) {
+            error_log("Error al cargar bloques personalizados: " . $e->getMessage());
+        }
+
+        return [
+            'resultado' => 'ok', 
+            'mensaje' => $schedule_grid_items,
+            'bloques_personalizados' => $bloques_personalizados,
+            'tur_nombre' => $turno_nombre
+        ];
     } catch (Exception $e) {
         error_log("Error en ConsultarDetalles: " . $e->getMessage());
         return ['resultado' => 'error', 'mensaje' => "¡ERROR!<br/>Error al consultar detalles: " . $e->getMessage()];
@@ -1023,12 +1103,34 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
         }
     }
     
-    public function getTurnoEnum($hora_inicio)
+    private function getTurnoEnum($horaInicio)
     {
-        $hour = intval(substr($hora_inicio, 0, 2));
-        if ($hour >= 18) return 'Noche';
-        if ($hour >= 13) return 'Tarde';
-        return 'Mañana';
+        if ($horaInicio >= '06:00:00' && $horaInicio < '12:00:00') {
+            return 'mañana';
+        } elseif ($horaInicio >= '12:00:00' && $horaInicio < '18:00:00') {
+            return 'tarde';
+        }
+        return 'noche';
+    }
+
+    private function inferirTurnoDesdeCodigo($sec_codigo)
+    {
+        if (!is_string($sec_codigo)) {
+            $sec_codigo = (string) $sec_codigo;
+        }
+
+        if (!preg_match('/\d{2,}/', $sec_codigo, $matches)) {
+            return 'mañana';
+        }
+
+        $digitos = str_split($matches[0]);
+        $turno = $digitos[1] ?? null;
+
+        return match ($turno) {
+            '2' => 'tarde',
+            '3' => 'noche',
+            default => 'mañana',
+        };
     }
 
     public function contarDocentes()

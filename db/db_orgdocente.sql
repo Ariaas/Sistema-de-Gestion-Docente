@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 30-10-2025 a las 14:32:29
+-- Tiempo de generación: 31-10-2025 a las 08:43:42
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -360,6 +360,22 @@ INSERT INTO `tbl_area` (`area_nombre`, `area_estado`, `area_descripcion`) VALUES
 ('Seguridad', 1, 'Área de seguridad informática y auditoría'),
 ('Sistemas Operativos', 1, 'Área de sistemas operativos y administración de sistemas'),
 ('Tecnologías', 1, 'Área de tecnologías de la información y comunicación');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `tbl_bloque_personalizado`
+--
+
+CREATE TABLE `tbl_bloque_personalizado` (
+  `bloque_id` int(11) NOT NULL,
+  `sec_codigo` varchar(30) NOT NULL,
+  `ani_anio` int(11) NOT NULL,
+  `ani_tipo` varchar(10) NOT NULL,
+  `tur_horainicio` varchar(5) NOT NULL,
+  `tur_horafin` varchar(5) NOT NULL,
+  `bloque_sintetico` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1590,6 +1606,13 @@ ALTER TABLE `tbl_area`
   ADD PRIMARY KEY (`area_nombre`);
 
 --
+-- Indices de la tabla `tbl_bloque_personalizado`
+--
+ALTER TABLE `tbl_bloque_personalizado`
+  ADD PRIMARY KEY (`bloque_id`),
+  ADD UNIQUE KEY `uk_bloque` (`sec_codigo`,`ani_anio`,`ani_tipo`,`tur_horainicio`);
+
+--
 -- Indices de la tabla `tbl_categoria`
 --
 ALTER TABLE `tbl_categoria`
@@ -1709,6 +1732,16 @@ ALTER TABLE `uc_malla`
   ADD KEY `mal_codigo` (`mal_codigo`);
 
 --
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `tbl_bloque_personalizado`
+--
+ALTER TABLE `tbl_bloque_personalizado`
+  MODIFY `bloque_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- Restricciones para tablas volcadas
 --
 
@@ -1748,6 +1781,12 @@ ALTER TABLE `tbl_aprobados`
   ADD CONSTRAINT `tbl_aprobados_ibfk_2` FOREIGN KEY (`doc_cedula`) REFERENCES `tbl_docente` (`doc_cedula`) ON UPDATE CASCADE,
   ADD CONSTRAINT `tbl_aprobados_ibfk_3` FOREIGN KEY (`sec_codigo`,`ani_anio`,`ani_tipo`) REFERENCES `tbl_seccion` (`sec_codigo`, `ani_anio`, `ani_tipo`) ON UPDATE CASCADE,
   ADD CONSTRAINT `tbl_aprobados_ibfk_4` FOREIGN KEY (`uc_codigo`) REFERENCES `tbl_uc` (`uc_codigo`) ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `tbl_bloque_personalizado`
+--
+ALTER TABLE `tbl_bloque_personalizado`
+  ADD CONSTRAINT `fk_bloque_seccion` FOREIGN KEY (`sec_codigo`,`ani_anio`,`ani_tipo`) REFERENCES `tbl_horario` (`sec_codigo`, `ani_anio`, `ani_tipo`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `tbl_docente`
