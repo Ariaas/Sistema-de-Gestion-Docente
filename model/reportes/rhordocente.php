@@ -86,6 +86,7 @@ class ReporteHorarioDocente extends Connection
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return false; }
     }
+
     public function obtenerOtrasActividades() {
         if (empty($this->cedula_docente)) return false;
         try {
@@ -115,6 +116,7 @@ class ReporteHorarioDocente extends Connection
         return [];
     }
 
+    
     public function obtenerAsignacionesAcademicas() {
         
         if (empty($this->cedula_docente) || empty($this->anio) || empty($this->ani_tipo)) return [];
@@ -240,5 +242,106 @@ class ReporteHorarioDocente extends Connection
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return []; }
+    }
+
+    
+    public function getBloquesPersonalizados() {
+        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
+
+        try {
+            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
+            $allowed_periods = $this->get_allowed_periods();
+            
+            $sql = "SELECT DISTINCT bp.tur_horainicio, bp.tur_horafin, bp.bloque_sintetico
+                    FROM tbl_bloque_personalizado bp
+                    JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio
+                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE uh.doc_cedula = :cedula_docente
+                        AND uh.doc_cedula IS NOT NULL
+                        AND s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param";
+            
+            if (!empty($allowed_periods)) {
+                $placeholders = [];
+                foreach ($allowed_periods as $i => $period) {
+                    $key = ":period" . $i;
+                    $placeholders[] = $key;
+                    $params[$key] = $period;
+                }
+                $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
+            }
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            
+            foreach ($result as &$bloque) {
+                if (strlen($bloque['tur_horainicio']) === 5) {
+                    $bloque['tur_horainicio'] .= ':00';
+                }
+                if (strlen($bloque['tur_horafin']) === 5) {
+                    $bloque['tur_horafin'] .= ':00';
+                }
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error en getBloquesPersonalizados: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    
+    public function getBloquesEliminados() {
+        if (empty($this->cedula_docente) || empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
+
+        try {
+            $params = [':cedula_docente' => $this->cedula_docente, ':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
+            $allowed_periods = $this->get_allowed_periods();
+            
+            $sql = "SELECT DISTINCT be.tur_horainicio
+                    FROM tbl_bloque_eliminado be
+                    JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio
+                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE uh.doc_cedula = :cedula_docente
+                        AND uh.doc_cedula IS NOT NULL
+                        AND s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param";
+            
+            if (!empty($allowed_periods)) {
+                $placeholders = [];
+                foreach ($allowed_periods as $i => $period) {
+                    $key = ":period" . $i;
+                    $placeholders[] = $key;
+                    $params[$key] = $period;
+                }
+                $sql .= " AND u.uc_periodo IN (" . implode(', ', $placeholders) . ")";
+            }
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            
+            foreach ($result as &$hora) {
+                if (strlen($hora) === 5) {
+                    $hora .= ':00';
+                }
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error en getBloquesEliminados: " . $e->getMessage());
+            return [];
+        }
     }
 }

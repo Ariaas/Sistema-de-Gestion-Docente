@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 $('#anio_completo').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Año" });
                 $('#trayecto').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Trayecto" });
-                $('#fase').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Fase" });
+                $('#fase').select2({ theme: "bootstrap-5", placeholder: "Todas", allowClear: false });
                 $('#ucurricular').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Unidad" });
                 
                 $('#anio_completo').on('change', function() {
@@ -51,32 +51,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Primero ejecutar el toggle de fase según el tipo de año
                     toggleFaseSelect();
                     
-                    if (anioSeleccionado) {
-                        fetch(`?pagina=ruc&action=obtener_fase_actual&anio=${anioSeleccionado}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    const faseInactiva = data.fase_numero === 1 ? 'Fase II' : 'Fase I';
-                                    
-                                    $('#fase option').prop('disabled', false);
-                                    $('#fase option').each(function() {
-                                        if ($(this).val() === faseInactiva) {
-                                            $(this).prop('disabled', true);
-                                        }
-                                    });
-                                    $('#fase').trigger('change.select2');
-                                } else {
-                                    $('#fase option').prop('disabled', false);
-                                    $('#fase').trigger('change.select2');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error al obtener fase actual:', error);
-                            });
-                    } else {
-                        $('#fase option').prop('disabled', false);
-                        $('#fase').trigger('change.select2');
-                    }
+                    // Habilitar todas las opciones de fase cuando cambia el año
+                    // No bloqueamos ninguna fase porque pueden haber UCs de ambas fases activas
+                    $('#fase option').prop('disabled', false);
+                    $('#fase').trigger('change.select2');
                 });
                 
                 $('#trayecto').on('change', function() {
@@ -89,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         Swal.fire({
                             icon: 'info',
                             title: 'Fase I Seleccionada',
-                            text: 'Se mostrarán las Unidades Curriculares de Fase I y las Anuales. Las UCs de Fase II no se incluirán.',
+                            text: 'Se mostrarán SOLO las Unidades Curriculares de Fase I.',
                             timer: 3000,
                             showConfirmButton: false
                         });
@@ -97,7 +75,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         Swal.fire({
                             icon: 'info',
                             title: 'Fase II Seleccionada',
-                            text: 'Se mostrarán las Unidades Curriculares de Fase II y las Anuales. Las UCs de Fase I no se incluirán.',
+                            text: 'Se mostrarán SOLO las Unidades Curriculares de Fase II.',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    } else if (faseSeleccionada === 'Anual') {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Anual Seleccionada',
+                            text: 'Se mostrarán SOLO las Unidades Curriculares Anuales.',
                             timer: 3000,
                             showConfirmButton: false
                         });

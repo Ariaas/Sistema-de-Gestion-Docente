@@ -57,8 +57,8 @@ if (!$puede_registrar) {
                 <form method="post" action="" id="fReporteUc" target="_blank">
                     <div class="row g-3 mb-4">
                         <div class="col-12 col-sm-6 col-md-6 col-lg-3">
-                            <label for="anio_id" class="form-label">Filtrar por Año:</label>
-                            <select class="form-select form-select-sm" name="anio_completo" id="anio_completo">
+                            <label for="anio_id" class="form-label">Filtrar por Año: <span style="color: red;">*</span></label>
+                            <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
                                 <option value="" selected>-- Seleccione un Año --</option>
                                 <?php if (!empty($listaAnios)): ?>
                                     <?php foreach ($listaAnios as $anio): ?>
@@ -67,6 +67,15 @@ if (!$puede_registrar) {
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
+                            <label for="fase" class="form-label">Filtrar por Fase:</label>
+                            <select class="form-select form-select-sm" name="fase" id="fase">
+                                <option value="">Todas</option>
+                                <option value="Fase I">Fase I</option>
+                                <option value="Fase II">Fase II</option>
+                                <option value="Anual">Anual</option>
                             </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-6 col-lg-3">
@@ -80,15 +89,6 @@ if (!$puede_registrar) {
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
-                            </select>
-                        </div>
-                        <div class="col-12 col-sm-6 col-md-6 col-lg-3">
-                            <label for="fase" class="form-label">Filtrar por Fase:</label>
-                            <select class="form-select form-select-sm" name="fase" id="fase">
-                                <option value="">Todas las Fases</option>
-                                <option value="Anual">Anual</option>
-                                <option value="Fase I">Fase I</option>
-                                <option value="Fase II">Fase II</option>
                             </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-6 col-lg-3">

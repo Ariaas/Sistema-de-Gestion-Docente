@@ -138,6 +138,8 @@ if (isset($_POST['generar_rhd_report'])) {
     $otrasActividades = $oReporteHorario->obtenerOtrasActividades();
     $datosParrillaHorario = $oReporteHorario->obtenerDatosParrillaHorario();
     $turnos_db = $oReporteHorario->getTurnos();
+    $bloques_personalizados = $oReporteHorario->getBloquesPersonalizados();
+    $bloques_eliminados = $oReporteHorario->getBloquesEliminados();
 
     if (!$infoDocente) {
         die("Error: No se encontró información para el docente seleccionado.");
@@ -234,6 +236,46 @@ if (isset($_POST['generar_rhd_report'])) {
         }
         $bloques_por_turno[$nombre_turno] = $bloques;
     }
+    
+    // Agregar bloques personalizados a los turnos correspondientes
+    foreach ($bloques_personalizados as $bloque) {
+        $hora_inicio = new DateTime($bloque['tur_horainicio']);
+        $hora_fin = new DateTime($bloque['tur_horafin']);
+        $hora_db_key = $hora_inicio->format('H:i');
+        $display_string = $hora_inicio->format('h:i a') . ' a ' . $hora_fin->format('h:i a');
+        
+        // Determinar a qué turno pertenece
+        $hora_inicio_str = $hora_inicio->format('H:i:s');
+        $nombre_turno_asignado = null;
+        
+        if ($hora_inicio_str < '13:00:00') {
+            $nombre_turno_asignado = 'Mañana';
+        } elseif ($hora_inicio_str < '18:00:00') {
+            $nombre_turno_asignado = 'Tarde';
+        } else {
+            $nombre_turno_asignado = 'Noche';
+        }
+        
+        if (isset($bloques_por_turno[$nombre_turno_asignado])) {
+            $bloques_por_turno[$nombre_turno_asignado][$hora_db_key] = $display_string;
+            $todos_los_bloques_ordenados[] = $hora_db_key;
+        }
+    }
+    
+    // Eliminar bloques marcados como eliminados
+    foreach ($bloques_eliminados as $hora_eliminada) {
+        $hora_key = (new DateTime($hora_eliminada))->format('H:i');
+        foreach ($bloques_por_turno as &$bloques) {
+            unset($bloques[$hora_key]);
+        }
+        $todos_los_bloques_ordenados = array_diff($todos_los_bloques_ordenados, [$hora_key]);
+    }
+    
+    // Reordenar los bloques de cada turno
+    foreach ($bloques_por_turno as &$bloques) {
+        ksort($bloques);
+    }
+    
     $todos_los_bloques_ordenados = array_values(array_unique($todos_los_bloques_ordenados));
     sort($todos_los_bloques_ordenados);
 
@@ -352,20 +394,16 @@ if (isset($_POST['generar_rhd_report'])) {
     $sheet->getPageSetup()->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
     $sheet->getPageMargins()->setTop(0.5)->setRight(0.5)->setLeft(0.5)->setBottom(0.5);
     
-    $styleBold = ['font' => ['bold' => true]];
-    $styleCenter = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleLeft = ['alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleSectionHeader = ['font' => ['bold' => true, 'color' => ['argb' => 'FF000000']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE0E0E0']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    $styleBold = ['font' => ['bold' => true, 'size' => 10]];
+    $styleCenter = ['font' => ['size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleLeft = ['font' => ['size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleSectionHeader = ['font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF000000']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE0E0E0']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $allBorders = ['borders' => [ 'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']], ],];
 
-    $sheet->getColumnDimension('A')->setWidth(18);
-    $sheet->getColumnDimension('B')->setWidth(25);
-    $sheet->getColumnDimension('C')->setWidth(15);
-    $sheet->getColumnDimension('D')->setWidth(15);
-    $sheet->getColumnDimension('E')->setWidth(15);
-    $sheet->getColumnDimension('F')->setWidth(20);
-    $sheet->getColumnDimension('G')->setWidth(15);
-    $sheet->getColumnDimension('H')->setWidth(20); 
+    // Configurar ancho automático para todas las columnas
+    foreach(range('A','H') as $col) {
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+    } 
 
 
     $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/Sistema-de-Gestion-Docente\public\assets\img\logo_uptaeb.png';
@@ -490,7 +528,26 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
             $sheet->setCellValue('E'.$row, $item['ambientes']);
             $sheet->setCellValue('F'.$row, $item['eje_nombre']);
             $sheet->mergeCells('G'.$row.':H'.$row)->setCellValue('G'.$row, $item['uc_periodo']);
-            $sheet->getStyle('D'.$row.':F'.$row)->getAlignment()->setWrapText(true);
+            $sheet->getStyle('A'.$row.':H'.$row)->getAlignment()->setWrapText(true);
+            
+            // Calcular altura de fila basada en el contenido más largo
+            $maxLines = 1;
+            $contenidos = [
+                $item['uc_nombre'],
+                $seccionesFormateadas,
+                $item['ambientes'],
+                $item['eje_nombre']
+            ];
+            foreach ($contenidos as $contenido) {
+                $lineCount = substr_count($contenido, "\n") + 1;
+                // Estimar líneas adicionales por longitud del texto (ajustado para ser más compacto)
+                $estimatedLines = ceil(mb_strlen($contenido) / 50);
+                $maxLines = max($maxLines, $lineCount, $estimatedLines);
+            }
+            // Altura más compacta: 12 puntos por línea, mínimo 18
+            $rowHeight = max(18, $maxLines * 12);
+            $sheet->getRowDimension($row)->setRowHeight($rowHeight);
+            
             $row++;
         }
     } else {
@@ -592,13 +649,31 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
                     $sheet->getCell($colLetter.$row)->setValue($contenido_final);
 
                     if (isset($primera_clase['type']) && $primera_clase['type'] === 'class') {
-    $sheet->getStyle($colLetter.$row)->applyFromArray($styleBold);
-}
+                        $sheet->getStyle($colLetter.$row)->applyFromArray(['font' => ['bold' => true, 'size' => 9]]);
+                    } else {
+                        $sheet->getStyle($colLetter.$row)->getFont()->setSize(9);
+                    }
                 }
                 $sheet->getStyle($colLetter.$row)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_CENTER)->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $colIndex++;
             }
-            $sheet->getRowDimension($row)->setRowHeight(35);
+            // Calcular altura de fila basada en el contenido
+            $maxLines = 1;
+            foreach($diasDeLaSemana as $dia) {
+                $clases_en_celda = $gridData[$dia][$hora_db] ?? null;
+                if ($clases_en_celda) {
+                    $contenidos = [];
+                    foreach ($clases_en_celda as $clase) {
+                        $contenidos[] = $clase['content'];
+                    }
+                    $contenido_final = implode("\n----\n", $contenidos);
+                    $lineCount = substr_count($contenido_final, "\n") + 1;
+                    $maxLines = max($maxLines, $lineCount);
+                }
+            }
+            // Altura más compacta: 12 puntos por línea, mínimo 30
+            $rowHeight = max(30, $maxLines * 12);
+            $sheet->getRowDimension($row)->setRowHeight($rowHeight);
             $row++;
         }
     }

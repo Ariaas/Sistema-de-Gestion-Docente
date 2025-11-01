@@ -93,8 +93,8 @@ require_once('model/dbconnection.php');
                 $params[':uc_id_filter'] = $this->nombreUnidad;
             }
 
-            if (!empty($this->fase) && $this->fase !== 'Anual') {
-                $conditions[] = "(u.uc_periodo = :fase OR u.uc_periodo = 'Anual')";
+            if (!empty($this->fase)) {
+                $conditions[] = "u.uc_periodo = :fase";
                 $params[':fase'] = $this->fase;
             }
 
@@ -205,8 +205,8 @@ require_once('model/dbconnection.php');
                 $params[':trayecto'] = $trayectoId;
             }
             
-            if ($fase !== null && $fase !== 'Anual') {
-                $sql .= " AND (uc_periodo = :fase OR uc_periodo = 'Anual')";
+            if ($fase !== null && $fase !== '') {
+                $sql .= " AND uc_periodo = :fase";
                 $params[':fase'] = $fase;
             }
             

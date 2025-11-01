@@ -68,6 +68,8 @@ if (isset($_POST['generar_aulario_report'])) {
     $oAulario->setEspacio($espacio_filtrado);
 
     $turnos = $oAulario->getTurnosCompletos();
+    $bloques_personalizados = $oAulario->getBloquesPersonalizados();
+    $bloques_eliminados = $oAulario->getBloquesEliminados();
     $slot_duration_minutes = 40;
     $todas_las_franjas_por_turno = [];
     $franjas_ordenadas_con_turno = [];
@@ -105,14 +107,50 @@ if (isset($_POST['generar_aulario_report'])) {
         }
     }
 
+    // Agregar bloques personalizados
+    foreach ($bloques_personalizados as $bloque) {
+        $hora_inicio = new DateTime($bloque['tur_horainicio']);
+        $hora_fin = new DateTime($bloque['tur_horafin']);
+        $db_start_time_key = $hora_inicio->format('H:i:s');
+        $display_string = $hora_inicio->format('h:i A') . ' a ' . $hora_fin->format('h:i A');
+        
+        $hora_inicio_str = $hora_inicio->format('H:i:s');
+        $nombre_turno = ($hora_inicio_str < '13:00:00') ? 'Mañana' : (($hora_inicio_str < '18:00:00') ? 'Tarde' : 'Noche');
+        
+        if (isset($todas_las_franjas_por_turno[$nombre_turno])) {
+            $todas_las_franjas_por_turno[$nombre_turno][$display_string] = $db_start_time_key;
+            $franjas_ordenadas_con_turno[] = [
+                'display' => $display_string,
+                'db_key' => $db_start_time_key,
+                'turno' => $nombre_turno
+            ];
+        }
+    }
+
+    // Eliminar bloques marcados como eliminados
+    foreach ($bloques_eliminados as $hora_eliminada) {
+        $hora_key = (new DateTime($hora_eliminada))->format('H:i:s');
+        foreach ($todas_las_franjas_por_turno as &$franjas) {
+            foreach ($franjas as $display => $db_key) {
+                if ($db_key === $hora_key) {
+                    unset($franjas[$display]);
+                }
+            }
+        }
+        $franjas_ordenadas_con_turno = array_filter($franjas_ordenadas_con_turno, function($f) use ($hora_key) {
+            return $f['db_key'] !== $hora_key;
+        });
+    }
+    $franjas_ordenadas_con_turno = array_values($franjas_ordenadas_con_turno);
+
     $horarioDataRaw = $oAulario->getAulariosFiltrados();
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0);
 
-    $styleMainTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleDayHeader = ['font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF5B9BD5']], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    $styleTimeColumn = ['font' => ['bold' => true], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleMainTitle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleDayHeader = ['font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FFFFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF5B9BD5']], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleTimeColumn = ['font' => ['bold' => true, 'size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleScheduleCell = ['font' => ['size' => 8], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
 
     $days_of_week = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     $day_map = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miércoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sábado' => 'Sábado'];
@@ -140,9 +178,9 @@ if (isset($_POST['generar_aulario_report'])) {
             
             $sheet = new Worksheet($spreadsheet, $nombreHoja);
             $spreadsheet->addSheet($sheet);
-            $sheet->getColumnDimension('A')->setWidth(20);
-            foreach (range('B', 'G') as $col) {
-                $sheet->getColumnDimension($col)->setWidth(25);
+            // Autoajuste de columnas
+            foreach (range('A', 'G') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
             $currentRow = 1;
@@ -284,7 +322,24 @@ if (isset($_POST['generar_aulario_report'])) {
                     $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
                     $colNum++;
                 }
-                $sheet->getRowDimension($currentRow)->setRowHeight(40);
+                // Calcular altura de fila basada en el contenido
+                $maxLines = 1;
+                foreach ($days_of_week as $day) {
+                    $clases = $gridData[$day][$dbStartTimeKey] ?? null;
+                    if ($clases) {
+                        foreach ($clases as $clase) {
+                            $secciones = implode(", ", array_unique($clase['sec_codigo_list']));
+                            $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
+                            $subgrupoTexto = $clase['subgrupo'] ? ' (Grupo: ' . $clase['subgrupo'] . ')' : '';
+                            $docente = $clase['NombreCompletoDocente'] ?? '(Sin Docente)';
+                            $contenido = $ucAbreviada . $subgrupoTexto . "\n" . $secciones . "\n" . $docente;
+                            $lineCount = substr_count($contenido, "\n") + 1;
+                            $maxLines = max($maxLines, $lineCount);
+                        }
+                    }
+                }
+                $rowHeight = max(30, $maxLines * 12);
+                $sheet->getRowDimension($currentRow)->setRowHeight($rowHeight);
                 $currentRow++;
             }
         }

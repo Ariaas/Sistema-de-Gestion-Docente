@@ -150,6 +150,121 @@ class AularioReport extends Connection
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return []; }
     }
+
+    /**
+     * Obtiene los bloques horarios personalizados para los espacios filtrados
+     */
+    public function getBloquesPersonalizados() {
+        if (empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
+
+        $allowed_periods = $esIntensivo ? ['Fase I', 'Fase II', 'Anual', 'anual', '0'] : 
+                          (($this->fase == 1) ? ['Fase I', 'anual', 'Anual', '0'] : ['Fase II', 'anual', 'Anual']);
+
+        try {
+            $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
+            
+            $sql = "SELECT DISTINCT bp.tur_horainicio, bp.tur_horafin, bp.bloque_sintetico
+                    FROM tbl_bloque_personalizado bp
+                    JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio
+                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param
+                        AND u.uc_estado = 1
+                        AND s.sec_estado = 1";
+            
+            $period_placeholders = [];
+            $i = 0;
+            foreach ($allowed_periods as $period) {
+                $key = ":period" . $i++;
+                $period_placeholders[] = $key;
+                $params[$key] = $period;
+            }
+            $sql .= " AND u.uc_periodo IN (" . implode(', ', $period_placeholders) . ")";
+
+            if (isset($this->espacio) && $this->espacio !== '') {
+                $sql .= " AND CASE
+                            WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
+                            ELSE CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
+                        END = :espacio_param";
+                $params[':espacio_param'] = $this->espacio;
+            }
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            foreach ($result as &$bloque) {
+                if (strlen($bloque['tur_horainicio']) === 5) $bloque['tur_horainicio'] .= ':00';
+                if (strlen($bloque['tur_horafin']) === 5) $bloque['tur_horafin'] .= ':00';
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error en getBloquesPersonalizados: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtiene los bloques horarios eliminados para los espacios filtrados
+     */
+    public function getBloquesEliminados() {
+        if (empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
+
+        $allowed_periods = $esIntensivo ? ['Fase I', 'Fase II', 'Anual', 'anual', '0'] : 
+                          (($this->fase == 1) ? ['Fase I', 'anual', 'Anual', '0'] : ['Fase II', 'anual', 'Anual']);
+
+        try {
+            $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
+            
+            $sql = "SELECT DISTINCT be.tur_horainicio
+                    FROM tbl_bloque_eliminado be
+                    JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio
+                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param
+                        AND u.uc_estado = 1
+                        AND s.sec_estado = 1";
+            
+            $period_placeholders = [];
+            $i = 0;
+            foreach ($allowed_periods as $period) {
+                $key = ":period" . $i++;
+                $period_placeholders[] = $key;
+                $params[$key] = $period;
+            }
+            $sql .= " AND u.uc_periodo IN (" . implode(', ', $period_placeholders) . ")";
+
+            if (isset($this->espacio) && $this->espacio !== '') {
+                $sql .= " AND CASE
+                            WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
+                            ELSE CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
+                        END = :espacio_param";
+                $params[':espacio_param'] = $this->espacio;
+            }
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            foreach ($result as &$hora) {
+                if (strlen($hora) === 5) $hora .= ':00';
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error en getBloquesEliminados: " . $e->getMessage());
+            return [];
+        }
+    }
     
     public function getEspaciosPorAnio($anio, $ani_tipo) {
         if (empty($anio) || empty($ani_tipo)) return $this->getEspacios();
