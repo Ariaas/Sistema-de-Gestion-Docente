@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 01-11-2025 a las 03:04:00
+-- Tiempo de generación: 01-11-2025 a las 03:53:47
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -560,7 +560,7 @@ INSERT INTO `tbl_docente` (`doc_cedula`, `cat_nombre`, `doc_prefijo`, `doc_nombr
 (18103232, 'Instructor', 'V', 'Carlos', 'Moreno', 'prueba@pnfi.edu.ve', 'Tiempo Completo', 'Ordinario', 1, 'Docente del PNF Deporte, atiende TC horas en PNFI', '2017-04-20', '2019-11-01', 'Oposicion'),
 (18356682, 'Instructor', 'V', 'Judith', 'Gomez', 'Rebecagomez1808@gmail.com', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
 (18912216, 'Instructor', 'V', 'Cesar', 'Perez', 'cesarupf72@gmail.com', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
-(20351422, 'Instructor', 'V', 'Kenlimar', 'Alvarado', '', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
+(20351422, 'Instructor', 'V', 'Kenlimar', 'Alvarado', 'prueba@pnfi.edu.ve', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
 (23316126, 'Instructor', 'V', 'Nangelys', 'Oviedo', 'nangelisg@gmail.com', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
 (24418577, 'Instructor', 'V', 'Douglas', 'Ramos', 'douglasramos0210@gmail.com', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
 (25471240, 'Instructor', 'V', 'José', 'Sequera', 'prueba@pnfi.edu.ve', 'Tiempo Completo', 'Suplente', 1, '', '2021-10-25', NULL, NULL),

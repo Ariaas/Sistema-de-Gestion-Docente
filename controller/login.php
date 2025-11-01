@@ -39,6 +39,10 @@ if (is_file("views/" . $pagina . ".php")) {
                     $permisos = $o->get_permisos($m['usu_id']);
                     $_SESSION['permisos'] = $permisos;
 
+                    // Establecer timestamps para control de sesión
+                    $_SESSION['session_start'] = time();
+                    $_SESSION['last_activity'] = time();
+
                     header('Location: ?pagina=principal');
                     die();
                 } else {
