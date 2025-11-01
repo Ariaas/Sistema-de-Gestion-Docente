@@ -689,7 +689,8 @@ if ($anio_activo) {
                     $_POST['cantidadSeccion'] ?? null,
                     $forzar,
                     $modo_operacion,
-                    $_POST['bloques_personalizados'] ?? '[]'
+                    $_POST['bloques_personalizados'] ?? '[]',
+                    $_POST['bloques_eliminados'] ?? '[]'
                 );
                 break;
 

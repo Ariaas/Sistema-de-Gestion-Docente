@@ -50,6 +50,7 @@ function formatTime12Hour(time24) {
 let currentClickedCell = null;
 let horarioContenidoGuardado = new Map();
 let bloquesDeLaTablaActual = [];
+let bloquesEliminadosPorUsuario = [];
 let allUcs = [], allEspacios = [], allDocentes = [], allSecciones = [], allTurnos = [], allCohortes = [], ocupacionGlobalCompleta = [];
 let modalDataLoaded = false;
 let isSplittingProcess = false;
@@ -115,20 +116,53 @@ function normalizeDayKey(day) {
     return day.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function construirBloquesParaHorario(clases, turnoSeleccionado, bloquesPersonalizadosDB = [], tieneBaseRegistrada = false) {
+function normalizeTurnoValue(turno) {
+    if (!turno) return 'mañana';
+    const sanitized = turno.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '');
+    if (sanitized.startsWith('man')) return 'mañana';
+    if (sanitized.startsWith('tar')) return 'tarde';
+    if (sanitized.startsWith('noc')) return 'noche';
+    return 'mañana';
+}
+
+function construirBloquesParaHorario(clases, turnoSeleccionado, bloquesPersonalizadosDB = [], tieneBaseRegistrada = false, bloquesEliminadosDB = []) {
     const clasesArray = Array.isArray(clases) ? clases : [];
+    const turnoNormalizado = normalizeTurnoValue(turnoSeleccionado);
+    const turnoTitulo = turnoNormalizado.charAt(0).toUpperCase() + turnoNormalizado.slice(1);
     const normalizar = (hora) => {
         if (!hora) return null;
         return hora.length === 5 ? `${hora}:00` : hora;
     };
 
-    if (Array.isArray(bloquesPersonalizadosDB) && bloquesPersonalizadosDB.length > 0) {
-        const mapa = new Map();
+    const bloquesEliminadosSet = new Set(
+        (bloquesEliminadosDB || []).map(b => normalizar(b.tur_horainicio))
+    );
 
+    const mapa = new Map();
+
+    if (tieneBaseRegistrada) {
+        const baseTurno = generarBloquesPorDefecto(turnoNormalizado);
+        baseTurno.forEach(base => {
+            const inicioBase = normalizar(base.tur_horainicio);
+            const finBase = normalizar(base.tur_horafin);
+            if (!inicioBase || !finBase || bloquesEliminadosSet.has(inicioBase)) {
+                return;
+            }
+            mapa.set(inicioBase, {
+                ...base,
+                tur_horainicio: inicioBase,
+                tur_horafin: finBase,
+                _sintetico: false
+            });
+        });
+    }
+
+    if (Array.isArray(bloquesPersonalizadosDB) && bloquesPersonalizadosDB.length > 0) {
         bloquesPersonalizadosDB.forEach(b => {
             const inicio = normalizar(b.tur_horainicio);
             const fin = normalizar(b.tur_horafin);
             if (!inicio || !fin) return;
+            if (bloquesEliminadosSet.has(inicio)) return;
             mapa.set(inicio, {
                 ...b,
                 tur_horainicio: inicio,
@@ -136,48 +170,34 @@ function construirBloquesParaHorario(clases, turnoSeleccionado, bloquesPersonali
                 _sintetico: Boolean(b._sintetico)
             });
         });
+    }
 
-        clasesArray.forEach(clase => {
-            const inicioClase = normalizar(clase.hora_inicio);
-            const finClase = normalizar(clase.hora_fin);
-            if (!inicioClase || !finClase) return;
-            if (!mapa.has(inicioClase)) {
-                mapa.set(inicioClase, {
-                    tur_horainicio: inicioClase,
-                    tur_horafin: finClase,
-                    tur_nombre: turnoSeleccionado.charAt(0).toUpperCase() + turnoSeleccionado.slice(1),
-                    tur_estado: 1,
-                    _sintetico: true
-                });
-            }
-        });
-
-        if (!tieneBaseRegistrada) {
-            const baseTurno = generarBloquesPorDefecto(turnoSeleccionado);
-            baseTurno.forEach(base => {
-                const inicioBase = normalizar(base.tur_horainicio);
-                const finBase = normalizar(base.tur_horafin);
-                if (!inicioBase || !finBase || mapa.has(inicioBase)) {
-                    return;
-                }
-                mapa.set(inicioBase, {
-                    ...base,
-                    tur_horainicio: inicioBase,
-                    tur_horafin: finBase,
-                    _sintetico: Boolean(base._sintetico)
-                });
+    clasesArray.forEach(clase => {
+        const inicioClase = normalizar(clase.hora_inicio);
+        const finClase = normalizar(clase.hora_fin);
+        if (!inicioClase || !finClase) return;
+        
+        if (!mapa.has(inicioClase)) {
+            mapa.set(inicioClase, {
+                tur_horainicio: inicioClase,
+                tur_horafin: finClase,
+                tur_nombre: turnoTitulo,
+                tur_estado: 1,
+                _sintetico: true
             });
         }
+    });
 
+    if (mapa.size > 0) {
         return Array.from(mapa.values()).sort((a, b) => a.tur_horainicio.localeCompare(b.tur_horainicio));
     }
 
     let rangoInicio;
     let rangoFin;
-    if (turnoSeleccionado === 'mañana') {
+    if (turnoNormalizado === 'mañana') {
         rangoInicio = '06:00:00';
         rangoFin = '12:00:00';
-    } else if (turnoSeleccionado === 'tarde') {
+    } else if (turnoNormalizado === 'tarde') {
         rangoInicio = '12:00:00';
         rangoFin = '18:00:00';
     } else {
@@ -186,7 +206,11 @@ function construirBloquesParaHorario(clases, turnoSeleccionado, bloquesPersonali
     }
 
     const bloquesBase = allTurnos
-        .filter(turnoBase => turnoBase.tur_horainicio >= rangoInicio && turnoBase.tur_horainicio < rangoFin)
+        .filter(turnoBase => {
+            const esRangoValido = turnoBase.tur_horainicio >= rangoInicio && turnoBase.tur_horainicio < rangoFin;
+            const noEstaEliminado = !bloquesEliminadosSet.has(turnoBase.tur_horainicio);
+            return esRangoValido && noEstaEliminado;
+        })
         .map(b => ({ ...b, _sintetico: false }));
 
     if (clasesArray.length === 0) {
@@ -198,12 +222,13 @@ function construirBloquesParaHorario(clases, turnoSeleccionado, bloquesPersonali
         const inicio = normalizar(clase.hora_inicio);
         const fin = normalizar(clase.hora_fin);
         if (!inicio || !fin) return;
+        if (bloquesEliminadosSet.has(inicio)) return;
         const existe = bloquesBase.some(b => b.tur_horainicio === inicio) || adicionales.has(inicio);
         if (!existe) {
             adicionales.set(inicio, {
                 tur_horainicio: inicio,
                 tur_horafin: fin,
-                tur_nombre: turnoSeleccionado.charAt(0).toUpperCase() + turnoSeleccionado.slice(1),
+                tur_nombre: turnoTitulo,
                 tur_estado: 1,
                 _sintetico: true
             });
@@ -244,11 +269,12 @@ function generarBloquesPorDefecto(turno) {
         return [];
     }
 
+    const turnoNormalizado = normalizeTurnoValue(turno);
     let rangoInicio, rangoFin;
-    if (turno === 'mañana') {
+    if (turnoNormalizado === 'mañana') {
         rangoInicio = '06:00:00';
         rangoFin = '12:00:00';
-    } else if (turno === 'tarde') {
+    } else if (turnoNormalizado === 'tarde') {
         rangoInicio = '12:00:00';
         rangoFin = '18:00:00';
     } else {
@@ -1395,8 +1421,14 @@ function procederConGuardado() {
             _sintetico: Boolean(bloque._sintetico)
         }));
 
+        const bloquesEliminados = (bloquesEliminadosPorUsuario || []).map(bloque => ({
+            tur_horainicio: bloque.tur_horainicio,
+            tur_horafin: bloque.tur_horafin
+        }));
+
         datos.append("items_horario", JSON.stringify(clasesAEnviar));
         datos.append("bloques_personalizados", JSON.stringify(bloquesPersonalizados));
+        datos.append("bloques_eliminados", JSON.stringify(bloquesEliminados));
         enviaAjax(datos, $("#proceso"));
     };
     ejecutarGuardado();
@@ -1431,6 +1463,7 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, an
             else turnoSeleccionado = 'mañana';
         }
     }
+    turnoSeleccionado = normalizeTurnoValue(turnoSeleccionado);
     const turnoTexto = turnoSeleccionado.charAt(0).toUpperCase() + turnoSeleccionado.slice(1);
     $("#cantidadSeccionModificar").val(secCantidad);
     $("#filtro_turno").val(turnoSeleccionado);
@@ -1754,13 +1787,12 @@ $(document).ready(function () {
     });
 
     $("#btnLimpiarHorario").on("click", function () {
-        if (horarioContenidoGuardado.size === 0) {
-            muestraMensaje("info", 2000, "Horario ya vacío", "No hay clases para limpiar.");
-            return;
-        }
         Swal.fire({
             title: '¿Está seguro de limpiar el horario?',
-            text: "Esta acción eliminará todas las clases asignadas. Los bloques horarios personalizados se mantendrán. Los cambios no serán permanentes hasta que guarde.",
+            html: "Esta acción:<br>" +
+                  "• Eliminará todas las clases<br>" +
+                  "• Restaurará los bloques base<br>" +
+                  "• <b>Descartará cambios NO guardados</b>",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -1769,29 +1801,62 @@ $(document).ready(function () {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                horarioContenidoGuardado.clear();
-
                 const sec_codigo = $("#sec_codigo_hidden").val();
                 const ani_anio = $("#ani_anio_hidden").val();
-                if (sec_codigo && ani_anio) {
-                    const keyPersonalizados = `bloques_personalizados_${sec_codigo}_${ani_anio}`;
-                    const keyExcluidos = `bloques_excluidos_${sec_codigo}_${ani_anio}`;
-                    localStorage.removeItem(keyPersonalizados);
-                    localStorage.removeItem(keyExcluidos);
-                }
 
-                const turnoActualFiltro = $("#filtro_turno").val() || 'mañana';
-                bloquesDeLaTablaActual = generarBloquesPorDefecto(turnoActualFiltro);
-
-
-                if (bloquesDeLaTablaActual.length === 0) {
-                    muestraMensaje("warning", 5000, "Advertencia", "No se pudieron cargar los bloques horarios. Recargue la página.");
+                if (!sec_codigo || !ani_anio) {
+                    muestraMensaje("warning", 3000, "Error", "No se puede limpiar. Datos de sección incompletos.");
                     return;
                 }
 
-                inicializarTablaHorario(turnoActualFiltro, "#tablaHorario", false);
-                checkForScheduleChanges();
-                muestraMensaje("success", 3000, "Horario Limpiado", "Se han eliminado todas las clases y bloques personalizados. Presione 'MODIFICAR' para guardar los cambios.");
+                const datosConsulta = new FormData();
+                datosConsulta.append("accion", "consultar_detalles");
+                datosConsulta.append("sec_codigo", sec_codigo);
+                datosConsulta.append("ani_anio", ani_anio);
+
+                $.ajax({
+                    url: "",
+                    type: "POST",
+                    data: datosConsulta,
+                    contentType: false,
+                    processData: false,
+                    success: function (respuesta) {
+                        if (respuesta.resultado === 'ok' || respuesta.resultado === 'consultar_detalles') {
+                            horarioContenidoGuardado.clear();
+                            
+                            let turnoSeleccionado = respuesta.tur_nombre || respuesta.turno_nombre || 'mañana';
+                            if (respuesta.tur_nombre || respuesta.turno_nombre) {
+                                turnoSeleccionado = normalizeTurnoValue(respuesta.tur_nombre || respuesta.turno_nombre);
+                            } else {
+                                turnoSeleccionado = normalizeTurnoValue(turnoSeleccionado || 'mañana');
+                            }
+
+                            $("#filtro_turno").val(turnoSeleccionado);
+
+                            bloquesEliminadosPorUsuario = [];
+
+                            const bloquesParaEstaTabla = construirBloquesParaHorario(
+                                [],
+                                turnoSeleccionado,
+                                [],
+                                true,
+                                []
+                            );
+                            bloquesDeLaTablaActual = bloquesParaEstaTabla;
+
+                            inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
+                            hasSaved = true;
+                            checkForScheduleChanges();
+                            
+                            muestraMensaje("success", 3000, "Éxito", "Horario limpiado correctamente");
+                        } else {
+                            muestraMensaje("warning", 3000, "Advertencia", respuesta.mensaje || "No se pudo limpiar el horario");
+                        }
+                    },
+                    error: function () {
+                        muestraMensaje("error", 3000, "Error", "Error al intentar limpiar el horario");
+                    }
+                });
             }
         });
     });
@@ -2073,6 +2138,7 @@ $(document).ready(function () {
             else if (segundoDigito === '3') turnoSeleccionado = 'noche';
             else turnoSeleccionado = 'mañana';
         }
+        turnoSeleccionado = normalizeTurnoValue(turnoSeleccionado);
 
         const datos = new FormData();
         datos.append("accion", "consultar_detalles");
@@ -2089,22 +2155,36 @@ $(document).ready(function () {
                     horarioContenidoGuardado.clear();
 
                     if (respuesta.tur_nombre) {
-                        turnoSeleccionado = respuesta.tur_nombre;
+                        turnoSeleccionado = normalizeTurnoValue(respuesta.tur_nombre);
                     } else if (respuesta.mensaje.length > 0) {
-                        turnoSeleccionado = detectarTurnoPorHorario(respuesta.mensaje);
+                        turnoSeleccionado = normalizeTurnoValue(detectarTurnoPorHorario(respuesta.mensaje));
                     } else {
-                        turnoSeleccionado = turnoSeleccionado || 'mañana';
+                        turnoSeleccionado = normalizeTurnoValue(turnoSeleccionado || 'mañana');
                     }
 
                     const bloquesPersonalizadosDB = Array.isArray(respuesta.bloques_personalizados)
                         ? respuesta.bloques_personalizados
                         : [];
 
+                    let bloquesEliminadosDB = Array.isArray(respuesta.bloques_eliminados)
+                        ? respuesta.bloques_eliminados
+                        : [];
+                    
+                    const horasConClases = new Set(respuesta.mensaje.map(c => c.hora_inicio.substring(0, 5)));
+                    bloquesEliminadosDB = bloquesEliminadosDB.filter(b => {
+                        const horaInicio = b.tur_horainicio.substring(0, 5);
+                        const tieneClase = horasConClases.has(horaInicio);
+                        return !tieneClase;
+                    });
+                    
+                    bloquesEliminadosPorUsuario = bloquesEliminadosDB;
+
                     const bloquesParaEstaTabla = construirBloquesParaHorario(
                         Array.isArray(respuesta.mensaje) ? respuesta.mensaje : [],
                         turnoSeleccionado,
                         bloquesPersonalizadosDB,
-                        Boolean(respuesta.bloques_base_registrados)
+                        Boolean(respuesta.bloques_base_registrados),
+                        bloquesEliminadosDB
                     );
                     bloquesDeLaTablaActual = bloquesParaEstaTabla;
 
@@ -2173,7 +2253,7 @@ $(document).ready(function () {
     });
 
     $('#filtro_turno').on("change", function () {
-        const turnoSeleccionado = $(this).val();
+        const turnoSeleccionado = normalizeTurnoValue($(this).val());
         const clasesExistentes = [];
         for (const claseArray of horarioContenidoGuardado.values()) {
             claseArray.forEach(claseObj => clasesExistentes.push(claseObj.data));
@@ -2181,7 +2261,7 @@ $(document).ready(function () {
 
         if (clasesExistentes.length > 0) {
             const bloquesPersonalizados = bloquesDeLaTablaActual.filter(b => b._sintetico);
-            bloquesDeLaTablaActual = construirBloquesParaHorario(clasesExistentes, turnoSeleccionado, bloquesPersonalizados, false);
+            bloquesDeLaTablaActual = construirBloquesParaHorario(clasesExistentes, turnoSeleccionado, bloquesPersonalizados, false, bloquesEliminadosPorUsuario);
         } else {
             bloquesDeLaTablaActual = generarBloquesPorDefecto(turnoSeleccionado);
         }
@@ -2482,6 +2562,16 @@ $(document).ready(function () {
             const bloqueEliminado = bloquesDeLaTablaActual.find(b => b.tur_horainicio === franjaInicio);
             const esBloqueDeBD = bloqueEliminado && allTurnos.some(t => t.tur_horainicio === franjaInicio);
             const esBloquePersonalizado = bloqueEliminado && (bloqueEliminado._sintetico || !esBloqueDeBD);
+
+            if (esBloqueDeBD && !esBloquePersonalizado) {
+                const yaEstaEliminado = bloquesEliminadosPorUsuario.some(b => b.tur_horainicio === franjaInicio);
+                if (!yaEstaEliminado && bloqueEliminado) {
+                    bloquesEliminadosPorUsuario.push({
+                        tur_horainicio: bloqueEliminado.tur_horainicio,
+                        tur_horafin: bloqueEliminado.tur_horafin
+                    });
+                }
+            }
 
             bloquesDeLaTablaActual = bloquesDeLaTablaActual.filter(b => b.tur_horainicio !== franjaInicio);
 

@@ -597,7 +597,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
     return ['conflicto' => false];
 }
 
-  public function Modificar($sec_codigo, $ani_anio, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]')
+  public function Modificar($sec_codigo, $ani_anio, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]', $bloques_eliminados_json = '[]')
 {
     if (empty($sec_codigo) || empty($ani_anio) || !isset($cantidadSeccion)) {
         return ['resultado' => 'error', 'mensaje' => 'Faltan datos clave (código, año o cantidad) para modificar la sección.'];
@@ -705,14 +705,20 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
         $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
         $ani_tipo = $stmt_tipo->fetchColumn() ?: 'regular';
 
-        if (!empty($items_horario)) {
-            $horas_inicio = array_column($items_horario, 'hora_inicio');
+        $bloques_personalizados = json_decode($bloques_personalizados_json, true);
+        $tiene_bloques = is_array($bloques_personalizados) && !empty($bloques_personalizados);
+
+        if (!empty($items_horario) || $tiene_bloques) {
+            $horas_inicio = !empty($items_horario) ? array_column($items_horario, 'hora_inicio') : [];
             $hora_principal = !empty($horas_inicio) ? min($horas_inicio) : '08:00:00';
             $turno_nombre = $turno_nombre_existente ?: $this->getTurnoEnum($hora_principal);
             
             $stmt_horario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_nombre, 1) ON DUPLICATE KEY UPDATE hor_estado = 1, tur_nombre = :tur_nombre");
             
             $stmt_horario->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo, ':tur_nombre' => $turno_nombre]);
+        }
+
+        if (!empty($items_horario)) {
             
             $stmt_uh = $co->prepare(
                 "INSERT INTO uc_horario (sec_codigo, ani_anio, ani_tipo, uc_codigo, doc_cedula, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) 
@@ -769,8 +775,7 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
             }
         }
 
-        $bloques_personalizados = json_decode($bloques_personalizados_json, true);
-        if (is_array($bloques_personalizados)) {
+        if (is_array($bloques_personalizados) && !empty($bloques_personalizados)) {
             $stmt_delete_bloques = $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
             $stmt_delete_bloques->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
 
@@ -795,6 +800,35 @@ public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $
                     ':tur_horainicio' => $horaInicio,
                     ':tur_horafin' => $horaFin,
                     ':bloque_sintetico' => !empty($bloque['_sintetico']) ? 1 : 0
+                ]);
+            }
+        }
+
+        $bloques_eliminados = json_decode($bloques_eliminados_json, true);
+        if (is_array($bloques_eliminados) && !empty($bloques_eliminados)) {
+            $stmt_delete_eliminados = $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+            $stmt_delete_eliminados->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+
+            $stmt_insert_eliminado = $co->prepare(
+                "INSERT INTO tbl_bloque_eliminado (sec_codigo, ani_anio, ani_tipo, tur_horainicio, tur_horafin)
+                 VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_horainicio, :tur_horafin)"
+            );
+
+            foreach ($bloques_eliminados as $bloque_elim) {
+                if (!isset($bloque_elim['tur_horainicio'], $bloque_elim['tur_horafin'])) {
+                    continue;
+                }
+                $horaInicio = trim($bloque_elim['tur_horainicio']);
+                $horaFin = trim($bloque_elim['tur_horafin']);
+                if ($horaInicio === '' || $horaFin === '' || $horaInicio >= $horaFin) {
+                    continue;
+                }
+                $stmt_insert_eliminado->execute([
+                    ':sec_codigo' => $sec_codigo,
+                    ':ani_anio' => $ani_anio,
+                    ':ani_tipo' => $ani_tipo,
+                    ':tur_horainicio' => $horaInicio,
+                    ':tur_horafin' => $horaFin
                 ]);
             }
         }
@@ -867,6 +901,8 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
         
         $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
         
+        $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+        
         $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
 
         if ($es_transaccion_interna) $co->commit();
@@ -935,6 +971,16 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
 
         $bloques_personalizados = [];
         $hay_bloques_base = false;
+        
+        try {
+            $sql_check_horario = "SELECT COUNT(*) FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
+            $stmt_check = $this->Con()->prepare($sql_check_horario);
+            $stmt_check->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $hay_bloques_base = $stmt_check->fetchColumn() > 0;
+        } catch (Exception $e) {
+            error_log("Error al verificar horario: " . $e->getMessage());
+        }
+        
         try {
             $sql_bloques = "SELECT tur_horainicio, tur_horafin, bloque_sintetico 
                            FROM tbl_bloque_personalizado 
@@ -942,7 +988,6 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
             $stmt_bloques = $this->Con()->prepare($sql_bloques);
             $stmt_bloques->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
             $bloques_personalizados = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
-            $hay_bloques_base = !empty($bloques_personalizados);
             
             foreach ($bloques_personalizados as &$bloque) {
                 if (strlen($bloque['tur_horainicio']) === 5) {
@@ -958,10 +1003,33 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
             error_log("Error al cargar bloques personalizados: " . $e->getMessage());
         }
 
+        $bloques_eliminados = [];
+        try {
+            $sql_eliminados = "SELECT tur_horainicio, tur_horafin 
+                              FROM tbl_bloque_eliminado 
+                              WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
+            $stmt_eliminados = $this->Con()->prepare($sql_eliminados);
+            $stmt_eliminados->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $bloques_eliminados = $stmt_eliminados->fetchAll(PDO::FETCH_ASSOC);
+            
+            foreach ($bloques_eliminados as &$bloque_elim) {
+                if (strlen($bloque_elim['tur_horainicio']) === 5) {
+                    $bloque_elim['tur_horainicio'] .= ':00';
+                }
+                if (strlen($bloque_elim['tur_horafin']) === 5) {
+                    $bloque_elim['tur_horafin'] .= ':00';
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error al cargar bloques eliminados: " . $e->getMessage());
+        }
+
         return [
             'resultado' => 'ok', 
             'mensaje' => $schedule_grid_items,
             'bloques_personalizados' => $bloques_personalizados,
+            'bloques_eliminados' => $bloques_eliminados,
+            'bloques_base_registrados' => $hay_bloques_base,
             'tur_nombre' => $turno_nombre
         ];
     } catch (Exception $e) {

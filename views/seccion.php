@@ -150,9 +150,9 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div id="cantidad-seccion-modificar-error" class="form-text text-muted" style="display: none;">Debe ser entre 0 y 99</div>
                                 </div>
                                 <div class="ms-4">
-                                     <button type="button" class="btn btn-warning" id="btnLimpiarHorario" title="Limpiar todo el horario" style="padding: 0.5rem 1.5rem;">
-                                        <img src="public/assets/icons/escoba.svg" alt="Limpiar" style="width: 18px; height: 18px; margin-right: 8px;">
-                                        <span>Limpiar Horario</span>
+                                     <button type="button" class="btn btn-warning" id="btnLimpiarHorario" title="Limpia el horario actual">
+                                        <img src="public/assets/icons/arrow-clockwise.svg" alt="" class="me-1" style="width: 1em; height: 1em; filter: brightness(0) invert(1);">
+                                        Limpiar Horario
                                     </button>
                                 </div>
                             </div>

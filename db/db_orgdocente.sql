@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 31-10-2025 a las 08:43:42
+-- Tiempo de generación: 01-11-2025 a las 03:04:00
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -360,6 +360,21 @@ INSERT INTO `tbl_area` (`area_nombre`, `area_estado`, `area_descripcion`) VALUES
 ('Seguridad', 1, 'Área de seguridad informática y auditoría'),
 ('Sistemas Operativos', 1, 'Área de sistemas operativos y administración de sistemas'),
 ('Tecnologías', 1, 'Área de tecnologías de la información y comunicación');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `tbl_bloque_eliminado`
+--
+
+CREATE TABLE `tbl_bloque_eliminado` (
+  `bloque_eliminado_id` int(11) NOT NULL,
+  `sec_codigo` varchar(30) NOT NULL,
+  `ani_anio` int(11) NOT NULL,
+  `ani_tipo` varchar(10) NOT NULL,
+  `tur_horainicio` time NOT NULL,
+  `tur_horafin` time NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1606,6 +1621,14 @@ ALTER TABLE `tbl_area`
   ADD PRIMARY KEY (`area_nombre`);
 
 --
+-- Indices de la tabla `tbl_bloque_eliminado`
+--
+ALTER TABLE `tbl_bloque_eliminado`
+  ADD PRIMARY KEY (`bloque_eliminado_id`),
+  ADD UNIQUE KEY `uk_bloque_eliminado` (`sec_codigo`,`ani_anio`,`ani_tipo`,`tur_horainicio`),
+  ADD KEY `idx_seccion_anio` (`sec_codigo`,`ani_anio`,`ani_tipo`);
+
+--
 -- Indices de la tabla `tbl_bloque_personalizado`
 --
 ALTER TABLE `tbl_bloque_personalizado`
@@ -1734,6 +1757,12 @@ ALTER TABLE `uc_malla`
 --
 -- AUTO_INCREMENT de las tablas volcadas
 --
+
+--
+-- AUTO_INCREMENT de la tabla `tbl_bloque_eliminado`
+--
+ALTER TABLE `tbl_bloque_eliminado`
+  MODIFY `bloque_eliminado_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `tbl_bloque_personalizado`
