@@ -70,7 +70,7 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode(['resultado' => 'Existe', 'existe' => $p->Existe($_POST['cedulaDocente'])]);
             exit;
         } elseif ($accion == 'existe_correo') {
-            echo json_encode(['resultado' => 'existe_correo', 'existe' => $p->existeCorreo($_POST['correoDocente'], $_POST['cedulaDocente'] ?? null)]);
+            echo json_encode($p->existeCorreo($_POST['correoDocente'], $_POST['cedulaDocente'] ?? null));
             exit;
         } elseif ($accion == 'incluir' || $accion == 'modificar') {
             $p->setCategoriaNombre($_POST['categoria']);

@@ -57,7 +57,7 @@ $(document).ready(function() {
             $('#nombreDocenteHoras').text(nombreDocente);
             const accion = $('#accion').val();
             const finalButtonText = (accion === 'incluir') ? "REGISTRAR" : "MODIFICAR";
-            const buttonClass = (accion === 'incluir') ? "btn-success" : "btn-primary";
+            const buttonClass = (accion === 'incluir') ? "btn-primary" : "btn-primary";
             footer.append('<button type="button" class="btn btn-secondary" id="btn-prev-3">ATRÁS</button>');
             footer.append(`<button type="button" class="btn ${buttonClass}" id="btn-final-submit">${finalButtonText}</button>`);
             
@@ -219,6 +219,10 @@ $(document).ready(function() {
         if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test($("#correoDocente").val())) esValido = false;
         if (!$('#categoria').val()) esValido = false;
         if (!$('#dedicacion').val()) esValido = false;
+        
+        // Validar que no haya errores de cédula o correo duplicado
+        if ($('#scedulaDocente').hasClass('text-danger')) esValido = false;
+        if ($('#scorreoDocente').hasClass('text-danger')) esValido = false;
         
         const anioConcursoInput = $('#anioConcurso');
         if (anioConcursoInput.prop('required') && !anioConcursoInput.val()) {
@@ -545,22 +549,22 @@ $(document).ready(function() {
                 success: function (respuesta) {
                     try {
                         var lee = JSON.parse(respuesta);
-                        let titulo = "¿Está seguro de desactivar este docente?";
-                        let texto = `Docente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}`;
+                        let titulo = "¿Está seguro de cambiar el estado de este docente?";
+                        let texto = `Docente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}<br>Pasará a estar inactivo`;
 
                         if (lee.resultado === "en_horario") {
                             titulo = "¡Atención!";
-                            texto = `Este docente está asignado a un horario. Si lo desactiva, se quitará del horario también. ¿Desea continuar?\n\nDocente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}`;
+                            texto = `Este docente está asignado a un horario<br>Docente: ${prefijo}-${cedula} - ${fila.find("td:eq(1)").text().trim()} ${fila.find("td:eq(2)").text().trim()}<br>Si cambia su estado a inactivo, se quitará del horario también. ¿Desea continuar?`;
                         }
 
                         Swal.fire({
                             title: titulo,
-                            text: texto,
+                            html: texto,
                             icon: "warning",
                             showCancelButton: true,
                             confirmButtonColor: "#3085d6",
                             cancelButtonColor: "#d33",
-                            confirmButtonText: "Sí, desactivar",
+                            confirmButtonText: "Sí, cambiar",
                             cancelButtonText: "Cancelar",
                         }).then((result) => {
                             if (result.isConfirmed) {
@@ -671,10 +675,10 @@ $(document).ready(function() {
                          } else { 
                              $("#scedulaDocente").text("").removeClass('text-danger text-secondary');
                          }
-                    } else if ((lee.resultado === 'existe' || lee.resultado === 'existe_docente') && lee.mensaje) {
-                        setErrorText($("#scorreoDocente"), lee.mensaje);
+                    } else if (lee.resultado === 'existe' || lee.resultado === 'existe_docente') {
+                        $("#scorreoDocente").text(lee.mensaje || "El correo ya está registrado.").removeClass('text-secondary').addClass('text-danger');
                     } else if (lee.resultado === 'no_existe') {
-                        setErrorText($("#scorreoDocente"), "");
+                        $("#scorreoDocente").text("").removeClass('text-danger text-secondary');
                     } else if (lee.resultado === 'consultar') {
                         destruyeDT();
                         $("#resultadoconsulta").empty();
