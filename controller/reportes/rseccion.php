@@ -66,6 +66,8 @@ if (isset($_POST['generar_seccion_report'])) {
     $oReporte->setTrayecto($trayecto_filtrado);
 
     $turnos = $oReporte->getTurnosCompletos();
+    $bloques_personalizados = $oReporte->getBloquesPersonalizados();
+    $bloques_eliminados = $oReporte->getBloquesEliminados();
     $slot_duration_minutes = 40;
 
     $morningSlots = [];
@@ -98,6 +100,31 @@ if (isset($_POST['generar_seccion_report'])) {
         } else {
             $nightSlots += $franjas_del_turno;
         }
+    }
+
+    // Agregar bloques personalizados
+    foreach ($bloques_personalizados as $bloque) {
+        $hora_inicio = new DateTime($bloque['tur_horainicio']);
+        $hora_fin = new DateTime($bloque['tur_horafin']);
+        $db_start_time_key = $hora_inicio->format('H:i:s');
+        $display_string = $hora_inicio->format('h:i A') . ' a ' . $hora_fin->format('h:i A');
+        
+        $hora_inicio_str = $hora_inicio->format('H:i:s');
+        
+        if ($hora_inicio_str < $afternoon_start_time) {
+            $morningSlots[$db_start_time_key] = $display_string;
+        } elseif ($hora_inicio_str < $night_start_time) {
+            $afternoonSlots[$db_start_time_key] = $display_string;
+        } else {
+            $nightSlots[$db_start_time_key] = $display_string;
+        }
+    }
+
+    // Eliminar bloques marcados como eliminados
+    foreach ($bloques_eliminados as $hora_eliminada) {
+        unset($morningSlots[$hora_eliminada]);
+        unset($afternoonSlots[$hora_eliminada]);
+        unset($nightSlots[$hora_eliminada]);
     }
 
     ksort($morningSlots);

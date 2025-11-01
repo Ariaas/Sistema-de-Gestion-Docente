@@ -144,4 +144,145 @@ public function getHorariosFiltrados()
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) { return []; }
     }
+
+    /**
+     * Obtiene los bloques horarios personalizados para las secciones filtradas
+     * @return array Array de bloques personalizados con tur_horainicio y tur_horafin
+     */
+    public function getBloquesPersonalizados() {
+        if (empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
+
+        $allowed_periods = [];
+        if ($esIntensivo) {
+            $allowed_periods = ['Fase I', 'Fase II', 'Anual', 'anual', '0'];
+        } else {
+            if ($this->fase == 1) {
+                $allowed_periods = ['Fase I', 'Anual', 'anual', '0'];
+            } elseif ($this->fase == 2) {
+                $allowed_periods = ['Fase II', 'Anual', 'anual'];
+            }
+        }
+
+        if (empty($allowed_periods)) return [];
+
+        try {
+            $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
+            
+            $sql = "SELECT DISTINCT bp.tur_horainicio, bp.tur_horafin, bp.bloque_sintetico
+                    FROM tbl_bloque_personalizado bp
+                    JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio
+                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param
+                        AND u.uc_estado = 1
+                        AND s.sec_estado = 1";
+            
+            $period_placeholders = [];
+            $i = 0;
+            foreach ($allowed_periods as $period) {
+                $key = ":period" . $i++;
+                $period_placeholders[] = $key;
+                $params[$key] = $period;
+            }
+            $in_clause = implode(', ', $period_placeholders);
+            $sql .= " AND u.uc_periodo IN ({$in_clause})";
+
+            if (isset($this->trayecto) && $this->trayecto !== '') {
+                $sql .= " AND u.uc_trayecto = :trayecto_param";
+                $params[':trayecto_param'] = $this->trayecto;
+            }
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Normalizar formato de hora
+            foreach ($result as &$bloque) {
+                if (strlen($bloque['tur_horainicio']) === 5) {
+                    $bloque['tur_horainicio'] .= ':00';
+                }
+                if (strlen($bloque['tur_horafin']) === 5) {
+                    $bloque['tur_horafin'] .= ':00';
+                }
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error en getBloquesPersonalizados: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtiene los bloques horarios eliminados para las secciones filtradas
+     * @return array Array de horas de inicio de bloques eliminados
+     */
+    public function getBloquesEliminados() {
+        if (empty($this->anio) || empty($this->ani_tipo)) return [];
+        
+        $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
+        if (!$esIntensivo && empty($this->fase)) return [];
+
+        $allowed_periods = [];
+        if ($esIntensivo) {
+            $allowed_periods = ['Fase I', 'Fase II', 'Anual', 'anual', '0'];
+        } else {
+            if ($this->fase == 1) {
+                $allowed_periods = ['Fase I', 'Anual', 'anual', '0'];
+            } elseif ($this->fase == 2) {
+                $allowed_periods = ['Fase II', 'Anual', 'anual'];
+            }
+        }
+
+        if (empty($allowed_periods)) return [];
+
+        try {
+            $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
+            
+            $sql = "SELECT DISTINCT be.tur_horainicio
+                    FROM tbl_bloque_eliminado be
+                    JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio
+                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio
+                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                    WHERE s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param
+                        AND u.uc_estado = 1
+                        AND s.sec_estado = 1";
+            
+            $period_placeholders = [];
+            $i = 0;
+            foreach ($allowed_periods as $period) {
+                $key = ":period" . $i++;
+                $period_placeholders[] = $key;
+                $params[$key] = $period;
+            }
+            $in_clause = implode(', ', $period_placeholders);
+            $sql .= " AND u.uc_periodo IN ({$in_clause})";
+
+            if (isset($this->trayecto) && $this->trayecto !== '') {
+                $sql .= " AND u.uc_trayecto = :trayecto_param";
+                $params[':trayecto_param'] = $this->trayecto;
+            }
+            
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Normalizar formato de hora
+            foreach ($result as &$hora) {
+                if (strlen($hora) === 5) {
+                    $hora .= ':00';
+                }
+            }
+            
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error en getBloquesEliminados: " . $e->getMessage());
+            return [];
+        }
+    }
 }
