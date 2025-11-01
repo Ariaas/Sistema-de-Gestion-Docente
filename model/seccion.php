@@ -1426,12 +1426,57 @@ public function obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio)
         }
     }
 
+        // Obtener bloques personalizados para todas las secciones involucradas
+        $bloques_personalizados = [];
+        $bloques_eliminados = [];
+        
+        foreach ($secciones_a_incluir as $sec) {
+            try {
+                $sql_bloques = "SELECT tur_horainicio, tur_horafin, bloque_sintetico 
+                               FROM tbl_bloque_personalizado 
+                               WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
+                $stmt_bloques = $co->prepare($sql_bloques);
+                $stmt_bloques->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio]);
+                $bloques_sec = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
+                
+                foreach ($bloques_sec as $bloque) {
+                    $inicio = strlen($bloque['tur_horainicio']) === 5 ? $bloque['tur_horainicio'] . ':00' : $bloque['tur_horainicio'];
+                    $fin = strlen($bloque['tur_horafin']) === 5 ? $bloque['tur_horafin'] . ':00' : $bloque['tur_horafin'];
+                    $bloques_personalizados[$inicio] = [
+                        'tur_horainicio' => $inicio,
+                        'tur_horafin' => $fin,
+                        '_sintetico' => (bool)$bloque['bloque_sintetico']
+                    ];
+                }
+            } catch (Exception $e) {
+                error_log("Error al cargar bloques personalizados para $sec: " . $e->getMessage());
+            }
+            
+            try {
+                $sql_eliminados = "SELECT tur_horainicio, tur_horafin 
+                                  FROM tbl_bloque_eliminado 
+                                  WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
+                $stmt_eliminados = $co->prepare($sql_eliminados);
+                $stmt_eliminados->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio]);
+                $bloques_elim = $stmt_eliminados->fetchAll(PDO::FETCH_ASSOC);
+                
+                foreach ($bloques_elim as $bloque_elim) {
+                    $inicio = strlen($bloque_elim['tur_horainicio']) === 5 ? $bloque_elim['tur_horainicio'] . ':00' : $bloque_elim['tur_horainicio'];
+                    $bloques_eliminados[$inicio] = true;
+                }
+            } catch (Exception $e) {
+                error_log("Error al cargar bloques eliminados para $sec: " . $e->getMessage());
+            }
+        }
+
         return [
             'resultado' => 'ok', 
             'secciones' => array_keys($secciones_data), 
             'horario'   => $horario_items,
             'anio'      => $ani_anio,
-            'turnos'    => $this->obtenerTurnos()
+            'turnos'    => $this->obtenerTurnos(),
+            'bloques_personalizados' => array_values($bloques_personalizados),
+            'bloques_eliminados' => array_keys($bloques_eliminados)
         ];
 
     } catch (Exception $e) {

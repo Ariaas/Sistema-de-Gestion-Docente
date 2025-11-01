@@ -19,6 +19,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;   
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
@@ -136,7 +137,7 @@ function _formatearEspacio($espacio_nombre) {
 
 
 
-function generarReportePDF($secciones_codigos, $horario, $anio, $turnos) {
+function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = []) {
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos para generar el reporte.");
     }
@@ -169,6 +170,16 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos) {
                 $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
             }
         }
+        
+        // Agregar bloques personalizados
+        foreach ($bloques_personalizados as $bloque) {
+            $time_slots[$bloque['tur_horainicio']] = $bloque['tur_horafin'];
+        }
+        
+        // Eliminar bloques marcados como eliminados
+        foreach ($bloques_eliminados as $inicio_eliminado) {
+            unset($time_slots[$inicio_eliminado]);
+        }
     }
     ksort($time_slots);
 
@@ -184,10 +195,20 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos) {
     }
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones);
 
+    $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/Sistema-de-Gestion-Docente/public/assets/img/logo_uptaeb.png';
+    $logoBase64 = '';
+    if (file_exists($logoPath)) {
+        $logoData = file_get_contents($logoPath);
+        $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+    }
+    
     $html = '<html><head><style>
         @page { margin: 25px; }
         body { font-family: Arial, sans-serif; font-size: 10px; }
-        h2 { text-align: center; margin: 0 0 15px 0; font-size: 16px; font-weight: bold; }
+        .header-container { position: relative; margin-bottom: 10px; min-height: 45px; }
+        .logo-container { position: absolute; top: -5px; right: 0; z-index: 10; }
+        .logo-container img { width: 45px; height: 35px; }
+        h2 { text-align: center; margin: 5px 0 10px 0; padding-top: 5px; font-size: 16px; font-weight: bold; }
         .schedule-table { width: 100%; border-collapse: collapse; }
         .schedule-table th, .schedule-table td { border: 1px solid #ccc; padding: 6px; text-align: center; vertical-align: middle; }
         .schedule-table th { background-color: #f2f2f2; font-weight: bold; font-size: 11px; }
@@ -197,7 +218,12 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos) {
         .class-cell strong { font-size: 11px; font-weight: bold; display: block; }
         .class-cell small { font-size: 9px; color: #6c757d; }
     </style></head><body>';
+    $html .= '<div class="header-container">';
+    if ($logoBase64) {
+        $html .= '<div class="logo-container"><img src="' . $logoBase64 . '" alt="Logo UPTAEB"></div>';
+    }
     $html .= '<h2>' . htmlspecialchars($tituloSeccion) . ' (' . htmlspecialchars($anio) . ')</h2>';
+    $html .= '</div>';
     $html .= '<table class="schedule-table"><thead><tr><th class="time-col">Hora</th>';
 
     foreach ($columnasHeader as $idx => $colInfo) {
@@ -268,7 +294,7 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos) {
     ob_end_clean();
     $dompdf->stream('horario_' . implode('_', $secciones_codigos) . '.pdf', ['Attachment' => true]);
 }
-function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
+function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = []) {
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos.");
     }
@@ -280,7 +306,12 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
     
     
     $time_slots = [];
-    if (!empty($horario)) {
+    if (empty($horario)) {
+        // Si no hay horario, mostrar los primeros bloques por defecto
+        foreach (array_slice($turnos, 0, 7) as $turno) {
+            $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
+        }
+    } else {
         $min_time = min(array_column($horario, 'hor_horainicio'));
         $max_time = max(array_column($horario, 'hor_horafin'));
         foreach ($turnos as $turno) {
@@ -288,8 +319,18 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
                 $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
             }
         }
-        ksort($time_slots);
+        
+        // Agregar bloques personalizados
+        foreach ($bloques_personalizados as $bloque) {
+            $time_slots[$bloque['tur_horainicio']] = $bloque['tur_horafin'];
+        }
+        
+        // Eliminar bloques marcados como eliminados
+        foreach ($bloques_eliminados as $inicio_eliminado) {
+            unset($time_slots[$inicio_eliminado]);
+        }
     }
+    ksort($time_slots);
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
@@ -311,6 +352,19 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
     $sheet->setCellValue('A1', $tituloSeccion);
     $sheet->getStyle('A1')->applyFromArray($styleTitle);
 
+    $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/Sistema-de-Gestion-Docente/public/assets/img/logo_uptaeb.png';
+    if (file_exists($logoPath)) {
+        $drawing = new Drawing();
+        $drawing->setName('Logo')->setDescription('Logo UPTAEB')->setPath($logoPath);
+        $drawing->setResizeProportional(false);
+        $drawing->setHeight(35);
+        $drawing->setWidth(45);
+        $drawing->setCoordinates($lastColLetter . '1');
+        $drawing->setOffsetX(10);
+        $drawing->setOffsetY(2);
+        $drawing->setWorksheet($sheet);
+        $sheet->getRowDimension(1)->setRowHeight(35);
+    }
     
     $sheet->setCellValue('A2', 'Hora');
     $sheet->getColumnDimension('A')->setWidth(20);
@@ -401,7 +455,7 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos) {
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');
 }
-function generarReporteWord($secciones_codigos, $horario, $anio, $turnos) {
+function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = []) {
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos.");
     }
@@ -420,11 +474,33 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos) {
                 $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
             }
         }
+        
+        // Agregar bloques personalizados
+        foreach ($bloques_personalizados as $bloque) {
+            $time_slots[$bloque['tur_horainicio']] = $bloque['tur_horafin'];
+        }
+        
+        // Eliminar bloques marcados como eliminados
+        foreach ($bloques_eliminados as $inicio_eliminado) {
+            unset($time_slots[$inicio_eliminado]);
+        }
+        
         ksort($time_slots);
     }
 
     $phpWord = new PhpWord();
     $section = $phpWord->addSection(['orientation' => 'landscape', 'marginLeft' => 600, 'marginRight' => 600, 'marginTop' => 600, 'marginBottom' => 600]);
+
+    $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/Sistema-de-Gestion-Docente/public/assets/img/logo_uptaeb.png';
+    if (file_exists($logoPath)) {
+        $header = $section->addHeader();
+        $header->addImage($logoPath, [
+            'width' => 50,
+            'height' => 40,
+            'alignment' => Jc::END,
+            'wrappingStyle' => 'inline'
+        ]);
+    }
 
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
@@ -536,7 +612,9 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'generar_reporte') {
             $datosReporte['secciones'], 
             $datosReporte['horario'],
             $datosReporte['anio'],
-            $datosReporte['turnos']
+            $datosReporte['turnos'],
+            $datosReporte['bloques_personalizados'] ?? [],
+            $datosReporte['bloques_eliminados'] ?? []
         );
         break;
         
@@ -546,7 +624,9 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'generar_reporte') {
             $datosReporte['secciones'], 
             $datosReporte['horario'],
             $datosReporte['anio'],
-            $datosReporte['turnos']
+            $datosReporte['turnos'],
+            $datosReporte['bloques_personalizados'] ?? [],
+            $datosReporte['bloques_eliminados'] ?? []
         );
         break;
         case 'pdf':
@@ -556,7 +636,9 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'generar_reporte') {
             $datosReporte['secciones'],
             $datosReporte['horario'],
             $datosReporte['anio'],
-            $datosReporte['turnos'] 
+            $datosReporte['turnos'],
+            $datosReporte['bloques_personalizados'] ?? [],
+            $datosReporte['bloques_eliminados'] ?? []
         );
         break;
     }
