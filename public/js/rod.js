@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const partes = anioCompletoSelect.value.split('|');
         const tipoAnio = partes[1] ? partes[1].toLowerCase() : '';
-        console.log('Tipo de año detectado:', tipoAnio, '- Es intensivo:', tipoAnio === 'intensivo');
         return tipoAnio === 'intensivo';
     }
 
@@ -21,12 +20,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleFaseSelect() {
         const esIntensivo = esAnioIntensivo();
         
-        console.log('Toggle fase - Es intensivo:', esIntensivo);
-        
         if (faseContainer) {
             if (esIntensivo) {
-                
-                console.log('Ocultando contenedor de fase');
                 faseContainer.style.display = 'none';
                 
                 if (faseSelect) {
@@ -38,16 +33,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             } else {
-                
-                console.log('Mostrando contenedor de fase');
                 faseContainer.style.display = 'block';
                 
                 if (faseSelect) {
                     faseSelect.setAttribute('required', 'required');
                 }
             }
-        } else {
-            console.error('No se encontró el contenedor de fase');
         }
     }
 
@@ -60,7 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 toggleFaseSelect();
             } catch (e) {
-                console.error("Error al inicializar Select2.", e);
             }
         });
     }

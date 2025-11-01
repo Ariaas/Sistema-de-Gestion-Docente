@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 $('#fase_id').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Fase" });
                 $('#trayecto').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Trayecto" });
             } catch (e) {
-                console.error("Error al inicializar Select2.", e);
             }
         });
     }
@@ -24,10 +23,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const partes = anioCompletoSelect.value.split('|');
         const tipoAnio = partes[1] ? partes[1].toLowerCase().trim() : '';
-        console.log('Valor completo:', anioCompletoSelect.value);
-        console.log('Partes:', partes);
-        console.log('Tipo año:', tipoAnio);
-        console.log('Es intensivo:', tipoAnio.includes('intensivo'));
         
         return tipoAnio.includes('intensivo');
     }
@@ -58,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     
     if (anioCompletoSelect) {
-        // Usar evento Select2 de jQuery en lugar de addEventListener nativo
         if (window.jQuery) {
             $('#anio_completo').on('change', function() {
                 toggleFaseSelect();

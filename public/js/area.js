@@ -66,13 +66,13 @@ function crearDT() {
 
 let originalNombreArea = '';
 
-let originalDescripcionArea = ''; 
+let originalDescripcionArea = '';
 
 
 $(document).ready(function () {
   Listar();
 
-  
+
 
   $("#areaNombre").on("keypress", function (e) {
     validarkeypress(/^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ,#\b\s-]*$/, e);
@@ -80,7 +80,7 @@ $(document).ready(function () {
 
   $("#areaNombre").on("keyup keydown", function () {
     $("#sareaNombre").css("color", "");
-    
+
     let formatoValido = validarkeyup(
       /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/,
       $(this),
@@ -93,27 +93,27 @@ $(document).ready(function () {
       datos.append('accion', 'existe');
       datos.append('areaNombre', $(this).val());
       if ($("#proceso").text() === "MODIFICAR") {
-          datos.append('areaExcluir', originalNombreArea);
-          verificarCambios();
+        datos.append('areaExcluir', originalNombreArea);
+        verificarCambios();
       }
       enviaAjax(datos, 'existe');
     }
   });
 
-  $("#areaDescripcion").on("keyup", function() {
+  $("#areaDescripcion").on("keyup", function () {
     validarkeyup(
       /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
       $(this),
       $("#sareaDescripcion"),
       "La descripción debe tener entre 5 y 100 caracteres. Ej:Esta categoría..."
     );
-    
+
     if ($("#proceso").text() === "MODIFICAR") {
       verificarCambios();
     }
   });
 
-  
+
 
   $("#proceso").on("click", function () {
     if ($(this).text() == "REGISTRAR") {
@@ -177,32 +177,32 @@ $(document).ready(function () {
 });
 
 function validarenvio() {
-    let esValido = true;
-    if (validarkeyup(
-      /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/,
-      $("#areaNombre"),
-      $("#sareaNombre"),
-      "El nombre debe tener entre 5 y 30 caracteres, Ej: Matemáticas"
-    ) == 0) {
-      if(esValido) muestraMensaje("error",4000,"ERROR!","El formato del nombre es incorrecto");
-      esValido = false;
-    }
-    if (validarkeyup(
-      /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
-      $("#areaDescripcion"),
-      $("#sareaDescripcion"),
-      "La descripción debe tener entre 5 y 100 caracteres."
-    ) == 0) {
-      if(esValido) muestraMensaje("error",4000,"ERROR!","El formato de la descripción es incorrecto");
-      esValido = false;
-    }
+  let esValido = true;
+  if (validarkeyup(
+    /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/,
+    $("#areaNombre"),
+    $("#sareaNombre"),
+    "El nombre debe tener entre 5 y 30 caracteres, Ej: Matemáticas"
+  ) == 0) {
+    if (esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del nombre es incorrecto");
+    esValido = false;
+  }
+  if (validarkeyup(
+    /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/,
+    $("#areaDescripcion"),
+    $("#sareaDescripcion"),
+    "La descripción debe tener entre 5 y 100 caracteres."
+  ) == 0) {
+    if (esValido) muestraMensaje("error", 4000, "ERROR!", "El formato de la descripción es incorrecto");
+    esValido = false;
+  }
 
   return esValido;
 }
 
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
-  originalNombreArea = $(linea).find("td:eq(0)").text(); 
+  originalNombreArea = $(linea).find("td:eq(0)").text();
   originalDescripcionArea = $(linea).find("td:eq(1)").text();
 
   if (accion == 0) {
@@ -221,7 +221,7 @@ function pone(pos, accion) {
     $("#proceso").prop("disabled", false);
 
   }
-  
+
   $("#areaNombre").val($(linea).find("td:eq(0)").text());
   $("#areaDescripcion").val($(linea).find("td:eq(1)").text());
 
@@ -237,7 +237,7 @@ function enviaAjax(datos, accion) {
     data: datos,
     processData: false,
     cache: false,
-    beforeSend: function () {},
+    beforeSend: function () { },
     timeout: 10000,
     success: function (respuesta) {
       try {
@@ -288,10 +288,10 @@ function enviaAjax(datos, accion) {
             $("#modal1").modal("hide");
             Listar();
           }
-        }else if (lee.resultado == "existe") {     
+        } else if (lee.resultado == "existe") {
           if (lee.mensaje == 'El área ya existe!') {
-            muestraMensaje('info', 4000,'Atención!', lee.mensaje);
-          } 
+            muestraMensaje('info', 4000, 'Atención!', lee.mensaje);
+          }
         }
         else if (lee.resultado == "eliminar") {
           muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
@@ -318,7 +318,7 @@ function enviaAjax(datos, accion) {
         muestraMensaje("ERROR: <br/>" + request + status + err);
       }
     },
-    complete: function () {},
+    complete: function () { },
   });
 }
 
@@ -329,14 +329,14 @@ function limpia() {
   $("#areaDescripcion").prop('disabled', false);
   $("#sareaNombre").text("");
   $("#sareaDescripcion").text("");
-  originalNombreArea = ''; 
-  originalDescripcionArea = ''; 
+  originalNombreArea = '';
+  originalDescripcionArea = '';
 }
 
 function verificarCambios() {
   const nombreActual = $("#areaNombre").val();
   const descripcionActual = $("#areaDescripcion").val();
-  
+
   if (nombreActual === originalNombreArea && descripcionActual === originalDescripcionArea) {
     $("#proceso").prop("disabled", true);
   } else {

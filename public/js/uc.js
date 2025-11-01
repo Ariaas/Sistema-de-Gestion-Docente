@@ -6,9 +6,9 @@ function Listar() {
 
 
 
-var __uc_modTracking = false; 
+var __uc_modTracking = false;
 var __uc_userModified = false;
-var initialFormState = null; 
+var initialFormState = null;
 
 function destruyeDT(selector) {
   if ($.fn.DataTable.isDataTable(selector)) {
@@ -124,7 +124,7 @@ function checkFormChanges() {
   }
 
   const currentFormState = $("#f").serialize();
-  
+
   if (currentFormState !== initialFormState) {
     $("#proceso").prop('disabled', false);
   } else {
@@ -141,7 +141,7 @@ $(document).ready(function () {
 
   $('#f').on('input change', 'input, select, textarea', checkFormChanges);
 
-  
+
 
   $("#proceso").on("click", function () {
     let ejeVal = $("#ejeUC").val();
@@ -167,7 +167,7 @@ $(document).ready(function () {
         var datos = new FormData($("#f")[0]);
         datos.append("accion", "modificar");
         datos.append("codigoUCOriginal", originalCodigoUC);
-        
+
         if ($("#ejeUC option:selected").prop("disabled")) {
           datos.set("ejeUC", $("#ejeUC option:selected").val());
         }
@@ -372,7 +372,7 @@ function validarenvio() {
     $("#speriodoUC").text("").hide();
   }
 
-  
+
 
   return esValido;
 }
@@ -450,15 +450,15 @@ function pone(pos, accion) {
 
     $("#codigoUC, #nombreUC, #creditosUC").trigger("keyup");
     $("#trayectoUC, #ejeUC, #areaUC, #periodoUC").trigger("change");
-    
-    setTimeout(function() {
+
+    setTimeout(function () {
       initialFormState = $("#f").serialize();
       $("#proceso").prop('disabled', true);
     }, 100);
 
     $("#modal1").modal("show");
   } else if (accion == 1) {
-    
+
     var codigoUC = linea.data("codigo");
     var datosVerificacion = new FormData();
     datosVerificacion.append("accion", "verificar_horario");
@@ -584,32 +584,28 @@ function enviaAjax(datos, accion = "") {
           $("#resultadoconsulta1").empty();
           let tabla = "";
           lee.mensaje.forEach((item) => {
-           
+
             let periodoTexto =
               item.uc_periodo === "anual"
                 ? "Anual"
                 : item.uc_periodo === "1"
-                ? "Fase 1"
-                : item.uc_periodo === "2"
-                ? "Fase 2"
-                : item.uc_periodo;
+                  ? "Fase 1"
+                  : item.uc_periodo === "2"
+                    ? "Fase 2"
+                    : item.uc_periodo;
             let trayectoTexto =
               item.uc_trayecto == 0 || item.uc_trayecto === "0"
                 ? "Inicial"
                 : item.uc_trayecto;
-            
-            const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" aria-label="Modificar" ${
-              !PERMISOS.modificar ? "disabled" : ""
-            }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Desactivar" aria-label="Desactivar" ${
-              !PERMISOS.eliminar ? "disabled" : ""
-            }><img src="public/assets/icons/power.svg" alt="Desactivar"></button>`;
-            const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar" aria-label="Activar" data-codigo="${
-              item.uc_codigo
-            }" ${
-              !PERMISOS.eliminar ? "disabled" : ""
-            }><img src="public/assets/icons/check.svg" alt="Activar"></button>`;
-            
+
+            const btnModificar = `<button class="btn btn-icon btn-edit" onclick="pone(this, 0)" title="Modificar" aria-label="Modificar" ${!PERMISOS.modificar ? "disabled" : ""
+              }><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick="pone(this, 1)" title="Desactivar" aria-label="Desactivar" ${!PERMISOS.eliminar ? "disabled" : ""
+              }><img src="public/assets/icons/power.svg" alt="Desactivar"></button>`;
+            const btnActivar = `<button class="btn btn-icon btn-success btn-activar" title="Activar" aria-label="Activar" data-codigo="${item.uc_codigo
+              }" ${!PERMISOS.eliminar ? "disabled" : ""
+              }><img src="public/assets/icons/check.svg" alt="Activar"></button>`;
+
             const btnDetalles = `<button class="btn btn-icon btn-info btn-detalles-uc" title="Ver Detalles" data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre}" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre}" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos}" data-periodo="${periodoTexto}"><img src="public/assets/icons/eye.svg" alt="Ver Detalles"></button>`;
             const estadoTexto =
               item.uc_estado == 1 || item.uc_estado === "1"
@@ -620,15 +616,11 @@ function enviaAjax(datos, accion = "") {
                 ? '<span class="uc-badge activa">Activa</span>'
                 : '<span class="uc-badge desactivada">Desactivada</span>';
             tabla += `
-              <tr data-codigo="${item.uc_codigo}" data-nombre="${
-              item.uc_nombre
-            }" data-trayecto="${item.uc_trayecto}" data-eje="${
-              item.eje_nombre
-            }" data-area="${item.area_nombre}" data-creditos="${
-              item.uc_creditos
-            }" data-periodo="${item.uc_periodo}" data-estado="${
-              item.uc_estado
-            }">
+              <tr data-codigo="${item.uc_codigo}" data-nombre="${item.uc_nombre
+              }" data-trayecto="${item.uc_trayecto}" data-eje="${item.eje_nombre
+              }" data-area="${item.area_nombre}" data-creditos="${item.uc_creditos
+              }" data-periodo="${item.uc_periodo}" data-estado="${item.uc_estado
+              }">
                 <td>${item.uc_codigo}</td>
                 <td>${item.uc_nombre}</td>
                 <td>${trayectoTexto}</td>
@@ -638,11 +630,10 @@ function enviaAjax(datos, accion = "") {
                 <td class="text-center">
                   ${btnDetalles}
                   ${btnModificar}
-                  ${
-                    item.uc_estado == 1 || item.uc_estado === "1"
-                      ? btnEliminar
-                      : btnActivar
-                  }
+                  ${item.uc_estado == 1 || item.uc_estado === "1"
+                ? btnEliminar
+                : btnActivar
+              }
                 </td>
               </tr>`;
           });
@@ -654,7 +645,7 @@ function enviaAjax(datos, accion = "") {
             $("#ucVerMasEje").text($(this).data("eje"));
             $("#ucVerMasCreditos").text($(this).data("creditos"));
             $("#ucVerMasPeriodo").text($(this).data("periodo"));
-            
+
             $("#modalVerMasUC").modal("show");
           });
 
@@ -667,9 +658,9 @@ function enviaAjax(datos, accion = "") {
             $("#detallesUcEje").text(data.eje);
             $("#detallesUcCreditos").text(data.creditos);
             $("#detallesUcPeriodo").text(data.periodo);
-            
+
             $("#ucDetallesNombreModal").text(data.nombre);
-            
+
             $("#modalDetallesUC").modal("show");
           });
 
@@ -693,7 +684,7 @@ function enviaAjax(datos, accion = "") {
           }
           Listar();
         } else if (lee.resultado == "eliminar") {
-          
+
           muestraMensaje("success", 4000, "DESACTIVAR", lee.mensaje);
           if (
             lee.mensaje.includes("eliminó la unidad curricular") ||
@@ -773,7 +764,7 @@ function limpia() {
   $("#ejeUC").val("");
   $("#areaUC").val("");
   $("#periodoUC").val("");
-  
+
   $(
     "#scodigoUC, #snombreUC, #screditosUC, #strayectoUC, #seje, #sarea, #speriodoUC"
   )

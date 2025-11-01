@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#anio_completo').select2({ theme: "bootstrap-5", placeholder: "Seleccione un Año" });
                 $('#fase_id').select2({ theme: "bootstrap-5", placeholder: "Seleccione una Fase" });
             } catch (e) {
-                console.error("Error al inicializar Select2.", e);
             }
         });
     }
@@ -23,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const partes = anioCompletoSelect.value.split('|');
         const tipoAnio = partes[1] ? partes[1].toLowerCase() : '';
-        console.log('Tipo de año detectado:', tipoAnio, '- Es intensivo:', tipoAnio === 'intensivo');
         return tipoAnio === 'intensivo';
     }
 
@@ -31,12 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleFaseSelect() {
         const esIntensivo = esAnioIntensivo();
         
-        console.log('Toggle fase - Es intensivo:', esIntensivo);
-        
         if (faseContainer) {
             if (esIntensivo) {
-                
-                console.log('Ocultando contenedor de fase');
                 faseContainer.style.display = 'none';
                 
                 if (faseSelect) {
@@ -44,22 +38,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     faseSelect.value = ''; 
                 }
             } else {
-                
-                console.log('Mostrando contenedor de fase');
                 faseContainer.style.display = 'block';
                 
                 if (faseSelect) {
                     faseSelect.setAttribute('required', 'required');
                 }
             }
-        } else {
-            console.error('No se encontró el contenedor de fase');
         }
     }
 
     
     if (anioCompletoSelect) {
-        // Usar evento Select2 de jQuery en lugar de addEventListener nativo
         if (window.jQuery) {
             $('#anio_completo').on('change', function() {
                 toggleFaseSelect();

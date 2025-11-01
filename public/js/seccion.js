@@ -265,7 +265,6 @@ function detectarTurnoPorHorario(clases) {
 
 function generarBloquesPorDefecto(turno) {
     if (!allTurnos || allTurnos.length === 0) {
-        console.error('⚠️ allTurnos está vacío. No se pueden generar bloques.');
         return [];
     }
 
@@ -1668,13 +1667,10 @@ function enviaAjax(datos, boton) {
                 }
             } catch (e) {
                 muestraMensaje("error", 8000, "Error de Procesamiento", "La respuesta del servidor no es válida: " + e.message);
-                console.error("Error en success de AJAX:", e);
-                console.error("Respuesta del servidor:", respuesta);
             }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             muestraMensaje("error", 5000, "Error de Conexión", `No se pudo comunicar con el servidor. ${textStatus}: ${errorThrown}`);
-            console.error("Error en AJAX:", textStatus, errorThrown, jqXHR.responseText);
         },
         complete: function () {
             if (boton) {
@@ -2202,8 +2198,6 @@ $(document).ready(function () {
                                     break;
                                 }
                             }
-                        } else {
-                            console.warn(`No se encontró bloque para hora_inicio: ${clase.hora_inicio}`);
                         }
                         clase.bloques_span = span;
 

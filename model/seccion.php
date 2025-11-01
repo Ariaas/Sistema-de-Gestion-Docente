@@ -1041,7 +1041,25 @@ public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_extern
     public function obtenerAnios()
     {
         try {
-            return $this->Con()->query("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 ORDER BY ani_anio DESC")->fetchAll(PDO::FETCH_ASSOC);
+            $co = $this->Con();
+            
+            $stmt_activo = $co->prepare("SELECT ani_anio FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 LIMIT 1");
+            $stmt_activo->execute();
+            $anio_activo = $stmt_activo->fetchColumn();
+            
+            if (!$anio_activo) {
+                return [];
+            }
+            
+            $anio_siguiente = $anio_activo + 1;
+            
+            $stmt = $co->prepare("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_anio IN (:anio_activo, :anio_siguiente) AND ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo");
+            $stmt->execute([
+                ':anio_activo' => $anio_activo,
+                ':anio_siguiente' => $anio_siguiente
+            ]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             error_log("Error en obtenerAnios: " . $e->getMessage());
             return [];
@@ -1426,7 +1444,6 @@ public function obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio)
         }
     }
 
-        // Obtener bloques personalizados para todas las secciones involucradas
         $bloques_personalizados = [];
         $bloques_eliminados = [];
         
