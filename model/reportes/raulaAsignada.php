@@ -49,7 +49,7 @@ class AsignacionAulasReport extends Connection
                     FROM
                         uc_horario uh
                     INNER JOIN tbl_espacio e ON uh.esp_numero = e.esp_numero AND uh.esp_tipo = e.esp_tipo AND uh.esp_edificio = e.esp_edificio
-                    INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+                    INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
                     INNER JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE
                         s.ani_anio = :anio 
@@ -58,9 +58,10 @@ class AsignacionAulasReport extends Connection
             
             
             $esIntensivo = strtolower($ani_tipo) === 'intensivo';
+            $allowed_periods = [];
+            
             if (!$esIntensivo && !empty($fase)) {
                 
-                $allowed_periods = [];
                 if ($fase == 1) {
                     $allowed_periods = ['Fase I', 'Anual'];
                 } elseif ($fase == 2) {
@@ -68,7 +69,7 @@ class AsignacionAulasReport extends Connection
                 }
                 
                 if (!empty($allowed_periods)) {
-                    $placeholders = implode(',', array_fill(0, count($allowed_periods), '?'));
+                    $placeholders = implode(',', array_map(function($i) { return ":periodo$i"; }, array_keys($allowed_periods)));
                     $sql .= " AND u.uc_periodo IN ($placeholders)";
                 }
             }
@@ -82,10 +83,9 @@ class AsignacionAulasReport extends Connection
             $stmt->bindParam(':ani_tipo', $ani_tipo, PDO::PARAM_STR);
             
             
-            if (!$esIntensivo && !empty($allowed_periods)) {
-                $paramIndex = 1;
-                foreach ($allowed_periods as $period) {
-                    $stmt->bindValue($paramIndex++, $period, PDO::PARAM_STR);
+            if (!empty($allowed_periods)) {
+                foreach ($allowed_periods as $index => $period) {
+                    $stmt->bindValue(":periodo$index", $period, PDO::PARAM_STR);
                 }
             }
             
