@@ -15,8 +15,8 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Alignment; 
-use PhpOffice\PhpSpreadsheet\Style\Border;   
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
@@ -25,7 +25,8 @@ use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
 
 
-function _abreviarNombreLargo($nombre) {
+function _abreviarNombreLargo($nombre)
+{
     if (!is_string($nombre) || empty($nombre)) return 'N/A';
     if (stripos($nombre, 'matemática') !== false) return 'Matemática' . _extraerNumeral($nombre);
     if (stripos($nombre, 'formación crítica') !== false) return 'Formación Crítica' . _extraerNumeral($nombre);
@@ -42,7 +43,8 @@ function _abreviarNombreLargo($nombre) {
 }
 
 
-function _extraerNumeral($cadena) {
+function _extraerNumeral($cadena)
+{
     $partes = explode(' ', $cadena);
     $ultimoTermino = end($partes);
     $numeralesRomanos = ['I', 'II', 'III', 'IV', 'V', 'VI'];
@@ -53,12 +55,13 @@ function _extraerNumeral($cadena) {
 }
 
 
-function _analizarEspaciosPorColumna($horario, $columnasHeader) {
+function _analizarEspaciosPorColumna($horario, $columnasHeader)
+{
     $espaciosPorColumna = [];
-    foreach($columnasHeader as $idx => $colInfo) {
+    foreach ($columnasHeader as $idx => $colInfo) {
         $espacios = [];
-        foreach($horario as $clase) {
-            if(strtoupper($clase['hor_dia']) === $colInfo['dia'] && $clase['subgrupo'] === $colInfo['subgrupo']) {
+        foreach ($horario as $clase) {
+            if (strtoupper($clase['hor_dia']) === $colInfo['dia'] && $clase['subgrupo'] === $colInfo['subgrupo']) {
                 if (!empty($clase['espacio_nombre'])) {
                     $espacios[] = $clase['espacio_nombre'];
                 }
@@ -72,7 +75,8 @@ function _analizarEspaciosPorColumna($horario, $columnasHeader) {
 }
 
 
-function _prepararColumnasYGrid($horario) {
+function _prepararColumnasYGrid($horario)
+{
     $day_map = ['LUNES' => 'Lunes', 'MARTES' => 'Martes', 'MIÉRCOLES' => 'Miércoles', 'JUEVES' => 'Jueves', 'VIERNES' => 'Viernes', 'SÁBADO' => 'Sábado'];
     $day_order = array_flip(array_keys($day_map));
     $horarioGrid = [];
@@ -111,13 +115,13 @@ function _prepararColumnasYGrid($horario) {
         $dia = strtoupper($clase['hor_dia']);
         $hora = $clase['hor_horainicio'];
         $subgrupo = $clase['subgrupo'];
-        
+
         if ($subgrupo) {
             $horarioGrid[$hora][$dia][$subgrupo] = $clase;
         } else {
-            foreach($columnasHeader as $col) {
+            foreach ($columnasHeader as $col) {
                 if ($col['dia'] === $dia && $col['subgrupo'] === null) {
-                     $horarioGrid[$hora][$dia]['general'] = $clase;
+                    $horarioGrid[$hora][$dia]['general'] = $clase;
                 }
             }
         }
@@ -126,7 +130,8 @@ function _prepararColumnasYGrid($horario) {
 }
 
 
-function _formatearEspacio($espacio_nombre) {
+function _formatearEspacio($espacio_nombre)
+{
     if (empty($espacio_nombre)) return '';
     if (stripos($espacio_nombre, 'LAB ') === 0) return $espacio_nombre;
     if (strpos($espacio_nombre, ' - ') === false) return $espacio_nombre;
@@ -137,25 +142,26 @@ function _formatearEspacio($espacio_nombre) {
 
 
 
-function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = []) {
+function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = [])
+{
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos para generar el reporte.");
     }
-    
+
     $preparacion = _prepararColumnasYGrid($horario);
     $columnasHeader = $preparacion['columnas'];
     $grid = $preparacion['grid'];
     $espaciosPorColumna = _analizarEspaciosPorColumna($horario, $columnasHeader);
-    
-   
+
+
     $time_slots = [];
     if (empty($horario)) {
-        
+
         foreach (array_slice($turnos, 0, 7) as $turno) {
-             $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
+            $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
         }
     } else {
-      
+
         $min_time = '23:59:59';
         $max_time = '00:00:00';
         foreach ($horario as $clase) {
@@ -163,20 +169,18 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
             if ($clase['hor_horafin'] > $max_time) $max_time = $clase['hor_horafin'];
         }
 
-       
+
         foreach ($turnos as $turno) {
-           
+
             if ($turno['tur_horainicio'] < $max_time && $turno['tur_horafin'] > $min_time) {
                 $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
             }
         }
-        
-        // Agregar bloques personalizados
+
         foreach ($bloques_personalizados as $bloque) {
             $time_slots[$bloque['tur_horainicio']] = $bloque['tur_horafin'];
         }
-        
-        // Eliminar bloques marcados como eliminados
+
         foreach ($bloques_eliminados as $inicio_eliminado) {
             unset($time_slots[$inicio_eliminado]);
         }
@@ -195,23 +199,22 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
     }
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones);
 
-    // Usar ruta relativa desde el directorio del proyecto
     $baseDir = dirname(dirname(__FILE__));
     $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
     $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
-    
+
     $logoBase64 = '';
     if (file_exists($logoPath)) {
         $logoData = file_get_contents($logoPath);
         $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
     }
-    
+
     $sintilloBase64 = '';
     if (file_exists($sintilloPath)) {
         $sintilloData = file_get_contents($sintilloPath);
         $sintilloBase64 = 'data:image/png;base64,' . base64_encode($sintilloData);
     }
-    
+
     $html = '<html><head><style>
         @page { margin: 25px; }
         body { font-family: Arial, sans-serif; font-size: 10px; }
@@ -232,25 +235,25 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
         .class-cell strong { font-size: 11px; font-weight: bold; display: block; margin-bottom: 6px; line-height: 1.4; }
         .class-cell small { font-size: 10px; color: #444; display: block; line-height: 1.5; margin-top: 3px; }
     </style></head><body>';
-    
+
     $html .= '<div class="header-logos">';
-    
+
     $html .= '<div class="logo-left"></div>';
-    
+
     if ($sintilloBase64) {
         $html .= '<div class="sintillo-center"><img src="' . $sintilloBase64 . '" alt="Sintillo"></div>';
     } else {
         $html .= '<div class="sintillo-center"></div>';
     }
-    
+
     if ($logoBase64) {
         $html .= '<div class="logo-right"><img src="' . $logoBase64 . '" alt="Logo UPTAEB"></div>';
     } else {
         $html .= '<div class="logo-right"></div>';
     }
-    
+
     $html .= '</div>';
-    
+
     $html .= '<div class="header-container">';
     $html .= '<h2>' . htmlspecialchars($tituloSeccion) . ' (' . htmlspecialchars($anio) . ')</h2>';
     $html .= '</div>';
@@ -276,10 +279,10 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
             foreach ($columnasHeader as $idx => $colInfo) {
                 $keySubgrupo = $colInfo['subgrupo'] ?? 'general';
                 $clase = $grid[$start_time][$colInfo['dia']][$keySubgrupo] ?? null;
-                
+
                 if (is_array($clase)) {
                     $rowspan = 0;
-                    foreach($time_slots as $s_start => $s_end) {
+                    foreach ($time_slots as $s_start => $s_end) {
                         if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) $rowspan++;
                     }
                     $rowspanAttr = $rowspan > 1 ? ' rowspan="' . $rowspan . '"' : '';
@@ -287,28 +290,28 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
                     $uc_abreviada = _abreviarNombreLargo($clase['uc_nombre']);
                     $docente_texto = htmlspecialchars($clase['docente_nombre'] ?: '(Sin Docente)');
                     $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
-                    
+
                     $html .= '<td class="class-cell"' . $rowspanAttr . '>';
                     $html .= '<strong>' . $subgrupo_texto . htmlspecialchars($uc_abreviada) . '</strong><br>';
                     $html .= '<small>' . $docente_texto;
-                    
+
                     if (!isset($espaciosPorColumna[$idx])) {
-                         $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
-                         if ($espacio_formateado) $html .= '<br>' . htmlspecialchars($espacio_formateado);
+                        $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
+                        if ($espacio_formateado) $html .= '<br>' . htmlspecialchars($espacio_formateado);
                     }
                     $html .= '</small></td>';
 
                     if ($rowspan > 1) {
-                         $temp_time = $start_time;
-                         for ($i = 0; $i < $rowspan - 1; $i++) {
-                             
-                             $keys = array_keys($time_slots);
-                             $current_key_index = array_search($temp_time, $keys);
-                             if ($current_key_index !== false && isset($keys[$current_key_index + 1])) {
-                                 $temp_time = $keys[$current_key_index + 1];
-                                 $grid[$temp_time][$colInfo['dia']][$keySubgrupo] = '__SPAN__';
-                             }
-                         }
+                        $temp_time = $start_time;
+                        for ($i = 0; $i < $rowspan - 1; $i++) {
+
+                            $keys = array_keys($time_slots);
+                            $current_key_index = array_search($temp_time, $keys);
+                            if ($current_key_index !== false && isset($keys[$current_key_index + 1])) {
+                                $temp_time = $keys[$current_key_index + 1];
+                                $grid[$temp_time][$colInfo['dia']][$keySubgrupo] = '__SPAN__';
+                            }
+                        }
                     }
                 } elseif ($clase !== '__SPAN__') {
                     $html .= '<td>&nbsp;</td>';
@@ -325,7 +328,8 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
     ob_end_clean();
     $dompdf->stream('horario_' . implode('_', $secciones_codigos) . '.pdf', ['Attachment' => true]);
 }
-function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = []) {
+function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = [])
+{
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos.");
     }
@@ -334,11 +338,10 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     $columnasHeader = $preparacion['columnas'];
     $grid = $preparacion['grid'];
     $espaciosPorColumna = _analizarEspaciosPorColumna($horario, $columnasHeader);
-    
-    
+
+
     $time_slots = [];
     if (empty($horario)) {
-        // Si no hay horario, mostrar los primeros bloques por defecto
         foreach (array_slice($turnos, 0, 7) as $turno) {
             $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
         }
@@ -350,13 +353,11 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
                 $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
             }
         }
-        
-        // Agregar bloques personalizados
+
         foreach ($bloques_personalizados as $bloque) {
             $time_slots[$bloque['tur_horainicio']] = $bloque['tur_horafin'];
         }
-        
-        // Eliminar bloques marcados como eliminados
+
         foreach ($bloques_eliminados as $inicio_eliminado) {
             unset($time_slots[$inicio_eliminado]);
         }
@@ -375,23 +376,20 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
 
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
-    $nombresSecciones = $secciones_codigos; 
+    $nombresSecciones = $secciones_codigos;
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones) . " ({$anio})";
 
     $lastColLetter = chr(65 + count($columnasHeader));
-    
-    // Usar ruta relativa desde el directorio del proyecto
+
     $baseDir = dirname(dirname(__FILE__));
     $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
     $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
-    
-    // Agregar sintillo en la fila 1 (centrado)
+
     if (file_exists($sintilloPath)) {
         $drawingSintillo = new Drawing();
         $drawingSintillo->setName('Sintillo')->setDescription('Sintillo')->setPath($sintilloPath);
         $drawingSintillo->setResizeProportional(true);
         $drawingSintillo->setHeight(40);
-        // Calcular columna central aproximada
         $colCentral = chr(65 + floor(count($columnasHeader) / 2));
         $drawingSintillo->setCoordinates($colCentral . '1');
         $drawingSintillo->setOffsetX(10);
@@ -399,8 +397,7 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
         $drawingSintillo->setWorksheet($sheet);
         $sheet->getRowDimension(1)->setRowHeight(45);
     }
-    
-    // Agregar logo en la fila 1 (esquina derecha)
+
     if (file_exists($logoPath)) {
         $drawingLogo = new Drawing();
         $drawingLogo->setName('Logo')->setDescription('Logo UPTAEB')->setPath($logoPath);
@@ -412,39 +409,39 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
         $drawingLogo->setWorksheet($sheet);
         $sheet->getRowDimension(1)->setRowHeight(45);
     }
-    
+
     $sheet->mergeCells("A2:{$lastColLetter}2");
     $sheet->setCellValue('A2', $tituloSeccion);
     $sheet->getStyle('A2')->applyFromArray($styleTitle);
-    
+
     $sheet->setCellValue('A3', 'Hora');
     $sheet->getColumnDimension('A')->setAutoSize(true);
 
     foreach ($columnasHeader as $idx => $colInfo) {
         $colLetter = chr(66 + $idx);
         $sheet->getColumnDimension($colLetter)->setAutoSize(true);
-        
-        
+
+
         $headerText = ucfirst(mb_strtolower($colInfo['dia']));
-        
+
         if ($colInfo['subgrupo']) {
             $headerText .= "\n(Grupo " . htmlspecialchars($colInfo['subgrupo']) . ")";
         }
         if (isset($espaciosPorColumna[$idx])) {
             $headerText .= "\n" . _formatearEspacio($espaciosPorColumna[$idx]);
         }
-        
+
         $sheet->getCell($colLetter . '3')->setValue($headerText);
         $sheet->getStyle($colLetter . '3')->getAlignment()->setWrapText(true);
     }
-    
+
     $currentRow = 4;
     $celdasOcupadas = [];
 
     foreach ($time_slots as $start_time => $end_time) {
         $sheet->getRowDimension($currentRow)->setRowHeight(55);
         $sheet->setCellValue('A' . $currentRow, date('h:i A', strtotime($start_time)) . ' a ' . date('h:i A', strtotime($end_time)));
-        
+
         foreach ($columnasHeader as $idx => $colInfo) {
             $colLetter = chr(66 + $idx);
             $cellAddress = $colLetter . $currentRow;
@@ -456,16 +453,16 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
 
             if (is_array($clase)) {
                 $rowspan = 0;
-                foreach($time_slots as $s_start => $s_end) {
+                foreach ($time_slots as $s_start => $s_end) {
                     if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) $rowspan++;
                 }
 
-            
+
                 $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
                 $texto_completo = $subgrupo_texto . _abreviarNombreLargo($clase['uc_nombre']);
                 $texto_completo .= "\n" . ($clase['docente_nombre'] ?: '(Sin Docente)');
-                
-               
+
+
                 if (!isset($espaciosPorColumna[$idx])) {
                     $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
                     if ($espacio_formateado) {
@@ -475,7 +472,7 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
 
                 $sheet->getCell($cellAddress)->setValue($texto_completo);
                 $sheet->getStyle($cellAddress)->getAlignment()->setWrapText(true);
-                
+
                 if ($rowspan > 1) {
                     $endRow = $currentRow + $rowspan - 1;
                     $sheet->mergeCells($cellAddress . ':' . $colLetter . $endRow);
@@ -497,7 +494,7 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     $sheet->getStyle($range)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF666666'));
 
 
-    
+
     $fileName = 'horario_' . implode('_', $nombresSecciones) . '.xlsx';
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
@@ -506,16 +503,17 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');
 }
-function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = []) {
+function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = [])
+{
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos.");
     }
-    
+
     $preparacion = _prepararColumnasYGrid($horario);
     $columnasHeader = $preparacion['columnas'];
     $grid = $preparacion['grid'];
     $espaciosPorColumna = _analizarEspaciosPorColumna($horario, $columnasHeader);
-    
+
     $time_slots = [];
     if (!empty($horario)) {
         $min_time = min(array_column($horario, 'hor_horainicio'));
@@ -525,44 +523,39 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
                 $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
             }
         }
-        
-        // Agregar bloques personalizados
+
         foreach ($bloques_personalizados as $bloque) {
             $time_slots[$bloque['tur_horainicio']] = $bloque['tur_horafin'];
         }
-        
-        // Eliminar bloques marcados como eliminados
+
         foreach ($bloques_eliminados as $inicio_eliminado) {
             unset($time_slots[$inicio_eliminado]);
         }
-        
+
         ksort($time_slots);
     }
 
-    // Generar HTML compatible con Word (no requiere extensión ZIP)
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
-    $nombresSecciones = $secciones_codigos; 
+    $nombresSecciones = $secciones_codigos;
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones) . " ({$anio})";
 
-    // Usar ruta relativa desde el directorio del proyecto
-    $baseDir = dirname(dirname(__FILE__)); // Sube dos niveles desde controller
+    $baseDir = dirname(dirname(__FILE__));
     $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
     $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
-    
+
     $logoBase64 = '';
     if (file_exists($logoPath)) {
         $logoData = file_get_contents($logoPath);
         $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
     }
-    
+
     $sintilloBase64 = '';
     if (file_exists($sintilloPath)) {
         $sintilloData = file_get_contents($sintilloPath);
         $sintilloBase64 = 'data:image/png;base64,' . base64_encode($sintilloData);
     }
 
-    // Generar HTML con estilos para Word
     $html = '<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
@@ -694,27 +687,27 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
 <body>';
 
     $html .= '<div class="header-logos">';
-    
+
     $html .= '<div class="logo-left"></div>';
-    
+
     if ($sintilloBase64) {
         $html .= '<div class="sintillo-center"><img src="' . $sintilloBase64 . '" alt="Sintillo" width="400" style="width:400px;height:auto;"></div>';
     } else {
         $html .= '<div class="sintillo-center"></div>';
     }
-    
+
     if ($logoBase64) {
         $html .= '<div class="logo-right"><img src="' . $logoBase64 . '" alt="Logo UPTAEB" width="120" style="width:120px;height:auto;"></div>';
     } else {
         $html .= '<div class="logo-right"></div>';
     }
-    
+
     $html .= '</div>';
-    
+
     $html .= '<div class="header-container">';
     $html .= '<h2>' . htmlspecialchars($tituloSeccion) . '</h2>';
     $html .= '</div>';
-    
+
     $html .= '<div class="table-container"><table><thead><tr><th class="time-col">Hora</th>';
 
     foreach ($columnasHeader as $idx => $colInfo) {
@@ -734,14 +727,14 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
     } else {
         foreach ($time_slots as $start_time => $end_time) {
             $html .= '<tr><td class="time-col">' . date('h:i A', strtotime($start_time)) . ' a ' . date('h:i A', strtotime($end_time)) . '</td>';
-            
+
             foreach ($columnasHeader as $idx => $colInfo) {
                 $keySubgrupo = $colInfo['subgrupo'] ?? 'general';
                 $clase = $grid[$start_time][$colInfo['dia']][$keySubgrupo] ?? null;
-                
+
                 if (is_array($clase)) {
                     $rowspan = 0;
-                    foreach($time_slots as $s_start => $s_end) {
+                    foreach ($time_slots as $s_start => $s_end) {
                         if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) $rowspan++;
                     }
                     $rowspanAttr = $rowspan > 1 ? ' rowspan="' . $rowspan . '"' : '';
@@ -749,27 +742,27 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
                     $uc_abreviada = _abreviarNombreLargo($clase['uc_nombre']);
                     $docente_texto = htmlspecialchars($clase['docente_nombre'] ?: '(Sin Docente)');
                     $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
-                    
+
                     $html .= '<td class="class-cell"' . $rowspanAttr . '>';
                     $html .= '<strong>' . $subgrupo_texto . htmlspecialchars($uc_abreviada) . '</strong><br>';
                     $html .= '<small>' . $docente_texto;
-                    
+
                     if (!isset($espaciosPorColumna[$idx])) {
-                         $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
-                         if ($espacio_formateado) $html .= '<br>' . htmlspecialchars($espacio_formateado);
+                        $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
+                        if ($espacio_formateado) $html .= '<br>' . htmlspecialchars($espacio_formateado);
                     }
                     $html .= '</small></td>';
 
                     if ($rowspan > 1) {
-                         $temp_time = $start_time;
-                         for ($i = 0; $i < $rowspan - 1; $i++) {
-                             $keys = array_keys($time_slots);
-                             $current_key_index = array_search($temp_time, $keys);
-                             if ($current_key_index !== false && isset($keys[$current_key_index + 1])) {
-                                 $temp_time = $keys[$current_key_index + 1];
-                                 $grid[$temp_time][$colInfo['dia']][$keySubgrupo] = '__SPAN__';
-                             }
-                         }
+                        $temp_time = $start_time;
+                        for ($i = 0; $i < $rowspan - 1; $i++) {
+                            $keys = array_keys($time_slots);
+                            $current_key_index = array_search($temp_time, $keys);
+                            if ($current_key_index !== false && isset($keys[$current_key_index + 1])) {
+                                $temp_time = $keys[$current_key_index + 1];
+                                $grid[$temp_time][$colInfo['dia']][$keySubgrupo] = '__SPAN__';
+                            }
+                        }
                     }
                 } elseif ($clase !== '__SPAN__') {
                     $html .= '<td>&nbsp;</td>';
@@ -780,15 +773,14 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
     }
     $html .= '</tbody></table></div></body></html>';
 
-    // Enviar como documento Word (HTML)
     $fileName = 'horario_' . implode('_', $nombresSecciones) . '.doc';
-    
+
     ob_end_clean();
-    
+
     header('Content-Type: application/msword');
     header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
     header('Cache-Control: max-age=0');
-    
+
     echo $html;
 }
 
@@ -802,52 +794,52 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'generar_reporte') {
     }
 
     $o = new Seccion();
-    
+
     $datosReporte = $o->obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio);
 
     if ($datosReporte['resultado'] !== 'ok') {
         die("Error al obtener los datos del horario: " . $datosReporte['mensaje']);
     }
 
-    
+
     switch ($formato) {
-       case 'excel':
-      
-        generarReporteExcel(
-            $datosReporte['secciones'], 
-            $datosReporte['horario'],
-            $datosReporte['anio'],
-            $datosReporte['turnos'],
-            $datosReporte['bloques_personalizados'] ?? [],
-            $datosReporte['bloques_eliminados'] ?? []
-        );
-        break;
-        
-    case 'word':
-       
-        generarReporteWord(
-            $datosReporte['secciones'], 
-            $datosReporte['horario'],
-            $datosReporte['anio'],
-            $datosReporte['turnos'],
-            $datosReporte['bloques_personalizados'] ?? [],
-            $datosReporte['bloques_eliminados'] ?? []
-        );
-        break;
+        case 'excel':
+
+            generarReporteExcel(
+                $datosReporte['secciones'],
+                $datosReporte['horario'],
+                $datosReporte['anio'],
+                $datosReporte['turnos'],
+                $datosReporte['bloques_personalizados'] ?? [],
+                $datosReporte['bloques_eliminados'] ?? []
+            );
+            break;
+
+        case 'word':
+
+            generarReporteWord(
+                $datosReporte['secciones'],
+                $datosReporte['horario'],
+                $datosReporte['anio'],
+                $datosReporte['turnos'],
+                $datosReporte['bloques_personalizados'] ?? [],
+                $datosReporte['bloques_eliminados'] ?? []
+            );
+            break;
         case 'pdf':
-       default:
-        
-        generarReportePDF(
-            $datosReporte['secciones'],
-            $datosReporte['horario'],
-            $datosReporte['anio'],
-            $datosReporte['turnos'],
-            $datosReporte['bloques_personalizados'] ?? [],
-            $datosReporte['bloques_eliminados'] ?? []
-        );
-        break;
+        default:
+
+            generarReportePDF(
+                $datosReporte['secciones'],
+                $datosReporte['horario'],
+                $datosReporte['anio'],
+                $datosReporte['turnos'],
+                $datosReporte['bloques_personalizados'] ?? [],
+                $datosReporte['bloques_eliminados'] ?? []
+            );
+            break;
     }
-    exit; 
+    exit;
 }
 $acciones_json_validas = [
     'obtener_datos_selects',
@@ -878,23 +870,23 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
         $_SESSION['reporte_promocion'] = $reporte_promocion;
     }
 
-   $mostrar_prompt_duplicar = false;
-$anio_activo = $o->obtenerAnioActivo();
+    $mostrar_prompt_duplicar = false;
+    $anio_activo = $o->obtenerAnioActivo();
 
-if ($anio_activo) {
-    $existen_secciones_actual = $o->existenSeccionesParaAnio($anio_activo);
+    if ($anio_activo) {
+        $existen_secciones_actual = $o->existenSeccionesParaAnio($anio_activo);
 
 
-    if (!$existen_secciones_actual) {
-        $anio_anterior = $anio_activo - 1;
-        $existen_secciones_anterior = $o->existenSeccionesParaAnio($anio_anterior);
+        if (!$existen_secciones_actual) {
+            $anio_anterior = $anio_activo - 1;
+            $existen_secciones_anterior = $o->existenSeccionesParaAnio($anio_anterior);
 
-      
-        if ($existen_secciones_anterior) {
-            $mostrar_prompt_duplicar = true;
+
+            if ($existen_secciones_anterior) {
+                $mostrar_prompt_duplicar = true;
+            }
         }
     }
-}
     if (is_file("views/" . $pagina . ".php")) {
         require_once("views/" . $pagina . ".php");
     } else {
@@ -912,7 +904,7 @@ if ($anio_activo) {
             case 'obtener_datos_selects':
                 $respuesta = [
                     'resultado' => 'ok',
-                    'anio_activo' => $o->obtenerAnioActivo(), 
+                    'anio_activo' => $o->obtenerAnioActivo(),
                     'ucs' => $o->obtenerUnidadesCurriculares(),
                     'espacios' => $o->obtenerEspacios(),
                     'docentes' => $o->obtenerDocentes(),
@@ -940,38 +932,39 @@ if ($anio_activo) {
                 $respuesta = $o->ListarAgrupado();
                 break;
 
-           case 'consultar_detalles':
-    $respuesta = $o->ConsultarDetalles($_POST['sec_codigo'] ?? null, $_POST['ani_anio'] ?? null);
-    break;
+            case 'consultar_detalles':
+                $respuesta = $o->ConsultarDetalles($_POST['sec_codigo'] ?? null, $_POST['ani_anio'] ?? null, $_POST['ani_tipo'] ?? null);
+                break;
 
             case 'obtener_uc_por_docente':
-                    $doc_cedula = $_POST['doc_cedula'] ?? null;
-                    $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null;
-                    $trayecto_seccion = null;
+                $doc_cedula = $_POST['doc_cedula'] ?? null;
+                $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null;
+                $ani_tipo = $_POST['ani_tipo'] ?? null;
+                $trayecto_seccion = null;
 
-                    if ($sec_codigo_actual) {
-                       
-                        $numericPart = preg_replace('/^\D+/', '', $sec_codigo_actual);
-                        if (strlen($numericPart) > 0) {
-                           
-                            $trayecto_seccion = substr($numericPart, 0, 1);
-                        }
+                if ($sec_codigo_actual) {
+
+                    $numericPart = preg_replace('/^\D+/', '', $sec_codigo_actual);
+                    if (strlen($numericPart) > 0) {
+
+                        $trayecto_seccion = substr($numericPart, 0, 1);
                     }
+                }
 
-                    $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion);
-                    $respuesta = [
-                        'resultado' => 'ok',
-                        'ucs_docente' => $resultado_uc['data'],
-                        'mensaje_uc' => $resultado_uc['mensaje']
-                    ];
-                    break;
+                $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion, $ani_tipo);
+                $respuesta = [
+                    'resultado' => 'ok',
+                    'ucs_docente' => $resultado_uc['data'],
+                    'mensaje_uc' => $resultado_uc['mensaje']
+                ];
+                break;
 
-         case 'modificar':
+            case 'modificar':
                 $forzar = isset($_POST['forzar_guardado']) && $_POST['forzar_guardado'] === 'true';
                 $modo_operacion = $_POST['modo_operacion'] ?? 'modificar';
                 $respuesta = $o->Modificar(
                     $_POST['sec_codigo'] ?? null,
-                    $_POST['ani_anio'] ?? null, 
+                    $_POST['ani_anio'] ?? null,
                     $_POST['items_horario'] ?? '[]',
                     $_POST['cantidadSeccion'] ?? null,
                     $forzar,
@@ -981,18 +974,18 @@ if ($anio_activo) {
                 );
                 break;
 
-           case 'eliminar_seccion_y_horario':
-                    $respuesta = $o->EliminarSeccionYHorario(
-                        $_POST['sec_codigo'] ?? null, 
-                        $_POST['ani_anio'] ?? null 
-                    );
-                    break;
+            case 'eliminar_seccion_y_horario':
+                $respuesta = $o->EliminarSeccionYHorario(
+                    $_POST['sec_codigo'] ?? null,
+                    $_POST['ani_anio'] ?? null
+                );
+                break;
 
             case 'validar_clase_en_vivo':
-                 $espacio = isset($_POST['espacio']) ? json_decode($_POST['espacio'], true) : null;
-                 $respuesta = $o->ValidarClaseEnVivo(
+                $espacio = isset($_POST['espacio']) ? json_decode($_POST['espacio'], true) : null;
+                $respuesta = $o->ValidarClaseEnVivo(
                     $_POST['doc_cedula'] ?? null,
-                    $_POST['uc_codigo'] ?? null, 
+                    $_POST['uc_codigo'] ?? null,
                     $espacio,
                     $_POST['dia'] ?? null,
                     $_POST['hora_inicio'] ?? null,
@@ -1001,27 +994,27 @@ if ($anio_activo) {
                     $_POST['ani_anio'] ?? null
                 );
                 break;
-            
+
             case 'verificar_codigo_seccion':
                 $anioCompuesto = $_POST['anioId'] ?? null;
                 list($anio_anio, $anio_tipo) = explode('|', $anioCompuesto . '|');
                 $codigoSeccion = $_POST['codigoSeccion'] ?? null;
 
                 $existe = false;
-                if($codigoSeccion && $anio_anio && $anio_tipo) {
-                   $existe = $o->VerificarCodigoSeccion($codigoSeccion, $anio_anio, $anio_tipo);
+                if ($codigoSeccion && $anio_anio && $anio_tipo) {
+                    $existe = $o->VerificarCodigoSeccion($codigoSeccion, $anio_anio, $anio_tipo);
                 }
                 $respuesta = ['resultado' => 'ok', 'existe' => $existe];
                 break;
-            
+
             case 'verificar_malla':
                 $numeroMalla = $_POST['numeroMalla'] ?? null;
                 $existe = false;
-                
+
                 if ($numeroMalla !== null) {
                     $existe = $o->VerificarMallaExiste($numeroMalla);
                 }
-                
+
                 $respuesta = ['resultado' => 'ok', 'existe' => $existe];
                 break;
 
@@ -1031,7 +1024,7 @@ if ($anio_activo) {
                     $_POST['secciones_a_unir'] ?? []
                 );
                 break;
-                
+
             case 'duplicar_anio_anterior':
                 $respuesta = $o->duplicarSeccionesAnioAnterior();
                 break;

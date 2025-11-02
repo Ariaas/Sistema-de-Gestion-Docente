@@ -176,7 +176,7 @@ function construirBloquesParaHorario(clases, turnoSeleccionado, bloquesPersonali
         const inicioClase = normalizar(clase.hora_inicio);
         const finClase = normalizar(clase.hora_fin);
         if (!inicioClase || !finClase) return;
-        
+
         if (!mapa.has(inicioClase)) {
             mapa.set(inicioClase, {
                 tur_horainicio: inicioClase,
@@ -511,11 +511,13 @@ function renderizarModalClaseUnica(claseData, franjaInicio, diaNombre) {
 }
 function populateUcSelectForModal(ucSelect, ucToSelect) {
     const secCodigo = $("#sec_codigo_hidden").val();
+    const aniTipo = $("#ani_tipo_hidden").val();
     ucSelect.empty().append('<option value="">Cargando UCs...</option>').prop("disabled", true);
 
     const datos = new FormData();
     datos.append("accion", "obtener_uc_por_docente");
     datos.append("sec_codigo_actual", secCodigo);
+    datos.append("ani_tipo", aniTipo);
 
 
     $.ajax({
@@ -1471,6 +1473,7 @@ function abrirModalHorarioParaNuevaSeccion(secCodigo, secCantidad, anioTexto, an
     $("#proceso").text("REGISTRAR HORARIO").data("action-type", "modificar").addClass("btn-success");
     $("#sec_codigo_hidden").val(secCodigo);
     $("#ani_anio_hidden").val(anioAnio);
+    $("#ani_tipo_hidden").val(anioTipo);
     $("#modal-horario").data("mode", "registrar");
 
     bloquesDeLaTablaActual = generarBloquesPorDefecto(turnoSeleccionado);
@@ -1584,11 +1587,11 @@ function enviaAjax(datos, boton) {
                         respuesta.mensaje.forEach(item => {
                             const tipoTexto = item.ani_tipo === 'regular' ? 'Regular' : 'Intensivo';
                             const botones_accion = `
-        <button class="btn btn-icon btn-info ver-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button>
-        <button class="btn btn-icon btn-secondary generar-reporte me-1" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Generar Reporte del Horario"><img src="public/assets/icons/printer.svg" alt="Generar Reporte"></button>
-        <button class="btn btn-icon btn-warning modificar-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-        <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
-    `;
+                                <button class="btn btn-icon btn-info ver-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button>
+                                <button class="btn btn-icon btn-secondary generar-reporte me-1" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Generar Reporte del Horario"><img src="public/assets/icons/printer.svg" alt="Generar Reporte"></button>
+                                <button class="btn btn-icon btn-warning modificar-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+                                <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
+                            `;
                             $("#resultadoconsulta").append(`<tr><td>${item.sec_codigo}</td><td>${item.sec_cantidad || 'N/A'}</td><td>${item.ani_anio || 'N/A'}</td><td>${tipoTexto}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
                     }
@@ -1786,9 +1789,9 @@ $(document).ready(function () {
         Swal.fire({
             title: '¿Está seguro de limpiar el horario?',
             html: "Esta acción:<br>" +
-                  "• Eliminará todas las clases<br>" +
-                  "• Restaurará los bloques base<br>" +
-                  "• <b>Descartará cambios NO guardados</b>",
+                "• Eliminará todas las clases<br>" +
+                "• Restaurará los bloques base<br>" +
+                "• <b>Descartará cambios NO guardados</b>",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -1809,6 +1812,7 @@ $(document).ready(function () {
                 datosConsulta.append("accion", "consultar_detalles");
                 datosConsulta.append("sec_codigo", sec_codigo);
                 datosConsulta.append("ani_anio", ani_anio);
+                datosConsulta.append("ani_tipo", $("#ani_tipo_hidden").val());
 
                 $.ajax({
                     url: "",
@@ -1819,7 +1823,7 @@ $(document).ready(function () {
                     success: function (respuesta) {
                         if (respuesta.resultado === 'ok' || respuesta.resultado === 'consultar_detalles') {
                             horarioContenidoGuardado.clear();
-                            
+
                             let turnoSeleccionado = respuesta.tur_nombre || respuesta.turno_nombre || 'mañana';
                             if (respuesta.tur_nombre || respuesta.turno_nombre) {
                                 turnoSeleccionado = normalizeTurnoValue(respuesta.tur_nombre || respuesta.turno_nombre);
@@ -1843,7 +1847,7 @@ $(document).ready(function () {
                             inicializarTablaHorario(turnoSeleccionado, "#tablaHorario", false);
                             hasSaved = true;
                             checkForScheduleChanges();
-                            
+
                             muestraMensaje("success", 3000, "Éxito", "Horario limpiado correctamente");
                         } else {
                             muestraMensaje("warning", 3000, "Advertencia", respuesta.mensaje || "No se pudo limpiar el horario");
@@ -2119,10 +2123,11 @@ $(document).ready(function () {
     $(document).on('click', '.ver-horario, .modificar-horario, .eliminar-horario', function () {
         const sec_codigo = $(this).data('sec-codigo');
         const ani_anio = $(this).data('ani-anio');
+        const ani_tipo = $(this).data('ani-tipo');
         const isView = $(this).hasClass('ver-horario');
         const isModify = $(this).hasClass('modificar-horario');
         const isDelete = $(this).hasClass('eliminar-horario');
-        const seccionData = allSecciones.find(s => s.sec_codigo == sec_codigo);
+        const seccionData = allSecciones.find(s => s.sec_codigo == sec_codigo && s.ani_anio == ani_anio && s.ani_tipo == ani_tipo);
         if (!seccionData) return;
 
         let turnoSeleccionado = 'mañana';
@@ -2140,6 +2145,7 @@ $(document).ready(function () {
         datos.append("accion", "consultar_detalles");
         datos.append("sec_codigo", sec_codigo);
         datos.append("ani_anio", ani_anio);
+        datos.append("ani_tipo", ani_tipo);
         $.ajax({
             url: "",
             type: "POST",
@@ -2165,14 +2171,14 @@ $(document).ready(function () {
                     let bloquesEliminadosDB = Array.isArray(respuesta.bloques_eliminados)
                         ? respuesta.bloques_eliminados
                         : [];
-                    
+
                     const horasConClases = new Set(respuesta.mensaje.map(c => c.hora_inicio.substring(0, 5)));
                     bloquesEliminadosDB = bloquesEliminadosDB.filter(b => {
                         const horaInicio = b.tur_horainicio.substring(0, 5);
                         const tieneClase = horasConClases.has(horaInicio);
                         return !tieneClase;
                     });
-                    
+
                     bloquesEliminadosPorUsuario = bloquesEliminadosDB;
 
                     const bloquesParaEstaTabla = construirBloquesParaHorario(
@@ -2226,6 +2232,7 @@ $(document).ready(function () {
                         const anioTipo = seccionData.ani_tipo === 'regular' ? 'Regular' : 'Intensivo';
                         $("#sec_codigo_hidden").val(sec_codigo);
                         $("#ani_anio_hidden").val(ani_anio);
+                        $("#ani_tipo_hidden").val(ani_tipo);
                         $("#cantidadSeccionModificar").val(seccionData.sec_cantidad);
                         $("#filtro_turno").val(turnoSeleccionado);
                         $("#modalHorarioGlobalTitle").text(`MODIFICAR Horario - ${seccionData.sec_codigo} | Año ${seccionData.ani_anio} (${anioTipo}) | Turno ${turnoTexto}`);

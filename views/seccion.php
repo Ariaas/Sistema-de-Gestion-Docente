@@ -55,7 +55,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Sección</h2>
             <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
-                <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button> 
+                <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button>
                 <button class="btn btn-success px-4" id="btnIniciarRegistro">Registrar Sección</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 900px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
@@ -129,7 +129,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
         </div>
 
-      <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal fade" tabindex="-1" role="dialog" id="modal-horario" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
@@ -141,7 +141,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                             <input type="hidden" name="accion" id="accion">
                             <input type="hidden" name="sec_codigo" id="sec_codigo_hidden">
                             <input type="hidden" id="ani_anio_hidden" name="ani_anio">
-                            
+                            <input type="hidden" id="ani_tipo_hidden" name="ani_tipo">
+
                             <input type="hidden" id="filtro_turno">
                             <div class="d-flex justify-content-between align-items-center mb-4 px-4 py-3 bg-light rounded">
                                 <div style="flex: 0 0 220px;">
@@ -150,7 +151,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div id="cantidad-seccion-modificar-error" class="form-text text-muted" style="display: none;">Debe ser entre 0 y 99</div>
                                 </div>
                                 <div class="ms-4">
-                                     <button type="button" class="btn btn-warning" id="btnLimpiarHorario" title="Limpia el horario actual">
+                                    <button type="button" class="btn btn-warning" id="btnLimpiarHorario" title="Limpia el horario actual">
                                         <img src="public/assets/icons/arrow-clockwise.svg" alt="" class="me-1" style="width: 1em; height: 1em; filter: brightness(0) invert(1);">
                                         Limpiar Horario
                                     </button>
@@ -177,7 +178,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <tbody></tbody>
                                 </table>
                             </div>
-                            
+
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn" id="proceso"></button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
@@ -260,7 +261,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             </div>
         </div>
 
-    <div class="modal fade" id="modalEntradaHorario" tabindex="-1">
+        <div class="modal fade" id="modalEntradaHorario" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -268,7 +269,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body" id="modal-body-gestion-clase">
-                        
+
                     </div>
                 </div>
             </div>
@@ -312,44 +313,44 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                 </div>
             </div>
         </div>
-     
-     
-<div class="modal fade" id="modalReporteHorario" tabindex="-1" aria-labelledby="modalReporteHorarioLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="modalReporteHorarioLabel">Generar Reporte de Horario</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-center mb-4">Descargar horario para la sección <strong id="reporteSeccionCodigo"></strong> en formato:</p>
-                
-                <input type="hidden" id="reporte_sec_codigo_hidden">
-                <input type="hidden" id="reporte_ani_anio_hidden">
 
-                <div class="d-grid gap-2 col-8 mx-auto">
-                    <button type="button" class="btn btn-danger btn-generar-reporte-tipo" data-tipo="pdf">
-                        <img src="public/assets/icons/filetype-pdf.svg"  alt="PDF" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1);"> Generar PDF
-             
-                    </button>
-                    <button type="button" class="btn btn-success btn-generar-reporte-tipo" data-tipo="excel">
-                        <img src="public/assets/icons/file-earmark-spreadsheet.svg" alt="Excel" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1)"> Generar Excel
-                    </button>
-                    <button type="button" class="btn btn-primary btn-generar-reporte-tipo" data-tipo="word">
-                        <img src="public/assets/icons/file-earmark-word.svg" alt="Word" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1)"> Generar Word
-                    </button>
+
+        <div class="modal fade" id="modalReporteHorario" tabindex="-1" aria-labelledby="modalReporteHorarioLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalReporteHorarioLabel">Generar Reporte de Horario</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-center mb-4">Descargar horario para la sección <strong id="reporteSeccionCodigo"></strong> en formato:</p>
+
+                        <input type="hidden" id="reporte_sec_codigo_hidden">
+                        <input type="hidden" id="reporte_ani_anio_hidden">
+
+                        <div class="d-grid gap-2 col-8 mx-auto">
+                            <button type="button" class="btn btn-danger btn-generar-reporte-tipo" data-tipo="pdf">
+                                <img src="public/assets/icons/filetype-pdf.svg" alt="PDF" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1);"> Generar PDF
+
+                            </button>
+                            <button type="button" class="btn btn-success btn-generar-reporte-tipo" data-tipo="excel">
+                                <img src="public/assets/icons/file-earmark-spreadsheet.svg" alt="Excel" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1)"> Generar Excel
+                            </button>
+                            <button type="button" class="btn btn-primary btn-generar-reporte-tipo" data-tipo="word">
+                                <img src="public/assets/icons/file-earmark-word.svg" alt="Word" style="height: 1.2em; margin-right: 8px; filter: brightness(0) invert(1)"> Generar Word
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<form id="formGenerarReporte" action="?pagina=seccion" method="POST" target="_blank" style="display: none;">
-    <input type="hidden" name="accion" value="generar_reporte">
-    <input type="hidden" id="form_reporte_sec_codigo" name="sec_codigo">
-    <input type="hidden" id="form_reporte_ani_anio" name="ani_anio">
-    <input type="hidden" id="form_reporte_formato" name="formato">
-</form>
+        <form id="formGenerarReporte" action="?pagina=seccion" method="POST" target="_blank" style="display: none;">
+            <input type="hidden" name="accion" value="generar_reporte">
+            <input type="hidden" id="form_reporte_sec_codigo" name="sec_codigo">
+            <input type="hidden" id="form_reporte_ani_anio" name="ani_anio">
+            <input type="hidden" id="form_reporte_formato" name="formato">
+        </form>
     </main>
     <script>
         const PERMISOS = {
