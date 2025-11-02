@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 01-11-2025 a las 03:53:47
+-- Tiempo de generación: 02-11-2025 a las 03:18:26
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -39,10 +39,10 @@ CREATE TABLE `coordinacion_docente` (
 
 INSERT INTO `coordinacion_docente` (`cor_nombre`, `doc_cedula`, `cor_doc_estado`) VALUES
 ('Académica', 7439117, 1),
-('Actividades Acreditables I, II', 12701387, 1),
-('Actividades Acreditables I, II', 16385182, 1),
-('Actividades Acreditables I, II', 18103232, 1),
-('Actividades Acreditables I, II', 20351422, 1),
+('Actividades Acreditables I', 12701387, 1),
+('Actividades Acreditables I', 16385182, 1),
+('Actividades Acreditables I', 18103232, 1),
+('Actividades Acreditables I', 20351422, 1),
 ('Administración de Base de Dato', 5260810, 1),
 ('Algorítmica y Programación', 7391773, 1),
 ('Algorítmica y Programación', 7439117, 1),
@@ -53,7 +53,6 @@ INSERT INTO `coordinacion_docente` (`cor_nombre`, `doc_cedula`, `cor_doc_estado`
 ('Arquitectura del Computador', 7424546, 1),
 ('Arquitectura del Computador', 10778236, 1),
 ('Arquitectura del Computador', 10844463, 1),
-('Arquitectura del Computador', 11264888, 1),
 ('Arquitectura del Computador', 11898335, 1),
 ('Auditoria de Sistemas', 16403903, 1),
 ('Base de Datos', 5260810, 1),
@@ -68,7 +67,6 @@ INSERT INTO `coordinacion_docente` (`cor_nombre`, `doc_cedula`, `cor_doc_estado`
 ('Eje Epistemológico', 3759671, 1),
 ('Eje Estético Lúdico', 18103232, 1),
 ('Eje Etico Político', 3759671, 1),
-('Electiva 1', 11264888, 1),
 ('Electiva 1', 26197135, 1),
 ('Electiva 1', 29880797, 1),
 ('Electiva 1', 30395804, 1),
@@ -96,7 +94,6 @@ INSERT INTO `coordinacion_docente` (`cor_nombre`, `doc_cedula`, `cor_doc_estado`
 ('Idiomas I', 18356682, 1),
 ('Idiomas II', 18356682, 1),
 ('Ingeniería del Software', 9555514, 1),
-('Ingeniería del Software', 11264888, 1),
 ('Ingeniería del Software', 13991971, 1),
 ('Ingeniería del Software', 30395804, 1),
 ('Ingeniería del Software II', 13991971, 1),
@@ -253,7 +250,21 @@ INSERT INTO `docente_horario` (`doc_cedula`, `sec_codigo`, `ani_anio`, `ani_tipo
 (16385182, 'IIN4404', 2025, 'regular'),
 (13527711, 'IIN4404', 2025, 'regular'),
 (7391773, 'IIN4404', 2025, 'regular'),
-(18356682, 'IIN4404', 2025, 'regular');
+(18356682, 'IIN4404', 2025, 'regular'),
+(14677589, 'IN1133', 2025, 'regular'),
+(12701387, 'IN1133', 2025, 'regular'),
+(24418577, 'IN1133', 2025, 'regular'),
+(7423486, 'IN1133', 2025, 'regular'),
+(13527711, 'IN1133', 2025, 'regular'),
+(10846157, 'IN1133', 2025, 'regular'),
+(7424546, 'IN1133', 2025, 'regular'),
+(12701387, 'IN1403', 2025, 'regular'),
+(7423486, 'IN1403', 2025, 'regular'),
+(13527711, 'IN1403', 2025, 'regular'),
+(17354607, 'IN1403', 2025, 'regular'),
+(7423485, 'IN1403', 2025, 'regular'),
+(15693145, 'IN1403', 2025, 'regular'),
+(7424546, 'IN1403', 2025, 'regular');
 
 -- --------------------------------------------------------
 
@@ -392,6 +403,26 @@ CREATE TABLE `tbl_bloque_personalizado` (
   `bloque_sintetico` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `tbl_bloque_personalizado`
+--
+
+INSERT INTO `tbl_bloque_personalizado` (`bloque_id`, `sec_codigo`, `ani_anio`, `ani_tipo`, `tur_horainicio`, `tur_horafin`, `bloque_sintetico`) VALUES
+(1, 'IN1133', 2025, 'regular', '07:20', '08:00', 0),
+(2, 'IN1133', 2025, 'regular', '08:00', '08:40', 0),
+(3, 'IN1133', 2025, 'regular', '08:40', '09:20', 0),
+(4, 'IN1133', 2025, 'regular', '09:20', '10:00', 0),
+(5, 'IN1133', 2025, 'regular', '10:00', '10:40', 0),
+(6, 'IN1133', 2025, 'regular', '10:40', '11:20', 0),
+(7, 'IN1133', 2025, 'regular', '11:20', '12:00', 0),
+(8, 'IN1403', 2025, 'regular', '07:20', '08:00', 0),
+(9, 'IN1403', 2025, 'regular', '08:00', '08:40', 0),
+(10, 'IN1403', 2025, 'regular', '08:40', '09:20', 0),
+(11, 'IN1403', 2025, 'regular', '09:20', '10:00', 0),
+(12, 'IN1403', 2025, 'regular', '10:00', '10:40', 0),
+(13, 'IN1403', 2025, 'regular', '10:40', '11:20', 0),
+(14, 'IN1403', 2025, 'regular', '11:20', '12:00', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -434,7 +465,8 @@ CREATE TABLE `tbl_coordinacion` (
 
 INSERT INTO `tbl_coordinacion` (`cor_nombre`, `cor_estado`, `coor_hora_descarga`) VALUES
 ('Académica', 1, 0),
-('Actividades Acreditables I, II', 1, 0),
+('Actividades Acreditables I', 1, 0),
+('Actividades Acreditables II', 1, 0),
 ('Administración de Base de Dato', 1, 0),
 ('Algorítmica y Programación', 1, 0),
 ('Arquitectura del Computador', 1, 0),
@@ -537,7 +569,6 @@ INSERT INTO `tbl_docente` (`doc_cedula`, `cat_nombre`, `doc_prefijo`, `doc_nombr
 (10847351, 'Instructor', 'V', 'Leany', 'González', 'prueba@pnfi.edu.ve', 'Tiempo Completo', 'Ordinario', 1, '', '1998-03-10', '2003-04-01', 'Oposicion'),
 (10848316, 'Instructor', 'V', 'Enrique', 'Ramos', 'uptaebenrique@gmail.com', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
 (10956121, 'Instructor', 'V', 'Lissette', 'Torrealba', 'prueba@pnfi.edu.ve', 'Tiempo Completo', 'Contratado por Credenciales', 1, '- de la UPTAEB - del PNFI -Integra de PNFI.', '2013-06-15', '2014-06-01', 'Credenciales'),
-(11264888, 'Instructor', 'V', 'Lerida', 'Figueroa', 'leryfigueroa2019@gmail.com', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
 (11898335, 'Instructor', 'V', 'Eduardo', 'Venegas', 'prueba@pnfi.edu.ve', 'Tiempo Completo', 'Ordinario', 1, '', '2015-02-04', '2019-11-01', 'Oposicion'),
 (12045627, 'Instructor', 'V', 'Pedro', 'Castro', 'prueba@pnfi.edu.ve', 'Tiempo Completo', 'Suplente', 1, '', '2016-07-19', NULL, NULL),
 (12701387, 'Instructor', 'V', 'Fidel', 'Aguilar', 'fidelaguilar3000@gmail.com', 'Tiempo Completo', 'Ordinario', 1, NULL, '2025-08-12', NULL, NULL),
@@ -722,7 +753,6 @@ INSERT INTO `tbl_horario` (`sec_codigo`, `ani_anio`, `ani_tipo`, `tur_nombre`, `
 ('IN0423', 2025, 'regular', 'Mañana', 1),
 ('IN1103', 2025, 'regular', 'Mañana', 1),
 ('IN1123', 2025, 'regular', 'Mañana', 1),
-('IN1403', 2025, 'regular', 'Mañana', 1),
 ('IN1203', 2025, 'regular', 'Tarde', 1),
 ('IN1143', 2025, 'regular', 'Mañana', 1),
 ('IN1213', 2025, 'regular', 'Tarde', 1),
@@ -748,14 +778,15 @@ INSERT INTO `tbl_horario` (`sec_codigo`, `ani_anio`, `ani_tipo`, `tur_nombre`, `
 ('IN0113', 2025, 'regular', 'Mañana', 1),
 ('IN0123', 2025, 'regular', 'Mañana', 1),
 ('IN1113', 2025, 'regular', 'Mañana', 1),
-('IN1133', 2025, 'regular', 'Mañana', 1),
 ('IN2123', 2025, 'regular', 'Mañana', 1),
 ('IN2133', 2025, 'regular', 'Mañana', 1),
 ('IN2114', 2025, 'regular', 'Mañana', 1),
 ('IIN4402', 2025, 'regular', 'Mañana', 1),
 ('IIN4401', 2025, 'regular', 'Mañana', 1),
 ('IIN4403', 2025, 'regular', 'Mañana', 1),
-('IIN4404', 2025, 'regular', 'Mañana', 1);
+('IIN4404', 2025, 'regular', 'Mañana', 1),
+('IN1133', 2025, 'regular', 'Mañana', 1),
+('IN1403', 2025, 'regular', 'Mañana', 1);
 
 -- --------------------------------------------------------
 
@@ -900,7 +931,7 @@ INSERT INTO `tbl_titulo` (`tit_prefijo`, `tit_nombre`, `tit_estado`) VALUES
 ('Esp.', 'Telematica Informática', 1),
 ('Ing.', 'Computación', 1),
 ('Ing.', 'Informática', 1),
-('Ing.', 'rijals', 1),
+('Ing.', 'rijals', 0),
 ('Ing.', 'rijas', 0),
 ('Ing.', 'Sistemas', 1),
 ('Lic.', 'Administración Mención Informática', 1),
@@ -1195,7 +1226,6 @@ INSERT INTO `uc_docente` (`uc_codigo`, `doc_cedula`) VALUES
 ('PIMAT234109', 14677589),
 ('PIACA090103', 12701387),
 ('PIFOC090103', 24418577),
-('PIELE072103', 11264888),
 ('PIELE072103', 7423486),
 ('PIARC234109', 7424546),
 ('PIMAT234109', 17354607),
@@ -1203,7 +1233,6 @@ INSERT INTO `uc_docente` (`uc_codigo`, `doc_cedula`) VALUES
 ('PIELE072103', 26197135),
 ('PIALP306112', 7391773),
 ('PIARC234109', 10778236),
-('PIARC234109', 11264888),
 ('PIARC234109', 7423486),
 ('PIARC234109', 11898335),
 ('PIIUP052002', 13695847),
@@ -1262,15 +1291,6 @@ INSERT INTO `uc_horario` (`uc_codigo`, `doc_cedula`, `subgrupo`, `sec_codigo`, `
 ('PIELE072103', 29880797, NULL, 'IN1123', 2025, 'regular', '3', 'Miércoles', '08:00', '09:20', 'Laboratorio', 'Giraluna'),
 ('PIACA090103', 18103232, NULL, 'IN1123', 2025, 'regular', '14', 'Miércoles', '09:20', '10:40', 'Aula', 'Hilandera'),
 ('PIFOC090103', 23316126, NULL, 'IN1123', 2025, 'regular', '14', 'Miércoles', '10:40', '12:00', 'Aula', 'Hilandera'),
-('PIACA090103', 12701387, NULL, 'IN1403', 2025, 'regular', '9', 'Martes', '08:00', '09:20', 'Aula', 'Hilandera'),
-('PIELE072103', 11264888, NULL, 'IN1403', 2025, 'regular', '6', 'Viernes', '08:00', '09:20', 'Laboratorio', 'Hilandera'),
-('PIFOC090103', 13527711, NULL, 'IN1403', 2025, 'regular', '11', 'Viernes', '09:20', '10:40', 'Aula', 'Hilandera'),
-('PIMAT234109', 17354607, NULL, 'IN1403', 2025, 'regular', '9', 'Martes', '09:20', '10:40', 'Aula', 'Hilandera'),
-('PIPST234109', 7423485, NULL, 'IN1403', 2025, 'regular', '11', 'Viernes', '10:40', '12:00', 'Aula', 'Hilandera'),
-('PIALP306112', 15693145, 'A', 'IN1403', 2025, 'regular', '3', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Giraluna'),
-('PIARC234109', 7424546, 'B', 'IN1403', 2025, 'regular', 'Hardware', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
-('PIARC234109', 7424546, 'A', 'IN1403', 2025, 'regular', 'Hardware', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Hilandera'),
-('PIALP306112', 15693145, 'B', 'IN1403', 2025, 'regular', '3', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Giraluna'),
 ('PIFOC090103', 23316126, NULL, 'IN1203', 2025, 'regular', '12', 'Miércoles', '13:00', '14:20', 'Aula', 'Hilandera'),
 ('PIACA090103', 18103232, NULL, 'IN1203', 2025, 'regular', '12', 'Miércoles', '14:20', '15:40', 'Aula', 'Hilandera'),
 ('PIELE072103', 26197135, NULL, 'IN1203', 2025, 'regular', '12', 'Miércoles', '15:40', '17:00', 'Aula', 'Hilandera'),
@@ -1448,15 +1468,6 @@ INSERT INTO `uc_horario` (`uc_codigo`, `doc_cedula`, `subgrupo`, `sec_codigo`, `
 ('PIALP306112', 7439117, 'B', 'IN1113', 2025, 'regular', '5', 'Jueves', '10:00', '12:00', 'Laboratorio', 'Giraluna'),
 ('PIMAT234109', 9627295, NULL, 'IN1113', 2025, 'regular', '13', 'Viernes', '08:00', '10:00', 'Aula', 'Hilandera'),
 ('PIPST234109', 26197135, NULL, 'IN1113', 2025, 'regular', '13', 'Viernes', '10:00', '12:00', 'Aula', 'Hilandera'),
-('PIMAT234109', 14677589, NULL, 'IN1133', 2025, 'regular', '7', 'Martes', '08:00', '09:20', 'Aula', 'Rio 7 Estrellas'),
-('PIACA090103', 12701387, NULL, 'IN1133', 2025, 'regular', '7', 'Martes', '09:20', '10:40', 'Aula', 'Rio 7 Estrellas'),
-('PIFOC090103', 24418577, NULL, 'IN1133', 2025, 'regular', '10', 'Viernes', '08:00', '09:20', 'Aula', 'Rio 7 Estrellas'),
-('PIELE072103', 11264888, NULL, 'IN1133', 2025, 'regular', '6', 'Viernes', '09:20', '10:40', 'Laboratorio', 'Hilandera'),
-('PIPST234109', 13527711, NULL, 'IN1133', 2025, 'regular', '10', 'Viernes', '10:40', '12:00', 'Aula', 'Rio 7 Estrellas'),
-('PIALP306112', 10846157, 'A', 'IN1133', 2025, 'regular', '5', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Giraluna'),
-('PIARC234109', 7424546, 'B', 'IN1133', 2025, 'regular', 'Hardware', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
-('PIARC234109', 7424546, 'B', 'IN1133', 2025, 'regular', 'Hardware', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Hilandera'),
-('PIALP306112', 10846157, 'A', 'IN1133', 2025, 'regular', '5', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Giraluna'),
 ('PIPRO306212', 29517943, NULL, 'IN2123', 2025, 'regular', '6', 'Lunes', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
 ('PIPST234209', 7439117, NULL, 'IN2123', 2025, 'regular', '4', 'Lunes', '10:00', '12:00', 'Aula', 'Hilandera'),
 ('PIMAT156206', 17354607, NULL, 'IN2123', 2025, 'regular', '8', 'Martes', '08:00', '09:20', 'Aula', 'Hilandera'),
@@ -1505,7 +1516,25 @@ INSERT INTO `uc_horario` (`uc_codigo`, `doc_cedula`, `subgrupo`, `sec_codigo`, `
 ('PIPST360412', 16403903, NULL, 'IIN4404', 2025, 'regular', '15', 'Martes', '09:20', '11:20', 'Aula', 'Hilandera'),
 ('PIFOC090403', 13527711, NULL, 'IIN4404', 2025, 'regular', '15', 'Viernes', '08:00', '09:20', 'Aula', 'Hilandera'),
 ('PIELE072403', 7391773, NULL, 'IIN4404', 2025, 'regular', 'Software', 'Viernes', '10:40', '12:00', 'Laboratorio', 'Hilandera'),
-('PIIDI090403', 18356682, NULL, 'IIN4404', 2025, 'regular', '15', 'Viernes', '09:20', '10:40', 'Aula', 'Hilandera');
+('PIIDI090403', 18356682, NULL, 'IIN4404', 2025, 'regular', '15', 'Viernes', '09:20', '10:40', 'Aula', 'Hilandera'),
+('PIMAT234109', 14677589, NULL, 'IN1133', 2025, 'regular', '7', 'Martes', '08:00', '09:20', 'Aula', 'Rio 7 Estrellas'),
+('PIACA090103', 12701387, NULL, 'IN1133', 2025, 'regular', '7', 'Martes', '09:20', '10:40', 'Aula', 'Rio 7 Estrellas'),
+('PIFOC090103', 24418577, NULL, 'IN1133', 2025, 'regular', '10', 'Viernes', '08:00', '09:20', 'Aula', 'Rio 7 Estrellas'),
+('PIELE072103', 7423486, NULL, 'IN1133', 2025, 'regular', '6', 'Viernes', '09:20', '10:40', 'Laboratorio', 'Hilandera'),
+('PIPST234109', 13527711, NULL, 'IN1133', 2025, 'regular', '10', 'Viernes', '10:40', '12:00', 'Aula', 'Rio 7 Estrellas'),
+('PIALP306112', 10846157, 'A', 'IN1133', 2025, 'regular', '5', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Giraluna'),
+('PIARC234109', 7424546, 'B', 'IN1133', 2025, 'regular', 'Hardware', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
+('PIARC234109', 7424546, 'B', 'IN1133', 2025, 'regular', 'Hardware', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Hilandera'),
+('PIALP306112', 10846157, 'A', 'IN1133', 2025, 'regular', '5', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Giraluna'),
+('PIACA090103', 12701387, NULL, 'IN1403', 2025, 'regular', '9', 'Martes', '08:00', '09:20', 'Aula', 'Hilandera'),
+('PIELE072103', 7423486, NULL, 'IN1403', 2025, 'regular', '6', 'Viernes', '08:00', '09:20', 'Laboratorio', 'Hilandera'),
+('PIFOC090103', 13527711, NULL, 'IN1403', 2025, 'regular', '11', 'Viernes', '09:20', '10:40', 'Aula', 'Hilandera'),
+('PIMAT234109', 17354607, NULL, 'IN1403', 2025, 'regular', '9', 'Martes', '09:20', '10:40', 'Aula', 'Hilandera'),
+('PIPST234109', 7423485, NULL, 'IN1403', 2025, 'regular', '11', 'Viernes', '10:40', '12:00', 'Aula', 'Hilandera'),
+('PIALP306112', 15693145, 'A', 'IN1403', 2025, 'regular', '3', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Giraluna'),
+('PIARC234109', 7424546, 'B', 'IN1403', 2025, 'regular', 'Hardware', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
+('PIARC234109', 7424546, 'A', 'IN1403', 2025, 'regular', 'Hardware', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Hilandera'),
+('PIALP306112', 15693145, 'B', 'IN1403', 2025, 'regular', '3', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Giraluna');
 
 -- --------------------------------------------------------
 
@@ -1768,7 +1797,7 @@ ALTER TABLE `tbl_bloque_eliminado`
 -- AUTO_INCREMENT de la tabla `tbl_bloque_personalizado`
 --
 ALTER TABLE `tbl_bloque_personalizado`
-  MODIFY `bloque_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `bloque_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- Restricciones para tablas volcadas
