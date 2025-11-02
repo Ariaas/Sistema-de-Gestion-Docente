@@ -25,7 +25,7 @@ class Seccion extends Connection
                 uh.hor_horafin as hora_fin,
                 s.sec_estado
             FROM uc_horario uh 
-            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo
+            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
             WHERE s.sec_estado = 1";
 
             $stmt = $this->Con()->prepare($sql);
@@ -778,8 +778,8 @@ class Seccion extends Connection
             }
 
             if (is_array($bloques_personalizados) && !empty($bloques_personalizados)) {
-                $stmt_delete_bloques = $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
-                $stmt_delete_bloques->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+                $stmt_delete_bloques = $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo");
+                $stmt_delete_bloques->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
 
                 $stmt_insert_bloque = $co->prepare(
                     "INSERT INTO tbl_bloque_personalizado (sec_codigo, ani_anio, ani_tipo, tur_horainicio, tur_horafin, bloque_sintetico)
@@ -808,8 +808,8 @@ class Seccion extends Connection
 
             $bloques_eliminados = json_decode($bloques_eliminados_json, true);
             if (is_array($bloques_eliminados) && !empty($bloques_eliminados)) {
-                $stmt_delete_eliminados = $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
-                $stmt_delete_eliminados->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+                $stmt_delete_eliminados = $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo");
+                $stmt_delete_eliminados->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
 
                 $stmt_insert_eliminado = $co->prepare(
                     "INSERT INTO tbl_bloque_eliminado (sec_codigo, ani_anio, ani_tipo, tur_horainicio, tur_horafin)
@@ -850,7 +850,7 @@ class Seccion extends Connection
             return ['resultado' => 'error', 'mensaje' => 'Error del servidor al modificar el horario: ' . $e->getMessage()];
         }
     }
-    public function EliminarSeccionYHorario($sec_codigo, $ani_anio)
+    public function EliminarSeccionYHorario($sec_codigo, $ani_anio, $ani_tipo = null)
     {
         if (empty($sec_codigo) || empty($ani_anio)) {
             return ['resultado' => 'error', 'mensaje' => 'Faltan datos (código o año) para eliminar la sección.'];
@@ -861,10 +861,15 @@ class Seccion extends Connection
 
         try {
             $co->beginTransaction();
-            $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co);
+            $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co, $ani_tipo);
 
-            $stmt = $co->prepare("DELETE FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
-            $stmt->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            if ($ani_tipo) {
+                $stmt = $co->prepare("DELETE FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo");
+                $stmt->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
+            } else {
+                $stmt = $co->prepare("DELETE FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+                $stmt->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            }
 
             $co->commit();
             return ['resultado' => 'eliminar_ok', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó la sección correctamente!'];
@@ -876,7 +881,7 @@ class Seccion extends Connection
 
 
 
-    public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_externo = null)
+    public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_externo = null, $ani_tipo_param = null)
     {
         $co = $co_externo ?? $this->Con();
         $es_transaccion_interna = ($co_externo === null);
@@ -884,15 +889,22 @@ class Seccion extends Connection
         try {
             if ($es_transaccion_interna) $co->beginTransaction();
 
-            $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
-            $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
-            $ani_tipo = $stmt_tipo->fetchColumn();
+            $ani_tipo = $ani_tipo_param;
+            if (!$ani_tipo) {
+                $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
+                $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+                $ani_tipo = $stmt_tipo->fetchColumn();
+            }
 
             $params_con_anio = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
             $params_con_tipo = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo];
             $params_sin_anio = [':sec_codigo' => $sec_codigo];
 
-            $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+            if ($ani_tipo) {
+                $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo")->execute($params_con_tipo);
+            } else {
+                $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+            }
 
             if ($ani_tipo) {
                 $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo")->execute($params_con_tipo);
@@ -900,11 +912,23 @@ class Seccion extends Connection
                 $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
             }
 
-            $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+            if ($ani_tipo) {
+                $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo")->execute($params_con_tipo);
+            } else {
+                $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+            }
 
-            $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+            if ($ani_tipo) {
+                $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo")->execute($params_con_tipo);
+            } else {
+                $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+            }
 
-            $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo")->execute($params_sin_anio);
+            if ($ani_tipo) {
+                $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo")->execute($params_con_tipo);
+            } else {
+                $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio")->execute($params_con_anio);
+            }
 
             if ($es_transaccion_interna) $co->commit();
         } catch (Exception $e) {
@@ -919,22 +943,24 @@ class Seccion extends Connection
             return ['resultado' => 'error', 'mensaje' => 'Falta el código o el año de la sección.'];
         }
 
+        if (!$ani_tipo) {
+            $stmt_tipo = $this->Con()->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio LIMIT 1");
+            $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $ani_tipo = $stmt_tipo->fetchColumn();
+            if (!$ani_tipo) {
+                return ['resultado' => 'error', 'mensaje' => 'No se pudo determinar el tipo de año de la sección.'];
+            }
+        }
+
         try {
             $sql = "SELECT 
                 uh.uc_codigo, uh.doc_cedula, uh.subgrupo, uh.esp_numero, uh.esp_tipo, uh.esp_edificio,
                 uh.hor_dia as dia, uh.hor_horainicio as hora_inicio, uh.hor_horafin as hora_fin
             FROM uc_horario uh
-            WHERE uh.sec_codigo = :sec_codigo AND uh.ani_anio = :ani_anio";
-
-            if ($ani_tipo) {
-                $sql .= " AND uh.ani_tipo = :ani_tipo";
-            }
+            WHERE uh.sec_codigo = :sec_codigo AND uh.ani_anio = :ani_anio AND uh.ani_tipo = :ani_tipo";
 
             $stmt = $this->Con()->prepare($sql);
-            $params = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
-            if ($ani_tipo) {
-                $params[':ani_tipo'] = $ani_tipo;
-            }
+            $params = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo];
             $stmt->execute($params);
             $schedule_grid_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -968,17 +994,9 @@ class Seccion extends Connection
 
             $turno_nombre = null;
             try {
-                $sql_turno = "SELECT tur_nombre FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
-                if ($ani_tipo) {
-                    $sql_turno .= " AND ani_tipo = :ani_tipo";
-                }
-                $sql_turno .= " LIMIT 1";
+                $sql_turno = "SELECT tur_nombre FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo LIMIT 1";
                 $stmt_turno = $this->Con()->prepare($sql_turno);
-                $params_turno = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
-                if ($ani_tipo) {
-                    $params_turno[':ani_tipo'] = $ani_tipo;
-                }
-                $stmt_turno->execute($params_turno);
+                $stmt_turno->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
                 $turno_nombre = $stmt_turno->fetchColumn() ?: null;
             } catch (Exception $e) {
                 error_log("Error al obtener turno de la sección: " . $e->getMessage());
@@ -992,16 +1010,9 @@ class Seccion extends Connection
             $hay_bloques_base = false;
 
             try {
-                $sql_check_horario = "SELECT COUNT(*) FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
-                if ($ani_tipo) {
-                    $sql_check_horario .= " AND ani_tipo = :ani_tipo";
-                }
+                $sql_check_horario = "SELECT COUNT(*) FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                 $stmt_check = $this->Con()->prepare($sql_check_horario);
-                $params_check = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
-                if ($ani_tipo) {
-                    $params_check[':ani_tipo'] = $ani_tipo;
-                }
-                $stmt_check->execute($params_check);
+                $stmt_check->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
                 $hay_bloques_base = $stmt_check->fetchColumn() > 0;
             } catch (Exception $e) {
                 error_log("Error al verificar horario: " . $e->getMessage());
@@ -1010,16 +1021,9 @@ class Seccion extends Connection
             try {
                 $sql_bloques = "SELECT tur_horainicio, tur_horafin, bloque_sintetico 
                            FROM tbl_bloque_personalizado 
-                           WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
-                if ($ani_tipo) {
-                    $sql_bloques .= " AND ani_tipo = :ani_tipo";
-                }
+                           WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                 $stmt_bloques = $this->Con()->prepare($sql_bloques);
-                $params_bloques = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
-                if ($ani_tipo) {
-                    $params_bloques[':ani_tipo'] = $ani_tipo;
-                }
-                $stmt_bloques->execute($params_bloques);
+                $stmt_bloques->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
                 $bloques_personalizados = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
 
                 foreach ($bloques_personalizados as &$bloque) {
@@ -1040,16 +1044,9 @@ class Seccion extends Connection
             try {
                 $sql_eliminados = "SELECT tur_horainicio, tur_horafin 
                               FROM tbl_bloque_eliminado 
-                              WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
-                if ($ani_tipo) {
-                    $sql_eliminados .= " AND ani_tipo = :ani_tipo";
-                }
+                              WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                 $stmt_eliminados = $this->Con()->prepare($sql_eliminados);
-                $params_eliminados = [':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio];
-                if ($ani_tipo) {
-                    $params_eliminados[':ani_tipo'] = $ani_tipo;
-                }
-                $stmt_eliminados->execute($params_eliminados);
+                $stmt_eliminados->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
                 $bloques_eliminados = $stmt_eliminados->fetchAll(PDO::FETCH_ASSOC);
 
                 foreach ($bloques_eliminados as &$bloque_elim) {

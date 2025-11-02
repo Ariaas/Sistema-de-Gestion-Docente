@@ -977,7 +977,8 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
             case 'eliminar_seccion_y_horario':
                 $respuesta = $o->EliminarSeccionYHorario(
                     $_POST['sec_codigo'] ?? null,
-                    $_POST['ani_anio'] ?? null
+                    $_POST['ani_anio'] ?? null,
+                    $_POST['ani_tipo'] ?? null
                 );
                 break;
 

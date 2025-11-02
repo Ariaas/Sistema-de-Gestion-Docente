@@ -2220,7 +2220,7 @@ $(document).ready(function () {
                     if (isDelete) {
                         $("#detallesParaEliminar").html(`<p class="mb-1"><strong>Código:</strong> ${seccionData.sec_codigo}</p><p class="mb-1"><strong>Estudiantes:</strong> ${seccionData.sec_cantidad}</p><p class="mb-0"><strong>Año:</strong> ${seccionData.ani_anio}</p>`);
                         inicializarTablaHorario(turnoSeleccionado, "#tablaEliminarHorario", true);
-                        $("#btnProcederEliminacion").data('sec-codigo', sec_codigo).data('ani-anio', ani_anio);
+                        $("#btnProcederEliminacion").data('sec-codigo', sec_codigo).data('ani-anio', ani_anio).data('ani-tipo', ani_tipo);
                         $("#modalConfirmarEliminar").modal('show');
                     } else if (isView) {
                         $("#modalVerHorarioTitle").text(`Horario: ${seccionTexto}`);
@@ -2296,9 +2296,11 @@ $(document).ready(function () {
 
     $("#btnProcederEliminacion").on("click", function () {
         const sec_codigo = $(this).data('sec-codigo');
+        const ani_anio = $(this).data('ani-anio');
+        const ani_tipo = $(this).data('ani-tipo');
         $('#modalConfirmarEliminar').modal('hide');
         setTimeout(() => {
-            const seccion = allSecciones.find(s => s.sec_codigo == sec_codigo);
+            const seccion = allSecciones.find(s => s.sec_codigo == sec_codigo && s.ani_anio == ani_anio && s.ani_tipo == ani_tipo);
             Swal.fire({
                 title: '¿Está seguro de eliminar esta sección?',
                 html: `Esta acción es irreversible y eliminará permanentemente la sección <strong>${seccion.sec_codigo}</strong>.`,
@@ -2323,7 +2325,8 @@ $(document).ready(function () {
                     const datos = new FormData();
                     datos.append("accion", "eliminar_seccion_y_horario");
                     datos.append("sec_codigo", sec_codigo);
-                    datos.append("ani_anio", seccion.ani_anio);
+                    datos.append("ani_anio", ani_anio);
+                    datos.append("ani_tipo", ani_tipo);
                     enviaAjax(datos, null);
                 }
             });
