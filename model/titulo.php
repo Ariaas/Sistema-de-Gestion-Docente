@@ -46,7 +46,6 @@ class Titulo extends Connection
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Validaciones de entrada
         if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
         }
@@ -111,7 +110,6 @@ class Titulo extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
-        // Validaciones de entrada
         if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
         }
@@ -179,7 +177,6 @@ class Titulo extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
-        // Validaciones de entrada
         if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
         }

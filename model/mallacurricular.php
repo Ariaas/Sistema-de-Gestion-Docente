@@ -44,7 +44,6 @@ class Malla extends Connection
         foreach ($unidades as $index => $uc) {
             $uc_codigo = isset($uc['uc_codigo']) ? $uc['uc_codigo'] : 'Desconocida';
             
-            // Validar que todos los campos de horas estén presentes y no sean nulos
             if (!isset($uc['hora_independiente']) || $uc['hora_independiente'] === null || $uc['hora_independiente'] === '' ||
                 !isset($uc['hora_asistida']) || $uc['hora_asistida'] === null || $uc['hora_asistida'] === '' ||
                 !isset($uc['hora_academica']) || $uc['hora_academica'] === null || $uc['hora_academica'] === '') {
@@ -54,7 +53,6 @@ class Malla extends Connection
                 ];
             }
             
-            // Validar que las horas sean mayores a 0
             if ($uc['hora_independiente'] <= 0 || $uc['hora_asistida'] <= 0 || $uc['hora_academica'] <= 0) {
                 return [
                     'resultado' => 'error',
@@ -112,7 +110,6 @@ class Malla extends Connection
             return ['resultado' => 'error', 'mensaje' => 'No se han proporcionado unidades curriculares para registrar.'];
         }
 
-        // Validar que todas las horas sean mayores a 0 y no nulas
         $validacion_horas = $this->validarHorasUnidades($unidades);
         if ($validacion_horas['resultado'] === 'error') {
             return $validacion_horas;
@@ -187,7 +184,6 @@ class Malla extends Connection
             return ['resultado' => 'error', 'mensaje' => 'No se han proporcionado unidades curriculares para modificar.'];
         }
 
-        // Validar que todas las horas sean mayores a 0 y no nulas
         $validacion_horas = $this->validarHorasUnidades($unidades);
         if ($validacion_horas['resultado'] === 'error') {
             return $validacion_horas;

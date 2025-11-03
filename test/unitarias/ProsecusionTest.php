@@ -15,6 +15,13 @@ class ProsecusionTest extends TestCase
     /** @var PDOStatement|\PHPUnit\Framework\MockObject\MockObject */
     private $stmtMock;
 
+    private const SECCION_ORIGEN = 'IN2104';
+    private const SECCION_DESTINO = 'IIN3104';
+    private const SECCION_DESTINO_EXTENDIDA = 'IIN4104';
+    private const SECCION_ORIGEN_SECUNDARIA = 'IN2105';
+    private const SECCION_INVALIDA = 'IN9999';
+    private const SECCION_NO_DESTINO = 'IIN4199';
+
     protected function setUp(): void
     {
         $this->pdoMock = $this->createMock(PDO::class);
@@ -57,7 +64,7 @@ class ProsecusionTest extends TestCase
     public function testVerificarEstado_AnioActivoExiste()
     {
         $stmt2 = $this->createMock(PDOStatement::class);
-        
+
         $this->pdoMock->expects($this->once())
             ->method('query')
             ->with("SELECT ani_anio FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1 AND ani_tipo = 'regular'")
@@ -66,15 +73,15 @@ class ProsecusionTest extends TestCase
         $this->stmtMock->expects($this->once())
             ->method('fetchColumn')
             ->willReturn('2024');
-            
+
         $this->pdoMock->expects($this->once())
             ->method('prepare')
             ->willReturn($stmt2);
-            
+
         $stmt2->expects($this->once())
             ->method('execute')
             ->with([2025]);
-            
+
         $stmt2->expects($this->once())
             ->method('fetchColumn')
             ->willReturn('1');
@@ -124,15 +131,15 @@ class ProsecusionTest extends TestCase
 
         $stmtOrigen->expects($this->once())
             ->method('execute')
-            ->with(['1A']);
+            ->with([self::SECCION_ORIGEN]);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
             ->willReturn('2024');
 
         $destinosEsperados = [
-            ['sec_codigo' => '2A', 'ani_anio' => '2025'],
-            ['sec_codigo' => '2B', 'ani_anio' => '2025']
+            ['sec_codigo' => self::SECCION_DESTINO, 'ani_anio' => '2025'],
+            ['sec_codigo' => self::SECCION_DESTINO_EXTENDIDA, 'ani_anio' => '2026']
         ];
 
         $stmtDestinos->expects($this->once())
@@ -143,7 +150,7 @@ class ProsecusionTest extends TestCase
             ->with(PDO::FETCH_ASSOC)
             ->willReturn($destinosEsperados);
 
-        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual('1A');
+        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual(self::SECCION_ORIGEN);
 
         $this->assertEquals('opcionesDestinoManual', $resultado['resultado']);
         $this->assertEquals($destinosEsperados, $resultado['mensaje']);
@@ -159,13 +166,13 @@ class ProsecusionTest extends TestCase
 
         $stmtOrigen->expects($this->once())
             ->method('execute')
-            ->with(['SECCION-INVALIDA']);
+            ->with([self::SECCION_INVALIDA]);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
             ->willReturn(false);
 
-        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual('SECCION-INVALIDA');
+        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual(self::SECCION_INVALIDA);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertEquals('Año de origen no encontrado.', $resultado['mensaje']);
@@ -189,7 +196,7 @@ class ProsecusionTest extends TestCase
             ->with(PDO::FETCH_ASSOC)
             ->willReturn([]);
 
-        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual('4A');
+        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual(self::SECCION_DESTINO_EXTENDIDA);
 
         $this->assertEquals('opcionesDestinoManual', $resultado['resultado']);
         $this->assertEmpty($resultado['mensaje']);
@@ -201,7 +208,7 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('Error en consulta'));
 
-        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual('1A');
+        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual(self::SECCION_ORIGEN);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('Error al buscar opciones', $resultado['mensaje']);
@@ -218,7 +225,7 @@ class ProsecusionTest extends TestCase
 
         $stmtOrigen->expects($this->once())
             ->method('execute')
-            ->with(['1A']);
+            ->with([self::SECCION_ORIGEN]);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -226,16 +233,16 @@ class ProsecusionTest extends TestCase
 
         $stmtDestino->expects($this->once())
             ->method('execute')
-            ->with(['2A', '2025']);
+            ->with([self::SECCION_DESTINO, '2025']);
 
         $stmtDestino->expects($this->once())
             ->method('fetchColumn')
-            ->willReturn('2A');
+            ->willReturn(self::SECCION_DESTINO);
 
-        $resultado = $this->prosecusion->verificarDestinoAutomatico('1A');
+        $resultado = $this->prosecusion->verificarDestinoAutomatico(self::SECCION_ORIGEN);
 
         $this->assertTrue($resultado['existe']);
-        $this->assertEquals('2A', $resultado['seccion_destino']);
+        $this->assertEquals(self::SECCION_DESTINO, $resultado['seccion_destino']);
     }
 
     public function testVerificarDestinoAutomatico_NoExiste()
@@ -255,7 +262,7 @@ class ProsecusionTest extends TestCase
             ->method('fetchColumn')
             ->willReturn(false);
 
-        $resultado = $this->prosecusion->verificarDestinoAutomatico('4Z');
+        $resultado = $this->prosecusion->verificarDestinoAutomatico(self::SECCION_NO_DESTINO);
 
         $this->assertFalse($resultado['existe']);
         $this->assertNull($resultado['seccion_destino']);
@@ -273,7 +280,7 @@ class ProsecusionTest extends TestCase
             ->method('fetchColumn')
             ->willReturn(false);
 
-        $resultado = $this->prosecusion->verificarDestinoAutomatico('INVALIDO');
+        $resultado = $this->prosecusion->verificarDestinoAutomatico(self::SECCION_INVALIDA);
 
         $this->assertFalse($resultado['existe']);
         $this->assertNull($resultado['seccion_destino']);
@@ -285,7 +292,7 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('Error verificando destino'));
 
-        $resultado = $this->prosecusion->verificarDestinoAutomatico('1A');
+        $resultado = $this->prosecusion->verificarDestinoAutomatico(self::SECCION_ORIGEN);
 
         $this->assertArrayHasKey('error', $resultado);
         $this->assertEquals('Error verificando destino', $resultado['error']);
@@ -302,7 +309,7 @@ class ProsecusionTest extends TestCase
 
         $stmtOrigen->expects($this->once())
             ->method('execute')
-            ->with(['1A']);
+            ->with([self::SECCION_ORIGEN]);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -310,13 +317,13 @@ class ProsecusionTest extends TestCase
 
         $stmtProsecusionados->expects($this->once())
             ->method('execute')
-            ->with(['1A']);
+            ->with([self::SECCION_ORIGEN]);
 
         $stmtProsecusionados->expects($this->once())
             ->method('fetchColumn')
             ->willReturn('10');
 
-        $resultado = $this->prosecusion->calcularCantidadProsecusion('1A');
+        $resultado = $this->prosecusion->calcularCantidadProsecusion(self::SECCION_ORIGEN);
 
         $this->assertTrue($resultado['puede_prosecusionar']);
         $this->assertEquals(20, $resultado['cantidad_disponible']);
@@ -334,13 +341,13 @@ class ProsecusionTest extends TestCase
 
         $stmtOrigen->expects($this->once())
             ->method('execute')
-            ->with(['INVALIDO']);
+            ->with([self::SECCION_INVALIDA]);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
             ->willReturn(false);
 
-        $resultado = $this->prosecusion->calcularCantidadProsecusion('INVALIDO');
+        $resultado = $this->prosecusion->calcularCantidadProsecusion(self::SECCION_INVALIDA);
 
         $this->assertFalse($resultado['puede_prosecusionar']);
         $this->assertEquals('La sección de origen no es válida o está inactiva.', $resultado['mensaje']);
@@ -363,7 +370,7 @@ class ProsecusionTest extends TestCase
             ->method('fetchColumn')
             ->willReturn('30');
 
-        $resultado = $this->prosecusion->calcularCantidadProsecusion('1A');
+        $resultado = $this->prosecusion->calcularCantidadProsecusion(self::SECCION_ORIGEN);
 
         $this->assertFalse($resultado['puede_prosecusionar']);
         $this->assertEquals(0, $resultado['cantidad_disponible']);
@@ -376,14 +383,14 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('Error calculando cantidad'));
 
-        $resultado = $this->prosecusion->calcularCantidadProsecusion('1A');
+        $resultado = $this->prosecusion->calcularCantidadProsecusion(self::SECCION_ORIGEN);
 
         $this->assertStringContainsString('Error al calcular la cantidad', $resultado['mensaje']);
     }
 
     public function testRealizarProsecusion_CantidadInvalida_Cero()
     {
-        $resultado = $this->prosecusion->RealizarProsecusion('1A', 0);
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 0);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertEquals('La cantidad de estudiantes debe ser mayor a cero.', $resultado['mensaje']);
@@ -391,7 +398,7 @@ class ProsecusionTest extends TestCase
 
     public function testRealizarProsecusion_CantidadInvalida_Negativa()
     {
-        $resultado = $this->prosecusion->RealizarProsecusion('1A', -5);
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, -5);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertEquals('La cantidad de estudiantes debe ser mayor a cero.', $resultado['mensaje']);
@@ -399,7 +406,7 @@ class ProsecusionTest extends TestCase
 
     public function testRealizarProsecusion_CantidadInvalida_NoNumerico()
     {
-        $resultado = $this->prosecusion->RealizarProsecusion('1A', 'abc');
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 'abc');
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertEquals('La cantidad de estudiantes debe ser mayor a cero.', $resultado['mensaje']);
@@ -417,7 +424,7 @@ class ProsecusionTest extends TestCase
 
         $stmtCheckOrigen->expects($this->once())
             ->method('fetchColumn')
-            ->willReturn('1A');
+            ->willReturn(self::SECCION_ORIGEN);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -427,7 +434,7 @@ class ProsecusionTest extends TestCase
             ->method('fetchColumn')
             ->willReturn('15');
 
-        $resultado = $this->prosecusion->RealizarProsecusion('1A', 10);
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 10);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('Solo hay 5 estudiantes disponibles para prosecusionar', $resultado['mensaje']);
@@ -440,13 +447,13 @@ class ProsecusionTest extends TestCase
         $stmtProsecusionados = $this->createMock(PDOStatement::class);
         $stmtDestino = $this->createMock(PDOStatement::class);
 
-        $this->pdoMock->expects($this->exactly(4))  
+        $this->pdoMock->expects($this->exactly(4))
             ->method('prepare')
             ->willReturnOnConsecutiveCalls($stmtCheckOrigen, $stmtOrigen, $stmtProsecusionados, $stmtDestino);
 
         $stmtCheckOrigen->expects($this->once())
             ->method('fetchColumn')
-            ->willReturn('1A');
+            ->willReturn(self::SECCION_ORIGEN);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -461,7 +468,7 @@ class ProsecusionTest extends TestCase
             ->with(PDO::FETCH_ASSOC)
             ->willReturn(false);
 
-        $resultado = $this->prosecusion->RealizarProsecusion('1A', 5, '2A');
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 5, self::SECCION_DESTINO);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('no existe o no está activa', $resultado['mensaje']);
@@ -480,7 +487,7 @@ class ProsecusionTest extends TestCase
 
         $stmtCheckOrigen->expects($this->once())
             ->method('fetchColumn')
-            ->willReturn('1A');
+            ->willReturn(self::SECCION_ORIGEN);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -495,7 +502,7 @@ class ProsecusionTest extends TestCase
             ->with(PDO::FETCH_ASSOC)
             ->willReturn(['sec_cantidad' => '42', 'ani_anio' => '2025']);
 
-        $resultado = $this->prosecusion->RealizarProsecusion('1A', 5, '2A', false);
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 5, self::SECCION_DESTINO, false);
 
         $this->assertEquals('confirmacion_requerida', $resultado['resultado']);
         $this->assertStringContainsString('47 estudiantes', $resultado['mensaje']);
@@ -508,7 +515,7 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('Error en la base de datos'));
 
-        $resultado = $this->prosecusion->RealizarProsecusion('1A', 5);
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 5);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('Error en la base de datos', $resultado['mensaje']);
@@ -531,26 +538,66 @@ class ProsecusionTest extends TestCase
             ->willReturnOnConsecutiveCalls($stmtOrigenAnio, $stmtDestinoAnio, $stmtCheck, $stmtInsert, $stmtUpdateDestino);
 
         $stmtOrigenAnio->expects($this->once())
-            ->method('fetchColumn')
-            ->willReturn('2024');
+            ->method('execute')
+            ->with([self::SECCION_ORIGEN]);
+
+        $stmtOrigenAnio->expects($this->once())
+            ->method('fetch')
+            ->with(PDO::FETCH_ASSOC)
+            ->willReturn([
+                'ani_anio' => '2024',
+                'ani_tipo' => 'regular'
+            ]);
 
         $stmtDestinoAnio->expects($this->once())
-            ->method('fetchColumn')
-            ->willReturn('2025');
+            ->method('execute')
+            ->with([self::SECCION_DESTINO]);
+
+        $stmtDestinoAnio->expects($this->once())
+            ->method('fetch')
+            ->with(PDO::FETCH_ASSOC)
+            ->willReturn([
+                'ani_anio' => '2025',
+                'ani_tipo' => 'regular'
+            ]);
+
+        $stmtCheck->expects($this->once())
+            ->method('execute')
+            ->with([
+                self::SECCION_ORIGEN,
+                2024,
+                'regular',
+                self::SECCION_DESTINO,
+                2025,
+                'regular'
+            ]);
 
         $stmtCheck->expects($this->once())
             ->method('fetch')
             ->with(PDO::FETCH_ASSOC)
             ->willReturn(false);
 
-        $stmtInsert->expects($this->once())->method('execute');
-        $stmtUpdateDestino->expects($this->once())->method('execute');
+        $stmtInsert->expects($this->once())
+            ->method('execute')
+            ->with([
+                self::SECCION_ORIGEN,
+                2024,
+                'regular',
+                self::SECCION_DESTINO,
+                2025,
+                'regular',
+                10
+            ]);
 
-        $resultado = $this->prosecusion->ProsecusionSeccion('1A', '2A', 10);
+        $stmtUpdateDestino->expects($this->once())
+            ->method('execute')
+            ->with([10, self::SECCION_DESTINO, 2025, 'regular']);
+
+        $resultado = $this->prosecusion->ProsecusionSeccion(self::SECCION_ORIGEN, self::SECCION_DESTINO, 10);
 
         $this->assertEquals('prosecusion', $resultado['resultado']);
         $this->assertEquals('Prosecusión realizada correctamente!', $resultado['mensaje']);
-        $this->assertEquals('2A', $resultado['seccionDestinoCodigo']);
+        $this->assertEquals(self::SECCION_DESTINO, $resultado['seccionDestinoCodigo']);
     }
 
     public function testProsecusionSeccion_ActualizarRegistroExistente_Exito()
@@ -569,22 +616,62 @@ class ProsecusionTest extends TestCase
             ->willReturnOnConsecutiveCalls($stmtOrigenAnio, $stmtDestinoAnio, $stmtCheck, $stmtUpdate, $stmtUpdateDestino);
 
         $stmtOrigenAnio->expects($this->once())
-            ->method('fetchColumn')
-            ->willReturn('2024');
+            ->method('execute')
+            ->with([self::SECCION_ORIGEN]);
+
+        $stmtOrigenAnio->expects($this->once())
+            ->method('fetch')
+            ->with(PDO::FETCH_ASSOC)
+            ->willReturn([
+                'ani_anio' => '2024',
+                'ani_tipo' => 'regular'
+            ]);
 
         $stmtDestinoAnio->expects($this->once())
-            ->method('fetchColumn')
-            ->willReturn('2025');
+            ->method('execute')
+            ->with([self::SECCION_DESTINO]);
+
+        $stmtDestinoAnio->expects($this->once())
+            ->method('fetch')
+            ->with(PDO::FETCH_ASSOC)
+            ->willReturn([
+                'ani_anio' => '2025',
+                'ani_tipo' => 'regular'
+            ]);
+
+        $stmtCheck->expects($this->once())
+            ->method('execute')
+            ->with([
+                self::SECCION_ORIGEN,
+                2024,
+                'regular',
+                self::SECCION_DESTINO,
+                2025,
+                'regular'
+            ]);
 
         $stmtCheck->expects($this->once())
             ->method('fetch')
             ->with(PDO::FETCH_ASSOC)
             ->willReturn(['pro_cantidad' => 5]);
 
-        $stmtUpdate->expects($this->once())->method('execute');
-        $stmtUpdateDestino->expects($this->once())->method('execute');
+        $stmtUpdate->expects($this->once())
+            ->method('execute')
+            ->with([
+                10,
+                self::SECCION_ORIGEN,
+                2024,
+                'regular',
+                self::SECCION_DESTINO,
+                2025,
+                'regular'
+            ]);
 
-        $resultado = $this->prosecusion->ProsecusionSeccion('1A', '2A', 10);
+        $stmtUpdateDestino->expects($this->once())
+            ->method('execute')
+            ->with([10, self::SECCION_DESTINO, 2025, 'regular']);
+
+        $resultado = $this->prosecusion->ProsecusionSeccion(self::SECCION_ORIGEN, self::SECCION_DESTINO, 10);
 
         $this->assertEquals('prosecusion', $resultado['resultado']);
         $this->assertEquals('Prosecusión realizada correctamente!', $resultado['mensaje']);
@@ -601,7 +688,7 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('Error en transacción'));
 
-        $resultado = $this->prosecusion->ProsecusionSeccion('1A', '2A', 10);
+        $resultado = $this->prosecusion->ProsecusionSeccion(self::SECCION_ORIGEN, self::SECCION_DESTINO, 10);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('Error en la prosecusión', $resultado['mensaje']);
@@ -611,14 +698,14 @@ class ProsecusionTest extends TestCase
     {
         $datosEsperados = [
             [
-                'sec_origen' => '1A',
+                'sec_origen' => self::SECCION_ORIGEN,
                 'ani_origen' => '2024',
-                'sec_promocion' => '2A',
+                'sec_promocion' => self::SECCION_DESTINO,
                 'ani_destino' => '2025',
                 'pro_cantidad' => 15,
-                'origen_codigo' => '1A',
+                'origen_codigo' => self::SECCION_ORIGEN,
                 'origen_cantidad' => 30,
-                'destino_codigo' => '2A',
+                'destino_codigo' => self::SECCION_DESTINO,
                 'destino_cantidad' => 40
             ]
         ];
@@ -671,13 +758,13 @@ class ProsecusionTest extends TestCase
     {
         $datosEsperados = [
             [
-                'sec_codigo' => '1A',
+                'sec_codigo' => self::SECCION_ORIGEN,
                 'sec_cantidad' => 30,
                 'ani_anio' => '2024',
                 'cantidad_prosecusionada' => 10
             ],
             [
-                'sec_codigo' => '1B',
+                'sec_codigo' => self::SECCION_ORIGEN_SECUNDARIA,
                 'sec_cantidad' => 25,
                 'ani_anio' => '2024',
                 'cantidad_prosecusionada' => 5
@@ -754,7 +841,7 @@ class ProsecusionTest extends TestCase
 
         $stmtCantidad->expects($this->once())
             ->method('execute')
-            ->with(['1A', '2024', 'regular', '2A', '2025', 'regular']);
+            ->with([self::SECCION_ORIGEN, '2024', 'regular', self::SECCION_DESTINO, '2025', 'regular']);
 
         $stmtCantidad->expects($this->once())
             ->method('fetchColumn')
@@ -762,13 +849,13 @@ class ProsecusionTest extends TestCase
 
         $stmtRevertir->expects($this->once())
             ->method('execute')
-            ->with([15, '2A', '2025', 'regular']);
+            ->with([15, self::SECCION_DESTINO, '2025', 'regular']);
 
         $stmtDelete->expects($this->once())
             ->method('execute')
-            ->with(['1A', '2024', 'regular', '2A', '2025', 'regular']);
+            ->with([self::SECCION_ORIGEN, '2024', 'regular', self::SECCION_DESTINO, '2025', 'regular']);
 
-        $this->prosecusion->setProId('1A-2024-2A-2025');
+        $this->prosecusion->setProId(sprintf('%s-2024-%s-2025', self::SECCION_ORIGEN, self::SECCION_DESTINO));
 
         $resultado = $this->prosecusion->Eliminar();
 
@@ -798,7 +885,7 @@ class ProsecusionTest extends TestCase
 
     public function testEliminar_FormatoIDInvalido()
     {
-        $this->prosecusion->setProId('1A-2024-2A');
+        $this->prosecusion->setProId(sprintf('%s-2024-%s', self::SECCION_ORIGEN, self::SECCION_DESTINO));
 
         $resultado = $this->prosecusion->Eliminar();
 
@@ -817,7 +904,7 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('Error eliminando prosecusión'));
 
-        $this->prosecusion->setProId('1A-2024-2A-2025');
+        $this->prosecusion->setProId(sprintf('%s-2024-%s-2025', self::SECCION_ORIGEN, self::SECCION_DESTINO));
 
         $resultado = $this->prosecusion->Eliminar();
 
@@ -831,7 +918,7 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('SQL mal formada'));
 
-        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual('1A');
+        $resultado = $this->prosecusion->obtenerOpcionesDestinoManual(self::SECCION_ORIGEN);
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('SQL mal formada', $resultado['mensaje']);
     }
@@ -842,7 +929,7 @@ class ProsecusionTest extends TestCase
             ->method('prepare')
             ->willThrowException(new PDOException('Error SQL destino'));
 
-        $resultado = $this->prosecusion->verificarDestinoAutomatico('1A');
+        $resultado = $this->prosecusion->verificarDestinoAutomatico(self::SECCION_ORIGEN);
         $this->assertArrayHasKey('error', $resultado);
         $this->assertEquals('Error SQL destino', $resultado['error']);
     }
@@ -859,7 +946,7 @@ class ProsecusionTest extends TestCase
             ->method('fetchColumn')
             ->willReturn(null);
 
-        $resultado = $this->prosecusion->calcularCantidadProsecusion('1A');
+        $resultado = $this->prosecusion->calcularCantidadProsecusion(self::SECCION_ORIGEN);
         $this->assertFalse($resultado['puede_prosecusionar']);
         $this->assertStringContainsString('no es válida o está inactiva', $resultado['mensaje']);
     }
@@ -876,7 +963,7 @@ class ProsecusionTest extends TestCase
             ->method('fetchColumn')
             ->willReturn(false);
 
-        $resultado = $this->prosecusion->RealizarProsecusion('NOEXISTE', 5);
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_INVALIDA, 5);
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('no es válida', $resultado['mensaje']);
     }
@@ -898,7 +985,7 @@ class ProsecusionTest extends TestCase
 
         $this->pdoMock->expects($this->once())->method('rollBack');
 
-        $resultado = $this->prosecusion->ProsecusionSeccion('1A', '2A', 10);
+        $resultado = $this->prosecusion->ProsecusionSeccion(self::SECCION_ORIGEN, self::SECCION_DESTINO, 10);
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('Error en la prosecusión', $resultado['mensaje']);
     }

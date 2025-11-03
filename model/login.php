@@ -37,7 +37,6 @@ class Login extends Connection_bitacora
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
-        // Validaciones de entrada
         if (empty($this->nombreUsuario) || trim($this->nombreUsuario) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El nombre de usuario es requerido'];
         }
@@ -84,7 +83,6 @@ class Login extends Connection_bitacora
 
     public function enviarCodigoRecuperacionPorUsuario($usuario)
     {
-        // Validaciones de entrada
         if (empty($usuario) || trim($usuario) === '') {
             return "El nombre de usuario es requerido.";
         }
@@ -141,7 +139,6 @@ class Login extends Connection_bitacora
 
     public function validarCodigoRecuperacion($usuario, $codigo)
     {
-        // Validaciones de entrada
         if (empty($usuario) || trim($usuario) === '') {
             return "El nombre de usuario es requerido.";
         }
@@ -177,7 +174,6 @@ class Login extends Connection_bitacora
 
     public function cambiarClaveConToken($usuario, $codigo, $nuevaClave)
     {
-        // Validaciones de entrada
         if (empty($usuario) || trim($usuario) === '') {
             return "El nombre de usuario es requerido.";
         }

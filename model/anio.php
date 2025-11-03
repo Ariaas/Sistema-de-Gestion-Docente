@@ -68,7 +68,6 @@ class Anio extends Connection
     {
         $r = array();
 
-        // Validar año
         if ($this->aniAnio === null || $this->aniAnio === '') {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El año no puede estar vacío.';
@@ -81,7 +80,6 @@ class Anio extends Connection
             return $r;
         }
 
-        // Validar que no sea decimal
         if ((float)$this->aniAnio != (int)$this->aniAnio) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El año debe ser un número entero, no decimal.';
@@ -96,7 +94,6 @@ class Anio extends Connection
             return $r;
         }
 
-        // Validar tipo
         if ($this->aniTipo === null || trim($this->aniTipo) === '') {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El tipo de año no puede estar vacío.';
@@ -111,14 +108,12 @@ class Anio extends Connection
             return $r;
         }
 
-        // Validar fases
         if (!is_array($this->fases)) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'Las fases deben ser un arreglo.';
             return $r;
         }
 
-        // Validar fase 1 (apertura y cierre del año o fase 1 para regular)
         if (!isset($this->fases[0])) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'Debe proporcionar las fechas de apertura y cierre.';
@@ -145,7 +140,6 @@ class Anio extends Connection
             return $r;
         }
 
-        // Para año regular, validar fase 2
         if ($this->aniTipo === 'regular') {
             if (!isset($this->fases[1])) {
                 $r['resultado'] = 'error';
@@ -173,7 +167,6 @@ class Anio extends Connection
                 return $r;
             }
 
-            // Validar que fase 2 inicie después del cierre de fase 1
             if (strtotime($fase2['apertura']) <= strtotime($fase1['cierre'])) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = 'La apertura de la fase 2 debe ser posterior al cierre de la fase 1.';
@@ -374,14 +367,12 @@ class Anio extends Connection
     {
         $r = array();
 
-        // Validar parámetros originales
         if ($anioOriginal === null || $tipoOriginal === null) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'Los parámetros originales son requeridos para modificar.';
             return $r;
         }
 
-        // Validar año nuevo
         if ($this->aniAnio === null || $this->aniAnio === '') {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El año no puede estar vacío.';
@@ -394,7 +385,6 @@ class Anio extends Connection
             return $r;
         }
 
-        // Validar que no sea decimal
         if ((float)$this->aniAnio != (int)$this->aniAnio) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El año debe ser un número entero, no decimal.';
@@ -409,7 +399,6 @@ class Anio extends Connection
             return $r;
         }
 
-        // Validar tipo
         if ($this->aniTipo === null || trim($this->aniTipo) === '') {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El tipo de año no puede estar vacío.';
@@ -424,14 +413,12 @@ class Anio extends Connection
             return $r;
         }
 
-        // Validar fases
         if (!is_array($this->fases)) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'Las fases deben ser un arreglo.';
             return $r;
         }
 
-        // Validar fase 1 (apertura y cierre del año o fase 1 para regular)
         if (!isset($this->fases[0])) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'Debe proporcionar las fechas de apertura y cierre.';
@@ -458,7 +445,6 @@ class Anio extends Connection
             return $r;
         }
 
-        // Para año regular, validar fase 2
         if ($this->aniTipo === 'regular') {
             if (!isset($this->fases[1])) {
                 $r['resultado'] = 'error';
@@ -486,7 +472,6 @@ class Anio extends Connection
                 return $r;
             }
 
-            // Validar que fase 2 inicie después del cierre de fase 1
             if (strtotime($fase2['apertura']) <= strtotime($fase1['cierre'])) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = 'La apertura de la fase 2 debe ser posterior al cierre de la fase 1.';
@@ -609,7 +594,6 @@ class Anio extends Connection
     {
         $r = array();
 
-        // Validar año
         if ($this->aniAnio === null || $this->aniAnio === '') {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El año no puede estar vacío.';
@@ -622,7 +606,6 @@ class Anio extends Connection
             return $r;
         }
 
-        // Validar tipo
         if ($this->aniTipo === null || trim($this->aniTipo) === '') {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El tipo de año no puede estar vacío.';

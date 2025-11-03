@@ -198,7 +198,9 @@ function enviaAjax(datos) {
                 <td>${item.destino_codigo}</td>
                 <td>${item.ani_destino}</td>
                 <td>
-                  <button class="btn btn-danger btn-sm eliminar-prosecusion" data-id="${pro_id}">Eliminar</button>
+                  <button class="btn btn-icon btn-delete eliminar-prosecusion" title="Eliminar prosecusión" data-id="${pro_id}">
+                    <img src="public/assets/icons/trash.svg" alt="Eliminar">
+                  </button>
                 </td>
               </tr>
             `);

@@ -85,11 +85,11 @@ class Prosecusion extends Connection
                 $prefijo = 'IN';
                 $digito_inicio = 2;
             }
-            
+
             $trayecto_actual = intval(substr($seccionOrigenCodigo, $digito_inicio, 1));
             $ultimo_digito_origen = substr($seccionOrigenCodigo, -1);
             $trayecto_siguiente = $trayecto_actual + 1;
-            
+
             $prefijo_destino = $prefijo;
             if ($trayecto_siguiente == 3 && $prefijo == 'IN') {
                 $prefijo_destino = 'IIN';
@@ -150,15 +150,15 @@ class Prosecusion extends Connection
                 $prefijo = 'IN';
                 $digito_inicio = 2;
             }
-            
+
             $trayecto_actual = intval(substr($seccionOrigenCodigo, $digito_inicio, 1));
             $resto_codigo = substr($seccionOrigenCodigo, $digito_inicio + 1);
             $trayecto_siguiente = $trayecto_actual + 1;
-            
+
             if ($trayecto_siguiente == 3 && $prefijo == 'IN') {
                 $prefijo = 'IIN';
             }
-            
+
             $seccionDestinoCodigo = $prefijo . $trayecto_siguiente . $resto_codigo;
 
             $stmtDestino = $co->prepare("
@@ -270,15 +270,15 @@ class Prosecusion extends Connection
                     $prefijo = 'IN';
                     $digito_inicio = 2;
                 }
-                
+
                 $trayecto_actual = intval(substr($seccionOrigenCodigo, $digito_inicio, 1));
                 $resto_codigo = substr($seccionOrigenCodigo, $digito_inicio + 1);
                 $trayecto_siguiente = $trayecto_actual + 1;
-                
+
                 if ($trayecto_siguiente == 3 && $prefijo == 'IN') {
                     $prefijo = 'IIN';
                 }
-                
+
                 $seccionDestinoCodigo = $prefijo . $trayecto_siguiente . $resto_codigo;
             }
 
@@ -317,49 +317,72 @@ class Prosecusion extends Connection
         try {
             $co->beginTransaction();
 
-            $stmtOrigenAnio = $co->prepare("SELECT ani_anio FROM tbl_seccion WHERE sec_codigo = ?");
+            $stmtOrigenAnio = $co->prepare("SELECT ani_anio, ani_tipo FROM tbl_seccion WHERE sec_codigo = ? AND sec_estado = 1");
             $stmtOrigenAnio->execute([$seccionOrigenCodigo]);
-            $anioOrigen = $stmtOrigenAnio->fetchColumn();
-            
-            if (!$anioOrigen) {
+            $origenInfo = $stmtOrigenAnio->fetch(PDO::FETCH_ASSOC);
+
+            if (!$origenInfo) {
                 $co->rollBack();
                 return ['resultado' => 'error', 'mensaje' => 'La sección de origen no es válida o no tiene año asociado.'];
             }
 
-            $stmtDestinoAnio = $co->prepare("SELECT ani_anio FROM tbl_seccion WHERE sec_codigo = ?");
+            $anioOrigen = (int)$origenInfo['ani_anio'];
+            $aniTipoOrigen = $origenInfo['ani_tipo'];
+
+            $stmtDestinoAnio = $co->prepare("SELECT ani_anio, ani_tipo FROM tbl_seccion WHERE sec_codigo = ? AND sec_estado = 1");
             $stmtDestinoAnio->execute([$seccionDestinoCodigo]);
-            $anioDestino = $stmtDestinoAnio->fetchColumn();
-            
-            if (!$anioDestino) {
+            $destinoInfo = $stmtDestinoAnio->fetch(PDO::FETCH_ASSOC);
+
+            if (!$destinoInfo) {
                 $co->rollBack();
                 return ['resultado' => 'error', 'mensaje' => 'La sección destino no es válida o no tiene año asociado.'];
             }
 
+            $anioDestino = (int)$destinoInfo['ani_anio'];
+            $aniTipoDestino = $destinoInfo['ani_tipo'];
+
             $stmtCheck = $co->prepare("
-                SELECT pro_cantidad 
-                FROM tbl_prosecusion 
-                WHERE sec_origen = ? AND sec_promocion = ?
+                SELECT pro_cantidad
+                FROM tbl_prosecusion
+                WHERE sec_origen = ? AND ani_origen = ? AND ani_tipo_origen = ?
+                  AND sec_promocion = ? AND ani_destino = ? AND ani_tipo_destino = ?
             ");
-            $stmtCheck->execute([$seccionOrigenCodigo, $seccionDestinoCodigo]);
+            $stmtCheck->execute([$seccionOrigenCodigo, $anioOrigen, $aniTipoOrigen, $seccionDestinoCodigo, $anioDestino, $aniTipoDestino]);
             $existe = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
             if ($existe) {
                 $stmtUpdate = $co->prepare("
-                    UPDATE tbl_prosecusion 
-                    SET pro_cantidad = pro_cantidad + ? 
-                    WHERE sec_origen = ? AND sec_promocion = ?
+                    UPDATE tbl_prosecusion
+                       SET pro_cantidad = pro_cantidad + ?
+                     WHERE sec_origen = ? AND ani_origen = ? AND ani_tipo_origen = ?
+                       AND sec_promocion = ? AND ani_destino = ? AND ani_tipo_destino = ?
                 ");
-                $stmtUpdate->execute([$cantidadFinal, $seccionOrigenCodigo, $seccionDestinoCodigo]);
+                $stmtUpdate->execute([$cantidadFinal, $seccionOrigenCodigo, $anioOrigen, $aniTipoOrigen, $seccionDestinoCodigo, $anioDestino, $aniTipoDestino]);
             } else {
                 $stmtInsert = $co->prepare("
-                    INSERT INTO tbl_prosecusion (sec_origen, sec_promocion, pro_cantidad, pro_estado) 
-                    VALUES (?, ?, ?, 1)
+                    INSERT INTO tbl_prosecusion (
+                        sec_origen, ani_origen, ani_tipo_origen,
+                        sec_promocion, ani_destino, ani_tipo_destino,
+                        pro_cantidad, pro_estado
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)
                 ");
-                $stmtInsert->execute([$seccionOrigenCodigo, $seccionDestinoCodigo, $cantidadFinal]);
+                $stmtInsert->execute([
+                    $seccionOrigenCodigo,
+                    $anioOrigen,
+                    $aniTipoOrigen,
+                    $seccionDestinoCodigo,
+                    $anioDestino,
+                    $aniTipoDestino,
+                    $cantidadFinal
+                ]);
             }
 
-            $stmtUpdateDestino = $co->prepare("UPDATE tbl_seccion SET sec_cantidad = sec_cantidad + ? WHERE sec_codigo = ?");
-            $stmtUpdateDestino->execute([$cantidadFinal, $seccionDestinoCodigo]);
+            $stmtUpdateDestino = $co->prepare("
+                UPDATE tbl_seccion
+                   SET sec_cantidad = sec_cantidad + ?
+                 WHERE sec_codigo = ? AND ani_anio = ? AND ani_tipo = ?
+            ");
+            $stmtUpdateDestino->execute([$cantidadFinal, $seccionDestinoCodigo, $anioDestino, $aniTipoDestino]);
 
             $co->commit();
 
@@ -475,10 +498,10 @@ class Prosecusion extends Connection
             $stmtObtenerTipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = ? AND ani_anio = ?");
             $stmtObtenerTipo->execute([$sec_origen, $ani_origen]);
             $ani_tipo_origen = $stmtObtenerTipo->fetchColumn();
-            
+
             $stmtObtenerTipo->execute([$sec_promocion, $ani_destino]);
             $ani_tipo_destino = $stmtObtenerTipo->fetchColumn();
-            
+
             $stmtCantidadPro = $co->prepare("
                 SELECT pro_cantidad 
                 FROM tbl_prosecusion 
