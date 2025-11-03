@@ -172,7 +172,7 @@ class UC extends Connection
                 if ($existe['uc_estado'] == 1) {
                     return ['resultado' => 'registrar', 'mensaje' => 'ERROR! <br/> El código de la UC ya existe!'];
                 }
-                
+
                 $stmt = $co->prepare("UPDATE tbl_uc SET 
                     uc_nombre = :nombreUC, uc_creditos = :creditosUC, uc_trayecto = :trayectoUC,
                     uc_periodo = :periodoUC, eje_nombre = :ejeNombre, area_nombre = :areaNombre, uc_estado = 1
@@ -250,7 +250,8 @@ class UC extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         try {
-            $sql = "SELECT uc_codigo, uc_nombre FROM tbl_uc WHERE uc_codigo = :codigoOriginal AND uc_estado = 1";
+            $sql = "SELECT uc_codigo, uc_nombre, uc_creditos, uc_trayecto, uc_periodo, eje_nombre, area_nombre
+                    FROM tbl_uc WHERE uc_codigo = :codigoOriginal AND uc_estado = 1";
             $stmt = $co->prepare($sql);
             $stmt->execute([':codigoOriginal' => $codigoOriginal]);
             $datosOriginales = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -259,7 +260,16 @@ class UC extends Connection
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> La unidad curricular no existe!'];
             }
 
-            if ($datosOriginales['uc_codigo'] === $this->codigoUC && $datosOriginales['uc_nombre'] === $this->nombreUC) {
+            $noHayCambios =
+                $datosOriginales['uc_codigo'] === $this->codigoUC &&
+                $datosOriginales['uc_nombre'] === $this->nombreUC &&
+                (int)$datosOriginales['uc_creditos'] === (int)$this->creditosUC &&
+                (string)$datosOriginales['uc_trayecto'] === (string)$this->trayectoUC &&
+                (string)$datosOriginales['uc_periodo'] === (string)$this->periodoUC &&
+                trim($datosOriginales['eje_nombre']) === trim($this->ejeUC) &&
+                trim($datosOriginales['area_nombre']) === trim($this->areaUC);
+
+            if ($noHayCambios) {
                 return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
             }
 
@@ -269,7 +279,7 @@ class UC extends Connection
 
             if ($this->codigoUC !== $codigoOriginal) {
                 $co->prepare("DELETE FROM tbl_uc WHERE uc_codigo = :codigoUC AND uc_estado = 0")
-                   ->execute([':codigoUC' => $this->codigoUC]);
+                    ->execute([':codigoUC' => $this->codigoUC]);
             }
 
             $stmt = $co->prepare("UPDATE tbl_uc SET 
@@ -323,7 +333,7 @@ class UC extends Connection
 
         try {
             $co->prepare("UPDATE tbl_uc SET uc_estado = 0 WHERE uc_codigo = :codigoUC")
-               ->execute([':codigoUC' => $this->codigoUC]);
+                ->execute([':codigoUC' => $this->codigoUC]);
 
             return ['resultado' => 'eliminar', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó la unidad curricular correctamente!'];
         } catch (Exception $e) {
@@ -434,7 +444,7 @@ class UC extends Connection
 
         try {
             $co->prepare("UPDATE tbl_uc SET uc_estado = 1 WHERE uc_codigo = :codigoUC")
-               ->execute([':codigoUC' => $this->codigoUC]);
+                ->execute([':codigoUC' => $this->codigoUC]);
 
             return ['resultado' => 'activar', 'mensaje' => 'Registro Reactivado!<br/>Se activó la unidad curricular correctamente!'];
         } catch (Exception $e) {
