@@ -260,14 +260,23 @@ class UC extends Connection
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> La unidad curricular no existe!'];
             }
 
+            // Normalizar valores originales con fallback a los actuales para evitar warnings y falsos negativos
+            $origCodigo   = isset($datosOriginales['uc_codigo']) ? (string)$datosOriginales['uc_codigo'] : (string)$this->codigoUC;
+            $origNombre   = isset($datosOriginales['uc_nombre']) ? (string)$datosOriginales['uc_nombre'] : (string)$this->nombreUC;
+            $origCreditos = isset($datosOriginales['uc_creditos']) ? (int)$datosOriginales['uc_creditos'] : (int)$this->creditosUC;
+            $origTrayecto = isset($datosOriginales['uc_trayecto']) ? (string)$datosOriginales['uc_trayecto'] : (string)$this->trayectoUC;
+            $origPeriodo  = isset($datosOriginales['uc_periodo']) ? (string)$datosOriginales['uc_periodo'] : (string)$this->periodoUC;
+            $origEje      = isset($datosOriginales['eje_nombre']) ? trim((string)$datosOriginales['eje_nombre']) : trim((string)$this->ejeUC);
+            $origArea     = isset($datosOriginales['area_nombre']) ? trim((string)$datosOriginales['area_nombre']) : trim((string)$this->areaUC);
+
             $noHayCambios =
-                $datosOriginales['uc_codigo'] === $this->codigoUC &&
-                $datosOriginales['uc_nombre'] === $this->nombreUC &&
-                (int)$datosOriginales['uc_creditos'] === (int)$this->creditosUC &&
-                (string)$datosOriginales['uc_trayecto'] === (string)$this->trayectoUC &&
-                (string)$datosOriginales['uc_periodo'] === (string)$this->periodoUC &&
-                trim($datosOriginales['eje_nombre']) === trim($this->ejeUC) &&
-                trim($datosOriginales['area_nombre']) === trim($this->areaUC);
+                $origCodigo === (string)$this->codigoUC &&
+                $origNombre === (string)$this->nombreUC &&
+                $origCreditos === (int)$this->creditosUC &&
+                $origTrayecto === (string)$this->trayectoUC &&
+                $origPeriodo === (string)$this->periodoUC &&
+                $origEje === trim((string)$this->ejeUC) &&
+                $origArea === trim((string)$this->areaUC);
 
             if ($noHayCambios) {
                 return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
