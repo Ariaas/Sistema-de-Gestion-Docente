@@ -74,18 +74,46 @@ class Seccion extends Connection
     }
 
 
-    private function determinarFaseActual()
+    private function determinarFaseActual($ani_anio_preferido = null, $ani_tipo_preferido = null)
     {
         try {
-            $stmt_anio = $this->Con()->prepare("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 LIMIT 1");
-            $stmt_anio->execute();
-            $anio_activo = $stmt_anio->fetch(PDO::FETCH_ASSOC);
+            $co = $this->Con();
+            $registro_anio = null;
+            $ani_tipo_normalizado = $this->normalizarTipoAnio($ani_tipo_preferido);
 
-            if ($anio_activo) {
-                $stmt_fases = $this->Con()->prepare(
+            if ($ani_anio_preferido !== null && $ani_anio_preferido !== '') {
+                $anioPreferidoEntero = (int)$ani_anio_preferido;
+                $sqlPrefer = "SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_anio = :anio AND ani_estado = 1";
+                if ($ani_tipo_normalizado) {
+                    $sqlPrefer .= " AND ani_tipo = :tipo";
+                }
+                $sqlPrefer .= " ORDER BY ani_activo DESC LIMIT 1";
+                $stmtPrefer = $co->prepare($sqlPrefer);
+                $stmtPrefer->bindValue(':anio', $anioPreferidoEntero, PDO::PARAM_INT);
+                if ($ani_tipo_normalizado) {
+                    $stmtPrefer->bindValue(':tipo', $ani_tipo_normalizado, PDO::PARAM_STR);
+                }
+                $stmtPrefer->execute();
+                $registro_anio = $stmtPrefer->fetch(PDO::FETCH_ASSOC);
+            }
+
+            if (!$registro_anio && $ani_tipo_normalizado) {
+                $stmtTipo = $co->prepare("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_tipo = :tipo AND ani_estado = 1 ORDER BY ani_activo DESC, ani_anio DESC LIMIT 1");
+                $stmtTipo->execute([':tipo' => $ani_tipo_normalizado]);
+                $registro_anio = $stmtTipo->fetch(PDO::FETCH_ASSOC);
+            }
+
+            if (!$registro_anio) {
+                $stmt_anio = $co->prepare("SELECT ani_anio, ani_tipo FROM tbl_anio WHERE ani_activo = 1 AND ani_estado = 1 LIMIT 1");
+                $stmt_anio->execute();
+                $registro_anio = $stmt_anio->fetch(PDO::FETCH_ASSOC);
+            }
+
+            if ($registro_anio) {
+                $stmt_fases = $co->prepare(
                     "SELECT fase_numero, fase_apertura, fase_cierre FROM tbl_fase WHERE ani_anio = :ani_anio AND ani_tipo = :ani_tipo"
                 );
-                $stmt_fases->execute([':ani_anio' => $anio_activo['ani_anio'], ':ani_tipo' => $anio_activo['ani_tipo']]);
+                $stmt_fases->execute([':ani_anio' => $registro_anio['ani_anio'], ':ani_tipo' => $registro_anio['ani_tipo']]);
                 $fases = $stmt_fases->fetchAll(PDO::FETCH_ASSOC);
                 $hoy = new DateTime();
 
@@ -1183,14 +1211,14 @@ class Seccion extends Connection
         return $bloques_horario;
     }
 
-    public function obtenerUcPorDocente($doc_cedula, $trayecto_seccion = null, $ani_tipo = null)
+    public function obtenerUcPorDocente($doc_cedula, $trayecto_seccion = null, $ani_tipo = null, $ani_anio = null)
     {
-
-        $es_intensivo = ($ani_tipo === 'intensivo' || strtolower(trim($ani_tipo)) === 'intensivo');
+        $ani_tipo_normalizado = $this->normalizarTipoAnio($ani_tipo);
+        $es_intensivo = ($ani_tipo_normalizado === 'intensivo');
+        $fase_actual = 'ninguna';
 
         if (!$es_intensivo) {
-            $fase_actual = $this->determinarFaseActual();
-
+            $fase_actual = $this->determinarFaseActual($ani_anio, $ani_tipo_normalizado);
             if ($fase_actual === 'ninguna') {
                 return ['data' => [], 'mensaje' => 'Fuera de período de asignación de UCs.'];
             }
@@ -1202,11 +1230,10 @@ class Seccion extends Connection
             $params = [];
 
             if (!$es_intensivo) {
-                $fase_actual = $this->determinarFaseActual();
                 if ($fase_actual === 'fase1') {
-                    $sql .= " AND (u.uc_periodo = 'Fase I' OR u.uc_periodo = 'Anual' OR u.uc_periodo = '0')";
+                    $sql .= " AND (UPPER(u.uc_periodo) IN ('FASE I', 'ANUAL', '0'))";
                 } elseif ($fase_actual === 'fase2') {
-                    $sql .= " AND (u.uc_periodo = 'Fase II' OR u.uc_periodo = 'Anual')";
+                    $sql .= " AND (UPPER(u.uc_periodo) IN ('FASE II', 'ANUAL'))";
                 }
             }
 
@@ -1329,6 +1356,21 @@ class Seccion extends Connection
         }
 
         return $hora;
+    }
+
+    private function normalizarTipoAnio($ani_tipo)
+    {
+        if (!is_string($ani_tipo)) {
+            return null;
+        }
+
+        $valor = mb_strtolower(trim($ani_tipo));
+
+        if ($valor === 'regular' || $valor === 'intensivo') {
+            return $valor;
+        }
+
+        return null;
     }
 
     private function getTurnoEnum($horaInicio)

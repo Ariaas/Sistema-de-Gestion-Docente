@@ -940,6 +940,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 $doc_cedula = $_POST['doc_cedula'] ?? null;
                 $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null;
                 $ani_tipo = $_POST['ani_tipo'] ?? null;
+                $ani_anio = $_POST['ani_anio'] ?? null;
                 $trayecto_seccion = null;
 
                 if ($sec_codigo_actual) {
@@ -951,7 +952,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     }
                 }
 
-                $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion, $ani_tipo);
+                $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion, $ani_tipo, $ani_anio);
                 $respuesta = [
                     'resultado' => 'ok',
                     'ucs_docente' => $resultado_uc['data'],

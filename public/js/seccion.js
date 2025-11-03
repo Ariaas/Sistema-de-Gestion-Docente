@@ -518,6 +518,7 @@ function populateUcSelectForModal(ucSelect, ucToSelect) {
     datos.append("accion", "obtener_uc_por_docente");
     datos.append("sec_codigo_actual", secCodigo);
     datos.append("ani_tipo", aniTipo);
+    datos.append("ani_anio", $("#ani_anio_hidden").val() || "");
 
 
     $.ajax({
