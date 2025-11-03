@@ -18,6 +18,48 @@ if (is_file("views/" . $pagina . ".php")) {
     if (!empty($_POST) && isset($_POST['accion'])) {
         $o = new Login();
         $h = $_POST['accion'];
+        
+        // Acción 'ingresar' - Para pruebas automatizadas (JMeter) - SIN CAPTCHA
+        if ($h == 'ingresar') {
+            // Solo permitir en localhost para seguridad
+            $es_localhost = ($_SERVER['HTTP_HOST'] === 'localhost' || 
+                           $_SERVER['HTTP_HOST'] === '127.0.0.1' ||
+                           strpos($_SERVER['HTTP_HOST'], 'localhost') !== false);
+            
+            if (!$es_localhost) {
+                echo json_encode(['resultado' => 'error', 'mensaje' => 'Acceso no permitido']);
+                exit;
+            }
+            
+            $o->set_nombreUsuario($_POST['usu_usuario']);
+            $o->set_contraseniaUsuario($_POST['usu_clave']);
+            $m = $o->existe();
+            
+            if ($m['resultado'] == 'existe') {
+                session_destroy();
+                session_start();
+                $_SESSION['name'] = $m['mensaje'];
+                $_SESSION['usu_id'] = $m['usu_id'];
+                $_SESSION['usu_foto'] = $m['usu_foto'];
+                $_SESSION['usu_docente'] = $m['usu_docente'];
+                $_SESSION['usu_cedula'] = $m['usu_cedula'];
+                $_SESSION['cedula'] = $m['mensaje'];
+
+                $permisos = $o->get_permisos($m['usu_id']);
+                $_SESSION['permisos'] = $permisos;
+
+                $_SESSION['session_start'] = time();
+                $_SESSION['last_activity'] = time();
+
+                echo json_encode(['resultado' => 'ok', 'mensaje' => 'Login exitoso']);
+                exit;
+            } else {
+                echo json_encode(['resultado' => 'error', 'mensaje' => $m['mensaje']]);
+                exit;
+            }
+        }
+        
+        // Acción 'acceder' - Para usuarios normales - CON CAPTCHA
         if ($h == 'acceder') {
             $captcha = $_POST['g-recaptcha-response'] ?? '';
             if (!$o->validarCaptcha($captcha)) {

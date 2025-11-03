@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="PS-020: File Upload Security">
+      <stringProp name="TestPlan.comments">Prueba de seguridad en subida de archivos
+Sistema de Gestión Docente
+Casos: PS-020
+Verifica: Validación de extensiones, tamaño, tipo MIME</stringProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="USUARIO" elementType="Argument">
+            <stringProp name="Argument.name">USUARIO</stringProp>
+            <stringProp name="Argument.value">LigiaDuran</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="PASSWORD" elementType="Argument">
+            <stringProp name="Argument.name">PASSWORD</stringProp>
+            <stringProp name="Argument.value">Carolina.16</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults">
+        <stringProp name="HTTPSampler.domain">localhost</stringProp>
+        <stringProp name="HTTPSampler.port">80</stringProp>
+        <stringProp name="HTTPSampler.protocol">http</stringProp>
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+        <stringProp name="HTTPSampler.implementation"></stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <CookieManager guiclass="CookiePanel" testclass="CookieManager" testname="HTTP Cookie Manager" enabled="true">
+        <collectionProp name="CookieManager.cookies"/>
+        <boolProp name="CookieManager.clearEachIteration">false</boolProp>
+        <boolProp name="CookieManager.controlledByThreadGroup">false</boolProp>
+      </CookieManager>
+      <hashTree/>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+        <collectionProp name="HeaderManager.headers">
+          <elementProp name="" elementType="Header">
+            <stringProp name="Header.name">X-Requested-With</stringProp>
+            <stringProp name="Header.value">XMLHttpRequest</stringProp>
+          </elementProp>
+        </collectionProp>
+      </HeaderManager>
+      <hashTree/>
+      <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="Setup: Login" enabled="true">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </SetupThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Login" enabled="true">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=login</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">ingresar</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="usu_usuario" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${USUARIO}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">usu_usuario</stringProp>
+              </elementProp>
+              <elementProp name="usu_clave" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${PASSWORD}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">usu_clave</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Test: Malicious File Extensions" enabled="true">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Upload PHP File" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.entity.ContentType
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.client.methods.HttpPost
+
+def phpContent = &quot;&lt;?php echo \&apos;VULNERABLE\&apos;; ?&gt;&quot;
+
+try {
+    def client = HttpClients.createDefault()
+    def post = new HttpPost(&quot;http://localhost/org/Sistema-de-Gestion-Docente/?pagina=perfil&amp;accion=subirFoto&quot;)
+    
+    def entity = MultipartEntityBuilder.create()
+        .addBinaryBody(&quot;foto&quot;, phpContent.getBytes(), ContentType.create(&quot;image/jpeg&quot;), &quot;shell.php&quot;)
+        .build()
+    
+    post.setEntity(entity)
+    
+    def response = client.execute(post)
+    def statusCode = response.getStatusLine().getStatusCode()
+    
+    SampleResult.setResponseCode(statusCode.toString())
+    
+    if (statusCode == 200) {
+        SampleResult.setResponseMessage(&quot;¡VULNERABLE! Archivo PHP subido exitosamente&quot;)
+        SampleResult.setSuccessful(false)
+    } else {
+        SampleResult.setResponseMessage(&quot;SEGURO: Archivo PHP rechazado (${statusCode})&quot;)
+        SampleResult.setSuccessful(true)
+    }
+} catch (Exception e) {
+    SampleResult.setResponseMessage(&quot;Error: &quot; + e.getMessage())
+    SampleResult.setSuccessful(false)
+}
+</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Upload Double Extension File" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.entity.ContentType
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.client.methods.HttpPost
+
+def phpContent = &quot;&lt;?php system(\$_GET[\&apos;cmd\&apos;]); ?&gt;&quot;
+
+try {
+    def client = HttpClients.createDefault()
+    def post = new HttpPost(&quot;http://localhost/org/Sistema-de-Gestion-Docente/?pagina=perfil&amp;accion=subirFoto&quot;)
+    
+    def entity = MultipartEntityBuilder.create()
+        .addBinaryBody(&quot;foto&quot;, phpContent.getBytes(), ContentType.create(&quot;image/jpeg&quot;), &quot;shell.php.jpg&quot;)
+        .build()
+    
+    post.setEntity(entity)
+    
+    def response = client.execute(post)
+    def statusCode = response.getStatusLine().getStatusCode()
+    
+    SampleResult.setResponseCode(statusCode.toString())
+    
+    if (statusCode == 200) {
+        SampleResult.setResponseMessage(&quot;¡VULNERABLE! Archivo con doble extensión subido&quot;)
+        SampleResult.setSuccessful(false)
+    } else {
+        SampleResult.setResponseMessage(&quot;SEGURO: Archivo con doble extensión rechazado&quot;)
+        SampleResult.setSuccessful(true)
+    }
+} catch (Exception e) {
+    SampleResult.setResponseMessage(&quot;Error: &quot; + e.getMessage())
+    SampleResult.setSuccessful(false)
+}
+</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Upload Executable File" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.entity.ContentType
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.client.methods.HttpPost
+
+def exeContent = &quot;MZ&quot; + &quot;\u0090&quot; * 100 // Fake EXE header
+
+try {
+    def client = HttpClients.createDefault()
+    def post = new HttpPost(&quot;http://localhost/org/Sistema-de-Gestion-Docente/?pagina=perfil&amp;accion=subirFoto&quot;)
+    
+    def entity = MultipartEntityBuilder.create()
+        .addBinaryBody(&quot;foto&quot;, exeContent.getBytes(), ContentType.create(&quot;application/octet-stream&quot;), &quot;malware.exe&quot;)
+        .build()
+    
+    post.setEntity(entity)
+    
+    def response = client.execute(post)
+    def statusCode = response.getStatusLine().getStatusCode()
+    
+    SampleResult.setResponseCode(statusCode.toString())
+    
+    if (statusCode == 200) {
+        SampleResult.setResponseMessage(&quot;¡VULNERABLE! Archivo ejecutable subido&quot;)
+        SampleResult.setSuccessful(false)
+    } else {
+        SampleResult.setResponseMessage(&quot;SEGURO: Archivo ejecutable rechazado&quot;)
+        SampleResult.setSuccessful(true)
+    }
+} catch (Exception e) {
+    SampleResult.setResponseMessage(&quot;Error: &quot; + e.getMessage())
+    SampleResult.setSuccessful(false)
+}
+</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>true</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>true</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

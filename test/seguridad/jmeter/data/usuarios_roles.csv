@@ -1,0 +1,5 @@
+usuario,password,rol,descripcion
+admin,Admin123!,administrador,Usuario con todos los permisos
+coordinador,Coord123!,coordinador,Usuario coordinador con permisos limitados
+docente,Docente123!,docente,Usuario docente con permisos básicos
+test_user,Test123!,docente,Usuario de prueba general
