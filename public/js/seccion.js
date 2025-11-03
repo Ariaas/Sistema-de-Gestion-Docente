@@ -1443,6 +1443,7 @@ function procederConGuardado() {
             tur_horafin: bloque.tur_horafin
         }));
 
+        datos.append("turno_seleccionado", $("#filtro_turno").val() || "");
         datos.append("items_horario", JSON.stringify(clasesAEnviar));
         datos.append("bloques_personalizados", JSON.stringify(bloquesPersonalizados));
         datos.append("bloques_eliminados", JSON.stringify(bloquesEliminados));
@@ -2529,17 +2530,13 @@ $(document).ready(function () {
                 }
 
             } else {
-                const existeEnAllTurnos = allTurnos.some(t => t.tur_horainicio === nuevoInicio);
                 const nuevoBloque = {
                     tur_horainicio: nuevoInicio,
                     tur_horafin: nuevoFin,
                     tur_nombre: turnoActualFiltro.charAt(0).toUpperCase() + turnoActualFiltro.slice(1),
                     tur_estado: 1,
-                    _sintetico: !existeEnAllTurnos
+                    _sintetico: true
                 };
-
-                if (!existeEnAllTurnos) {
-                }
 
                 bloquesDeLaTablaActual.push(nuevoBloque);
             }

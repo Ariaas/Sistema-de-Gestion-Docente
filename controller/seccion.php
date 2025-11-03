@@ -971,7 +971,8 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     $forzar,
                     $modo_operacion,
                     $_POST['bloques_personalizados'] ?? '[]',
-                    $_POST['bloques_eliminados'] ?? '[]'
+                    $_POST['bloques_eliminados'] ?? '[]',
+                    $_POST['turno_seleccionado'] ?? null
                 );
                 break;
 

@@ -599,7 +599,7 @@ class Seccion extends Connection
         return ['conflicto' => false];
     }
 
-    public function Modificar($sec_codigo, $ani_anio, $ani_tipo, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]', $bloques_eliminados_json = '[]')
+    public function Modificar($sec_codigo, $ani_anio, $ani_tipo, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]', $bloques_eliminados_json = '[]', $turno_preferido = null)
     {
         if (empty($sec_codigo) || empty($ani_anio) || empty($ani_tipo) || !isset($cantidadSeccion)) {
             return ['resultado' => 'error', 'mensaje' => 'Faltan datos clave (código, año, tipo o cantidad) para modificar la sección.'];
@@ -708,10 +708,43 @@ class Seccion extends Connection
             $bloques_personalizados = json_decode($bloques_personalizados_json, true);
             $tiene_bloques = is_array($bloques_personalizados) && !empty($bloques_personalizados);
 
+            $turno_preferido = $this->normalizarNombreTurno($turno_preferido);
+
+            $horas_para_turno = [];
+            if (is_array($items_horario)) {
+                foreach ($items_horario as $item) {
+                    if (!empty($item['hora_inicio'])) {
+                        $hora = $this->normalizarHora($item['hora_inicio']);
+                        if ($hora !== null) {
+                            $horas_para_turno[] = $hora;
+                        }
+                    }
+                }
+            }
+
+            if (empty($horas_para_turno) && is_array($bloques_personalizados)) {
+                foreach ($bloques_personalizados as $bloque) {
+                    if (isset($bloque['tur_horainicio'])) {
+                        $hora = $this->normalizarHora($bloque['tur_horainicio']);
+                        if ($hora !== null) {
+                            $horas_para_turno[] = $hora;
+                        }
+                    }
+                }
+            }
+
+            $hora_principal = !empty($horas_para_turno) ? min($horas_para_turno) : null;
+
             if (!empty($items_horario) || $tiene_bloques) {
-                $horas_inicio = !empty($items_horario) ? array_column($items_horario, 'hora_inicio') : [];
-                $hora_principal = !empty($horas_inicio) ? min($horas_inicio) : '08:00:00';
-                $turno_nombre = $turno_nombre_existente ?: $this->getTurnoEnum($hora_principal);
+                if ($turno_preferido) {
+                    $turno_nombre = $turno_preferido;
+                } elseif ($hora_principal) {
+                    $turno_nombre = $this->getTurnoEnum($hora_principal);
+                } elseif ($turno_nombre_existente) {
+                    $turno_nombre = $turno_nombre_existente;
+                } else {
+                    $turno_nombre = $this->inferirTurnoDesdeCodigo($sec_codigo);
+                }
 
                 $stmt_horario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (:sec_codigo, :ani_anio, :ani_tipo, :tur_nombre, 1) ON DUPLICATE KEY UPDATE hor_estado = 1, tur_nombre = :tur_nombre");
 
@@ -1228,6 +1261,74 @@ class Seccion extends Connection
             error_log("Error: " . $e->getMessage());
             return [];
         }
+    }
+
+    private function normalizarNombreTurno($turno)
+    {
+        if ($turno === null) {
+            return null;
+        }
+
+        $turno = trim(mb_strtolower($turno));
+        if ($turno === '') {
+            return null;
+        }
+
+        $turnoSinTildes = strtr($turno, [
+            'á' => 'a',
+            'à' => 'a',
+            'ä' => 'a',
+            'â' => 'a',
+            'ã' => 'a',
+            'é' => 'e',
+            'è' => 'e',
+            'ë' => 'e',
+            'ê' => 'e',
+            'í' => 'i',
+            'ì' => 'i',
+            'ï' => 'i',
+            'î' => 'i',
+            'ó' => 'o',
+            'ò' => 'o',
+            'ö' => 'o',
+            'ô' => 'o',
+            'õ' => 'o',
+            'ú' => 'u',
+            'ù' => 'u',
+            'ü' => 'u',
+            'û' => 'u',
+            'ñ' => 'n'
+        ]);
+
+        if (str_starts_with($turnoSinTildes, 'man')) {
+            return 'mañana';
+        }
+        if (str_starts_with($turnoSinTildes, 'tar')) {
+            return 'tarde';
+        }
+        if (str_starts_with($turnoSinTildes, 'noc')) {
+            return 'noche';
+        }
+
+        return null;
+    }
+
+    private function normalizarHora($hora)
+    {
+        if (!$hora) {
+            return null;
+        }
+
+        $hora = trim($hora);
+        if ($hora === '') {
+            return null;
+        }
+
+        if (strlen($hora) === 5) {
+            $hora .= ':00';
+        }
+
+        return $hora;
     }
 
     private function getTurnoEnum($horaInicio)
