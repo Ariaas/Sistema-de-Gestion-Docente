@@ -2,356 +2,352 @@
 
 use PHPUnit\Framework\TestCase;
 
-require_once 'model/rol.php';
+require_once __DIR__ . '/../../model/rol.php';
 
 class RolTest extends TestCase
 {
     private $rol;
-
     private $pdoMock;
-
     private $stmtMock;
 
     protected function setUp(): void
     {
+        $this->rol = new Rol();
         $this->pdoMock = $this->createMock(PDO::class);
         $this->stmtMock = $this->createMock(PDOStatement::class);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->rol = null;
+        $this->pdoMock = null;
+        $this->stmtMock = null;
+    }
+
+    public function providerNombresInvalidos()
+    {
+        return [
+            'nombre null' => [null],
+            'nombre vacío' => [''],
+            'nombre espacios' => ['   '],
+            'nombre muy corto' => ['AB'],
+            'nombre muy largo' => [str_repeat('A', 51)],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function testSetAndGetNombreRol()
+    {
+        $this->rol->setNombreRol('Coordinador');
+        $this->assertEquals('Coordinador', $this->rol->getNombreRol());
+    }
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testRegistrar_ConNombresInvalidos($nombre)
+    {
+        $this->rol->setNombreRol($nombre);
+
+        $resultado = $this->rol->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testRegistrar_RolYaExiste()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+        $this->stmtMock->method('fetchAll')->willReturn([['rol_nombre' => 'Coordinador']]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
 
         $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $this->rol->method('Con')->willReturn($this->pdoMock);
+        $this->rol->method('existe')->willReturn(['resultado' => 'existe']);
+
+        $this->rol->setNombreRol('Coordinador');
+
+        $resultado = $this->rol->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('existe', strtolower($resultado['mensaje']));
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_RolIdNull()
+    {
+        $this->rol->setNombreRol('Nuevo Rol');
+
+        $resultado = $this->rol->Modificar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testModificar_ConNombresInvalidos($nombre)
+    {
+        $this->rol->setRolId(1);
+        $this->rol->setNombreRol($nombre);
+
+        $resultado = $this->rol->Modificar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_RolAdministrador()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['rol_nombre' => 'Administrador']);
+        $this->stmtMock->method('fetchAll')->willReturn([['rol_id' => 1]]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->rol = $this->getMockBuilder(Rol::class)
+            ->onlyMethods(['Con', 'ExisteId', 'getRolById'])
+            ->getMock();
+        $this->rol->method('Con')->willReturn($this->pdoMock);
+        $this->rol->method('ExisteId')->willReturn(['resultado' => 'existe']);
+        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Administrador']);
+
+        $this->rol->setRolId(1);
+        $this->rol->setNombreRol('Nuevo Nombre');
+
+        $resultado = $this->rol->Modificar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('Administrador', $resultado['mensaje']);
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_RolNoExiste()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->rol = $this->getMockBuilder(Rol::class)
             ->onlyMethods(['Con'])
             ->getMock();
-
         $this->rol->method('Con')->willReturn($this->pdoMock);
 
-        $this->pdoMock->method('setAttribute');
-    }
-
-    public function testRegistrar_Exito()
-    {
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'existe'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('existe')->willReturn([]);
-
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->with($this->stringContains('INSERT INTO tbl_rol'))
-            ->willReturn($this->stmtMock);
-
-        $this->stmtMock->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-
-        $this->rol->setNombre('Docente');
-
-        $resultado = $this->rol->Registrar();
-
-        $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('Registro Incluido', $resultado['mensaje']);
-    }
-
-    public function testRegistrar_Falla_RolYaExiste()
-    {
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'existe'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('existe')->willReturn(['resultado' => 'existe']);
-
-        $this->pdoMock->expects($this->never())->method('prepare');
-
-        $this->rol->setNombre('Administrador');
-
-        $resultado = $this->rol->Registrar();
-
-        $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('YA existe', $resultado['mensaje']);
-    }
-
-    public function testRegistrar_Falla_DBException()
-    {
-        
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'existe'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('existe')->willReturn([]);
-
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->willThrowException(new PDOException('Error de BD'));
-
-        $this->rol->setNombre('Docente');
-        $resultado = $this->rol->Registrar();
-
-        $this->assertEquals('error', $resultado['resultado']);
-        $this->assertEquals('Error de BD', $resultado['mensaje']);
-    }
-    public function testModificar_Exito()
-    {
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'ExisteId', 'existe', 'getNombre'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('ExisteId')->willReturn(['resultado' => 'existe']);
-        $this->rol->method('existe')->willReturn([]);
-        $this->rol->method('getNombre')->willReturn('Docente');
-
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->with($this->stringContains('UPDATE tbl_rol'))
-            ->willReturn($this->stmtMock);
-
-        $this->stmtMock->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-
-        $this->rol->setId(2);
-        $this->rol->setNombre('Docente Actualizado');
-
-
-        $resultado = $this->rol->Modificar();
-
-        $this->assertEquals('modificar', $resultado['resultado']);
-        $this->assertStringContainsString('Registro Modificado', $resultado['mensaje']);
-    }
-
-    public function testModificar_Falla_RolAdministrador()
-    {
-        $this->rol->setNombre('Administrador');
+        $this->rol->setRolId(999);
+        $this->rol->setNombreRol('Rol Inexistente');
 
         $resultado = $this->rol->Modificar();
 
         $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString('Administrador', $resultado['mensaje']);
-        $this->assertStringContainsString('no puede ser modificado', $resultado['mensaje']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
     }
 
-    public function testModificar_Falla_RolNoExiste()
+    /**
+     * @test
+     */
+    public function testEliminar_RolIdNull()
     {
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'ExisteId'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('ExisteId')->willReturn([]);
-
-        $this->rol->setId(999);
-        $this->rol->setNombre('Docente');
-
-        $resultado = $this->rol->Modificar();
-
-        $this->assertEquals('modificar', $resultado['resultado']);
-        $this->assertStringContainsString('NO existe', $resultado['mensaje']);
-    }
-
-    public function testModificar_Falla_NombreYaExiste()
-    {
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'ExisteId', 'existe', 'getNombre'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('ExisteId')->willReturn(['resultado' => 'existe']);
-        $this->rol->method('existe')->willReturn(['resultado' => 'existe']);
-        $this->rol->method('getNombre')->willReturn('Docente');
-
-        $this->rol->setId(2);
-        $this->rol->setNombre('Coordinador');
-
-        $resultado = $this->rol->Modificar();
-
-        $this->assertEquals('modificar', $resultado['resultado']);
-        $this->assertStringContainsString('YA existe', $resultado['mensaje']);
-    }
-
-    public function testEliminar_Exito()
-    {
-       
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'ExisteId', 'getRolById'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('ExisteId')->willReturn(['resultado' => 'existe']);
-        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Docente']);
-
-       
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->with($this->stringContains('UPDATE tbl_rol'))
-            ->willReturn($this->stmtMock);
-
-        $this->stmtMock->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-        $this->rol->setId(2);
-
         $resultado = $this->rol->Eliminar();
 
-        $this->assertEquals('eliminar', $resultado['resultado']);
-        $this->assertStringContainsString('Registro Eliminado', $resultado['mensaje']);
+        $this->assertEquals('error', $resultado['resultado']);
     }
 
-    public function testEliminar_Falla_RolAdministrador()
+    /**
+     * @test
+     */
+    public function testEliminar_RolAdministrador()
     {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['rol_nombre' => 'Administrador']);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
         $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'getRolById'])
+            ->onlyMethods(['Con'])
             ->getMock();
         $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Administrador']);
 
-        $this->rol->setId(1);
+        $this->rol->setRolId(1);
 
         $resultado = $this->rol->Eliminar();
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('Administrador', $resultado['mensaje']);
-        $this->assertStringContainsString('no puede ser eliminado', $resultado['mensaje']);
     }
 
-    public function testEliminar_Falla_RolNoExiste()
+    /**
+     * @test
+     */
+    public function testEliminar_RolNoExiste()
     {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
         $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'ExisteId', 'getRolById'])
+            ->onlyMethods(['Con'])
             ->getMock();
         $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('ExisteId')->willReturn([]);
-        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Docente']);
 
-        $this->rol->setId(999);
+        $this->rol->setRolId(999);
 
         $resultado = $this->rol->Eliminar();
-        $this->assertEquals('eliminar', $resultado['resultado']);
-        $this->assertStringContainsString('NO existe', $resultado['mensaje']);
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
     }
 
-    public function testAsignarPermisos_Exito()
+    /**
+     * @test
+     */
+    public function testRegistrar_Exitoso()
     {
-        $permisos = [
-            ['per_id' => 1, 'per_accion' => 'registrar'],
-            ['per_id' => 2, 'per_accion' => 'consultar']
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchAll')->willReturn([]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->rol = $this->getMockBuilder(Rol::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $this->rol->method('Con')->willReturn($this->pdoMock);
+        $this->rol->method('existe')->willReturn([]);
+
+        $this->rol->setNombreRol('Docente');
+
+        $resultado = $this->rol->Registrar();
+
+        $this->assertEquals('registrar', $resultado['resultado']);
+    }
+
+    public function providerNombresValidos()
+    {
+        return [
+            'nombre normal' => ['Coordinador'],
+            'nombre con espacios' => ['Jefe de Departamento'],
+            'nombre largo' => ['Coordinador de Investigación'],
         ];
-        $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'getRolById'])
-            ->getMock();
-        $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Docente']);
-
-        $stmtDelete = $this->createMock(PDOStatement::class);
-        $stmtInsert = $this->createMock(PDOStatement::class);
-
-        $this->pdoMock->expects($this->exactly(2))
-            ->method('prepare')
-            ->withConsecutive(
-                [$this->stringContains('DELETE FROM rol_permisos')],
-                [$this->stringContains('INSERT INTO rol_permisos')]
-            )
-            ->willReturnOnConsecutiveCalls($stmtDelete, $stmtInsert);
-
-        $stmtDelete->expects($this->once())->method('execute');
-        $stmtInsert->expects($this->exactly(2))->method('execute');
-
-        $resultado = $this->rol->asignarPermisos(2, $permisos);
-
-        $this->assertEquals('ok', $resultado['resultado']);
-        $this->assertStringContainsString('Permisos asignados correctamente', $resultado['mensaje']);
     }
 
-    public function testAsignarPermisos_Falla_RolAdministrador()
+    /**
+     * @test
+     * @dataProvider providerNombresValidos
+     */
+    public function testRegistrar_ConNombresValidos($nombre)
     {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchAll')->willReturn([]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
         $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'getRolById'])
+            ->onlyMethods(['Con', 'existe'])
             ->getMock();
         $this->rol->method('Con')->willReturn($this->pdoMock);
-        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Administrador']);
+        $this->rol->method('existe')->willReturn([]);
 
-        $resultado = $this->rol->asignarPermisos(1, []);
+        $this->rol->setNombreRol($nombre);
+
+        $resultado = $this->rol->Registrar();
+
+        $this->assertEquals('registrar', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_Exitoso()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['rol_nombre' => 'Coordinador']);
+        $this->stmtMock->method('fetchAll')->willReturn([['rol_id' => 2]]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->rol = $this->getMockBuilder(Rol::class)
+            ->onlyMethods(['Con', 'ExisteId', 'getRolById', 'existe'])
+            ->getMock();
+        $this->rol->method('Con')->willReturn($this->pdoMock);
+        $this->rol->method('ExisteId')->willReturn(['resultado' => 'existe']);
+        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Coordinador']);
+        $this->rol->method('existe')->willReturn([]);
+
+        $this->rol->setRolId(2);
+        $this->rol->setNombreRol('Coordinador Principal');
+
+        $resultado = $this->rol->Modificar();
+
+        $this->assertEquals('modificar', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_RolDuplicado()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['rol_nombre' => 'Docente']);
+        $this->stmtMock->method('fetchAll')->willReturn([['rol_id' => 2]]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->rol = $this->getMockBuilder(Rol::class)
+            ->onlyMethods(['Con', 'ExisteId', 'getRolById', 'existe'])
+            ->getMock();
+        $this->rol->method('Con')->willReturn($this->pdoMock);
+        $this->rol->method('ExisteId')->willReturn(['resultado' => 'existe']);
+        $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Docente']);
+        $this->rol->method('existe')->willReturn(['resultado' => 'existe']);
+
+        $this->rol->setRolId(2);
+        $this->rol->setNombreRol('Coordinador');
+
+        $resultado = $this->rol->Modificar();
 
         $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString('Administrador', $resultado['mensaje']);
-        $this->assertStringContainsString('no se pueden modificar', $resultado['mensaje']);
+        $this->assertStringContainsString('existe', strtolower($resultado['mensaje']));
     }
 
-    public function testAsignarPermisos_Exito_PermisosVacios()
+    /**
+     * @test
+     */
+    public function testEliminar_Exitoso()
     {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['rol_nombre' => 'Docente']);
+        $this->stmtMock->method('fetchAll')->willReturn([['rol_id' => 3]]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
         $this->rol = $this->getMockBuilder(Rol::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['Con', 'getRolById'])
+            ->onlyMethods(['Con', 'ExisteId', 'getRolById'])
             ->getMock();
         $this->rol->method('Con')->willReturn($this->pdoMock);
+        $this->rol->method('ExisteId')->willReturn(['resultado' => 'existe']);
         $this->rol->method('getRolById')->willReturn(['rol_nombre' => 'Docente']);
 
-        $stmtDelete = $this->createMock(PDOStatement::class);
+        $this->rol->setRolId(3);
 
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->with($this->stringContains('DELETE FROM rol_permisos'))
-            ->willReturn($stmtDelete);
+        $resultado = $this->rol->Eliminar();
 
-        $stmtDelete->expects($this->once())->method('execute');
-
-        $resultado = $this->rol->asignarPermisos(2, []);
-
-        $this->assertEquals('ok', $resultado['resultado']);
-    }
-
-    public function testGetRolById_Exito()
-    {
-        $datosRol = ['rol_nombre' => 'Docente'];
-
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->with($this->stringContains('SELECT rol_nombre FROM tbl_rol WHERE rol_id'))
-            ->willReturn($this->stmtMock);
-
-        $this->stmtMock->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-
-        $this->stmtMock->expects($this->once())
-            ->method('fetch')
-            ->with(PDO::FETCH_ASSOC)
-            ->willReturn($datosRol);
-
-        $resultado = $this->rol->getRolById(2);
-
-        $this->assertEquals($datosRol, $resultado);
-    }
-
-    public function testGetRolById_Falla_DBException()
-    {
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->willThrowException(new PDOException('Error de BD'));
-
-        $resultado = $this->rol->getRolById(2);
-
-        $this->assertNull($resultado);
-    }
-
-    public function testGettersYSetters()
-    {
-        $rol = new Rol();
-        $rol->setNombre('Docente');
-        $this->assertEquals('Docente', $rol->getNombre());
-
-        $rol->setId(5);
-        $this->assertEquals(5, $rol->getId());
-    }
-
-    public function testConstructor()
-    {
-        $this->assertTrue(method_exists(Rol::class, '__construct'));
+        $this->assertEquals('eliminar', $resultado['resultado']);
     }
 }

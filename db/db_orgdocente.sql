@@ -423,32 +423,6 @@ CREATE TABLE `tbl_bloque_personalizado` (
   `bloque_sintetico` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `tbl_bloque_personalizado`
---
-
-INSERT INTO `tbl_bloque_personalizado` (`bloque_id`, `sec_codigo`, `ani_anio`, `ani_tipo`, `tur_horainicio`, `tur_horafin`, `bloque_sintetico`) VALUES
-(1, 'IN1133', 2025, 'regular', '07:20', '08:00', 0),
-(2, 'IN1133', 2025, 'regular', '08:00', '08:40', 0),
-(3, 'IN1133', 2025, 'regular', '08:40', '09:20', 0),
-(4, 'IN1133', 2025, 'regular', '09:20', '10:00', 0),
-(5, 'IN1133', 2025, 'regular', '10:00', '10:40', 0),
-(6, 'IN1133', 2025, 'regular', '10:40', '11:20', 0),
-(7, 'IN1133', 2025, 'regular', '11:20', '12:00', 0),
-(8, 'IN1403', 2025, 'regular', '07:20', '08:00', 0),
-(9, 'IN1403', 2025, 'regular', '08:00', '08:40', 0),
-(10, 'IN1403', 2025, 'regular', '08:40', '09:20', 0),
-(11, 'IN1403', 2025, 'regular', '09:20', '10:00', 0),
-(12, 'IN1403', 2025, 'regular', '10:00', '10:40', 0),
-(13, 'IN1403', 2025, 'regular', '10:40', '11:20', 0),
-(14, 'IN1403', 2025, 'regular', '11:20', '12:00', 0),
-(15, 'IN1113', 2025, 'regular', '07:20', '08:00', 0),
-(16, 'IN1113', 2025, 'regular', '08:00', '08:40', 0),
-(17, 'IN1113', 2025, 'regular', '08:40', '09:20', 0),
-(18, 'IN1113', 2025, 'regular', '09:20', '10:00', 0),
-(19, 'IN1113', 2025, 'regular', '10:00', '10:40', 0),
-(20, 'IN1113', 2025, 'regular', '10:40', '11:20', 0),
-(21, 'IN1113', 2025, 'regular', '11:20', '12:00', 0);
 
 -- --------------------------------------------------------
 

@@ -49,6 +49,25 @@ class Coordinacion extends Connection
     {
         $r = [];
 
+        if ($this->cor_nombre === null || trim($this->cor_nombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la coordinación no puede estar vacío.';
+            return $r;
+        }
+
+        $this->cor_nombre = trim($this->cor_nombre);
+
+        if (strlen($this->cor_nombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->cor_nombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre no puede exceder 100 caracteres.';
+            return $r;
+        }
 
         $registro_existente = $this->BuscarPorNombre($this->cor_nombre);
 
@@ -94,6 +113,32 @@ class Coordinacion extends Connection
     public function Modificar()
     {
         $r = [];
+
+        if ($this->original_cor_nombre === null || trim($this->original_cor_nombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre original es requerido.';
+            return $r;
+        }
+
+        if ($this->cor_nombre === null || trim($this->cor_nombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la coordinación no puede estar vacío.';
+            return $r;
+        }
+
+        $this->cor_nombre = trim($this->cor_nombre);
+
+        if (strlen($this->cor_nombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->cor_nombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre no puede exceder 100 caracteres.';
+            return $r;
+        }
         
         try {
             $co = $this->Con();
@@ -158,6 +203,26 @@ class Coordinacion extends Connection
     public function Eliminar()
     {
         $r = [];
+
+        if ($this->cor_nombre === null || trim($this->cor_nombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la coordinación no puede estar vacío.';
+            return $r;
+        }
+
+        $this->cor_nombre = trim($this->cor_nombre);
+
+        if (strlen($this->cor_nombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->cor_nombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre no puede exceder 100 caracteres.';
+            return $r;
+        }
         
         try {
             $co = $this->Con();

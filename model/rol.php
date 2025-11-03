@@ -25,6 +25,16 @@ class Rol extends Connection_bitacora
         return $this->rolId;
     }
 
+    public function getNombreRol()
+    {
+        return $this->nombreRol;
+    }
+
+    public function getRolId()
+    {
+        return $this->rolId;
+    }
+
     public function setNombre($nombreRol)
     {
         $this->nombreRol = $nombreRol;
@@ -35,9 +45,39 @@ class Rol extends Connection_bitacora
         $this->rolId = $rolId;
     }
 
+    public function setNombreRol($nombreRol)
+    {
+        $this->nombreRol = $nombreRol;
+    }
+
+    public function setRolId($rolId)
+    {
+        $this->rolId = $rolId;
+    }
+
     function Registrar()
     {
         $r = array();
+
+        if ($this->nombreRol === null || trim($this->nombreRol) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del rol no puede estar vacío.';
+            return $r;
+        }
+
+        $this->nombreRol = trim($this->nombreRol);
+
+        if (strlen($this->nombreRol) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del rol debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->nombreRol) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del rol no puede exceder 50 caracteres.';
+            return $r;
+        }
 
         if (!$this->existe($this->nombreRol)) {
 
@@ -68,7 +108,7 @@ class Rol extends Connection_bitacora
 
             $co = null;
         } else {
-            $r['resultado'] = 'registrar';
+            $r['resultado'] = 'error';
             $r['mensaje'] = 'ERROR! <br/> El ROL colocado YA existe!';
         }
 
@@ -77,51 +117,89 @@ class Rol extends Connection_bitacora
 
     function Modificar()
     {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
-        if ($this->nombreRol === 'Administrador') {
+        if ($this->rolId === null) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El ID del rol es requerido.';
+            return $r;
+        }
+
+        if ($this->nombreRol === null || trim($this->nombreRol) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del rol no puede estar vacío.';
+            return $r;
+        }
+
+        $this->nombreRol = trim($this->nombreRol);
+
+        if (strlen($this->nombreRol) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del rol debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->nombreRol) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del rol no puede exceder 50 caracteres.';
+            return $r;
+        }
+
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        if (!$this->ExisteId($this->rolId)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'ERROR! <br/> El ROL colocado NO existe!';
+            return $r;
+        }
+
+        $rolInfo = $this->getRolById($this->rolId);
+        if ($rolInfo && $rolInfo['rol_nombre'] === 'Administrador') {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El rol "Administrador" no puede ser modificado.';
             return $r;
         }
 
-        if ($this->ExisteId($this->rolId)) {
-            $existe = $this->existe($this->nombreRol);
-            if (empty($existe) || $this->nombreRol == $this->getNombre()) {
-                try {
-                    $stmt = $co->prepare("UPDATE tbl_rol
-                    SET rol_nombre = :nombreRol
-                    WHERE rol_id = :rolId");
-
-                    $stmt->bindParam(':nombreRol', $this->nombreRol, PDO::PARAM_STR);
-                    $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
-
-                    $stmt->execute();
-
-                    $r['resultado'] = 'modificar';
-                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el rol correctamente!';
-                } catch (Exception $e) {
-                    $r['resultado'] = 'error';
-                    $r['mensaje'] = $e->getMessage();
-                }
-            } else {
-                $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'ERROR! <br/> El ROL colocado YA existe!';
-            }
-        } else {
-            $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El ROL colocado NO existe!';
+        $existe = $this->existe($this->nombreRol);
+        if (!empty($existe) && $existe['resultado'] === 'existe') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'ERROR! <br/> El ROL colocado YA existe!';
+            return $r;
         }
+
+        try {
+            $stmt = $co->prepare("UPDATE tbl_rol
+            SET rol_nombre = :nombreRol
+            WHERE rol_id = :rolId");
+
+            $stmt->bindParam(':nombreRol', $this->nombreRol, PDO::PARAM_STR);
+            $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
+
+            $stmt->execute();
+
+            $r['resultado'] = 'modificar';
+            $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el rol correctamente!';
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+
         return $r;
     }
 
     function Eliminar()
     {
+        $r = array();
+
+        if ($this->rolId === null) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El ID del rol es requerido.';
+            return $r;
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
 
         $rolInfo = $this->getRolById($this->rolId);
         if ($rolInfo && $rolInfo['rol_nombre'] === 'Administrador') {
@@ -147,7 +225,7 @@ class Rol extends Connection_bitacora
                 $r['mensaje'] = $e->getMessage();
             }
         } else {
-            $r['resultado'] = 'eliminar';
+            $r['resultado'] = 'error';
             $r['mensaje'] = 'ERROR! <br/> El ROL colocado NO existe!';
         }
         return $r;

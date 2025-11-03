@@ -34,6 +34,36 @@ class Area extends Connection
     function Registrar()
     {
         $r = array();
+
+        if ($this->areaNombre === null || trim($this->areaNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área no puede estar vacío.';
+            return $r;
+        }
+
+        $this->areaNombre = trim($this->areaNombre);
+
+        if (strlen($this->areaNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->areaNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área no puede exceder 100 caracteres.';
+            return $r;
+        }
+
+        if ($this->areaDescripcion !== null) {
+            $this->areaDescripcion = trim($this->areaDescripcion);
+            if (strlen($this->areaDescripcion) > 500) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La descripción no puede exceder 500 caracteres.';
+                return $r;
+            }
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -94,9 +124,45 @@ class Area extends Connection
 
     function Modificar($areaOriginal)
     {
+        $r = array();
+
+        if ($areaOriginal === null || trim($areaOriginal) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre original del área es requerido.';
+            return $r;
+        }
+
+        if ($this->areaNombre === null || trim($this->areaNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área no puede estar vacío.';
+            return $r;
+        }
+
+        $this->areaNombre = trim($this->areaNombre);
+
+        if (strlen($this->areaNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->areaNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área no puede exceder 100 caracteres.';
+            return $r;
+        }
+
+        if ($this->areaDescripcion !== null) {
+            $this->areaDescripcion = trim($this->areaDescripcion);
+            if (strlen($this->areaDescripcion) > 500) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La descripción no puede exceder 500 caracteres.';
+                return $r;
+            }
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
 
         if (!$this->Existe($this->areaNombre, $areaOriginal)) {
             try {
@@ -128,9 +194,30 @@ class Area extends Connection
 
     function Eliminar()
     {
+        $r = array();
+
+        if ($this->areaNombre === null || trim($this->areaNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área no puede estar vacío.';
+            return $r;
+        }
+
+        $this->areaNombre = trim($this->areaNombre);
+
+        if (strlen($this->areaNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->areaNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del área no puede exceder 100 caracteres.';
+            return $r;
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = array();
 
         if ($this->Existe($this->areaNombre, NULL)) {
             try {

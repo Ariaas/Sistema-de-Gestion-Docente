@@ -965,6 +965,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 $respuesta = $o->Modificar(
                     $_POST['sec_codigo'] ?? null,
                     $_POST['ani_anio'] ?? null,
+                    $_POST['ani_tipo'] ?? null,
                     $_POST['items_horario'] ?? '[]',
                     $_POST['cantidadSeccion'] ?? null,
                     $forzar,
@@ -992,7 +993,8 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     $_POST['hora_inicio'] ?? null,
                     $_POST['hora_fin'] ?? null,
                     $_POST['sec_codigo'] ?? null,
-                    $_POST['ani_anio'] ?? null
+                    $_POST['ani_anio'] ?? null,
+                    $_POST['ani_tipo'] ?? null
                 );
                 break;
 

@@ -56,19 +56,34 @@ class ProsecusionTest extends TestCase
 
     public function testVerificarEstado_AnioActivoExiste()
     {
+        $stmt2 = $this->createMock(PDOStatement::class);
+        
         $this->pdoMock->expects($this->once())
             ->method('query')
-            ->with("SELECT COUNT(*) FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1")
+            ->with("SELECT ani_anio FROM tbl_anio WHERE ani_estado = 1 AND ani_activo = 1 AND ani_tipo = 'regular'")
             ->willReturn($this->stmtMock);
 
         $this->stmtMock->expects($this->once())
+            ->method('fetchColumn')
+            ->willReturn('2024');
+            
+        $this->pdoMock->expects($this->once())
+            ->method('prepare')
+            ->willReturn($stmt2);
+            
+        $stmt2->expects($this->once())
+            ->method('execute')
+            ->with([2025]);
+            
+        $stmt2->expects($this->once())
             ->method('fetchColumn')
             ->willReturn('1');
 
         $resultado = $this->prosecusion->VerificarEstado();
 
         $this->assertTrue($resultado['anio_activo_existe']);
-        $this->assertArrayNotHasKey('resultado', $resultado);
+        $this->assertEquals(2024, $resultado['anio_activo']);
+        $this->assertTrue($resultado['anio_destino_existe']);
     }
 
     public function testVerificarEstado_NoExisteAnioActivo()
@@ -392,12 +407,17 @@ class ProsecusionTest extends TestCase
 
     public function testRealizarProsecusion_CantidadSuperaDisponible()
     {
+        $stmtCheckOrigen = $this->createMock(PDOStatement::class);
         $stmtOrigen = $this->createMock(PDOStatement::class);
         $stmtProsecusionados = $this->createMock(PDOStatement::class);
 
-        $this->pdoMock->expects($this->exactly(2))
+        $this->pdoMock->expects($this->exactly(3))
             ->method('prepare')
-            ->willReturnOnConsecutiveCalls($stmtOrigen, $stmtProsecusionados);
+            ->willReturnOnConsecutiveCalls($stmtCheckOrigen, $stmtOrigen, $stmtProsecusionados);
+
+        $stmtCheckOrigen->expects($this->once())
+            ->method('fetchColumn')
+            ->willReturn('1A');
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -415,13 +435,18 @@ class ProsecusionTest extends TestCase
 
     public function testRealizarProsecusion_SeccionDestinoNoExiste()
     {
+        $stmtCheckOrigen = $this->createMock(PDOStatement::class);
         $stmtOrigen = $this->createMock(PDOStatement::class);
         $stmtProsecusionados = $this->createMock(PDOStatement::class);
         $stmtDestino = $this->createMock(PDOStatement::class);
 
-        $this->pdoMock->expects($this->exactly(3))  
+        $this->pdoMock->expects($this->exactly(4))  
             ->method('prepare')
-            ->willReturnOnConsecutiveCalls($stmtOrigen, $stmtProsecusionados, $stmtDestino);
+            ->willReturnOnConsecutiveCalls($stmtCheckOrigen, $stmtOrigen, $stmtProsecusionados, $stmtDestino);
+
+        $stmtCheckOrigen->expects($this->once())
+            ->method('fetchColumn')
+            ->willReturn('1A');
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -444,13 +469,18 @@ class ProsecusionTest extends TestCase
 
     public function testRealizarProsecusion_RequiereConfirmacionExceso()
     {
+        $stmtCheckOrigen = $this->createMock(PDOStatement::class);
         $stmtOrigen = $this->createMock(PDOStatement::class);
         $stmtProsecusionados = $this->createMock(PDOStatement::class);
         $stmtDestino = $this->createMock(PDOStatement::class);
 
-        $this->pdoMock->expects($this->exactly(3))
+        $this->pdoMock->expects($this->exactly(4))
             ->method('prepare')
-            ->willReturnOnConsecutiveCalls($stmtOrigen, $stmtProsecusionados, $stmtDestino);
+            ->willReturnOnConsecutiveCalls($stmtCheckOrigen, $stmtOrigen, $stmtProsecusionados, $stmtDestino);
+
+        $stmtCheckOrigen->expects($this->once())
+            ->method('fetchColumn')
+            ->willReturn('1A');
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -564,6 +594,7 @@ class ProsecusionTest extends TestCase
     {
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->pdoMock->expects($this->never())->method('commit');
+        $this->pdoMock->method('inTransaction')->willReturn(true);
         $this->pdoMock->expects($this->once())->method('rollBack');
 
         $this->pdoMock->expects($this->once())
@@ -708,17 +739,22 @@ class ProsecusionTest extends TestCase
         $this->pdoMock->expects($this->once())->method('commit');
         $this->pdoMock->expects($this->never())->method('rollBack');
 
+        $stmtOrigenTipo = $this->createMock(PDOStatement::class);
         $stmtCantidad = $this->createMock(PDOStatement::class);
         $stmtRevertir = $this->createMock(PDOStatement::class);
         $stmtDelete = $this->createMock(PDOStatement::class);
 
-        $this->pdoMock->expects($this->exactly(3))
+        $this->pdoMock->expects($this->exactly(4))
             ->method('prepare')
-            ->willReturnOnConsecutiveCalls($stmtCantidad, $stmtRevertir, $stmtDelete);
+            ->willReturnOnConsecutiveCalls($stmtOrigenTipo, $stmtCantidad, $stmtRevertir, $stmtDelete);
+
+        $stmtOrigenTipo->expects($this->exactly(2))->method('execute');
+        $stmtOrigenTipo->expects($this->exactly(2))->method('fetchColumn')
+            ->willReturnOnConsecutiveCalls('regular', 'regular');
 
         $stmtCantidad->expects($this->once())
             ->method('execute')
-            ->with(['1A', '2024', '2A', '2025']);
+            ->with(['1A', '2024', 'regular', '2A', '2025', 'regular']);
 
         $stmtCantidad->expects($this->once())
             ->method('fetchColumn')
@@ -726,11 +762,11 @@ class ProsecusionTest extends TestCase
 
         $stmtRevertir->expects($this->once())
             ->method('execute')
-            ->with([15, '2A', '2025']);
+            ->with([15, '2A', '2025', 'regular']);
 
         $stmtDelete->expects($this->once())
             ->method('execute')
-            ->with(['1A', '2024', '2A', '2025']);
+            ->with(['1A', '2024', 'regular', '2A', '2025', 'regular']);
 
         $this->prosecusion->setProId('1A-2024-2A-2025');
 
@@ -774,6 +810,7 @@ class ProsecusionTest extends TestCase
     {
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->pdoMock->expects($this->never())->method('commit');
+        $this->pdoMock->method('inTransaction')->willReturn(true);
         $this->pdoMock->expects($this->once())->method('rollBack');
 
         $this->pdoMock->expects($this->once())
@@ -813,11 +850,10 @@ class ProsecusionTest extends TestCase
     public function testCalcularCantidadProsecusion_OrigenDevuelveNull()
     {
         $stmtOrigen = $this->createMock(PDOStatement::class);
-        $stmtProsecusionados = $this->createMock(PDOStatement::class);
 
-        $this->pdoMock->expects($this->exactly(2))
+        $this->pdoMock->expects($this->once())
             ->method('prepare')
-            ->willReturnOnConsecutiveCalls($stmtOrigen, $stmtProsecusionados);
+            ->willReturn($stmtOrigen);
 
         $stmtOrigen->expects($this->once())
             ->method('fetchColumn')
@@ -825,7 +861,7 @@ class ProsecusionTest extends TestCase
 
         $resultado = $this->prosecusion->calcularCantidadProsecusion('1A');
         $this->assertFalse($resultado['puede_prosecusionar']);
-        $this->assertStringContainsString('No quedan estudiantes disponibles', $resultado['mensaje']);
+        $this->assertStringContainsString('no es válida o está inactiva', $resultado['mensaje']);
     }
 
     public function testRealizarProsecusion_OrigenNoExiste()
@@ -848,6 +884,8 @@ class ProsecusionTest extends TestCase
     public function testProsecusionSeccion_OrigenAnioNull()
     {
         $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->method('inTransaction')->willReturn(true);
+        $this->pdoMock->expects($this->once())->method('rollBack');
         $stmtOrigenAnio = $this->createMock(PDOStatement::class);
 
         $this->pdoMock->expects($this->once())

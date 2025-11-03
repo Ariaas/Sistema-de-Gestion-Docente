@@ -33,6 +33,37 @@ class Eje extends Connection
 
     public function Registrar()
     {
+        $r = array();
+
+        if ($this->ejeNombre === null || trim($this->ejeNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje no puede estar vacío.';
+            return $r;
+        }
+
+        $this->ejeNombre = trim($this->ejeNombre);
+
+        if (strlen($this->ejeNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->ejeNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje no puede exceder 100 caracteres.';
+            return $r;
+        }
+
+        if ($this->ejeDescripcion !== null) {
+            $this->ejeDescripcion = trim($this->ejeDescripcion);
+            if (strlen($this->ejeDescripcion) > 500) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La descripción no puede exceder 500 caracteres.';
+                return $r;
+            }
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -66,6 +97,43 @@ class Eje extends Connection
 
     public function Modificar($ejeOriginal)
     {
+        $r = array();
+
+        if ($ejeOriginal === null || trim($ejeOriginal) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre original del eje es requerido.';
+            return $r;
+        }
+
+        if ($this->ejeNombre === null || trim($this->ejeNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje no puede estar vacío.';
+            return $r;
+        }
+
+        $this->ejeNombre = trim($this->ejeNombre);
+
+        if (strlen($this->ejeNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->ejeNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje no puede exceder 100 caracteres.';
+            return $r;
+        }
+
+        if ($this->ejeDescripcion !== null) {
+            $this->ejeDescripcion = trim($this->ejeDescripcion);
+            if (strlen($this->ejeDescripcion) > 500) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La descripción no puede exceder 500 caracteres.';
+                return $r;
+            }
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -109,6 +177,28 @@ class Eje extends Connection
 
     public function Eliminar()
     {
+        $r = array();
+
+        if ($this->ejeNombre === null || trim($this->ejeNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje no puede estar vacío.';
+            return $r;
+        }
+
+        $this->ejeNombre = trim($this->ejeNombre);
+
+        if (strlen($this->ejeNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->ejeNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del eje no puede exceder 100 caracteres.';
+            return $r;
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 

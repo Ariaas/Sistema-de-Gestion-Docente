@@ -106,6 +106,42 @@ class Usuario extends Connection_bitacora
     {
         $r = array();
 
+        if ($this->nombreUsuario === null || trim($this->nombreUsuario) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de usuario no puede estar vacío.';
+            return $r;
+        }
+
+        if (strlen($this->nombreUsuario) < 3 || strlen($this->nombreUsuario) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de usuario debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
+        if ($this->correoUsuario === null || trim($this->correoUsuario) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El correo no puede estar vacío.';
+            return $r;
+        }
+
+        if (!filter_var($this->correoUsuario, FILTER_VALIDATE_EMAIL)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El correo no tiene un formato válido.';
+            return $r;
+        }
+
+        if ($this->contraseniaUsuario === null || trim($this->contraseniaUsuario) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La contraseña no puede estar vacía.';
+            return $r;
+        }
+
+        if (strlen($this->contraseniaUsuario) < 6) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La contraseña debe tener al menos 6 caracteres.';
+            return $r;
+        }
+
         if (!$this->existe($this->nombreUsuario, $this->correoUsuario)) {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -180,12 +216,59 @@ class Usuario extends Connection_bitacora
     }
 
 
-    function Modificar($current_user_id)
+    function Modificar($current_user_id, $nuevoNombre = null, $nuevoCorreo = null, $nuevaContrasenia = null)
     {
+        if ($current_user_id === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El ID del usuario actual es requerido.');
+        }
+        if (trim($current_user_id) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El ID del usuario actual es requerido.');
+        }
+
+        if ($nuevoNombre !== null) {
+            $this->nombreUsuario = $nuevoNombre;
+        }
+
+        if ($nuevoCorreo !== null) {
+            $this->correoUsuario = $nuevoCorreo;
+        }
+
+        if ($nuevaContrasenia !== null) {
+            $this->contraseniaUsuario = $nuevaContrasenia;
+        }
+
+        if ($this->nombreUsuario === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre no puede estar vacío.');
+        }
+        if (trim($this->nombreUsuario) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre no puede estar vacío.');
+        }
+
+        $this->nombreUsuario = trim($this->nombreUsuario);
+
+        if (strlen($this->nombreUsuario) < 3) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 50 caracteres.');
+        }
+        if (strlen($this->nombreUsuario) > 50) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 50 caracteres.');
+        }
+
+        if ($this->correoUsuario === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El correo no puede estar vacío.');
+        }
+        if (trim($this->correoUsuario) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El correo no puede estar vacío.');
+        }
+
+        if (!filter_var($this->correoUsuario, FILTER_VALIDATE_EMAIL)) {
+            return array('resultado' => 'error', 'mensaje' => 'El formato del correo es inválido.');
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
-        if ($this->ExisteId($this->usuarioId)) {
+        $existeResult = $this->verificarUsuarioExiste($this->usuarioId);
+        if (isset($existeResult['resultado']) && $existeResult['resultado'] === 'existe') {
             $stmt_info = $co->prepare("
                 SELECT r.rol_nombre 
                 FROM tbl_usuario u 
@@ -248,13 +331,25 @@ class Usuario extends Connection_bitacora
 
 
 
-    function Eliminar($current_user_id)
+    function Eliminar($usuarioEliminar = null)
     {
+        if ($usuarioEliminar !== null) {
+            $this->nombreUsuario = $usuarioEliminar;
+        }
+
+        if ($this->nombreUsuario === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre de usuario no puede estar vacío.');
+        }
+        if (trim($this->nombreUsuario) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre de usuario no puede estar vacío.');
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
-        if ($this->ExisteId($this->usuarioId)) {
+        $existeResult = $this->verificarUsuarioExiste($this->usuarioId);
+        if (isset($existeResult['resultado']) && $existeResult['resultado'] === 'existe') {
             try {
                 $stmt_info = $co->prepare("
                     SELECT r.rol_nombre 
@@ -266,7 +361,7 @@ class Usuario extends Connection_bitacora
                 $stmt_info->execute();
                 $userInfo = $stmt_info->fetch(PDO::FETCH_ASSOC);
 
-                if ($userInfo && $userInfo['rol_nombre'] === 'Administrador' && $this->usuarioId != $current_user_id) {
+                if ($userInfo && $userInfo['rol_nombre'] === 'Administrador') {
                     $r['resultado'] = 'error';
                     $r['mensaje'] = 'No se puede eliminar a un usuario con el rol de Administrador.';
                     return $r;
@@ -280,9 +375,6 @@ class Usuario extends Connection_bitacora
 
                 $r['resultado'] = 'eliminar';
                 $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el usuario correctamente!';
-                if ($this->usuarioId == $current_user_id) {
-                    $r['autoeliminado'] = true;
-                }
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -380,17 +472,20 @@ class Usuario extends Connection_bitacora
         return $r;
     }
 
-    function ExisteId($usuarioId)
+    function verificarUsuarioExiste($usuarioId)
     {
-        $co = $this->Con();
-        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
-            $stmt = $co->prepare("SELECT * FROM tbl_usuario WHERE usu_id=:usuarioId AND usu_estado = 1");
-
-            $stmt->bindParam(':usuarioId', $usuarioId, PDO::PARAM_STR);
-            $stmt->execute();
-            $fila = $stmt->fetchAll(PDO::FETCH_BOTH);
+            $co = $this->Con();
+            if (!$co) {
+                return array('resultado' => 'error', 'mensaje' => 'Error de conexión');
+            }
+            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $sql = "SELECT * FROM tbl_usuario WHERE usu_id=:usuarioId AND usu_estado = 1";
+            $statement = $co->prepare($sql);
+            $statement->bindParam(':usuarioId', $usuarioId, PDO::PARAM_STR);
+            $statement->execute();
+            $fila = $statement->fetchAll(PDO::FETCH_BOTH);
             if ($fila) {
                 $r['resultado'] = 'existe';
                 $r['mensaje'] = ' El USUARIO colocado YA existe!';
@@ -399,8 +494,6 @@ class Usuario extends Connection_bitacora
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
         }
-
-        $co = null;
         return $r;
     }
 

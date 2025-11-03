@@ -22,9 +22,9 @@ if (!function_exists('tiene_permiso_accion')) {
     }
 }
 
-$puede_registrar = tiene_permiso_accion('area', 'registrar', $permisos);
-$puede_modificar = tiene_permiso_accion('area', 'modificar', $permisos);
-$puede_eliminar = tiene_permiso_accion('area', 'eliminar', $permisos);
+$puede_registrar = tiene_permiso_accion('seccion', 'registrar', $permisos);
+$puede_modificar = tiene_permiso_accion('seccion', 'modificar', $permisos);
+$puede_eliminar = tiene_permiso_accion('seccion', 'eliminar', $permisos);
 
 if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     header('Location: ?pagina=principal');
@@ -55,8 +55,8 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         <section class="d-flex flex-column align-items-center justify-content-center py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Sección</h2>
             <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
-                <button class="btn btn-primary px-4" id="btnAbrirModalUnir">Unir Horarios</button>
-                <button class="btn btn-success px-4" id="btnIniciarRegistro">Registrar Sección</button>
+                <button class="btn btn-primary px-4" id="btnAbrirModalUnir" <?php echo !$puede_registrar ? 'disabled' : ''; ?>>Unir Horarios</button>
+                <button class="btn btn-success px-4" id="btnIniciarRegistro" <?php echo !$puede_registrar ? 'disabled' : ''; ?>>Registrar Sección</button>
             </div>
             <div class="datatable-ui w-100" style="max-width: 900px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive">
@@ -152,7 +152,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 </div>
                                 <div class="ms-4">
                                     <button type="button" class="btn btn-warning" id="btnLimpiarHorario" title="Limpia el horario actual">
-                                        <img src="public/assets/icons/arrow-clockwise.svg" alt="" class="me-1" style="width: 1em; height: 1em; filter: brightness(0) invert(1);">
+                                        <img src="public/assets/icons/escoba.svg" alt="" class="me-1" style="width: 1em; height: 1em; filter: brightness(0) invert(1);">
                                         Limpiar Horario
                                     </button>
                                 </div>
@@ -354,6 +354,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     </main>
     <script>
         const PERMISOS = {
+            registrar: <?php echo json_encode($puede_registrar); ?>,
             modificar: <?php echo json_encode($puede_modificar); ?>,
             eliminar: <?php echo json_encode($puede_eliminar); ?>
         };

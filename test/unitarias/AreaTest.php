@@ -1,355 +1,403 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
-require_once __DIR__ . '/../model/area.php';
+
+require_once __DIR__ . '/../../model/area.php';
+
 class AreaTest extends TestCase
 {
     private $area;
+    private $pdoMock;
+    private $stmtMock;
+
     protected function setUp(): void
     {
         $this->area = new Area();
+        $this->pdoMock = $this->createMock(PDO::class);
+        $this->stmtMock = $this->createMock(PDOStatement::class);
     }
+
     protected function tearDown(): void
     {
         $this->area = null;
+        $this->pdoMock = null;
+        $this->stmtMock = null;
     }
+
+    private function setupMocksParaRegistroExitoso()
+    {
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->area = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->area->method('Con')->willReturn($this->pdoMock);
+    }
+
+    public function providerNombresInvalidos()
+    {
+        return [
+            'nombre null' => [null, 'Nombre null'],
+            'nombre vacío' => ['', 'Nombre cadena vacía'],
+            'nombre espacios' => ['   ', 'Nombre solo espacios'],
+            'nombre muy corto' => ['AB', 'Nombre 2 caracteres'],
+            'nombre muy largo' => [str_repeat('A', 101), 'Nombre 101 caracteres'],
+        ];
+    }
+
+    public function providerDescripcionesInvalidas()
+    {
+        return [
+            'descripción muy larga' => [str_repeat('A', 501), 'Descripción 501 caracteres'],
+        ];
+    }
+
+    public function providerNombresValidos()
+    {
+        return [
+            'nombre mínimo' => ['ABC', 'Nombre 3 caracteres'],
+            'nombre normal' => ['Área de Formación', 'Nombre normal'],
+            'nombre máximo' => [str_repeat('A', 100), 'Nombre 100 caracteres'],
+        ];
+    }
+
     public function testSetAndGetArea()
     {
-        $this->area->setArea('Área de Formación');
-        $this->assertEquals('Área de Formación', $this->area->getArea());
+        $this->area->setArea('Área Test');
+        $this->assertEquals('Área Test', $this->area->getArea());
     }
+
     public function testSetAndGetDescripcion()
     {
-        $this->area->setDescripcion('Descripción del área');
-        $this->assertEquals('Descripción del área', $this->area->getDescripcion());
+        $this->area->setDescripcion('Descripción Test');
+        $this->assertEquals('Descripción Test', $this->area->getDescripcion());
     }
-    public function testRegistrarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testRegistrar_ConNombresInvalidos($nombre, $descripcion)
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetch() {
-                                    return false; 
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $area->setTestMode(true);
-        $area->setArea('Área Nueva');
-        $area->setDescripcion('Descripción del área');
-        $resultado = $area->Registrar();
-        $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
+        $this->setupMocksParaRegistroExitoso();
+
+        $this->area->setArea($nombre);
+        $this->area->setDescripcion('Descripción válida');
+
+        $resultado = $this->area->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcion}");
     }
-    public function testRegistrarAreaYaExisteActiva()
+
+    /**
+     * @test
+     * @dataProvider providerDescripcionesInvalidas
+     */
+    public function testRegistrar_ConDescripcionesInvalidas($descripcion, $descripcionTest)
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            private $callCount = 0;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    $callCount = &$this->callCount;
-                    return new class($callCount) {
-                        private $callCount;
-                        public function __construct(&$count) {
-                            $this->callCount = &$count;
-                        }
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            $callCount = &$this->callCount;
-                            return new class($callCount) {
-                                private $callCount;
-                                public function __construct(&$count) {
-                                    $this->callCount = &$count;
-                                }
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetch() {
-                                    if ($this->callCount == 0) {
-                                        $this->callCount++;
-                                        return ['area_estado' => 1];
-                                    }
-                                    return false;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $area->setTestMode(true);
-        $area->setArea('Área Existente');
-        $area->setDescripcion('Descripción');
-        $resultado = $area->Registrar();
+        $this->setupMocksParaRegistroExitoso();
+
+        $this->area->setArea('Área válida');
+        $this->area->setDescripcion($descripcion);
+
+        $resultado = $this->area->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcionTest}");
+    }
+
+    /**
+     * @test
+     * @dataProvider providerNombresValidos
+     */
+    public function testRegistrar_ConNombresValidos($nombre, $descripcion)
+    {
+        $this->setupMocksParaRegistroExitoso();
+
+        $this->area->setArea($nombre);
+        $this->area->setDescripcion('Descripción válida');
+
+        $resultado = $this->area->Registrar();
+
+        $this->assertIsArray($resultado);
+        $this->assertArrayHasKey('resultado', $resultado);
+    }
+
+    /**
+     * @test
+     */
+    public function testRegistrar_AreaYaExisteActiva()
+    {
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['area_estado' => 1]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->area = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->area->method('Con')->willReturn($this->pdoMock);
+
+        $this->area->setArea('Área Existente');
+        $this->area->setDescripcion('Descripción');
+
+        $resultado = $this->area->Registrar();
+
         $this->assertEquals('registrar', $resultado['resultado']);
         $this->assertStringContainsString('ya existe', $resultado['mensaje']);
     }
-    public function testRegistrarReactivarAreaInactiva()
+
+    /**
+     * @test
+     */
+    public function testRegistrar_ReactivarAreaInactiva()
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            private $callCount = 0;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
+        $callCount = 0;
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->will($this->returnCallback(function() use (&$callCount) {
+            $callCount++;
+            if ($callCount === 1) {
+                return false;
             }
-            public function Con() {
-                if ($this->testMode) {
-                    $callCount = &$this->callCount;
-                    return new class($callCount) {
-                        private $callCount;
-                        public function __construct(&$count) {
-                            $this->callCount = &$count;
-                        }
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            $callCount = &$this->callCount;
-                            return new class($callCount) {
-                                private $callCount;
-                                public function __construct(&$count) {
-                                    $this->callCount = &$count;
-                                }
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetch() {
-                                    if ($this->callCount == 0) {
-                                        $this->callCount++;
-                                        return false;
-                                    }
-                                    if ($this->callCount == 1) {
-                                        $this->callCount++;
-                                        return ['area_estado' => 0];
-                                    }
-                                    return false;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
+            if ($callCount === 2) {
+                return ['area_estado' => 0];
             }
-        };
-        $area->setTestMode(true);
-        $area->setArea('Área Inactiva');
-        $area->setDescripcion('Reactivar');
-        $resultado = $area->Registrar();
+            return false;
+        }));
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->area = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->area->method('Con')->willReturn($this->pdoMock);
+
+        $this->area->setArea('Área Inactiva');
+        $this->area->setDescripcion('Reactivar');
+
+        $resultado = $this->area->Registrar();
+
         $this->assertEquals('registrar', $resultado['resultado']);
         $this->assertStringContainsString('correctamente', $resultado['mensaje']);
     }
-    public function testModificarExitoso()
+
+    /**
+     * @test
+     */
+    public function testModificar_SinParametroOriginal()
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($areaNombre, $areaExcluir = NULL) {
-                if ($this->testMode) {
-                    return [];
-                }
-                return parent::Existe($areaNombre, $areaExcluir);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $area->setTestMode(true);
-        $area->setArea('Área Modificada');
-        $area->setDescripcion('Nueva Descripción');
-        $resultado = $area->Modificar('Área Original');
+        $this->area->setArea('Área Nueva');
+        $this->area->setDescripcion('Descripción');
+
+        $resultado = $this->area->Modificar(null);
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('original', $resultado['mensaje']);
+    }
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testModificar_ConNombresInvalidos($nombre, $descripcion)
+    {
+        $this->area->setArea($nombre);
+        $this->area->setDescripcion('Descripción válida');
+
+        $resultado = $this->area->Modificar('Área Original');
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcion}");
+    }
+
+    /**
+     * @test
+     * @dataProvider providerDescripcionesInvalidas
+     */
+    public function testModificar_ConDescripcionesInvalidas($descripcion, $descripcionTest)
+    {
+        $this->area->setArea('Área válida');
+        $this->area->setDescripcion($descripcion);
+
+        $resultado = $this->area->Modificar('Área Original');
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcionTest}");
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_NombreNoExiste()
+    {
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $areaMock = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $areaMock->method('Con')->willReturn($this->pdoMock);
+        $areaMock->method('Existe')->willReturn([]);
+
+        $areaMock->setArea('Área Modificada');
+        $areaMock->setDescripcion('Nueva Descripción');
+
+        $resultado = $areaMock->Modificar('Área Original');
+
         $this->assertEquals('modificar', $resultado['resultado']);
         $this->assertStringContainsString('correctamente', $resultado['mensaje']);
     }
-    public function testModificarConNombreExistente()
+
+    /**
+     * @test
+     */
+    public function testModificar_NombreYaExiste()
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($areaNombre, $areaExcluir = NULL) {
-                if ($this->testMode) {
-                    return ['resultado' => 'existe', 'mensaje' => 'El Área ya existe!'];
-                }
-                return parent::Existe($areaNombre, $areaExcluir);
-            }
-        };
-        $area->setTestMode(true);
-        $area->setArea('Área Existente');
-        $area->setDescripcion('Descripción');
-        $resultado = $area->Modificar('Área Original');
+        $areaMock = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Existe'])
+            ->getMock();
+        $areaMock->method('Existe')->willReturn(['resultado' => 'existe']);
+
+        $areaMock->setArea('Área Existente');
+        $areaMock->setDescripcion('Descripción');
+
+        $resultado = $areaMock->Modificar('Área Original');
+
         $this->assertEquals('modificar', $resultado['resultado']);
         $this->assertStringContainsString('ya existe', $resultado['mensaje']);
     }
-    public function testEliminarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testEliminar_ConNombresInvalidos($nombre, $descripcion)
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($areaNombre, $areaExcluir = NULL) {
-                if ($this->testMode) {
-                    return ['resultado' => 'existe'];
-                }
-                return parent::Existe($areaNombre, $areaExcluir);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $area->setTestMode(true);
-        $area->setArea('Área a Eliminar');
-        $resultado = $area->Eliminar();
+        $this->area->setArea($nombre);
+
+        $resultado = $this->area->Eliminar();
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcion}");
+    }
+
+    /**
+     * @test
+     */
+    public function testEliminar_AreaExiste()
+    {
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $areaMock = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $areaMock->method('Con')->willReturn($this->pdoMock);
+        $areaMock->method('Existe')->willReturn(['resultado' => 'existe']);
+
+        $areaMock->setArea('Área a Eliminar');
+
+        $resultado = $areaMock->Eliminar();
+
         $this->assertEquals('eliminar', $resultado['resultado']);
         $this->assertStringContainsString('correctamente', $resultado['mensaje']);
     }
-    public function testEliminarAreaNoExiste()
+
+    /**
+     * @test
+     */
+    public function testEliminar_AreaNoExiste()
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($areaNombre, $areaExcluir = NULL) {
-                if ($this->testMode) {
-                    return [];
-                }
-                return parent::Existe($areaNombre, $areaExcluir);
-            }
-        };
-        $area->setTestMode(true);
-        $area->setArea('Área Inexistente');
-        $resultado = $area->Eliminar();
+        $areaMock = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Existe'])
+            ->getMock();
+        $areaMock->method('Existe')->willReturn([]);
+
+        $areaMock->setArea('Área Inexistente');
+
+        $resultado = $areaMock->Eliminar();
+
         $this->assertEquals('eliminar', $resultado['resultado']);
         $this->assertStringContainsString('no existe', $resultado['mensaje']);
     }
-    public function testExisteAreaActiva()
+
+    /**
+     * @test
+     */
+    public function testExiste_AreaActiva()
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetchAll() {
-                                    return [['area_nombre' => 'Área Existente']];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $area->setTestMode(true);
-        $resultado = $area->Existe('Área Existente');
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchAll')->willReturn([['area_nombre' => 'Área Existente']]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->area = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->area->method('Con')->willReturn($this->pdoMock);
+
+        $resultado = $this->area->Existe('Área Existente');
+
         $this->assertIsArray($resultado);
         $this->assertArrayHasKey('resultado', $resultado);
         $this->assertEquals('existe', $resultado['resultado']);
     }
-    public function testNoExisteArea()
+
+    /**
+     * @test
+     */
+    public function testExiste_AreaNoExiste()
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetchAll() {
-                                    return [];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $area->setTestMode(true);
-        $resultado = $area->Existe('Área Inexistente');
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchAll')->willReturn([]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->area = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->area->method('Con')->willReturn($this->pdoMock);
+
+        $resultado = $this->area->Existe('Área Inexistente');
+
         $this->assertIsArray($resultado);
         $this->assertEmpty($resultado);
     }
-    public function testExisteConExclusion()
+
+    /**
+     * @test
+     */
+    public function testExiste_ConExclusion()
     {
-        $area = new class extends Area {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetchAll() {
-                                    return [];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $area->setTestMode(true);
-        $resultado = $area->Existe('Área Test', 'Área Test');
+        $this->stmtMock->method('bindParam')->willReturn(true);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchAll')->willReturn([]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->area = $this->getMockBuilder(Area::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->area->method('Con')->willReturn($this->pdoMock);
+
+        $resultado = $this->area->Existe('Área Test', 'Área Test');
+
         $this->assertIsArray($resultado);
         $this->assertEmpty($resultado);
     }

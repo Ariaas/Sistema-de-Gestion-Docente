@@ -328,7 +328,7 @@ function validarenvio() {
 
   if (hayErrorRequerido || hayErrorSecuencia) {
     esValido = false;
-    let mensaje = hayErrorRequerido ? "Complete todas las fechas requeridas." : "Corrija las fechas marcadas en rojo.";
+    let mensaje = hayErrorRequerido ? "Complete todos los campos requeridos." : "Corrija las fechas marcadas en rojo.";
     muestraMensaje("error", 4000, "ERROR!", mensaje);
   }
 

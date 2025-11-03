@@ -31,11 +31,23 @@ class Login extends Connection_bitacora
     }
 
 
-   public function existe()
+    public function existe()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
+
+        // Validaciones de entrada
+        if (empty($this->nombreUsuario) || trim($this->nombreUsuario) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'El nombre de usuario es requerido'];
+        }
+
+        if (empty($this->contraseniaUsuario) || trim($this->contraseniaUsuario) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'La contraseña es requerida'];
+        }
+
+        $this->nombreUsuario = trim($this->nombreUsuario);
+
         try {
             $p = $co->prepare("SELECT usu_id,usu_cedula, usu_nombre, usu_contrasenia, usu_foto, usu_estado, usu_docente FROM tbl_usuario 
             WHERE usu_nombre = BINARY :username AND usu_estado = 1");
@@ -72,6 +84,13 @@ class Login extends Connection_bitacora
 
     public function enviarCodigoRecuperacionPorUsuario($usuario)
     {
+        // Validaciones de entrada
+        if (empty($usuario) || trim($usuario) === '') {
+            return "El nombre de usuario es requerido.";
+        }
+
+        $usuario = trim($usuario);
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
@@ -122,6 +141,18 @@ class Login extends Connection_bitacora
 
     public function validarCodigoRecuperacion($usuario, $codigo)
     {
+        // Validaciones de entrada
+        if (empty($usuario) || trim($usuario) === '') {
+            return "El nombre de usuario es requerido.";
+        }
+
+        if (empty($codigo) || trim($codigo) === '') {
+            return "El código de recuperación es requerido.";
+        }
+
+        $usuario = trim($usuario);
+        $codigo = trim($codigo);
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
@@ -146,6 +177,26 @@ class Login extends Connection_bitacora
 
     public function cambiarClaveConToken($usuario, $codigo, $nuevaClave)
     {
+        // Validaciones de entrada
+        if (empty($usuario) || trim($usuario) === '') {
+            return "El nombre de usuario es requerido.";
+        }
+
+        if (empty($codigo) || trim($codigo) === '') {
+            return "El código de recuperación es requerido.";
+        }
+
+        if (empty($nuevaClave) || trim($nuevaClave) === '') {
+            return "La nueva contraseña es requerida.";
+        }
+
+        if (strlen($nuevaClave) < 6) {
+            return "La nueva contraseña debe tener al menos 6 caracteres.";
+        }
+
+        $usuario = trim($usuario);
+        $codigo = trim($codigo);
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
@@ -176,13 +227,13 @@ class Login extends Connection_bitacora
     public function validarCaptcha($token)
     {
         $secret = '6LeahHErAAAAAE7NIWRPVeJGe6Gq6IB2M3laWOY0';
-        
+
         $response = @file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret}&response={$token}");
-        
+
         if ($response === false) {
             return false;
         }
-        
+
         $result = json_decode($response, true);
         return $result['success'] ?? false;
     }

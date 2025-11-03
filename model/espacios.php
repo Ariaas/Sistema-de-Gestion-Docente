@@ -61,6 +61,42 @@ class Espacio extends Connection
     {
         $r = [];
 
+        if ($this->numeroEspacio === null || trim($this->numeroEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El número del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if ($this->edificioEspacio === null || trim($this->edificioEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El edificio del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if ($this->tipoEspacio === null || trim($this->tipoEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if (strlen($this->numeroEspacio) < 1 || strlen($this->numeroEspacio) > 10) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El número del espacio debe tener entre 1 y 10 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->edificioEspacio) < 1 || strlen($this->edificioEspacio) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El edificio debe tener entre 1 y 50 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->tipoEspacio) < 3 || strlen($this->tipoEspacio) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
         if ($this->existeDirecto($this->numeroEspacio, $this->edificioEspacio, $this->tipoEspacio)) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'ERROR! <br/> El ESPACIO colocado YA existe!';
@@ -79,11 +115,11 @@ class Espacio extends Connection
 
         try {
             $co->prepare("INSERT INTO tbl_espacio (esp_numero, esp_edificio, esp_tipo, esp_estado) VALUES (:numeroEspacio, :edificioEspacio, :tipoEspacio, 1)")
-               ->execute([
-                   ':numeroEspacio' => $this->numeroEspacio,
-                   ':edificioEspacio' => $this->edificioEspacio,
-                   ':tipoEspacio' => $this->tipoEspacio
-               ]);
+                ->execute([
+                    ':numeroEspacio' => $this->numeroEspacio,
+                    ':edificioEspacio' => $this->edificioEspacio,
+                    ':tipoEspacio' => $this->tipoEspacio
+                ]);
 
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
@@ -104,11 +140,11 @@ class Espacio extends Connection
         $r = [];
         try {
             $co->prepare("UPDATE tbl_espacio SET esp_tipo = :tipoEspacio, esp_estado = 1 WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio")
-               ->execute([
-                   ':tipoEspacio' => $this->tipoEspacio,
-                   ':numeroEspacio' => $this->numeroEspacio,
-                   ':edificioEspacio' => $this->edificioEspacio
-               ]);
+                ->execute([
+                    ':tipoEspacio' => $this->tipoEspacio,
+                    ':numeroEspacio' => $this->numeroEspacio,
+                    ':edificioEspacio' => $this->edificioEspacio
+                ]);
 
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el espacio correctamente!';
@@ -124,10 +160,65 @@ class Espacio extends Connection
 
     function Modificar($originalNumero, $originalEdificio, $originalTipo)
     {
+        $r = [];
+
+        if ($originalNumero === null || trim($originalNumero) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El número original del espacio es requerido.';
+            return $r;
+        }
+
+        if ($originalEdificio === null || trim($originalEdificio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El edificio original del espacio es requerido.';
+            return $r;
+        }
+
+        if ($originalTipo === null || trim($originalTipo) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo original del espacio es requerido.';
+            return $r;
+        }
+
+        if ($this->numeroEspacio === null || trim($this->numeroEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El número del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if ($this->edificioEspacio === null || trim($this->edificioEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El edificio del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if ($this->tipoEspacio === null || trim($this->tipoEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if (strlen($this->numeroEspacio) < 1 || strlen($this->numeroEspacio) > 10) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El número del espacio debe tener entre 1 y 10 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->edificioEspacio) < 1 || strlen($this->edificioEspacio) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El edificio debe tener entre 1 y 50 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->tipoEspacio) < 3 || strlen($this->tipoEspacio) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = [];
-        
+
         try {
             $stmt = $co->prepare("SELECT esp_numero, esp_edificio, esp_tipo FROM tbl_espacio WHERE esp_numero = :numero AND esp_edificio = :edificio AND esp_tipo = :tipo AND esp_estado = 1");
             $stmt->execute([
@@ -136,38 +227,35 @@ class Espacio extends Connection
                 ':tipo' => $originalTipo
             ]);
             $datosOriginales = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$datosOriginales) {
                 return ['resultado' => 'error', 'mensaje' => 'El espacio no existe.'];
             }
-            
-            if ($datosOriginales['esp_numero'] === $this->numeroEspacio && 
+
+            if (
+                $datosOriginales['esp_numero'] === $this->numeroEspacio &&
                 $datosOriginales['esp_edificio'] === $this->edificioEspacio &&
-                $datosOriginales['esp_tipo'] === $this->tipoEspacio) {
+                $datosOriginales['esp_tipo'] === $this->tipoEspacio
+            ) {
                 return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
             }
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
 
-        if (
-            ($originalNumero != $this->numeroEspacio ||
-                $originalEdificio != $this->edificioEspacio ||
-                $originalTipo != $this->tipoEspacio) &&
-            $this->existeDirecto($this->numeroEspacio, $this->edificioEspacio, $this->tipoEspacio)
-        ) {
+        if ($this->existeDirecto($this->numeroEspacio, $this->edificioEspacio, $this->tipoEspacio)) {
             $r['resultado'] = 'error';
-            $r['mensaje'] = 'ERROR! <br/> Ya existe un espacio con el nuevo número, edificio y tipo.';
+            $r['mensaje'] = 'ERROR! <br/> El ESPACIO colocado YA existe!';
             return $r;
         }
 
         try {
             $co->prepare("DELETE FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio AND esp_estado = 0")
-               ->execute([
-                   ':numeroEspacio' => $this->numeroEspacio,
-                   ':edificioEspacio' => $this->edificioEspacio,
-                   ':tipoEspacio' => $this->tipoEspacio
-               ]);
+                ->execute([
+                    ':numeroEspacio' => $this->numeroEspacio,
+                    ':edificioEspacio' => $this->edificioEspacio,
+                    ':tipoEspacio' => $this->tipoEspacio
+                ]);
 
             $stmt = $co->prepare("UPDATE tbl_espacio SET esp_numero = :numeroEspacio, esp_edificio = :edificioEspacio, esp_tipo = :tipoEspacio WHERE esp_numero = :originalNumero AND esp_edificio = :originalEdificio AND esp_tipo = :originalTipo AND esp_estado = 1");
             $stmt->execute([
@@ -198,9 +286,46 @@ class Espacio extends Connection
 
     function Eliminar()
     {
+        $r = [];
+
+        if ($this->numeroEspacio === null || trim($this->numeroEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El número del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if ($this->edificioEspacio === null || trim($this->edificioEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El edificio del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if ($this->tipoEspacio === null || trim($this->tipoEspacio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo del espacio no puede estar vacío.';
+            return $r;
+        }
+
+        if (strlen($this->numeroEspacio) < 1 || strlen($this->numeroEspacio) > 10) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El número del espacio debe tener entre 1 y 10 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->edificioEspacio) < 1 || strlen($this->edificioEspacio) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El edificio debe tener entre 1 y 50 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->tipoEspacio) < 3 || strlen($this->tipoEspacio) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $r = [];
 
         try {
             $stmt = $co->prepare("SELECT esp_estado FROM tbl_espacio WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio");
@@ -222,13 +347,13 @@ class Espacio extends Connection
                 $r['mensaje'] = 'El espacio ya está desactivado.';
                 return $r;
             }
-            
+
             $co->prepare("UPDATE tbl_espacio SET esp_estado = 0 WHERE esp_numero = :numeroEspacio AND esp_edificio = :edificioEspacio AND esp_tipo = :tipoEspacio")
-               ->execute([
-                   ':numeroEspacio' => $this->numeroEspacio,
-                   ':edificioEspacio' => $this->edificioEspacio,
-                   ':tipoEspacio' => $this->tipoEspacio
-               ]);
+                ->execute([
+                    ':numeroEspacio' => $this->numeroEspacio,
+                    ':edificioEspacio' => $this->edificioEspacio,
+                    ':tipoEspacio' => $this->tipoEspacio
+                ]);
 
             $r['resultado'] = 'eliminar';
             $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el espacio correctamente!';

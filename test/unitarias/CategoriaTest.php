@@ -1,463 +1,453 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
-require_once __DIR__ . '/../model/categoria.php';
+
+require_once __DIR__ . '/../../model/categoria.php';
+
 class CategoriaTest extends TestCase
 {
     private $categoria;
+    private $pdoMock;
+    private $stmtMock;
+
     protected function setUp(): void
     {
         $this->categoria = new Categoria();
+        $this->pdoMock = $this->createMock(PDO::class);
+        $this->stmtMock = $this->createMock(PDOStatement::class);
     }
+
     protected function tearDown(): void
     {
         $this->categoria = null;
+        $this->pdoMock = null;
+        $this->stmtMock = null;
     }
+
+    private function setupMocksParaRegistroExitoso()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+    }
+
+    public function providerNombresInvalidos()
+    {
+        return [
+            'nombre null' => [null, 'Nombre null'],
+            'nombre vacío' => ['', 'Nombre cadena vacía'],
+            'nombre espacios' => ['   ', 'Nombre solo espacios'],
+            'nombre muy corto' => ['AB', 'Nombre 2 caracteres'],
+            'nombre muy largo' => [str_repeat('A', 101), 'Nombre 101 caracteres'],
+        ];
+    }
+
+    public function providerDescripcionesInvalidas()
+    {
+        return [
+            'descripción muy larga' => [str_repeat('A', 501), 'Descripción 501 caracteres'],
+        ];
+    }
+
+    public function providerNombresValidos()
+    {
+        return [
+            'nombre mínimo' => ['ABC', 'Nombre 3 caracteres'],
+            'nombre normal' => ['Categoría Normal', 'Nombre normal'],
+            'nombre máximo' => [str_repeat('A', 100), 'Nombre 100 caracteres'],
+        ];
+    }
+
     public function testSetAndGetCategoria()
     {
-        $this->categoria->setCategoria('Docente');
-        $this->assertEquals('Docente', $this->categoria->getCategoria());
+        $this->categoria->setCategoria('Categoría Test');
+        $this->assertEquals('Categoría Test', $this->categoria->getCategoria());
     }
+
     public function testSetAndGetDescripcion()
     {
-        $this->categoria->setDescripcion('Categoría para docentes');
-        $this->assertEquals('Categoría para docentes', $this->categoria->getDescripcion());
+        $this->categoria->setDescripcion('Descripción Test');
+        $this->assertEquals('Descripción Test', $this->categoria->getDescripcion());
     }
-    public function testRegistrarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testRegistrar_ConNombresInvalidos($nombre, $descripcion)
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        private $insertMode = true;
-                        public function setAttribute() { return true; }
-                        public function prepare($sql) { 
-                            $this->insertMode = strpos($sql, 'INSERT') !== false;
-                            return new class {
-                                private $isInsert;
-                                public function __construct() {
-                                    $this->isInsert = true;
-                                }
-                                public function setInsertMode($mode) {
-                                    $this->isInsert = $mode;
-                                }
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return false; 
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Nueva Categoría');
-        $categoria->setDescripcion('Descripción de prueba');
-        $resultado = $categoria->Registrar();
-        $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
+        $this->setupMocksParaRegistroExitoso();
+
+        $this->categoria->setCategoria($nombre);
+        $this->categoria->setDescripcion('Descripción válida');
+
+        $resultado = $this->categoria->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcion}");
     }
-    public function testRegistrarCategoriaYaExisteActiva()
+
+    /**
+     * @test
+     * @dataProvider providerDescripcionesInvalidas
+     */
+    public function testRegistrar_ConDescripcionesInvalidas($descripcion, $descripcionTest)
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['cat_estado' => 1];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Existente');
-        $categoria->setDescripcion('Descripción');
-        $resultado = $categoria->Registrar();
+        $this->setupMocksParaRegistroExitoso();
+
+        $this->categoria->setCategoria('Categoría válida');
+        $this->categoria->setDescripcion($descripcion);
+
+        $resultado = $this->categoria->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcionTest}");
+    }
+
+    /**
+     * @test
+     * @dataProvider providerNombresValidos
+     */
+    public function testRegistrar_ConNombresValidos($nombre, $descripcion)
+    {
+        $this->setupMocksParaRegistroExitoso();
+
+        $this->categoria->setCategoria($nombre);
+        $this->categoria->setDescripcion('Descripción válida');
+
+        $resultado = $this->categoria->Registrar();
+
+        $this->assertIsArray($resultado);
+        $this->assertArrayHasKey('resultado', $resultado);
+    }
+
+    /**
+     * @test
+     */
+    public function testRegistrar_CategoriaYaExisteActiva()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['cat_estado' => 1]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $this->categoria->setCategoria('Categoría Existente');
+        $this->categoria->setDescripcion('Descripción');
+
+        $resultado = $this->categoria->Registrar();
+
         $this->assertEquals('registrar', $resultado['resultado']);
         $this->assertStringContainsString('ya existe', $resultado['mensaje']);
     }
-    public function testRegistrarReactivarCategoriaInactiva()
+
+    /**
+     * @test
+     */
+    public function testRegistrar_ReactivarCategoriaInactiva()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['cat_estado' => 0];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Inactiva');
-        $categoria->setDescripcion('Reactivar');
-        $resultado = $categoria->Registrar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['cat_estado' => 0]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $this->categoria->setCategoria('Categoría Inactiva');
+        $this->categoria->setDescripcion('Reactivar');
+
+        $resultado = $this->categoria->Registrar();
+
         $this->assertEquals('registrar', $resultado['resultado']);
-    }
-    public function testModificarExitoso()
-    {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            private $callCount = 0;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($categoriaNombre, $categoriaExcluir = null) {
-                if ($this->testMode) {
-                    return [];
-                }
-                return parent::Existe($categoriaNombre, $categoriaExcluir);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    $callCount = &$this->callCount;
-                    return new class($callCount) {
-                        private $callCount;
-                        public function __construct(&$count) {
-                            $this->callCount = &$count;
-                        }
-                        public function setAttribute() { return true; }
-                        public function prepare($sql) {
-                            $callCount = &$this->callCount;
-                            return new class($callCount) {
-                                private $callCount;
-                                public function __construct(&$count) {
-                                    $this->callCount = &$count;
-                                }
-                                public function execute() { 
-                                    return true; 
-                                }
-                                public function fetch() {
-                                    $result = ($this->callCount == 0) ? [
-                                        'cat_nombre' => 'Categoría Original',
-                                        'cat_descripcion' => 'Descripción Original'
-                                    ] : false;
-                                    $this->callCount++;
-                                    return $result;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Modificada');
-        $categoria->setDescripcion('Nueva Descripción');
-        $resultado = $categoria->Modificar('Categoría Original');
-        $this->assertEquals('modificar', $resultado['resultado']);
         $this->assertStringContainsString('correctamente', $resultado['mensaje']);
     }
-    public function testModificarCategoriaNoExiste()
+
+    /**
+     * @test
+     */
+    public function testModificar_SinParametroOriginal()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return false;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Nueva');
-        $categoria->setDescripcion('Descripción');
-        $resultado = $categoria->Modificar('Categoría Inexistente');
+        $this->categoria->setCategoria('Categoría Nueva');
+        $this->categoria->setDescripcion('Descripción');
+
+        $resultado = $this->categoria->Modificar(null);
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('original', $resultado['mensaje']);
+    }
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testModificar_ConNombresInvalidos($nombre, $descripcion)
+    {
+        $this->categoria->setCategoria($nombre);
+        $this->categoria->setDescripcion('Descripción válida');
+
+        $resultado = $this->categoria->Modificar('Categoría Original');
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcion}");
+    }
+
+    /**
+     * @test
+     * @dataProvider providerDescripcionesInvalidas
+     */
+    public function testModificar_ConDescripcionesInvalidas($descripcion, $descripcionTest)
+    {
+        $this->categoria->setCategoria('Categoría válida');
+        $this->categoria->setDescripcion($descripcion);
+
+        $resultado = $this->categoria->Modificar('Categoría Original');
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcionTest}");
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_CategoriaNoExiste()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $this->categoria->setCategoria('Categoría Nueva');
+        $this->categoria->setDescripcion('Descripción');
+
+        $resultado = $this->categoria->Modificar('Categoría Inexistente');
+
         $this->assertEquals('modificar', $resultado['resultado']);
         $this->assertStringContainsString('no existe', $resultado['mensaje']);
     }
-    public function testModificarSinCambios()
+
+    /**
+     * @test
+     */
+    public function testModificar_SinCambios()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return [
-                                        'cat_nombre' => 'Categoría Test',
-                                        'cat_descripcion' => 'Descripción Test'
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Test');
-        $categoria->setDescripcion('Descripción Test');
-        $resultado = $categoria->Modificar('Categoría Test');
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn([
+            'cat_nombre' => 'Categoría Test',
+            'cat_descripcion' => 'Descripción Test'
+        ]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $this->categoria->setCategoria('Categoría Test');
+        $this->categoria->setDescripcion('Descripción Test');
+
+        $resultado = $this->categoria->Modificar('Categoría Test');
+
         $this->assertEquals('modificar', $resultado['resultado']);
         $this->assertStringContainsString('No se realizaron cambios', $resultado['mensaje']);
     }
-    public function testModificarConNombreExistente()
+
+    /**
+     * @test
+     */
+    public function testModificar_NombreYaExiste()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($categoriaNombre, $categoriaExcluir = null) {
-                if ($this->testMode) {
-                    return ['resultado' => 'existe', 'mensaje' => 'La CATEGORÍA colocada YA existe!'];
-                }
-                return parent::Existe($categoriaNombre, $categoriaExcluir);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return [
-                                        'cat_nombre' => 'Categoría Original',
-                                        'cat_descripcion' => 'Descripción'
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Existente');
-        $categoria->setDescripcion('Descripción');
-        $resultado = $categoria->Modificar('Categoría Original');
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn([
+            'cat_nombre' => 'Categoría Original',
+            'cat_descripcion' => 'Descripción'
+        ]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $categoriaMock = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $categoriaMock->method('Con')->willReturn($this->pdoMock);
+        $categoriaMock->method('Existe')->willReturn(['resultado' => 'existe']);
+
+        $categoriaMock->setCategoria('Categoría Existente');
+        $categoriaMock->setDescripcion('Descripción');
+
+        $resultado = $categoriaMock->Modificar('Categoría Original');
+
         $this->assertEquals('modificar', $resultado['resultado']);
         $this->assertStringContainsString('YA existe', $resultado['mensaje']);
     }
-    public function testEliminarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testEliminar_ConNombresInvalidos($nombre, $descripcion)
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['cat_estado' => 1];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría a Eliminar');
-        $resultado = $categoria->Eliminar();
+        $this->categoria->setCategoria($nombre);
+
+        $resultado = $this->categoria->Eliminar();
+
+        $this->assertEquals('error', $resultado['resultado'], "Fallo validación: {$descripcion}");
+    }
+
+    /**
+     * @test
+     */
+    public function testEliminar_CategoriaExiste()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['cat_estado' => 1]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $this->categoria->setCategoria('Categoría a Eliminar');
+
+        $resultado = $this->categoria->Eliminar();
+
         $this->assertEquals('eliminar', $resultado['resultado']);
         $this->assertStringContainsString('correctamente', $resultado['mensaje']);
     }
-    public function testEliminarCategoriaNoExiste()
+
+    /**
+     * @test
+     */
+    public function testEliminar_CategoriaNoExiste()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return false;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Inexistente');
-        $resultado = $categoria->Eliminar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $this->categoria->setCategoria('Categoría Inexistente');
+
+        $resultado = $this->categoria->Eliminar();
+
         $this->assertEquals('eliminar', $resultado['resultado']);
         $this->assertStringContainsString('no existe', $resultado['mensaje']);
     }
-    public function testEliminarCategoriaYaDesactivada()
+
+    /**
+     * @test
+     */
+    public function testEliminar_CategoriaYaDesactivada()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['cat_estado' => 0];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $categoria->setCategoria('Categoría Desactivada');
-        $resultado = $categoria->Eliminar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['cat_estado' => 0]);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $this->categoria->setCategoria('Categoría Desactivada');
+
+        $resultado = $this->categoria->Eliminar();
+
         $this->assertEquals('eliminar', $resultado['resultado']);
         $this->assertStringContainsString('ya está desactivada', $resultado['mensaje']);
     }
-    public function testExisteCategoriaActiva()
+
+    /**
+     * @test
+     */
+    public function testExiste_CategoriaActiva()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetchColumn() {
-                                    return 1;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $resultado = $categoria->Existe('Categoría Existente');
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchColumn')->willReturn(1);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $resultado = $this->categoria->Existe('Categoría Existente');
+
         $this->assertIsArray($resultado);
         $this->assertArrayHasKey('resultado', $resultado);
         $this->assertEquals('existe', $resultado['resultado']);
     }
-    public function testNoExisteCategoria()
+
+    /**
+     * @test
+     */
+    public function testExiste_CategoriaNoExiste()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetchColumn() {
-                                    return 0;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $resultado = $categoria->Existe('Categoría Inexistente');
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchColumn')->willReturn(0);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $resultado = $this->categoria->Existe('Categoría Inexistente');
+
         $this->assertIsArray($resultado);
         $this->assertEmpty($resultado);
     }
-    public function testExisteConExclusion()
+
+    /**
+     * @test
+     */
+    public function testExiste_ConExclusion()
     {
-        $categoria = new class extends Categoria {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetchColumn() {
-                                    return 0;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $categoria->setTestMode(true);
-        $resultado = $categoria->Existe('Categoría Test', 'Categoría Test');
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchColumn')->willReturn(0);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->categoria = $this->getMockBuilder(Categoria::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->categoria->method('Con')->willReturn($this->pdoMock);
+
+        $resultado = $this->categoria->Existe('Categoría Test', 'Categoría Test');
+
         $this->assertIsArray($resultado);
         $this->assertEmpty($resultado);
     }

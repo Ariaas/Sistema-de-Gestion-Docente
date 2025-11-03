@@ -1,66 +1,337 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
-require_once __DIR__ . '/../model/usuario.php';
+
+require_once __DIR__ . '/../../model/usuario.php';
+
 class UsuarioTest extends TestCase
 {
     private $usuario;
+    private $pdoMock;
+    private $stmtMock;
+
     protected function setUp(): void
     {
         $this->usuario = new Usuario();
+        $this->pdoMock = $this->createMock(PDO::class);
+        $this->stmtMock = $this->createMock(PDOStatement::class);
     }
+
     protected function tearDown(): void
     {
         $this->usuario = null;
+        $this->pdoMock = null;
+        $this->stmtMock = null;
     }
-    public function testSetAndGetUsuCedula()
+
+    public function providerNombresInvalidos()
     {
-        $this->usuario->set_usu_cedula(12345678);
-        $this->assertEquals(12345678, $this->usuario->get_usu_cedula());
+        return [
+            'nombre null' => [null, 'user@test.com', 'pass123'],
+            'nombre vacío' => ['', 'user@test.com', 'pass123'],
+            'nombre espacios' => ['   ', 'user@test.com', 'pass123'],
+            'nombre corto' => ['AB', 'user@test.com', 'pass123'],
+            'nombre largo' => [str_repeat('A', 51), 'user@test.com', 'pass123'],
+        ];
     }
-    public function testSetAndGetUsuDocente()
+
+    public function providerCorreosInvalidos()
     {
-        $this->usuario->set_usu_docente(1);
-        $this->assertEquals(1, $this->usuario->get_usu_docente());
+        return [
+            'correo null' => ['usuario', null, 'pass123'],
+            'correo vacío' => ['usuario', '', 'pass123'],
+            'correo sin @' => ['usuario', 'invalido.com', 'pass123'],
+            'correo sin dominio' => ['usuario', 'user@', 'pass123'],
+            'correo formato inválido' => ['usuario', 'user@invalido', 'pass123'],
+        ];
     }
-    public function testSetAndGetRolId()
+
+    public function providerContraseniasInvalidas()
     {
-        $this->usuario->set_rolId(2);
-        $this->assertEquals(2, $this->usuario->get_rolId());
+        return [
+            'contraseña null' => ['usuario', 'user@test.com', null],
+            'contraseña vacía' => ['usuario', 'user@test.com', ''],
+            'contraseña corta' => ['usuario', 'user@test.com', '12345'],
+        ];
     }
-    public function testGetNombreUsuario()
+
+    /**
+     * @test
+     */
+    public function testSetAndGetNombreUsuario()
     {
-        $usuario = new Usuario(1, 'admin', 'pass123', 'admin@test.com', 1);
-        $this->assertEquals('admin', $usuario->get_nombreUsuario());
+        $this->usuario->set_nombreUsuario('usuario1');
+        $this->assertEquals('usuario1', $this->usuario->get_nombreUsuario());
     }
-    public function testGetCorreoUsuario()
+
+    /**
+     * @test
+     */
+    public function testSetAndGetCorreoUsuario()
     {
-        $usuario = new Usuario(1, 'admin', 'pass123', 'admin@test.com', 1);
-        $this->assertEquals('admin@test.com', $usuario->get_correoUsuario());
+        $this->usuario->set_correoUsuario('user@test.com');
+        $this->assertEquals('user@test.com', $this->usuario->get_correoUsuario());
     }
-    public function testGetSuperUsuario()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testRegistrar_ConNombresInvalidos($nombre, $correo, $pass)
     {
-        $usuario = new Usuario(1, 'admin', 'pass123', 'admin@test.com', 1);
-        $this->assertEquals(1, $usuario->get_superUsuario());
+        $this->usuario->set_nombreUsuario($nombre);
+        $this->usuario->set_correoUsuario($correo);
+        $this->usuario->set_contraseniaUsuario($pass);
+
+        $resultado = $this->usuario->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testGetUsuarioId()
+
+    /**
+     * @test
+     * @dataProvider providerCorreosInvalidos
+     */
+    public function testRegistrar_ConCorreosInvalidos($nombre, $correo, $pass)
     {
-        $usuario = new Usuario(5, 'user', 'pass', 'user@test.com', 0);
-        $this->assertEquals(5, $usuario->get_usuarioId());
+        $this->usuario->set_nombreUsuario($nombre);
+        $this->usuario->set_correoUsuario($correo);
+        $this->usuario->set_contraseniaUsuario($pass);
+
+        $resultado = $this->usuario->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testEliminarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerContraseniasInvalidas
+     */
+    public function testRegistrar_ConContraseniasInvalidas($nombre, $correo, $pass)
     {
-        $this->assertTrue(true);
+        $this->usuario->set_nombreUsuario($nombre);
+        $this->usuario->set_correoUsuario($correo);
+        $this->usuario->set_contraseniaUsuario($pass);
+
+        $resultado = $this->usuario->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testEliminarNoExiste()
+
+    /**
+     * @test
+     */
+    public function testRegistrar_UsuarioYaExiste()
     {
-        $this->assertTrue(true);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+
+        $usuarioMock = $this->getMockBuilder(Usuario::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $usuarioMock->method('Con')->willReturn($this->pdoMock);
+        $usuarioMock->method('existe')->willReturn(true);
+
+        $usuarioMock->set_nombreUsuario('usuario1');
+        $usuarioMock->set_correoUsuario('user@test.com');
+        $usuarioMock->set_contraseniaUsuario('password123');
+
+        $resultado = $usuarioMock->Registrar();
+
+        $this->assertEquals('registrar', $resultado['resultado']);
+        $this->assertStringContainsString('existe', $resultado['mensaje']);
     }
-    public function testCrearUsuarioConParametros()
+
+    /**
+     * @test
+     */
+    public function testRegistrar_Exitoso()
     {
-        $usuario = new Usuario(10, 'testuser', 'password', 'test@example.com', 0);
-        $this->assertEquals(10, $usuario->get_usuarioId());
-        $this->assertEquals('testuser', $usuario->get_nombreUsuario());
-        $this->assertEquals('test@example.com', $usuario->get_correoUsuario());
-        $this->assertEquals(0, $usuario->get_superUsuario());
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $usuarioMock = $this->getMockBuilder(Usuario::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $usuarioMock->method('Con')->willReturn($this->pdoMock);
+        $usuarioMock->method('existe')->willReturn(false);
+
+        $usuarioMock->set_nombreUsuario('usuario1');
+        $usuarioMock->set_correoUsuario('user@test.com');
+        $usuarioMock->set_contraseniaUsuario('password123');
+
+        $resultado = $usuarioMock->Registrar();
+
+        $this->assertEquals('registrar', $resultado['resultado']);
+    }
+
+    public function providerDatosValidos()
+    {
+        return [
+            'usuario básico' => ['usuario1', 'user1@test.com', 'pass123456'],
+            'usuario con espacios' => ['Usuario Completo', 'usuario@example.com', 'secure_pass'],
+            'correo largo' => ['usuario', 'very.long.email@subdomain.example.com', 'password'],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider providerDatosValidos
+     */
+    public function testRegistrar_ConDatosValidos($nombre, $correo, $pass)
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $usuarioMock = $this->getMockBuilder(Usuario::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $usuarioMock->method('Con')->willReturn($this->pdoMock);
+        $usuarioMock->method('existe')->willReturn(false);
+
+        $usuarioMock->set_nombreUsuario($nombre);
+        $usuarioMock->set_correoUsuario($correo);
+        $usuarioMock->set_contraseniaUsuario($pass);
+
+        $resultado = $usuarioMock->Registrar();
+
+        $this->assertEquals('registrar', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_UsuarioNull()
+    {
+        $resultado = $this->usuario->Modificar(null, 'Nuevo Nombre', 'nuevo@test.com', null);
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testModificar_ConNombresInvalidos($nombre, $correo, $pass)
+    {
+        $resultado = $this->usuario->Modificar('usuario1', $nombre, $correo, null);
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     * @dataProvider providerCorreosInvalidos
+     */
+    public function testModificar_ConCorreosInvalidos($nombre, $correo, $pass)
+    {
+        $resultado = $this->usuario->Modificar('usuario1', $nombre, $correo, null);
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_UsuarioNoExiste()
+    {
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchAll')->willReturn([]);
+
+        $usuarioMock = $this->getMockBuilder(Usuario::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $usuarioMock->method('Con')->willReturn($this->pdoMock);
+        $usuarioMock->method('existe')->willReturn(false);
+
+        $resultado = $usuarioMock->Modificar('usuarioXXX', 'Nombre Nuevo', 'nuevo@test.com', null);
+
+        $this->assertEquals('modificar', $resultado['resultado']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_Exitoso()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $usuarioMock = $this->getMockBuilder(Usuario::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $usuarioMock->method('Con')->willReturn($this->pdoMock);
+        $usuarioMock->method('existe')->willReturn(true);
+
+        $resultado = $usuarioMock->Modificar('usuario1', 'Usuario Modificado', 'nuevo@test.com', null);
+
+        $this->assertEquals('modificar', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testEliminar_UsuarioNull()
+    {
+        $resultado = $this->usuario->Eliminar(null);
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testEliminar_UsuarioVacio()
+    {
+        $resultado = $this->usuario->Eliminar('');
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testEliminar_UsuarioNoExiste()
+    {
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetchAll')->willReturn([]);
+
+        $usuarioMock = $this->getMockBuilder(Usuario::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $usuarioMock->method('Con')->willReturn($this->pdoMock);
+        $usuarioMock->method('existe')->willReturn(false);
+
+        $resultado = $usuarioMock->Eliminar('usuarioXXX');
+
+        $this->assertEquals('eliminar', $resultado['resultado']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
+    }
+
+    /**
+     * @test
+     */
+    public function testEliminar_Exitoso()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $usuarioMock = $this->getMockBuilder(Usuario::class)
+            ->onlyMethods(['Con', 'existe'])
+            ->getMock();
+        $usuarioMock->method('Con')->willReturn($this->pdoMock);
+        $usuarioMock->method('existe')->willReturn(true);
+
+        $resultado = $usuarioMock->Eliminar('usuario1');
+
+        $this->assertEquals('eliminar', $resultado['resultado']);
     }
 }

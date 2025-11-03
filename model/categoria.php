@@ -33,6 +33,37 @@ class Categoria extends Connection
 
     public function Registrar()
     {
+        $r = array();
+
+        if ($this->categoriaNombre === null || trim($this->categoriaNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría no puede estar vacío.';
+            return $r;
+        }
+
+        $this->categoriaNombre = trim($this->categoriaNombre);
+
+        if (strlen($this->categoriaNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->categoriaNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría no puede exceder 100 caracteres.';
+            return $r;
+        }
+
+        if ($this->categoriaDescripcion !== null) {
+            $this->categoriaDescripcion = trim($this->categoriaDescripcion);
+            if (strlen($this->categoriaDescripcion) > 500) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La descripción no puede exceder 500 caracteres.';
+                return $r;
+            }
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -66,6 +97,43 @@ class Categoria extends Connection
 
     public function Modificar($categoriaOriginal)
     {
+        $r = array();
+
+        if ($categoriaOriginal === null || trim($categoriaOriginal) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre original de la categoría es requerido.';
+            return $r;
+        }
+
+        if ($this->categoriaNombre === null || trim($this->categoriaNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría no puede estar vacío.';
+            return $r;
+        }
+
+        $this->categoriaNombre = trim($this->categoriaNombre);
+
+        if (strlen($this->categoriaNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->categoriaNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría no puede exceder 100 caracteres.';
+            return $r;
+        }
+
+        if ($this->categoriaDescripcion !== null) {
+            $this->categoriaDescripcion = trim($this->categoriaDescripcion);
+            if (strlen($this->categoriaDescripcion) > 500) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La descripción no puede exceder 500 caracteres.';
+                return $r;
+            }
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -109,6 +177,28 @@ class Categoria extends Connection
 
     public function Eliminar()
     {
+        $r = array();
+
+        if ($this->categoriaNombre === null || trim($this->categoriaNombre) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría no puede estar vacío.';
+            return $r;
+        }
+
+        $this->categoriaNombre = trim($this->categoriaNombre);
+
+        if (strlen($this->categoriaNombre) < 3) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría debe tener al menos 3 caracteres.';
+            return $r;
+        }
+
+        if (strlen($this->categoriaNombre) > 100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre de la categoría no puede exceder 100 caracteres.';
+            return $r;
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 

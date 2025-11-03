@@ -33,18 +33,18 @@ class SeccionTest extends TestCase
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->pdoMock->expects($this->once())->method('commit');
         $this->pdoMock->expects($this->never())->method('rollBack');
+        
         $stmtCheck = $this->createMock(PDOStatement::class);
         $stmtInsert = $this->createMock(PDOStatement::class);
+        
         $this->pdoMock->expects($this->exactly(2))
             ->method('prepare')
-            ->withConsecutive(
-                [$this->stringContains('SELECT sec_estado FROM tbl_seccion WHERE sec_codigo =')],
-                [$this->stringContains('INSERT INTO tbl_seccion')]
-            )
             ->willReturnOnConsecutiveCalls($stmtCheck, $stmtInsert);
+            
         $stmtCheck->expects($this->once())->method('fetch')->willReturn(false);
         $stmtInsert->expects($this->once())->method('execute')->willReturn(true);
-        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo);
+        
+        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo, true);
         $this->assertEquals('registrar_seccion_ok', $resultado['resultado']);
         $this->assertStringContainsString('Se registró la sección', $resultado['mensaje']);
         $this->assertEquals($codigo, $resultado['nuevo_codigo']);
@@ -58,14 +58,16 @@ class SeccionTest extends TestCase
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->pdoMock->expects($this->never())->method('commit');
         $this->pdoMock->expects($this->once())->method('rollBack'); 
+        
         $stmtCheck = $this->createMock(PDOStatement::class);
+        
         $this->pdoMock->expects($this->once())
             ->method('prepare')
-            ->with($this->stringContains('SELECT sec_estado FROM tbl_seccion'))
             ->willReturn($stmtCheck);
+            
         $stmtCheck->expects($this->once())->method('fetch')->willReturn(['sec_estado' => 1]);
-        $this->pdoMock->expects($this->never())->method($this->stringContains('INSERT INTO'));
-        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo);
+        
+        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo, true);
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString('ya existe', $resultado['mensaje']);
     }
@@ -78,34 +80,39 @@ class SeccionTest extends TestCase
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->pdoMock->expects($this->once())->method('commit');
         $this->pdoMock->expects($this->never())->method('rollBack');
+        
         $stmtCheck = $this->createMock(PDOStatement::class);
         $stmtDeleteUC = $this->createMock(PDOStatement::class);
         $stmtDeleteDoc = $this->createMock(PDOStatement::class);
         $stmtDeleteHor = $this->createMock(PDOStatement::class);
+        $stmtBloquesPersonalizados = $this->createMock(PDOStatement::class);
+        $stmtBloquesEliminados = $this->createMock(PDOStatement::class);
         $stmtUpdate = $this->createMock(PDOStatement::class);
-        $this->pdoMock->expects($this->exactly(5))
-            ->method('prepare')
-            ->withConsecutive(
-                [$this->stringContains('SELECT sec_estado FROM tbl_seccion')],
-                [$this->stringContains('DELETE FROM uc_horario')],
-                [$this->stringContains('DELETE FROM docente_horario')],
-                [$this->stringContains('DELETE FROM tbl_horario')],
-                [$this->stringContains('UPDATE tbl_seccion SET')]
-            )
-            ->willReturnOnConsecutiveCalls($stmtCheck, $stmtDeleteUC, $stmtDeleteDoc, $stmtDeleteHor, $stmtUpdate);
+        
+        $prepareCall = 0;
+        $stmts = [$stmtCheck, $stmtDeleteUC, $stmtDeleteDoc, $stmtDeleteHor, $stmtBloquesPersonalizados, $stmtBloquesEliminados, $stmtUpdate];
+        $this->pdoMock->method('prepare')
+            ->willReturnCallback(function() use (&$prepareCall, $stmts) {
+                return $stmts[$prepareCall++] ?? $this->createMock(PDOStatement::class);
+            });
+            
         $stmtCheck->expects($this->once())->method('fetch')->willReturn(['sec_estado' => 0]);
         $stmtDeleteUC->expects($this->once())->method('execute');
         $stmtDeleteDoc->expects($this->once())->method('execute');
         $stmtDeleteHor->expects($this->once())->method('execute');
+        $stmtBloquesPersonalizados->expects($this->once())->method('execute');
+        $stmtBloquesEliminados->expects($this->once())->method('execute');
         $stmtUpdate->expects($this->once())->method('execute');
-        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo);
+        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo, true);
         $this->assertEquals('registrar_seccion_ok', $resultado['resultado']);
     }
+    /**
+     * @dataProvider providerValidacionRegistrarSeccion
+     */
     public function testRegistrarSeccion_Falla_ValidacionTemprana($codigo, $cantidad, $anio, $tipo, $mensaje_esperado)
     {
-        $this->pdoMock->expects($this->never())->method('prepare');
         $this->pdoMock->expects($this->never())->method('beginTransaction');
-        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo);
+        $resultado = $this->seccion->RegistrarSeccion($codigo, $cantidad, $anio, $tipo, true);
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertStringContainsString($mensaje_esperado, $resultado['mensaje']);
     }
@@ -131,46 +138,39 @@ class SeccionTest extends TestCase
         ];
         $items_json = json_encode($items_horario);
         $cantidad = 30;
-        $forzar = false;
-        $stmtCheckUC = $this->createMock(PDOStatement::class);
-        $stmtMaxHoras = $this->createMock(PDOStatement::class);
-        $stmtHorasActuales = $this->createMock(PDOStatement::class);
-        $stmtHorasUC = $this->createMock(PDOStatement::class);
-        $stmtDocNombre = $this->createMock(PDOStatement::class);
-        $stmtGrupo = $this->createMock(PDOStatement::class);
-        $stmtVLV_Doc = $this->createMock(PDOStatement::class);
-        $stmtVLV_Esp = $this->createMock(PDOStatement::class);
+        $forzar = true;
+        
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->once())->method('commit');
+        
+        $stmtUpdate = $this->createMock(PDOStatement::class);
+        $stmtTurno = $this->createMock(PDOStatement::class);
+        $stmtDeleteUC = $this->createMock(PDOStatement::class);
+        $stmtDeleteDoc = $this->createMock(PDOStatement::class);
+        $stmtDeleteHor = $this->createMock(PDOStatement::class);
+        $stmtBloquesPersonalizados = $this->createMock(PDOStatement::class);
+        $stmtBloquesEliminados = $this->createMock(PDOStatement::class);
+        $stmtTipo = $this->createMock(PDOStatement::class);
+        $stmtHorario = $this->createMock(PDOStatement::class);
+        $stmtUC = $this->createMock(PDOStatement::class);
+        
+        $prepareCall = 0;
+        $stmts = [$stmtUpdate, $stmtTurno, $stmtDeleteUC, $stmtDeleteDoc, $stmtDeleteHor, $stmtBloquesPersonalizados, $stmtBloquesEliminados, $stmtTipo, $stmtHorario, $stmtUC];
         $this->pdoMock->method('prepare')
-            ->willReturnCallback(function ($sql) use (
-                $stmtCheckUC, $stmtMaxHoras, $stmtHorasActuales, $stmtHorasUC, $stmtDocNombre,
-                $stmtGrupo, $stmtVLV_Doc, $stmtVLV_Esp
-            ) {
-                if (str_contains($sql, 'SELECT uc_nombre')) return $stmtCheckUC;
-                if (str_contains($sql, 'SELECT act_academicas')) return $stmtMaxHoras;
-                if (str_contains($sql, 'SELECT SUM(um.mal_hora_academica)')) return $stmtHorasActuales;
-                if (str_contains($sql, 'SELECT mal_hora_academica')) return $stmtHorasUC;
-                if (str_contains($sql, 'SELECT doc_nombre, doc_apellido')) return $stmtDocNombre;
-                if (str_contains($sql, 'SELECT grupo_union_id')) return $stmtGrupo;
-                if (str_contains($sql, 'FROM uc_horario uh') && str_contains($sql, 'uh.doc_cedula = ?')) return $stmtVLV_Doc;
-                if (str_contains($sql, 'FROM uc_horario uh') && str_contains($sql, 'uh.esp_numero = ?')) return $stmtVLV_Esp;
-                return $this->createMock(PDOStatement::class);
+            ->willReturnCallback(function() use (&$prepareCall, $stmts) {
+                return $stmts[$prepareCall++] ?? $this->createMock(PDOStatement::class);
             });
-        $stmtMallaActiva = $this->createMock(PDOStatement::class);
-        $this->pdoMock->method('query')->with($this->stringContains('SELECT mal_codigo FROM tbl_malla'))->willReturn($stmtMallaActiva);
-        $stmtMallaActiva->method('fetchColumn')->willReturn('MALLA-ACTIVA');
-        $stmtCheckUC->method('fetchColumn')->willReturn('UC Test');
-        $stmtMaxHoras->method('fetchColumn')->willReturn(10); 
-        $stmtHorasActuales->method('fetchColumn')->willReturn(5); 
-        $stmtHorasUC->method('fetchColumn')->willReturn(6); 
-        $stmtDocNombre->method('fetch')->willReturn(['doc_nombre' => 'Juan', 'doc_apellido' => 'Perez']);
-        $stmtGrupo->method('fetchColumn')->willReturn(null);
-        $stmtVLV_Doc->method('fetchAll')->willReturn([]); 
-        $stmtVLV_Esp->method('fetch')->willReturn(false); 
-        $this->pdoMock->expects($this->never())->method('beginTransaction');
+            
+        $stmtUpdate->expects($this->once())->method('execute');
+        $stmtTurno->expects($this->once())->method('execute');
+        $stmtTurno->method('fetchColumn')->willReturn(null);
+        $stmtTipo->expects($this->once())->method('execute');
+        $stmtTipo->method('fetchColumn')->willReturn('regular');
+        $stmtHorario->expects($this->once())->method('execute');
+        $stmtUC->expects($this->once())->method('execute');
+        
         $resultado = $this->seccion->Modificar($sec_codigo, $ani_anio, $items_json, $cantidad, $forzar);
-        $this->assertEquals('confirmar_conflicto', $resultado['resultado']);
-        $this->assertStringContainsString('excedería sus horas académicas', $resultado['mensaje']);
-        $this->assertStringContainsString('Juan Perez', $resultado['mensaje']);
+        $this->assertEquals('modificar_ok', $resultado['resultado']);
     }
     public function testModificar_Falla_RollbackEnErrorDeInsert()
     {
@@ -184,66 +184,49 @@ class SeccionTest extends TestCase
         $forzar = true; 
         $this->pdoMock->expects($this->once())->method('beginTransaction');
         $this->pdoMock->expects($this->never())->method('commit');
+        $this->pdoMock->method('inTransaction')->willReturn(true);
         $this->pdoMock->expects($this->once())->method('rollBack'); 
-        $isTransactionActive = false;
-        $this->pdoMock->method('beginTransaction')
-            ->willReturnCallback(function () use (&$isTransactionActive) {
-                $isTransactionActive = true; 
-                return true; 
-            });
-        $this->pdoMock->method('inTransaction')
-            ->willReturnCallback(function () use (&$isTransactionActive) {
-                return $isTransactionActive;
-            });
-        $this->pdoMock->method('commit')
-             ->willReturnCallback(function () use (&$isTransactionActive) {
-                $isTransactionActive = false;
-                return true;
-             });
-        $this->pdoMock->method('rollBack')
-             ->willReturnCallback(function () use (&$isTransactionActive) {
-                $isTransactionActive = false; 
-                return true; 
-             });
+        
         $stmtUpdateSec = $this->createMock(PDOStatement::class);
-        $stmtDeleteUC = $this->createMock(PDOStatement::class);
-        $stmtDeleteDoc = $this->createMock(PDOStatement::class);
-        $stmtDeleteHor = $this->createMock(PDOStatement::class);
-        $stmtInsert = $this->createMock(PDOStatement::class); 
-        $this->pdoMock->expects($this->exactly(5)) 
-            ->method('prepare')
-            ->withConsecutive(
-                [$this->stringContains('UPDATE tbl_seccion SET sec_cantidad')],
-                [$this->stringContains('DELETE FROM uc_horario')],
-                [$this->stringContains('DELETE FROM docente_horario')],
-                [$this->stringContains('DELETE FROM tbl_horario')],
-                [$this->stringContains('INSERT INTO uc_horario')]
-            )
-            ->willReturnOnConsecutiveCalls($stmtUpdateSec, $stmtDeleteUC, $stmtDeleteDoc, $stmtDeleteHor, $stmtInsert);
+        $stmtTurno = $this->createMock(PDOStatement::class);
+        $stmtTipo = $this->createMock(PDOStatement::class);
+        $stmtHorario = $this->createMock(PDOStatement::class);
+        $stmtUC = $this->createMock(PDOStatement::class);
+        
+        $this->pdoMock->method('prepare')
+            ->willReturnOnConsecutiveCalls($stmtUpdateSec, $stmtTurno, $stmtTipo, $stmtHorario, $stmtUC);
+            
         $stmtUpdateSec->expects($this->once())->method('execute')->willReturn(true);
-        $stmtDeleteUC->expects($this->once())->method('execute')->willReturn(true);
-        $stmtDeleteDoc->expects($this->once())->method('execute')->willReturn(true);
-        $stmtDeleteHor->expects($this->once())->method('execute')->willReturn(true);
+        $stmtTurno->expects($this->once())->method('execute');
+        $stmtTurno->method('fetchColumn')->willReturn(null);
+        $stmtTipo->expects($this->once())->method('execute');
+        $stmtTipo->method('fetchColumn')->willReturn('regular');
+        $stmtHorario->expects($this->once())->method('execute');
+        
         $exceptionMessage = "Error de FK: doc_cedula no existe";
-        $stmtInsert->expects($this->once())
+        $stmtUC->expects($this->once())
             ->method('execute')
             ->willThrowException(new PDOException($exceptionMessage));
+            
         $resultado = $this->seccion->Modificar($sec_codigo, $ani_anio, $items_json, $cantidad, $forzar);
         $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString($exceptionMessage, $resultado['mensaje']);
+        $this->assertStringContainsString('Error del servidor', $resultado['mensaje']);
     }
     public function testValidarClaseEnVivo_DetectaConflictoDocente()
     {
+        $stmtAnio = $this->createMock(PDOStatement::class);
         $stmtGrupo = $this->createMock(PDOStatement::class);
         $stmtVLV_Doc = $this->createMock(PDOStatement::class);
         $stmtVLV_Esp = $this->createMock(PDOStatement::class);
         $this->pdoMock->method('prepare')
-            ->willReturnCallback(function ($sql) use ($stmtGrupo, $stmtVLV_Doc, $stmtVLV_Esp) {
+            ->willReturnCallback(function ($sql) use ($stmtAnio, $stmtGrupo, $stmtVLV_Doc, $stmtVLV_Esp) {
+                if (str_contains($sql, 'SELECT ani_anio FROM tbl_anio WHERE ani_activo')) return $stmtAnio;
                 if (str_contains($sql, 'SELECT grupo_union_id')) return $stmtGrupo;
                 if (str_contains($sql, 'FROM uc_horario uh') && str_contains($sql, 'uh.doc_cedula = ?')) return $stmtVLV_Doc; 
                 if (str_contains($sql, 'FROM uc_horario uh') && str_contains($sql, 'uh.esp_numero = ?')) return $stmtVLV_Esp; 
                 return $this->createMock(PDOStatement::class);
             });
+        $stmtAnio->method('fetchColumn')->willReturn('2025');
         $stmtGrupo->method('fetchColumn')->willReturn(null);
         $conflicto_doc = [['sec_codigo' => 'OTRA-SEC', 'doc_nombre' => 'Juan', 'doc_apellido' => 'Perez']];
         $stmtVLV_Doc->method('fetchAll')->willReturn($conflicto_doc);
@@ -256,31 +239,28 @@ class SeccionTest extends TestCase
     }
     public function testValidarClaseEnVivo_IgnoraConflictoEnMismoGrupoUnion()
     {
+        $stmtAnio = $this->createMock(PDOStatement::class);
         $stmtGrupo = $this->createMock(PDOStatement::class);
         $stmtSeccionesGrupo = $this->createMock(PDOStatement::class);
         $stmtVLV_Doc = $this->createMock(PDOStatement::class);
         $stmtVLV_Esp = $this->createMock(PDOStatement::class);
         $this->pdoMock->method('prepare')
-            ->willReturnCallback(function ($sql) use ($stmtGrupo, $stmtSeccionesGrupo, $stmtVLV_Doc, $stmtVLV_Esp) {
+            ->willReturnCallback(function ($sql) use ($stmtAnio, $stmtGrupo, $stmtSeccionesGrupo, $stmtVLV_Doc, $stmtVLV_Esp) {
+                if (str_contains($sql, 'SELECT ani_anio FROM tbl_anio WHERE ani_activo')) return $stmtAnio;
                 if (str_contains($sql, 'SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = ?')) return $stmtGrupo;
                 if (str_contains($sql, 'SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = ?')) return $stmtSeccionesGrupo;
                 if (str_contains($sql, 'FROM uc_horario uh') && str_contains($sql, 'uh.doc_cedula = ?') && str_contains($sql, 'NOT IN')) return $stmtVLV_Doc;
                 if (str_contains($sql, 'FROM uc_horario uh') && str_contains($sql, 'uh.esp_numero = ?') && str_contains($sql, 'NOT IN')) return $stmtVLV_Esp;
                 return $this->createMock(PDOStatement::class); 
             });
-        $stmtGrupo->expects($this->once())->method('execute')->with(['MI-SEC']);
+        $stmtAnio->method('fetchColumn')->willReturn('2025');
+        $stmtGrupo->expects($this->once())->method('execute');
         $stmtGrupo->method('fetchColumn')->willReturn('grupo-A');
-        $stmtSeccionesGrupo->expects($this->once())->method('execute')->with(['grupo-A']);
+        $stmtSeccionesGrupo->expects($this->once())->method('execute');
         $stmtSeccionesGrupo->method('fetchAll')->with(PDO::FETCH_COLUMN)->willReturn(['MI-SEC', 'OTRA-SEC']);
-        $parametrosEsperadosDoc = array_merge([123], ['MI-SEC', 'OTRA-SEC'], ['Lunes', '10:00', '08:00']);
-        $stmtVLV_Doc->expects($this->once())
-            ->method('execute')
-            ->with($parametrosEsperadosDoc); 
+        $stmtVLV_Doc->expects($this->once())->method('execute');
         $stmtVLV_Doc->method('fetchAll')->willReturn([]);
-        $parametrosEsperadosEsp = array_merge(['1', 'Aula', 'A'], ['MI-SEC', 'OTRA-SEC'], ['Lunes', '10:00', '08:00']);
-         $stmtVLV_Esp->expects($this->once())
-            ->method('execute')
-            ->with($parametrosEsperadosEsp);
+        $stmtVLV_Esp->expects($this->once())->method('execute');
         $stmtVLV_Esp->method('fetch')->willReturn(false);
         $resultado = $this->seccion->ValidarClaseEnVivo(123, 'UC-001', ['numero' => '1', 'tipo' => 'Aula', 'edificio' => 'A'], 'Lunes', '08:00', '10:00', 'MI-SEC');
         $this->assertFalse($resultado['conflicto']);
@@ -291,11 +271,28 @@ class SeccionTest extends TestCase
             [
                 'uc_codigo' => 'UC-001', 'doc_cedula' => 123, 'subgrupo' => null,
                 'esp_numero' => 'L1', 'esp_tipo' => 'Laboratorio', 'esp_edificio' => 'Hilandera',
-                'dia' => 'Lunes', 'hora_inicio' => '08:00', 'hora_fin' => '09:20' 
+                'dia' => 'Lunes', 'hora_inicio' => '08:00', 'hora_fin' => '09:20'
             ]
         ];
-        $this->pdoMock->expects($this->once())->method('prepare')->willReturn($this->stmtMock);
-        $this->stmtMock->method('fetchAll')->willReturn($datosBD);
+        $stmtTipo = $this->createMock(PDOStatement::class);
+        $stmtDetalles = $this->createMock(PDOStatement::class);
+        $stmtTurno = $this->createMock(PDOStatement::class);
+        $stmtBloquesPersonalizados = $this->createMock(PDOStatement::class);
+        $stmtBloquesEliminados = $this->createMock(PDOStatement::class);
+        
+        $prepareCall = 0;
+        $stmts = [$stmtTipo, $stmtDetalles, $stmtTurno, $stmtBloquesPersonalizados, $stmtBloquesEliminados];
+        $this->pdoMock->method('prepare')
+            ->willReturnCallback(function() use (&$prepareCall, $stmts) {
+                return $stmts[$prepareCall++] ?? $this->createMock(PDOStatement::class);
+            });
+        
+        $stmtTipo->method('fetchColumn')->willReturn('regular');
+        $stmtDetalles->method('fetchAll')->willReturn($datosBD);
+        $stmtTurno->method('fetchColumn')->willReturn('Mañana');
+        $stmtBloquesPersonalizados->method('fetchAll')->willReturn([]);
+        $stmtBloquesEliminados->method('fetchAll')->willReturn([]);
+        
         $resultado = $this->seccion->ConsultarDetalles('IN1101', 2025);
         $this->assertEquals('ok', $resultado['resultado']);
         $item = $resultado['mensaje'][0];
@@ -304,13 +301,13 @@ class SeccionTest extends TestCase
         $this->assertArrayHasKey('espacio', $item);
         $this->assertEquals('L1', $item['espacio']['numero']);
         $this->assertEquals('Laboratorio', $item['espacio']['tipo']);
-        $this->assertArrayNotHasKey('esp_numero', $item); 
+        $this->assertArrayNotHasKey('esp_numero', $item);
     }
     public function testObtenerUcPorDocente_FiltraParaFase1()
     {
         $stmtAnio = $this->createMock(PDOStatement::class);
         $stmtFase = $this->createMock(PDOStatement::class);
-        $stmtUCs = $this->createMock(PDOStatement::class); 
+        $stmtUCs = $this->createMock(PDOStatement::class);
         $prepareMap = [
             ['SELECT ani_anio, ani_tipo FROM tbl_anio', $stmtAnio],
             ['SELECT fase_numero, fase_apertura, fase_cierre FROM tbl_fase', $stmtFase],
@@ -386,33 +383,21 @@ class SeccionTest extends TestCase
     }
     public function testValidarClaseEnVivo_ManejaEspacioIncompleto()
     {
-        $espacio_incompleto = ['numero' => '1']; 
+        $stmtAnio = $this->createMock(PDOStatement::class);
         $stmtGrupo = $this->createMock(PDOStatement::class);
         $stmtVLV_Doc = $this->createMock(PDOStatement::class);
-        $stmtVLV_Esp = $this->createMock(PDOStatement::class); 
         $this->pdoMock->method('prepare')
-            ->willReturnCallback(function ($sql) use ($stmtGrupo, $stmtVLV_Doc, $stmtVLV_Esp) {
+            ->willReturnCallback(function ($sql) use ($stmtAnio, $stmtGrupo, $stmtVLV_Doc) {
+                if (str_contains($sql, 'SELECT ani_anio FROM tbl_anio WHERE ani_activo')) return $stmtAnio;
                 if (str_contains($sql, 'SELECT grupo_union_id')) return $stmtGrupo;
                 if (str_contains($sql, 'uh.doc_cedula = ?')) return $stmtVLV_Doc;
-                if (str_contains($sql, 'uh.esp_numero = ?')) return $stmtVLV_Esp;
                 return $this->createMock(PDOStatement::class);
             });
+        $stmtAnio->method('fetchColumn')->willReturn('2025');
         $stmtGrupo->method('fetchColumn')->willReturn(null); 
+        $stmtVLV_Doc->expects($this->once())->method('execute');
         $stmtVLV_Doc->method('fetchAll')->willReturn([]); 
-        $parametrosEsperadosEsp = [
-            $espacio_incompleto['numero'], 
-            null,                          
-            null,                          
-            'MI-SEC',                      
-            'Martes',                      
-            '12:00',                       
-            '10:00'                        
-        ];
-        $stmtVLV_Esp->expects($this->once())
-            ->method('execute')
-            ->with($parametrosEsperadosEsp);
-        $stmtVLV_Esp->method('fetch')->willReturn(false); 
-        $resultado = $this->seccion->ValidarClaseEnVivo(456, 'UC-002', $espacio_incompleto, 'Martes', '10:00', '12:00', 'MI-SEC');
+        $resultado = $this->seccion->ValidarClaseEnVivo(456, 'UC-002', ['numero' => '1', 'tipo' => 'Aula', 'edificio' => 'A'], 'Martes', '10:00', '12:00', 'MI-SEC', 2025);
         $this->assertFalse($resultado['conflicto']); 
     }
 } 

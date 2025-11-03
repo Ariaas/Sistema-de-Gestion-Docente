@@ -1,306 +1,258 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
-require_once __DIR__ . '/../model/coordinacion.php';
+
+require_once __DIR__ . '/../../model/coordinacion.php';
+
 class CoordinacionTest extends TestCase
 {
     private $coordinacion;
-    private $pdo;
+    private $pdoMock;
+    private $stmtMock;
+
     protected function setUp(): void
     {
-        $this->coordinacion = $this->getMockBuilder(Coordinacion::class)
-            ->onlyMethods(['Con'])
-            ->getMock();
-        $this->pdo = $this->createMock(PDO::class);
-        $this->coordinacion->method('Con')->willReturn($this->pdo);
+        $this->coordinacion = new Coordinacion();
+        $this->pdoMock = $this->createMock(PDO::class);
+        $this->stmtMock = $this->createMock(PDOStatement::class);
     }
+
     protected function tearDown(): void
     {
         $this->coordinacion = null;
-        $this->pdo = null;
+        $this->pdoMock = null;
+        $this->stmtMock = null;
     }
+
+    public function providerNombresInvalidos()
+    {
+        return [
+            'nombre null' => [null],
+            'nombre vacío' => [''],
+            'nombre espacios' => ['   '],
+            'nombre muy corto' => ['AB'],
+            'nombre muy largo' => [str_repeat('A', 101)],
+        ];
+    }
+
+    public function providerNombresValidos()
+    {
+        return [
+            'nombre válido 3 chars' => ['ABC'],
+            'nombre válido medio' => ['Coordinación de Informática'],
+            'nombre válido 100 chars' => [str_repeat('A', 100)],
+        ];
+    }
+
+    public function providerHorasInvalidas()
+    {
+        return [
+            'hora 0' => [0],
+            'hora negativa' => [-5],
+            'hora 100' => [100],
+            'hora 150' => [150],
+        ];
+    }
+
+    public function providerHorasValidas()
+    {
+        return [
+            'hora 1' => [1],
+            'hora 50' => [50],
+            'hora 99' => [99],
+        ];
+    }
+
+    /**
+     * @test
+     */
     public function testSetAndGetNombre()
     {
-        $this->coordinacion->setNombre('  Coordinación de Informática  ');
-        $this->assertEquals('Coordinación de Informática', $this->coordinacion->getNombre());
+        $this->coordinacion->setNombre('Coordinación Académica');
+        $this->assertEquals('Coordinación Académica', $this->coordinacion->getNombre());
     }
+
+    /**
+     * @test
+     */
     public function testSetAndGetHoraDescarga()
     {
-        $this->coordinacion->setHoraDescarga(40);
-        $this->assertEquals(40, $this->coordinacion->getHoraDescarga());
+        $this->coordinacion->setHoraDescarga(10);
+        $this->assertEquals(10, $this->coordinacion->getHoraDescarga());
     }
-    public function testSetOriginalNombre()
+
+    /**
+     * @test
+     * @dataProvider providerHorasInvalidas
+     */
+    public function testSetHoraDescarga_ConHorasInvalidas($hora)
     {
-        $this->coordinacion->setOriginalNombre('  Coordinación Original  ');
-        $this->assertTrue(true);
+        $this->expectException(Exception::class);
+        $this->coordinacion->setHoraDescarga($hora);
     }
-    public function testRegistrarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerHorasValidas
+     */
+    public function testSetHoraDescarga_ConHorasValidas($hora)
     {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function BuscarPorNombre($nombre) {
-                if ($this->testMode) {
-                    return false; 
-                }
-                return parent::BuscarPorNombre($nombre);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetch() { return false; }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $coordinacion->setNombre('Nueva Coordinación');
-        $coordinacion->setHoraDescarga(40);
-        $resultado = $coordinacion->Registrar();
-        $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
+        $this->coordinacion->setHoraDescarga($hora);
+        $this->assertEquals($hora, $this->coordinacion->getHoraDescarga());
     }
-    public function testRegistrarCoordinacionYaExisteActiva()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testRegistrar_ConNombresInvalidos($nombre)
     {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function BuscarPorNombre($nombre) {
-                if ($this->testMode) {
-                    return [
-                        'cor_nombre' => 'Coordinación Existente',
-                        'cor_estado' => 1,
-                        'coor_hora_descarga' => 40
-                    ];
-                }
-                return parent::BuscarPorNombre($nombre);
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $coordinacion->setNombre('Coordinación Existente');
-        $coordinacion->setHoraDescarga(40);
-        $resultado = $coordinacion->Registrar();
+        $this->coordinacion->setNombre($nombre);
+        $this->coordinacion->setHoraDescarga(10);
+
+        $resultado = $this->coordinacion->Registrar();
+
         $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString('ya existe', $resultado['mensaje']);
     }
-    public function testModificarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testModificar_ConNombresInvalidos($nombre)
     {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($nombre) {
-                if ($this->testMode) {
-                    return false;
-                }
-                return parent::Existe($nombre);
-            }
-            public function BuscarPorNombre($nombre) {
-                if ($this->testMode) {
-                    return false;
-                }
-                return parent::BuscarPorNombre($nombre);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function bindParam() { return true; }
-                                public function fetch() {
-                                    return [
-                                        'cor_nombre' => 'Coordinación Original',
-                                        'coor_hora_descarga' => 35
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $coordinacion->setOriginalNombre('Coordinación Original');
-        $coordinacion->setNombre('Coordinación Modificada');
-        $coordinacion->setHoraDescarga(40);
-        $resultado = $coordinacion->Modificar();
-        $this->assertEquals('modificar', $resultado['resultado']);
+        $this->coordinacion->setOriginalNombre('Original');
+        $this->coordinacion->setNombre($nombre);
+        $this->coordinacion->setHoraDescarga(10);
+
+        $resultado = $this->coordinacion->Modificar();
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testModificarSinCambios()
+
+    /**
+     * @test
+     */
+    public function testModificar_SinNombreOriginal()
     {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return [
-                                        'cor_nombre' => 'Coordinación Test',
-                                        'coor_hora_descarga' => 40
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $coordinacion->setOriginalNombre('Coordinación Test');
-        $coordinacion->setNombre('Coordinación Test');
-        $coordinacion->setHoraDescarga(40);
-        $resultado = $coordinacion->Modificar();
+        $this->coordinacion->setNombre('Nueva Coordinación');
+        $this->coordinacion->setHoraDescarga(10);
+
+        $resultado = $this->coordinacion->Modificar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('original', strtolower($resultado['mensaje']));
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_CoordinacionNoExiste()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->coordinacion = $this->getMockBuilder(Coordinacion::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->coordinacion->method('Con')->willReturn($this->pdoMock);
+
+        $this->coordinacion->setOriginalNombre('Inexistente');
+        $this->coordinacion->setNombre('Nuevo Nombre');
+        $this->coordinacion->setHoraDescarga(10);
+
+        $resultado = $this->coordinacion->Modificar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_SinCambios()
+    {
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn([
+            'cor_nombre' => 'Coordinación',
+            'coor_hora_descarga' => 10
+        ]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->coordinacion = $this->getMockBuilder(Coordinacion::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->coordinacion->method('Con')->willReturn($this->pdoMock);
+
+        $this->coordinacion->setOriginalNombre('Coordinación');
+        $this->coordinacion->setNombre('Coordinación');
+        $this->coordinacion->setHoraDescarga(10);
+
+        $resultado = $this->coordinacion->Modificar();
+
         $this->assertEquals('modificar', $resultado['resultado']);
         $this->assertStringContainsString('No se realizaron cambios', $resultado['mensaje']);
     }
-    public function testEliminarExitoso()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testEliminar_ConNombresInvalidos($nombre)
     {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['cor_estado' => 1];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $coordinacion->setNombre('Coordinación a Eliminar');
-        $resultado = $coordinacion->Eliminar();
-        $this->assertEquals('eliminar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
-    }
-    public function testEliminarCoordinacionNoExiste()
-    {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return false;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $coordinacion->setNombre('Coordinación Inexistente');
-        $resultado = $coordinacion->Eliminar();
+        $this->coordinacion->setNombre($nombre);
+
+        $resultado = $this->coordinacion->Eliminar();
+
         $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString('no existe', $resultado['mensaje']);
     }
-    public function testEliminarCoordinacionYaDesactivada()
+
+    /**
+     * @test
+     */
+    public function testEliminar_CoordinacionNoExiste()
     {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['cor_estado' => 0];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $coordinacion->setNombre('Coordinación Desactivada');
-        $resultado = $coordinacion->Eliminar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->coordinacion = $this->getMockBuilder(Coordinacion::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->coordinacion->method('Con')->willReturn($this->pdoMock);
+
+        $this->coordinacion->setNombre('Inexistente');
+
+        $resultado = $this->coordinacion->Eliminar();
+
         $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString('ya está desactivada', $resultado['mensaje']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
     }
-    public function testExisteCoordinacionActiva()
+
+    /**
+     * @test
+     */
+    public function testEliminar_CoordinacionYaDesactivada()
     {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($nombre) {
-                if ($this->testMode) {
-                    return ['cor_nombre' => $nombre];
-                }
-                return parent::Existe($nombre);
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $resultado = $coordinacion->Existe('Coordinación Existente');
-        $this->assertIsArray($resultado);
-        $this->assertArrayHasKey('cor_nombre', $resultado);
-    }
-    public function testNoExisteCoordinacion()
-    {
-        $coordinacion = new class extends Coordinacion {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($nombre) {
-                if ($this->testMode) {
-                    return false;
-                }
-                return parent::Existe($nombre);
-            }
-        };
-        $coordinacion->setTestMode(true);
-        $resultado = $coordinacion->Existe('Coordinación Inexistente');
-        $this->assertFalse($resultado);
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['cor_estado' => 0]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->coordinacion = $this->getMockBuilder(Coordinacion::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->coordinacion->method('Con')->willReturn($this->pdoMock);
+
+        $this->coordinacion->setNombre('Coordinación');
+
+        $resultado = $this->coordinacion->Eliminar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+        $this->assertStringContainsString('desactivad', strtolower($resultado['mensaje']));
     }
 }

@@ -25,7 +25,7 @@ class Seccion extends Connection
                 uh.hor_horafin as hora_fin,
                 s.sec_estado
             FROM uc_horario uh 
-            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
             WHERE s.sec_estado = 1";
 
             $stmt = $this->Con()->prepare($sql);
@@ -51,7 +51,7 @@ class Seccion extends Connection
         $sql = "
             SELECT SUM(u.uc_creditos)
             FROM uc_horario uh
-            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+            JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
             JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
             WHERE s.sec_estado = 1 AND uh.doc_cedula = :doc_cedula
         ";
@@ -177,7 +177,7 @@ class Seccion extends Connection
                     }
 
                     if ($clases_procesadas > 0) {
-                        $this->Modificar($seccion['sec_codigo'], $anio_activo['ani_anio'], json_encode($nuevo_horario_seccion), $seccion['sec_cantidad']);
+                        $this->Modificar($seccion['sec_codigo'], $anio_activo['ani_anio'], $anio_activo['ani_tipo'], json_encode($nuevo_horario_seccion), $seccion['sec_cantidad']);
                     }
 
                     $co->commit();
@@ -502,7 +502,7 @@ class Seccion extends Connection
         }
     }
 
-    public function ValidarClaseEnVivo($doc_cedula, $uc_codigo, $espacio, $dia, $hora_inicio, $hora_fin, $sec_codigo, $ani_anio = null)
+    public function ValidarClaseEnVivo($doc_cedula, $uc_codigo, $espacio, $dia, $hora_inicio, $hora_fin, $sec_codigo, $ani_anio = null, $ani_tipo = null)
     {
         $co = $this->Con();
         $conflictos = [];
@@ -537,10 +537,11 @@ class Seccion extends Connection
 
             $sql_doc = "SELECT uh.sec_codigo, d.doc_nombre, d.doc_apellido
                     FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
                     JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
                     WHERE s.sec_estado = 1 
                     AND uh.ani_anio = ?
+                    " . ($ani_tipo ? "AND uh.ani_tipo = ?" : "") . "
                     AND uh.doc_cedula = ? 
                     AND uh.sec_codigo NOT IN ($placeholders_exclusion)
                     AND uh.hor_dia = ? 
@@ -549,7 +550,7 @@ class Seccion extends Connection
 
             $stmt_doc = $co->prepare($sql_doc);
 
-            $params_doc = array_merge([$ani_anio, $doc_cedula], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
+            $params_doc = $ani_tipo ? array_merge([$ani_anio, $ani_tipo, $doc_cedula], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]) : array_merge([$ani_anio, $doc_cedula], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
             $stmt_doc->execute($params_doc);
 
             $conflictos_docente = $stmt_doc->fetchAll(PDO::FETCH_ASSOC);
@@ -565,10 +566,11 @@ class Seccion extends Connection
 
             $sql_esp = "SELECT uh.sec_codigo, d.doc_nombre, d.doc_apellido
                     FROM uc_horario uh
-                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+                    JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
                     LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
                     WHERE s.sec_estado = 1 
                     AND uh.ani_anio = ?
+                    " . ($ani_tipo ? "AND uh.ani_tipo = ?" : "") . "
                     AND uh.esp_numero = ? 
                     AND uh.esp_tipo = ? 
                     AND uh.esp_edificio = ?
@@ -579,7 +581,7 @@ class Seccion extends Connection
 
             $stmt_esp = $co->prepare($sql_esp);
 
-            $params_esp = array_merge([$ani_anio, $espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
+            $params_esp = $ani_tipo ? array_merge([$ani_anio, $ani_tipo, $espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]) : array_merge([$ani_anio, $espacio['numero'], $espacio['tipo'], $espacio['edificio']], $secciones_a_excluir, [$dia, $hora_fin, $hora_inicio]);
             $stmt_esp->execute($params_esp);
             $conflicto_espacio = $stmt_esp->fetch(PDO::FETCH_ASSOC);
 
@@ -597,10 +599,10 @@ class Seccion extends Connection
         return ['conflicto' => false];
     }
 
-    public function Modificar($sec_codigo, $ani_anio, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]', $bloques_eliminados_json = '[]')
+    public function Modificar($sec_codigo, $ani_anio, $ani_tipo, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]', $bloques_eliminados_json = '[]')
     {
-        if (empty($sec_codigo) || empty($ani_anio) || !isset($cantidadSeccion)) {
-            return ['resultado' => 'error', 'mensaje' => 'Faltan datos clave (código, año o cantidad) para modificar la sección.'];
+        if (empty($sec_codigo) || empty($ani_anio) || empty($ani_tipo) || !isset($cantidadSeccion)) {
+            return ['resultado' => 'error', 'mensaje' => 'Faltan datos clave (código, año, tipo o cantidad) para modificar la sección.'];
         }
 
         $cantidadInt = filter_var($cantidadSeccion, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 99]]);
@@ -693,19 +695,15 @@ class Seccion extends Connection
         try {
             $co->beginTransaction();
 
-            $stmt_update_seccion = $co->prepare("UPDATE tbl_seccion SET sec_cantidad = :cantidad WHERE sec_codigo = :codigo AND ani_anio = :anio");
-            $stmt_update_seccion->execute([':cantidad' => $cantidadInt, ':codigo' => $sec_codigo, ':anio' => $ani_anio]);
+            $stmt_update_seccion = $co->prepare("UPDATE tbl_seccion SET sec_cantidad = :cantidad WHERE sec_codigo = :codigo AND ani_anio = :anio AND ani_tipo = :ani_tipo");
+            $stmt_update_seccion->execute([':cantidad' => $cantidadInt, ':codigo' => $sec_codigo, ':anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
 
             $turno_nombre_existente = null;
-            $stmt_turno_existente = $co->prepare("SELECT tur_nombre FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio LIMIT 1");
-            $stmt_turno_existente->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $stmt_turno_existente = $co->prepare("SELECT tur_nombre FROM tbl_horario WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo LIMIT 1");
+            $stmt_turno_existente->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
             $turno_nombre_existente = $stmt_turno_existente->fetchColumn() ?: null;
 
-            $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co);
-
-            $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
-            $stmt_tipo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
-            $ani_tipo = $stmt_tipo->fetchColumn() ?: 'regular';
+            $this->EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co, $ani_tipo);
 
             $bloques_personalizados = json_decode($bloques_personalizados_json, true);
             $tiene_bloques = is_array($bloques_personalizados) && !empty($bloques_personalizados);
@@ -1382,7 +1380,7 @@ class Seccion extends Connection
             $stmt_horarios = $co->prepare(
                 "SELECT DISTINCT uh.sec_codigo, uh.uc_codigo, uh.hor_dia, uh.hor_horainicio, uh.hor_horafin, uh.subgrupo, s.ani_tipo
              FROM uc_horario uh
-             JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+             JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
              WHERE s.ani_anio = ? AND uh.sec_codigo IN ($placeholders)"
             );
             $stmt_horarios->execute(array_merge([$anio_anterior], $codigos_secciones));
@@ -1457,7 +1455,7 @@ class Seccion extends Connection
                         ELSE CONCAT(uh.esp_edificio, ' - ', uh.esp_tipo, ' ', uh.esp_numero)
                     END AS espacio_nombre
                 FROM uc_horario uh
-                JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+                JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
                 LEFT JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                 LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
                 WHERE uh.ani_anio = ? AND uh.sec_codigo IN ($placeholders)
@@ -1490,12 +1488,26 @@ class Seccion extends Connection
             $bloques_eliminados = [];
 
             foreach ($secciones_a_incluir as $sec) {
+                $ani_tipo_sec = null;
+                try {
+                    $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio LIMIT 1");
+                    $stmt_tipo->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio]);
+                    $ani_tipo_sec = $stmt_tipo->fetchColumn();
+                } catch (Exception $e) {
+                    error_log("Error al obtener tipo de año para $sec: " . $e->getMessage());
+                    continue;
+                }
+
+                if (!$ani_tipo_sec) {
+                    continue;
+                }
+
                 try {
                     $sql_bloques = "SELECT tur_horainicio, tur_horafin, bloque_sintetico 
                                FROM tbl_bloque_personalizado 
-                               WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
+                               WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                     $stmt_bloques = $co->prepare($sql_bloques);
-                    $stmt_bloques->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio]);
+                    $stmt_bloques->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo_sec]);
                     $bloques_sec = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($bloques_sec as $bloque) {
@@ -1514,9 +1526,9 @@ class Seccion extends Connection
                 try {
                     $sql_eliminados = "SELECT tur_horainicio, tur_horafin 
                                   FROM tbl_bloque_eliminado 
-                                  WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio";
+                                  WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                     $stmt_eliminados = $co->prepare($sql_eliminados);
-                    $stmt_eliminados->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio]);
+                    $stmt_eliminados->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo_sec]);
                     $bloques_elim = $stmt_eliminados->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($bloques_elim as $bloque_elim) {

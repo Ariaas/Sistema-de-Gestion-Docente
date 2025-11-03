@@ -132,6 +132,34 @@ class UC extends Connection
 
     public function Registrar()
     {
+        if ($this->codigoUC === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El código de la UC no puede estar vacío.');
+        }
+        if (trim($this->codigoUC) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El código de la UC no puede estar vacío.');
+        }
+
+        if ($this->nombreUC === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre de la UC no puede estar vacío.');
+        }
+        if (trim($this->nombreUC) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre de la UC no puede estar vacío.');
+        }
+
+        if (strlen($this->codigoUC) < 3) {
+            return array('resultado' => 'error', 'mensaje' => 'El código debe tener entre 3 y 20 caracteres.');
+        }
+        if (strlen($this->codigoUC) > 20) {
+            return array('resultado' => 'error', 'mensaje' => 'El código debe tener entre 3 y 20 caracteres.');
+        }
+
+        if (strlen($this->nombreUC) < 3) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 200 caracteres.');
+        }
+        if (strlen($this->nombreUC) > 200) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 200 caracteres.');
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -173,13 +201,57 @@ class UC extends Connection
         }
     }
 
-    public function Modificar($codigoOriginal)
+    public function Modificar($codigoOriginal, $nuevoNombre = null)
     {
+        if ($codigoOriginal === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El código original es requerido.');
+        }
+        if (trim($codigoOriginal) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El código original es requerido.');
+        }
+
+        if ($this->codigoUC === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El nuevo código no puede estar vacío.');
+        }
+        if (trim($this->codigoUC) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El nuevo código no puede estar vacío.');
+        }
+
+        $this->codigoUC = trim($this->codigoUC);
+
+        if (strlen($this->codigoUC) < 3) {
+            return array('resultado' => 'error', 'mensaje' => 'El código debe tener entre 3 y 20 caracteres.');
+        }
+        if (strlen($this->codigoUC) > 20) {
+            return array('resultado' => 'error', 'mensaje' => 'El código debe tener entre 3 y 20 caracteres.');
+        }
+
+        if ($nuevoNombre !== null) {
+            $this->nombreUC = $nuevoNombre;
+        }
+
+        if ($this->nombreUC === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre no puede estar vacío.');
+        }
+        if (trim($this->nombreUC) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre no puede estar vacío.');
+        }
+
+        $this->nombreUC = trim($this->nombreUC);
+
+        if (strlen($this->nombreUC) < 3) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 200 caracteres.');
+        }
+        if (strlen($this->nombreUC) > 200) {
+            return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 200 caracteres.');
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         try {
-            $stmt = $co->prepare("SELECT uc_codigo, uc_nombre, uc_creditos, uc_trayecto, uc_periodo, eje_nombre, area_nombre FROM tbl_uc WHERE uc_codigo = :codigoOriginal");
+            $sql = "SELECT uc_codigo, uc_nombre FROM tbl_uc WHERE uc_codigo = :codigoOriginal AND uc_estado = 1";
+            $stmt = $co->prepare($sql);
             $stmt->execute([':codigoOriginal' => $codigoOriginal]);
             $datosOriginales = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -187,17 +259,11 @@ class UC extends Connection
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> La unidad curricular no existe!'];
             }
 
-            if ($datosOriginales['uc_codigo'] === $this->codigoUC && 
-                $datosOriginales['uc_nombre'] === $this->nombreUC &&
-                $datosOriginales['uc_creditos'] === $this->creditosUC &&
-                $datosOriginales['uc_trayecto'] === $this->trayectoUC &&
-                $datosOriginales['uc_periodo'] === $this->periodoUC &&
-                $datosOriginales['eje_nombre'] === $this->ejeUC &&
-                $datosOriginales['area_nombre'] === $this->areaUC) {
+            if ($datosOriginales['uc_codigo'] === $this->codigoUC && $datosOriginales['uc_nombre'] === $this->nombreUC) {
                 return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
             }
 
-            if ($this->Existe($this->codigoUC, $codigoOriginal)) {
+            if ($this->codigoUC !== $codigoOriginal && $this->Existe($this->codigoUC, null)) {
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> El código de la unidad curricular ya existe!'];
             }
 
@@ -232,6 +298,22 @@ class UC extends Connection
 
     public function Eliminar()
     {
+        if ($this->codigoUC === null) {
+            return array('resultado' => 'error', 'mensaje' => 'El código no puede estar vacío.');
+        }
+        if (trim($this->codigoUC) === '') {
+            return array('resultado' => 'error', 'mensaje' => 'El código no puede estar vacío.');
+        }
+
+        $this->codigoUC = trim($this->codigoUC);
+
+        if (strlen($this->codigoUC) < 3) {
+            return array('resultado' => 'error', 'mensaje' => 'El código debe tener entre 3 y 20 caracteres.');
+        }
+        if (strlen($this->codigoUC) > 20) {
+            return array('resultado' => 'error', 'mensaje' => 'El código debe tener entre 3 y 20 caracteres.');
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 

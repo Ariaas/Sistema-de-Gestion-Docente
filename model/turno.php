@@ -24,7 +24,31 @@ class Turno extends Connection
     public function Registrar()
     {
         $r = array();
-        
+
+        if ($this->nombreTurno === null || trim($this->nombreTurno) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del turno no puede estar vacío.';
+            return $r;
+        }
+
+        if (strlen($this->nombreTurno) < 3 || strlen($this->nombreTurno) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del turno debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
+        if ($this->horaInicio === null || trim($this->horaInicio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La hora de inicio no puede estar vacía.';
+            return $r;
+        }
+
+        if ($this->horaFin === null || trim($this->horaFin) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La hora de fin no puede estar vacía.';
+            return $r;
+        }
+
         $solapamiento = $this->chequearSolapamiento();
         if(isset($solapamiento['solapamiento']) && $solapamiento['solapamiento'] === true){
             $r['resultado'] = 'error';
@@ -111,6 +135,37 @@ class Turno extends Connection
     public function Modificar()
     {
         $r = [];
+
+        if ($this->nombreTurnoOriginal === null || trim($this->nombreTurnoOriginal) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre original del turno es requerido.';
+            return $r;
+        }
+
+        if ($this->nombreTurno === null || trim($this->nombreTurno) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del turno no puede estar vacío.';
+            return $r;
+        }
+
+        if (strlen($this->nombreTurno) < 3 || strlen($this->nombreTurno) > 50) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El nombre del turno debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
+        if ($this->horaInicio === null || trim($this->horaInicio) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La hora de inicio no puede estar vacía.';
+            return $r;
+        }
+
+        if ($this->horaFin === null || trim($this->horaFin) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La hora de fin no puede estar vacía.';
+            return $r;
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
@@ -166,6 +221,20 @@ class Turno extends Connection
 
     public function Eliminar()
     {
+        if ($this->nombreTurno === null || trim($this->nombreTurno) === '') {
+            return [
+                'resultado' => 'error',
+                'mensaje' => 'El nombre del turno no puede estar vacío.'
+            ];
+        }
+
+        if (strlen($this->nombreTurno) < 3 || strlen($this->nombreTurno) > 50) {
+            return [
+                'resultado' => 'error',
+                'mensaje' => 'El nombre del turno debe tener entre 3 y 50 caracteres.'
+            ];
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = [];

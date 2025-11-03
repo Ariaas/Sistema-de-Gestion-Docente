@@ -68,6 +68,119 @@ class Anio extends Connection
     {
         $r = array();
 
+        // Validar año
+        if ($this->aniAnio === null || $this->aniAnio === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año no puede estar vacío.';
+            return $r;
+        }
+
+        if (!is_numeric($this->aniAnio) || $this->aniAnio <= 0) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año debe ser un número entero positivo.';
+            return $r;
+        }
+
+        // Validar que no sea decimal
+        if ((float)$this->aniAnio != (int)$this->aniAnio) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año debe ser un número entero, no decimal.';
+            return $r;
+        }
+
+        $this->aniAnio = (int)$this->aniAnio;
+
+        if ($this->aniAnio < 2000 || $this->aniAnio > 2100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año debe estar entre 2000 y 2100.';
+            return $r;
+        }
+
+        // Validar tipo
+        if ($this->aniTipo === null || trim($this->aniTipo) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo de año no puede estar vacío.';
+            return $r;
+        }
+
+        $this->aniTipo = trim($this->aniTipo);
+
+        if (!in_array($this->aniTipo, ['regular', 'intensivo'], true)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo de año debe ser "regular" o "intensivo".';
+            return $r;
+        }
+
+        // Validar fases
+        if (!is_array($this->fases)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Las fases deben ser un arreglo.';
+            return $r;
+        }
+
+        // Validar fase 1 (apertura y cierre del año o fase 1 para regular)
+        if (!isset($this->fases[0])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Debe proporcionar las fechas de apertura y cierre.';
+            return $r;
+        }
+
+        $fase1 = $this->fases[0];
+        
+        if (empty($fase1['apertura']) || empty($fase1['cierre'])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Las fechas de apertura y cierre son requeridas.';
+            return $r;
+        }
+
+        if (!$this->validarFecha($fase1['apertura']) || !$this->validarFecha($fase1['cierre'])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Las fechas deben tener formato válido (YYYY-MM-DD).';
+            return $r;
+        }
+
+        if (strtotime($fase1['cierre']) <= strtotime($fase1['apertura'])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La fecha de cierre debe ser posterior a la fecha de apertura.';
+            return $r;
+        }
+
+        // Para año regular, validar fase 2
+        if ($this->aniTipo === 'regular') {
+            if (!isset($this->fases[1])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Un año regular debe tener datos para la fase 2.';
+                return $r;
+            }
+
+            $fase2 = $this->fases[1];
+            
+            if (empty($fase2['apertura']) || empty($fase2['cierre'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Las fechas de apertura y cierre de la fase 2 son requeridas.';
+                return $r;
+            }
+
+            if (!$this->validarFecha($fase2['apertura']) || !$this->validarFecha($fase2['cierre'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Las fechas de la fase 2 deben tener formato válido (YYYY-MM-DD).';
+                return $r;
+            }
+
+            if (strtotime($fase2['cierre']) <= strtotime($fase2['apertura'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La fecha de cierre de la fase 2 debe ser posterior a su apertura.';
+                return $r;
+            }
+
+            // Validar que fase 2 inicie después del cierre de fase 1
+            if (strtotime($fase2['apertura']) <= strtotime($fase1['cierre'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La apertura de la fase 2 debe ser posterior al cierre de la fase 1.';
+                return $r;
+            }
+        }
+
         if (!$this->MallaActiva()) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'No se puede registrar un nuevo año si no hay una malla curricular activa.';
@@ -248,9 +361,138 @@ class Anio extends Connection
         }
     }
 
+    private function validarFecha($fecha)
+    {
+        if (empty($fecha)) {
+            return false;
+        }
+        $d = DateTime::createFromFormat('Y-m-d', $fecha);
+        return $d && $d->format('Y-m-d') === $fecha;
+    }
+
     public function Modificar($anioOriginal, $tipoOriginal)
     {
         $r = array();
+
+        // Validar parámetros originales
+        if ($anioOriginal === null || $tipoOriginal === null) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Los parámetros originales son requeridos para modificar.';
+            return $r;
+        }
+
+        // Validar año nuevo
+        if ($this->aniAnio === null || $this->aniAnio === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año no puede estar vacío.';
+            return $r;
+        }
+
+        if (!is_numeric($this->aniAnio) || $this->aniAnio <= 0) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año debe ser un número entero positivo.';
+            return $r;
+        }
+
+        // Validar que no sea decimal
+        if ((float)$this->aniAnio != (int)$this->aniAnio) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año debe ser un número entero, no decimal.';
+            return $r;
+        }
+
+        $this->aniAnio = (int)$this->aniAnio;
+
+        if ($this->aniAnio < 2000 || $this->aniAnio > 2100) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año debe estar entre 2000 y 2100.';
+            return $r;
+        }
+
+        // Validar tipo
+        if ($this->aniTipo === null || trim($this->aniTipo) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo de año no puede estar vacío.';
+            return $r;
+        }
+
+        $this->aniTipo = trim($this->aniTipo);
+
+        if (!in_array($this->aniTipo, ['regular', 'intensivo'], true)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo de año debe ser "regular" o "intensivo".';
+            return $r;
+        }
+
+        // Validar fases
+        if (!is_array($this->fases)) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Las fases deben ser un arreglo.';
+            return $r;
+        }
+
+        // Validar fase 1 (apertura y cierre del año o fase 1 para regular)
+        if (!isset($this->fases[0])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Debe proporcionar las fechas de apertura y cierre.';
+            return $r;
+        }
+
+        $fase1 = $this->fases[0];
+        
+        if (empty($fase1['apertura']) || empty($fase1['cierre'])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Las fechas de apertura y cierre son requeridas.';
+            return $r;
+        }
+
+        if (!$this->validarFecha($fase1['apertura']) || !$this->validarFecha($fase1['cierre'])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'Las fechas deben tener formato válido (YYYY-MM-DD).';
+            return $r;
+        }
+
+        if (strtotime($fase1['cierre']) <= strtotime($fase1['apertura'])) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'La fecha de cierre debe ser posterior a la fecha de apertura.';
+            return $r;
+        }
+
+        // Para año regular, validar fase 2
+        if ($this->aniTipo === 'regular') {
+            if (!isset($this->fases[1])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Un año regular debe tener datos para la fase 2.';
+                return $r;
+            }
+
+            $fase2 = $this->fases[1];
+            
+            if (empty($fase2['apertura']) || empty($fase2['cierre'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Las fechas de apertura y cierre de la fase 2 son requeridas.';
+                return $r;
+            }
+
+            if (!$this->validarFecha($fase2['apertura']) || !$this->validarFecha($fase2['cierre'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'Las fechas de la fase 2 deben tener formato válido (YYYY-MM-DD).';
+                return $r;
+            }
+
+            if (strtotime($fase2['cierre']) <= strtotime($fase2['apertura'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La fecha de cierre de la fase 2 debe ser posterior a su apertura.';
+                return $r;
+            }
+
+            // Validar que fase 2 inicie después del cierre de fase 1
+            if (strtotime($fase2['apertura']) <= strtotime($fase1['cierre'])) {
+                $r['resultado'] = 'error';
+                $r['mensaje'] = 'La apertura de la fase 2 debe ser posterior al cierre de la fase 1.';
+                return $r;
+            }
+        }
         if (!$this->Existe($this->aniAnio, $this->aniTipo, $anioOriginal, $tipoOriginal)) {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -366,6 +608,28 @@ class Anio extends Connection
     public function Eliminar()
     {
         $r = array();
+
+        // Validar año
+        if ($this->aniAnio === null || $this->aniAnio === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año no puede estar vacío.';
+            return $r;
+        }
+
+        if (!is_numeric($this->aniAnio) || $this->aniAnio <= 0) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El año debe ser un número entero positivo.';
+            return $r;
+        }
+
+        // Validar tipo
+        if ($this->aniTipo === null || trim($this->aniTipo) === '') {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = 'El tipo de año no puede estar vacío.';
+            return $r;
+        }
+
+        $this->aniTipo = trim($this->aniTipo);
         if ($this->Existe($this->aniAnio, $this->aniTipo)) {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

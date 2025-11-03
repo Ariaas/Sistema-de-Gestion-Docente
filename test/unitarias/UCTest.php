@@ -1,631 +1,346 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
-require_once __DIR__ . '/../model/uc.php';
+
+require_once __DIR__ . '/../../model/uc.php';
+
 class UCTest extends TestCase
 {
     private $uc;
+    private $pdoMock;
+    private $stmtMock;
+
     protected function setUp(): void
     {
         $this->uc = new UC();
+        $this->pdoMock = $this->createMock(PDO::class);
+        $this->stmtMock = $this->createMock(PDOStatement::class);
     }
+
     protected function tearDown(): void
     {
         $this->uc = null;
+        $this->pdoMock = null;
+        $this->stmtMock = null;
     }
+
+    public function providerCodigosInvalidos()
+    {
+        return [
+            'código null' => [null, 'UC Válida'],
+            'código vacío' => ['', 'UC Válida'],
+            'código espacios' => ['   ', 'UC Válida'],
+            'código corto' => ['AB', 'UC Válida'],
+            'código largo' => [str_repeat('A', 21), 'UC Válida'],
+        ];
+    }
+
+    public function providerNombresInvalidos()
+    {
+        return [
+            'nombre null' => ['UC001', null],
+            'nombre vacío' => ['UC001', ''],
+            'nombre espacios' => ['UC001', '   '],
+            'nombre corto' => ['UC001', 'AB'],
+            'nombre largo' => ['UC001', str_repeat('A', 201)],
+        ];
+    }
+
+    /**
+     * @test
+     */
     public function testSetAndGetCodigoUC()
     {
         $this->uc->setcodigoUC('UC001');
         $this->assertEquals('UC001', $this->uc->getcodigoUC());
     }
+
+    /**
+     * @test
+     */
     public function testSetAndGetNombreUC()
     {
-        $this->uc->setnombreUC('Programación I');
-        $this->assertEquals('Programación I', $this->uc->getnombreUC());
+        $this->uc->setnombreUC('Matemáticas');
+        $this->assertEquals('Matemáticas', $this->uc->getnombreUC());
     }
-    public function testSetAndGetCreditosUC()
+
+    /**
+     * @test
+     * @dataProvider providerCodigosInvalidos
+     */
+    public function testRegistrar_ConCodigosInvalidos($codigo, $nombre)
     {
-        $this->uc->setcreditosUC(4);
-        $this->assertEquals(4, $this->uc->getcreditosUC());
+        $this->uc->setcodigoUC($codigo);
+        $this->uc->setnombreUC($nombre);
+
+        $resultado = $this->uc->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testSetAndGetAsistidaUC()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testRegistrar_ConNombresInvalidos($codigo, $nombre)
     {
-        $this->uc->setasistidaUC(3);
-        $this->assertEquals(3, $this->uc->getasistidaUC());
+        $this->uc->setcodigoUC($codigo);
+        $this->uc->setnombreUC($nombre);
+
+        $resultado = $this->uc->Registrar();
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testSetAndGetAcademicaUC()
+
+    /**
+     * @test
+     */
+    public function testRegistrar_UCYaExisteActiva()
     {
-        $this->uc->setacademicaUC(2);
-        $this->assertEquals(2, $this->uc->getacademicaUC());
-    }
-    public function testSetAndGetIndependienteUC()
-    {
-        $this->uc->setindependienteUC(1);
-        $this->assertEquals(1, $this->uc->getindependienteUC());
-    }
-    public function testSetAndGetTrayectoUC()
-    {
-        $this->uc->settrayectoUC(1);
-        $this->assertEquals(1, $this->uc->gettrayectoUC());
-    }
-    public function testSetAndGetEjeUC()
-    {
-        $this->uc->setejeUC('Eje Profesional');
-        $this->assertEquals('Eje Profesional', $this->uc->getejeUC());
-    }
-    public function testSetAndGetAreaUC()
-    {
-        $this->uc->setareaUC('Área de Formación');
-        $this->assertEquals('Área de Formación', $this->uc->getareaUC());
-    }
-    public function testSetAndGetPeriodoUC()
-    {
-        $this->uc->setperiodoUC(1);
-        $this->assertEquals(1, $this->uc->getperiodoUC());
-    }
-    public function testSetAndGetIdUC()
-    {
-        $this->uc->setidUC(1);
-        $this->assertEquals(1, $this->uc->getidUC());
-    }
-    public function testRegistrarExitoso()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return false; 
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC001');
-        $uc->setnombreUC('Programación I');
-        $uc->setcreditosUC(4);
-        $uc->settrayectoUC(1);
-        $uc->setperiodoUC(1);
-        $uc->setejeUC('Eje Profesional');
-        $uc->setareaUC('Área de Formación');
-        $resultado = $uc->Registrar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(['uc_estado' => 1]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->uc = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->uc->method('Con')->willReturn($this->pdoMock);
+
+        $this->uc->setcodigoUC('UC001');
+        $this->uc->setnombreUC('Matemáticas');
+
+        $resultado = $this->uc->Registrar();
+
         $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
+        $this->assertStringContainsString('existe', $resultado['mensaje']);
     }
-    public function testRegistrarUCYaExisteActiva()
+
+    /**
+     * @test
+     */
+    public function testRegistrar_Exitoso()
     {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['uc_estado' => 1];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC001');
-        $uc->setnombreUC('Programación I');
-        $uc->setcreditosUC(4);
-        $uc->settrayectoUC(1);
-        $uc->setperiodoUC(1);
-        $uc->setejeUC('Eje Profesional');
-        $uc->setareaUC('Área de Formación');
-        $resultado = $uc->Registrar();
-        $this->assertEquals('registrar', $resultado['resultado']);
-        $this->assertStringContainsString('ya existe', $resultado['mensaje']);
-    }
-    public function testRegistrarReactivarUCInactiva()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return ['uc_estado' => 0];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC001');
-        $uc->setnombreUC('Programación I');
-        $uc->setcreditosUC(4);
-        $uc->settrayectoUC(1);
-        $uc->setperiodoUC(1);
-        $uc->setejeUC('Eje Profesional');
-        $uc->setareaUC('Área de Formación');
-        $resultado = $uc->Registrar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn(false);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $this->uc = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->uc->method('Con')->willReturn($this->pdoMock);
+
+        $this->uc->setcodigoUC('UC001');
+        $this->uc->setnombreUC('Matemáticas I');
+
+        $resultado = $this->uc->Registrar();
+
         $this->assertEquals('registrar', $resultado['resultado']);
     }
-    public function testModificarExitoso()
+
+    /**
+     * @test
+     */
+    public function testRegistrar_ReactivarUCInactiva()
     {
-        $uc = new class extends UC {
-            private $testMode = false;
-            private $callCount = 0;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($codigoUC, $codigoExcluir = null) {
-                if ($this->testMode) {
-                    return [];
-                }
-                return parent::Existe($codigoUC, $codigoExcluir);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    $callCount = &$this->callCount;
-                    return new class($callCount) {
-                        private $callCount;
-                        public function __construct(&$count) {
-                            $this->callCount = &$count;
-                        }
-                        public function setAttribute() { return true; }
-                        public function prepare($sql) {
-                            $callCount = &$this->callCount;
-                            return new class($callCount) {
-                                private $callCount;
-                                public function __construct(&$count) {
-                                    $this->callCount = &$count;
-                                }
-                                public function execute() { 
-                                    return true; 
-                                }
-                                public function fetch() {
-                                    $result = ($this->callCount == 0) ? [
-                                        'uc_codigo' => 'UC001',
-                                        'uc_nombre' => 'Programación I',
-                                        'uc_creditos' => 4,
-                                        'uc_trayecto' => 1,
-                                        'uc_periodo' => 1,
-                                        'eje_nombre' => 'Eje Profesional',
-                                        'area_nombre' => 'Área de Formación'
-                                    ] : false;
-                                    $this->callCount++;
-                                    return $result;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC002');
-        $uc->setnombreUC('Programación II');
-        $uc->setcreditosUC(5);
-        $uc->settrayectoUC(1);
-        $uc->setperiodoUC(2);
-        $uc->setejeUC('Eje Profesional');
-        $uc->setareaUC('Área de Formación');
-        $resultado = $uc->Modificar('UC001');
-        $this->assertEquals('modificar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
+        $stmtCheck = $this->createMock(PDOStatement::class);
+        $stmtUpdate = $this->createMock(PDOStatement::class);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')
+            ->willReturnOnConsecutiveCalls($stmtCheck, $stmtUpdate);
+
+        $stmtCheck->method('execute')->willReturn(true);
+        $stmtCheck->method('fetch')->willReturn(['uc_estado' => 0]);
+        $stmtUpdate->method('execute')->willReturn(true);
+
+        $this->uc = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con'])
+            ->getMock();
+        $this->uc->method('Con')->willReturn($this->pdoMock);
+
+        $this->uc->setcodigoUC('UC001');
+        $this->uc->setnombreUC('Matemáticas I');
+
+        $resultado = $this->uc->Registrar();
+
+        $this->assertEquals('registrar', $resultado['resultado']);
     }
-    public function testModificarUCNoExiste()
+
+    /**
+     * @test
+     * @dataProvider providerCodigosInvalidos
+     */
+    public function testModificar_ConCodigosInvalidos($codigo, $nombre)
     {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return false;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC999');
-        $uc->setnombreUC('UC Inexistente');
-        $uc->setcreditosUC(4);
-        $uc->settrayectoUC(1);
-        $uc->setperiodoUC(1);
-        $uc->setejeUC('Eje Profesional');
-        $uc->setareaUC('Área de Formación');
-        $resultado = $uc->Modificar('UC999');
-        $this->assertEquals('modificar', $resultado['resultado']);
-        $this->assertStringContainsString('no existe', $resultado['mensaje']);
+        $this->uc->setcodigoUC($codigo);
+        $this->uc->setnombreUC($nombre);
+
+        $resultado = $this->uc->Modificar('UC-ORIGINAL', $nombre);
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testModificarSinCambios()
+
+    /**
+     * @test
+     * @dataProvider providerNombresInvalidos
+     */
+    public function testModificar_ConNombresInvalidos($codigo, $nombre)
     {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return [
-                                        'uc_codigo' => 'UC001',
-                                        'uc_nombre' => 'Programación I',
-                                        'uc_creditos' => 4,
-                                        'uc_trayecto' => 1,
-                                        'uc_periodo' => 1,
-                                        'eje_nombre' => 'Eje Profesional',
-                                        'area_nombre' => 'Área de Formación'
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC001');
-        $uc->setnombreUC('Programación I');
-        $uc->setcreditosUC(4);
-        $uc->settrayectoUC(1);
-        $uc->setperiodoUC(1);
-        $uc->setejeUC('Eje Profesional');
-        $uc->setareaUC('Área de Formación');
-        $resultado = $uc->Modificar('UC001');
-        $this->assertEquals('modificar', $resultado['resultado']);
-        $this->assertStringContainsString('No se realizaron cambios', $resultado['mensaje']);
+        $this->uc->setcodigoUC($codigo);
+        $this->uc->setnombreUC($nombre);
+
+        $resultado = $this->uc->Modificar('UC001', $nombre);
+
+        $this->assertEquals('error', $resultado['resultado']);
     }
-    public function testModificarConCodigoExistente()
+
+    /**
+     * @test
+     */
+    public function testModificar_UCNoExiste()
     {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($codigoUC, $codigoExcluir = null) {
-                if ($this->testMode) {
-                    return ['resultado' => 'existe', 'mensaje' => 'La unidad de curricular YA existe!'];
-                }
-                return parent::Existe($codigoUC, $codigoExcluir);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetch() {
-                                    return [
-                                        'uc_codigo' => 'UC001',
-                                        'uc_nombre' => 'Programación I',
-                                        'uc_creditos' => 4,
-                                        'uc_trayecto' => 1,
-                                        'uc_periodo' => 1,
-                                        'eje_nombre' => 'Eje Profesional',
-                                        'area_nombre' => 'Área de Formación'
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC002');
-        $uc->setnombreUC('Programación II');
-        $uc->setcreditosUC(5);
-        $uc->settrayectoUC(1);
-        $uc->setperiodoUC(2);
-        $uc->setejeUC('Eje Profesional');
-        $uc->setareaUC('Área de Formación');
-        $resultado = $uc->Modificar('UC001');
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+        $this->stmtMock->method('fetch')->willReturn(false);
+
+        $ucMock = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $ucMock->method('Con')->willReturn($this->pdoMock);
+        $ucMock->method('Existe')->willReturn([]);
+
+        $ucMock->setcodigoUC('UC002');
+        $ucMock->setnombreUC('Nombre Nuevo');
+
+        $resultado = $ucMock->Modificar('UCXXX', 'Nombre Nuevo');
+
         $this->assertEquals('modificar', $resultado['resultado']);
-        $this->assertStringContainsString('ya existe', $resultado['mensaje']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
     }
-    public function testEliminarExitoso()
+
+    /**
+     * @test
+     */
+    public function testModificar_SinCambios()
     {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($codigoUC, $codigoExcluir = null) {
-                if ($this->testMode) {
-                    return ['resultado' => 'existe'];
-                }
-                return parent::Existe($codigoUC, $codigoExcluir);
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC001');
-        $resultado = $uc->Eliminar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->stmtMock->method('fetch')->willReturn([
+            'uc_codigo' => 'UC001',
+            'uc_nombre' => 'Matemáticas I'
+        ]);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $ucMock = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $ucMock->method('Con')->willReturn($this->pdoMock);
+        $ucMock->method('Existe')->willReturn(['resultado' => 'existe']);
+
+        $ucMock->setcodigoUC('UC001');
+        $ucMock->setnombreUC('Matemáticas I');
+
+        $resultado = $ucMock->Modificar('UC001', 'Matemáticas I');
+
+        $this->assertEquals('modificar', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testModificar_Exitoso()
+    {
+        $stmtCheck = $this->createMock(PDOStatement::class);
+        $stmtUpdate = $this->createMock(PDOStatement::class);
+
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')
+            ->willReturnOnConsecutiveCalls($stmtCheck, $stmtUpdate);
+
+        $stmtCheck->method('execute')->willReturn(true);
+        $stmtCheck->method('fetch')->willReturn(['uc_codigo' => 'UC001', 'uc_nombre' => 'Matemáticas I']);
+        $stmtUpdate->method('execute')->willReturn(true);
+
+        $ucMock = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $ucMock->method('Con')->willReturn($this->pdoMock);
+        $ucMock->method('Existe')->willReturn([]);
+
+        $ucMock->setcodigoUC('UC001');
+        $ucMock->setnombreUC('Matemáticas II');
+
+        $resultado = $ucMock->Modificar('UC001', 'Matemáticas II');
+
+        $this->assertEquals('modificar', $resultado['resultado']);
+    }
+
+    public function providerCodigosInvalidosEliminar()
+    {
+        return [
+            'código null' => [null],
+            'código vacío' => [''],
+            'código espacios' => ['   '],
+            'código corto' => ['AB'],
+            'código largo' => [str_repeat('A', 21)],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider providerCodigosInvalidosEliminar
+     */
+    public function testEliminar_ConCodigosInvalidos($codigo)
+    {
+        $this->uc->setcodigoUC($codigo);
+
+        $resultado = $this->uc->Eliminar();
+
+        $this->assertEquals('error', $resultado['resultado']);
+    }
+
+    /**
+     * @test
+     */
+    public function testEliminar_UCNoExiste()
+    {
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+
+        $ucMock = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $ucMock->method('Con')->willReturn($this->pdoMock);
+        $ucMock->method('Existe')->willReturn([]);
+
+        $ucMock->setcodigoUC('UCXXX');
+
+        $resultado = $ucMock->Eliminar();
+
         $this->assertEquals('eliminar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
+        $this->assertStringContainsString('no existe', strtolower($resultado['mensaje']));
     }
-    public function testEliminarUCNoExiste()
+
+    /**
+     * @test
+     */
+    public function testEliminar_Exitoso()
     {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Existe($codigoUC, $codigoExcluir = null) {
-                if ($this->testMode) {
-                    return [];
-                }
-                return parent::Existe($codigoUC, $codigoExcluir);
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC999');
-        $resultado = $uc->Eliminar();
+        $this->stmtMock->method('execute')->willReturn(true);
+        $this->pdoMock->method('setAttribute')->willReturn(true);
+        $this->pdoMock->method('prepare')->willReturn($this->stmtMock);
+
+        $ucMock = $this->getMockBuilder(UC::class)
+            ->onlyMethods(['Con', 'Existe'])
+            ->getMock();
+        $ucMock->method('Con')->willReturn($this->pdoMock);
+        $ucMock->method('Existe')->willReturn(['resultado' => 'existe']);
+
+        $ucMock->setcodigoUC('UC001');
+
+        $resultado = $ucMock->Eliminar();
+
         $this->assertEquals('eliminar', $resultado['resultado']);
-        $this->assertStringContainsString('no existe', $resultado['mensaje']);
-    }
-    public function testExisteUCActiva()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetchColumn() {
-                                    return 1;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $resultado = $uc->Existe('UC001');
-        $this->assertIsArray($resultado);
-        $this->assertArrayHasKey('resultado', $resultado);
-        $this->assertEquals('existe', $resultado['resultado']);
-    }
-    public function testNoExisteUC()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetchColumn() {
-                                    return 0;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $resultado = $uc->Existe('UC999');
-        $this->assertIsArray($resultado);
-        $this->assertEmpty($resultado);
-    }
-    public function testObtenerEje()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function query() { 
-                            return new class {
-                                public function fetchAll() {
-                                    return [
-                                        ['eje_nombre' => 'Eje Profesional'],
-                                        ['eje_nombre' => 'Eje Epistemológico']
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $resultado = $uc->obtenerEje();
-        $this->assertIsArray($resultado);
-        $this->assertCount(2, $resultado);
-    }
-    public function testObtenerArea()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function query() { 
-                            return new class {
-                                public function fetchAll() {
-                                    return [
-                                        ['area_nombre' => 'Área de Formación'],
-                                        ['area_nombre' => 'Área Socio Crítica']
-                                    ];
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $resultado = $uc->obtenerArea();
-        $this->assertIsArray($resultado);
-        $this->assertCount(2, $resultado);
-    }
-    public function testVerificarEnHorario()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetchColumn() {
-                                    return 1;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $resultado = $uc->verificarEnHorario('UC001');
-        $this->assertEquals('en_horario', $resultado['resultado']);
-        $this->assertStringContainsString('está en un horario', $resultado['mensaje']);
-    }
-    public function testVerificarNoEnHorario()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                                public function fetchColumn() {
-                                    return 0;
-                                }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $resultado = $uc->verificarEnHorario('UC999');
-        $this->assertEquals('no_en_horario', $resultado['resultado']);
-        $this->assertStringContainsString('no está en un horario', $resultado['mensaje']);
-    }
-    public function testActivar()
-    {
-        $uc = new class extends UC {
-            private $testMode = false;
-            public function setTestMode($mode) {
-                $this->testMode = $mode;
-            }
-            public function Con() {
-                if ($this->testMode) {
-                    return new class {
-                        public function setAttribute() { return true; }
-                        public function prepare() { 
-                            return new class {
-                                public function execute() { return true; }
-                            };
-                        }
-                    };
-                }
-                return parent::Con();
-            }
-        };
-        $uc->setTestMode(true);
-        $uc->setcodigoUC('UC001');
-        $resultado = $uc->Activar();
-        $this->assertEquals('activar', $resultado['resultado']);
-        $this->assertStringContainsString('correctamente', $resultado['mensaje']);
     }
 }

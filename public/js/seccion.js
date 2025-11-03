@@ -826,6 +826,7 @@ function validarBloqueEnTiempoReal() {
     datosValidacion.append("dia", diaNombre);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
     datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
+    datosValidacion.append("ani_tipo", $("#ani_tipo_hidden").val());
     datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
     datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
 
@@ -926,9 +927,9 @@ function guardarClase() {
     datosValidacion.append("dia", diaNombre);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
     datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
+    datosValidacion.append("ani_tipo", $("#ani_tipo_hidden").val());
     datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
     datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
-
 
     $.ajax({
         url: "",
@@ -1202,18 +1203,29 @@ function configurarDragAndDrop() {
 
             if (bloques_span > 1) {
                 const diaKey = normalizeDayKey(diaNombre);
+                const idClaseMovida = `${draggedClassData.uc_codigo}-${draggedClassData.doc_cedula}-${draggedClassData.subgrupo || 'default'}`;
 
                 for (let i = indiceInicio + 1; i <= indiceFin; i++) {
                     const bloqueActual = bloquesDeLaTablaActual[i];
                     const keyBloque = `${bloqueActual.tur_horainicio.substring(0, 5)}-${diaKey}`;
                     const clasesEnBloque = horarioContenidoGuardado.get(keyBloque) || [];
 
-                    if (clasesEnBloque.length > 0) {
-                        const idsEnBloque = clasesEnBloque.map(c =>
+                    const clasesEnBloqueFiltered = clasesEnBloque.filter(c => {
+                        const idClase = `${c.data.uc_codigo}-${c.data.doc_cedula}-${c.data.subgrupo || 'default'}`;
+                        return idClase !== idClaseMovida;
+                    });
+
+                    const clasesEnDestinoFiltered = clasesEnDestino.filter(c => {
+                        const idClase = `${c.data.uc_codigo}-${c.data.doc_cedula}-${c.data.subgrupo || 'default'}`;
+                        return idClase !== idClaseMovida;
+                    });
+
+                    if (clasesEnBloqueFiltered.length > 0) {
+                        const idsEnBloque = clasesEnBloqueFiltered.map(c =>
                             `${c.data.uc_codigo}-${c.data.doc_cedula}-${c.data.subgrupo || 'default'}`
                         ).sort().join('|');
 
-                        const idsEnDestino = clasesEnDestino.map(c =>
+                        const idsEnDestino = clasesEnDestinoFiltered.map(c =>
                             `${c.data.uc_codigo}-${c.data.doc_cedula}-${c.data.subgrupo || 'default'}`
                         ).sort().join('|');
 
@@ -1253,6 +1265,7 @@ function validarYMoverClase(claseData, keyOrigen, keyDestino, diaNuevo, horaNuev
     datosValidacion.append("dia", diaNuevo);
     datosValidacion.append("sec_codigo", $("#sec_codigo_hidden").val());
     datosValidacion.append("ani_anio", $("#ani_anio_hidden").val());
+    datosValidacion.append("ani_tipo", $("#ani_tipo_hidden").val());
     datosValidacion.append("hora_inicio", bloquesDeLaTablaActual[indiceInicio].tur_horainicio.substring(0, 5));
     datosValidacion.append("hora_fin", bloquesDeLaTablaActual[indiceFin].tur_horafin.substring(0, 5));
 
@@ -1399,6 +1412,7 @@ function procederConGuardado() {
         datos.append("accion", accion);
         datos.append("sec_codigo", $("#sec_codigo_hidden").val());
         datos.append("ani_anio", $("#ani_anio_hidden").val());
+        datos.append("ani_tipo", $("#ani_tipo_hidden").val());
         datos.append("modo_operacion", modoModal);
 
         if (accion === 'modificar' || accion === 'registrar') {
@@ -1416,11 +1430,13 @@ function procederConGuardado() {
             item.hora_fin = item.hora_fin.substring(0, 5);
         });
 
-        const bloquesPersonalizados = bloquesDeLaTablaActual.map(bloque => ({
-            tur_horainicio: bloque.tur_horainicio,
-            tur_horafin: bloque.tur_horafin,
-            _sintetico: Boolean(bloque._sintetico)
-        }));
+        const bloquesPersonalizados = bloquesDeLaTablaActual
+            .filter(bloque => bloque._sintetico)
+            .map(bloque => ({
+                tur_horainicio: bloque.tur_horainicio,
+                tur_horafin: bloque.tur_horafin,
+                _sintetico: true
+            }));
 
         const bloquesEliminados = (bloquesEliminadosPorUsuario || []).map(bloque => ({
             tur_horainicio: bloque.tur_horainicio,
@@ -1589,8 +1605,8 @@ function enviaAjax(datos, boton) {
                             const botones_accion = `
                                 <button class="btn btn-icon btn-info ver-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Ver Horario"><img src="public/assets/icons/eye.svg" alt="Ver Horario"></button>
                                 <button class="btn btn-icon btn-secondary generar-reporte me-1" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Generar Reporte del Horario"><img src="public/assets/icons/printer.svg" alt="Generar Reporte"></button>
-                                <button class="btn btn-icon btn-warning modificar-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Modificar Horario"><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
-                                <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Eliminar Horario"><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
+                                <button class="btn btn-icon btn-warning modificar-horario " data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Modificar Horario" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
+                                <button class="btn btn-icon btn-danger eliminar-horario" data-sec-codigo="${item.sec_codigo}" data-ani-anio="${item.ani_anio}" data-ani-tipo="${item.ani_tipo}" title="Eliminar Horario" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>
                             `;
                             $("#resultadoconsulta").append(`<tr><td>${item.sec_codigo}</td><td>${item.sec_cantidad || 'N/A'}</td><td>${item.ani_anio || 'N/A'}</td><td>${tipoTexto}</td><td class="text-nowrap">${botones_accion}</td></tr>`);
                         });
@@ -2313,11 +2329,9 @@ $(document).ready(function () {
             }).then((result) => {
                 if (result.isConfirmed) {
 
-                    const seccion = allSecciones.find(s => s.sec_codigo == sec_codigo);
-
-                    if (sec_codigo && seccion.ani_anio) {
-                        const keyPersonalizados = `bloques_personalizados_${sec_codigo}_${seccion.ani_anio}`;
-                        const keyExcluidos = `bloques_excluidos_${sec_codigo}_${seccion.ani_anio}`;
+                    if (sec_codigo && ani_anio && ani_tipo) {
+                        const keyPersonalizados = `bloques_personalizados_${sec_codigo}_${ani_anio}_${ani_tipo}`;
+                        const keyExcluidos = `bloques_excluidos_${sec_codigo}_${ani_anio}_${ani_tipo}`;
                         localStorage.removeItem(keyPersonalizados);
                         localStorage.removeItem(keyExcluidos);
                     }

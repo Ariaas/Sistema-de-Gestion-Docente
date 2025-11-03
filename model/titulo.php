@@ -41,10 +41,30 @@ class Titulo extends Connection
         $this->originalNombreTitulo = $originalNombreTitulo;
     }
 
-     public function Registrar()
+    public function Registrar()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        // Validaciones de entrada
+        if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
+        }
+        
+        if (empty($this->nombreTitulo) || trim($this->nombreTitulo) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'El nombre del título es requerido'];
+        }
+
+        $this->prefijoTitulo = trim($this->prefijoTitulo);
+        $this->nombreTitulo = trim($this->nombreTitulo);
+
+        if (strlen($this->prefijoTitulo) < 2 || strlen($this->prefijoTitulo) > 10) {
+            return ['resultado' => 'error', 'mensaje' => 'El prefijo debe tener entre 2 y 10 caracteres'];
+        }
+
+        if (strlen($this->nombreTitulo) < 3 || strlen($this->nombreTitulo) > 100) {
+            return ['resultado' => 'error', 'mensaje' => 'El nombre del título debe tener entre 3 y 100 caracteres'];
+        }
 
         if ($this->existeActivo($co)) {
             return ['resultado' => 'error', 'mensaje' => '¡ERROR! <br/> El título colocado ya existe!.'];
@@ -91,6 +111,29 @@ class Titulo extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
+        // Validaciones de entrada
+        if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
+        }
+        
+        if (empty($this->nombreTitulo) || trim($this->nombreTitulo) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'El nombre del título es requerido'];
+        }
+
+        if (empty($this->originalPrefijoTitulo) || empty($this->originalNombreTitulo)) {
+            return ['resultado' => 'error', 'mensaje' => 'Debe especificar el título original a modificar'];
+        }
+
+        $this->prefijoTitulo = trim($this->prefijoTitulo);
+        $this->nombreTitulo = trim($this->nombreTitulo);
+
+        if (strlen($this->prefijoTitulo) < 2 || strlen($this->prefijoTitulo) > 10) {
+            return ['resultado' => 'error', 'mensaje' => 'El prefijo debe tener entre 2 y 10 caracteres'];
+        }
+
+        if (strlen($this->nombreTitulo) < 3 || strlen($this->nombreTitulo) > 100) {
+            return ['resultado' => 'error', 'mensaje' => 'El nombre del título debe tener entre 3 y 100 caracteres'];
+        }
 
         if ($this->prefijoTitulo !== $this->originalPrefijoTitulo || $this->nombreTitulo !== $this->originalNombreTitulo) {
             if ($this->Existe()) {
@@ -136,6 +179,17 @@ class Titulo extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
 
+        // Validaciones de entrada
+        if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
+        }
+        
+        if (empty($this->nombreTitulo) || trim($this->nombreTitulo) === '') {
+            return ['resultado' => 'error', 'mensaje' => 'El nombre del título es requerido'];
+        }
+
+        $this->prefijoTitulo = trim($this->prefijoTitulo);
+        $this->nombreTitulo = trim($this->nombreTitulo);
 
         if ($this->Existe()) {
             try {
@@ -191,27 +245,30 @@ class Titulo extends Connection
         }
     }
 
-      private function existeActivo(PDO $co): bool
+    private function existeActivo($co)
     {
-        $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 1");
+        $sql = "SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 1";
+        $stmt = $co->prepare($sql);
         $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);
         $stmt->bindParam(':nombre', $this->nombreTitulo, PDO::PARAM_STR);
         $stmt->execute();
-        return $stmt->fetchColumn() !== false;
+        $result = $stmt->fetchColumn();
+        return ($result != false);
     }
 
     
-    private function existeInactivo(PDO $co): bool
+    private function existeInactivo($co)
     {
         $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 0");
         $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);
         $stmt->bindParam(':nombre', $this->nombreTitulo, PDO::PARAM_STR);
         $stmt->execute();
-        return $stmt->fetchColumn() !== false;
+        $result = $stmt->fetchColumn();
+        return ($result != false);
     }
 
     
-    private function reactivar(PDO $co): array
+    private function reactivar($co)
     {
         $stmt = $co->prepare("UPDATE tbl_titulo SET tit_estado = 1 WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre");
         $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);
@@ -219,6 +276,4 @@ class Titulo extends Connection
         $stmt->execute();
         return ['resultado' => 'registrar', 'mensaje' => '¡Registro Incluido! <br/> Se registró el título correctamente!'];
     }
-
-    
 }

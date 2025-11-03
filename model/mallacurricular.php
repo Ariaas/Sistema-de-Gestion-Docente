@@ -41,32 +41,26 @@ class Malla extends Connection
      */
     private function validarHorasUnidades($unidades)
     {
-        $errores = [];
-        
         foreach ($unidades as $index => $uc) {
             $uc_codigo = isset($uc['uc_codigo']) ? $uc['uc_codigo'] : 'Desconocida';
             
-            // Validar hora_independiente
-            if (!isset($uc['hora_independiente']) || $uc['hora_independiente'] === null || $uc['hora_independiente'] === '' || $uc['hora_independiente'] <= 0) {
-                $errores[] = "La unidad curricular '{$uc_codigo}' tiene horas independientes inválidas (debe ser mayor a 0).";
+            // Validar que todos los campos de horas estén presentes y no sean nulos
+            if (!isset($uc['hora_independiente']) || $uc['hora_independiente'] === null || $uc['hora_independiente'] === '' ||
+                !isset($uc['hora_asistida']) || $uc['hora_asistida'] === null || $uc['hora_asistida'] === '' ||
+                !isset($uc['hora_academica']) || $uc['hora_academica'] === null || $uc['hora_academica'] === '') {
+                return [
+                    'resultado' => 'error',
+                    'mensaje' => "Error: La unidad curricular '{$uc_codigo}' tiene campos de horas nulos o faltantes."
+                ];
             }
             
-            // Validar hora_asistida
-            if (!isset($uc['hora_asistida']) || $uc['hora_asistida'] === null || $uc['hora_asistida'] === '' || $uc['hora_asistida'] <= 0) {
-                $errores[] = "La unidad curricular '{$uc_codigo}' tiene horas asistidas inválidas (debe ser mayor a 0).";
+            // Validar que las horas sean mayores a 0
+            if ($uc['hora_independiente'] <= 0 || $uc['hora_asistida'] <= 0 || $uc['hora_academica'] <= 0) {
+                return [
+                    'resultado' => 'error',
+                    'mensaje' => "Error: La unidad curricular '{$uc_codigo}' tiene horas inválidas (deben ser mayores a 0)."
+                ];
             }
-            
-            // Validar hora_academica
-            if (!isset($uc['hora_academica']) || $uc['hora_academica'] === null || $uc['hora_academica'] === '' || $uc['hora_academica'] <= 0) {
-                $errores[] = "La unidad curricular '{$uc_codigo}' tiene horas académicas inválidas (debe ser mayor a 0).";
-            }
-        }
-        
-        if (!empty($errores)) {
-            return [
-                'resultado' => 'error',
-                'mensaje' => 'Error de validación de horas:<br/>' . implode('<br/>', $errores)
-            ];
         }
         
         return ['resultado' => 'ok'];
