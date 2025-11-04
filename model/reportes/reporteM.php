@@ -1,8 +1,7 @@
 <?php
 require_once('model/dbconnection.php');
 
-class Reporte extends Connection
-{
+class Reporte extends Connection{
     public function __construct()
     {
         parent::__construct();
@@ -21,7 +20,7 @@ class Reporte extends Connection
     }
 
     public function verificarDatosAulasAsignadas()
-    {
+{
         try {
             $anios_activos = $this->obtenerAnioActivo();
             if (empty($anios_activos)) {

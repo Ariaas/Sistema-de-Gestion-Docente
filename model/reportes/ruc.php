@@ -119,7 +119,7 @@ require_once('model/dbconnection.php');
     { 
         $co = $this->con(); 
         try { 
-            $p = $co->prepare("SELECT ani_anio, ani_tipo, CONCAT(ani_anio, ' - ', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_activo = 1 ORDER BY ani_anio DESC, ani_tipo ASC"); 
+            $p = $co->prepare("SELECT ani_anio, ani_tipo, CONCAT(ani_anio, ' - ', ani_tipo) as anio_completo FROM tbl_anio WHERE ani_estado = 1 ORDER BY ani_anio DESC, ani_tipo ASC"); 
             $p->execute(); 
             return $p->fetchAll(PDO::FETCH_ASSOC); 
         } catch (PDOException $e) { 
