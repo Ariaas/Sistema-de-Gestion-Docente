@@ -63,6 +63,7 @@ class Carga extends Connection
                                 WHERE uh2.sec_codigo = uh.sec_codigo 
                                     AND uh2.uc_codigo = uh.uc_codigo
                                     AND uh2.ani_anio = uh.ani_anio
+                                    AND uh2.ani_tipo = uh.ani_tipo
                                 LIMIT 1
                             ) AS 'Nombre Completo del Docente'
                         FROM
@@ -70,7 +71,7 @@ class Carga extends Connection
                         INNER JOIN
                             tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         INNER JOIN
-                            tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio
+                            tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
                         WHERE
                             s.ani_anio = :anio_param
                             AND s.ani_tipo = :ani_tipo_param

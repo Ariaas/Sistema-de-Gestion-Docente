@@ -88,12 +88,12 @@ class AularioReport extends Connection
                             uc_horario uh
                         JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
                             AND uh.ani_anio = s.ani_anio
-                            AND s.ani_tipo = :ani_tipo_param
-                            AND (uh.ani_tipo = s.ani_tipo OR uh.ani_tipo IS NULL)
+                            AND uh.ani_tipo = s.ani_tipo
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
                         WHERE
                             s.ani_anio = :anio_param
+                            AND s.ani_tipo = :ani_tipo_param
                             AND u.uc_estado = 1
                             AND s.sec_estado = 1
                             AND uh.esp_numero IS NOT NULL
@@ -169,7 +169,7 @@ class AularioReport extends Connection
             $sql = "SELECT DISTINCT bp.tur_horainicio, bp.tur_horafin, bp.bloque_sintetico
                     FROM tbl_bloque_personalizado bp
                     JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio
+                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio AND uh.ani_tipo = s.ani_tipo
                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE s.ani_anio = :anio_param
                         AND s.ani_tipo = :ani_tipo_param
@@ -227,7 +227,7 @@ class AularioReport extends Connection
             $sql = "SELECT DISTINCT be.tur_horainicio
                     FROM tbl_bloque_eliminado be
                     JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio
+                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio AND uh.ani_tipo = s.ani_tipo
                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE s.ani_anio = :anio_param
                         AND s.ani_tipo = :ani_tipo_param
@@ -279,6 +279,7 @@ class AularioReport extends Connection
                     FROM uc_horario uh
                     INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
                         AND uh.ani_anio = s.ani_anio
+                        AND uh.ani_tipo = s.ani_tipo
                     WHERE s.ani_anio = :anio_param
                         AND s.ani_tipo = :ani_tipo_param
                         AND uh.esp_numero IS NOT NULL
