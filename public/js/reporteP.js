@@ -111,7 +111,7 @@ $(document).ready(function() {
                            },
                             label: function(tooltipItem) {
                                 const quantity = tooltipItem.raw || '';
-                                // Etiqueta del tooltip
+                               
                                 return `Estudiantes (Prosecución): ${quantity}`;
                             }
                         }

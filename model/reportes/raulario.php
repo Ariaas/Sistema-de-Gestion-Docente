@@ -85,15 +85,15 @@ class AularioReport extends Connection
                             uh.doc_cedula,
                             CONCAT(d.doc_nombre, ' ', d.doc_apellido) as NombreCompletoDocente
                         FROM
-                            uc_horario uh
-                        JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
-                            AND uh.ani_anio = s.ani_anio
-                            AND uh.ani_tipo = s.ani_tipo
-                        JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                        LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
-                        WHERE
-                            s.ani_anio = :anio_param
-                            AND s.ani_tipo = :ani_tipo_param
+                        uc_horario uh
+                         JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
+                        AND uh.ani_anio = s.ani_anio
+                        AND uh.ani_tipo = s.ani_tipo  /* <-- ESTA ES LA CORRECCIÓN CLAVE */
+                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                         LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
+                         WHERE
+                        s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param /* <-- FILTRO MOVIDO AQUÍ */
                             AND u.uc_estado = 1
                             AND s.sec_estado = 1
                             AND uh.esp_numero IS NOT NULL
@@ -165,12 +165,16 @@ class AularioReport extends Connection
 
         try {
             $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
-            
+
             $sql = "SELECT DISTINCT bp.tur_horainicio, bp.tur_horafin, bp.bloque_sintetico
-                    FROM tbl_bloque_personalizado bp
-                    JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio AND uh.ani_tipo = s.ani_tipo
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                     FROM tbl_bloque_personalizado bp
+                     JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo 
+                     AND bp.ani_anio = s.ani_anio 
+                     AND bp.ani_tipo = s.ani_tipo /* <-- CORRECCIÓN 1 */
+                     JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo 
+                     AND bp.ani_anio = uh.ani_anio 
+                     AND bp.ani_tipo = uh.ani_tipo /* <-- CORRECCIÓN 2 */
+                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE s.ani_anio = :anio_param
                         AND s.ani_tipo = :ani_tipo_param
                         AND u.uc_estado = 1
@@ -223,12 +227,16 @@ class AularioReport extends Connection
 
         try {
             $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
-            
+
             $sql = "SELECT DISTINCT be.tur_horainicio
-                    FROM tbl_bloque_eliminado be
-                    JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio AND uh.ani_tipo = s.ani_tipo
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                     FROM tbl_bloque_eliminado be
+                     JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo 
+                     AND be.ani_anio = s.ani_anio 
+                     AND be.ani_tipo = s.ani_tipo /* <-- CORRECCIÓN 1 */
+                     JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo 
+                     AND be.ani_anio = uh.ani_anio 
+                     AND be.ani_tipo = uh.ani_tipo /* <-- CORRECCIÓN 2 */
+                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE s.ani_anio = :anio_param
                         AND s.ani_tipo = :ani_tipo_param
                         AND u.uc_estado = 1
@@ -276,11 +284,11 @@ class AularioReport extends Connection
                             ELSE CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
                         END as esp_codigo,
                         uh.esp_tipo
-                    FROM uc_horario uh
-                    INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
-                        AND uh.ani_anio = s.ani_anio
-                        AND uh.ani_tipo = s.ani_tipo
-                    WHERE s.ani_anio = :anio_param
+                   FROM uc_horario uh
+                     INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
+                      AND uh.ani_anio = s.ani_anio
+                      AND uh.ani_tipo = s.ani_tipo /* <-- ESTA ES LA CORRECCIÓN CLAVE */
+                     WHERE s.ani_anio = :anio_param
                         AND s.ani_tipo = :ani_tipo_param
                         AND uh.esp_numero IS NOT NULL
                     ORDER BY uh.esp_tipo ASC, uh.esp_numero ASC";

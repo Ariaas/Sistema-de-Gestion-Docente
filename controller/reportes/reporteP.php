@@ -31,7 +31,6 @@ if (is_file("views/reportes/reporteP.php")) {
                     exit;
                 }
 
-                // Separar año y tipo (formato: "2025|regular" o "2025|intensivo")
                 $partes = explode('|', $anio_completo);
                 if (count($partes) != 2) {
                     echo json_encode(['success' => false, 'mensaje' => 'Formato de año inválido.']);

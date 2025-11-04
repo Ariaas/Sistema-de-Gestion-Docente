@@ -260,7 +260,7 @@ class UC extends Connection
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> La unidad curricular no existe!'];
             }
 
-            // Normalizar valores originales con fallback a los actuales para evitar warnings y falsos negativos
+           
             $origCodigo   = isset($datosOriginales['uc_codigo']) ? (string)$datosOriginales['uc_codigo'] : (string)$this->codigoUC;
             $origNombre   = isset($datosOriginales['uc_nombre']) ? (string)$datosOriginales['uc_nombre'] : (string)$this->nombreUC;
             $origCreditos = isset($datosOriginales['uc_creditos']) ? (int)$datosOriginales['uc_creditos'] : (int)$this->creditosUC;

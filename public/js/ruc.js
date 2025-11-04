@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const faseSelect = document.getElementById('fase');
     const faseContainer = faseSelect ? faseSelect.closest('.col-12, .col-sm-6, .col-md-6, .col-lg-3') : null;
     
-    // Función para verificar si el año seleccionado es intensivo
     function esAnioIntensivo() {
         if (!anioCompletoSelect || anioCompletoSelect.value === "") {
             return false;
@@ -14,13 +13,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return tipoAnio === 'intensivo';
     }
 
-    // Función para mostrar/ocultar el select de fase
     function toggleFaseSelect() {
         const esIntensivo = esAnioIntensivo();
         
         if (faseContainer) {
             if (esIntensivo) {
-                // Ocultar el contenedor de fase
                 faseContainer.style.display = 'none';
                 
                 if (faseSelect) {
@@ -30,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
             } else {
-                // Mostrar el contenedor de fase
                 faseContainer.style.display = 'block';
             }
         }
@@ -48,11 +44,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const anioCompleto = $(this).val();
                     const anioSeleccionado = anioCompleto.split('|')[0];
                     
-                    // Primero ejecutar el toggle de fase según el tipo de año
                     toggleFaseSelect();
-                    
-                    // Habilitar todas las opciones de fase cuando cambia el año
-                    // No bloqueamos ninguna fase porque pueden haber UCs de ambas fases activas
+
                     $('#fase option').prop('disabled', false);
                     $('#fase').trigger('change.select2');
                 });
@@ -92,7 +85,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     filtrarUCs();
                 });
                 
-                // Ejecutar toggle de fase al cargar la página
                 toggleFaseSelect();
             } catch (e) {
                 console.error("Error al inicializar Select2.", e);
@@ -150,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-  
     const generarBtnUc = document.getElementById("generar_uc");
     const anioSelect = document.getElementById("anio_completo");
     const ucSelect = document.getElementById("ucurricular");

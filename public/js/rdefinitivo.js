@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const faseContainer = document.getElementById("fase_container");
     const formulario = document.getElementById("fReporteDefinitivoEmit");
 
-    // Función para verificar si el año seleccionado es intensivo
+   
     function esAnioIntensivo() {
         if (!anioCompletoSelect || anioCompletoSelect.value === "") {
             return false;
@@ -15,26 +15,26 @@ document.addEventListener('DOMContentLoaded', function () {
         return tipoAnio === 'intensivo';
     }
 
-    // Función para mostrar/ocultar el select de fase
+    
     function toggleFaseSelect() {
         const esIntensivo = esAnioIntensivo();
         
         if (faseContainer) {
             if (esIntensivo) {
-                // Ocultar el contenedor de fase
+                
                 faseContainer.style.display = 'none';
-                // Remover el atributo required
+                
                 if (faseSelect) {
                     faseSelect.removeAttribute('required');
-                    faseSelect.value = ''; // Limpiar el valor
+                    faseSelect.value = ''; 
                     if (window.jQuery && $.fn.select2) {
                         $('#fase').val("").trigger('change');
                     }
                 }
             } else {
-                // Mostrar el contenedor de fase
+                
                 faseContainer.style.display = 'block';
-                // No agregar required, ya que "Todas las Fases" es válido
+                
             }
         }
     }
@@ -51,12 +51,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     placeholder: "Seleccione una Fase"
                 });
 
-                // Escuchar cambios en el select de año usando Select2
+                
                 $('#anio_completo').on('change', function() {
                     toggleFaseSelect();
                 });
 
-                // Ejecutar al cargar la página por si hay un valor preseleccionado
+                
                 toggleFaseSelect();
             } catch (e) {
                 console.error("Error al inicializar Select2.", e);
@@ -64,10 +64,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Validación al enviar el formulario
+    
     if (formulario) {
         formulario.addEventListener('submit', function(evento) {
-            // Validar año académico
+            
             if (!anioCompletoSelect || anioCompletoSelect.value === "") {
                 evento.preventDefault();
                 Swal.fire({

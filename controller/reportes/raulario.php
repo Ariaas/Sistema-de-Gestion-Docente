@@ -67,24 +67,26 @@ if (isset($_POST['generar_aulario_report'])) {
     $oAulario->setFase($fase);
     $oAulario->setEspacio($espacio_filtrado);
 
+    
+
     $turnos = $oAulario->getTurnosCompletos();
     $bloques_personalizados = $oAulario->getBloquesPersonalizados();
     $bloques_eliminados = $oAulario->getBloquesEliminados();
     $slot_duration_minutes = 40;
-    $todas_las_franjas_por_turno = [];
-    $franjas_ordenadas_con_turno = [];
 
+    
     $orden_turnos = ['mañana' => 1, 'tarde' => 2, 'noche' => 3];
-
     usort($turnos, function ($a, $b) use ($orden_turnos) {
         $nombre_a = strtolower($a['tur_nombre']);
         $nombre_b = strtolower($b['tur_nombre']);
         return ($orden_turnos[$nombre_a] ?? 99) <=> ($orden_turnos[$nombre_b] ?? 99);
     });
 
+    $all_slots_map = []; 
+
+    
     foreach ($turnos as $turno) {
         $nombre_turno = ucfirst(strtolower($turno['tur_nombre']));
-        $todas_las_franjas_por_turno[$nombre_turno] = [];
         $hora_actual = new DateTime($turno['tur_horaInicio']);
         $hora_fin_turno = new DateTime($turno['tur_horaFin']);
 
@@ -94,40 +96,53 @@ if (isset($_POST['generar_aulario_report'])) {
             $franja_fin = ($hora_actual > $hora_fin_turno) ? $hora_fin_turno : clone $hora_actual;
 
             if ($franja_inicio < $franja_fin) {
-                $db_start_time_key = $franja_inicio->format('H:i:s');
+                $db_start_time_key = $franja_inicio->format('H:i:s'); 
                 $display_string = $franja_inicio->format('h:i A') . ' a ' . $franja_fin->format('h:i A');
 
-                $todas_las_franjas_por_turno[$nombre_turno][$display_string] = $db_start_time_key;
-                $franjas_ordenadas_con_turno[] = [
-                    'display' => $display_string,
-                    'db_key' => $db_start_time_key,
-                    'turno' => $nombre_turno
-                ];
+                if (!isset($all_slots_map[$db_start_time_key])) {
+                    $all_slots_map[$db_start_time_key] = [
+                        'display' => $display_string,
+                        'db_key' => $db_start_time_key,
+                        'turno' => $nombre_turno
+                    ];
+                }
             }
         }
     }
 
-    // Agregar bloques personalizados
+    
     foreach ($bloques_personalizados as $bloque) {
         $hora_inicio = new DateTime($bloque['tur_horainicio']);
         $hora_fin = new DateTime($bloque['tur_horafin']);
-        $db_start_time_key = $hora_inicio->format('H:i:s');
+        $db_start_time_key = $hora_inicio->format('H:i:s'); 
         $display_string = $hora_inicio->format('h:i A') . ' a ' . $hora_fin->format('h:i A');
-        
+
         $hora_inicio_str = $hora_inicio->format('H:i:s');
         $nombre_turno = ($hora_inicio_str < '13:00:00') ? 'Mañana' : (($hora_inicio_str < '18:00:00') ? 'Tarde' : 'Noche');
+
         
-        if (isset($todas_las_franjas_por_turno[$nombre_turno])) {
-            $todas_las_franjas_por_turno[$nombre_turno][$display_string] = $db_start_time_key;
-            $franjas_ordenadas_con_turno[] = [
-                'display' => $display_string,
-                'db_key' => $db_start_time_key,
-                'turno' => $nombre_turno
-            ];
+        $all_slots_map[$db_start_time_key] = [
+            'display' => $display_string,
+            'db_key' => $db_start_time_key,
+            'turno' => $nombre_turno
+        ];
+    }
+
+   
+    foreach ($bloques_eliminados as $hora_eliminada) {
+        $hora_key = (new DateTime($hora_eliminada))->format('H:i:s');
+        if (isset($all_slots_map[$hora_key])) {
+            unset($all_slots_map[$hora_key]);
         }
     }
 
-    // Eliminar bloques marcados como eliminados
+    
+    ksort($all_slots_map);
+
+    
+    $franjas_ordenadas_con_turno = array_values($all_slots_map);
+
+    
     foreach ($bloques_eliminados as $hora_eliminada) {
         $hora_key = (new DateTime($hora_eliminada))->format('H:i:s');
         foreach ($todas_las_franjas_por_turno as &$franjas) {
@@ -178,10 +193,11 @@ if (isset($_POST['generar_aulario_report'])) {
             
             $sheet = new Worksheet($spreadsheet, $nombreHoja);
             $spreadsheet->addSheet($sheet);
-            // Autoajuste de columnas
-            foreach (range('A', 'G') as $col) {
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-            }
+            $sheet->getColumnDimension('A')->setAutoSize(true);
+            
+           foreach (range('B', 'G') as $col) {
+                $sheet->getColumnDimension($col)->setWidth(25); 
+    }
 
             $currentRow = 1;
             $sheet->mergeCells("A{$currentRow}:G{$currentRow}")->setCellValue("A{$currentRow}", mb_strtoupper($espacioCodigo, 'UTF-8'));
@@ -226,7 +242,7 @@ if (isset($_POST['generar_aulario_report'])) {
                 $nombreTurno = $franja['turno'];
                 $nombreTurnoNormalizado = strtolower($nombreTurno);
 
-               
+              /*  
                 if ($nombreTurnoNormalizado === 'tarde' || $nombreTurnoNormalizado === 'noche') {
                     $filaTieneContenido = false;
 
@@ -256,7 +272,7 @@ if (isset($_POST['generar_aulario_report'])) {
                     if (!$filaTieneContenido) {
                         continue;
                     }
-                }
+                } */
                 
 
                 $sheet->setCellValue('A' . $currentRow, $displaySlot);
@@ -322,7 +338,7 @@ if (isset($_POST['generar_aulario_report'])) {
                     $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
                     $colNum++;
                 }
-                // Calcular altura de fila basada en el contenido
+                
                 $maxLines = 1;
                 foreach ($days_of_week as $day) {
                     $clases = $gridData[$day][$dbStartTimeKey] ?? null;
@@ -338,7 +354,7 @@ if (isset($_POST['generar_aulario_report'])) {
                         }
                     }
                 }
-                $rowHeight = max(30, $maxLines * 12);
+                $rowHeight = max(30, $maxLines * 16);
                 $sheet->getRowDimension($currentRow)->setRowHeight($rowHeight);
                 $currentRow++;
             }

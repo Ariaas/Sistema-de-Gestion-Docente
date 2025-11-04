@@ -220,7 +220,7 @@ $(document).ready(function() {
         if (!$('#categoria').val()) esValido = false;
         if (!$('#dedicacion').val()) esValido = false;
         
-        // Validar que no haya errores de cédula o correo duplicado
+        
         if ($('#scedulaDocente').hasClass('text-danger')) esValido = false;
         if ($('#scorreoDocente').hasClass('text-danger')) esValido = false;
         

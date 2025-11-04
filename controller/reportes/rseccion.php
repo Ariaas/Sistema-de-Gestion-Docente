@@ -102,7 +102,6 @@ if (isset($_POST['generar_seccion_report'])) {
         }
     }
 
-    // Agregar bloques personalizados
     foreach ($bloques_personalizados as $bloque) {
         $hora_inicio = new DateTime($bloque['tur_horainicio']);
         $hora_fin = new DateTime($bloque['tur_horafin']);
@@ -120,7 +119,6 @@ if (isset($_POST['generar_seccion_report'])) {
         }
     }
 
-    // Eliminar bloques marcados como eliminados
     foreach ($bloques_eliminados as $hora_eliminada) {
         unset($morningSlots[$hora_eliminada]);
         unset($afternoonSlots[$hora_eliminada]);
@@ -298,20 +296,17 @@ if (isset($_POST['generar_seccion_report'])) {
             $currentRow++;
 
             $celdasOcupadas = [];
-            
-            // --- INICIO DE LA LÓGICA CORREGIDA ---
-            
-            // 1. Determinar el turno principal de la sección
+
             $shiftNameMapping = [
                 'mañana' => 'morning',
                 'tarde' => 'afternoon',
                 'noche' => 'night'
             ];
-            // Obtenemos el 'tur_nombre' que agregamos en la consulta del modelo
+          
             $mainShiftName = strtolower($clasesDelGrupo[0]['tur_nombre'] ?? 'mañana');
             $mainShiftMapped = $shiftNameMapping[$mainShiftName] ?? 'morning';
 
-            // 2. Combinar todos los slots (mañana, tarde, noche) en uno solo
+     
             $allAvailableSlots = [
                 'morning' => $morningSlots,
                 'afternoon' => $afternoonSlots,
@@ -320,26 +315,20 @@ if (isset($_POST['generar_seccion_report'])) {
             
             $slotsToDisplay = [];
 
-            // 3. Filtrar la lista de slots
             foreach ($allAvailableSlots as $shift => $timeSlots) {
                 $isMainShift = ($shift === $mainShiftMapped);
                 
                 foreach ($timeSlots as $dbStartTimeKey => $displaySlot) {
                     $isOccupied = isset($occupiedDbKeys[$dbStartTimeKey]);
 
-                    // Mostramos el slot si:
-                    // 1. Está ocupado (una clase, un bloque personalizado)
-                    // 2. O si pertenece al turno principal de la sección
                     if ($isOccupied || $isMainShift) {
                         $slotsToDisplay[$dbStartTimeKey] = $displaySlot;
                     }
                 }
             }
 
-            // 4. Ordenar la lista filtrada por hora (LA CLAVE DEL ORDEN)
             ksort($slotsToDisplay); 
 
-            // 5. Iterar sobre la lista unificada y ordenada
             $maxRow = $headerRow;
             foreach ($slotsToDisplay as $dbStartTimeKey => $displaySlot) {
             
@@ -388,7 +377,6 @@ if (isset($_POST['generar_seccion_report'])) {
                      $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);
                      $horaFinClase = new DateTime($primeraClase['hor_horafin']);
 
-                     // --- INICIO LÓGICA SPAN CORREGIDA ---
                      $span = 0;
                      $slotsKeys = array_keys($slotsToDisplay);
                      $currentKeyIndex = array_search($dbStartTimeKey, $slotsKeys);
@@ -401,19 +389,16 @@ if (isset($_POST['generar_seccion_report'])) {
                            $slotStart = new DateTime(date('H:i:s', strtotime($parts[0])));
                            $slotEnd = new DateTime(date('H:i:s', strtotime($parts[1])));
 
-                           // Si este slot (fila) comienza DESPUÉS de que la clase termina, paramos.
                  if ($slotStart >= $horaFinClase) {
                               break;
                  }
 
-                           // Si la clase (ej. 10:00) comienza antes de que este slot termine (ej. 11:40)
                            if ($horaInicioClase < $slotEnd) {
                               $span++;
                            }
                         }
                      }
                    if ($span < 1) $span = 1;
-                     // --- FIN LÓGICA SPAN CORREGIDA ---
 
                             if ($span > 1) {
                              $endRow = $currentRow + $span - 1;
@@ -427,7 +412,7 @@ if (isset($_POST['generar_seccion_report'])) {
                         $colIndex++;
                      }
                      $rowEnd = $currentRow;
-                    if (isset($clasesEnBloque) && $span > 1) { // $span fue calculado
+                    if (isset($clasesEnBloque) && $span > 1) { 
                         $rowEnd = $currentRow + $span - 1;
                     }
                     if ($rowEnd > $maxRow) {
@@ -438,10 +423,9 @@ if (isset($_POST['generar_seccion_report'])) {
                    $currentRow++;
 
             }
-            // --- FIN DE LA LÓGICA CORREGIDA ---
 
-            if ($maxRow > $headerRow) { // Usar maxRow
-                $lastVisibleRow = $maxRow; // Usar maxRow
+            if ($maxRow > $headerRow) { 
+                $lastVisibleRow = $maxRow; 
                 $range = 'A' . $lastVisibleRow . ':' . chr(65 + $numDataColumns) . $lastVisibleRow;
                 $sheet->getStyle($range)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
          }
