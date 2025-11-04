@@ -885,7 +885,7 @@ CREATE TABLE `tbl_usuario` (
 --
 
 INSERT INTO `tbl_usuario` (`usu_id`, `usu_nombre`, `usu_correo`, `usu_contrasenia`, `usu_foto`, `usu_cedula`, `usu_docente`, `usu_estado`, `reset_token`, `reset_token_expira`, `rol_id`) VALUES
-(1, 'LigiaDuran', 'prueba@pnfi.edu.ve', '$2y$10$fYpv49aUoBWTPuZxKK//7uBrGs4K1ZrkYnaVuOaxCW80HRO5LDNke', 'public/assets/profile/ligiaDuran.png?v=1754037180097', 13991250, 'Ligia Durán', 1, '79940294', '2025-09-27 14:54:26', 1);
+(1, 'LigiaDuran', 'prueba@pnfi.edu.ve', '$2y$10$fYpv49aUoBWTPuZxKK//7uBrGs4K1ZrkYnaVuOaxCW80HRO5LDNke', 'public/assets/profile/sinPerfil.jpg', 13991250, 'Ligia Durán', 1, '79940294', '2025-09-27 14:54:26', 1);
 
 --
 -- Índices para tablas volcadas
