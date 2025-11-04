@@ -95,7 +95,7 @@ foreach ($mantenimiento_permisos as $permiso) {
 
 $tiene_permiso_reportes_subitem = tiene_permiso_accion('reportes', 'registrar', $permisos);
 
-$tiene_permiso_admin = $tiene_permiso_config_subitem || $tiene_permiso_reportes_subitem || $tiene_permiso_mantenimiento_subitem || $docente_asignado;
+$tiene_permiso_admin = $tiene_permiso_config_subitem || $tiene_permiso_mantenimiento_subitem || $docente_asignado;
 
 
 $paginas_gestion = array_values($gestion_items);
@@ -148,16 +148,16 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                         </ul>
                     </li>
                 <?php endif; ?>
-              
-                 <?php if ($tiene_permiso_reportes_estadisticos): ?>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <?php echo is_active(['reportesnor', 'reportesesta'], $pagina_actual); ?>" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gestionar Reportes</a>
-                    <ul class="dropdown-menu" aria-labelledby="reportesDropdown">
-                        <li><a class="dropdown-item <?php echo is_active('reportesnor', $pagina_actual); ?>" href="?pagina=reportesnor">Reportes Organización Docente</a></li>
-                        <li><a class="dropdown-item <?php echo is_active('reportesesta', $pagina_actual); ?>" href="?pagina=reportesesta">Reportes Estadísticos</a></li>
-                    </ul>
-                </li>
-                    <?php endif; ?>
+
+                <?php if ($tiene_permiso_reportes_estadisticos): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle <?php echo is_active(['reportesnor', 'reportesesta'], $pagina_actual); ?>" href="#" id="reportesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gestionar Reportes</a>
+                        <ul class="dropdown-menu" aria-labelledby="reportesDropdown">
+                            <li><a class="dropdown-item <?php echo is_active('reportesnor', $pagina_actual); ?>" href="?pagina=reportesnor">Reportes Organización Docente</a></li>
+                            <li><a class="dropdown-item <?php echo is_active('reportesesta', $pagina_actual); ?>" href="?pagina=reportesesta">Reportes Estadísticos</a></li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle <?php echo is_active(['preguntas', 'manual_usuario'], $pagina_actual); ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Ayuda</a>
                     <ul class="dropdown-menu">
@@ -180,7 +180,10 @@ $paginas_reportes_estadisticos = array_values($reportes_estadisticos_items);
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <?php
-                        $foto_perfil = $_SESSION['usu_foto'] ?? 'public/assets/icons/user-circle.svg';
+                        $foto_perfil = $_SESSION['usu_foto'] ?? '';
+                        if (empty($foto_perfil) || (!str_contains($foto_perfil, 'public/assets/profile/') && !str_contains($foto_perfil, 'public/assets/icons/'))) {
+                            $foto_perfil = 'public/assets/profile/sinPerfil.jpg';
+                        }
                         $estilo_filtro = str_contains($foto_perfil, 'user-circle.svg') ? 'filter: invert(35%) sepia(30%) saturate(2000%) hue-rotate(200deg);' : '';
                         ?>
                         <img src="<?php echo $foto_perfil; ?>?v=<?php echo time(); ?>" alt="Foto de perfil" width="24" height="24" class="rounded-circle me-2" style="object-fit: cover; <?php echo $estilo_filtro; ?>">

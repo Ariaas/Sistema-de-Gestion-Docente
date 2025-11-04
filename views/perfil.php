@@ -101,7 +101,7 @@ if (!isset($_SESSION['name'])) {
                             <h5 class="perfil-section-title">Datos de acceso</h5>
                             <form id="formPerfil" enctype="multipart/form-data" autocomplete="off">
                                 <div class="perfil-foto-container">
-                                    <img id="fotoPerfil" src="public/assets/icons/user-circle.svg" class="perfil-foto" alt="Foto de perfil">
+                                    <img id="fotoPerfil" src="public/assets/profile/sinPerfil.jpg" class="perfil-foto" alt="Foto de perfil">
                                     <label for="fotoPerfilInput" class="perfil-foto-label">Cambiar foto</label>
                                     <input type="file" id="fotoPerfilInput" name="fotoPerfilInput" accept=".png,.jpg,.jpeg,.svg" style="display:none;">
                                 </div>

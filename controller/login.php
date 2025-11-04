@@ -18,29 +18,33 @@ if (is_file("views/" . $pagina . ".php")) {
     if (!empty($_POST) && isset($_POST['accion'])) {
         $o = new Login();
         $h = $_POST['accion'];
-        
+
         // Acción 'ingresar' - Para pruebas automatizadas (JMeter) - SIN CAPTCHA
         if ($h == 'ingresar') {
             // Solo permitir en localhost para seguridad
-            $es_localhost = ($_SERVER['HTTP_HOST'] === 'localhost' || 
-                           $_SERVER['HTTP_HOST'] === '127.0.0.1' ||
-                           strpos($_SERVER['HTTP_HOST'], 'localhost') !== false);
-            
+            $es_localhost = ($_SERVER['HTTP_HOST'] === 'localhost' ||
+                $_SERVER['HTTP_HOST'] === '127.0.0.1' ||
+                strpos($_SERVER['HTTP_HOST'], 'localhost') !== false);
+
             if (!$es_localhost) {
                 echo json_encode(['resultado' => 'error', 'mensaje' => 'Acceso no permitido']);
                 exit;
             }
-            
+
             $o->set_nombreUsuario($_POST['usu_usuario']);
             $o->set_contraseniaUsuario($_POST['usu_clave']);
             $m = $o->existe();
-            
+
             if ($m['resultado'] == 'existe') {
                 session_destroy();
                 session_start();
                 $_SESSION['name'] = $m['mensaje'];
                 $_SESSION['usu_id'] = $m['usu_id'];
-                $_SESSION['usu_foto'] = $m['usu_foto'];
+                $fotoPerfil = $m['usu_foto'] ?? '';
+                if (empty($fotoPerfil) || (!str_contains($fotoPerfil, 'public/assets/profile/') && !str_contains($fotoPerfil, 'public/assets/icons/'))) {
+                    $fotoPerfil = 'public/assets/profile/sinPerfil.jpg';
+                }
+                $_SESSION['usu_foto'] = $fotoPerfil;
                 $_SESSION['usu_docente'] = $m['usu_docente'];
                 $_SESSION['usu_cedula'] = $m['usu_cedula'];
                 $_SESSION['cedula'] = $m['mensaje'];
@@ -58,7 +62,7 @@ if (is_file("views/" . $pagina . ".php")) {
                 exit;
             }
         }
-        
+
         // Acción 'acceder' - Para usuarios normales - CON CAPTCHA
         if ($h == 'acceder') {
             $captcha = $_POST['g-recaptcha-response'] ?? '';
@@ -73,7 +77,11 @@ if (is_file("views/" . $pagina . ".php")) {
                     session_start();
                     $_SESSION['name'] = $m['mensaje'];
                     $_SESSION['usu_id'] = $m['usu_id'];
-                    $_SESSION['usu_foto'] = $m['usu_foto'];
+                    $fotoPerfil = $m['usu_foto'] ?? '';
+                    if (empty($fotoPerfil) || (!str_contains($fotoPerfil, 'public/assets/profile/') && !str_contains($fotoPerfil, 'public/assets/icons/'))) {
+                        $fotoPerfil = 'public/assets/profile/sinPerfil.jpg';
+                    }
+                    $_SESSION['usu_foto'] = $fotoPerfil;
                     $_SESSION['usu_docente'] = $m['usu_docente'];
                     $_SESSION['usu_cedula'] = $m['usu_cedula'];
                     $_SESSION['cedula'] = $m['mensaje'];

@@ -167,6 +167,9 @@ class Perfil extends Connection_bitacora
             $stmt->bindParam(':usuarioId', $usuarioId, PDO::PARAM_INT);
             $stmt->execute();
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($data && (empty($data['usu_foto']) || (!str_starts_with($data['usu_foto'], 'public/assets/profile/') && !str_starts_with($data['usu_foto'], 'public/assets/icons/')))) {
+                $data['usu_foto'] = 'public/assets/profile/sinPerfil.jpg';
+            }
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $data;
 

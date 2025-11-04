@@ -257,7 +257,7 @@ function enviaAjax(datos) {
                     $('#correoUsuario').val(lee.mensaje.usu_correo || '');
                     const foto = lee.mensaje.usu_foto && (lee.mensaje.usu_foto.startsWith('public/assets/profile/') || lee.mensaje.usu_foto.startsWith('public/assets/icons/'))
                         ? lee.mensaje.usu_foto
-                        : 'public/assets/icons/user-circle.svg';
+                        : 'public/assets/profile/sinPerfil.jpg';
                     $('#fotoPerfil').attr('src', foto + '?v=' + new Date().getTime());
                     estadoInicialPerfil = {
                         nombre: lee.mensaje.usu_nombre || '',

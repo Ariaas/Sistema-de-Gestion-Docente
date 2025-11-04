@@ -156,7 +156,8 @@ class Usuario extends Connection_bitacora
                     usu_estado,
                     rol_id,
                     usu_docente,
-                    usu_cedula
+                    usu_cedula,
+                    usu_foto
                 ) VALUES (
                     :nombreUsuario,
                     :correoUsuario,
@@ -164,7 +165,8 @@ class Usuario extends Connection_bitacora
                     1,
                     :rolId,
                     :usu_docente,
-                    :usu_cedula
+                    :usu_cedula,
+                    :usu_foto
                 )");
 
                 $stmt->bindParam(':nombreUsuario', $this->nombreUsuario, PDO::PARAM_STR);
@@ -173,6 +175,8 @@ class Usuario extends Connection_bitacora
                 $stmt->bindParam(':rolId', $this->rolId, PDO::PARAM_INT);
                 $stmt->bindParam(':usu_docente', $this->usu_docente, PDO::PARAM_STR);
                 $stmt->bindParam(':usu_cedula', $this->usu_cedula, PDO::PARAM_STR);
+                $fotoPorDefecto = 'public/assets/profile/sinPerfil.jpg';
+                $stmt->bindParam(':usu_foto', $fotoPorDefecto, PDO::PARAM_STR);
 
                 $stmt->execute();
 
