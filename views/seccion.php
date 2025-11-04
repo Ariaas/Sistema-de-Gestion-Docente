@@ -327,6 +327,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
                         <input type="hidden" id="reporte_sec_codigo_hidden">
                         <input type="hidden" id="reporte_ani_anio_hidden">
+                        <input type="hidden" id="reporte_ani_tipo_hidden">
 
                         <div class="d-grid gap-2 col-8 mx-auto">
                             <button type="button" class="btn btn-danger btn-generar-reporte-tipo" data-tipo="pdf">
@@ -349,6 +350,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             <input type="hidden" name="accion" value="generar_reporte">
             <input type="hidden" id="form_reporte_sec_codigo" name="sec_codigo">
             <input type="hidden" id="form_reporte_ani_anio" name="ani_anio">
+            <input type="hidden" id="form_reporte_ani_tipo" name="ani_tipo">
             <input type="hidden" id="form_reporte_formato" name="formato">
         </form>
     </main>

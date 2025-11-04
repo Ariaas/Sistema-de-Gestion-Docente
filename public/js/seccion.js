@@ -1707,11 +1707,13 @@ $(document).ready(function () {
     $(document).on('click', '.generar-reporte', function () {
         const secCodigo = $(this).data('sec-codigo');
         const anioAnio = $(this).data('ani-anio');
+        const anioTipo = $(this).data('ani-tipo');
 
 
         $('#reporteSeccionCodigo').text(secCodigo);
         $('#reporte_sec_codigo_hidden').val(secCodigo);
         $('#reporte_ani_anio_hidden').val(anioAnio);
+        $('#reporte_ani_tipo_hidden').val(anioTipo);
 
 
         $('#modalReporteHorario').modal('show');
@@ -1721,11 +1723,13 @@ $(document).ready(function () {
 
         const secCodigo = $('#reporte_sec_codigo_hidden').val();
         const anioAnio = $('#reporte_ani_anio_hidden').val();
+        const anioTipo = $('#reporte_ani_tipo_hidden').val();
         const formato = $(this).data('tipo');
 
 
         $('#form_reporte_sec_codigo').val(secCodigo);
         $('#form_reporte_ani_anio').val(anioAnio);
+        $('#form_reporte_ani_tipo').val(anioTipo);
         $('#form_reporte_formato').val(formato);
 
 

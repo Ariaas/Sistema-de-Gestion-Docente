@@ -200,19 +200,30 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones);
 
     $baseDir = dirname(dirname(__FILE__));
-    $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
-    $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
+    
+    // Intentar usar PNG primero (compatible con Word), si no existe usar SVG
+    $logoPath = $baseDir . '/public/assets/img/LOGO.png';
+    if (!file_exists($logoPath)) {
+        $logoPath = $baseDir . '/public/assets/img/LOGO.svg';
+    }
+    
+    $sintilloPath = $baseDir . '/public/assets/img/Sintillo.png';
+    if (!file_exists($sintilloPath)) {
+        $sintilloPath = $baseDir . '/public/assets/img/Sintillo.svg';
+    }
 
     $logoBase64 = '';
     if (file_exists($logoPath)) {
         $logoData = file_get_contents($logoPath);
-        $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        $mimeType = (pathinfo($logoPath, PATHINFO_EXTENSION) === 'png') ? 'image/png' : 'image/svg+xml';
+        $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoData);
     }
 
     $sintilloBase64 = '';
     if (file_exists($sintilloPath)) {
         $sintilloData = file_get_contents($sintilloPath);
-        $sintilloBase64 = 'data:image/png;base64,' . base64_encode($sintilloData);
+        $mimeType = (pathinfo($sintilloPath, PATHINFO_EXTENSION) === 'png') ? 'image/png' : 'image/svg+xml';
+        $sintilloBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($sintilloData);
     }
 
     $html = '<html><head><style>
@@ -744,7 +755,7 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
                     $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
 
                     $html .= '<td class="class-cell"' . $rowspanAttr . '>';
-                    $html .= '<strong>' . $subgrupo_texto . htmlspecialchars($uc_abreviada) . '</strong><br>';
+                    $html .= '<strong>' . $subgrupo_texto . htmlspecialchars($uc_abreviada) . '</strong>';
                     $html .= '<small>' . $docente_texto;
 
                     if (!isset($espaciosPorColumna[$idx])) {
@@ -787,16 +798,16 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
 if (isset($_POST['accion']) && $_POST['accion'] === 'generar_reporte') {
     $sec_codigo = $_POST['sec_codigo'] ?? null;
     $ani_anio = $_POST['ani_anio'] ?? null;
+    $ani_tipo = $_POST['ani_tipo'] ?? null;
     $formato = $_POST['formato'] ?? 'pdf';
 
-    if (!$sec_codigo || !$ani_anio) {
+    if (!$sec_codigo || !$ani_anio || !$ani_tipo) {
         die("Error: Faltan datos clave para generar el reporte.");
     }
 
     $o = new Seccion();
 
-    $datosReporte = $o->obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio);
-
+    $datosReporte = $o->obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio, $ani_tipo);
     if ($datosReporte['resultado'] !== 'ok') {
         die("Error al obtener los datos del horario: " . $datosReporte['mensaje']);
     }
@@ -940,7 +951,6 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                 $doc_cedula = $_POST['doc_cedula'] ?? null;
                 $sec_codigo_actual = $_POST['sec_codigo_actual'] ?? null;
                 $ani_tipo = $_POST['ani_tipo'] ?? null;
-                $ani_anio = $_POST['ani_anio'] ?? null;
                 $trayecto_seccion = null;
 
                 if ($sec_codigo_actual) {
@@ -952,7 +962,7 @@ if (empty($_POST) || (isset($_POST['accion']) && !in_array($_POST['accion'], $ac
                     }
                 }
 
-                $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion, $ani_tipo, $ani_anio);
+                $resultado_uc = $o->obtenerUcPorDocente($doc_cedula, $trayecto_seccion, $ani_tipo);
                 $respuesta = [
                     'resultado' => 'ok',
                     'ucs_docente' => $resultado_uc['data'],

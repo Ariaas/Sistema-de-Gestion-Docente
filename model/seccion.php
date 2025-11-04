@@ -1558,9 +1558,9 @@ class Seccion extends Connection
         }
     }
 
-    public function obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio)
+    public function obtenerDatosCompletosHorarioParaReporte($sec_codigo, $ani_anio, $ani_tipo)
     {
-        if (!$sec_codigo || !$ani_anio) {
+        if (!$sec_codigo || !$ani_anio || !$ani_tipo) {
             return ['resultado' => 'error', 'mensaje' => 'Faltan datos de la sección.'];
         }
 
@@ -1568,14 +1568,14 @@ class Seccion extends Connection
             $co = $this->Con();
 
 
-            $stmt_grupo = $co->prepare("SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio");
-            $stmt_grupo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio]);
+            $stmt_grupo = $co->prepare("SELECT grupo_union_id FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo");
+            $stmt_grupo->execute([':sec_codigo' => $sec_codigo, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
             $grupo_id = $stmt_grupo->fetchColumn();
 
 
             if ($grupo_id) {
-                $stmt_secciones_grupo = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = :grupo_id AND ani_anio = :ani_anio");
-                $stmt_secciones_grupo->execute([':grupo_id' => $grupo_id, ':ani_anio' => $ani_anio]);
+                $stmt_secciones_grupo = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE grupo_union_id = :grupo_id AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo");
+                $stmt_secciones_grupo->execute([':grupo_id' => $grupo_id, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
                 $secciones_a_incluir = $stmt_secciones_grupo->fetchAll(PDO::FETCH_COLUMN);
             } else {
                 $secciones_a_incluir = [$sec_codigo];
@@ -1583,28 +1583,26 @@ class Seccion extends Connection
 
             $placeholders = implode(',', array_fill(0, count($secciones_a_incluir), '?'));
 
-            $sql = "SELECT 
-                    uh.sec_codigo,
-                    s.grupo_union_id,
-                    uh.subgrupo,
-                    u.uc_trayecto,
-                    uh.hor_dia,
-                    uh.hor_horainicio,
-                    uh.hor_horafin,
-                    u.uc_nombre,
-                    CONCAT(d.doc_nombre, ' ', d.doc_apellido) as docente_nombre,
-                    CASE
-                        WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
-                        ELSE CONCAT(uh.esp_edificio, ' - ', uh.esp_tipo, ' ', uh.esp_numero)
-                    END AS espacio_nombre
-                FROM uc_horario uh
-                JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo
-                LEFT JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
-                WHERE uh.ani_anio = ? AND uh.sec_codigo IN ($placeholders)
-                ORDER BY uh.hor_horainicio, uh.hor_dia";
+            $sql = "SELECT uh.sec_codigo,
+                       s.grupo_union_id,
+                       uh.subgrupo,
+                        u.uc_trayecto, 
+                       uh.hor_dia, 
+                       uh.hor_horainicio, 
+                       uh.hor_horafin,
+                       u.uc_nombre, CONCAT(d.doc_nombre, ' ', d.doc_apellido) as docente_nombre,
+                       CASE 
+                           WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero) 
+                           ELSE CONCAT(uh.esp_edificio, ' - ', uh.esp_tipo, ' ', uh.esp_numero) 
+                           END AS espacio_nombre 
+                           FROM uc_horario uh 
+                           JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo AND uh.ani_anio = s.ani_anio AND uh.ani_tipo = s.ani_tipo 
+                           LEFT JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo 
+                           LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula 
+                           WHERE uh.ani_anio = ? AND uh.ani_tipo = ? AND uh.sec_codigo IN ($placeholders) 
+                           ORDER BY uh.hor_horainicio, uh.hor_dia";
 
-            $params = array_merge([$ani_anio], $secciones_a_incluir);
+            $params = array_merge([$ani_anio, $ani_tipo], $secciones_a_incluir);
             $stmt_horario = $co->prepare($sql);
             $stmt_horario->execute($params);
             $horario_items = $stmt_horario->fetchAll(PDO::FETCH_ASSOC);
@@ -1631,7 +1629,7 @@ class Seccion extends Connection
             $bloques_eliminados = [];
 
             foreach ($secciones_a_incluir as $sec) {
-                $ani_tipo_sec = null;
+/*                 $ani_tipo_sec = null;
                 try {
                     $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio LIMIT 1");
                     $stmt_tipo->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio]);
@@ -1643,15 +1641,14 @@ class Seccion extends Connection
 
                 if (!$ani_tipo_sec) {
                     continue;
-                }
+                } */
 
                 try {
                     $sql_bloques = "SELECT tur_horainicio, tur_horafin, bloque_sintetico 
                                FROM tbl_bloque_personalizado 
                                WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                     $stmt_bloques = $co->prepare($sql_bloques);
-                    $stmt_bloques->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo_sec]);
-                    $bloques_sec = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
+                    $stmt_bloques->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);                    $bloques_sec = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($bloques_sec as $bloque) {
                         $inicio = strlen($bloque['tur_horainicio']) === 5 ? $bloque['tur_horainicio'] . ':00' : $bloque['tur_horainicio'];
@@ -1671,7 +1668,7 @@ class Seccion extends Connection
                                   FROM tbl_bloque_eliminado 
                                   WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                     $stmt_eliminados = $co->prepare($sql_eliminados);
-                    $stmt_eliminados->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo_sec]);
+                    $stmt_eliminados->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
                     $bloques_elim = $stmt_eliminados->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($bloques_elim as $bloque_elim) {
