@@ -66,6 +66,24 @@ if (is_file("views/" . $pagina . ".php")) {
             }
             echo json_encode($resultado);
             $bitacora->registrarAccion($usu_id, 'modificó su perfil', 'perfil');
+        } elseif ($accion == 'actualizar_docente') {
+            $cedulaDocente = isset($_SESSION['usu_cedula']) ? $_SESSION['usu_cedula'] : null;
+            if (empty($cedulaDocente)) {
+                echo json_encode(['resultado' => 'error', 'mensaje' => 'No se encontró el docente asociado al usuario.']);
+                exit;
+            }
+
+            $payloadDocente = [
+                'doc_correo' => $_POST['doc_correo'] ?? null,
+                'titulos' => isset($_POST['titulos']) ? (array) $_POST['titulos'] : [],
+                'coordinaciones' => isset($_POST['coordinaciones']) ? (array) $_POST['coordinaciones'] : []
+            ];
+
+            $resultado = $p->ActualizarDocentePerfil($cedulaDocente, $payloadDocente);
+            echo json_encode($resultado);
+            if (isset($resultado['resultado']) && $resultado['resultado'] === 'actualizar_docente') {
+                $bitacora->registrarAccion($usu_id, 'actualizó sus datos docentes', 'perfil');
+            }
         } else if ($_POST['accion'] === 'existe_correo_perfil') {
             require_once('model/perfil.php');
             $perfil = new Perfil();

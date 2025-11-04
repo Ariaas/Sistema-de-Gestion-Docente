@@ -121,7 +121,7 @@ class Anio extends Connection
         }
 
         $fase1 = $this->fases[0];
-        
+
         if (empty($fase1['apertura']) || empty($fase1['cierre'])) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'Las fechas de apertura y cierre son requeridas.';
@@ -148,7 +148,7 @@ class Anio extends Connection
             }
 
             $fase2 = $this->fases[1];
-            
+
             if (empty($fase2['apertura']) || empty($fase2['cierre'])) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = 'Las fechas de apertura y cierre de la fase 2 son requeridas.';
@@ -252,6 +252,10 @@ class Anio extends Connection
             $co->commit();
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
+            $infoDuplicacion = $this->prepararDuplicacion($anioAnterior, $this->aniAnio, $this->aniTipo, $co);
+            if ($infoDuplicacion !== null) {
+                $r['duplicacion'] = $infoDuplicacion;
+            }
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';
@@ -426,7 +430,7 @@ class Anio extends Connection
         }
 
         $fase1 = $this->fases[0];
-        
+
         if (empty($fase1['apertura']) || empty($fase1['cierre'])) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'Las fechas de apertura y cierre son requeridas.';
@@ -453,7 +457,7 @@ class Anio extends Connection
             }
 
             $fase2 = $this->fases[1];
-            
+
             if (empty($fase2['apertura']) || empty($fase2['cierre'])) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = 'Las fechas de apertura y cierre de la fase 2 son requeridas.';
@@ -851,6 +855,377 @@ class Anio extends Connection
         }
         $co = null;
         return $r;
+    }
+
+    private function prepararDuplicacion($anioOrigen, $anioDestino, $aniTipo, PDO $co)
+    {
+        if ($anioOrigen <= 0) {
+            return null;
+        }
+        $stmtSecciones = $co->prepare("SELECT COUNT(*) FROM tbl_seccion WHERE ani_anio = ? AND ani_tipo = ?");
+        $stmtSecciones->execute([$anioOrigen, $aniTipo]);
+        $totalSecciones = (int)$stmtSecciones->fetchColumn();
+        if ($totalSecciones === 0) {
+            return null;
+        }
+        $stmtHorarios = $co->prepare("SELECT COUNT(*) FROM uc_horario WHERE ani_anio = ? AND ani_tipo = ?");
+        $stmtHorarios->execute([$anioOrigen, $aniTipo]);
+        $totalHorarios = (int)$stmtHorarios->fetchColumn();
+        return [
+            'anioOrigen' => (int)$anioOrigen,
+            'anioDestino' => (int)$anioDestino,
+            'aniTipo' => $aniTipo,
+            'secciones' => $totalSecciones,
+            'horarios' => $totalHorarios
+        ];
+    }
+
+    public function duplicarSecciones($anioOrigen, $aniTipoOrigen, $anioDestino, $aniTipoDestino = null)
+    {
+        $aniTipoDestino = $aniTipoDestino ?? $aniTipoOrigen;
+        $respuesta = ['resultado' => 'duplicar_secciones_ok', 'mensaje' => ''];
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $co->beginTransaction();
+            $stmtOrigen = $co->prepare("SELECT sec_codigo, sec_cantidad, sec_estado, grupo_union_id FROM tbl_seccion WHERE ani_anio = ? AND ani_tipo = ?");
+            $stmtOrigen->execute([(int)$anioOrigen, $aniTipoOrigen]);
+            $secciones = $stmtOrigen->fetchAll(PDO::FETCH_ASSOC);
+            if (empty($secciones)) {
+                $co->rollBack();
+                $respuesta['mensaje'] = 'No existen secciones en el año de origen.';
+                $co = null;
+                return $respuesta;
+            }
+            $stmtDestino = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = ? AND ani_tipo = ?");
+            $stmtDestino->execute([(int)$anioDestino, $aniTipoDestino]);
+            $existentes = $stmtDestino->fetchAll(PDO::FETCH_COLUMN, 0);
+            $existentes = array_flip($existentes);
+            $stmtInsert = $co->prepare("INSERT INTO tbl_seccion (sec_codigo, ani_anio, ani_tipo, sec_cantidad, sec_estado, grupo_union_id) VALUES (?, ?, ?, ?, ?, ?)");
+            $insertados = 0;
+            $omitidos = 0;
+            foreach ($secciones as $fila) {
+                $codigo = $fila['sec_codigo'];
+                if (isset($existentes[$codigo])) {
+                    $omitidos++;
+                    continue;
+                }
+                $stmtInsert->execute([$codigo, (int)$anioDestino, $aniTipoDestino, (int)$fila['sec_cantidad'], (int)$fila['sec_estado'], $fila['grupo_union_id']]);
+                $insertados++;
+            }
+            $co->commit();
+            if ($insertados === 0) {
+                if ($omitidos > 0) {
+                    $respuesta['mensaje'] = 'Las secciones ya existen en el año destino.';
+                } else {
+                    $respuesta['mensaje'] = 'No se pudieron duplicar secciones.';
+                }
+            } else {
+                $respuesta['mensaje'] = 'Se duplicaron ' . $insertados . ' secciones.';
+            }
+        } catch (Exception $e) {
+            if ($co->inTransaction()) {
+                $co->rollBack();
+            }
+            $respuesta['resultado'] = 'error';
+            $respuesta['mensaje'] = $e->getMessage();
+        }
+        $co = null;
+        return $respuesta;
+    }
+
+    public function duplicarHorarios($anioOrigen, $aniTipoOrigen, $anioDestino, $aniTipoDestino = null, $faseObjetivo = null)
+    {
+        $aniTipoDestino = $aniTipoDestino ?? $aniTipoOrigen;
+        $respuesta = ['resultado' => 'duplicar_horarios_ok', 'mensaje' => ''];
+        $co = $this->Con();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        try {
+            $co->beginTransaction();
+            $stmtOrigen = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = ? AND ani_tipo = ?");
+            $stmtOrigen->execute([(int)$anioOrigen, $aniTipoOrigen]);
+            $seccionesOrigen = $stmtOrigen->fetchAll(PDO::FETCH_COLUMN, 0);
+            if (empty($seccionesOrigen)) {
+                $co->rollBack();
+                $respuesta['mensaje'] = 'No se encontraron secciones en el año de origen.';
+                $co = null;
+                return $respuesta;
+            }
+            $stmtDestino = $co->prepare("SELECT sec_codigo FROM tbl_seccion WHERE ani_anio = ? AND ani_tipo = ?");
+            $stmtDestino->execute([(int)$anioDestino, $aniTipoDestino]);
+            $seccionesDestino = $stmtDestino->fetchAll(PDO::FETCH_COLUMN, 0);
+            if (empty($seccionesDestino)) {
+                $co->rollBack();
+                $respuesta['mensaje'] = 'Debe duplicar secciones antes de copiar los horarios.';
+                $co = null;
+                return $respuesta;
+            }
+            $seccionesDisponibles = array_values(array_intersect($seccionesOrigen, $seccionesDestino));
+            if (empty($seccionesDisponibles)) {
+                $co->rollBack();
+                $respuesta['mensaje'] = 'No hay secciones coincidentes entre los años seleccionados.';
+                $co = null;
+                return $respuesta;
+            }
+            $faseObjetivo = $this->faseObjetivoDuplicacion((int)$anioDestino, $aniTipoDestino, $faseObjetivo, $co);
+            $mapa = $this->mapaConversionFase();
+            $infoUc = $this->cargarInfoUc($co);
+            $docUcMap = $this->cargarDocUcMap($co);
+            $placeholders = implode(',', array_fill(0, count($seccionesDisponibles), '?'));
+            $paramsConsulta = array_merge([(int)$anioOrigen, $aniTipoOrigen], $seccionesDisponibles);
+            $stmtUc = $co->prepare("SELECT uc_codigo, doc_cedula, subgrupo, sec_codigo, esp_numero, hor_dia, hor_horainicio, hor_horafin, esp_tipo, esp_edificio FROM uc_horario WHERE ani_anio = ? AND ani_tipo = ? AND sec_codigo IN ($placeholders)");
+            $stmtUc->execute($paramsConsulta);
+            $ucPorSeccion = [];
+            while ($fila = $stmtUc->fetch(PDO::FETCH_ASSOC)) {
+                $codigo = $fila['sec_codigo'];
+                if (!isset($ucPorSeccion[$codigo])) {
+                    $ucPorSeccion[$codigo] = [];
+                }
+                $ucPorSeccion[$codigo][] = $fila;
+            }
+            $stmtHorario = $co->prepare("SELECT sec_codigo, tur_nombre, hor_estado FROM tbl_horario WHERE ani_anio = ? AND ani_tipo = ? AND sec_codigo IN ($placeholders)");
+            $stmtHorario->execute($paramsConsulta);
+            $horarioPorSeccion = [];
+            while ($fila = $stmtHorario->fetch(PDO::FETCH_ASSOC)) {
+                $horarioPorSeccion[$fila['sec_codigo']] = $fila;
+            }
+            $stmtBloques = $co->prepare("SELECT sec_codigo, tur_horainicio, tur_horafin, bloque_sintetico FROM tbl_bloque_personalizado WHERE ani_anio = ? AND ani_tipo = ? AND sec_codigo IN ($placeholders)");
+            $stmtBloques->execute($paramsConsulta);
+            $bloquesPorSeccion = [];
+            while ($fila = $stmtBloques->fetch(PDO::FETCH_ASSOC)) {
+                $codigo = $fila['sec_codigo'];
+                if (!isset($bloquesPorSeccion[$codigo])) {
+                    $bloquesPorSeccion[$codigo] = [];
+                }
+                $bloquesPorSeccion[$codigo][] = $fila;
+            }
+            $stmtBloquesElim = $co->prepare("SELECT sec_codigo, tur_horainicio, tur_horafin FROM tbl_bloque_eliminado WHERE ani_anio = ? AND ani_tipo = ? AND sec_codigo IN ($placeholders)");
+            $stmtBloquesElim->execute($paramsConsulta);
+            $bloquesEliminados = [];
+            while ($fila = $stmtBloquesElim->fetch(PDO::FETCH_ASSOC)) {
+                $codigo = $fila['sec_codigo'];
+                if (!isset($bloquesEliminados[$codigo])) {
+                    $bloquesEliminados[$codigo] = [];
+                }
+                $bloquesEliminados[$codigo][] = $fila;
+            }
+            $stmtDelUc = $co->prepare("DELETE FROM uc_horario WHERE sec_codigo = ? AND ani_anio = ? AND ani_tipo = ?");
+            $stmtDelDoc = $co->prepare("DELETE FROM docente_horario WHERE sec_codigo = ? AND ani_anio = ? AND ani_tipo = ?");
+            $stmtDelBloque = $co->prepare("DELETE FROM tbl_bloque_personalizado WHERE sec_codigo = ? AND ani_anio = ? AND ani_tipo = ?");
+            $stmtDelBloqueElim = $co->prepare("DELETE FROM tbl_bloque_eliminado WHERE sec_codigo = ? AND ani_anio = ? AND ani_tipo = ?");
+            $stmtDelHorario = $co->prepare("DELETE FROM tbl_horario WHERE sec_codigo = ? AND ani_anio = ? AND ani_tipo = ?");
+            $stmtInsertUc = $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, subgrupo, sec_codigo, ani_anio, ani_tipo, esp_numero, hor_dia, hor_horainicio, hor_horafin, esp_tipo, esp_edificio) VALUES (:uc_codigo, :doc_cedula, :subgrupo, :sec_codigo, :ani_anio, :ani_tipo, :esp_numero, :hor_dia, :hor_horainicio, :hor_horafin, :esp_tipo, :esp_edificio)");
+            $stmtInsertDoc = $co->prepare("INSERT INTO docente_horario (doc_cedula, sec_codigo, ani_anio, ani_tipo) VALUES (?, ?, ?, ?)");
+            $stmtInsertBloque = $co->prepare("INSERT INTO tbl_bloque_personalizado (sec_codigo, ani_anio, ani_tipo, tur_horainicio, tur_horafin, bloque_sintetico) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmtInsertBloqueElim = $co->prepare("INSERT INTO tbl_bloque_eliminado (sec_codigo, ani_anio, ani_tipo, tur_horainicio, tur_horafin) VALUES (?, ?, ?, ?, ?)");
+            $stmtInsertHorario = $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (?, ?, ?, ?, ?)");
+            $clasesInsertadas = 0;
+            foreach ($seccionesDisponibles as $seccion) {
+                $stmtDelUc->execute([$seccion, (int)$anioDestino, $aniTipoDestino]);
+                $stmtDelDoc->execute([$seccion, (int)$anioDestino, $aniTipoDestino]);
+                $stmtDelBloque->execute([$seccion, (int)$anioDestino, $aniTipoDestino]);
+                $stmtDelBloqueElim->execute([$seccion, (int)$anioDestino, $aniTipoDestino]);
+                $stmtDelHorario->execute([$seccion, (int)$anioDestino, $aniTipoDestino]);
+                if (isset($horarioPorSeccion[$seccion])) {
+                    $filaHorario = $horarioPorSeccion[$seccion];
+                    $stmtInsertHorario->execute([$seccion, (int)$anioDestino, $aniTipoDestino, $filaHorario['tur_nombre'], $filaHorario['hor_estado']]);
+                }
+                $docentesSeccion = [];
+                if (isset($ucPorSeccion[$seccion])) {
+                    foreach ($ucPorSeccion[$seccion] as $bloque) {
+                        $ucActual = $bloque['uc_codigo'];
+                        $ucConvertido = $ucActual;
+                        if ($ucActual !== null && $ucActual !== '') {
+                            $ucConvertido = $this->convertirUcPorFase($ucActual, $faseObjetivo, $mapa, $infoUc);
+                            if (!isset($infoUc[$ucConvertido]) || (int)$infoUc[$ucConvertido]['estado'] !== 1) {
+                                continue;
+                            }
+                        }
+                        $docente = $bloque['doc_cedula'];
+                        if ($ucConvertido !== null && $ucConvertido !== '') {
+                            $docente = $this->validarDocenteParaUc($docente, $ucConvertido, $docUcMap);
+                        } else {
+                            $docente = null;
+                        }
+                        $stmtInsertUc->execute([
+                            ':uc_codigo' => $ucConvertido,
+                            ':doc_cedula' => $docente,
+                            ':subgrupo' => $bloque['subgrupo'],
+                            ':sec_codigo' => $seccion,
+                            ':ani_anio' => (int)$anioDestino,
+                            ':ani_tipo' => $aniTipoDestino,
+                            ':esp_numero' => $bloque['esp_numero'],
+                            ':hor_dia' => $bloque['hor_dia'],
+                            ':hor_horainicio' => $bloque['hor_horainicio'],
+                            ':hor_horafin' => $bloque['hor_horafin'],
+                            ':esp_tipo' => $bloque['esp_tipo'],
+                            ':esp_edificio' => $bloque['esp_edificio']
+                        ]);
+                        if ($docente !== null) {
+                            $docentesSeccion[$docente] = true;
+                        }
+                        $clasesInsertadas++;
+                    }
+                }
+                if (!empty($docentesSeccion)) {
+                    foreach (array_keys($docentesSeccion) as $docente) {
+                        $stmtInsertDoc->execute([$docente, $seccion, (int)$anioDestino, $aniTipoDestino]);
+                    }
+                }
+                if (isset($bloquesPorSeccion[$seccion])) {
+                    foreach ($bloquesPorSeccion[$seccion] as $bloque) {
+                        $stmtInsertBloque->execute([$seccion, (int)$anioDestino, $aniTipoDestino, $bloque['tur_horainicio'], $bloque['tur_horafin'], (int)$bloque['bloque_sintetico']]);
+                    }
+                }
+                if (isset($bloquesEliminados[$seccion])) {
+                    foreach ($bloquesEliminados[$seccion] as $bloque) {
+                        $stmtInsertBloqueElim->execute([$seccion, (int)$anioDestino, $aniTipoDestino, $bloque['tur_horainicio'], $bloque['tur_horafin']]);
+                    }
+                }
+            }
+            $co->commit();
+            if ($clasesInsertadas === 0) {
+                $respuesta['mensaje'] = 'No se copiaron bloques de horario.';
+            } else {
+                $respuesta['mensaje'] = 'Se duplicaron ' . $clasesInsertadas . ' bloques de horario.';
+            }
+        } catch (Exception $e) {
+            if ($co->inTransaction()) {
+                $co->rollBack();
+            }
+            $respuesta['resultado'] = 'error';
+            $respuesta['mensaje'] = $e->getMessage();
+        }
+        $co = null;
+        return $respuesta;
+    }
+
+    private function faseObjetivoDuplicacion($anioDestino, $aniTipoDestino, $faseSolicitada, PDO $co)
+    {
+        if ($aniTipoDestino !== 'regular') {
+            return 1;
+        }
+        if ($faseSolicitada !== null) {
+            $faseSolicitada = (int)$faseSolicitada;
+            if ($faseSolicitada < 1) {
+                $faseSolicitada = 1;
+            }
+            if ($faseSolicitada > 2) {
+                $faseSolicitada = 2;
+            }
+            return $faseSolicitada;
+        }
+        $stmt = $co->prepare("SELECT fase_numero, fase_apertura, fase_cierre FROM tbl_fase WHERE ani_anio = ? AND ani_tipo = ? ORDER BY fase_numero ASC");
+        $stmt->execute([(int)$anioDestino, $aniTipoDestino]);
+        $fases = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (empty($fases)) {
+            return 1;
+        }
+        $hoy = new DateTime('now');
+        foreach ($fases as $fila) {
+            if (empty($fila['fase_apertura'])) {
+                continue;
+            }
+            $apertura = new DateTime($fila['fase_apertura']);
+            $cierre = !empty($fila['fase_cierre']) ? new DateTime($fila['fase_cierre']) : null;
+            if ($cierre !== null && $hoy >= $apertura && $hoy <= $cierre) {
+                return (int)$fila['fase_numero'];
+            }
+            if ($hoy < $apertura) {
+                return (int)$fila['fase_numero'];
+            }
+        }
+        $ultima = end($fases);
+        return (int)$ultima['fase_numero'];
+    }
+
+    private function mapaConversionFase()
+    {
+        $mapa = [
+            '2to1' => [
+                'PIELE072103' => 'PIIDI090103',
+                'PIELE072203' => 'PIBAD090203',
+                'PIELE072403' => 'PIABD090403',
+                'PIELE078303' => 'PIMOB078303',
+                'PIAUI120404' => 'PISEI120404',
+                'PIINO078303' => 'PISIO078303',
+                'PIREA084403' => 'PIGPI120404'
+            ]
+        ];
+        $mapa['1to2'] = [];
+        foreach ($mapa['2to1'] as $origen => $destino) {
+            if (!isset($mapa['1to2'][$destino])) {
+                $mapa['1to2'][$destino] = $origen;
+            }
+        }
+        return $mapa;
+    }
+
+    private function convertirUcPorFase($ucCodigo, $faseObjetivo, array $mapa, array $ucInfo)
+    {
+        if (!isset($ucInfo[$ucCodigo])) {
+            return $ucCodigo;
+        }
+        $periodo = strtoupper((string)$ucInfo[$ucCodigo]['periodo']);
+        if ($faseObjetivo === 1) {
+            if ($periodo === 'FASE II' && isset($mapa['2to1'][$ucCodigo])) {
+                $destino = $mapa['2to1'][$ucCodigo];
+                if (isset($ucInfo[$destino]) && (int)$ucInfo[$destino]['estado'] === 1) {
+                    return $destino;
+                }
+            }
+        } elseif ($faseObjetivo === 2) {
+            if (($periodo === 'FASE I' || $periodo === '0') && isset($mapa['1to2'][$ucCodigo])) {
+                $destino = $mapa['1to2'][$ucCodigo];
+                if (isset($ucInfo[$destino]) && (int)$ucInfo[$destino]['estado'] === 1) {
+                    return $destino;
+                }
+            }
+        }
+        return $ucCodigo;
+    }
+
+    private function validarDocenteParaUc($docCedula, $ucCodigo, array $docUcMap)
+    {
+        if ($docCedula === null) {
+            return null;
+        }
+        $clave = (string)$docCedula;
+        if (!isset($docUcMap[$clave])) {
+            return null;
+        }
+        if (!isset($docUcMap[$clave][$ucCodigo])) {
+            return null;
+        }
+        return $docCedula;
+    }
+
+    private function cargarInfoUc(PDO $co)
+    {
+        $stmt = $co->query("SELECT uc_codigo, uc_periodo, uc_estado, uc_trayecto FROM tbl_uc");
+        $datos = [];
+        while ($fila = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $datos[$fila['uc_codigo']] = [
+                'periodo' => $fila['uc_periodo'],
+                'estado' => (int)$fila['uc_estado'],
+                'trayecto' => $fila['uc_trayecto']
+            ];
+        }
+        return $datos;
+    }
+
+    private function cargarDocUcMap(PDO $co)
+    {
+        $stmt = $co->query("SELECT uc_codigo, doc_cedula FROM uc_docente");
+        $mapa = [];
+        while ($fila = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $doc = (string)$fila['doc_cedula'];
+            if (!isset($mapa[$doc])) {
+                $mapa[$doc] = [];
+            }
+            $mapa[$doc][$fila['uc_codigo']] = true;
+        }
+        return $mapa;
     }
 
     public function consultarPer()

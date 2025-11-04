@@ -47,6 +47,21 @@ if (is_file("views/" . $pagina . ".php")) {
             } else {
                 echo json_encode(['resultado' => 'no_existe']);
             }
+        } elseif ($accion == 'duplicar_secciones') {
+            $anioOrigen = isset($_POST['anioOrigen']) ? (int)$_POST['anioOrigen'] : 0;
+            $anioDestino = isset($_POST['anioDestino']) ? (int)$_POST['anioDestino'] : 0;
+            $aniTipo = isset($_POST['aniTipo']) ? $_POST['aniTipo'] : '';
+            $aniTipoDestino = isset($_POST['aniTipoDestino']) ? $_POST['aniTipoDestino'] : $aniTipo;
+            echo json_encode($c->duplicarSecciones($anioOrigen, $aniTipo, $anioDestino, $aniTipoDestino));
+            $bitacora->registrarAccion($usu_id, 'duplicar_secciones', 'anio');
+        } elseif ($accion == 'duplicar_horarios') {
+            $anioOrigen = isset($_POST['anioOrigen']) ? (int)$_POST['anioOrigen'] : 0;
+            $anioDestino = isset($_POST['anioDestino']) ? (int)$_POST['anioDestino'] : 0;
+            $aniTipo = isset($_POST['aniTipo']) ? $_POST['aniTipo'] : '';
+            $aniTipoDestino = isset($_POST['aniTipoDestino']) ? $_POST['aniTipoDestino'] : $aniTipo;
+            $faseObjetivo = isset($_POST['faseObjetivo']) && $_POST['faseObjetivo'] !== '' ? (int)$_POST['faseObjetivo'] : null;
+            echo json_encode($c->duplicarHorarios($anioOrigen, $aniTipo, $anioDestino, $aniTipoDestino, $faseObjetivo));
+            $bitacora->registrarAccion($usu_id, 'duplicar_horarios', 'anio');
         } else {
             $c->setAnio($_POST['aniAnio']);
             $c->setTipo($_POST['tipoAnio']);

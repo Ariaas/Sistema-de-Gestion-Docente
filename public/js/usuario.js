@@ -132,8 +132,6 @@ $(document).ready(function () {
   });
 
   $("#correo").on("keyup", function () {
-    if ($("#usu_cedula").val()) return;
-
     $("#scorreo").text("").css("color", "red");
     $("#proceso").prop("disabled", false);
 
@@ -265,11 +263,10 @@ $(document).ready(function () {
   $(document).on('click', '.btn-seleccionar-doc', function () {
     const nombre = $(this).data('nombre');
     const cedula = $(this).data('cedula');
-    const correo = $(this).data('correo');
     $('#usu_docente').val(nombre);
     $('#usu_cedula').val(cedula);
     $('#docente_asignado_nombre').val(nombre);
-    $('#correo').val(correo).prop('readonly', true);
+    $('#correo').prop('readonly', false);
     $('#scorreo').text('');
     $('#modalDocentes').modal('hide');
   });
@@ -282,7 +279,7 @@ $(document).ready(function () {
     $('#usu_docente').val('');
     $('#usu_cedula').val('');
     $('#docente_asignado_nombre').val('');
-    $('#correo').val('').prop('readonly', false);
+    $('#correo').prop('readonly', false);
   });
 
   $('#btnSeleccionarRol').on('click', function () {
@@ -393,11 +390,7 @@ function pone(pos, accion) {
   $("#usu_cedula").val(cedulaAsignada);
   $("#docente_asignado_nombre").val(docenteAsignado === 'Usuario no es un docente' ? '' : docenteAsignado);
 
-  if (cedulaAsignada) {
-    $("#correo").prop("readonly", true);
-  } else {
-    $("#correo").prop("readonly", false);
-  }
+  $("#correo").prop("readonly", false);
 
   $("#susuarionombre, #scontrasenia, #scorreo, #susuarioRol").text("");
 

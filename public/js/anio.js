@@ -1,3 +1,5 @@
+let duplicacionPendiente = null;
+
 function Listar() {
   var datos = new FormData();
   datos.append("accion", "consultar");
@@ -429,7 +431,7 @@ function enviaAjax(datos, accion) {
           } else {
             $("#saniAnio").text("").hide();
           }
-          verificarCambiosAnio(); 
+          verificarCambiosAnio();
           return;
         }
         if (lee.resultado === "consultar") {
@@ -520,6 +522,10 @@ function enviaAjax(datos, accion) {
           ) {
             $("#modal1").modal("hide");
             Listar();
+            duplicacionPendiente = lee.duplicacion || null;
+            if (duplicacionPendiente && duplicacionPendiente.secciones > 0) {
+              iniciarDuplicacionAutomatica();
+            }
           }
         }
         else if (lee.resultado == "modificar") {
@@ -545,12 +551,27 @@ function enviaAjax(datos, accion) {
             Verificar();
           }
         }
+        else if (lee.resultado === "duplicar_secciones_ok") {
+          const tipo = lee.mensaje && lee.mensaje.toLowerCase().includes('no ') ? 'info' : 'success';
+          muestraMensaje(tipo, 4000, "DUPLICAR", lee.mensaje);
+          if (duplicacionPendiente && duplicacionPendiente.horarios > 0) {
+            solicitarDuplicarHorarios();
+          } else {
+            duplicacionPendiente = null;
+          }
+        }
+        else if (lee.resultado === "duplicar_horarios_ok") {
+          const tipo = lee.mensaje && lee.mensaje.toLowerCase().includes('no ') ? 'info' : 'success';
+          muestraMensaje(tipo, 4000, "DUPLICAR", lee.mensaje);
+          duplicacionPendiente = null;
+        }
         else if (lee.resultado == "activar") {
           muestraMensaje("info", 2000, "ESTADO", lee.mensaje);
           Listar();
         }
         else if (lee.resultado == "error") {
           muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
+          duplicacionPendiente = null;
         }
       } catch (e) {
         console.error("Error en análisis JSON:", e);
@@ -590,6 +611,71 @@ function Verificar() {
   var datos = new FormData();
   datos.append("accion", "verificar_condiciones_registro");
   enviaAjax(datos);
+}
+
+function iniciarDuplicacionAutomatica() {
+  if (!duplicacionPendiente || duplicacionPendiente.secciones <= 0) {
+    duplicacionPendiente = null;
+    return;
+  }
+  solicitarDuplicarSecciones();
+}
+
+function solicitarDuplicarSecciones() {
+  if (!duplicacionPendiente) {
+    return;
+  }
+  const datos = duplicacionPendiente;
+  const texto = `Se copiarán ${datos.secciones} secciones del ${datos.anioOrigen} al ${datos.anioDestino}.`;
+  Swal.fire({
+    title: `¿Duplicar secciones ${datos.anioOrigen} → ${datos.anioDestino}?`,
+    html: texto,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, duplicar secciones',
+    cancelButtonText: 'No duplicar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const datosAjax = new FormData();
+      datosAjax.append('accion', 'duplicar_secciones');
+      datosAjax.append('anioOrigen', datos.anioOrigen);
+      datosAjax.append('anioDestino', datos.anioDestino);
+      datosAjax.append('aniTipo', datos.aniTipo);
+      datosAjax.append('aniTipoDestino', datos.aniTipo);
+      enviaAjax(datosAjax, 'duplicar_secciones');
+    } else {
+      duplicacionPendiente = null;
+    }
+  });
+}
+
+function solicitarDuplicarHorarios() {
+  if (!duplicacionPendiente || duplicacionPendiente.horarios <= 0) {
+    duplicacionPendiente = null;
+    return;
+  }
+  const datos = duplicacionPendiente;
+  const texto = `Se copiarán ${datos.horarios} bloques de horario del ${datos.anioOrigen}.`;
+  Swal.fire({
+    title: `¿Duplicar horarios ${datos.anioOrigen} → ${datos.anioDestino}?`,
+    html: texto,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, duplicar horarios',
+    cancelButtonText: 'No duplicar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const datosAjax = new FormData();
+      datosAjax.append('accion', 'duplicar_horarios');
+      datosAjax.append('anioOrigen', datos.anioOrigen);
+      datosAjax.append('anioDestino', datos.anioDestino);
+      datosAjax.append('aniTipo', datos.aniTipo);
+      datosAjax.append('aniTipoDestino', datos.aniTipo);
+      enviaAjax(datosAjax, 'duplicar_horarios');
+    } else {
+      duplicacionPendiente = null;
+    }
+  });
 }
 
 function actualizarTiposPorAnio() {
