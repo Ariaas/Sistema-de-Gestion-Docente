@@ -81,7 +81,6 @@ function abreviarNombreUC($nombre) {
         
     ];
 
-   
     if (isset($mapaAbreviaturas[$nombre])) {
         return $mapaAbreviaturas[$nombre];
     }
@@ -115,7 +114,6 @@ if (isset($_POST['generar_rhd_report'])) {
     $fase = $_POST['fase_id'] ?? '';
     $cedulaDocenteSeleccionada = $_POST['cedula_docente'] ?? '';
     
-  
     $esIntensivo = strtolower($ani_tipo) === 'intensivo';
     
     
@@ -141,6 +139,7 @@ if (isset($_POST['generar_rhd_report'])) {
     $bloques_personalizados = $oReporteHorario->getBloquesPersonalizados();
     $bloques_eliminados = $oReporteHorario->getBloquesEliminados();
 
+    
     if (!$infoDocente) {
         die("Error: No se encontró información para el docente seleccionado.");
     }
@@ -173,12 +172,17 @@ if (isset($_POST['generar_rhd_report'])) {
             $horaInicio = new DateTime($item_base['hor_horainicio']);
             $horaFin = new DateTime($item_base['hor_horafin']);
 
+            // Lógica para activar turnos (se mantiene)
             foreach ($turnos_db as $turno) {
-                if ($horaInicio >= new DateTime($turno['tur_horaInicio']) && $horaInicio < new DateTime($turno['tur_horaFin'])) {
+                $turnoInicio = new DateTime($turno['tur_horaInicio']);
+                $turnoFin = new DateTime($turno['tur_horaFin']);
+                // Un bloque activa un turno si comienza DENTRO de él
+                if ($horaInicio >= $turnoInicio && $horaInicio < $turnoFin) {
                     $activeShifts[ucfirst(strtolower($turno['tur_nombre']))] = true;
                 }
             }
             
+            // Lógica de span (se mantiene)
             $diffMinutes = ($horaFin->getTimestamp() - $horaInicio->getTimestamp()) / 60;
             $bloques_span = round($diffMinutes / 40);
             if ($bloques_span < 1) $bloques_span = 1;
@@ -192,12 +196,11 @@ if (isset($_POST['generar_rhd_report'])) {
             foreach($secciones_unicas as $sec){
                 if (!empty(trim($sec))) {
                     $primerCaracter = substr(trim($sec), 0, 1);
-
                     $seccionesFormateadas .=  trim($sec) . ', ';
                 }
             }
             $seccionesFormateadas = rtrim($seccionesFormateadas, ', ');
-
+            
             $ambientes_unicos = array_unique($uc_info['ambientes']);
             $ambientesFormateados = implode(', ', $ambientes_unicos);
             
@@ -207,10 +210,14 @@ if (isset($_POST['generar_rhd_report'])) {
             if (!isset($gridData[$dia_key][$horaInicio->format('H:i')])) {
                 $gridData[$dia_key][$horaInicio->format('H:i')] = [];
             }
-            $gridData[$dia_key][$horaInicio->format('H:i')][] = ['content' => $contenidoCeldaSimple, 'span' => $bloques_span, 'type' => 'class'];
+            
+            // **CAMBIO 1: Almacenar data_original**
+            // Se guarda la data con 'span' y la data original para el fallback
+            $gridData[$dia_key][$horaInicio->format('H:i')][] = ['content' => $contenidoCeldaSimple, 'span' => $bloques_span, 'type' => 'class', 'data_original' => $item_base];
         }
     }
 
+    // Generación de bloques (se mantiene)
     $bloques_por_turno = [];
     $shiftOrder = ['Mañana' => 1, 'Tarde' => 2, 'Noche' => 3];
     usort($turnos_db, function($a, $b) use ($shiftOrder) {
@@ -225,6 +232,7 @@ if (isset($_POST['generar_rhd_report'])) {
         $bloques = [];
         $tiempoActual = new DateTime($turno['tur_horaInicio']);
         $tiempoFin = new DateTime($turno['tur_horaFin']);
+        
         while ($tiempoActual < $tiempoFin) {
             $inicioBloque = clone $tiempoActual;
             $hora_db_key = $inicioBloque->format('H:i');
@@ -237,17 +245,15 @@ if (isset($_POST['generar_rhd_report'])) {
         $bloques_por_turno[$nombre_turno] = $bloques;
     }
     
-    // Agregar bloques personalizados a los turnos correspondientes
+    // Lógica de bloques personalizados (se mantiene)
     foreach ($bloques_personalizados as $bloque) {
         $hora_inicio = new DateTime($bloque['tur_horainicio']);
         $hora_fin = new DateTime($bloque['tur_horafin']);
         $hora_db_key = $hora_inicio->format('H:i');
         $display_string = $hora_inicio->format('h:i a') . ' a ' . $hora_fin->format('h:i a');
         
-        // Determinar a qué turno pertenece
         $hora_inicio_str = $hora_inicio->format('H:i:s');
         $nombre_turno_asignado = null;
-        
         if ($hora_inicio_str < '13:00:00') {
             $nombre_turno_asignado = 'Mañana';
         } elseif ($hora_inicio_str < '18:00:00') {
@@ -257,12 +263,19 @@ if (isset($_POST['generar_rhd_report'])) {
         }
         
         if (isset($bloques_por_turno[$nombre_turno_asignado])) {
+            // Eliminar bloques estándar que son "tragados" por este
+            foreach ($bloques_por_turno[$nombre_turno_asignado] as $hora_estandar_key => $display_estandar) {
+                $hora_estandar_dt = new DateTime($hora_estandar_key);
+                if ($hora_estandar_dt > $hora_inicio && $hora_estandar_dt < $hora_fin) {
+                    unset($bloques_por_turno[$nombre_turno_asignado][$hora_estandar_key]);
+                }
+            }
             $bloques_por_turno[$nombre_turno_asignado][$hora_db_key] = $display_string;
             $todos_los_bloques_ordenados[] = $hora_db_key;
         }
     }
     
-    // Eliminar bloques marcados como eliminados
+    // Lógica de bloques eliminados (se mantiene)
     foreach ($bloques_eliminados as $hora_eliminada) {
         $hora_key = (new DateTime($hora_eliminada))->format('H:i');
         foreach ($bloques_por_turno as &$bloques) {
@@ -271,7 +284,7 @@ if (isset($_POST['generar_rhd_report'])) {
         $todos_los_bloques_ordenados = array_diff($todos_los_bloques_ordenados, [$hora_key]);
     }
     
-    // Reordenar los bloques de cada turno
+    // Lógica de reordenamiento (se mantiene)
     foreach ($bloques_por_turno as &$bloques) {
         ksort($bloques);
     }
@@ -279,9 +292,9 @@ if (isset($_POST['generar_rhd_report'])) {
     $todos_los_bloques_ordenados = array_values(array_unique($todos_los_bloques_ordenados));
     sort($todos_los_bloques_ordenados);
 
+    // Lógica de auto-colocación de actividades (se mantiene)
     $occupancyMap = [];
     $dayOccupancyCount = array_fill_keys(array_values($day_map), 0);
-    
     foreach ($gridData as $dia => $horas) {
         foreach ($horas as $hora => $clases) {
             if (!empty($clases)) {
@@ -289,7 +302,10 @@ if (isset($_POST['generar_rhd_report'])) {
                 $span = $clases[0]['span'];
                 $currentTime = new DateTime($hora);
                 for ($i = 0; $i < $span; $i++) {
-                    $occupancyMap[$dia][$currentTime->format('H:i')] = true;
+                    $blockKey = $currentTime->format('H:i');
+                    $occupancyMap[$dia][$blockKey] = true;
+                    
+                    // Avanza 40 min para marcar el siguiente bloque
                     $currentTime->add(new DateInterval('PT40M'));
                 }
             }
@@ -310,15 +326,18 @@ if (isset($_POST['generar_rhd_report'])) {
         $horasRestantes = intval($actividad['horas']);
         if ($horasRestantes <= 0) continue;
         
+        // Activa los turnos donde se coloquen actividades
+        $turnosDondeSeColoco = [];
         
         foreach ($diasDisponibles as $dia) {
             if ($horasRestantes <= 0) break;
             
-            
             foreach ($bloques_por_turno as $turno => $bloques) {
                 if ($horasRestantes <= 0) break;
-                if (!isset($activeShifts[$turno])) continue;
                 
+                // IMPORTANTE: El filtro de turno activo se quita temporalmente
+                // para permitir colocar actividades en turnos "vacíos".
+                // if (!isset($activeShifts[$turno])) continue; // <- Lógica anterior
                 
                 $indicesTurno = [];
                 foreach ($todos_los_bloques_ordenados as $index => $hora_db) {
@@ -327,18 +346,15 @@ if (isset($_POST['generar_rhd_report'])) {
                     }
                 }
                 
-               
                 $i = 0;
                 while ($i < count($indicesTurno) && $horasRestantes > 0) {
                     $index = $indicesTurno[$i];
                     $hora_db = $todos_los_bloques_ordenados[$index];
                     
-                    
                     if (!empty($occupancyMap[$dia][$hora_db])) {
                         $i++;
                         continue;
                     }
-                    
                     
                     $bloquesLibresConsecutivos = 0;
                     $j = $i;
@@ -346,19 +362,17 @@ if (isset($_POST['generar_rhd_report'])) {
                         $idx = $indicesTurno[$j];
                         $hora = $todos_los_bloques_ordenados[$idx];
                         
-                       
                         if ($j > $i && $idx != $indicesTurno[$j-1] + 1) {
-                            break; 
+                            break;
                         }
                         
                         if (!empty($occupancyMap[$dia][$hora])) {
-                            break; 
+                            break;
                         }
                         
                         $bloquesLibresConsecutivos++;
                         $j++;
                     }
-                    
                     
                     if ($bloquesLibresConsecutivos > 0) {
                         $bloquesAColocar = min($bloquesLibresConsecutivos, $horasRestantes);
@@ -367,8 +381,9 @@ if (isset($_POST['generar_rhd_report'])) {
                             'content' => $actividad['nombre'], 
                             'span' => $bloquesAColocar,
                             'type' => 'activity'
-                        ];
+                         ];
                         
+                        $turnosDondeSeColoco[$turno] = true;
                         
                         for ($k = 0; $k < $bloquesAColocar; $k++) {
                             $idx = $indicesTurno[$i + $k];
@@ -377,15 +392,23 @@ if (isset($_POST['generar_rhd_report'])) {
                         }
                         
                         $horasRestantes -= $bloquesAColocar;
-                        $i += $bloquesAColocar;
+                    $i += $bloquesAColocar;
                     } else {
                         $i++;
                     }
                 }
             }
         }
+        // Ahora, activa los turnos donde se colocaron actividades
+      foreach($turnosDondeSeColoco as $turno_a_activar => $val) {
+            $activeShifts[$turno_a_activar] = true;
+        }
     }
     
+    // === FIN DE LA LÓGICA DE PREPARACIÓN ===
+
+    // === INICIO DE LA LÓGICA DE DIBUJO DE EXCEL ===
+
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle("Horario Docente");
@@ -399,8 +422,7 @@ if (isset($_POST['generar_rhd_report'])) {
     $styleLeft = ['font' => ['size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleSectionHeader = ['font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF000000']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE0E0E0']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $allBorders = ['borders' => [ 'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']], ],];
-
-    // Configurar ancho automático para todas las columnas
+    
     foreach(range('A','H') as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     } 
@@ -434,8 +456,6 @@ if (isset($_POST['generar_rhd_report'])) {
     $sheet->setCellValue('A'.$row, '1. PNF/CARRERA');
     $sheet->mergeCells('B'.$row.':F'.$row)->setCellValue('B'.$row, 'INFORMÁTICA');
     $sheet->setCellValue('G'.$row, '2. LAPSO');
-    
-    
     if ($esIntensivo) {
         $sheet->setCellValue('H'.$row, 'Intensivo-' . $anio);
     } else {
@@ -450,7 +470,7 @@ if (isset($_POST['generar_rhd_report'])) {
     $sheet->getStyle('H'.$row)->applyFromArray($styleLeft);
     
 $sheet->getStyle('H3')->applyFromArray($styleCenter); 
-$sheet->getStyle('H4')->applyFromArray($styleCenter); 
+$sheet->getStyle('H4')->applyFromArray($styleCenter);
 $sheet->getStyle('H5')->applyFromArray($styleCenter);
     $row = 5;
     $sheet->setCellValue('A'.$row, '5. DEDICACIÓN');
@@ -459,14 +479,11 @@ $sheet->getStyle('H5')->applyFromArray($styleCenter);
     $sheet->mergeCells('D'.$row.':F'.$row)->setCellValue('D'.$row, $infoDocente['doc_condicion']);
     $sheet->setCellValue('G'.$row, '7. CATEGORÍA');
     $sheet->setCellValue('H'.$row, $infoDocente['categoria']);
-
-    
     $row = 6;
     $sheet->mergeCells('A'.$row.':A'.($row + 1))->setCellValue('A'.$row, "8. TÍTULO DE\nPREGRADO");
     $sheet->getStyle('A'.$row)->getAlignment()->setWrapText(true);
     
      $sheet->mergeCells('B'.$row.':C'.($row + 1));
-    
     $titulosPregrado = str_replace(', ', "\n", $infoDocente['pregrado_titulo'] ?? '');
     $sheet->setCellValue('B'.$row, $titulosPregrado);
     
@@ -475,7 +492,6 @@ $sheet->getStyle('H5')->applyFromArray($styleCenter);
   
     $sheet->mergeCells('D'.$row.':D'.($row + 1))->setCellValue('D'.$row, '9. POSTGRADO');
     $sheet->mergeCells('E'.$row.':H'.($row + 1));
-    
     $titulosPostgrado = str_replace(', ', "\n", $infoDocente['postgrado_titulo'] ?? '');
     $sheet->setCellValue('E'.$row, $titulosPostgrado);
     
@@ -490,8 +506,7 @@ $sheet->getStyle('B5')->applyFromArray($styleBold);
 $sheet->getStyle('D5')->applyFromArray($styleBold); 
 $sheet->getStyle('H5')->applyFromArray($styleBold); 
 $sheet->getStyle('B6')->applyFromArray($styleBold); 
-$sheet->getStyle('E6')->applyFromArray($styleBold); 
-
+$sheet->getStyle('E6')->applyFromArray($styleBold);
     $sheet->getStyle('A3:H7')->applyFromArray($allBorders);
     $sheet->getStyle('A3:A7')->applyFromArray($styleBold);
     $sheet->getStyle('C5')->applyFromArray($styleBold);
@@ -523,28 +538,26 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
                 }
             }
             $seccionesFormateadas = implode(', ', $seccionesConPrefijo);
-            $sheet->setCellValue('D'.$row, $seccionesFormateadas);
+          $sheet->setCellValue('D'.$row, $seccionesFormateadas);
             
             $sheet->setCellValue('E'.$row, $item['ambientes']);
             $sheet->setCellValue('F'.$row, $item['eje_nombre']);
             $sheet->mergeCells('G'.$row.':H'.$row)->setCellValue('G'.$row, $item['uc_periodo']);
             $sheet->getStyle('A'.$row.':H'.$row)->getAlignment()->setWrapText(true);
             
-            // Calcular altura de fila basada en el contenido más largo
+            // Calcular altura de fila (se mantiene)
             $maxLines = 1;
             $contenidos = [
                 $item['uc_nombre'],
-                $seccionesFormateadas,
+              $seccionesFormateadas,
                 $item['ambientes'],
                 $item['eje_nombre']
             ];
             foreach ($contenidos as $contenido) {
                 $lineCount = substr_count($contenido, "\n") + 1;
-                // Estimar líneas adicionales por longitud del texto (ajustado para ser más compacto)
                 $estimatedLines = ceil(mb_strlen($contenido) / 50);
                 $maxLines = max($maxLines, $lineCount, $estimatedLines);
             }
-            // Altura más compacta: 12 puntos por línea, mínimo 18
             $rowHeight = max(18, $maxLines * 12);
             $sheet->getRowDimension($row)->setRowHeight($rowHeight);
             
@@ -556,7 +569,6 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     }
     $firstDataRow = $startRow + 2;
     $lastDataRow = $row - 1;
-    
     if ($lastDataRow >= $firstDataRow) {
         
         $sheet->getStyle('A'.$firstDataRow.':H'.$lastDataRow)->applyFromArray($styleCenter);
@@ -575,7 +587,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     $otras = ['CREACIÓN INTELECTUAL' => $otrasActividades['act_creacion_intelectual'] ?? 0, 'INTEGRACIÓN COMUNIDAD' => $otrasActividades['act_integracion_comunidad'] ?? 0, 'GESTIÓN ACADÉMICA' => $otrasActividades['act_gestion_academica'] ?? 0, 'OTRAS ACT. ACADÉMICAS' => $otrasActividades['act_otras'] ?? 0];
     foreach($otras as $label => $valor) {
         $sheet->mergeCells('A'.$row.':C'.$row)->setCellValue('A'.$row, $label);
-        $sheet->mergeCells('D'.$row.':F'.$row)->setCellValue('D'.$row, $valor);
+      $sheet->mergeCells('D'.$row.':F'.$row)->setCellValue('D'.$row, $valor);
         $sheet->mergeCells('G'.$row.':H'.$row);
         $row++;
     }
@@ -589,9 +601,15 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     $sheet->getStyle('A'.$startRow.':H'.($row - 1))->applyFromArray($allBorders);
     $row += 2;
 
+    // === INICIO DEL BLOQUE DE DIBUJO DE HORARIO (CORREGIDO) ===
+
     $startRowHorario = $row;
+    
     uksort($activeShifts, function($a, $b) use ($shiftOrder) { return ($shiftOrder[$a] ?? 99) <=> ($shiftOrder[$b] ?? 99); });
     $turnosString = implode(' / ', array_map('mb_strtoupper', array_keys($activeShifts)));
+    if (empty($turnosString)) {
+        $turnosString = "SIN ASIGNACIÓN";
+    }
     
     $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, '19. HORARIO: ' . $turnosString)->getStyle('A'.$row)->applyFromArray($styleSectionHeader);
     $row++;
@@ -608,36 +626,79 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     $sheet->getStyle('A'.$row.':H'.$row)->applyFromArray($styleBold)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     $row++;
     
-    $celdasOcupadas = [];
+    // ==========================================================
+    // **INICIO DE LA CORRECCIÓN DE LÓGICA (TURNO + ETIQUETA)**
+    
+    // 1. Construir la lista de slots a mostrar, FILTRADA por turnos activos
+    $slotsToDisplay = [];
     foreach ($bloques_por_turno as $nombreTurno => $bloques) {
-        if (!isset($activeShifts[$nombreTurno])) continue;
-
-        if ($nombreTurno != array_key_first(array_filter($bloques_por_turno, fn($key) => isset($activeShifts[$key]), ARRAY_FILTER_USE_KEY))) {
-             $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, mb_strtoupper($nombreTurno, 'UTF-8'))->getStyle('A'.$row)->applyFromArray($styleSectionHeader);
-             $row++;
+        // Solo añade bloques de turnos que tengan clases o actividades
+        if (isset($activeShifts[$nombreTurno])) {
+            $slotsToDisplay += $bloques;
         }
-        
-        foreach($bloques as $hora_db => $rango_hora) {
+    }
+    
+    // 2. Sobrescribir etiquetas estándar con las horas correctas de las clases
+    // (Esto arregla el problema de "18:20" vs "06:20 pm a 07:40 pm")
+    foreach ($gridData as $dia => $horas) {
+        foreach ($horas as $hora_db_key => $clases) { // $hora_db_key = '18:20'
+            if (!empty($clases)) {
+                // Usamos la 'data_original' que guardamos en el Cambio 1
+                $primera_clase_data = $clases[0]['data_original'];
+                $hora_inicio_dt = new DateTime($primera_clase_data['hor_horainicio']);
+                $hora_fin_dt = new DateTime($primera_clase_data['hor_horafin']);
+                
+                // Creamos la etiqueta correcta, ej: "06:20 pm a 07:40 pm"
+                $display_string = $hora_inicio_dt->format('h:i a') . ' a ' . $hora_fin_dt->format('h:i a');
+                
+                // Sobrescribe o añade la etiqueta correcta
+                $slotsToDisplay[$hora_db_key] = $display_string;
+            }
+        }
+    }
+    // **FIN DE LA CORRECCIÓN DE LÓGICA**
+    // ==========================================================
+
+    // 3. Ordenar la lista final por hora
+    uksort($slotsToDisplay, function($a, $b) {
+        return strtotime($a) <=> strtotime($b);
+    });
+    
+    $celdasOcupadas = []; 
+    
+    // 4. Iterar sobre la lista FILTRADA y ETIQUETADA
+    if (empty($slotsToDisplay) && empty($asignacionesAcademicas)) {
+        $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, 'No hay horas asignadas para este período.');
+        $row++;
+    } else {
+        foreach($slotsToDisplay as $hora_db => $rango_hora) {
+            
             $sheet->setCellValue('A'.$row, $rango_hora);
             $colIndex = 1;
+            
             foreach($diasDeLaSemana as $dia) {
                 $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
+                
                 if (isset($celdasOcupadas[$dia][$hora_db])) {
                     $colIndex++;
                     continue;
                 }
 
                 $clases_en_celda = $gridData[$dia][$hora_db] ?? null;
+                
                 if ($clases_en_celda) {
                     $primera_clase = $clases_en_celda[0];
-                    $span = $primera_clase['span'];
+                    $span = $primera_clase['span']; 
                     
                     if ($span > 1) {
                         $sheet->mergeCells($colLetter.$row.':'.$colLetter.($row + $span - 1));
-                        $horaActual = new DateTime($hora_db);
+                        
+                        // Lógica de fusión (SPAN) corregida
+                        $currentBlockTime = new DateTime($hora_db);
                         for ($i = 1; $i < $span; $i++) {
-                            $horaActual->add(new DateInterval('PT40M'));
-                            $celdasOcupadas[$dia][$horaActual->format('H:i')] = true;
+                            $currentBlockTime->add(new DateInterval('PT40M'));
+                            $next_hora_db = $currentBlockTime->format('H:i');
+                            $celdasOcupadas[$dia][$next_hora_db] = true;
                         }
                     }
                     
@@ -646,7 +707,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
                         $contenidos[] = $clase['content'];
                     }
                     $contenido_final = implode("\n----\n", $contenidos);
-                    $sheet->getCell($colLetter.$row)->setValue($contenido_final);
+                  $sheet->getCell($colLetter.$row)->setValue($contenido_final);
 
                     if (isset($primera_clase['type']) && $primera_clase['type'] === 'class') {
                         $sheet->getStyle($colLetter.$row)->applyFromArray(['font' => ['bold' => true, 'size' => 9]]);
@@ -655,30 +716,36 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
                     }
                 }
                 $sheet->getStyle($colLetter.$row)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_CENTER)->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $colIndex++;
+            $colIndex++;
             }
-            // Calcular altura de fila basada en el contenido
+            
             $maxLines = 1;
             foreach($diasDeLaSemana as $dia) {
                 $clases_en_celda = $gridData[$dia][$hora_db] ?? null;
-                if ($clases_en_celda) {
+              if ($clases_en_celda) {
                     $contenidos = [];
                     foreach ($clases_en_celda as $clase) {
                         $contenidos[] = $clase['content'];
                     }
                     $contenido_final = implode("\n----\n", $contenidos);
-                    $lineCount = substr_count($contenido_final, "\n") + 1;
+                  $lineCount = substr_count($contenido_final, "\n") + 1;
                     $maxLines = max($maxLines, $lineCount);
                 }
             }
-            // Altura más compacta: 12 puntos por línea, mínimo 30
             $rowHeight = max(30, $maxLines * 12);
-            $sheet->getRowDimension($row)->setRowHeight($rowHeight);
+          $sheet->getRowDimension($row)->setRowHeight($rowHeight);
             $row++;
         }
     }
+    
+    // Aplicar bordes a toda la parrilla
     $sheet->getStyle('A'.$startRowHorario.':H'.($row-1))->applyFromArray($allBorders);
     
+    // === FIN DEL BLOQUE DE DIBUJO DE HORARIO ===
+
+
+    // === INICIO DE LA LÓGICA FINAL (se mantiene) ===
+
     $startRowObs = $row;
     $sheet->setCellValue('A'.$row, '20. Observaciones:');
     $sheet->getStyle('A'.$row)->applyFromArray($styleBold)->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
@@ -728,9 +795,8 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     $sheet->mergeCells('D'.($startRowFinal + 1).':E'.($endRowFinal - 1));
 
     
-    $sheet->setCellValue('D'.$endRowFinal, '23. Fecha:'); 
-                                                        
-
+    $sheet->setCellValue('D'.$endRowFinal, '23. Fecha:');
+    
     $sheet->mergeCells('F'.$startRowFinal.':H'.$startRowFinal)->setCellValue('F'.$startRowFinal, '24. Vo Bo (Coordinador de PNF o Jefe Dpto)');
     $sheet->mergeCells('F'.($startRowFinal + 1).':H'.($startRowFinal + 1))->setCellValue('F'.($startRowFinal + 1), 'Firma y Sello');
     $sheet->mergeCells('F'.($startRowFinal + 2).':H'.$endRowFinal);
@@ -740,7 +806,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
     $sheet->getStyle($finalRange)->applyFromArray($allBorders);
     
     
-    $sheet->getStyle('C33')->applyFromArray($styleBold);
+    $sheet->getStyle('C'.$startRowFinal)->applyFromArray($styleBold);
    
     $sheet->getStyle('A'.$startRowFinal.':B'.$endRowFinal)->applyFromArray($styleBold); 
     $sheet->getStyle('D'.$startRowFinal)->applyFromArray($styleBold); 

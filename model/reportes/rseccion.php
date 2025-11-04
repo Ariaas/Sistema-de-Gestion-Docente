@@ -75,6 +75,7 @@ public function getHorariosFiltrados()
         
         $sql_base = "SELECT
                         uh.sec_codigo,
+                        h.tur_nombre,
                         s.grupo_union_id,
                         uh.subgrupo,
                         u.uc_trayecto,
@@ -90,10 +91,14 @@ public function getHorariosFiltrados()
                             WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
                             ELSE uh.esp_numero
                         END AS esp_codigo
-                    FROM
+                   FROM
                         uc_horario uh
                     JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
                         AND uh.ani_anio = s.ani_anio
+                        AND uh.ani_tipo = s.ani_tipo
+                    JOIN tbl_horario h ON s.sec_codigo = h.sec_codigo
+                        AND s.ani_anio = h.ani_anio
+                        AND s.ani_tipo = h.ani_tipo
                     JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
                     WHERE
@@ -145,10 +150,6 @@ public function getHorariosFiltrados()
         } catch (PDOException $e) { return []; }
     }
 
-    /**
-     * Obtiene los bloques horarios personalizados para las secciones filtradas
-     * @return array Array de bloques personalizados con tur_horainicio y tur_horafin
-     */
     public function getBloquesPersonalizados() {
         if (empty($this->anio) || empty($this->ani_tipo)) return [];
         
@@ -171,15 +172,22 @@ public function getHorariosFiltrados()
         try {
             $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
             
+            // --- INICIO DE LA LÓGICA CORREGIDA ---
             $sql = "SELECT DISTINCT bp.tur_horainicio, bp.tur_horafin, bp.bloque_sintetico
                     FROM tbl_bloque_personalizado bp
-                    JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                    WHERE s.ani_anio = :anio_param
-                        AND s.ani_tipo = :ani_tipo_param
-                        AND u.uc_estado = 1
-                        AND s.sec_estado = 1";
+                    WHERE bp.ani_anio = :anio_param
+                        AND bp.ani_tipo = :ani_tipo_param
+                        AND bp.sec_codigo IN (
+                            SELECT DISTINCT s.sec_codigo
+                            FROM tbl_seccion s
+                            JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo 
+                                AND s.ani_anio = uh.ani_anio 
+                                AND s.ani_tipo = uh.ani_tipo
+                            JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                            WHERE s.ani_anio = :anio_param
+                                AND s.ani_tipo = :ani_tipo_param
+                                AND u.uc_estado = 1
+                                AND s.sec_estado = 1";
             
             $period_placeholders = [];
             $i = 0;
@@ -196,6 +204,9 @@ public function getHorariosFiltrados()
                 $params[':trayecto_param'] = $this->trayecto;
             }
             
+            $sql .= " )";
+            // --- FIN DE LA LÓGICA CORREGIDA ---
+            
             $stmt = $this->con()->prepare($sql);
             $stmt->execute($params);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -211,17 +222,14 @@ public function getHorariosFiltrados()
             }
             
             return $result;
-        } catch (PDOException $e) {
+      } catch (PDOException $e) {
             error_log("Error en getBloquesPersonalizados: " . $e->getMessage());
             return [];
         }
     }
 
-    /**
-     * Obtiene los bloques horarios eliminados para las secciones filtradas
-     * @return array Array de horas de inicio de bloques eliminados
-     */
-    public function getBloquesEliminados() {
+    
+   public function getBloquesEliminados() {
         if (empty($this->anio) || empty($this->ani_tipo)) return [];
         
         $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
@@ -242,22 +250,29 @@ public function getHorariosFiltrados()
 
         try {
             $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
-            
+
+            // --- INICIO DE LA LÓGICA CORREGIDA ---
             $sql = "SELECT DISTINCT be.tur_horainicio
                     FROM tbl_bloque_eliminado be
-                    JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
-                    WHERE s.ani_anio = :anio_param
-                        AND s.ani_tipo = :ani_tipo_param
-                        AND u.uc_estado = 1
-                        AND s.sec_estado = 1";
+                    WHERE be.ani_anio = :anio_param
+                        AND be.ani_tipo = :ani_tipo_param
+                    AND be.sec_codigo IN (
+                            SELECT DISTINCT s.sec_codigo
+                            FROM tbl_seccion s
+                            JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo 
+                                AND s.ani_anio = uh.ani_anio 
+                                AND s.ani_tipo = uh.ani_tipo
+                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+                            WHERE s.ani_anio = :anio_param
+                                AND s.ani_tipo = :ani_tipo_param
+                              AND u.uc_estado = 1
+                                AND s.sec_estado = 1";
             
             $period_placeholders = [];
             $i = 0;
             foreach ($allowed_periods as $period) {
                 $key = ":period" . $i++;
-                $period_placeholders[] = $key;
+               $period_placeholders[] = $key;
                 $params[$key] = $period;
             }
             $in_clause = implode(', ', $period_placeholders);
@@ -267,6 +282,9 @@ public function getHorariosFiltrados()
                 $sql .= " AND u.uc_trayecto = :trayecto_param";
                 $params[':trayecto_param'] = $this->trayecto;
             }
+            
+            $sql .= " )";
+          // --- FIN DE LA LÓGICA CORREGIDA ---
             
             $stmt = $this->con()->prepare($sql);
             $stmt->execute($params);
@@ -280,9 +298,9 @@ public function getHorariosFiltrados()
             }
             
             return $result;
-        } catch (PDOException $e) {
+     } catch (PDOException $e) {
             error_log("Error en getBloquesEliminados: " . $e->getMessage());
-            return [];
+          return [];
         }
     }
 }

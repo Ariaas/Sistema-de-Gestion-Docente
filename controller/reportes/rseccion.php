@@ -298,54 +298,85 @@ if (isset($_POST['generar_seccion_report'])) {
             $currentRow++;
 
             $celdasOcupadas = [];
+            
+            // --- INICIO DE LA LÓGICA CORREGIDA ---
+            
+            // 1. Determinar el turno principal de la sección
+            $shiftNameMapping = [
+                'mañana' => 'morning',
+                'tarde' => 'afternoon',
+                'noche' => 'night'
+            ];
+            // Obtenemos el 'tur_nombre' que agregamos en la consulta del modelo
+            $mainShiftName = strtolower($clasesDelGrupo[0]['tur_nombre'] ?? 'mañana');
+            $mainShiftMapped = $shiftNameMapping[$mainShiftName] ?? 'morning';
 
-            $allSlots = [
+            // 2. Combinar todos los slots (mañana, tarde, noche) en uno solo
+            $allAvailableSlots = [
                 'morning' => $morningSlots,
                 'afternoon' => $afternoonSlots,
                 'night' => $nightSlots
             ];
+            
+            $slotsToDisplay = [];
 
-            foreach ($allSlots as $shift => $timeSlots) {
+            // 3. Filtrar la lista de slots
+            foreach ($allAvailableSlots as $shift => $timeSlots) {
+                $isMainShift = ($shift === $mainShiftMapped);
+                
                 foreach ($timeSlots as $dbStartTimeKey => $displaySlot) {
+                    $isOccupied = isset($occupiedDbKeys[$dbStartTimeKey]);
 
-                    if ($shift !== 'morning' && !isset($occupiedDbKeys[$dbStartTimeKey])) {
+                    // Mostramos el slot si:
+                    // 1. Está ocupado (una clase, un bloque personalizado)
+                    // 2. O si pertenece al turno principal de la sección
+                    if ($isOccupied || $isMainShift) {
+                        $slotsToDisplay[$dbStartTimeKey] = $displaySlot;
+                    }
+                }
+            }
+
+            // 4. Ordenar la lista filtrada por hora (LA CLAVE DEL ORDEN)
+            ksort($slotsToDisplay); 
+
+            // 5. Iterar sobre la lista unificada y ordenada
+            $maxRow = $headerRow;
+            foreach ($slotsToDisplay as $dbStartTimeKey => $displaySlot) {
+            
+                $sheet->setCellValue('A' . $currentRow, $displaySlot);
+                $sheet->getStyle('A' . $currentRow)->applyFromArray($styleTimeSlot);
+
+                $colIndex = 1;
+                foreach ($columnasHeader as $idx => $colInfo) {
+                    $cellAddress = chr(65 + $colIndex) . $currentRow;
+                    if (isset($celdasOcupadas[$cellAddress])) {
+                        $colIndex++;
                         continue;
                     }
 
-                    $sheet->setCellValue('A' . $currentRow, $displaySlot);
-                    $sheet->getStyle('A' . $currentRow)->applyFromArray($styleTimeSlot);
+                    $clasesEnBloque = $horarioGrid[$colInfo['dia']][$colInfo['subgrupo']][$dbStartTimeKey] ?? null;
 
-                    $colIndex = 1;
-                    foreach ($columnasHeader as $idx => $colInfo) {
-                        $cellAddress = chr(65 + $colIndex) . $currentRow;
-                        if (isset($celdasOcupadas[$cellAddress])) {
-                            $colIndex++;
-                            continue;
+                    if ($clasesEnBloque) {
+                        if (!is_array($clasesEnBloque) || !isset($clasesEnBloque[0])) {
+                            $clasesEnBloque = [$clasesEnBloque];
                         }
 
-                        $clasesEnBloque = $horarioGrid[$colInfo['dia']][$colInfo['subgrupo']][$dbStartTimeKey] ?? null;
-
-                        if ($clasesEnBloque) {
-                            if (!is_array($clasesEnBloque) || !isset($clasesEnBloque[0])) {
-                                $clasesEnBloque = [$clasesEnBloque];
+                        $richText = new RichText();
+                        foreach ($clasesEnBloque as $cIdx => $clase) {
+                            if ($cIdx > 0) {
+                                $richText->createText("\n- - - - - - - - -\n");
                             }
 
-                            $richText = new RichText();
-                            foreach ($clasesEnBloque as $cIdx => $clase) {
-                                if ($cIdx > 0) {
-                                    $richText->createText("\n- - - - - - - - -\n");
-                                }
-
-                                $subgrupoTexto = ($clase['subgrupo'] && $clase['subgrupo'] !== 'general') ? '(G: ' . $clase['subgrupo'] . ') ' : '';
-                                $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
-                                $ucPart = $richText->createTextRun($subgrupoTexto . $ucAbreviada);
-                                $ucPart->getFont()->setBold(true);
+                            $subgrupoTexto = ($clase['subgrupo'] && $clase['subgrupo'] !== 'general') ? '(G: ' . $clase['subgrupo'] . ') ' : '';
+                            $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
+                           $ucPart = $richText->createTextRun($subgrupoTexto . $ucAbreviada);
+                               $ucPart->getFont()->setBold(true);
 
                                 $docente = $clase['NombreCompletoDocente'] ?? '(Sin docente)';
                                 $richText->createText("\n" . $docente);
 
                                 $currentColumnInfo = $columnLocationInfo[$idx];
-                                if (!$currentColumnInfo['is_single'] || strtolower($currentColumnInfo['type']) === 'laboratorio') {
+                         if (!$currentColumnInfo['is_single'] || strtolower($currentColumnInfo['type']) === 'laboratorio') {
                                     $espacio = $clase['esp_codigo'] ?? '(Sin espacio)';
                                     $richText->createText("\n" . $espacio);
                                 }
@@ -353,34 +384,67 @@ if (isset($_POST['generar_seccion_report'])) {
 
                             $sheet->getCell($cellAddress)->setValue($richText);
 
-                            $primeraClase = $clasesEnBloque[0];
-                            $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);
-                            $horaFinClase = new DateTime($primeraClase['hor_horafin']);
-                            $diffMinutes = ($horaFinClase->getTimestamp() - $horaInicioClase->getTimestamp()) / 60;
-                            $span = ceil($diffMinutes / $slot_duration_minutes);
-                            if ($span < 1) $span = 1;
+                           $primeraClase = $clasesEnBloque[0];
+                     $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);
+                     $horaFinClase = new DateTime($primeraClase['hor_horafin']);
+
+                     // --- INICIO LÓGICA SPAN CORREGIDA ---
+                     $span = 0;
+                     $slotsKeys = array_keys($slotsToDisplay);
+                     $currentKeyIndex = array_search($dbStartTimeKey, $slotsKeys);
+
+                     if ($currentKeyIndex !== false) {
+                        for ($i = $currentKeyIndex; $i < count($slotsKeys); $i++) {
+                           $slotKey = $slotsKeys[$i];
+                           $displayString = $slotsToDisplay[$slotKey];
+                           $parts = explode(' a ', $displayString);
+                           $slotStart = new DateTime(date('H:i:s', strtotime($parts[0])));
+                           $slotEnd = new DateTime(date('H:i:s', strtotime($parts[1])));
+
+                           // Si este slot (fila) comienza DESPUÉS de que la clase termina, paramos.
+                 if ($slotStart >= $horaFinClase) {
+                              break;
+                 }
+
+                           // Si la clase (ej. 10:00) comienza antes de que este slot termine (ej. 11:40)
+                           if ($horaInicioClase < $slotEnd) {
+                              $span++;
+                           }
+                        }
+                     }
+                   if ($span < 1) $span = 1;
+                     // --- FIN LÓGICA SPAN CORREGIDA ---
 
                             if ($span > 1) {
-                                $endRow = $currentRow + $span - 1;
+                             $endRow = $currentRow + $span - 1;
                                 $sheet->mergeCells($cellAddress . ':' . chr(65 + $colIndex) . $endRow);
                                 for ($k = 1; $k < $span; $k++) {
                                     $celdasOcupadas[chr(65 + $colIndex) . ($currentRow + $k)] = true;
-                                }
+                           }
                             }
-                        }
+                       }
                         $sheet->getStyle($cellAddress)->applyFromArray($styleScheduleCell);
                         $colIndex++;
+                     }
+                     $rowEnd = $currentRow;
+                    if (isset($clasesEnBloque) && $span > 1) { // $span fue calculado
+                        $rowEnd = $currentRow + $span - 1;
                     }
+                    if ($rowEnd > $maxRow) {
+                        $maxRow = $rowEnd;
+                    }
+                    unset($span, $clasesEnBloque);
                     $sheet->getRowDimension($currentRow)->setRowHeight(45);
-                    $currentRow++;
-                }
-            }
+                   $currentRow++;
 
-            if ($currentRow > $headerRow + 1) { 
-                $lastVisibleRow = $currentRow - 1;
+            }
+            // --- FIN DE LA LÓGICA CORREGIDA ---
+
+            if ($maxRow > $headerRow) { // Usar maxRow
+                $lastVisibleRow = $maxRow; // Usar maxRow
                 $range = 'A' . $lastVisibleRow . ':' . chr(65 + $numDataColumns) . $lastVisibleRow;
                 $sheet->getStyle($range)->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
-            }
+         }
 
         }
     }

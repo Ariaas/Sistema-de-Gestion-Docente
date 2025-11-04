@@ -43,11 +43,14 @@ class ReporteHorarioDocente extends Connection
         if (empty($anio) || empty($ani_tipo)) return $this->obtenerDocentes();
         
         try {
-            $sql = "SELECT DISTINCT d.doc_cedula, CONCAT(d.doc_apellido, ' ', d.doc_nombre) as nombreCompleto 
+            $sql = $sql = "SELECT DISTINCT d.doc_cedula, CONCAT(d.doc_apellido, ' ', d.doc_nombre) as nombreCompleto 
                     FROM tbl_docente d
                     INNER JOIN uc_horario uh ON d.doc_cedula = uh.doc_cedula
+
                     INNER JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
-                        AND uh.ani_anio = s.ani_anio
+                        AND uh.ani_anio = s.ani_anio 
+                        AND uh.ani_tipo = s.ani_tipo
+
                     WHERE d.doc_estado = 1 
                         AND s.ani_anio = :anio_param
                         AND s.ani_tipo = :ani_tipo_param
@@ -148,6 +151,7 @@ class ReporteHorarioDocente extends Connection
                         FROM uc_horario uh
                         JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
                             AND uh.ani_anio = s.ani_anio
+                            AND uh.ani_tipo = s.ani_tipo
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         LEFT JOIN tbl_eje e ON u.eje_nombre = e.eje_nombre
                         WHERE 
@@ -205,16 +209,17 @@ class ReporteHorarioDocente extends Connection
                                 WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
                                 WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
                                 ELSE uh.esp_numero
-                            END AS esp_codigo_formatted
+                  END AS esp_codigo_formatted
                         FROM uc_horario uh
                         JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 
                             AND uh.ani_anio = s.ani_anio
+                          	AND uh.ani_tipo = s.ani_tipo
                         JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                         WHERE 
-                            uh.doc_cedula = :cedula_docente
-                            AND uh.doc_cedula IS NOT NULL
-                            AND s.ani_anio = :anio_param
-                            AND s.ani_tipo = :ani_tipo_param";
+                          	uh.doc_cedula = :cedula_docente
+                          	AND uh.doc_cedula IS NOT NULL
+                          	AND s.ani_anio = :anio_param
+                        AND s.ani_tipo = :ani_tipo_param";
             
             if (!empty($allowed_periods)) {
                 $placeholders = [];
@@ -257,9 +262,9 @@ class ReporteHorarioDocente extends Connection
             
             $sql = "SELECT DISTINCT bp.tur_horainicio, bp.tur_horafin, bp.bloque_sintetico
                     FROM tbl_bloque_personalizado bp
-                    JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON bp.sec_codigo = uh.sec_codigo AND bp.ani_anio = uh.ani_anio
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+JOIN tbl_seccion s ON bp.sec_codigo = s.sec_codigo AND bp.ani_anio = s.ani_anio AND bp.ani_tipo = s.ani_tipo
+JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo AND s.ani_anio = uh.ani_anio AND s.ani_tipo = uh.ani_tipo
+JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE uh.doc_cedula = :cedula_docente
                         AND uh.doc_cedula IS NOT NULL
                         AND s.ani_anio = :anio_param
@@ -309,9 +314,9 @@ class ReporteHorarioDocente extends Connection
             
             $sql = "SELECT DISTINCT be.tur_horainicio
                     FROM tbl_bloque_eliminado be
-                    JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio
-                    JOIN uc_horario uh ON be.sec_codigo = uh.sec_codigo AND be.ani_anio = uh.ani_anio
-                    JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
+JOIN tbl_seccion s ON be.sec_codigo = s.sec_codigo AND be.ani_anio = s.ani_anio AND be.ani_tipo = s.ani_tipo
+JOIN uc_horario uh ON s.sec_codigo = uh.sec_codigo AND s.ani_anio = uh.ani_anio AND s.ani_tipo = uh.ani_tipo
+JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo
                     WHERE uh.doc_cedula = :cedula_docente
                         AND uh.doc_cedula IS NOT NULL
                         AND s.ani_anio = :anio_param
