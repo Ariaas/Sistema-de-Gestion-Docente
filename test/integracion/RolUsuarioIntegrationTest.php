@@ -1,8 +1,10 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
+
 require_once 'model/rol.php';
 require_once 'model/usuario.php';
-class RolUsuarioIntegrationTest extends TestCase
+class RolUsuarioIntegrationTest extends IntegrationTestCase
 {
     private $rol;
     private $usuario;
@@ -83,7 +85,7 @@ class RolUsuarioIntegrationTest extends TestCase
         $this->usuario->set_nombreUsuario($nombreUsuario);
         $this->usuario->set_correoUsuario($correoUsuario);
         $this->usuario->set_contraseniaUsuario('Test123456');
-        $this->usuario->set_rolId(999999); 
+        $this->usuario->set_rolId(999999);
         $this->usuario->set_usu_docente('No');
         $this->usuario->set_usu_cedula('12345678');
         $resultado = $this->usuario->Registrar();

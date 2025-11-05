@@ -353,7 +353,7 @@ class Seccion extends Connection
 
 
             $clases_origen_result = $this->ConsultarDetalles($sec_codigo_origen, $seccion_origen_data['ani_anio'], $seccion_origen_data['ani_tipo']);
-            $clases_origen = $clases_origen_result['mensaje'] ?? [];
+            $clases_origen = (isset($clases_origen_result['mensaje']) && is_array($clases_origen_result['mensaje'])) ? $clases_origen_result['mensaje'] : [];
             $codigos_destinos = array_filter($sec_codigos_a_unir, function ($codigo) use ($sec_codigo_origen) {
                 return $codigo != $sec_codigo_origen;
             });
@@ -408,6 +408,9 @@ class Seccion extends Connection
             return ['resultado' => 'unir_horarios_ok', 'mensaje' => '¡Horarios unidos y actualizados correctamente!'];
         } catch (Exception $e) {
             if ($co->inTransaction()) $co->rollBack();
+            // Log full exception for debugging in test runs
+            error_log("Exception en UnirHorarios: " . $e->getMessage());
+            error_log($e->getTraceAsString());
             return ['resultado' => 'error', 'mensaje' => 'Error al unir los horarios: ' . $e->getMessage()];
         }
     }
@@ -1629,7 +1632,7 @@ class Seccion extends Connection
             $bloques_eliminados = [];
 
             foreach ($secciones_a_incluir as $sec) {
-/*                 $ani_tipo_sec = null;
+                /*                 $ani_tipo_sec = null;
                 try {
                     $stmt_tipo = $co->prepare("SELECT ani_tipo FROM tbl_seccion WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio LIMIT 1");
                     $stmt_tipo->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio]);
@@ -1648,7 +1651,8 @@ class Seccion extends Connection
                                FROM tbl_bloque_personalizado 
                                WHERE sec_codigo = :sec_codigo AND ani_anio = :ani_anio AND ani_tipo = :ani_tipo";
                     $stmt_bloques = $co->prepare($sql_bloques);
-                    $stmt_bloques->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);                    $bloques_sec = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
+                    $stmt_bloques->execute([':sec_codigo' => $sec, ':ani_anio' => $ani_anio, ':ani_tipo' => $ani_tipo]);
+                    $bloques_sec = $stmt_bloques->fetchAll(PDO::FETCH_ASSOC);
 
                     foreach ($bloques_sec as $bloque) {
                         $inicio = strlen($bloque['tur_horainicio']) === 5 ? $bloque['tur_horainicio'] . ':00' : $bloque['tur_horainicio'];

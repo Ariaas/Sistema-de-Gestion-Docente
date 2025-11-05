@@ -4,7 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 require_once 'model/rol.php';
 
-class RolIntegrationTest extends TestCase
+class RolIntegrationTest extends IntegrationTestCase
 {
     private $rol;
     private $rolesCreados = [];
@@ -21,9 +21,9 @@ class RolIntegrationTest extends TestCase
             try {
                 $rolTemp = new Rol();
                 $rolTemp->setId($rolId);
-                
+
                 $rolInfo = $rolTemp->getRolById($rolId);
-                
+
                 if ($rolInfo && $rolInfo['rol_nombre'] !== 'Administrador') {
                     $rolTemp->Eliminar();
                 }
@@ -35,7 +35,7 @@ class RolIntegrationTest extends TestCase
     public function testRegistrar_Integracion_Exito()
     {
         $nombreRol = 'Test_' . rand(1000, 9999);
-        
+
         $this->rol->setNombre($nombreRol);
         $resultado = $this->rol->Registrar();
 
@@ -51,14 +51,14 @@ class RolIntegrationTest extends TestCase
         $nombreRol = 'Dup_' . rand(1000, 9999);
         $this->rol->setNombre($nombreRol);
         $resultado1 = $this->rol->Registrar();
-        
+
         $this->assertEquals('registrar', $resultado1['resultado']);
 
         $rol2 = new Rol();
         $rol2->setNombre($nombreRol);
         $resultado2 = $rol2->Registrar();
 
-        $this->assertEquals('registrar', $resultado2['resultado']);
+        $this->assertEquals('error', $resultado2['resultado']);
         $this->assertStringContainsString('YA existe', $resultado2['mensaje']);
     }
 
@@ -67,7 +67,7 @@ class RolIntegrationTest extends TestCase
         $nombreOriginal = 'Orig_' . rand(1000, 9999);
         $this->rol->setNombre($nombreOriginal);
         $resultadoRegistro = $this->rol->Registrar();
-        
+
         $this->assertEquals('registrar', $resultadoRegistro['resultado']);
 
         $verificacion = $this->rol->Existe($nombreOriginal);
@@ -99,12 +99,27 @@ class RolIntegrationTest extends TestCase
 
     public function testModificar_Integracion_Falla_RolAdministrador()
     {
-        $this->rol->setNombre('Administrador');
-        $resultado = $this->rol->Modificar();
+        $roles = $this->rol->Listar();
+        $adminId = null;
+        foreach ($roles['mensaje'] as $r) {
+            if ($r['rol_nombre'] === 'Administrador') {
+                $adminId = $r['rol_id'];
+                break;
+            }
+        }
 
-        $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString('Administrador', $resultado['mensaje']);
-        $this->assertStringContainsString('no puede ser modificado', $resultado['mensaje']);
+        if ($adminId) {
+            $rolAdmin = new Rol();
+            $rolAdmin->setId($adminId);
+            $rolAdmin->setNombre('Administrador');
+            $resultado = $rolAdmin->Modificar();
+
+            $this->assertEquals('error', $resultado['resultado']);
+            $this->assertStringContainsString('Administrador', $resultado['mensaje']);
+            $this->assertStringContainsString('no puede ser modificado', $resultado['mensaje']);
+        } else {
+            $this->markTestSkipped('No existe el rol Administrador en la BD');
+        }
     }
 
 
@@ -113,7 +128,7 @@ class RolIntegrationTest extends TestCase
         $nombreRol = 'Del_' . rand(1000, 9999);
         $this->rol->setNombre($nombreRol);
         $resultadoRegistro = $this->rol->Registrar();
-        
+
         $this->assertEquals('registrar', $resultadoRegistro['resultado']);
 
         $roles = $this->rol->Listar();
@@ -190,7 +205,7 @@ class RolIntegrationTest extends TestCase
         $nombreRol = 'Perm_' . rand(1000, 9999);
         $this->rol->setNombre($nombreRol);
         $resultadoRegistro = $this->rol->Registrar();
-        
+
         $this->assertEquals('registrar', $resultadoRegistro['resultado']);
 
         $roles = $this->rol->Listar();
@@ -205,7 +220,7 @@ class RolIntegrationTest extends TestCase
         $this->assertNotNull($rolEncontrado);
 
         $permisosDisponibles = $this->rol->listarPermisos($rolEncontrado['rol_id']);
-        
+
         if (count($permisosDisponibles['modulosDisponibles']) > 0) {
             $permisosAsignar = [
                 [
@@ -252,10 +267,10 @@ class RolIntegrationTest extends TestCase
     public function testGetRolById_Integracion_Exito()
     {
         $roles = $this->rol->Listar();
-        
+
         if (count($roles['mensaje']) > 0) {
             $primerRol = $roles['mensaje'][0];
-            
+
             $resultado = $this->rol->getRolById($primerRol['rol_id']);
 
             $this->assertNotNull($resultado);
@@ -269,7 +284,7 @@ class RolIntegrationTest extends TestCase
     public function testGetRolById_Integracion_RolNoExiste()
     {
         $idInexistente = 999999;
-        
+
         $resultado = $this->rol->getRolById($idInexistente);
 
         $this->assertFalse($resultado);
@@ -281,7 +296,7 @@ class RolIntegrationTest extends TestCase
         $nombreRol = 'CRUD_' . rand(1000, 9999);
         $this->rol->setNombre($nombreRol);
         $resultadoCrear = $this->rol->Registrar();
-        
+
         $this->assertEquals('registrar', $resultadoCrear['resultado']);
 
         $verificacion = $this->rol->Existe($nombreRol);
@@ -302,7 +317,7 @@ class RolIntegrationTest extends TestCase
         $rolModificar->setId($rolEncontrado['rol_id']);
         $rolModificar->setNombre($nombreNuevo);
         $resultadoModificar = $rolModificar->Modificar();
-        
+
         $this->assertEquals('modificar', $resultadoModificar['resultado']);
 
         $rolInfo = $rolModificar->getRolById($rolEncontrado['rol_id']);
@@ -311,7 +326,7 @@ class RolIntegrationTest extends TestCase
         $rolEliminar = new Rol();
         $rolEliminar->setId($rolEncontrado['rol_id']);
         $resultadoEliminar = $rolEliminar->Eliminar();
-        
+
         $this->assertEquals('eliminar', $resultadoEliminar['resultado']);
 
         $rolesActualizados = $this->rol->Listar();
@@ -332,7 +347,7 @@ class RolIntegrationTest extends TestCase
         $resultado = $this->rol->Registrar();
 
         $this->assertEquals('registrar', $resultado['resultado']);
-        
+
         $verificacion = $this->rol->Existe($nombreRol);
         $this->assertEquals('existe', $verificacion['resultado']);
     }

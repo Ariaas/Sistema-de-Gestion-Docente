@@ -1,7 +1,9 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
+
 require_once 'model/categoria.php';
-class CategoriaIntegrationTest extends TestCase
+class CategoriaIntegrationTest extends IntegrationTestCase
 {
     private $categoria;
     private $categoriasCreadas = [];
