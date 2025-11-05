@@ -1,7 +1,5 @@
 <?php
 
-use PDO;
-use PDOStatement;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -9,7 +7,7 @@ require_once 'model/docente.php';
 
 class DocenteTest extends TestCase
 {
-    /** @var PDO&MockObject */
+    /** @var \PDO&MockObject */
     private $pdoMock;
 
     protected function setUp(): void
@@ -22,7 +20,8 @@ class DocenteTest extends TestCase
      */
     private function createDocenteMock(array $extraMethods = [])
     {
-        $builder = $this->getMockBuilder(Docente::class);
+        $builder = $this->getMockBuilder(Docente::class)
+            ->disableOriginalConstructor();
         $builder->onlyMethods(array_merge(['Con'], $extraMethods));
         $docente = $builder->getMock();
         $docente->method('Con')->willReturn($this->pdoMock);
@@ -55,7 +54,8 @@ class DocenteTest extends TestCase
     /** @return PDOStatement&MockObject */
     private function makeStatement()
     {
-        $stmt = $this->createMock(PDOStatement::class);
+        /** @var \PDOStatement&MockObject $stmt */
+        $stmt = $this->createMock(\PDOStatement::class);
         $stmt->method('bindParam')->willReturn(true);
         return $stmt;
     }
@@ -211,6 +211,69 @@ class DocenteTest extends TestCase
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertEquals('Fallo insert', $resultado['mensaje']);
+    }
+
+    public function testRegistrar_NuevoDocente_Exito(): void
+    {
+        $docente = $this->createDocenteMock();
+        $this->seedDocenteDatos($docente);
+
+        $stmtEstado = $this->makeStatement();
+        $stmtEstado->expects($this->once())
+            ->method('execute')
+            ->with([':doc_cedula' => 12345678])
+            ->willReturn(true);
+        $stmtEstado->expects($this->once())
+            ->method('fetch')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn(false);
+
+        $stmtInsertDoc = $this->makeStatement();
+        $stmtInsertDoc->expects($this->once())->method('execute')->willReturn(true);
+
+        $stmtInsertTitulo = $this->makeStatement();
+        $stmtInsertTitulo->expects($this->once())->method('execute')->willReturn(true);
+
+        $stmtInsertCoord = $this->makeStatement();
+        $stmtInsertCoord->expects($this->once())->method('execute')->willReturn(true);
+
+        $stmtActividadCheck = $this->makeStatement();
+        $stmtActividadCheck->expects($this->once())->method('execute')->willReturn(true);
+        $stmtActividadCheck->method('fetch')->willReturn(false);
+
+        $stmtActividadInsert = $this->makeStatement();
+        $stmtActividadInsert->expects($this->once())->method('execute')->willReturn(true);
+
+        $this->pdoMock->expects($this->exactly(6))
+            ->method('prepare')
+            ->withConsecutive(
+                [$this->stringContains('SELECT doc_estado FROM tbl_docente')],
+                [$this->stringStartsWith('INSERT INTO tbl_docente')],
+                [$this->stringContains('INSERT INTO titulo_docente')],
+                [$this->stringContains('INSERT INTO coordinacion_docente')],
+                [$this->stringContains('SELECT doc_cedula FROM tbl_actividad')],
+                [$this->stringStartsWith('INSERT INTO tbl_actividad')]
+            )
+            ->willReturnOnConsecutiveCalls(
+                $stmtEstado,
+                $stmtInsertDoc,
+                $stmtInsertTitulo,
+                $stmtInsertCoord,
+                $stmtActividadCheck,
+                $stmtActividadInsert
+            );
+
+        $this->pdoMock->expects($this->once())
+            ->method('setAttribute')
+            ->with(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $this->pdoMock->expects($this->once())->method('beginTransaction');
+        $this->pdoMock->expects($this->once())->method('commit');
+        $this->pdoMock->expects($this->never())->method('rollBack');
+
+        $resultado = $docente->Registrar();
+
+        $this->assertEquals('incluir', $resultado['resultado']);
+        $this->assertStringContainsString('Se registró el docente correctamente', $resultado['mensaje']);
     }
 
     public function testModificar_DocenteNoExiste_RetornaError(): void
