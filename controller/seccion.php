@@ -339,20 +339,21 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
     ob_end_clean();
     $dompdf->stream('horario_' . implode('_', $secciones_codigos) . '.pdf', ['Attachment' => true]);
 }
+
 function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = [])
 {
     if (empty($turnos)) {
         die("Error: No se ha definido una estructura de turnos.");
     }
 
-    
+    // 1. PREPARACIÓN DE DATOS (Se mantiene igual)
     $preparacion = _prepararColumnasYGrid($horario);
     $columnasHeader = $preparacion['columnas'];
     $grid = $preparacion['grid'];
     $espaciosPorColumna = _analizarEspaciosPorColumna($horario, $columnasHeader);
 
 
-    
+    // Calcular franjas horarias (Se mantiene igual)
     $time_slots = [];
     if (empty($horario)) {
         foreach (array_slice($turnos, 0, 7) as $turno) {
@@ -381,63 +382,70 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     $sheet = $spreadsheet->getActiveSheet();
 
 
-    
+    // Estilos (Se mantiene igual)
     $styleTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $styleHeader = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFFF']]];
     $styleTimeCol = ['font' => ['size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleCell = ['font' => ['size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
 
 
-    
+    // Título (Se mantiene igual)
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
     $nombresSecciones = $secciones_codigos;
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones) . " ({$anio})";
 
-   
+    // *** INICIO DEL CAMBIO (EXCEL) ***
+
+    // Determinar la última letra de la columna de DATOS
     $lastColLetter = chr(65 + count($columnasHeader));
     
-
+    // --- Encabezado de Imágenes (Fila 1) ---
     $baseDir = dirname(dirname(__FILE__));
-    $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
-    $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
-
     
-    $sheet->getRowDimension(1)->setRowHeight(75); 
-    $colSintilloEnd = 'D'; 
-    $colLogoStart = 'E';   
-    $lastHeaderCol = 'F';  
+    // CORRECCIÓN: Usar los nombres de archivo correctos (sensible a mayúsculas)
+    $logoPath = $baseDir . '/public/assets/img/LOGO.png'; // Antes 'logo_uptaeb.png'
+    $sintilloPath = $baseDir . '/public/assets/img/Sintillo.png'; // Antes 'sintillo.png'
+
+    // Establecer altura de la fila 1 para las imágenes
+    $sheet->getRowDimension(1)->setRowHeight(75); // Altura aumentada
+    
+    // Área fija para las imágenes (A-E) para que estén juntas
+    $colSintilloEnd = 'C'; // Columnas A-C para el Cintillo
+    $colLogoStart = 'D';   // Columnas D-E para el Logo
+    $lastHeaderCol = 'E';  // Última columna del área de imágenes
 
     if (file_exists($sintilloPath)) {
         $drawingSintillo = new Drawing();
         $drawingSintillo->setName('Sintillo')->setDescription('Sintillo')->setPath($sintilloPath);
         $drawingSintillo->setResizeProportional(true);
         $drawingSintillo->setHeight(40);
-        $drawingSintillo->setCoordinates('A1'); 
+        $drawingSintillo->setCoordinates('A1'); // Posicionar en A1
         $drawingSintillo->setOffsetX(10);
         $drawingSintillo->setOffsetY(2);
         $drawingSintillo->setWorksheet($sheet);
-        $sheet->mergeCells("A1:{$colSintilloEnd}1"); 
+        $sheet->mergeCells("A1:{$colSintilloEnd}1"); // Combinar celdas A1 a C1
     }
 
     if (file_exists($logoPath)) {
         $drawingLogo = new Drawing();
         $drawingLogo->setName('Logo')->setDescription('Logo UPTAEB')->setPath($logoPath);
         $drawingLogo->setResizeProportional(true);
-        $drawingLogo->setHeight(70); 
-        $drawingLogo->setCoordinates($colLogoStart . '1'); 
+        $drawingLogo->setHeight(70); // Logo más grande
+        $drawingLogo->setCoordinates($colLogoStart . '1'); // Posicionar en D1
         $drawingLogo->setOffsetX(10);
         $drawingLogo->setOffsetY(2);
         $drawingLogo->setWorksheet($sheet);
-        $sheet->mergeCells("{$colLogoStart}1:{$lastHeaderCol}1"); 
+        $sheet->mergeCells("{$colLogoStart}1:{$lastHeaderCol}1"); // Combinar celdas D1 a E1
     }
 
-    
+    // --- Título Principal (Fila 2) ---
+    // Combinar el título a lo ancho de las columnas de DATOS (A hasta $lastColLetter)
     $sheet->mergeCells("A2:{$lastColLetter}2"); 
     $sheet->setCellValue('A2', $tituloSeccion);
     $sheet->getStyle('A2')->applyFromArray($styleTitle);
 
-    
+    // --- Encabezado de Tabla (Inicia en Fila 3) ---
     $sheet->setCellValue('A3', 'Hora');
     $sheet->getColumnDimension('A')->setAutoSize(true);
 
@@ -454,14 +462,14 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
             $headerText .= "\n" . _formatearEspacio($espaciosPorColumna[$idx]);
         }
 
-        $sheet->getCell($colLetter . '3')->setValue($headerText); 
+        $sheet->getCell($colLetter . '3')->setValue($headerText); // Celda en fila 3
         $sheet->getStyle($colLetter . '3')->getAlignment()->setWrapText(true);
     }
 
-    
+    // --- Datos de Horario (Inicia en Fila 4) ---
     $currentRow = 4;
     
-    
+    // *** FIN DEL CAMBIO (EXCEL) ***
 
     $celdasOcupadas = [];
 
@@ -510,15 +518,21 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
         $currentRow++;
     }
 
-    
+    // Ajustar rangos de estilo para empezar desde la fila 3
     $lastRow = $currentRow - 1;
-    $range = "A3:{$lastColLetter}{$lastRow}"; 
-    $sheet->getStyle("A3:{$lastColLetter}3")->applyFromArray($styleHeader); 
-    $sheet->getStyle("A4:A{$lastRow}")->applyFromArray($styleTimeCol); 
-    $sheet->getStyle("B4:{$lastColLetter}{$lastRow}")->applyFromArray($styleCell); 
+    if ($lastRow < 3) $lastRow = 3; // Asegurarse de que el rango sea válido incluso si no hay datos
+    
+    $range = "A3:{$lastColLetter}{$lastRow}"; // Estilos de la tabla empiezan en Fila 3
+    $sheet->getStyle("A3:{$lastColLetter}3")->applyFromArray($styleHeader); // Header en Fila 3
+    
+    if($lastRow >= 4) { // Solo aplicar estilos de datos si hay filas de datos
+        $sheet->getStyle("A4:A{$lastRow}")->applyFromArray($styleTimeCol); // Columna de tiempo empieza en Fila 4
+        $sheet->getStyle("B4:{$lastColLetter}{$lastRow}")->applyFromArray($styleCell); // Celdas de datos empiezan en Fila 4
+    }
+    
     $sheet->getStyle($range)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF666666'));
 
-    
+    // --- Envío del Archivo (Se mantiene igual) ---
     $fileName = 'horario_' . implode('_', $nombresSecciones) . '.xlsx';
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
@@ -535,11 +549,13 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
         die("Error: No se ha definido una estructura de turnos.");
     }
 
+    // 1. PREPARACIÓN DE DATOS (Se mantiene igual)
     $preparacion = _prepararColumnasYGrid($horario);
     $columnasHeader = $preparacion['columnas'];
     $grid = $preparacion['grid'];
     $espaciosPorColumna = _analizarEspaciosPorColumna($horario, $columnasHeader);
 
+    // Calcular franjas horarias (Se mantiene igual)
     $time_slots = [];
     if (!empty($horario)) {
         $min_time = min(array_column($horario, 'hor_horainicio'));
@@ -558,7 +574,7 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
         ksort($time_slots);
     }
 
-    
+    // Títulos y logos (Se mantiene igual)
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
     $nombresSecciones = $secciones_codigos;
@@ -568,10 +584,10 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
     $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
     $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
 
-    
+    // 2. CREACIÓN DEL DOCUMENTO PHPWORD
     $phpWord = new \PhpOffice\PhpWord\PhpWord();
 
-    
+    // Estilos
     $headerFontStyle = ['bold' => true, 'size' => 11];
     $headerSmallFontStyle = ['size' => 9, 'color' => '555555'];
     $timeCellStyle = ['valign' => 'center'];
@@ -580,13 +596,14 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
     $detailFontStyle = ['size' => 10, 'color' => '444444'];
     $centerAlign = ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER];
     
-    
+    // Estilo para las celdas del horario: Alinear verticalmente y horizontalmente al centro
     $gridCellStyle = ['valign' => 'center', 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER];
 
-    
+    // Estilo para celdas de header (sin bordes)
     $noBorderCellStyle = ['valign' => 'center', 'borderSize' => 0, 'borderColor' => 'FFFFFF'];
 
 
+    // Configurar sección en horizontal (landscape) con márgenes
     $section = $phpWord->addSection([
         'orientation' => 'landscape',
         'marginLeft' => \PhpOffice\PhpWord\Shared\Converter::cmToTwip(1.5),
@@ -595,12 +612,12 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
         'marginBottom' => \PhpOffice\PhpWord\Shared\Converter::cmToTwip(1)
     ]);
 
-    
+    // Añadir Encabezado (Logos) - Usamos una tabla de 2 celdas
     $headerTableStyle = ['width' => 10000, 'unit' => 'pct', 'borderSize' => 0, 'cellMargin' => 0];
     $headerTable = $section->addTable($headerTableStyle);
     $headerTable->addRow();
 
-    
+    // Celda 1: Cintillo (85% de ancho) - Aplicar estilo sin bordes
     $cellSintillo = $headerTable->addCell(8500, $noBorderCellStyle); 
     if (file_exists($sintilloPath)) {
         $cellSintillo->addImage($sintilloPath, [
@@ -609,7 +626,7 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
         ]);
     }
 
-    
+    // Celda 2: Logo UPTAEB (15% de ancho) - Aplicar estilo sin bordes
     $cellLogo = $headerTable->addCell(1500, $noBorderCellStyle); 
     if (file_exists($logoPath)) {
         $cellLogo->addImage($logoPath, [
@@ -618,15 +635,28 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
         ]);
     }
 
-    
+    // Título principal
     $section->addTextBreak(1);
     $section->addText($tituloSeccion, ['bold' => true, 'size' => 16], $centerAlign);
     $section->addTextBreak(1);
 
-    $tableStyle = ['borderSize' => 6, 'borderColor' => '666666', 'cellMargin' => 80];
-    $phpWord->addTableStyle('scheduleTable', $tableStyle);
-    $table = $section->addTable('scheduleTable');
+    // 3. CREACIÓN DE LA TABLA DE HORARIO
+    
+    // *** INICIO DEL CAMBIO ***
+    // Definimos el estilo de la tabla (incluyendo el centrado)
+    $tableStyle = [
+        'borderSize' => 6, 
+        'borderColor' => '666666', 
+        'cellMargin' => 80,
+        'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER // <-- Centrar la tabla en la página
+    ];
+    
+    // Ya no registramos el estilo con addTableStyle, lo pasamos directamente
+    // $phpWord->addTableStyle('scheduleTable', $tableStyle); // <- LÍNEA ELIMINADA
+    $table = $section->addTable($tableStyle); // <- LÍNEA MODIFICADA
+    // *** FIN DEL CAMBIO ***
 
+    // Fila de Encabezado de la tabla
     $table->addRow();
     $cell = $table->addCell(1500, ['valign' => 'center']);
     $cell->addText('Hora', $headerFontStyle, $centerAlign);
@@ -644,7 +674,9 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
         }
     }
 
-
+    // 4. LLENADO DE CELDAS DE HORARIO
+    
+    // Rastrear celdas que deben combinarse verticalmente
     $cellsToSkip = []; 
 
     if (empty($time_slots)) {
@@ -654,15 +686,15 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
         foreach ($time_slots as $start_time => $end_time) {
             $table->addRow();
             
+            // Celda de Hora
             $timeText = date('h:i A', strtotime($start_time)) . ' a ' . date('h:i A', strtotime($end_time));
             $table->addCell(1500, $timeCellStyle)->addText($timeText, $timeFontStyle, $centerAlign);
 
-            
+            // Celdas de Días
             foreach ($columnasHeader as $idx => $colInfo) {
                 
-                
                 if (isset($cellsToSkip[$idx]) && $cellsToSkip[$idx] > 0) {
-                    
+                    // Esta celda es parte de un vMerge, añadir celda continua con estilo centrado
                     $table->addCell(2000, ['vMerge' => 'continue', 'valign' => 'center', 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
                     $cellsToSkip[$idx]--;
                     continue;
@@ -672,7 +704,7 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
                 $clase = $grid[$start_time][$colInfo['dia']][$keySubgrupo] ?? null;
 
                 if (is_array($clase)) {
-                    
+                    // Calcular rowspan (vMerge)
                     $rowspan = 0;
                     foreach ($time_slots as $s_start => $s_end) {
                         if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) {
@@ -682,14 +714,15 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
                     
                     $vMerge = ($rowspan > 1) ? 'restart' : null;
                     
-                    
+                    // Aplicar estilo de cuadrícula (vertical center, horizontal center)
                     $cell = $table->addCell(2000, ['vMerge' => $vMerge, 'valign' => 'center', 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
                     
+                    // Añadir contenido a la celda
                     $uc_abreviada = _abreviarNombreLargo($clase['uc_nombre']);
                     $docente_texto = htmlspecialchars($clase['docente_nombre'] ?: '(Sin Docente)');
                     $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
 
-                
+                    // Añadir texto con alineación centrada
                     $cell->addText($subgrupo_texto . htmlspecialchars($uc_abreviada), $ucFontStyle, $centerAlign);
                     $cell->addText($docente_texto, $detailFontStyle, $centerAlign);
 
@@ -700,26 +733,26 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
                         }
                     }
 
-                    
+                    // Marcar celdas siguientes para saltar (vMerge)
                     if ($rowspan > 1) {
                         $cellsToSkip[$idx] = $rowspan - 1;
                     }
 
                 } else {
-                    
+                    // Celda vacía (aplicar estilo de cuadrícula)
                     $table->addCell(2000, $gridCellStyle)->addText('');
                 }
             }
         }
     }
 
-    
+    // 5. ENVÍO DEL ARCHIVO .DOCX
     $fileName = 'horario_' . implode('_', $nombresSecciones) . '.docx';
     
-    
+    // Limpiar cualquier salida de buffer anterior
     ob_end_clean(); 
 
-    
+    // Cabeceras para .docx
     header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
     header('Cache-Control: max-age=0');
