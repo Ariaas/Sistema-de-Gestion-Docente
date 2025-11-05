@@ -269,13 +269,28 @@ if (isset($_POST['generar_seccion_report'])) {
             $columnLocationInfo = [];
             foreach ($columnasHeader as $idx => $colInfo) {
                 $locationsInColumn = [];
+                $hasNullSpace = false; // Flag para rastrear si hay "Sin espacio"
+
                 foreach ($horarioGrid[$colInfo['dia']][$colInfo['subgrupo']] ?? [] as $clase) {
-                    $locationsInColumn[$clase['esp_codigo']] = $clase['esp_tipo'];
+                    // Solo contamos las aulas que SÍ tienen un código
+                    if (!empty($clase['esp_codigo'])) {
+                        $locationsInColumn[$clase['esp_codigo']] = $clase['esp_tipo'];
+                    } else {
+                        $hasNullSpace = true; // Si encontramos un NULL, lo marcamos
+                    }
                 }
+                $locationCount = count($locationsInColumn);
+                
+                // Si la columna tiene "1 aula real" Y "Sin espacio", no es una columna 'single'.
+                if ($locationCount > 0 && $hasNullSpace) {
+                    $locationCount = 99; // Forzamos a que no sea 'single'
+                }
+                $isSingle = ($locationCount === 1);
+
                 $columnLocationInfo[$idx] = [
-                    'is_single' => count($locationsInColumn) === 1,
-                    'name' => count($locationsInColumn) === 1 ? key($locationsInColumn) : null,
-                    'type' => count($locationsInColumn) === 1 ? current($locationsInColumn) : null,
+                    'is_single' => $isSingle,
+                    'name' => $isSingle ? key($locationsInColumn) : null,
+                    'type' => $isSingle ? current($locationsInColumn) : null,
                 ];
 
                 $colLetter = chr(65 + $colIndex++);
@@ -357,7 +372,8 @@ if (isset($_POST['generar_seccion_report'])) {
                             }
 
                             $subgrupoTexto = ($clase['subgrupo'] && $clase['subgrupo'] !== 'general') ? '(G: ' . $clase['subgrupo'] . ') ' : '';
-                            $ucAbreviada = abreviarNombreLargo($clase['uc_nombre']);
+                            $uc_nombre = $clase['uc_nombre'] ?? null;
+$ucAbreviada = $uc_nombre ? abreviarNombreLargo($uc_nombre) : '(Sin UC)';
                            $ucPart = $richText->createTextRun($subgrupoTexto . $ucAbreviada);
                                $ucPart->getFont()->setBold(true);
 

@@ -138,13 +138,16 @@ class ReporteHorarioDocente extends Connection
                             u.uc_codigo,
                             
                             GROUP_CONCAT(DISTINCT s.sec_codigo ORDER BY s.sec_codigo SEPARATOR ', ') as secciones,
-                            GROUP_CONCAT(DISTINCT 
-                                CASE
+                            COALESCE(
+                                 GROUP_CONCAT(DISTINCT 
+                                  CASE
                                     WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
                                     WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
-                                    ELSE uh.esp_numero
-                                END 
-                            ORDER BY uh.esp_edificio, uh.esp_numero SEPARATOR ', ') as ambientes,
+                                    WHEN uh.esp_numero IS NOT NULL THEN uh.esp_numero
+                                    ELSE NULL
+                                  END 
+                                 ORDER BY uh.esp_edificio, uh.esp_numero SEPARATOR ', '),
+                             '(Sin espacio)') as ambientes,
                             e.eje_nombre, 
                             u.uc_periodo,
                             (SELECT um.mal_hora_academica FROM uc_malla um JOIN tbl_malla m ON um.mal_codigo = m.mal_codigo WHERE um.uc_codigo = u.uc_codigo AND m.mal_activa = 1 LIMIT 1) as totalHorasClase
@@ -208,7 +211,8 @@ class ReporteHorarioDocente extends Connection
                             CASE
                                 WHEN uh.esp_tipo = 'Laboratorio' THEN CONCAT('LAB ', uh.esp_numero)
                                 WHEN uh.esp_tipo = 'Aula' THEN CONCAT(LEFT(uh.esp_edificio, 1), '-', uh.esp_numero)
-                                ELSE uh.esp_numero
+                                WHEN uh.esp_numero IS NOT NULL THEN uh.esp_numero
+                                ELSE '(Sin espacio)'
                   END AS esp_codigo_formatted
                         FROM uc_horario uh
                         JOIN tbl_seccion s ON uh.sec_codigo = s.sec_codigo 

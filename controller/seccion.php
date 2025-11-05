@@ -27,7 +27,7 @@ use PhpOffice\PhpWord\SimpleType\Jc;
 
 function _abreviarNombreLargo($nombre)
 {
-    if (!is_string($nombre) || empty($nombre)) return 'N/A';
+    if (!is_string($nombre) || empty($nombre)) return '(Sin UC)';
     if (stripos($nombre, 'matemática') !== false) return 'Matemática' . _extraerNumeral($nombre);
     if (stripos($nombre, 'formación crítica') !== false) return 'Formación Crítica' . _extraerNumeral($nombre);
     if (stripos($nombre, 'proyecto socio') !== false) return 'PST' . _extraerNumeral($nombre);
@@ -59,21 +59,46 @@ function _analizarEspaciosPorColumna($horario, $columnasHeader)
 {
     $espaciosPorColumna = [];
     foreach ($columnasHeader as $idx => $colInfo) {
-        $espacios = [];
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        $espacios_encontrados = [];
+        $hay_clases_sin_espacio = false;
+        // --- FIN DE LA CORRECCIÓN ---
+
         foreach ($horario as $clase) {
             if (strtoupper($clase['hor_dia']) === $colInfo['dia'] && $clase['subgrupo'] === $colInfo['subgrupo']) {
+                
+                // --- INICIO DE LA CORRECCIÓN ---
                 if (!empty($clase['espacio_nombre'])) {
-                    $espacios[] = $clase['espacio_nombre'];
+                    // Se guarda el nombre del espacio si existe
+                    $espacios_encontrados[] = $clase['espacio_nombre'];
+                } else {
+                    // Se marca que SÍ hay clases sin espacio en esta columna
+                    $hay_clases_sin_espacio = true;
                 }
+                // --- FIN DE LA CORRECCIÓN ---
             }
         }
-        if (count($espacios) > 0 && !empty($espacios[0]) && count(array_unique($espacios)) === 1) {
-            $espaciosPorColumna[$idx] = $espacios[0];
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        $espacios_unicos = array_unique($espacios_encontrados);
+        $conteo_unicos = count($espacios_unicos);
+
+        // Condición nueva y mejorada:
+        // Solo se pondrá el espacio en el encabezado si:
+        // 1. Hay exactamente UN solo tipo de espacio (ej: "A-101").
+        // 2. Y ADEMÁS, NO hay ninguna clase "Sin espacio" en esa misma columna.
+        if ($conteo_unicos === 1 && !$hay_clases_sin_espacio) {
+            // Solo si se cumplen ambas condiciones, se asigna al encabezado
+            $espaciosPorColumna[$idx] = current($espacios_unicos); 
         }
+        // Si no se cumple (ej: hay "A-101" Y "Sin espacio"), $espaciosPorColumna[$idx] queda nulo.
+        // Esto fuerza a que las funciones de reporte (PDF, Word, Excel)
+        // impriman el espacio individualmente en CADA CELDA.
+        // --- FIN DE LA CORRECCIÓN ---
     }
     return $espaciosPorColumna;
 }
-
 
 function _prepararColumnasYGrid($horario)
 {
@@ -132,7 +157,10 @@ function _prepararColumnasYGrid($horario)
 
 function _formatearEspacio($espacio_nombre)
 {
-    if (empty($espacio_nombre)) return '';
+    // --- INICIO DE LA CORRECCIÓN ---
+    if (empty($espacio_nombre)) return '(Sin espacio)'; 
+    // --- FIN DE LA CORRECCIÓN ---
+
     if (stripos($espacio_nombre, 'LAB ') === 0) return $espacio_nombre;
     if (strpos($espacio_nombre, ' - ') === false) return $espacio_nombre;
     list($edificio, $resto) = explode(' - ', $espacio_nombre, 2);
