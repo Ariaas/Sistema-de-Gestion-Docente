@@ -31,15 +31,32 @@ class Login extends Connection_bitacora
     }
 
 
-   public function existe()
+    public function existe()
     {
+        $username = trim((string) $this->nombreUsuario);
+        $password = (string) $this->contraseniaUsuario;
+
+        if ($username === '') {
+            return [
+                'resultado' => 'error',
+                'mensaje' => 'El usuario es requerido.'
+            ];
+        }
+
+        if (trim($password) === '') {
+            return [
+                'resultado' => 'error',
+                'mensaje' => 'La contraseña es requerida.'
+            ];
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         try {
             $p = $co->prepare("SELECT usu_id,usu_cedula, usu_nombre, usu_contrasenia, usu_foto, usu_estado, usu_docente FROM tbl_usuario 
             WHERE usu_nombre = BINARY :username AND usu_estado = 1");
-            $p->bindParam(':username', $this->nombreUsuario);
+            $p->bindParam(':username', $username);
 
             $p->execute();
 
@@ -72,11 +89,16 @@ class Login extends Connection_bitacora
 
     public function enviarCodigoRecuperacionPorUsuario($usuario)
     {
+        $usuarioLimpio = trim((string) $usuario);
+        if ($usuarioLimpio === '') {
+            return "El usuario es requerido.";
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $stmt = $co->prepare("SELECT usu_id, usu_correo FROM tbl_usuario WHERE usu_nombre = :usuario AND usu_estado = 1");
-            $stmt->bindParam(':usuario', $usuario);
+            $stmt->bindParam(':usuario', $usuarioLimpio);
             $stmt->execute();
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -122,15 +144,25 @@ class Login extends Connection_bitacora
 
     public function validarCodigoRecuperacion($usuario, $codigo)
     {
+        $usuarioLimpio = trim((string) $usuario);
+        if ($usuarioLimpio === '') {
+            return "El usuario es requerido.";
+        }
+
+        $codigoLimpio = trim((string) $codigo);
+        if ($codigoLimpio === '') {
+            return "El código es requerido.";
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $stmt = $co->prepare("SELECT reset_token, reset_token_expira FROM tbl_usuario WHERE usu_nombre = :usuario AND usu_estado = 1");
-            $stmt->bindParam(':usuario', $usuario);
+            $stmt->bindParam(':usuario', $usuarioLimpio);
             $stmt->execute();
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($user && $user['reset_token'] === $codigo) {
+            if ($user && $user['reset_token'] === $codigoLimpio) {
                 if (strtotime($user['reset_token_expira']) >= time()) {
                     return "ok";
                 } else {
@@ -146,12 +178,32 @@ class Login extends Connection_bitacora
 
     public function cambiarClaveConToken($usuario, $codigo, $nuevaClave)
     {
+        $usuarioLimpio = trim((string) $usuario);
+        if ($usuarioLimpio === '') {
+            return "El usuario es requerido.";
+        }
+
+        $codigoLimpio = trim((string) $codigo);
+        if ($codigoLimpio === '') {
+            return "El código es requerido.";
+        }
+
+        $claveOriginal = (string) $nuevaClave;
+        $claveLimpia = trim($claveOriginal);
+        if ($claveLimpia === '') {
+            return "La contraseña es requerida.";
+        }
+
+        if (strlen($claveLimpia) < 6) {
+            return "La contraseña debe tener al menos 6 caracteres.";
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         try {
             $stmt = $co->prepare("SELECT usu_id, reset_token_expira FROM tbl_usuario WHERE usu_nombre = :usuario AND reset_token = :token AND usu_estado = 1");
-            $stmt->bindParam(':usuario', $usuario);
-            $stmt->bindParam(':token', $codigo);
+            $stmt->bindParam(':usuario', $usuarioLimpio);
+            $stmt->bindParam(':token', $codigoLimpio);
             $stmt->execute();
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -159,7 +211,7 @@ class Login extends Connection_bitacora
                 if (strtotime($user['reset_token_expira']) < time()) {
                     return "El código ha expirado. Solicite uno nuevo.";
                 }
-                $hash = password_hash($nuevaClave, PASSWORD_DEFAULT);
+                $hash = password_hash($claveLimpia, PASSWORD_DEFAULT);
                 $stmt = $co->prepare("UPDATE tbl_usuario SET usu_contrasenia = :clave, reset_token = NULL, reset_token_expira = NULL WHERE usu_id = :id");
                 $stmt->bindParam(':clave', $hash);
                 $stmt->bindParam(':id', $user['usu_id']);
@@ -176,13 +228,13 @@ class Login extends Connection_bitacora
     public function validarCaptcha($token)
     {
         $secret = '6LeahHErAAAAAE7NIWRPVeJGe6Gq6IB2M3laWOY0';
-        
+
         $response = @file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secret}&response={$token}");
-        
+
         if ($response === false) {
             return false;
         }
-        
+
         $result = json_decode($response, true);
         return $result['success'] ?? false;
     }
