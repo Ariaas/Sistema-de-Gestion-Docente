@@ -263,7 +263,7 @@ function enviaAjax(datos) {
               datos.append("accion", "prosecusion");
               datos.append("seccionOrigenCodigo", seccionOrigenCodigo);
               datos.append("cantidad", cantidad);
-              datos.append("confirmarExceso", true);
+              datos.append("confirmar_exceso", "true");
 
               if (tipo === "manual") {
                 const destinoCodigo = $("#destinoManual").val();

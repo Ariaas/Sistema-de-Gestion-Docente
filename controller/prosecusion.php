@@ -50,7 +50,8 @@ if (is_file("views/" . $pagina . ".php")) {
             $seccionOrigenCodigo = $_POST['seccionOrigenCodigo'];
             $cantidad = $_POST['cantidad'];
             $seccionDestinoCodigo = isset($_POST['seccionDestinoCodigo']) ? $_POST['seccionDestinoCodigo'] : null;
-            $confirmarExceso = isset($_POST['confirmar_exceso']) && $_POST['confirmar_exceso'] === 'true';
+            $confirmarExcesoRaw = $_POST['confirmar_exceso'] ?? $_POST['confirmarExceso'] ?? 'false';
+            $confirmarExceso = filter_var($confirmarExcesoRaw, FILTER_VALIDATE_BOOLEAN);
 
             $resultado = $p->RealizarProsecusion($seccionOrigenCodigo, $cantidad, $seccionDestinoCodigo, $confirmarExceso);
 
