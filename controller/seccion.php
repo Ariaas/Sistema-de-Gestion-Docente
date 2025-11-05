@@ -85,7 +85,7 @@ function _prepararColumnasYGrid($horario)
     $columnasHeader = [];
 
     foreach ($horario as $clase) {
-        $dia = strtoupper($clase['hor_dia']);
+        $dia = mb_strtoupper($clase['hor_dia'], 'UTF-8');
         $subgrupo = $clase['subgrupo'];
         if ($subgrupo) {
             $diasConSubgrupos[$dia][$subgrupo] = true;
@@ -112,7 +112,7 @@ function _prepararColumnasYGrid($horario)
     }
 
     foreach ($horario as $clase) {
-        $dia = strtoupper($clase['hor_dia']);
+        $dia = mb_strtoupper($clase['hor_dia'], 'UTF-8');
         $hora = $clase['hor_horainicio'];
         $subgrupo = $clase['subgrupo'];
 
@@ -201,7 +201,7 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
 
     $baseDir = dirname(dirname(__FILE__));
     
-    // Intentar usar PNG primero (compatible con Word), si no existe usar SVG
+    
     $logoPath = $baseDir . '/public/assets/img/LOGO.png';
     if (!file_exists($logoPath)) {
         $logoPath = $baseDir . '/public/assets/img/LOGO.svg';
@@ -345,12 +345,14 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
         die("Error: No se ha definido una estructura de turnos.");
     }
 
+    
     $preparacion = _prepararColumnasYGrid($horario);
     $columnasHeader = $preparacion['columnas'];
     $grid = $preparacion['grid'];
     $espaciosPorColumna = _analizarEspaciosPorColumna($horario, $columnasHeader);
 
 
+    
     $time_slots = [];
     if (empty($horario)) {
         foreach (array_slice($turnos, 0, 7) as $turno) {
@@ -379,59 +381,69 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     $sheet = $spreadsheet->getActiveSheet();
 
 
+    
     $styleTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
     $styleHeader = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFFF']]];
     $styleTimeCol = ['font' => ['size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleCell = ['font' => ['size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
 
 
+    
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
     $nombresSecciones = $secciones_codigos;
     $tituloSeccion .= (count($nombresSecciones) > 1 ? "es: " : ": ") . implode(' - ', $nombresSecciones) . " ({$anio})";
 
+   
     $lastColLetter = chr(65 + count($columnasHeader));
+    
 
     $baseDir = dirname(dirname(__FILE__));
     $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
     $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
+
+    
+    $sheet->getRowDimension(1)->setRowHeight(75); 
+    $colSintilloEnd = 'D'; 
+    $colLogoStart = 'E';   
+    $lastHeaderCol = 'F';  
 
     if (file_exists($sintilloPath)) {
         $drawingSintillo = new Drawing();
         $drawingSintillo->setName('Sintillo')->setDescription('Sintillo')->setPath($sintilloPath);
         $drawingSintillo->setResizeProportional(true);
         $drawingSintillo->setHeight(40);
-        $colCentral = chr(65 + floor(count($columnasHeader) / 2));
-        $drawingSintillo->setCoordinates($colCentral . '1');
+        $drawingSintillo->setCoordinates('A1'); 
         $drawingSintillo->setOffsetX(10);
         $drawingSintillo->setOffsetY(2);
         $drawingSintillo->setWorksheet($sheet);
-        $sheet->getRowDimension(1)->setRowHeight(45);
+        $sheet->mergeCells("A1:{$colSintilloEnd}1"); 
     }
 
     if (file_exists($logoPath)) {
         $drawingLogo = new Drawing();
         $drawingLogo->setName('Logo')->setDescription('Logo UPTAEB')->setPath($logoPath);
         $drawingLogo->setResizeProportional(true);
-        $drawingLogo->setHeight(60);
-        $drawingLogo->setCoordinates($lastColLetter . '1');
+        $drawingLogo->setHeight(70); 
+        $drawingLogo->setCoordinates($colLogoStart . '1'); 
         $drawingLogo->setOffsetX(10);
         $drawingLogo->setOffsetY(2);
         $drawingLogo->setWorksheet($sheet);
-        $sheet->getRowDimension(1)->setRowHeight(45);
+        $sheet->mergeCells("{$colLogoStart}1:{$lastHeaderCol}1"); 
     }
 
-    $sheet->mergeCells("A2:{$lastColLetter}2");
+    
+    $sheet->mergeCells("A2:{$lastColLetter}2"); 
     $sheet->setCellValue('A2', $tituloSeccion);
     $sheet->getStyle('A2')->applyFromArray($styleTitle);
 
+    
     $sheet->setCellValue('A3', 'Hora');
     $sheet->getColumnDimension('A')->setAutoSize(true);
 
     foreach ($columnasHeader as $idx => $colInfo) {
         $colLetter = chr(66 + $idx);
         $sheet->getColumnDimension($colLetter)->setAutoSize(true);
-
 
         $headerText = ucfirst(mb_strtolower($colInfo['dia']));
 
@@ -442,11 +454,15 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
             $headerText .= "\n" . _formatearEspacio($espaciosPorColumna[$idx]);
         }
 
-        $sheet->getCell($colLetter . '3')->setValue($headerText);
+        $sheet->getCell($colLetter . '3')->setValue($headerText); 
         $sheet->getStyle($colLetter . '3')->getAlignment()->setWrapText(true);
     }
 
+    
     $currentRow = 4;
+    
+    
+
     $celdasOcupadas = [];
 
     foreach ($time_slots as $start_time => $end_time) {
@@ -468,11 +484,9 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
                     if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) $rowspan++;
                 }
 
-
                 $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
                 $texto_completo = $subgrupo_texto . _abreviarNombreLargo($clase['uc_nombre']);
                 $texto_completo .= "\n" . ($clase['docente_nombre'] ?: '(Sin Docente)');
-
 
                 if (!isset($espaciosPorColumna[$idx])) {
                     $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
@@ -496,16 +510,15 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
         $currentRow++;
     }
 
-
+    
     $lastRow = $currentRow - 1;
-    $range = "A3:{$lastColLetter}{$lastRow}";
-    $sheet->getStyle("A3:{$lastColLetter}3")->applyFromArray($styleHeader);
-    $sheet->getStyle("A4:A{$lastRow}")->applyFromArray($styleTimeCol);
-    $sheet->getStyle("B4:{$lastColLetter}{$lastRow}")->applyFromArray($styleCell);
+    $range = "A3:{$lastColLetter}{$lastRow}"; 
+    $sheet->getStyle("A3:{$lastColLetter}3")->applyFromArray($styleHeader); 
+    $sheet->getStyle("A4:A{$lastRow}")->applyFromArray($styleTimeCol); 
+    $sheet->getStyle("B4:{$lastColLetter}{$lastRow}")->applyFromArray($styleCell); 
     $sheet->getStyle($range)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF666666'));
 
-
-
+    
     $fileName = 'horario_' . implode('_', $nombresSecciones) . '.xlsx';
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
@@ -514,6 +527,8 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');
 }
+
+
 function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloques_personalizados = [], $bloques_eliminados = [])
 {
     if (empty($turnos)) {
@@ -534,18 +549,16 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
                 $time_slots[$turno['tur_horainicio']] = $turno['tur_horafin'];
             }
         }
-
         foreach ($bloques_personalizados as $bloque) {
             $time_slots[$bloque['tur_horainicio']] = $bloque['tur_horafin'];
         }
-
         foreach ($bloques_eliminados as $inicio_eliminado) {
             unset($time_slots[$inicio_eliminado]);
         }
-
         ksort($time_slots);
     }
 
+    
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
     $nombresSecciones = $secciones_codigos;
@@ -555,245 +568,166 @@ function generarReporteWord($secciones_codigos, $horario, $anio, $turnos, $bloqu
     $logoPath = $baseDir . '/public/assets/img/logo_uptaeb.png';
     $sintilloPath = $baseDir . '/public/assets/img/sintillo.png';
 
-    $logoBase64 = '';
-    if (file_exists($logoPath)) {
-        $logoData = file_get_contents($logoPath);
-        $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
-    }
+    
+    $phpWord = new \PhpOffice\PhpWord\PhpWord();
 
-    $sintilloBase64 = '';
+    
+    $headerFontStyle = ['bold' => true, 'size' => 11];
+    $headerSmallFontStyle = ['size' => 9, 'color' => '555555'];
+    $timeCellStyle = ['valign' => 'center'];
+    $timeFontStyle = ['size' => 9];
+    $ucFontStyle = ['bold' => true, 'size' => 11];
+    $detailFontStyle = ['size' => 10, 'color' => '444444'];
+    $centerAlign = ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER];
+    
+    
+    $gridCellStyle = ['valign' => 'center', 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER];
+
+    
+    $noBorderCellStyle = ['valign' => 'center', 'borderSize' => 0, 'borderColor' => 'FFFFFF'];
+
+
+    $section = $phpWord->addSection([
+        'orientation' => 'landscape',
+        'marginLeft' => \PhpOffice\PhpWord\Shared\Converter::cmToTwip(1.5),
+        'marginRight' => \PhpOffice\PhpWord\Shared\Converter::cmToTwip(1.5),
+        'marginTop' => \PhpOffice\PhpWord\Shared\Converter::cmToTwip(1),
+        'marginBottom' => \PhpOffice\PhpWord\Shared\Converter::cmToTwip(1)
+    ]);
+
+    
+    $headerTableStyle = ['width' => 10000, 'unit' => 'pct', 'borderSize' => 0, 'cellMargin' => 0];
+    $headerTable = $section->addTable($headerTableStyle);
+    $headerTable->addRow();
+
+    
+    $cellSintillo = $headerTable->addCell(8500, $noBorderCellStyle); 
     if (file_exists($sintilloPath)) {
-        $sintilloData = file_get_contents($sintilloPath);
-        $sintilloBase64 = 'data:image/png;base64,' . base64_encode($sintilloData);
+        $cellSintillo->addImage($sintilloPath, [
+            'width' => 500,
+            'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::START
+        ]);
     }
 
-    $html = '<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-    <meta charset="UTF-8">
-    <title>Horario</title>
-    <!--[if gte mso 9]>
-    <xml>
-        <w:WordDocument>
-            <w:View>Print</w:View>
-            <w:Zoom>100</w:Zoom>
-            <w:DoNotOptimizeForBrowser/>
-        </w:WordDocument>
-    </xml>
-    <![endif]-->
-    <style>
-        @page { 
-            size: landscape;
-            margin: 1.5cm 1cm;
-        }
-        body { 
-            font-family: Arial, Helvetica, sans-serif; 
-            font-size: 10pt;
-            margin: 0;
-            padding: 20px;
-        }
-        .header-logos { 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .logo-left { 
-            flex: 0 0 auto;
-            visibility: hidden;
-            width: 120px;
-        }
-        .sintillo-center { 
-            flex: 1;
-            text-align: center;
-        }
-        .sintillo-center img { 
-            width: 400px;
-            height: auto;
-        }
-        .logo-right { 
-            flex: 0 0 auto;
-        }
-        .logo-right img { 
-            width: 120px;
-            height: auto;
-        }
-        .header-container { 
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        h2 { 
-            text-align: center; 
-            margin: 0 0 15px 0;
-            font-size: 16pt;
-            font-weight: bold;
-            color: #000;
-        }
-        .table-container {
-            text-align: center;
-            margin: 0 auto;
-        }
-        table { 
-            width: auto;
-            display: inline-table;
-            border-collapse: collapse;
-            margin: 0 auto;
-            table-layout: auto;
-            border: 1px solid #666;
-        }
-        th, td { 
-            border: 1px solid #666 !important;
-            border-bottom: 1px solid #666 !important;
-            border-top: 1px solid #666 !important;
-            border-left: 1px solid #666 !important;
-            border-right: 1px solid #666 !important;
-            padding: 10px 8px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        th { 
-            background-color: #ffffff;
-            font-weight: bold;
-            font-size: 11pt;
-            color: #000;
-            padding: 12px 8px;
-        }
-        th small { 
-            display: block;
-            font-weight: normal;
-            color: #555;
-            font-size: 9pt;
-            margin-top: 3px;
-        }
-        .time-col { 
-            width: auto;
-            font-size: 9pt;
-            white-space: nowrap;
-            font-weight: normal;
-            background-color: #ffffff;
-        }
-        .class-cell { 
-            line-height: 1.5;
-            padding: 12px 10px;
-            min-height: 55px;
-            width: auto;
-        }
-        .class-cell strong { 
-            font-size: 11pt;
-            font-weight: bold;
-            display: block;
-            margin-bottom: 6px;
-            color: #000;
-            line-height: 1.4;
-        }
-        .class-cell small { 
-            font-size: 10pt;
-            color: #444;
-            display: block;
-            line-height: 1.5;
-            margin-top: 3px;
-        }
-    </style>
-</head>
-<body>';
-
-    $html .= '<div class="header-logos">';
-
-    $html .= '<div class="logo-left"></div>';
-
-    if ($sintilloBase64) {
-        $html .= '<div class="sintillo-center"><img src="' . $sintilloBase64 . '" alt="Sintillo" width="400" style="width:400px;height:auto;"></div>';
-    } else {
-        $html .= '<div class="sintillo-center"></div>';
+    
+    $cellLogo = $headerTable->addCell(1500, $noBorderCellStyle); 
+    if (file_exists($logoPath)) {
+        $cellLogo->addImage($logoPath, [
+            'width' => 80,
+            'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::END
+        ]);
     }
 
-    if ($logoBase64) {
-        $html .= '<div class="logo-right"><img src="' . $logoBase64 . '" alt="Logo UPTAEB" width="120" style="width:120px;height:auto;"></div>';
-    } else {
-        $html .= '<div class="logo-right"></div>';
-    }
+    
+    $section->addTextBreak(1);
+    $section->addText($tituloSeccion, ['bold' => true, 'size' => 16], $centerAlign);
+    $section->addTextBreak(1);
 
-    $html .= '</div>';
+    $tableStyle = ['borderSize' => 6, 'borderColor' => '666666', 'cellMargin' => 80];
+    $phpWord->addTableStyle('scheduleTable', $tableStyle);
+    $table = $section->addTable('scheduleTable');
 
-    $html .= '<div class="header-container">';
-    $html .= '<h2>' . htmlspecialchars($tituloSeccion) . '</h2>';
-    $html .= '</div>';
-
-    $html .= '<div class="table-container"><table><thead><tr><th class="time-col">Hora</th>';
+    $table->addRow();
+    $cell = $table->addCell(1500, ['valign' => 'center']);
+    $cell->addText('Hora', $headerFontStyle, $centerAlign);
 
     foreach ($columnasHeader as $idx => $colInfo) {
+        $cell = $table->addCell(2000, ['valign' => 'center']);
         $headerText = ucfirst(mb_strtolower($colInfo['dia']));
+        $cell->addText($headerText, $headerFontStyle, $centerAlign);
+
         if ($colInfo['subgrupo']) {
-            $headerText .= '<br><small>(Grupo ' . htmlspecialchars($colInfo['subgrupo']) . ')</small>';
+            $cell->addText('(Grupo ' . htmlspecialchars($colInfo['subgrupo']) . ')', $headerSmallFontStyle, $centerAlign);
         }
         if (isset($espaciosPorColumna[$idx])) {
-            $headerText .= '<br><small>' . htmlspecialchars(_formatearEspacio($espaciosPorColumna[$idx])) . '</small>';
+            $cell->addText(htmlspecialchars(_formatearEspacio($espaciosPorColumna[$idx])), $headerSmallFontStyle, $centerAlign);
         }
-        $html .= '<th>' . $headerText . '</th>';
     }
-    $html .= '</tr></thead><tbody>';
+
+
+    $cellsToSkip = []; 
 
     if (empty($time_slots)) {
-        $html .= '<tr><td colspan="' . (count($columnasHeader) + 1) . '">No hay horario para mostrar.</td></tr>';
+        $table->addRow();
+        $table->addCell(null, ['gridSpan' => count($columnasHeader) + 1])->addText('No hay horario para mostrar.', null, $centerAlign);
     } else {
         foreach ($time_slots as $start_time => $end_time) {
-            $html .= '<tr><td class="time-col">' . date('h:i A', strtotime($start_time)) . ' a ' . date('h:i A', strtotime($end_time)) . '</td>';
+            $table->addRow();
+            
+            $timeText = date('h:i A', strtotime($start_time)) . ' a ' . date('h:i A', strtotime($end_time));
+            $table->addCell(1500, $timeCellStyle)->addText($timeText, $timeFontStyle, $centerAlign);
 
+            
             foreach ($columnasHeader as $idx => $colInfo) {
+                
+                
+                if (isset($cellsToSkip[$idx]) && $cellsToSkip[$idx] > 0) {
+                    
+                    $table->addCell(2000, ['vMerge' => 'continue', 'valign' => 'center', 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+                    $cellsToSkip[$idx]--;
+                    continue;
+                }
+
                 $keySubgrupo = $colInfo['subgrupo'] ?? 'general';
                 $clase = $grid[$start_time][$colInfo['dia']][$keySubgrupo] ?? null;
 
                 if (is_array($clase)) {
+                    
                     $rowspan = 0;
                     foreach ($time_slots as $s_start => $s_end) {
-                        if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) $rowspan++;
+                        if ($s_start >= $clase['hor_horainicio'] && $s_start < $clase['hor_horafin']) {
+                            $rowspan++;
+                        }
                     }
-                    $rowspanAttr = $rowspan > 1 ? ' rowspan="' . $rowspan . '"' : '';
-
+                    
+                    $vMerge = ($rowspan > 1) ? 'restart' : null;
+                    
+                    
+                    $cell = $table->addCell(2000, ['vMerge' => $vMerge, 'valign' => 'center', 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+                    
                     $uc_abreviada = _abreviarNombreLargo($clase['uc_nombre']);
                     $docente_texto = htmlspecialchars($clase['docente_nombre'] ?: '(Sin Docente)');
                     $subgrupo_texto = $clase['subgrupo'] ? '(G: ' . htmlspecialchars($clase['subgrupo']) . ') ' : '';
 
-                    $html .= '<td class="class-cell"' . $rowspanAttr . '>';
-                    $html .= '<strong>' . $subgrupo_texto . htmlspecialchars($uc_abreviada) . '</strong>';
-                    $html .= '<small>' . $docente_texto;
+                
+                    $cell->addText($subgrupo_texto . htmlspecialchars($uc_abreviada), $ucFontStyle, $centerAlign);
+                    $cell->addText($docente_texto, $detailFontStyle, $centerAlign);
 
                     if (!isset($espaciosPorColumna[$idx])) {
                         $espacio_formateado = _formatearEspacio($clase['espacio_nombre']);
-                        if ($espacio_formateado) $html .= '<br>' . htmlspecialchars($espacio_formateado);
-                    }
-                    $html .= '</small></td>';
-
-                    if ($rowspan > 1) {
-                        $temp_time = $start_time;
-                        for ($i = 0; $i < $rowspan - 1; $i++) {
-                            $keys = array_keys($time_slots);
-                            $current_key_index = array_search($temp_time, $keys);
-                            if ($current_key_index !== false && isset($keys[$current_key_index + 1])) {
-                                $temp_time = $keys[$current_key_index + 1];
-                                $grid[$temp_time][$colInfo['dia']][$keySubgrupo] = '__SPAN__';
-                            }
+                        if ($espacio_formateado) {
+                            $cell->addText(htmlspecialchars($espacio_formateado), $detailFontStyle, $centerAlign);
                         }
                     }
-                } elseif ($clase !== '__SPAN__') {
-                    $html .= '<td>&nbsp;</td>';
+
+                    
+                    if ($rowspan > 1) {
+                        $cellsToSkip[$idx] = $rowspan - 1;
+                    }
+
+                } else {
+                    
+                    $table->addCell(2000, $gridCellStyle)->addText('');
                 }
             }
-            $html .= '</tr>';
         }
     }
-    $html .= '</tbody></table></div></body></html>';
 
-    $fileName = 'horario_' . implode('_', $nombresSecciones) . '.doc';
+    
+    $fileName = 'horario_' . implode('_', $nombresSecciones) . '.docx';
+    
+    
+    ob_end_clean(); 
 
-    ob_end_clean();
-
-    header('Content-Type: application/msword');
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
     header('Cache-Control: max-age=0');
-
-    echo $html;
+    
+    $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+    $objWriter->save('php://output');
 }
+
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'generar_reporte') {
     $sec_codigo = $_POST['sec_codigo'] ?? null;
