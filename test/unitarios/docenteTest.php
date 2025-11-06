@@ -442,16 +442,24 @@ class DocenteTest extends TestCase
         $this->assertEquals('Fallo eliminar docente', $resultado['mensaje']);
     }
 
-    public function testActivar_Exito(): void
+    /**
+     * @dataProvider activarProvider
+     */
+    public function testActivar($exceptionMessage, string $expectedResultado, string $expectedMensaje, string $assertionType): void
     {
         $docente = $this->createDocenteMock();
         $docente->setCedula(321);
 
         $stmtUpdate = $this->makeStatement();
-        $stmtUpdate->expects($this->once())
+        $executeExpectation = $stmtUpdate->expects($this->once())
             ->method('execute')
-            ->with([':doc_cedula' => 321])
-            ->willReturn(true);
+            ->with([':doc_cedula' => 321]);
+
+        if ($exceptionMessage !== null) {
+            $executeExpectation->willThrowException(new Exception($exceptionMessage));
+        } else {
+            $executeExpectation->willReturn(true);
+        }
 
         $this->pdoMock->expects($this->once())
             ->method('setAttribute')
@@ -463,32 +471,30 @@ class DocenteTest extends TestCase
 
         $resultado = $docente->Activar();
 
-        $this->assertEquals('activar', $resultado['resultado']);
-        $this->assertStringContainsString('Registro Activo', $resultado['mensaje']);
+        $this->assertEquals($expectedResultado, $resultado['resultado']);
+        if ($assertionType === 'contains') {
+            $this->assertStringContainsString($expectedMensaje, $resultado['mensaje']);
+        } else {
+            $this->assertEquals($expectedMensaje, $resultado['mensaje']);
+        }
     }
 
-    public function testActivar_Error(): void
+    public function activarProvider(): array
     {
-        $docente = $this->createDocenteMock();
-        $docente->setCedula(321);
-
-        $stmtUpdate = $this->makeStatement();
-        $stmtUpdate->expects($this->once())
-            ->method('execute')
-            ->willThrowException(new Exception('Fallo activar docente'));
-
-        $this->pdoMock->expects($this->once())
-            ->method('setAttribute')
-            ->with(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->with($this->stringContains('UPDATE tbl_docente SET doc_estado = 1'))
-            ->willReturn($stmtUpdate);
-
-        $resultado = $docente->Activar();
-
-        $this->assertEquals('error', $resultado['resultado']);
-        $this->assertEquals('Fallo activar docente', $resultado['mensaje']);
+        return [
+            'activar_exito' => [
+                null,
+                'activar',
+                'Registro Activo',
+                'contains',
+            ],
+            'activar_error' => [
+                'Fallo activar docente',
+                'error',
+                'Fallo activar docente',
+                'equals',
+            ],
+        ];
     }
 
     public function testListar_Exito(): void
@@ -630,7 +636,10 @@ class DocenteTest extends TestCase
         $this->assertFalse($docente->Existe(10));
     }
 
-    public function testObtenerHorasActividad_Encontradas(): void
+    /**
+     * @dataProvider obtenerHorasActividadProvider
+     */
+    public function testObtenerHorasActividad_Scenarios($fetchResult, string $expectedResultado, array $expectedMensaje): void
     {
         $docente = $this->createDocenteMock();
 
@@ -639,13 +648,7 @@ class DocenteTest extends TestCase
             ->method('execute')
             ->with([':doc_cedula' => 200])
             ->willReturn(true);
-        $stmt->method('fetch')->willReturn([
-            'act_academicas' => '5',
-            'act_creacion_intelectual' => '3',
-            'act_integracion_comunidad' => '2',
-            'act_gestion_academica' => '1',
-            'act_otras' => '0',
-        ]);
+        $stmt->method('fetch')->willReturn($fetchResult);
 
         $this->pdoMock->expects($this->once())
             ->method('prepare')
@@ -654,27 +657,42 @@ class DocenteTest extends TestCase
 
         $resultado = $docente->ObtenerHorasActividad(200);
 
-        $this->assertEquals('consultar_horas', $resultado['resultado']);
-        $this->assertEquals('5', $resultado['mensaje']['act_academicas']);
+        $this->assertEquals($expectedResultado, $resultado['resultado']);
+        $this->assertSame($expectedMensaje, $resultado['mensaje']);
     }
 
-    public function testObtenerHorasActividad_NoEncontradas(): void
+    public function obtenerHorasActividadProvider(): array
     {
-        $docente = $this->createDocenteMock();
-
-        $stmt = $this->makeStatement();
-        $stmt->method('execute')->willReturn(true);
-        $stmt->method('fetch')->willReturn(false);
-
-        $this->pdoMock->expects($this->once())
-            ->method('prepare')
-            ->with($this->stringContains('SELECT act_academicas'))
-            ->willReturn($stmt);
-
-        $resultado = $docente->ObtenerHorasActividad(200);
-
-        $this->assertEquals('horas_no_encontradas', $resultado['resultado']);
-        $this->assertEquals('0', $resultado['mensaje']['act_academicas']);
+        return [
+            'horas_encontradas' => [
+                [
+                    'act_academicas' => '5',
+                    'act_creacion_intelectual' => '3',
+                    'act_integracion_comunidad' => '2',
+                    'act_gestion_academica' => '1',
+                    'act_otras' => '0',
+                ],
+                'consultar_horas',
+                [
+                    'act_academicas' => '5',
+                    'act_creacion_intelectual' => '3',
+                    'act_integracion_comunidad' => '2',
+                    'act_gestion_academica' => '1',
+                    'act_otras' => '0',
+                ],
+            ],
+            'horas_no_encontradas' => [
+                false,
+                'horas_no_encontradas',
+                [
+                    'act_academicas' => '0',
+                    'act_creacion_intelectual' => '0',
+                    'act_integracion_comunidad' => '0',
+                    'act_gestion_academica' => '0',
+                    'act_otras' => '0',
+                ],
+            ],
+        ];
     }
 
     public function testObtenerHorasActividad_Error(): void

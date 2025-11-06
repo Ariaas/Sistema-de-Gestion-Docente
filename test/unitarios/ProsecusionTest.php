@@ -425,28 +425,24 @@ class ProsecusionTest extends TestCase
         $this->assertStringContainsString('Error al calcular la cantidad', $resultado['mensaje']);
     }
 
-    public function testRealizarProsecusion_CantidadInvalida_Cero()
+    /**
+     * @dataProvider cantidadesInvalidasProvider
+     */
+    public function testRealizarProsecusion_CantidadInvalida($cantidad)
     {
-        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 0);
+        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, $cantidad);
 
         $this->assertEquals('error', $resultado['resultado']);
         $this->assertEquals('La cantidad de estudiantes debe ser mayor a cero.', $resultado['mensaje']);
     }
 
-    public function testRealizarProsecusion_CantidadInvalida_Negativa()
+    public function cantidadesInvalidasProvider(): array
     {
-        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, -5);
-
-        $this->assertEquals('error', $resultado['resultado']);
-        $this->assertEquals('La cantidad de estudiantes debe ser mayor a cero.', $resultado['mensaje']);
-    }
-
-    public function testRealizarProsecusion_CantidadInvalida_NoNumerico()
-    {
-        $resultado = $this->prosecusion->RealizarProsecusion(self::SECCION_ORIGEN, 'abc');
-
-        $this->assertEquals('error', $resultado['resultado']);
-        $this->assertEquals('La cantidad de estudiantes debe ser mayor a cero.', $resultado['mensaje']);
+        return [
+            'cantidad_cero' => [0],
+            'cantidad_negativa' => [-5],
+            'cantidad_no_numerica' => ['abc'],
+        ];
     }
 
     public function testRealizarProsecusion_CantidadSuperaDisponible()
