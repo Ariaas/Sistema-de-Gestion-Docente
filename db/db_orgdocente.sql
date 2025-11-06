@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 02-11-2025 a las 07:17:16
+-- Tiempo de generación: 06-11-2025 a las 04:22:22
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -289,23 +289,6 @@ INSERT INTO `docente_horario` (`doc_cedula`, `sec_codigo`, `ani_anio`, `ani_tipo
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `per_aprobados`
---
-
-CREATE TABLE `per_aprobados` (
-  `ani_anio` int(11) NOT NULL,
-  `ani_tipo` varchar(10) NOT NULL,
-  `fase_numero` tinyint(1) NOT NULL,
-  `uc_codigo` varchar(30) NOT NULL,
-  `sec_codigo` varchar(30) NOT NULL,
-  `per_cantidad` int(11) NOT NULL DEFAULT 0,
-  `per_aprobados` int(11) NOT NULL DEFAULT 0,
-  `pa_estado` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `tbl_actividad`
 --
 
@@ -338,23 +321,6 @@ CREATE TABLE `tbl_anio` (
 
 INSERT INTO `tbl_anio` (`ani_anio`, `ani_tipo`, `ani_activo`, `ani_estado`) VALUES
 (2025, 'regular', 1, 1);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `tbl_aprobados`
---
-
-CREATE TABLE `tbl_aprobados` (
-  `apro_estado` tinyint(1) NOT NULL,
-  `apro_cantidad` int(11) NOT NULL DEFAULT 0,
-  `uc_codigo` varchar(30) NOT NULL,
-  `sec_codigo` varchar(30) NOT NULL,
-  `ani_anio` int(11) NOT NULL,
-  `ani_tipo` varchar(10) NOT NULL,
-  `fase_numero` tinyint(1) NOT NULL,
-  `doc_cedula` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -399,7 +365,6 @@ INSERT INTO `tbl_area` (`area_nombre`, `area_estado`, `area_descripcion`) VALUES
 --
 
 CREATE TABLE `tbl_bloque_eliminado` (
-  `bloque_eliminado_id` int(11) NOT NULL,
   `sec_codigo` varchar(30) NOT NULL,
   `ani_anio` int(11) NOT NULL,
   `ani_tipo` varchar(10) NOT NULL,
@@ -414,7 +379,6 @@ CREATE TABLE `tbl_bloque_eliminado` (
 --
 
 CREATE TABLE `tbl_bloque_personalizado` (
-  `bloque_id` int(11) NOT NULL,
   `sec_codigo` varchar(30) NOT NULL,
   `ani_anio` int(11) NOT NULL,
   `ani_tipo` varchar(10) NOT NULL,
@@ -422,7 +386,6 @@ CREATE TABLE `tbl_bloque_personalizado` (
   `tur_horafin` varchar(5) NOT NULL,
   `bloque_sintetico` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 -- --------------------------------------------------------
 
@@ -1596,14 +1559,6 @@ ALTER TABLE `docente_horario`
   ADD KEY `sec_codigo` (`sec_codigo`,`ani_anio`,`ani_tipo`);
 
 --
--- Indices de la tabla `per_aprobados`
---
-ALTER TABLE `per_aprobados`
-  ADD KEY `ani_anio` (`ani_anio`,`ani_tipo`),
-  ADD KEY `sec_codigo` (`sec_codigo`,`ani_anio`,`ani_tipo`),
-  ADD KEY `uc_codigo` (`uc_codigo`);
-
---
 -- Indices de la tabla `tbl_actividad`
 --
 ALTER TABLE `tbl_actividad`
@@ -1616,15 +1571,6 @@ ALTER TABLE `tbl_anio`
   ADD PRIMARY KEY (`ani_anio`,`ani_tipo`);
 
 --
--- Indices de la tabla `tbl_aprobados`
---
-ALTER TABLE `tbl_aprobados`
-  ADD KEY `ani_anio` (`ani_anio`,`ani_tipo`),
-  ADD KEY `doc_cedula` (`doc_cedula`),
-  ADD KEY `sec_codigo` (`sec_codigo`,`ani_anio`,`ani_tipo`),
-  ADD KEY `uc_codigo` (`uc_codigo`);
-
---
 -- Indices de la tabla `tbl_area`
 --
 ALTER TABLE `tbl_area`
@@ -1634,15 +1580,16 @@ ALTER TABLE `tbl_area`
 -- Indices de la tabla `tbl_bloque_eliminado`
 --
 ALTER TABLE `tbl_bloque_eliminado`
-  ADD PRIMARY KEY (`bloque_eliminado_id`),
+  ADD PRIMARY KEY (`sec_codigo`,`ani_anio`,`ani_tipo`,`tur_horainicio`),
   ADD UNIQUE KEY `uk_bloque_eliminado` (`sec_codigo`,`ani_anio`,`ani_tipo`,`tur_horainicio`),
-  ADD KEY `idx_seccion_anio` (`sec_codigo`,`ani_anio`,`ani_tipo`);
+  ADD KEY `idx_seccion_anio` (`sec_codigo`,`ani_anio`,`ani_tipo`),
+  ADD KEY `tbl_eliminado_seccion` (`ani_anio`,`ani_tipo`,`sec_codigo`);
 
 --
 -- Indices de la tabla `tbl_bloque_personalizado`
 --
 ALTER TABLE `tbl_bloque_personalizado`
-  ADD PRIMARY KEY (`bloque_id`),
+  ADD PRIMARY KEY (`sec_codigo`,`ani_anio`,`ani_tipo`,`tur_horainicio`),
   ADD UNIQUE KEY `uk_bloque` (`sec_codigo`,`ani_anio`,`ani_tipo`,`tur_horainicio`);
 
 --
@@ -1765,22 +1712,6 @@ ALTER TABLE `uc_malla`
   ADD KEY `mal_codigo` (`mal_codigo`);
 
 --
--- AUTO_INCREMENT de las tablas volcadas
---
-
---
--- AUTO_INCREMENT de la tabla `tbl_bloque_eliminado`
---
-ALTER TABLE `tbl_bloque_eliminado`
-  MODIFY `bloque_eliminado_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `tbl_bloque_personalizado`
---
-ALTER TABLE `tbl_bloque_personalizado`
-  MODIFY `bloque_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
-
---
 -- Restricciones para tablas volcadas
 --
 
@@ -1799,27 +1730,16 @@ ALTER TABLE `docente_horario`
   ADD CONSTRAINT `docente_horario_ibfk_2` FOREIGN KEY (`sec_codigo`,`ani_anio`,`ani_tipo`) REFERENCES `tbl_horario` (`sec_codigo`, `ani_anio`, `ani_tipo`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `per_aprobados`
---
-ALTER TABLE `per_aprobados`
-  ADD CONSTRAINT `per_aprobados_ibfk_1` FOREIGN KEY (`ani_anio`,`ani_tipo`) REFERENCES `tbl_anio` (`ani_anio`, `ani_tipo`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `per_aprobados_ibfk_2` FOREIGN KEY (`sec_codigo`,`ani_anio`,`ani_tipo`) REFERENCES `tbl_seccion` (`sec_codigo`, `ani_anio`, `ani_tipo`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `per_aprobados_ibfk_3` FOREIGN KEY (`uc_codigo`) REFERENCES `tbl_uc` (`uc_codigo`) ON UPDATE CASCADE;
-
---
 -- Filtros para la tabla `tbl_actividad`
 --
 ALTER TABLE `tbl_actividad`
   ADD CONSTRAINT `tbl_actividad_ibfk_1` FOREIGN KEY (`doc_cedula`) REFERENCES `tbl_docente` (`doc_cedula`) ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `tbl_aprobados`
+-- Filtros para la tabla `tbl_bloque_eliminado`
 --
-ALTER TABLE `tbl_aprobados`
-  ADD CONSTRAINT `tbl_aprobados_ibfk_1` FOREIGN KEY (`ani_anio`,`ani_tipo`) REFERENCES `tbl_anio` (`ani_anio`, `ani_tipo`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `tbl_aprobados_ibfk_2` FOREIGN KEY (`doc_cedula`) REFERENCES `tbl_docente` (`doc_cedula`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `tbl_aprobados_ibfk_3` FOREIGN KEY (`sec_codigo`,`ani_anio`,`ani_tipo`) REFERENCES `tbl_seccion` (`sec_codigo`, `ani_anio`, `ani_tipo`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `tbl_aprobados_ibfk_4` FOREIGN KEY (`uc_codigo`) REFERENCES `tbl_uc` (`uc_codigo`) ON UPDATE CASCADE;
+ALTER TABLE `tbl_bloque_eliminado`
+  ADD CONSTRAINT `tbl_eliminado_seccion` FOREIGN KEY (`ani_anio`,`ani_tipo`,`sec_codigo`) REFERENCES `tbl_seccion` (`ani_anio`, `ani_tipo`, `sec_codigo`) ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `tbl_bloque_personalizado`

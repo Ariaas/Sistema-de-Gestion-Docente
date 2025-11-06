@@ -115,16 +115,6 @@ $docente_asignado = isset($_SESSION['usu_cedula']) && !empty($_SESSION['usu_cedu
                     </div>
                 <?php endif; ?>
 
-                <?php if ($docente_asignado): ?>
-                    <div class="col">
-                        <a href="?pagina=archivo" class="dashboard-card">
-                            <div class="icon-circle">
-                                <img src="public/assets/icons/folder-open-solid.svg" alt="Resguardar Notas">
-                            </div>
-                            <h5>Cargar Notas Definitivas</h5>
-                        </a>
-                    </div>
-                <?php endif; ?>
 
                 <?php if (tiene_permiso_accion('seccion', 'registrar', $permisos) && tiene_permiso_accion('seccion', 'modificar', $permisos)) : ?>
                     <div class="col">
