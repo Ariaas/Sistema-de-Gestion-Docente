@@ -1,5 +1,9 @@
 <?php
-require_once('model/db_bitacora.php');
+
+namespace App\Model;
+
+use PDO;
+use Exception;
 
 class Usuario extends Connection_bitacora
 {

@@ -5,8 +5,8 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once("vendor/autoload.php");
-require_once("model/reportes/rhordocente.php");
 
+use App\Model\Reportes\ReporteHorarioDocente;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -179,17 +179,10 @@ if (isset($_POST['generar_rhd_report'])) {
           $activeShifts[ucfirst(strtolower($turno['tur_nombre']))] = true;
         }
       }
-     
-            // ==========================================================
-      // CORRECCIÓN 1: Usar ceil() en lugar de round()
-            // ==========================================================
+  
       $diffMinutes = ($horaFin->getTimestamp() - $horaInicio->getTimestamp()) / 60;
-      $bloques_span = ceil($diffMinutes / 40); // <-- CORREGIDO
-      if ($bloques_span < 1) $bloques_span = 1;
-            // ==========================================================
-      // FIN CORRECCIÓN 1
-            // ==========================================================
-
+      $bloques_span = ceil($diffMinutes / 40); 
+      if ($bloques_span < 1) $bloques_span = 1;        
       $subgrupos_unicos = array_unique($uc_info['subgrupos']);
       sort($subgrupos_unicos);
       $subgrupoDisplay = !empty($subgrupos_unicos) ? " G(" . implode(', ', $subgrupos_unicos) . ")" : "";
@@ -210,7 +203,7 @@ if (isset($_POST['generar_rhd_report'])) {
             $nombreUC_Abreviado = abreviarNombreUC($item_base['uc_nombre']);
             $contenidoCeldaSimple = $nombreUC_Abreviado . $subgrupoDisplay . "\n" . $seccionesFormateadas . "\n" . $ambientesFormateados;
 
-            if (!isset($gridData[$dia_key][$horaInicio->format('H:i:s')])) { // Usar H:i:s para consistencia
+            if (!isset($gridData[$dia_key][$horaInicio->format('H:i:s')])) { 
                 $gridData[$dia_key][$horaInicio->format('H:i:s')] = [];
             }
            
@@ -237,7 +230,7 @@ if (isset($_POST['generar_rhd_report'])) {
        
         while ($tiempoActual < $tiempoFin) {
             $inicioBloque = clone $tiempoActual;
-            $hora_db_key = $inicioBloque->format('H:i:s'); // Usar H:i:s
+            $hora_db_key = $inicioBloque->format('H:i:s'); 
             $todos_los_bloques_ordenados[] = $hora_db_key;
            
             $tiempoActual->add(new DateInterval('PT40M'));
@@ -250,7 +243,7 @@ if (isset($_POST['generar_rhd_report'])) {
     foreach ($bloques_personalizados as $bloque) {
         $hora_inicio = new DateTime($bloque['tur_horainicio']);
         $hora_fin = new DateTime($bloque['tur_horafin']);
-        $hora_db_key = $hora_inicio->format('H:i:s'); // Usar H:i:s
+        $hora_db_key = $hora_inicio->format('H:i:s'); 
         $display_string = $hora_inicio->format('h:i a') . ' a ' . $hora_fin->format('h:i a');
        
         $hora_inicio_str = $hora_inicio->format('H:i:s');
@@ -270,7 +263,7 @@ if (isset($_POST['generar_rhd_report'])) {
     }
    
    foreach ($bloques_eliminados as $hora_eliminada) {
-        $hora_key = (new DateTime($hora_eliminada))->format('H:i:s'); // Usar H:i:s
+        $hora_key = (new DateTime($hora_eliminada))->format('H:i:s'); 
         foreach ($bloques_por_turno as &$bloques) {
             unset($bloques[$hora_key]);
         }
@@ -284,21 +277,18 @@ if (isset($_POST['generar_rhd_report'])) {
     $todos_los_bloques_ordenados = array_values(array_unique($todos_los_bloques_ordenados));
     sort($todos_los_bloques_ordenados);
    
-    // $occupancyMap contendrá todas las celdas de 40min ocupadas por clases
     $occupancyMap = [];
     $dayOccupancyCount = array_fill_keys(array_values($day_map), 0);
    
     foreach ($gridData as $dia => $horas) {
-        foreach ($horas as $hora_inicio_clase_str => $clases) { // '07:00:00'
+        foreach ($horas as $hora_inicio_clase_str => $clases) { 
             if (!empty($clases)) {
-                $span = $clases[0]['span']; // Span ya está corregido con ceil()
+                $span = $clases[0]['span']; 
                 $dayOccupancyCount[$dia] += $span;
                
-                // Encontrar el índice de esta clase en la lista ordenada de todos los bloques
                 $startIndex = array_search($hora_inicio_clase_str, $todos_los_bloques_ordenados);
 
                 if ($startIndex !== false) {
-                    // Marcar este bloque y los N siguientes como ocupados
                     for ($i = 0; $i < $span; $i++) {
                         $blockIndexToOccupy = $startIndex + $i;
                         if (isset($todos_los_bloques_ordenados[$blockIndexToOccupy])) {
@@ -320,10 +310,6 @@ if (isset($_POST['generar_rhd_report'])) {
         ['nombre' => 'GESTIÓN ACADÉMICA', 'horas' => $otrasActividades['act_gestion_academica'] ?? 0],
     ];
 
-
-    // ======================================================================
-    // CORRECCIÓN 2: Algoritmo de asignación de actividades
-    // ======================================================================
     foreach ($actividadesParaColocar as $actividad) {
      $horasRestantes = intval($actividad['horas']);
      if ($horasRestantes <= 0) continue;
@@ -331,12 +317,10 @@ if (isset($_POST['generar_rhd_report'])) {
      foreach ($diasDisponibles as $dia) {
         if ($horasRestantes <= 0) break;
        
-        // Iterar sobre los turnos (Mañana, Tarde, Noche) en orden
         foreach ($bloques_por_turno as $turno => $bloques) {
             if ($horasRestantes <= 0) break;
-            if (!isset($activeShifts[$turno])) continue; // Solo en turnos activos
+            if (!isset($activeShifts[$turno])) continue; 
            
-            // Obtener los índices globales de los bloques que pertenecen a ESTE turno
             $indicesTurno = [];
             foreach ($todos_los_bloques_ordenados as $index => $hora_db) {
                 if (array_key_exists($hora_db, $bloques)) {
@@ -344,21 +328,18 @@ if (isset($_POST['generar_rhd_report'])) {
                 }
             }
 
-            // Iterar sobre los índices de este turno
             $i = 0;
             while ($i < count($indicesTurno) && $horasRestantes > 0) {
-                $index_global_inicio = $indicesTurno[$i]; // Índice en $todos_los_bloques_ordenados
-                $hora_db = $todos_los_bloques_ordenados[$index_global_inicio]; // '07:00:00'
+                $index_global_inicio = $indicesTurno[$i]; 
+                $hora_db = $todos_los_bloques_ordenados[$index_global_inicio]; 
                
-                // 1. Comprobar si este bloque inicial está libre
                 if (!empty($occupancyMap[$dia][$hora_db])) {
                     $i++;
-                    continue; // Está ocupado, pasar al siguiente
+                    continue; 
                 }
 
-                // 2. Buscar bloques libres consecutivos A PARTIR de este
                 $bloquesLibresConsecutivos = 0;
-                $j = $i; // $j es el índice de $indicesTurno (e.g., 0, 1, 2...)
+                $j = $i; 
                 $ultimo_bloque_time = null;
 
                 while ($j < count($indicesTurno)) {
@@ -366,44 +347,35 @@ if (isset($_POST['generar_rhd_report'])) {
                     $hora_actual_str = $todos_los_bloques_ordenados[$idx_global_actual];
                     $hora_actual_time = new DateTime($hora_actual_str);
 
-                    // Comprobar si es temporalmente consecutivo
                     if ($j > $i) {
                         $expected_start_time = (clone $ultimo_bloque_time)->add(new DateInterval('PT40M'));
-                        // Si la hora actual no es la esperada (40min después), la cadena se rompe
                         if ($hora_actual_time != $expected_start_time) {
                             break;
                         }
                     }
 
-                    // Comprobar si está ocupado por una clase
                     if (!empty($occupancyMap[$dia][$hora_actual_str])) {
-                        break; // Cadena rota
+                        break; 
                     }
                    
-                    // Si llegamos aquí, el bloque está libre y es consecutivo
                     $bloquesLibresConsecutivos++;
-                    $ultimo_bloque_time = $hora_actual_time; // Guardar para la próxima iteración
+                    $ultimo_bloque_time = $hora_actual_time; 
                     $j++;
 
-                    // Si ya encontramos suficientes, parar
                     if ($bloquesLibresConsecutivos >= $horasRestantes) {
                         break;
                     }
                 }
-                // --- Fin del buscador de bloques ---
 
-                // 3. Si encontramos huecos, colocar la actividad
                 if ($bloquesLibresConsecutivos > 0) {
                     $bloquesAColocar = min($bloquesLibresConsecutivos, $horasRestantes);
                    
-                    // Añadir al grid en la hora de inicio ($hora_db)
                     $gridData[$dia][$hora_db][] = [
                         'content' => $actividad['nombre'], 
                         'span' => $bloquesAColocar,
                         'type' => 'activity'
                     ];
                    
-                    // 4. Marcar los bloques recién asignados como ocupados
                     for ($k = 0; $k < $bloquesAColocar; $k++) {
                         $idx_global_a_ocupar = $indicesTurno[$i + $k];
                         $hora_a_ocupar = $todos_los_bloques_ordenados[$idx_global_a_ocupar];
@@ -411,17 +383,14 @@ if (isset($_POST['generar_rhd_report'])) {
                     }
                    
                     $horasRestantes -= $bloquesAColocar;
-                    $i += $bloquesAColocar; // Saltar el bucle principal más allá de los bloques llenados
+                    $i += $bloquesAColocar; 
                 } else {
-                    $i++; // No se encontraron bloques libres a partir de aquí, probar el siguiente
+                    $i++; 
                 }
-            } // Fin del while $i
-        } // Fin del foreach $bloques_por_turno
-    } // Fin del foreach $diasDisponibles
-  } // Fin del foreach $actividadesParaColocar
-    // ======================================================================
-    // FIN CORRECCIÓN 2
-    // ======================================================================
+            } 
+        } 
+    } 
+  } 
  
   $spreadsheet = new Spreadsheet();
   $sheet = $spreadsheet->getActiveSheet();
@@ -437,8 +406,6 @@ if (isset($_POST['generar_rhd_report'])) {
   $styleSectionHeader = ['font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FF000000']], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE0E0E0']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
   $allBorders = ['borders' => [ 'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']], ],];
  
-  // Se eliminó el bucle setAutoSize(true)
-
   $logoPath = $_SERVER['DOCUMENT_ROOT'] . '/Sistema-de-Gestion-Docente\public\assets\img\logo_uptaeb.png';
 
 
@@ -620,9 +587,6 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
   $sheet->mergeCells('A'.$row.':H'.$row)->setCellValue('A'.$row, '19. HORARIO: ' . $turnosString)->getStyle('A'.$row)->applyFromArray($styleSectionHeader);
   $row++;
  
-  // ==========================================================
-  // CORRECCIÓN 3: Ancho de columnas fijo (reemplaza setAutoSize)
-  // ==========================================================
   $diasDeLaSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
   $sheet->setCellValue('A'.$row, 'Hora');
@@ -651,10 +615,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
 
   $sheet->getStyle('A'.$row.':H'.$row)->applyFromArray($styleBold)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
   $row++;
-  // ==========================================================
-  // FIN CORRECCIÓN 3
-  // ==========================================================
- 
+
   $slotsToDisplay = [];
   foreach ($bloques_por_turno as $nombreTurno => $bloques) {
     if (isset($activeShifts[$nombreTurno])) {
@@ -663,7 +624,7 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
   }
  
   foreach ($gridData as $dia => $horas) {
-    foreach ($horas as $hora_db_key => $clases) { // $hora_db_key es H:i:s
+    foreach ($horas as $hora_db_key => $clases) { 
       if (!empty($clases) && !isset($slotsToDisplay[$hora_db_key])) {
         $primera_clase_data = $clases[0]['data_original'];
         $hora_inicio_dt = new DateTime($primera_clase_data['hor_horainicio']);
@@ -683,16 +644,13 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
  
   $celdasOcupadas = []; 
 
-  foreach($slotsToDisplay as $hora_db => $rango_hora) { // $hora_db es H:i:s
+  foreach($slotsToDisplay as $hora_db => $rango_hora) { 
 
    
     $sheet->setCellValue('A'.$row, $rango_hora);
     $sheet->getStyle('A'.$row)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER)->setHorizontal(Alignment::HORIZONTAL_CENTER);
     $colIndex = 1;
 
-    // =====================================================================
-    //  INICIO DEL BLOQUE CORREGIDO (REEMPLAZA EL BUCLE ANTERIOR)
-    // =====================================================================
     foreach($diasDeLaSemana as $dia) {
         $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
         
@@ -703,39 +661,35 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
 
         $clases_en_celda = $gridData[$dia][$hora_db] ?? null;
         
-        if ($clases_en_celda) { // <-- Este 'if' envuelve la lógica
+        if ($clases_en_celda) { 
             
             $primera_clase = $clases_en_celda[0];
-            $span = $primera_clase['span']; // Este es el 'bloque_span' (ej: 2)
+            $span = $primera_clase['span'];
 
-            // --- Lógica de la corrección de span ---
             if ($span > 1) {
                 
-                // 1. Encontrar los bloques que esta clase OCUPA
                 $startIndex = array_search($hora_db, $todos_los_bloques_ordenados);
                 $bloques_a_ocupar = [];
                 if ($startIndex !== false) {
                     for ($i = 0; $i < $span; $i++) {
                         $blockIndexToOccupy = $startIndex + $i;
                         if (isset($todos_los_bloques_ordenados[$blockIndexToOccupy])) {
-                             // Asegurarse de que los bloques sean temporalmente consecutivos
                             if ($i > 0) {
                                 $last_time = new DateTime($todos_los_bloques_ordenados[$blockIndexToOccupy - 1]);
                                 $current_time = new DateTime($todos_los_bloques_ordenados[$blockIndexToOccupy]);
                                 $expected_time = $last_time->add(new DateInterval('PT40M'));
                                 
                                 if ($current_time != $expected_time) {
-                                    break; // La cadena de bloques de 40 min se rompió
+                                    break; 
                                 }
                             }
                             $bloques_a_ocupar[] = $todos_los_bloques_ordenados[$blockIndexToOccupy];
                         } else {
-                            break; // No hay más bloques en la lista ordenada
+                            break;
                         }
                     }
                 }
 
-                // 2. Contar cuántos de estos bloques son FILAS REALES en $slotsToDisplay
                 $filas_reales_a_spanear = 0;
                 foreach ($bloques_a_ocupar as $bloque_key) {
                     if (isset($slotsToDisplay[$bloque_key])) {
@@ -743,12 +697,10 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
                     }
                 }
 
-                // 3. Usar ese conteo real para el merge
                 if ($filas_reales_a_spanear > 1) {
                     $sheet->mergeCells($colLetter.$row.':'.$colLetter.($row + $filas_reales_a_spanear - 1));
                 }
 
-                // 4. Marcar celdas futuras como ocupadas (usando los bloques reales)
                 for ($i = 1; $i < count($bloques_a_ocupar); $i++) {
                      if (isset($bloques_a_ocupar[$i])) {
                            $next_hora_db = $bloques_a_ocupar[$i];
@@ -757,7 +709,6 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
                 }
 
             }
-            // --- Fin de la lógica de corrección de span ---
             
             $contenidos = [];
             foreach ($clases_en_celda as $clase) {
@@ -772,19 +723,13 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
              $sheet->getStyle($colLetter.$row)->getFont()->setSize(9);
             }
             
-        } // <-- Este '}' cierra el 'if ($clases_en_celda)'
+        } 
         
-        // Esta línea aplica estilo a TODAS las celdas de la fila (llenas o vacías)
         $sheet->getStyle($colLetter.$row)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_CENTER)->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         $colIndex++;
-    } // <-- Este '}' cierra el 'foreach($diasDeLaSemana...)'
-    // =====================================================================
-    //  FIN DEL BLOQUE CORREGIDO
-    // =====================================================================
-   
-    // --- INICIO DE CÁLCULO DE ALTURA CORREGIDO ---
-    $maxLines = 1; // 1 es el mínimo (incluso una celda vacía tiene 1 línea)
+    } 
+    $maxLines = 1; 
     foreach($diasDeLaSemana as $dia) {
         $clases_en_celda = $gridData[$dia][$hora_db] ?? null;
        
@@ -795,26 +740,20 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
             }
             $contenido_final = implode("\n----\n", $contenidos);
 
-            // 1. Contar los saltos de línea explícitos
             $lineas_explicitas = explode("\n", $contenido_final);
             $totalLineasEstimadas = 0;
 
-            // 2. Estimar el ajuste de texto (wrapping) para cada línea
             foreach ($lineas_explicitas as $linea) {
-                // Basado en un ancho de columna de 25, que son ~30-35 caracteres.
-                // Usamos 30 para ser conservadores.
                 $lineas_ajustadas = ceil(mb_strlen($linea) / 30);
-                $totalLineasEstimadas += ($lineas_ajustadas > 0) ? $lineas_ajustadas : 1; // Al menos 1 línea
+                $totalLineasEstimadas += ($lineas_ajustadas > 0) ? $lineas_ajustadas : 1; 
             }
            
             $maxLines = max($maxLines, $totalLineasEstimadas);
         }
     }
    
-    // 3. Aumentar el multiplicador de altura por línea (16 es más seguro que 12)
     $rowHeight = max(30, $maxLines * 16); 
     $sheet->getRowDimension($row)->setRowHeight($rowHeight);
-    // --- FIN DE CÁLCULO DE ALTURA CORREGIDO ---
     $row++;
   }
  

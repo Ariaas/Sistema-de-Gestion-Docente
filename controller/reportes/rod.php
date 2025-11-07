@@ -3,7 +3,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 require_once("vendor/autoload.php");
-require_once("model/reportes/rod.php");
+
+use App\Model\Reportes\Rod;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;

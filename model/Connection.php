@@ -1,9 +1,12 @@
 <?php
-require_once('config/configBitacora.php');
 
-class Connection_bitacora extends PDO
+namespace App\Model;
+
+use PDO;
+use PDOException;
+
+class Connection extends PDO
 {
-    /** @var PDO|null PDO compartido para la base de datos de bitácora */
     private static $sharedConex = null;
 
     public function __construct()
@@ -15,9 +18,9 @@ class Connection_bitacora extends PDO
 
     private function initSharedConnection()
     {
-        $conexstring = "mysql:host=" . _BITA_DB_HOST_ . ";dbname=" . _BITA_DB_NAME_ . ";charset=utf8";
+        $conexstring = "mysql:host=" . _DB_HOST_ . ";dbname=" . _DB_NAME_ . ";charset=utf8";
         try {
-            self::$sharedConex = new PDO($conexstring, _BITA_DB_USER_, _BITA_DB_PASS_);
+            self::$sharedConex = new PDO($conexstring, _DB_USER_, _DB_PASS_);
             self::$sharedConex->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             if (defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY')) {
                 self::$sharedConex->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
@@ -26,8 +29,7 @@ class Connection_bitacora extends PDO
             die("Conexión Fallida: " . $e->getMessage());
         }
     }
-
-    public function Con()
+    protected function Con()
     {
         if (self::$sharedConex === null) {
             $this->initSharedConnection();

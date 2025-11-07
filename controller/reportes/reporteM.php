@@ -3,11 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!is_file("model/reportes/reporteM.php")) {
-    echo "Falta definir la clase del modelo: reporteM.php";
-    exit;
-}
-require_once("model/reportes/reporteM.php");
+use App\Model\Reportes\Reporte;
 
 if (is_file("views/reportes/reporteM.php")) {
 

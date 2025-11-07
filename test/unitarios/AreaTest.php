@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/area.php';
+use App\Model\Area;
 
 class AreaTest extends TestCase
 {

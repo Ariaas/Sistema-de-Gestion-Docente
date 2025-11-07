@@ -4,8 +4,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 require_once("vendor/autoload.php");
-require_once("model/reportes/rcuentacupos.php");
 
+use App\Model\Reportes\CuentaCupos;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;

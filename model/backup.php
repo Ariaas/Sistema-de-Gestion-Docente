@@ -1,9 +1,14 @@
-<?php 
-require_once("model/dbconnection.php");
-require_once("config/config.php");
-require_once("model/db_bitacora.php");
-require_once("config/configBitacora.php");
+<?php
 
+namespace App\Model;
+
+use PDO;
+use Exception;
+use ZipArchive;
+use RuntimeException;
+
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/configBitacora.php';
 
 class Mantenimiento extends Connection
 {

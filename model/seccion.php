@@ -1,5 +1,11 @@
 <?php
-require_once('model/dbconnection.php');
+
+namespace App\Model;
+
+use PDO;
+use Exception;
+use DateTime;
+use DateInterval;
 
 class Seccion extends Connection
 {
@@ -408,7 +414,6 @@ class Seccion extends Connection
             return ['resultado' => 'unir_horarios_ok', 'mensaje' => '¡Horarios unidos y actualizados correctamente!'];
         } catch (Exception $e) {
             if ($co->inTransaction()) $co->rollBack();
-            // Log full exception for debugging in test runs
             error_log("Exception en UnirHorarios: " . $e->getMessage());
             error_log($e->getTraceAsString());
             return ['resultado' => 'error', 'mensaje' => 'Error al unir los horarios: ' . $e->getMessage()];

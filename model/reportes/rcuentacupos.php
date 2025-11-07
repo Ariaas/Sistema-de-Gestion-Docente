@@ -1,7 +1,11 @@
 <?php
 
+namespace App\Model\Reportes;
 
-require_once('model/dbconnection.php');
+use App\Model\Connection;
+use PDO;
+use PDOException;
+use Exception;
 
 class CuentaCupos extends Connection
 {

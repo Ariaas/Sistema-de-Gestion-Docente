@@ -1,5 +1,7 @@
 <?php
 
+use App\Model\Login;
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -8,12 +10,6 @@ if (isset($_SESSION['name']) && !empty($_SESSION['name'])) {
     header('Location: ?pagina=principal');
     exit();
 }
-
-if (!is_file("model/" . $pagina . ".php")) {
-    echo "Falta el modelo";
-    exit;
-}
-require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
     if (!empty($_POST) && isset($_POST['accion'])) {
         $o = new Login();

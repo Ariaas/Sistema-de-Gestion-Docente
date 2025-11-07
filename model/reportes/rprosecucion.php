@@ -1,5 +1,11 @@
 <?php
-require_once('model/dbconnection.php');
+
+namespace App\Model\Reportes;
+
+use App\Model\Connection;
+use PDO;
+use PDOException;
+use Exception;
 
 class ProsecucionReport extends Connection
 {

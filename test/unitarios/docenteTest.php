@@ -2,8 +2,7 @@
 
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-
-require_once 'model/docente.php';
+use App\Model\Docente;
 
 class DocenteTest extends TestCase
 {

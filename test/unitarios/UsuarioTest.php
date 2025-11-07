@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/usuario.php';
+use App\Model\Usuario;
 
 class UsuarioTest extends TestCase
 {

@@ -4,8 +4,8 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once("vendor/autoload.php");
-require_once("model/reportes/rdefinitivo.php");
 
+use App\Model\Reportes\DefinitivoEmit;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;

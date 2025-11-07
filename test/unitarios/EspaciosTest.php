@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/espacios.php';
+use App\Model\Espacio;
 
 class EspaciosTest extends TestCase
 {

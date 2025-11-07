@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once 'model/prosecusion.php';
+use App\Model\Prosecusion;
 
 class ProsecusionTest extends TestCase
 {

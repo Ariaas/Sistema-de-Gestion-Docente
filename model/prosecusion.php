@@ -1,5 +1,9 @@
 <?php
-require_once('model/dbconnection.php');
+
+namespace App\Model;
+
+use PDO;
+use Exception;
 
 class Prosecusion extends Connection
 {

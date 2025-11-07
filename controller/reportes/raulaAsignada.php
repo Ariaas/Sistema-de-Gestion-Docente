@@ -4,7 +4,8 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once("vendor/autoload.php");
-require_once("model/reportes/raulaAsignada.php");
+
+use App\Model\Reportes\AsignacionAulasReport;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;

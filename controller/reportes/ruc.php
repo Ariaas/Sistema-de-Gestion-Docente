@@ -4,8 +4,8 @@
  } 
 
  require_once("vendor/autoload.php"); 
- require_once("model/reportes/ruc.php"); 
 
+ use App\Model\Reportes\Ruc;
 
  use PhpOffice\PhpSpreadsheet\Spreadsheet; 
  use PhpOffice\PhpSpreadsheet\Writer\Xlsx; 

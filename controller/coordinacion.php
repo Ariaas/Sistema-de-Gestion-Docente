@@ -1,21 +1,17 @@
 <?php
+
+use App\Model\Coordinacion;
+use App\Model\Bitacora;
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 $pagina = 'coordinacion';
 
-
-if (!is_file("model/" . $pagina . ".php")) {
-    echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina . ".php"]);
-    exit;
-}
-require_once("model/" . $pagina . ".php");
-
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
-        require_once("model/bitacora.php");
         $usu_id = isset($_SESSION['usu_id']) ? $_SESSION['usu_id'] : null;
 
         if ($usu_id === null) {

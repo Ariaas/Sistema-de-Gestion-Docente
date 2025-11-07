@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/uc.php';
+use App\Model\UC;
 
 class UCTest extends TestCase
 {

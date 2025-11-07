@@ -1,5 +1,11 @@
 <?php
-require_once('model/dbconnection.php');
+
+namespace App\Model;
+
+use PDO;
+use PDOException;
+use Exception;
+use DateTime;
 
 class Anio extends Connection
 {
@@ -322,7 +328,6 @@ class Anio extends Connection
             return;
         }
 
-        require_once('model/notificaciones.php');
         $n = new Notificaciones();
         $finNotificacion = (new DateTime())->modify('+20 days')->format('Y-m-d');
 
@@ -776,7 +781,6 @@ class Anio extends Connection
 
     public function Notificaciones()
     {
-        require_once('model/notificaciones.php');
         $n = new Notificaciones();
 
         $co = $this->Con();

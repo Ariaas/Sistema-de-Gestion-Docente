@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/turno.php';
+use App\Model\Turno;
 
 class TurnoTest extends TestCase
 {

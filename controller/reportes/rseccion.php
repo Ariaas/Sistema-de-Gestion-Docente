@@ -4,8 +4,8 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once('vendor/autoload.php');
-require_once('model/reportes/rseccion.php');
 
+use App\Model\Reportes\SeccionReport;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -269,21 +269,19 @@ if (isset($_POST['generar_seccion_report'])) {
             $columnLocationInfo = [];
             foreach ($columnasHeader as $idx => $colInfo) {
                 $locationsInColumn = [];
-                $hasNullSpace = false; // Flag para rastrear si hay "Sin espacio"
+                $hasNullSpace = false; 
 
                 foreach ($horarioGrid[$colInfo['dia']][$colInfo['subgrupo']] ?? [] as $clase) {
-                    // Solo contamos las aulas que SÍ tienen un código
                     if (!empty($clase['esp_codigo'])) {
                         $locationsInColumn[$clase['esp_codigo']] = $clase['esp_tipo'];
                     } else {
-                        $hasNullSpace = true; // Si encontramos un NULL, lo marcamos
+                        $hasNullSpace = true; 
                     }
                 }
                 $locationCount = count($locationsInColumn);
                 
-                // Si la columna tiene "1 aula real" Y "Sin espacio", no es una columna 'single'.
                 if ($locationCount > 0 && $hasNullSpace) {
-                    $locationCount = 99; // Forzamos a que no sea 'single'
+                    $locationCount = 99; 
                 }
                 $isSingle = ($locationCount === 1);
 

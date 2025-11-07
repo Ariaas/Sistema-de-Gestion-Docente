@@ -1,5 +1,10 @@
 <?php
-require_once('model/dbconnection.php');
+
+namespace App\Model;
+
+use PDO;
+use Exception;
+
 class Docente extends Connection
 {
     private $cat_nombre;

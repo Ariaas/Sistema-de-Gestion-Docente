@@ -7,7 +7,8 @@ if (session_status() == PHP_SESSION_NONE) {
 
 
 require_once('vendor/autoload.php');
-require_once('model/reportes/rmalla.php');
+
+use App\Model\Reportes\MallaReport;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;

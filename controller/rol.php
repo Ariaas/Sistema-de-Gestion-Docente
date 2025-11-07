@@ -1,19 +1,16 @@
 <?php
 
+use App\Model\Rol;
+use App\Model\Bitacora;
+use App\Model\Login;
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!is_file("model/" . $pagina . ".php")) {
-    echo "Falta definir la clase " . $pagina;
-    exit;
-}
-require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
-
-        require_once("model/bitacora.php");
         $usu_id = isset($_SESSION['usu_id']) ? $_SESSION['usu_id'] : null;
 
         if ($usu_id === null) {
@@ -44,7 +41,6 @@ if (is_file("views/" . $pagina . ".php")) {
             $permisos = json_decode($_POST['permisos'], true);
             $res = $r->asignarPermisos($_POST['rolId'], $permisos);
 
-            require_once("model/login.php");
             $login = new Login();
             $usuario = $login->getDatosUsuario($_SESSION['usu_id']);
             if ($usuario && isset($usuario['rol_id']) && $usuario['rol_id'] == $_POST['rolId']) {

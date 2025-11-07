@@ -30,4 +30,6 @@ return array(
     'DeepCopy\\' => array($vendorDir . '/myclabs/deep-copy/src/DeepCopy'),
     'Composer\\Pcre\\' => array($vendorDir . '/composer/pcre/src'),
     'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
+    'App\\Model\\' => array($baseDir . '/model'),
+    'App\\Config\\' => array($baseDir . '/config'),
 );

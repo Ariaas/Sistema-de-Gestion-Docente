@@ -2,8 +2,7 @@
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Constraint\StringStartsWith;
-
-require_once 'model/seccion.php';
+use App\Model\Seccion;
 class SeccionTest extends TestCase
 {
     private $seccion;

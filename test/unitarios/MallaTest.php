@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once 'model/mallacurricular.php';
+use App\Model\Malla;
 class MallaTest extends TestCase
 {
     private $malla;

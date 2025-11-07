@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/eje.php';
+use App\Model\Eje;
 
 class EjeTest extends TestCase
 {

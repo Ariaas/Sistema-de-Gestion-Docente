@@ -1,7 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-
-require_once 'model/titulo.php';
+use App\Model\Titulo;
 
 class TituloTest extends TestCase
 {

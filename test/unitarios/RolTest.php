@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/rol.php';
+use App\Model\Rol;
 
 class RolTest extends TestCase
 {

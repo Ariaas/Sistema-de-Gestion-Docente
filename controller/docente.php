@@ -1,16 +1,13 @@
 <?php
+
+use App\Model\Docente;
+use App\Model\Bitacora;
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 $pagina = 'docente';
-
-if (!is_file("model/" . $pagina . ".php")) {
-    echo json_encode(['resultado' => 'error', 'mensaje' => "Falta definir la clase " . $pagina]);
-    exit;
-}
-
-require_once("model/" . $pagina . ".php");
 
 if (is_file("views/" . $pagina . ".php")) {
 
@@ -19,7 +16,6 @@ if (is_file("views/" . $pagina . ".php")) {
         $accion = $_POST['accion'] ?? '';
 
         if ($accion !== 'consultar' && $accion !== 'Existe' && $accion !== 'consultar_paso2' && $accion !== 'consultar_datos_adicionales') {
-            require_once("model/bitacora.php");
             $usu_id = $_SESSION['usu_id'] ?? null;
             if ($usu_id === null) {
                 echo json_encode(['resultado' => 'error', 'mensaje' => 'Usuario no autenticado.']);

@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once 'model/anio.php';
+use App\Model\Anio;
 
 /**
  * Pruebas unitarias completas para el módulo Anio

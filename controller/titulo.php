@@ -1,24 +1,19 @@
 <?php
+
+use App\Model\Titulo;
+use App\Model\Bitacora;
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
 $pagina = "titulo";
-
-if (!is_file("model/" . $pagina . ".php")) {
-    echo "Falta definir la clase " . $pagina;
-    exit;
-}
-require_once("model/" . $pagina . ".php");
 
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
         $t = new Titulo();
         $accion = $_POST['accion'];
-
-        require_once("model/bitacora.php");
         $usu_id = isset($_SESSION['usu_id']) ? $_SESSION['usu_id'] : null;
 
         if ($usu_id === null && $accion != 'consultar' && $accion != 'existe') {

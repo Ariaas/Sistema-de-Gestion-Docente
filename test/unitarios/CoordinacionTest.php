@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/coordinacion.php';
+use App\Model\Coordinacion;
 
 class CoordinacionTest extends TestCase
 {

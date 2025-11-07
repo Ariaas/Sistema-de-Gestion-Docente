@@ -1,6 +1,11 @@
 <?php
-require_once('model/db_bitacora.php');
-require_once('config/config.php');
+
+namespace App\Model;
+
+use PDO;
+use Exception;
+
+require_once __DIR__ . '/../config/config.php';
 
 class Perfil extends Connection_bitacora
 {

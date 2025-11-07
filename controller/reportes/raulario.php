@@ -4,8 +4,7 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once('vendor/autoload.php');
-// Asegúrate de que la ruta al modelo sea correcta
-require_once('model/reportes/raulario.php'); 
+use App\Model\Reportes\AularioReport;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -15,8 +14,6 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 
-// --- INICIO FUNCIÓN HELPER ---
-// (Recomendación: Mover esto a un archivo 'helpers.php' e incluirlo)
 function abreviarNombreLargo($nombre, $longitudMaxima = 25)
 {
     if (mb_strlen($nombre) <= $longitudMaxima) {
@@ -38,14 +35,11 @@ function abreviarNombreLargo($nombre, $longitudMaxima = 25)
     }
     return implode('', $iniciales) . $numeral;
 }
-// --- FIN FUNCIÓN HELPER ---
-
 
 $oAulario = new AularioReport();
 
 if (isset($_POST['generar_aulario_report'])) {
 
-    // --- 1. VALIDACIÓN DE ENTRADA ---
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio = $partes[0] ?? '';
@@ -68,22 +62,18 @@ if (isset($_POST['generar_aulario_report'])) {
     $oAulario->setFase($fase);
     $oAulario->setEspacio($espacio_filtrado);
 
-    // --- 2. GENERACIÓN DE FRANJAS HORARIAS (Lógica de rseccion) ---
-
     $turnos = $oAulario->getTurnosCompletos();
     $bloques_personalizados = $oAulario->getBloquesPersonalizados();
     $bloques_eliminados = $oAulario->getBloquesEliminados();
-    $slot_duration_minutes = 40; // Asumes 40 min, ajústalo si es necesario
+    $slot_duration_minutes = 40; 
 
     $morningSlots = [];
     $afternoonSlots = [];
     $nightSlots = [];
 
-    // Define las horas de inicio de los turnos
     $afternoon_start_time = '13:00:00';
     $night_start_time = '18:00:00';
 
-    // Genera franjas estándar
     foreach ($turnos as $turno) {
         $franjas_del_turno = [];
         $hora_actual = new DateTime($turno['tur_horaInicio']);
@@ -112,7 +102,6 @@ if (isset($_POST['generar_aulario_report'])) {
         }
     }
 
-    // Agrega bloques personalizados
     foreach ($bloques_personalizados as $bloque) {
         $hora_inicio = new DateTime($bloque['tur_horainicio']);
         $hora_fin = new DateTime($bloque['tur_horafin']);
@@ -130,7 +119,6 @@ if (isset($_POST['generar_aulario_report'])) {
         }
     }
 
-    // Elimina bloques eliminados
     foreach ($bloques_eliminados as $hora_eliminada) {
         $hora_key = (new DateTime($hora_eliminada))->format('H:i:s');
         unset($morningSlots[$hora_key]);
@@ -138,12 +126,10 @@ if (isset($_POST['generar_aulario_report'])) {
         unset($nightSlots[$hora_key]);
     }
 
-    // Ordena las franjas de cada turno
     ksort($morningSlots);
     ksort($afternoonSlots);
     ksort($nightSlots);
 
-    // Crea un mapa global de todas las franjas disponibles
     $allAvailableSlots = [
         'morning' => $morningSlots,
         'afternoon' => $afternoonSlots,
@@ -156,12 +142,10 @@ if (isset($_POST['generar_aulario_report'])) {
         'noche' => 'night'
     ];
 
-    // --- 3. PROCESAMIENTO DE DATOS Y EXCEL ---
     $horarioDataRaw = $oAulario->getAulariosFiltrados();
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0);
 
-    // Define estilos
     $styleMainTitle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleDayHeader = ['font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FFFFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF5B9BD5']], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleTimeColumn = ['font' => ['bold' => true, 'size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
@@ -175,14 +159,12 @@ if (isset($_POST['generar_aulario_report'])) {
         $spreadsheet->addSheet($sheet, 0);
         $sheet->setCellValue('A1', 'No se encontraron horarios con los criterios seleccionados.');
     } else {
-        // Agrupa los datos por aula (cada aula será una hoja)
         $dataGroupedByAula = [];
         foreach ($horarioDataRaw as $item) {
             $dataGroupedByAula[$item['esp_codigo']][] = $item;
         }
         ksort($dataGroupedByAula);
 
-        // --- 4. BUCLE PRINCIPAL POR AULA (HOJA) ---
         foreach ($dataGroupedByAula as $espacioCodigo => $horarioData) {
             
             $nombreHoja = preg_replace('/[^A-Za-z0-9\-\. ]/', '', $espacioCodigo);
@@ -199,18 +181,14 @@ if (isset($_POST['generar_aulario_report'])) {
             $sheet->getStyle("A{$currentRow}")->applyFromArray($styleMainTitle);
             $currentRow += 2;
 
-            // --- INICIO LÓGICA DE FILTRADO DE TURNO ---
-
-            // 4.1. Procesa los datos del aula para agrupar secciones y crear la cuadrícula
             $horarioProcesado = [];
-            $earliestClassTime = '23:59:59'; // Para encontrar el turno principal
+            $earliestClassTime = '23:59:59'; 
             foreach ($horarioData as $item) {
                 $clave = $item['hor_dia'] . '|' . $item['hor_horainicio'] . '|' . $item['uc_codigo'] . '|' . ($item['doc_cedula'] ?? 'N/A') . '|' . ($item['subgrupo'] ?? '');
                 if (!isset($horarioProcesado[$clave])) {
                     $horarioProcesado[$clave] = $item;
                     $horarioProcesado[$clave]['sec_codigo_list'] = [];
                     
-                    // Encuentra la hora más temprana para definir el turno principal
                     $classStartTime = (new DateTime($item['hor_horainicio']))->format('H:i:s');
                     if ($classStartTime < $earliestClassTime) {
                         $earliestClassTime = $classStartTime;
@@ -219,7 +197,6 @@ if (isset($_POST['generar_aulario_report'])) {
                 $horarioProcesado[$clave]['sec_codigo_list'][] = $item['sec_codigo_formatted'];
             }
 
-            // 4.2. Define el turno principal del AULA
             $mainShiftName = 'mañana';
             if ($earliestClassTime >= $night_start_time) {
                 $mainShiftName = 'noche';
@@ -228,9 +205,8 @@ if (isset($_POST['generar_aulario_report'])) {
             }
             $mainShiftMapped = $shiftNameMapping[$mainShiftName] ?? 'morning';
 
-            // 4.3. Crea la cuadrícula y encuentra las franjas OCUPADAS
             $gridData = [];
-            $occupiedDbKeys = []; // Franjas que tienen al menos una clase
+            $occupiedDbKeys = []; 
             foreach ($horarioProcesado as $item) {
                 $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
                 $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
@@ -243,11 +219,9 @@ if (isset($_POST['generar_aulario_report'])) {
                 }
                 $gridData[$dia_key][$horaInicioKey][] = $item;
 
-                // Marca todas las franjas que esta clase ocupa
                 foreach ($allAvailableSlots as $shiftSlots) {
                     foreach ($shiftSlots as $dbStartTimeKey => $displayString) {
                         $slotStart = new DateTime($dbStartTimeKey);
-                        // Comprueba si la franja (slot) se solapa con la clase
                         if ($slotStart >= $horaInicio && $slotStart < $horaFinClase) {
                             $occupiedDbKeys[$dbStartTimeKey] = true;
                         }
@@ -255,24 +229,18 @@ if (isset($_POST['generar_aulario_report'])) {
                 }
             }
 
-            // 4.4. Construye el MAPA de franjas a MOSTRAR (Turno principal + Ocupadas)
             $slotsToDisplayMap = [];
             foreach ($allAvailableSlots as $shift => $timeSlots) {
                 $isMainShift = ($shift === $mainShiftMapped);
                 foreach ($timeSlots as $dbStartTimeKey => $displaySlot) {
                     $isOccupied = isset($occupiedDbKeys[$dbStartTimeKey]);
-                    // Muestra la franja si (es del turno principal) O (está ocupada)
                     if ($isOccupied || $isMainShift) {
                         $slotsToDisplayMap[$dbStartTimeKey] = $displaySlot;
                     }
                 }
             }
-            ksort($slotsToDisplayMap); // Ordena el mapa de franjas por hora
+            ksort($slotsToDisplayMap); 
             
-            // --- FIN LÓGICA DE FILTRADO DE TURNO ---
-
-
-            // 4.5. Dibuja la cabecera de la tabla
             $headerRow = $currentRow;
             $sheet->setCellValue('A' . $headerRow, 'Hora');
             $col = 'B';
@@ -282,13 +250,11 @@ if (isset($_POST['generar_aulario_report'])) {
             $sheet->getStyle("A{$headerRow}:G{$headerRow}")->applyFromArray($styleDayHeader);
             $currentRow++;
 
-            // 4.6. Bucle principal de filas (HORAS) - Modificado
             $celdasOcupadas = [];
-            $slotsKeys = array_keys($slotsToDisplayMap); // Array de claves de franjas visibles
+            $slotsKeys = array_keys($slotsToDisplayMap); 
 
             foreach ($slotsToDisplayMap as $dbStartTimeKey => $displaySlot) {
             
-                // Dibuja la columna de la hora
                 $sheet->setCellValue('A' . $currentRow, $displaySlot);
                 $sheet->getStyle('A' . $currentRow)->applyFromArray($styleTimeColumn);
 
@@ -323,8 +289,6 @@ if (isset($_POST['generar_aulario_report'])) {
 
                         $sheet->setCellValue($cellAddress, $richText);
 
-                        // --- CÁLCULO DE SPAN (MERGE) MODIFICADO ---
-                        // (Usa la lógica de rseccion, que cuenta las franjas visibles)
                         $primeraClase = $clases[0];
                         $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);
                         $horaFinClase = new DateTime($primeraClase['hor_horafin']);
@@ -339,12 +303,10 @@ if (isset($_POST['generar_aulario_report'])) {
                                 $parts = explode(' a ', $displayString);
                                 $slotStart = new DateTime(date('H:i:s', strtotime($parts[0])));
                                 
-                                // Si la franja comienza después de que termine la clase, paramos
                                 if ($slotStart >= $horaFinClase) {
                                     break;
                                 }
                                 
-                                // Si la clase comenzó antes o en esta franja, contamos
                                 if ($horaInicioClase <= $slotStart) {
                                     $span++;
                                 }
@@ -364,13 +326,12 @@ if (isset($_POST['generar_aulario_report'])) {
                     $colNum++;
                 }
                 
-                // Ajusta la altura de la fila
                 $maxLines = 1;
                 foreach ($days_of_week as $day) {
                     $clases = $gridData[$day][$dbStartTimeKey] ?? null;
                     if ($clases) {
                         foreach($clases as $clase) {
-                            $lineCount = 3; // Asume 3 líneas (Materia, Secciones, Docente)
+                            $lineCount = 3; 
                             $maxLines = max($maxLines, $lineCount * count($clases));
                         }
                     }
@@ -383,7 +344,6 @@ if (isset($_POST['generar_aulario_report'])) {
         }
     }
 
-    // --- 5. SALIDA DEL ARCHIVO ---
     if (ob_get_length()) ob_end_clean();
     $outputFileName = "Reporte_Aulario";
     if ($esIntensivo) {
@@ -398,7 +358,6 @@ if (isset($_POST['generar_aulario_report'])) {
     exit;
 
 } elseif (isset($_POST['action']) && $_POST['action'] === 'obtener_espacios_por_anio') {
-    // --- LÓGICA AJAX (Sin cambios) ---
     header('Content-Type: application/json');
     
     $anio_completo = $_POST['anio_completo'] ?? '';
@@ -415,7 +374,6 @@ if (isset($_POST['generar_aulario_report'])) {
     echo json_encode(['success' => true, 'espacios' => $espacios]);
     exit;
 } else {
-    // --- CARGA DE PÁGINA INICIAL (Sin cambios) ---
     $listaAnios = $oAulario->getAniosActivos();
     $listaFases = $oAulario->getFases();
     $listaEspacios = $oAulario->getEspacios();

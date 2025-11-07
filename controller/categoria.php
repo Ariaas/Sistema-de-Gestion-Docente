@@ -1,20 +1,17 @@
 <?php
+
+use App\Model\Categoria;
+use App\Model\Bitacora;
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-if (!is_file("model/" . $pagina . ".php")) {
-    echo "Falta definir la clase " . $pagina;
-    exit;
-}
-require_once("model/" . $pagina . ".php");
 if (is_file("views/" . $pagina . ".php")) {
 
     if (!empty($_POST)) {
 
         $c = new Categoria();
         $accion = $_POST['accion'];
-
-        require_once("model/bitacora.php");
         $usu_id = isset($_SESSION['usu_id']) ? $_SESSION['usu_id'] : null;
 
         if ($usu_id === null) {

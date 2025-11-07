@@ -1,7 +1,7 @@
 <?php
 require_once("vendor/autoload.php");
-require_once("model/reportes/rprosecucion.php");
 
+use App\Model\Reportes\ProsecucionReport;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;

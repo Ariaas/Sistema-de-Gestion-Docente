@@ -1,7 +1,8 @@
 <?php
 
-require_once('model/db_bitacora.php');
+namespace App\Model;
 
+use PDO;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 

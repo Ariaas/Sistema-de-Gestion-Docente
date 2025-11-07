@@ -10,6 +10,8 @@ class ComposerStaticInit9a5ec6af041aacaa98120df2e721d470
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
+        '3563826eb49888fa68b46f57257f1f76' => __DIR__ . '/../..' . '/config/config.php',
+        'f72e7592bb8abe5c3bbf74fd7dbef005' => __DIR__ . '/../..' . '/config/configBitacora.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -63,6 +65,11 @@ class ComposerStaticInit9a5ec6af041aacaa98120df2e721d470
         array (
             'Composer\\Pcre\\' => 14,
             'Complex\\' => 8,
+        ),
+        'A' => 
+        array (
+            'App\\Model\\' => 10,
+            'App\\Config\\' => 11,
         ),
     );
 
@@ -166,9 +173,41 @@ class ComposerStaticInit9a5ec6af041aacaa98120df2e721d470
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
+        'App\\Model\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/model',
+        ),
+        'App\\Config\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/config',
+        ),
     );
 
     public static $classMap = array (
+        'App\\Model\\Anio' => __DIR__ . '/../..' . '/model/anio.php',
+        'App\\Model\\Area' => __DIR__ . '/../..' . '/model/area.php',
+        'App\\Model\\Bitacora' => __DIR__ . '/../..' . '/model/bitacora.php',
+        'App\\Model\\Categoria' => __DIR__ . '/../..' . '/model/categoria.php',
+        'App\\Model\\Connection' => __DIR__ . '/../..' . '/model/Connection.php',
+        'App\\Model\\Connection_bitacora' => __DIR__ . '/../..' . '/model/Connection_bitacora.php',
+        'App\\Model\\Coordinacion' => __DIR__ . '/../..' . '/model/coordinacion.php',
+        'App\\Model\\Docente' => __DIR__ . '/../..' . '/model/docente.php',
+        'App\\Model\\Eje' => __DIR__ . '/../..' . '/model/eje.php',
+        'App\\Model\\Espacio' => __DIR__ . '/../..' . '/model/espacios.php',
+        'App\\Model\\Login' => __DIR__ . '/../..' . '/model/login.php',
+        'App\\Model\\Malla' => __DIR__ . '/../..' . '/model/mallacurricular.php',
+        'App\\Model\\Mantenimiento' => __DIR__ . '/../..' . '/model/backup.php',
+        'App\\Model\\Notificaciones' => __DIR__ . '/../..' . '/model/notificaciones.php',
+        'App\\Model\\Perfil' => __DIR__ . '/../..' . '/model/perfil.php',
+        'App\\Model\\Permisos' => __DIR__ . '/../..' . '/model/permisos.php',
+        'App\\Model\\Prosecusion' => __DIR__ . '/../..' . '/model/prosecusion.php',
+        'App\\Model\\Rol' => __DIR__ . '/../..' . '/model/rol.php',
+        'App\\Model\\Seccion' => __DIR__ . '/../..' . '/model/seccion.php',
+        'App\\Model\\Titulo' => __DIR__ . '/../..' . '/model/titulo.php',
+        'App\\Model\\Turno' => __DIR__ . '/../..' . '/model/turno.php',
+        'App\\Model\\UC' => __DIR__ . '/../..' . '/model/uc.php',
+        'App\\Model\\Usuario' => __DIR__ . '/../..' . '/model/usuario.php',
+        'App\\Model\\verifica' => __DIR__ . '/../..' . '/model/verifica.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Dompdf\\Cpdf' => __DIR__ . '/..' . '/dompdf/dompdf/lib/Cpdf.php',
         'PHPUnit\\Exception' => __DIR__ . '/..' . '/phpunit/phpunit/src/Exception.php',

@@ -1,8 +1,14 @@
 <?php
-require_once('model/dbconnection.php');
 
- class Ruc extends Connection 
- { 
+namespace App\Model\Reportes;
+
+use App\Model\Connection;
+use PDO;
+use PDOException;
+use Exception;
+
+class Ruc extends Connection 
+{ 
     private $anio_id;  
     private $ani_tipo;
     private $trayecto; 

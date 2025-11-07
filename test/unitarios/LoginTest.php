@@ -1,7 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-
-require_once 'model/login.php';
+use App\Model\Login;
 
 class LoginTest extends TestCase
 {

@@ -1,9 +1,6 @@
 <?php
-if (!is_file("model/" . $pagina . ".php")) {
-    echo "Falta definir la clase " . $pagina;
-    exit;
-}
-require_once("model/" . $pagina . ".php");
+
+use App\Model\Bitacora;
 if (is_file("views/" . $pagina . ".php")) {
     if (!empty($_POST)) {
 

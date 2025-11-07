@@ -1,8 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../model/categoria.php';
+use App\Model\Categoria;
 
 class CategoriaTest extends TestCase
 {
