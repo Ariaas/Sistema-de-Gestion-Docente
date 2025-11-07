@@ -274,7 +274,7 @@ class Turno extends Connection
         return $r;
     }
 
-    public function chequearSolapamiento()
+    private function chequearSolapamiento()
     {
         try {
             $co = $this->Con();

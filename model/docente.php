@@ -233,7 +233,7 @@ class Docente extends Connection
     public function Modificar()
     {
         $r = array();
-        if ($this->existe($this->doc_cedula)) {
+        if ($this->Existe($this->doc_cedula)) {
             $resultado_actualizacion = $this->_actualizarDatosDocente();
             if ($resultado_actualizacion['resultado'] === 'ok') {
                 $r['resultado'] = 'modificar';
@@ -254,7 +254,7 @@ class Docente extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
         
-        if ($this->existe($this->doc_cedula)) {
+        if ($this->Existe($this->doc_cedula)) {
             try {
                 $stmt = $co->prepare("UPDATE tbl_docente SET doc_estado = 0 WHERE doc_cedula = :doc_cedula");
                 $stmt->execute([':doc_cedula' => $this->doc_cedula]);

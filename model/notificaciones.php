@@ -79,7 +79,7 @@ class Notificaciones extends Connection_bitacora
         $co = null;
     }
 
-    public function Desactivar()
+    private function Desactivar()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -94,7 +94,7 @@ class Notificaciones extends Connection_bitacora
         $co = null;
     }
 
-    public function existeNotificacion($mensaje)
+    private function existeNotificacion($mensaje)
     {
         $co = $this->Con();
         $stmt = $co->prepare("SELECT COUNT(*) FROM tbl_notificacion WHERE not_notificacion = ? AND not_estado = 1");

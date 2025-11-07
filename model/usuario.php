@@ -394,7 +394,7 @@ class Usuario extends Connection_bitacora
         return $r;
     }
 
-    function Existe($nombreUsuario, $correoUsuario, $usuarioIdExcluir = null)
+    private function Existe($nombreUsuario, $correoUsuario, $usuarioIdExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -480,7 +480,7 @@ class Usuario extends Connection_bitacora
         return $r;
     }
 
-    function verificarUsuarioExiste($usuarioId)
+    private function verificarUsuarioExiste($usuarioId)
     {
         $r = array();
         try {

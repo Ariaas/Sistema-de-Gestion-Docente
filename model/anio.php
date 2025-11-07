@@ -723,7 +723,7 @@ class Anio extends Connection
         return false;
     }
 
-    public function DesactivarAnios()
+    private function DesactivarAnios()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -779,7 +779,7 @@ class Anio extends Connection
         $co = null;
     }
 
-    public function Notificaciones()
+    private function Notificaciones()
     {
         $n = new Notificaciones();
 

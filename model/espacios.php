@@ -137,7 +137,7 @@ class Espacio extends Connection
     }
 
 
-    function Reactivar()
+    private function Reactivar()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -376,7 +376,7 @@ class Espacio extends Connection
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = [];
         try {
-            $stmt = $co->query("SELECT CONCAT(CASE WHEN LOWER(esp_tipo) = 'laboratorio' THEN 'L' ELSE SUBSTRING(esp_edificio, 1, 1) END, '-', esp_numero) AS esp_codigo, esp_numero, esp_edificio, esp_tipo, esp_estado FROM tbl_espacio ORDER BY esp_edificio, esp_numero");
+            $stmt = $co->query("SELECT esp_numero, esp_tipo, esp_edificio, esp_estado FROM tbl_espacio");
             $r['resultado'] = 'consultar';
             $r['mensaje'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -387,7 +387,6 @@ class Espacio extends Connection
         }
         return $r;
     }
-
 
     public function Existe($numeroEspacio, $edificioEspacio, $tipoEspacio, $numeroEspacioExcluir = null, $edificioEspacioExcluir = null, $tipoEspacioExcluir = null)
     {

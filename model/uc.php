@@ -373,7 +373,7 @@ class UC extends Connection
         }
     }
 
-    public function Existe($codigoUC, $codigoExcluir = null)
+    private function Existe($codigoUC, $codigoExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

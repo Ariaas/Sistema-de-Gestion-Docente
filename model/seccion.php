@@ -948,7 +948,7 @@ class Seccion extends Connection
 
 
 
-    public function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_externo = null, $ani_tipo_param = null)
+    private function EliminarDependenciasDeSeccion($sec_codigo, $ani_anio, $co_externo = null, $ani_tipo_param = null)
     {
         $co = $co_externo ?? $this->Con();
         $es_transaccion_interna = ($co_externo === null);

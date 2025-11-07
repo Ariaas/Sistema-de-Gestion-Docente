@@ -218,7 +218,7 @@ class Titulo extends Connection
         return $r;
     }
 
-    public function Existe()
+    private function Existe()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
