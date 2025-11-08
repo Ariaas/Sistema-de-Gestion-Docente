@@ -7,7 +7,7 @@ use PDOException;
 
 class Connection_bitacora extends PDO
 {
-    /** @var PDO|null PDO compartido para la base de datos de bitácora */
+    
     private static $sharedConex = null;
 
     public function __construct()

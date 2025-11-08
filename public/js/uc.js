@@ -4,8 +4,6 @@ function Listar() {
   enviaAjax(datos);
 }
 
-
-
 var __uc_modTracking = false;
 var __uc_userModified = false;
 var initialFormState = null;
@@ -679,7 +677,10 @@ function enviaAjax(datos, accion = "") {
           Listar();
         } else if (lee.resultado == "modificar") {
           muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
-          if (lee.mensaje.includes("modificó la unidad curricular")) {
+          muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
+          
+         
+          if (!lee.mensaje.includes("ERROR!")) { 
             $("#modal1").modal("hide");
           }
           Listar();

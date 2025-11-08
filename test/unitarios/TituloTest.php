@@ -28,10 +28,7 @@ class TituloTest extends TestCase
         $this->stmtMock = null;
     }
 
-    /**
-     * @dataProvider providerDatosInvalidos
-     * @test
-     */
+    
     public function testRegistrar_Falla_ValidacionEntrada($prefijo, $nombre, $mensajeEsperado)
     {
         $this->titulo->set_prefijo($prefijo);
@@ -59,9 +56,7 @@ class TituloTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     */
+    
     public function testRegistrar_TituloNuevo_Exito()
     {
         $stmtExisteActivo = $this->createMock(PDOStatement::class);
