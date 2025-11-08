@@ -71,6 +71,26 @@ $(document).ready(function() {
         Listar();
     }
     
+    function actualizarContador() {
+        $.ajax({
+            url: '?pagina=notificaciones',
+            type: 'POST',
+            data: { accion: 'contar_nuevas' },
+            dataType: 'json',
+            success: function(resp) {
+                const badge = $("#notificacionesBadge");
+                if (resp.resultado === 'ok' && resp.count > 0) {
+                    badge.text(resp.count).show();
+                } else {
+                    badge.hide();
+                }
+            },
+            error: function() {
+                console.error('Error al actualizar contador de notificaciones');
+            }
+        });
+    }
+
     function cargarNotificaciones() {
         $.ajax({
             url: '?pagina=notificaciones',
@@ -105,6 +125,9 @@ $(document).ready(function() {
     }
 
     cargarNotificaciones();
+    
+    actualizarContador();
+    setInterval(actualizarContador, 3000);
 
     $('#notificacionesDropdown').on('show.bs.dropdown', function () {
         const badge = $("#notificacionesBadge");

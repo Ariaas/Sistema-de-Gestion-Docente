@@ -27,13 +27,20 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($u->Listar());
         } elseif ($accion == 'eliminar') {
             $u->setcodigoUC($_POST['codigoUC']);
-            echo  json_encode($u->Eliminar());
+            $resultado = $u->Eliminar();
+            echo json_encode($resultado);
 
-            $bitacora->registrarAccion($usu_id, 'eliminar', 'Unidad Curricular');
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'eliminar', 'Unidad Curricular');
+            }
         } elseif ($accion == 'activar') {
             $u->setcodigoUC($_POST['codigoUC']);
-            echo json_encode($u->Activar());
-            $bitacora->registrarAccion($usu_id, 'activar', 'Unidad Curricular');
+            $resultado = $u->Activar();
+            echo json_encode($resultado);
+            
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'activar', 'Unidad Curricular');
+            }
         } elseif ($accion == 'existe') {
             $codigoUC = $_POST['codigoUC'];
             $codigoExcluir = isset($_POST['codigoExcluir']) ? $_POST['codigoExcluir'] : null;
@@ -59,13 +66,19 @@ if (is_file("views/" . $pagina . ".php")) {
             $u->setperiodoUC($_POST['periodoUC']);
 
             if ($accion == 'registrar') {
-                echo  json_encode($u->Registrar());
+                $resultado = $u->Registrar();
+                echo json_encode($resultado);
 
-                $bitacora->registrarAccion($usu_id, 'registrar', 'Unidad Curricular');
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'registrar', 'Unidad Curricular');
+                }
             } elseif ($accion == 'modificar') {
-                echo  json_encode($u->modificar($_POST['codigoUCOriginal']));
+                $resultado = $u->modificar($_POST['codigoUCOriginal']);
+                echo json_encode($resultado);
 
-                $bitacora->registrarAccion($usu_id, 'modificar', 'Unidad Curricular');
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'modificar', 'Unidad Curricular');
+                }
             }
         }
         exit;

@@ -20,9 +20,6 @@
         },
         "classmap": [
             "model/"
-        ],
-        "exclude-from-classmap": [
-            "model/reportes/"
         ]
     },
     "config": {

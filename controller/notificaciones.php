@@ -16,6 +16,8 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($n->ListarNuevas());
         } else if ($accion == 'marcar_vistas') {
             echo json_encode($n->MarcarComoVistas());
+        } else if ($accion == 'contar_nuevas') {
+            echo json_encode($n->ContarNuevas());
         }
         exit;
     }

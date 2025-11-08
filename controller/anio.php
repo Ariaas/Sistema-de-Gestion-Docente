@@ -32,8 +32,12 @@ if (is_file("views/" . $pagina . ".php")) {
         } elseif ($accion == 'eliminar') {
             $c->setAnio($_POST['aniAnio']);
             $c->setTipo($_POST['tipoAnio']);
-            echo  json_encode($c->Eliminar());
-            $bitacora->registrarAccion($usu_id, 'eliminar', 'anio');
+            $resultado = $c->Eliminar();
+            echo json_encode($resultado);
+            
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'eliminar', 'anio');
+            }
         } elseif ($accion == 'existe') {
             $anioOriginal = isset($_POST['anioOriginal']) ? $_POST['anioOriginal'] : null;
             $tipoOriginal = isset($_POST['tipoOriginal']) ? $_POST['tipoOriginal'] : null;
@@ -48,16 +52,24 @@ if (is_file("views/" . $pagina . ".php")) {
             $anioDestino = isset($_POST['anioDestino']) ? (int)$_POST['anioDestino'] : 0;
             $aniTipo = isset($_POST['aniTipo']) ? $_POST['aniTipo'] : '';
             $aniTipoDestino = isset($_POST['aniTipoDestino']) ? $_POST['aniTipoDestino'] : $aniTipo;
-            echo json_encode($c->duplicarSecciones($anioOrigen, $aniTipo, $anioDestino, $aniTipoDestino));
-            $bitacora->registrarAccion($usu_id, 'duplicar_secciones', 'anio');
+            $resultado = $c->duplicarSecciones($anioOrigen, $aniTipo, $anioDestino, $aniTipoDestino);
+            echo json_encode($resultado);
+            
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'duplicar_secciones', 'anio');
+            }
         } elseif ($accion == 'duplicar_horarios') {
             $anioOrigen = isset($_POST['anioOrigen']) ? (int)$_POST['anioOrigen'] : 0;
             $anioDestino = isset($_POST['anioDestino']) ? (int)$_POST['anioDestino'] : 0;
             $aniTipo = isset($_POST['aniTipo']) ? $_POST['aniTipo'] : '';
             $aniTipoDestino = isset($_POST['aniTipoDestino']) ? $_POST['aniTipoDestino'] : $aniTipo;
             $faseObjetivo = isset($_POST['faseObjetivo']) && $_POST['faseObjetivo'] !== '' ? (int)$_POST['faseObjetivo'] : null;
-            echo json_encode($c->duplicarHorarios($anioOrigen, $aniTipo, $anioDestino, $aniTipoDestino, $faseObjetivo));
-            $bitacora->registrarAccion($usu_id, 'duplicar_horarios', 'anio');
+            $resultado = $c->duplicarHorarios($anioOrigen, $aniTipo, $anioDestino, $aniTipoDestino, $faseObjetivo);
+            echo json_encode($resultado);
+            
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'duplicar_horarios', 'anio');
+            }
         } else {
             $c->setAnio($_POST['aniAnio']);
             $c->setTipo($_POST['tipoAnio']);
@@ -68,11 +80,19 @@ if (is_file("views/" . $pagina . ".php")) {
             $c->setFases($fases);
 
             if ($accion == 'registrar') {
-                echo  json_encode($c->Registrar());
-                $bitacora->registrarAccion($usu_id, 'registrar', 'anio');
+                $resultado = $c->Registrar();
+                echo json_encode($resultado);
+                
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'registrar', 'anio');
+                }
             } elseif ($accion == 'modificar') {
-                echo  json_encode($c->modificar($_POST['anioOriginal'], $_POST['tipoOriginal']));
-                $bitacora->registrarAccion($usu_id, 'modificar', 'anio');
+                $resultado = $c->modificar($_POST['anioOriginal'], $_POST['tipoOriginal']);
+                echo json_encode($resultado);
+                
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'modificar', 'anio');
+                }
             }
         }
         exit;

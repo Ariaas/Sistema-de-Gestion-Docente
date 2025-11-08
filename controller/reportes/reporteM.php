@@ -3,11 +3,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-use App\Model\Reportes\Reporte;
+use App\Model\Reportes\ReporteM;
 
 if (is_file("views/reportes/reporteM.php")) {
 
-    $reporteModel = new Reporte();
+    $reporteModel = new ReporteM();
 
     if (!empty($_POST['accion'])) {
         header('Content-Type: application/json');

@@ -25,20 +25,32 @@ if (is_file("views/" . $pagina . ".php")) {
         if ($accion == 'registrar') {
             $t->set_prefijo($_POST['tituloprefijo']);
             $t->set_nombreTitulo($_POST['titulonombre']);
-            echo json_encode($t->Registrar());
-            $bitacora->registrarAccion($usu_id, 'registrar', 'titulo');
+            $resultado = $t->Registrar();
+            echo json_encode($resultado);
+            
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'registrar', 'titulo');
+            }
         } elseif ($accion == 'modificar') {
             $t->set_original_prefijo($_POST['tituloprefijo_original']);
             $t->set_original_nombre($_POST['titulonombre_original']);
             $t->set_prefijo($_POST['tituloprefijo']);
             $t->set_nombreTitulo($_POST['titulonombre']);
-            echo json_encode($t->Modificar());
-            $bitacora->registrarAccion($usu_id, 'modificar', 'titulo');
+            $resultado = $t->Modificar();
+            echo json_encode($resultado);
+            
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'modificar', 'titulo');
+            }
         } elseif ($accion == 'eliminar') {
             $t->set_prefijo($_POST['tituloprefijo']);
             $t->set_nombreTitulo($_POST['titulonombre']);
-            echo json_encode($t->Eliminar());
-            $bitacora->registrarAccion($usu_id, 'eliminar', 'titulo');
+            $resultado = $t->Eliminar();
+            echo json_encode($resultado);
+            
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'eliminar', 'titulo');
+            }
         } elseif ($accion == 'consultar') {
             echo json_encode($t->Consultar());
         } elseif ($accion == 'existe') {

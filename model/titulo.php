@@ -4,6 +4,7 @@ namespace App\Model;
 
 use PDO;
 use Exception;
+use App\Model\ValidacionSelect;
 
 class Titulo extends Connection
 {
@@ -63,6 +64,12 @@ class Titulo extends Connection
 
         if (strlen($this->prefijoTitulo) < 2 || strlen($this->prefijoTitulo) > 10) {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo debe tener entre 2 y 10 caracteres'];
+        }
+
+        try {
+            ValidacionSelect::validarEnum('titulo_prefijo', $this->prefijoTitulo);
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
 
         if (strlen($this->nombreTitulo) < 3 || strlen($this->nombreTitulo) > 100) {
@@ -131,6 +138,12 @@ class Titulo extends Connection
 
         if (strlen($this->prefijoTitulo) < 2 || strlen($this->prefijoTitulo) > 10) {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo debe tener entre 2 y 10 caracteres'];
+        }
+
+        try {
+            ValidacionSelect::validarEnum('titulo_prefijo', $this->prefijoTitulo);
+        } catch (Exception $e) {
+            return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
 
         if (strlen($this->nombreTitulo) < 3 || strlen($this->nombreTitulo) > 100) {
@@ -218,7 +231,7 @@ class Titulo extends Connection
         return $r;
     }
 
-    private function Existe()
+    public function Existe()
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -246,7 +259,7 @@ class Titulo extends Connection
         }
     }
 
-    private function existeActivo($co)
+    public function existeActivo($co)
     {
         $sql = "SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 1";
         $stmt = $co->prepare($sql);
@@ -258,7 +271,7 @@ class Titulo extends Connection
     }
 
     
-    private function existeInactivo($co)
+    public function existeInactivo($co)
     {
         $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 0");
         $stmt->bindParam(':prefijo', $this->prefijoTitulo, PDO::PARAM_STR);

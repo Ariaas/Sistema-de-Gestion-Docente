@@ -6,6 +6,7 @@ use PDO;
 use Exception;
 use ZipArchive;
 use RuntimeException;
+use App\Model\Connection_bitacora;
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/configBitacora.php';

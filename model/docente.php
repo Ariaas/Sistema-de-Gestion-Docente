@@ -4,6 +4,8 @@ namespace App\Model;
 
 use PDO;
 use Exception;
+use App\Model\ValidacionSelect;
+use App\Model\Connection_bitacora;
 
 class Docente extends Connection
 {
@@ -176,6 +178,60 @@ class Docente extends Connection
     public function Registrar()
     {
         $r = array();
+        
+        try {
+            ValidacionSelect::validarEnum('prefijo_cedula', $this->doc_prefijo);
+            ValidacionSelect::validarEnum('dedicacion', $this->doc_dedicacion);
+            ValidacionSelect::validarEnum('condicion', $this->doc_condicion);
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+            return $r;
+        }
+        
+        $co = $this->Con();
+        try {
+            ValidacionSelect::validarExisteEnBD($co, 'tbl_categoria', 'cat_nombre', $this->cat_nombre, 'cat_estado');
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+            return $r;
+        }
+        
+        if (!empty($this->titulos)) {
+            foreach ($this->titulos as $titulo_compuesto) {
+                if (strpos($titulo_compuesto, '::') !== false) {
+                    list($tit_prefijo, $tit_nombre) = explode('::', $titulo_compuesto);
+                    try {
+                        $sql = "SELECT COUNT(*) FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 1";
+                        $stmt = $co->prepare($sql);
+                        $stmt->execute([':prefijo' => $tit_prefijo, ':nombre' => $tit_nombre]);
+                        if ($stmt->fetchColumn() == 0) {
+                            $r['resultado'] = 'error';
+                            $r['mensaje'] = "El título {$tit_prefijo} {$tit_nombre} no existe o está inactivo.";
+                            return $r;
+                        }
+                    } catch (Exception $e) {
+                        $r['resultado'] = 'error';
+                        $r['mensaje'] = $e->getMessage();
+                        return $r;
+                    }
+                }
+            }
+        }
+        
+        if (!empty($this->coordinaciones)) {
+            foreach ($this->coordinaciones as $coordinacion) {
+                try {
+                    ValidacionSelect::validarExisteEnBD($co, 'tbl_coordinacion', 'cor_nombre', $coordinacion, 'cor_estado');
+                } catch (Exception $e) {
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = $e->getMessage();
+                    return $r;
+                }
+            }
+        }
+        
         $estado_docente = $this->buscarEstadoPorCedula($this->doc_cedula);
         if ($estado_docente == '1') {
             $r['resultado'] = 'error';
@@ -233,6 +289,60 @@ class Docente extends Connection
     public function Modificar()
     {
         $r = array();
+        
+        try {
+            ValidacionSelect::validarEnum('prefijo_cedula', $this->doc_prefijo);
+            ValidacionSelect::validarEnum('dedicacion', $this->doc_dedicacion);
+            ValidacionSelect::validarEnum('condicion', $this->doc_condicion);
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+            return $r;
+        }
+        
+        $co = $this->Con();
+        try {
+            ValidacionSelect::validarExisteEnBD($co, 'tbl_categoria', 'cat_nombre', $this->cat_nombre, 'cat_estado');
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+            return $r;
+        }
+        
+        if (!empty($this->titulos)) {
+            foreach ($this->titulos as $titulo_compuesto) {
+                if (strpos($titulo_compuesto, '::') !== false) {
+                    list($tit_prefijo, $tit_nombre) = explode('::', $titulo_compuesto);
+                    try {
+                        $sql = "SELECT COUNT(*) FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 1";
+                        $stmt = $co->prepare($sql);
+                        $stmt->execute([':prefijo' => $tit_prefijo, ':nombre' => $tit_nombre]);
+                        if ($stmt->fetchColumn() == 0) {
+                            $r['resultado'] = 'error';
+                            $r['mensaje'] = "El título {$tit_prefijo} {$tit_nombre} no existe o está inactivo.";
+                            return $r;
+                        }
+                    } catch (Exception $e) {
+                        $r['resultado'] = 'error';
+                        $r['mensaje'] = $e->getMessage();
+                        return $r;
+                    }
+                }
+            }
+        }
+        
+        if (!empty($this->coordinaciones)) {
+            foreach ($this->coordinaciones as $coordinacion) {
+                try {
+                    ValidacionSelect::validarExisteEnBD($co, 'tbl_coordinacion', 'cor_nombre', $coordinacion, 'cor_estado');
+                } catch (Exception $e) {
+                    $r['resultado'] = 'error';
+                    $r['mensaje'] = $e->getMessage();
+                    return $r;
+                }
+            }
+        }
+        
         if ($this->Existe($this->doc_cedula)) {
             $resultado_actualizacion = $this->_actualizarDatosDocente();
             if ($resultado_actualizacion['resultado'] === 'ok') {
@@ -362,7 +472,7 @@ class Docente extends Connection
                     ];
                 }
             }
-            require_once(__DIR__ . '/db_bitacora.php');
+            
             $bitacora_con = (new Connection_bitacora())->Con();
             $sql_usuario = "SELECT usu_id, usu_cedula FROM tbl_usuario WHERE usu_correo = :correo AND usu_estado = 1";
             $stmt_usuario = $bitacora_con->prepare($sql_usuario);

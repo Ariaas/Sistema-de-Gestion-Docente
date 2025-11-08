@@ -4,6 +4,7 @@ namespace App\Model;
 
 use PDO;
 use Exception;
+use App\Model\ValidacionSelect;
 
 class Turno extends Connection
 {
@@ -38,6 +39,14 @@ class Turno extends Connection
         if (strlen($this->nombreTurno) < 3 || strlen($this->nombreTurno) > 50) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El nombre del turno debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
+        try {
+            ValidacionSelect::validarEnum('turno_nombre', $this->nombreTurno);
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
             return $r;
         }
 
@@ -155,6 +164,14 @@ class Turno extends Connection
         if (strlen($this->nombreTurno) < 3 || strlen($this->nombreTurno) > 50) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El nombre del turno debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
+        try {
+            ValidacionSelect::validarEnum('turno_nombre', $this->nombreTurno);
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
             return $r;
         }
 

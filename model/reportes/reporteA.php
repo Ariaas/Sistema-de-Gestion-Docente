@@ -7,7 +7,7 @@ use PDO;
 use PDOException;
 use Exception;
 
-class Reporte extends Connection
+class ReporteA extends Connection
 {
     public function __construct()
     {

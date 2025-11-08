@@ -6,6 +6,7 @@ use PDO;
 use PDOException;
 use Exception;
 use DateTime;
+use App\Model\ValidacionSelect;
 
 class Anio extends Connection
 {
@@ -108,9 +109,11 @@ class Anio extends Connection
 
         $this->aniTipo = trim($this->aniTipo);
 
-        if (!in_array($this->aniTipo, ['regular', 'intensivo'], true)) {
+        try {
+            ValidacionSelect::validarEnum('tipo_anio', $this->aniTipo);
+        } catch (Exception $e) {
             $r['resultado'] = 'error';
-            $r['mensaje'] = 'El tipo de año debe ser "regular" o "intensivo".';
+            $r['mensaje'] = $e->getMessage();
             return $r;
         }
 
@@ -262,6 +265,8 @@ class Anio extends Connection
             if ($infoDuplicacion !== null) {
                 $r['duplicacion'] = $infoDuplicacion;
             }
+            
+            $this->Notificaciones();
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';
@@ -313,6 +318,8 @@ class Anio extends Connection
             $co->commit();
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
+            
+            $this->Notificaciones();
         } catch (Exception $e) {
             $co->rollBack();
             $r['resultado'] = 'error';
@@ -416,9 +423,11 @@ class Anio extends Connection
 
         $this->aniTipo = trim($this->aniTipo);
 
-        if (!in_array($this->aniTipo, ['regular', 'intensivo'], true)) {
+        try {
+            ValidacionSelect::validarEnum('tipo_anio', $this->aniTipo);
+        } catch (Exception $e) {
             $r['resultado'] = 'error';
-            $r['mensaje'] = 'El tipo de año debe ser "regular" o "intensivo".';
+            $r['mensaje'] = $e->getMessage();
             return $r;
         }
 
@@ -586,6 +595,8 @@ class Anio extends Connection
                 $co->commit();
                 $r['resultado'] = 'modificar';
                 $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el AÑO correctamente!';
+                
+                $this->Notificaciones();
             } catch (Exception $e) {
                 $co->rollBack();
                 $r['resultado'] = 'error';

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 06-11-2025 a las 04:22:22
+-- Tiempo de generación: 06-11-2025 a las 15:05:33
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -195,6 +195,18 @@ INSERT INTO `docente_horario` (`doc_cedula`, `sec_codigo`, `ani_anio`, `ani_tipo
 (7423485, 'IN1403', 2025, 'regular'),
 (15693145, 'IN1403', 2025, 'regular'),
 (7424546, 'IN1403', 2025, 'regular'),
+(7439117, 'IN1113', 2025, 'regular'),
+(7423486, 'IN1113', 2025, 'regular'),
+(15170003, 'IN1113', 2025, 'regular'),
+(29880797, 'IN1113', 2025, 'regular'),
+(18103232, 'IN1113', 2025, 'regular'),
+(9627295, 'IN1113', 2025, 'regular'),
+(26197135, 'IN1113', 2025, 'regular'),
+(3759671, 'IIN3204', 2025, 'regular'),
+(18356682, 'IN0423', 2025, 'regular'),
+(14159756, 'IN0423', 2025, 'regular'),
+(NULL, 'IN0423', 2025, 'regular'),
+(10775753, 'IN0423', 2025, 'regular'),
 (9629702, 'IN1101', 2025, 'regular'),
 (10848316, 'IN1101', 2025, 'regular'),
 (16385182, 'IN1101', 2025, 'regular'),
@@ -277,14 +289,7 @@ INSERT INTO `docente_horario` (`doc_cedula`, `sec_codigo`, `ani_anio`, `ani_tipo
 (16385182, 'IIN4404', 2025, 'regular'),
 (13527711, 'IIN4404', 2025, 'regular'),
 (7391773, 'IIN4404', 2025, 'regular'),
-(18356682, 'IIN4404', 2025, 'regular'),
-(7439117, 'IN1113', 2025, 'regular'),
-(7423486, 'IN1113', 2025, 'regular'),
-(15170003, 'IN1113', 2025, 'regular'),
-(29880797, 'IN1113', 2025, 'regular'),
-(18103232, 'IN1113', 2025, 'regular'),
-(9627295, 'IN1113', 2025, 'regular'),
-(26197135, 'IN1113', 2025, 'regular');
+(18356682, 'IIN4404', 2025, 'regular');
 
 -- --------------------------------------------------------
 
@@ -386,6 +391,14 @@ CREATE TABLE `tbl_bloque_personalizado` (
   `tur_horafin` varchar(5) NOT NULL,
   `bloque_sintetico` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `tbl_bloque_personalizado`
+--
+
+INSERT INTO `tbl_bloque_personalizado` (`sec_codigo`, `ani_anio`, `ani_tipo`, `tur_horainicio`, `tur_horafin`, `bloque_sintetico`) VALUES
+('IIN3204', 2025, 'regular', '18:20', '19:00', 1),
+('IIN3204', 2025, 'regular', '19:00', '19:40', 1);
 
 -- --------------------------------------------------------
 
@@ -714,7 +727,6 @@ CREATE TABLE `tbl_horario` (
 
 INSERT INTO `tbl_horario` (`sec_codigo`, `ani_anio`, `ani_tipo`, `tur_nombre`, `hor_estado`) VALUES
 ('IN0403', 2025, 'regular', 'Mañana', 1),
-('IN0423', 2025, 'regular', 'Mañana', 1),
 ('IN1103', 2025, 'regular', 'Mañana', 1),
 ('IN1123', 2025, 'regular', 'Mañana', 1),
 ('IN1203', 2025, 'regular', 'Tarde', 1),
@@ -735,6 +747,9 @@ INSERT INTO `tbl_horario` (`sec_codigo`, `ani_anio`, `ani_tipo`, `tur_nombre`, `
 ('IIN4401', 2025, 'regular', 'Mañana', 1),
 ('IN1133', 2025, 'regular', 'Mañana', 1),
 ('IN1403', 2025, 'regular', 'Mañana', 1),
+('IN1113', 2025, 'regular', 'Mañana', 1),
+('IIN3204', 2025, 'regular', 'tarde', 1),
+('IN0423', 2025, 'regular', 'mañana', 1),
 ('IN1101', 2025, 'regular', 'mañana', 1),
 ('IN1102', 2025, 'regular', 'mañana', 1),
 ('IN1104', 2025, 'regular', 'mañana', 1),
@@ -749,8 +764,7 @@ INSERT INTO `tbl_horario` (`sec_codigo`, `ani_anio`, `ani_tipo`, `tur_nombre`, `
 ('IIN3103', 2025, 'regular', 'mañana', 1),
 ('IIN4402', 2025, 'regular', 'mañana', 1),
 ('IIN4403', 2025, 'regular', 'mañana', 1),
-('IIN4404', 2025, 'regular', 'mañana', 1),
-('IN1113', 2025, 'regular', 'Mañana', 1);
+('IIN4404', 2025, 'regular', 'mañana', 1);
 
 -- --------------------------------------------------------
 
@@ -830,44 +844,45 @@ CREATE TABLE `tbl_seccion` (
 --
 
 INSERT INTO `tbl_seccion` (`sec_codigo`, `ani_anio`, `ani_tipo`, `sec_cantidad`, `sec_estado`, `grupo_union_id`) VALUES
-('IIN3101', 2025, 'regular', 0, 1, 'grupo_6906f1aed89d32.26127021'),
-('IIN3102', 2025, 'regular', 0, 1, 'grupo_6906f1aed89d32.26127021'),
-('IIN3103', 2025, 'regular', 0, 1, 'grupo_6906f1aed89d32.26127021'),
-('IIN3104', 2025, 'regular', 0, 1, NULL),
-('IIN3113', 2025, 'regular', 0, 1, NULL),
-('IIN4401', 2025, 'regular', 0, 1, 'grupo_6906f26132b450.98491486'),
-('IIN4402', 2025, 'regular', 0, 1, 'grupo_6906f26132b450.98491486'),
-('IIN4403', 2025, 'regular', 0, 1, 'grupo_6906f26132b450.98491486'),
-('IIN4404', 2025, 'regular', 0, 1, 'grupo_6906f26132b450.98491486'),
-('IN0103', 2025, 'regular', 0, 1, NULL),
-('IN0113', 2025, 'regular', 0, 1, NULL),
-('IN0123', 2025, 'regular', 0, 1, 'grupo_68f1e6eff04e21.73853247'),
-('IN0403', 2025, 'regular', 0, 1, 'grupo_68f2b5460a8c62.29071220'),
-('IN0413', 2025, 'regular', 0, 1, 'grupo_68f2b5460a8c62.29071220'),
-('IN0423', 2025, 'regular', 0, 1, NULL),
-('IN1101', 2025, 'regular', 0, 1, 'grupo_6906f067020238.53998537'),
-('IN1102', 2025, 'regular', 0, 1, 'grupo_6906f067020238.53998537'),
-('IN1103', 2025, 'regular', 0, 1, 'grupo_68f1eb5b82b6f9.74113922'),
-('IN1104', 2025, 'regular', 0, 1, 'grupo_6906f067020238.53998537'),
-('IN1113', 2025, 'regular', 0, 1, 'grupo_68f1eb5b82b6f9.74113922'),
-('IN1123', 2025, 'regular', 0, 1, NULL),
-('IN1133', 2025, 'regular', 0, 1, NULL),
-('IN1143', 2025, 'regular', 0, 1, 'grupo_6906f067020238.53998537'),
-('IN1202', 2025, 'regular', 0, 1, 'grupo_6906f0bbafbad8.90655097'),
-('IN1203', 2025, 'regular', 0, 1, NULL),
-('IN1204', 2025, 'regular', 0, 1, 'grupo_6906f0bbafbad8.90655097'),
-('IN1213', 2025, 'regular', 0, 1, 'grupo_6906f0bbafbad8.90655097'),
-('IN1214', 2025, 'regular', 0, 1, 'grupo_6906f0bbafbad8.90655097'),
-('IN1403', 2025, 'regular', 0, 1, NULL),
-('IN2101', 2025, 'regular', 0, 1, 'grupo_6906f0e4c15492.45154369'),
-('IN2102', 2025, 'regular', 0, 1, 'grupo_6906f12beffd36.03688937'),
-('IN2103', 2025, 'regular', 0, 1, 'grupo_6906f0e4c15492.45154369'),
-('IN2104', 2025, 'regular', 0, 1, 'grupo_6906f1491920d3.82832473'),
-('IN2113', 2025, 'regular', 0, 1, 'grupo_6906f12beffd36.03688937'),
-('IN2114', 2025, 'regular', 0, 1, 'grupo_6906f171f10322.80777208'),
-('IN2123', 2025, 'regular', 0, 1, 'grupo_6906f1491920d3.82832473'),
-('IN2133', 2025, 'regular', 0, 1, 'grupo_6906f171f10322.80777208'),
-('IN2403', 2025, 'regular', 0, 1, NULL);
+('IIN3101', 2025, 'regular', 0, 1, 'grupo_690ca9b46e8ee5.02608136'),
+('IIN3102', 2025, 'regular', 0, 1, 'grupo_690ca9b46e8ee5.02608136'),
+('IIN3103', 2025, 'regular', 0, 1, 'grupo_690ca9b46e8ee5.02608136'),
+('IIN3104', 2025, 'regular', 0, 1, ''),
+('IIN3113', 2025, 'regular', 0, 1, ''),
+('IIN3204', 2025, 'regular', 0, 1, ''),
+('IIN4401', 2025, 'regular', 0, 1, 'grupo_690ca9d6879fd2.29633931'),
+('IIN4402', 2025, 'regular', 0, 1, 'grupo_690ca9d6879fd2.29633931'),
+('IIN4403', 2025, 'regular', 0, 1, 'grupo_690ca9d6879fd2.29633931'),
+('IIN4404', 2025, 'regular', 0, 1, 'grupo_690ca9d6879fd2.29633931'),
+('IN0103', 2025, 'regular', 0, 1, ''),
+('IN0113', 2025, 'regular', 0, 1, ''),
+('IN0123', 2025, 'regular', 0, 1, ''),
+('IN0403', 2025, 'regular', 0, 1, ''),
+('IN0413', 2025, 'regular', 0, 1, 'grupo_690ca872e156a9.32544454'),
+('IN0423', 2025, 'regular', 0, 1, 'grupo_690ca872e156a9.32544454'),
+('IN1101', 2025, 'regular', 0, 1, 'grupo_690ca8a7059c14.02661819'),
+('IN1102', 2025, 'regular', 0, 1, 'grupo_690ca8a7059c14.02661819'),
+('IN1103', 2025, 'regular', 0, 1, ''),
+('IN1104', 2025, 'regular', 0, 1, 'grupo_690ca8a7059c14.02661819'),
+('IN1113', 2025, 'regular', 0, 1, ''),
+('IN1123', 2025, 'regular', 0, 1, ''),
+('IN1133', 2025, 'regular', 0, 1, ''),
+('IN1143', 2025, 'regular', 0, 1, 'grupo_690ca8a7059c14.02661819'),
+('IN1202', 2025, 'regular', 0, 1, 'grupo_690ca8d2eaa5d6.77006420'),
+('IN1203', 2025, 'regular', 0, 1, ''),
+('IN1204', 2025, 'regular', 0, 1, 'grupo_690ca8d2eaa5d6.77006420'),
+('IN1213', 2025, 'regular', 0, 1, 'grupo_690ca8d2eaa5d6.77006420'),
+('IN1214', 2025, 'regular', 0, 1, 'grupo_690ca8d2eaa5d6.77006420'),
+('IN1403', 2025, 'regular', 0, 1, ''),
+('IN2101', 2025, 'regular', 0, 1, 'grupo_690ca90160a340.38986853'),
+('IN2102', 2025, 'regular', 0, 1, 'grupo_690ca91cd2cfb7.17321136'),
+('IN2103', 2025, 'regular', 0, 1, 'grupo_690ca90160a340.38986853'),
+('IN2104', 2025, 'regular', 0, 1, 'grupo_690ca96730c595.25903187'),
+('IN2113', 2025, 'regular', 0, 1, 'grupo_690ca91cd2cfb7.17321136'),
+('IN2114', 2025, 'regular', 0, 1, 'grupo_690ca9877e1985.45054380'),
+('IN2123', 2025, 'regular', 0, 1, 'grupo_690ca96730c595.25903187'),
+('IN2133', 2025, 'regular', 0, 1, 'grupo_690ca9877e1985.45054380'),
+('IN2403', 2025, 'regular', 0, 1, '');
 
 -- --------------------------------------------------------
 
@@ -1231,10 +1246,6 @@ INSERT INTO `uc_horario` (`uc_codigo`, `doc_cedula`, `subgrupo`, `sec_codigo`, `
 ('PIMAT090003', 10775753, NULL, 'IN0403', 2025, 'regular', '8', 'Sábado', '08:00', '09:20', 'Aula', 'Hilandera'),
 ('PIPNN078003', 14159756, NULL, 'IN0403', 2025, 'regular', '8', 'Sábado', '10:40', '12:00', 'Aula', 'Hilandera'),
 ('PITIC032002', NULL, NULL, 'IN0403', 2025, 'regular', '8', 'Sábado', '09:20', '10:40', 'Aula', 'Hilandera'),
-('PIIUP052002', 18356682, NULL, 'IN0423', 2025, 'regular', '15', 'Miércoles', '10:40', '12:00', 'Aula', 'Hilandera'),
-('PIMAT090003', 10775753, NULL, 'IN0423', 2025, 'regular', '21', 'Sábado', '09:20', '10:40', 'Aula', 'Giraluna'),
-('PITIC032002', NULL, NULL, 'IN0423', 2025, 'regular', '21', 'Sábado', '10:40', '12:00', 'Aula', 'Giraluna'),
-('PIPNN078003', 14159756, NULL, 'IN0423', 2025, 'regular', '21', 'Sábado', '13:00', '14:20', 'Aula', 'Giraluna'),
 ('PIACA090103', 18103232, NULL, 'IN1103', 2025, 'regular', '12', 'Miércoles', '08:00', '09:20', 'Aula', 'Hilandera'),
 ('PIFOC090103', 23316126, NULL, 'IN1103', 2025, 'regular', '12', 'Miércoles', '09:20', '10:40', 'Aula', 'Hilandera'),
 ('PIELE072103', 29880797, NULL, 'IN1103', 2025, 'regular', '3', 'Miércoles', '10:40', '12:00', 'Laboratorio', 'Giraluna'),
@@ -1374,6 +1385,20 @@ INSERT INTO `uc_horario` (`uc_codigo`, `doc_cedula`, `subgrupo`, `sec_codigo`, `
 ('PIARC234109', 7424546, 'B', 'IN1403', 2025, 'regular', 'Hardware', 'Sábado', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
 ('PIARC234109', 7424546, 'A', 'IN1403', 2025, 'regular', 'Hardware', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Hilandera'),
 ('PIALP306112', 15693145, 'B', 'IN1403', 2025, 'regular', '3', 'Sábado', '10:00', '12:00', 'Laboratorio', 'Giraluna'),
+('PIALP306112', 7439117, 'A', 'IN1113', 2025, 'regular', '5', 'Jueves', '08:00', '10:00', 'Laboratorio', 'Giraluna'),
+('PIARC234109', 7423486, 'B', 'IN1113', 2025, 'regular', 'Hardware', 'Jueves', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
+('PIFOC090103', 15170003, NULL, 'IN1113', 2025, 'regular', '13', 'Lunes', '08:00', '09:20', 'Aula', 'Hilandera'),
+('PIELE072103', 29880797, NULL, 'IN1113', 2025, 'regular', '3', 'Lunes', '09:20', '10:40', 'Laboratorio', 'Giraluna'),
+('PIACA090103', 18103232, NULL, 'IN1113', 2025, 'regular', '13', 'Lunes', '10:40', '12:00', 'Aula', 'Hilandera'),
+('PIMAT234109', 9627295, NULL, 'IN1113', 2025, 'regular', '13', 'Viernes', '08:00', '10:00', 'Aula', 'Hilandera'),
+('PIPST234109', 26197135, NULL, 'IN1113', 2025, 'regular', '13', 'Viernes', '10:00', '12:00', 'Aula', 'Hilandera'),
+('PIALP306112', 7439117, 'A', 'IN1113', 2025, 'regular', '5', 'Jueves', '10:00', '11:20', 'Laboratorio', 'Giraluna'),
+('PIARC234109', 7423486, 'B', 'IN1113', 2025, 'regular', 'Hardware', 'Jueves', '10:00', '11:20', 'Laboratorio', 'Hilandera'),
+(NULL, 3759671, NULL, 'IIN3204', 2025, 'regular', NULL, 'Miércoles', '15:40', '17:00', NULL, NULL),
+('PIIUP052002', 18356682, NULL, 'IN0423', 2025, 'regular', '15', 'Miércoles', '10:40', '12:00', 'Aula', 'Hilandera'),
+('PIPNN078003', 14159756, NULL, 'IN0423', 2025, 'regular', '21', 'Sábado', '13:00', '14:00', 'Aula', 'Giraluna'),
+('PITIC032002', NULL, NULL, 'IN0423', 2025, 'regular', '21', 'Sábado', '10:40', '12:00', 'Aula', 'Giraluna'),
+('PIMAT090003', 10775753, NULL, 'IN0423', 2025, 'regular', '21', 'Sábado', '09:20', '10:40', 'Aula', 'Giraluna'),
 ('PIFOC090103', 9629702, NULL, 'IN1101', 2025, 'regular', '14', 'Martes', '08:00', '09:20', 'Aula', 'Hilandera'),
 ('PIPST234109', 10848316, NULL, 'IN1101', 2025, 'regular', '14', 'Martes', '10:40', '12:00', 'Aula', 'Hilandera'),
 ('PIACA090103', 16385182, NULL, 'IN1101', 2025, 'regular', '14', 'Jueves', '08:00', '09:20', 'Aula', 'Hilandera'),
@@ -1469,16 +1494,7 @@ INSERT INTO `uc_horario` (`uc_codigo`, `doc_cedula`, `subgrupo`, `sec_codigo`, `
 ('PIPST360412', 16403903, NULL, 'IIN4404', 2025, 'regular', '15', 'Martes', '09:20', '11:20', 'Aula', 'Hilandera'),
 ('PIFOC090403', 13527711, NULL, 'IIN4404', 2025, 'regular', '15', 'Viernes', '08:00', '09:20', 'Aula', 'Hilandera'),
 ('PIELE072403', 7391773, NULL, 'IIN4404', 2025, 'regular', 'Software', 'Viernes', '10:40', '12:00', 'Laboratorio', 'Hilandera'),
-('PIIDI090403', 18356682, NULL, 'IIN4404', 2025, 'regular', '15', 'Viernes', '09:20', '10:40', 'Aula', 'Hilandera'),
-('PIALP306112', 7439117, 'A', 'IN1113', 2025, 'regular', '5', 'Jueves', '08:00', '10:00', 'Laboratorio', 'Giraluna'),
-('PIARC234109', 7423486, 'B', 'IN1113', 2025, 'regular', 'Hardware', 'Jueves', '08:00', '10:00', 'Laboratorio', 'Hilandera'),
-('PIFOC090103', 15170003, NULL, 'IN1113', 2025, 'regular', '13', 'Lunes', '08:00', '09:20', 'Aula', 'Hilandera'),
-('PIELE072103', 29880797, NULL, 'IN1113', 2025, 'regular', '3', 'Lunes', '09:20', '10:40', 'Laboratorio', 'Giraluna'),
-('PIACA090103', 18103232, NULL, 'IN1113', 2025, 'regular', '13', 'Lunes', '10:40', '12:00', 'Aula', 'Hilandera'),
-('PIMAT234109', 9627295, NULL, 'IN1113', 2025, 'regular', '13', 'Viernes', '08:00', '10:00', 'Aula', 'Hilandera'),
-('PIPST234109', 26197135, NULL, 'IN1113', 2025, 'regular', '13', 'Viernes', '10:00', '12:00', 'Aula', 'Hilandera'),
-('PIALP306112', 7439117, 'A', 'IN1113', 2025, 'regular', '5', 'Jueves', '10:00', '11:20', 'Laboratorio', 'Giraluna'),
-('PIARC234109', 7423486, 'B', 'IN1113', 2025, 'regular', 'Hardware', 'Jueves', '10:00', '11:20', 'Laboratorio', 'Hilandera');
+('PIIDI090403', 18356682, NULL, 'IIN4404', 2025, 'regular', '15', 'Viernes', '09:20', '10:40', 'Aula', 'Hilandera');
 
 -- --------------------------------------------------------
 

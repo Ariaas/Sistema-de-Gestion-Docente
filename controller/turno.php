@@ -30,23 +30,35 @@ if (is_file("views/" . $pagina . ".php")) {
                 $obj1->setNombreTurno($_POST['turnonombre']);
                 $obj1->setHoraInicio($_POST['horaInicio']); 
                 $obj1->setHoraFin($_POST['horafin']);
-                echo json_encode($obj1->Registrar());
-                $bitacora->registrarAccion($usu_id, 'registrar', 'turno');
+                $resultado = $obj1->Registrar();
+                echo json_encode($resultado);
+                
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'registrar', 'turno');
+                }
                 break;
 
             case 'modificar':
                 $obj1->setNombreTurno($_POST['turnonombre']);
-                $obj1->setNombreTurnoOriginal($_POST['turnoid']);
+                $obj1->setNombreTurnoOriginal($_POST['turnonombre_original']);
                 $obj1->setHoraInicio($_POST['horaInicio']); 
                 $obj1->setHoraFin($_POST['horafin']);
-                echo json_encode($obj1->Modificar());
-                $bitacora->registrarAccion($usu_id, 'modificar', 'turno');
+                $resultado = $obj1->Modificar();
+                echo json_encode($resultado);
+                
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'modificar', 'turno');
+                }
                 break;
             
             case 'eliminar':
                 $obj1->setNombreTurno($_POST['turnoid']);
-                echo json_encode($obj1->Eliminar());
-                $bitacora->registrarAccion($usu_id, 'eliminar', 'turno');
+                $resultado = $obj1->Eliminar();
+                echo json_encode($resultado);
+                
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'eliminar', 'turno');
+                }
                 break;
 
             case 'chequear_solapamiento':

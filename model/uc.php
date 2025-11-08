@@ -4,6 +4,7 @@ namespace App\Model;
 
 use PDO;
 use Exception;
+use App\Model\ValidacionSelect;
 
 class UC extends Connection
 {
@@ -164,8 +165,24 @@ class UC extends Connection
             return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 200 caracteres.');
         }
 
+        try {
+            ValidacionSelect::validarEnum('trayecto', $this->trayectoUC);
+            if ($this->periodoUC !== null && $this->periodoUC !== '') {
+                ValidacionSelect::validarEnum('periodo', $this->periodoUC);
+            }
+        } catch (Exception $e) {
+            return array('resultado' => 'error', 'mensaje' => $e->getMessage());
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        try {
+            ValidacionSelect::validarExisteEnBD($co, 'tbl_eje', 'eje_nombre', $this->ejeUC, 'eje_estado');
+            ValidacionSelect::validarExisteEnBD($co, 'tbl_area', 'area_nombre', $this->areaUC, 'area_estado');
+        } catch (Exception $e) {
+            return array('resultado' => 'error', 'mensaje' => $e->getMessage());
+        }
 
         try {
             $stmt = $co->prepare("SELECT uc_estado FROM tbl_uc WHERE uc_codigo = :codigoUC");
@@ -250,8 +267,24 @@ class UC extends Connection
             return array('resultado' => 'error', 'mensaje' => 'El nombre debe tener entre 3 y 200 caracteres.');
         }
 
+        try {
+            ValidacionSelect::validarEnum('trayecto', $this->trayectoUC);
+            if ($this->periodoUC !== null && $this->periodoUC !== '') {
+                ValidacionSelect::validarEnum('periodo', $this->periodoUC);
+            }
+        } catch (Exception $e) {
+            return array('resultado' => 'error', 'mensaje' => $e->getMessage());
+        }
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        try {
+            ValidacionSelect::validarExisteEnBD($co, 'tbl_eje', 'eje_nombre', $this->ejeUC, 'eje_estado');
+            ValidacionSelect::validarExisteEnBD($co, 'tbl_area', 'area_nombre', $this->areaUC, 'area_estado');
+        } catch (Exception $e) {
+            return array('resultado' => 'error', 'mensaje' => $e->getMessage());
+        }
 
         try {
             $sql = "SELECT uc_codigo, uc_nombre, uc_creditos, uc_trayecto, uc_periodo, eje_nombre, area_nombre

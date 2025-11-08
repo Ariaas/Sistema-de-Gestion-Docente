@@ -4,6 +4,7 @@ namespace App\Model;
 
 use PDO;
 use Exception;
+use App\Model\ValidacionSelect;
 
 class Espacio extends Connection
 {
@@ -98,6 +99,15 @@ class Espacio extends Connection
         if (strlen($this->tipoEspacio) < 3 || strlen($this->tipoEspacio) > 50) {
             $r['resultado'] = 'error';
             $r['mensaje'] = 'El tipo debe tener entre 3 y 50 caracteres.';
+            return $r;
+        }
+
+        try {
+            ValidacionSelect::validarEnum('edificio', $this->edificioEspacio);
+            ValidacionSelect::validarEnum('tipo_espacio', $this->tipoEspacio);
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
             return $r;
         }
 

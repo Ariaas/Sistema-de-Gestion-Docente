@@ -145,6 +145,8 @@ function enviaAjax(datos, accion) {
                     });
                     $("#modal1").modal("hide");
                     Listar();
+                } else if (lee.resultado === "error") {
+                    muestraMensaje("error", 10000, "ERROR!!!!", lee.mensaje);
                 }
             } catch (e) {
                 console.error("Error al procesar JSON: ", e, respuesta);

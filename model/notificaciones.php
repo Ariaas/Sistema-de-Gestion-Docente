@@ -10,14 +10,16 @@ class Notificaciones extends Connection_bitacora
     public function RegistrarNotificacion($notificacion, $fin)
     {
         $co = $this->Con();
-        $stmt = $co->prepare("SELECT not_id FROM tbl_notificacion WHERE not_notificacion = ? AND not_estado = 1");
+        
+        $stmt = $co->prepare("SELECT not_id, not_estado FROM tbl_notificacion WHERE not_notificacion = ?");
         $stmt->execute([$notificacion]);
-        $id = $stmt->fetchColumn();
-        if ($id) {
-            $stmt = $co->prepare("UPDATE tbl_notificacion SET not_fin = ? WHERE not_id = ?");
-            return $stmt->execute([$fin, $id]);
+        $existe = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($existe) {
+            $stmt = $co->prepare("UPDATE tbl_notificacion SET not_fin = ?, not_estado = 1, not_activo = 1 WHERE not_id = ?");
+            return $stmt->execute([$fin, $existe['not_id']]);
         } else {
-            $stmt = $co->prepare("INSERT INTO tbl_notificacion (not_notificacion, not_fecha, not_fin, not_activo) VALUES (?, NOW(), ?, 1)");
+            $stmt = $co->prepare("INSERT INTO tbl_notificacion (not_notificacion, not_fecha, not_fin, not_activo, not_estado) VALUES (?, NOW(), ?, 1, 1)");
             return $stmt->execute([$notificacion, $fin]);
         }
     }
@@ -94,11 +96,34 @@ class Notificaciones extends Connection_bitacora
         $co = null;
     }
 
-    private function existeNotificacion($mensaje)
+    public function existeNotificacion($mensaje)
     {
         $co = $this->Con();
         $stmt = $co->prepare("SELECT COUNT(*) FROM tbl_notificacion WHERE not_notificacion = ? AND not_estado = 1");
         $stmt->execute([$mensaje]);
         return $stmt->fetchColumn() > 0;
+    }
+
+    public function ContarNuevas()
+    {
+        $this->Desactivar();
+        $co = $this->Con();
+        
+        try {
+            $stmt = $co->query("SELECT COUNT(*) FROM tbl_notificacion 
+                WHERE not_estado = 1 AND not_activo = 1 AND not_fin >= NOW()");
+            $count = $stmt->fetchColumn();
+            
+            return [
+                'resultado' => 'ok',
+                'count' => (int)$count
+            ];
+        } catch (Exception $e) {
+            return [
+                'resultado' => 'error',
+                'mensaje' => $e->getMessage(),
+                'count' => 0
+            ];
+        }
     }
 }

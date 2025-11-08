@@ -69,9 +69,9 @@ if (is_file("views/" . $pagina . ".php")) {
             echo json_encode($p->existeCorreo($_POST['correoDocente'], $_POST['cedulaDocente'] ?? null));
             exit;
         } elseif ($accion == 'incluir' || $accion == 'modificar') {
-            $p->setCategoriaNombre($_POST['categoria']);
-            $p->setPrefijo($_POST['prefijoCedula']);
-            $p->setCedula($_POST['cedulaDocente']);
+            $p->setCategoriaNombre($_POST['categoria'] ?? '');
+            $p->setPrefijo($_POST['prefijoCedula'] ?? '');
+            $p->setCedula($_POST['cedulaDocente'] ?? '');
             $p->setNombre($_POST['nombreDocente']);
             $p->setApellido($_POST['apellidoDocente']);
             $p->setCorreo($_POST['correoDocente']);
@@ -100,11 +100,19 @@ if (is_file("views/" . $pagina . ".php")) {
             $p->setOtras((int)($_POST['actOtras'] ?? 0));
 
             if ($accion == 'incluir') {
-                echo json_encode($p->Registrar());
-                if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'registrar', 'docente');
+                $resultado = $p->Registrar();
+                echo json_encode($resultado);
+                
+                if (isset($bitacora) && isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'registrar', 'docente');
+                }
             } elseif ($accion == 'modificar') {
-                echo json_encode($p->Modificar());
-                if (isset($bitacora)) $bitacora->registrarAccion($usu_id, 'modificar', 'docente');
+                $resultado = $p->Modificar();
+                echo json_encode($resultado);
+                
+                if (isset($bitacora) && isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'modificar', 'docente');
+                }
             }
         }
         exit;

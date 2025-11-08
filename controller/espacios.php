@@ -28,9 +28,12 @@ if (is_file("views/" . $pagina . ".php")) {
             $e->setNumero($_POST['numeroEspacio']);
             $e->setEdificio($_POST['edificioEspacio']);
             $e->setTipo($_POST['tipoEspacio']);
-            echo  json_encode($e->eliminar());
+            $resultado = $e->eliminar();
+            echo json_encode($resultado);
 
-            $bitacora->registrarAccion($usu_id, 'eliminar', 'espacios');
+            if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                $bitacora->registrarAccion($usu_id, 'eliminar', 'espacios');
+            }
         } elseif ($accion == 'existe') {
             $numeroEspacio = $_POST['numeroEspacio'];
             $edificioEspacio = $_POST['edificioEspacio'];
@@ -45,18 +48,23 @@ if (is_file("views/" . $pagina . ".php")) {
             $e->setEdificio($_POST['edificioEspacio']);
             $e->setTipo($_POST['tipoEspacio']);
             if ($accion == 'registrar') {
-                echo  json_encode($e->Registrar());
+                $resultado = $e->Registrar();
+                echo json_encode($resultado);
 
-                $bitacora->registrarAccion($usu_id, 'registrar', 'espacios');
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'registrar', 'espacios');
+                }
             } elseif ($accion == 'modificar') {
-
-                $bitacora->registrarAccion($usu_id, 'modificar', 'espacios');
-
-                echo  json_encode($e->modificar(
+                $resultado = $e->modificar(
                     $_POST['original_numeroEspacio'],
                     $_POST['original_edificioEspacio'],
                     $_POST['original_tipoEspacio']
-                ));
+                );
+                echo json_encode($resultado);
+                
+                if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
+                    $bitacora->registrarAccion($usu_id, 'modificar', 'espacios');
+                }
             }
         }
         exit;
