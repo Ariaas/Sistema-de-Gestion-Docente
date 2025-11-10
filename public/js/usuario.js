@@ -269,6 +269,7 @@ $(document).ready(function () {
     $('#correo').prop('readonly', false);
     $('#scorreo').text('');
     $('#modalDocentes').modal('hide');
+    $('#usu_cedula').trigger('change');
   });
 
   $('#modalDocentes').on('hidden.bs.modal', function () {
@@ -280,6 +281,7 @@ $(document).ready(function () {
     $('#usu_cedula').val('');
     $('#docente_asignado_nombre').val('');
     $('#correo').prop('readonly', false);
+    $('#usu_cedula').trigger('change');
   });
 
   $('#btnSeleccionarRol').on('click', function () {
@@ -299,6 +301,7 @@ $(document).ready(function () {
     $('#usuarioRol').val(id);
     $('#rol_asignado_nombre').val(nombre);
     $('#modalRoles').modal('hide');
+    $('#usuarioRol').trigger('change');
   });
 
   $('#modalRoles').on('hidden.bs.modal', function () {
@@ -308,6 +311,7 @@ $(document).ready(function () {
   $('#btnQuitarRol').on('click', function () {
     $('#usuarioRol').val('');
     $('#rol_asignado_nombre').val('');
+    $('#usuarioRol').trigger('change');
   });
 
   $('#modal1').on('hidden.bs.modal', function () {

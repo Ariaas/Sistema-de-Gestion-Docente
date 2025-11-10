@@ -163,7 +163,6 @@ if (!$puede_registrar && !$puede_modificar) {
     <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/mallacurricular.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <script src="public/js/validacion_selects.js"></script>
 </body>
 
 </html>
