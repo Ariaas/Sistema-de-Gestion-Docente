@@ -73,6 +73,11 @@ class Anio extends Connection
 
     public function Registrar()
     {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
+    {
         $r = array();
 
         if ($this->aniAnio === null || $this->aniAnio === '') {
@@ -265,7 +270,7 @@ class Anio extends Connection
             if ($infoDuplicacion !== null) {
                 $r['duplicacion'] = $infoDuplicacion;
             }
-            
+
             $this->Notificaciones();
         } catch (Exception $e) {
             $co->rollBack();
@@ -318,7 +323,7 @@ class Anio extends Connection
             $co->commit();
             $r['resultado'] = 'registrar';
             $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
-            
+
             $this->Notificaciones();
         } catch (Exception $e) {
             $co->rollBack();
@@ -380,6 +385,11 @@ class Anio extends Connection
     }
 
     public function Modificar($anioOriginal, $tipoOriginal)
+    {
+        return $this->PostModificar($anioOriginal, $tipoOriginal);
+    }
+
+    private function PostModificar($anioOriginal, $tipoOriginal)
     {
         $r = array();
 
@@ -595,7 +605,7 @@ class Anio extends Connection
                 $co->commit();
                 $r['resultado'] = 'modificar';
                 $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el AÑO correctamente!';
-                
+
                 $this->Notificaciones();
             } catch (Exception $e) {
                 $co->rollBack();
@@ -611,6 +621,11 @@ class Anio extends Connection
     }
 
     public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         $r = array();
 

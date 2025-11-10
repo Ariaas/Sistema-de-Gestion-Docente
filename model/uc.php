@@ -137,6 +137,11 @@ class UC extends Connection
 
     public function Registrar()
     {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
+    {
         if ($this->codigoUC === null) {
             return array('resultado' => 'error', 'mensaje' => 'El código de la UC no puede estar vacío.');
         }
@@ -176,7 +181,7 @@ class UC extends Connection
 
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
+
         try {
             ValidacionSelect::validarExisteEnBD($co, 'tbl_eje', 'eje_nombre', $this->ejeUC, 'eje_estado');
             ValidacionSelect::validarExisteEnBD($co, 'tbl_area', 'area_nombre', $this->areaUC, 'area_estado');
@@ -223,6 +228,11 @@ class UC extends Connection
     }
 
     public function Modificar($codigoOriginal, $nuevoNombre = null)
+    {
+        return $this->PostModificar($codigoOriginal, $nuevoNombre);
+    }
+
+    private function PostModificar($codigoOriginal, $nuevoNombre = null)
     {
         if ($codigoOriginal === null) {
             return array('resultado' => 'error', 'mensaje' => 'El código original es requerido.');
@@ -278,7 +288,7 @@ class UC extends Connection
 
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
+
         try {
             ValidacionSelect::validarExisteEnBD($co, 'tbl_eje', 'eje_nombre', $this->ejeUC, 'eje_estado');
             ValidacionSelect::validarExisteEnBD($co, 'tbl_area', 'area_nombre', $this->areaUC, 'area_estado');
@@ -297,7 +307,7 @@ class UC extends Connection
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> La unidad curricular no existe!'];
             }
 
-           
+
             $origCodigo   = isset($datosOriginales['uc_codigo']) ? (string)$datosOriginales['uc_codigo'] : (string)$this->codigoUC;
             $origNombre   = isset($datosOriginales['uc_nombre']) ? (string)$datosOriginales['uc_nombre'] : (string)$this->nombreUC;
             $origCreditos = isset($datosOriginales['uc_creditos']) ? (int)$datosOriginales['uc_creditos'] : (int)$this->creditosUC;
@@ -353,6 +363,11 @@ class UC extends Connection
     }
 
     public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         if ($this->codigoUC === null) {
             return array('resultado' => 'error', 'mensaje' => 'El código no puede estar vacío.');

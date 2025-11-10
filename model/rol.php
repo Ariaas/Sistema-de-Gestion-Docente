@@ -59,7 +59,12 @@ class Rol extends Connection_bitacora
         $this->rolId = $rolId;
     }
 
-    function Registrar()
+    public function Registrar()
+    {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
     {
         $r = array();
 
@@ -119,7 +124,12 @@ class Rol extends Connection_bitacora
         return $r;
     }
 
-    function Modificar()
+    public function Modificar()
+    {
+        return $this->PostModificar();
+    }
+
+    private function PostModificar()
     {
         $r = array();
 
@@ -192,7 +202,12 @@ class Rol extends Connection_bitacora
         return $r;
     }
 
-    function Eliminar()
+    public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         $r = array();
 

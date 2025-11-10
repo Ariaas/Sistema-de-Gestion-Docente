@@ -48,13 +48,18 @@ class Titulo extends Connection
 
     public function Registrar()
     {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
         }
-        
+
         if (empty($this->nombreTitulo) || trim($this->nombreTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El nombre del título es requerido'];
         }
@@ -117,6 +122,11 @@ class Titulo extends Connection
 
     public function Modificar()
     {
+        return $this->PostModificar();
+    }
+
+    private function PostModificar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
@@ -124,7 +134,7 @@ class Titulo extends Connection
         if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
         }
-        
+
         if (empty($this->nombreTitulo) || trim($this->nombreTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El nombre del título es requerido'];
         }
@@ -190,6 +200,11 @@ class Titulo extends Connection
 
     public function Eliminar()
     {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
@@ -197,7 +212,7 @@ class Titulo extends Connection
         if (empty($this->prefijoTitulo) || trim($this->prefijoTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El prefijo del título es requerido'];
         }
-        
+
         if (empty($this->nombreTitulo) || trim($this->nombreTitulo) === '') {
             return ['resultado' => 'error', 'mensaje' => 'El nombre del título es requerido'];
         }
@@ -270,7 +285,7 @@ class Titulo extends Connection
         return ($result != false);
     }
 
-    
+
     public function existeInactivo($co)
     {
         $stmt = $co->prepare("SELECT 1 FROM tbl_titulo WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre AND tit_estado = 0");
@@ -281,7 +296,7 @@ class Titulo extends Connection
         return ($result != false);
     }
 
-    
+
     private function reactivar($co)
     {
         $stmt = $co->prepare("UPDATE tbl_titulo SET tit_estado = 1 WHERE tit_prefijo = :prefijo AND tit_nombre = :nombre");

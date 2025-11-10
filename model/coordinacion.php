@@ -20,22 +20,22 @@ class Coordinacion extends Connection
     {
         return $this->cor_nombre;
     }
-    
+
     public function setNombre($nombre)
     {
         $this->cor_nombre = trim($nombre);
     }
-    
+
     public function setOriginalNombre($nombre)
     {
         $this->original_cor_nombre = trim($nombre);
     }
-    
+
     public function getHoraDescarga()
     {
         return $this->coor_hora_descarga;
     }
-    
+
     public function setHoraDescarga($hora)
     {
         if ($hora !== null && $hora !== '') {
@@ -47,9 +47,12 @@ class Coordinacion extends Connection
         $this->coor_hora_descarga = $hora;
     }
 
-
-
     public function Registrar()
+    {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
     {
         $r = [];
 
@@ -116,6 +119,11 @@ class Coordinacion extends Connection
 
     public function Modificar()
     {
+        return $this->PostModificar();
+    }
+
+    private function PostModificar()
+    {
         $r = [];
 
         if ($this->original_cor_nombre === null || trim($this->original_cor_nombre) === '') {
@@ -143,27 +151,29 @@ class Coordinacion extends Connection
             $r['mensaje'] = 'El nombre no puede exceder 100 caracteres.';
             return $r;
         }
-        
+
         try {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
+
             $stmt = $co->prepare("SELECT cor_nombre, coor_hora_descarga FROM tbl_coordinacion WHERE cor_nombre = :original_nombre");
             $stmt->execute([':original_nombre' => $this->original_cor_nombre]);
             $datosOriginales = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$datosOriginales) {
                 return ['resultado' => 'error', 'mensaje' => 'La coordinación no existe.'];
             }
-            
-            if ($datosOriginales['cor_nombre'] === $this->cor_nombre && 
-                $datosOriginales['coor_hora_descarga'] == $this->coor_hora_descarga) {
+
+            if (
+                $datosOriginales['cor_nombre'] === $this->cor_nombre &&
+                $datosOriginales['coor_hora_descarga'] == $this->coor_hora_descarga
+            ) {
                 return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
             }
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         }
-        
+
         if ($this->original_cor_nombre !== $this->cor_nombre) {
             if ($this->Existe($this->cor_nombre)) {
                 $r['resultado'] = 'error';
@@ -171,7 +181,7 @@ class Coordinacion extends Connection
                 return $r;
             }
         }
-        
+
         try {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -179,16 +189,16 @@ class Coordinacion extends Connection
             $registro_inactivo = $this->BuscarPorNombre($this->cor_nombre);
             if ($registro_inactivo && isset($registro_inactivo['cor_estado']) && $registro_inactivo['cor_estado'] == 0) {
                 $co->prepare("DELETE FROM tbl_coordinacion WHERE cor_nombre = :nombre AND cor_estado = 0")
-                   ->execute([':nombre' => $this->cor_nombre]);
+                    ->execute([':nombre' => $this->cor_nombre]);
             }
 
             $co->prepare("UPDATE tbl_coordinacion SET cor_nombre = :new_nombre, coor_hora_descarga = :coor_hora_descarga WHERE cor_nombre = :original_nombre")
-               ->execute([
-                   ':new_nombre' => $this->cor_nombre,
-                   ':coor_hora_descarga' => $this->coor_hora_descarga,
-                   ':original_nombre' => $this->original_cor_nombre
-               ]);
-            
+                ->execute([
+                    ':new_nombre' => $this->cor_nombre,
+                    ':coor_hora_descarga' => $this->coor_hora_descarga,
+                    ':original_nombre' => $this->original_cor_nombre
+                ]);
+
             $r['resultado'] = 'modificar';
             $r['mensaje'] = ' La coordinación se ha modificado correctamente.';
         } catch (Exception $e) {
@@ -205,6 +215,11 @@ class Coordinacion extends Connection
     }
 
     public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         $r = [];
 
@@ -227,11 +242,11 @@ class Coordinacion extends Connection
             $r['mensaje'] = 'El nombre no puede exceder 100 caracteres.';
             return $r;
         }
-        
+
         try {
             $co = $this->Con();
             $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
+
             $stmt = $co->prepare("SELECT cor_estado FROM tbl_coordinacion WHERE cor_nombre = :cor_nombre");
             $stmt->execute([':cor_nombre' => $this->cor_nombre]);
             $coordinacion = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -247,10 +262,10 @@ class Coordinacion extends Connection
                 $r['mensaje'] = ' La coordinación ya está desactivada.';
                 return $r;
             }
-            
+
             $co->prepare("UPDATE tbl_coordinacion SET cor_estado = 0 WHERE cor_nombre = :cor_nombre")
-               ->execute([':cor_nombre' => $this->cor_nombre]);
-            
+                ->execute([':cor_nombre' => $this->cor_nombre]);
+
             $r['resultado'] = 'eliminar';
             $r['mensaje'] = 'La coordinación se ha eliminado correctamente.';
         } catch (Exception $e) {

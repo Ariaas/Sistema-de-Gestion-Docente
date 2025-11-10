@@ -25,18 +25,54 @@ class Malla extends Connection
     }
 
 
-    public function getMalCodigo(){ return $this->mal_codigo; }
-    public function setMalCodigo($mal_codigo){ $this->mal_codigo = $mal_codigo; }
-    public function getMalNombre(){ return $this->mal_nombre; }
-    public function setMalNombre($mal_nombre){ $this->mal_nombre = $mal_nombre; }
-    public function getMalCohorte(){ return $this->mal_cohorte; }
-    public function setMalCohorte($mal_cohorte){ $this->mal_cohorte = $mal_cohorte; }
-    public function getMalDescripcion(){ return $this->mal_descripcion; }
-    public function setMalDescripcion($mal_descripcion){ $this->mal_descripcion = $mal_descripcion; }
-    public function getMalActiva(){ return $this->mal_activa; }
-    public function setMalActiva($mal_activa){ $this->mal_activa = $mal_activa; }
-    public function getMalCodigoOriginal(){ return $this->mal_codigo_original; }
-    public function setMalCodigoOriginal($mal_codigo_original){ $this->mal_codigo_original = $mal_codigo_original; }
+    public function getMalCodigo()
+    {
+        return $this->mal_codigo;
+    }
+    public function setMalCodigo($mal_codigo)
+    {
+        $this->mal_codigo = $mal_codigo;
+    }
+    public function getMalNombre()
+    {
+        return $this->mal_nombre;
+    }
+    public function setMalNombre($mal_nombre)
+    {
+        $this->mal_nombre = $mal_nombre;
+    }
+    public function getMalCohorte()
+    {
+        return $this->mal_cohorte;
+    }
+    public function setMalCohorte($mal_cohorte)
+    {
+        $this->mal_cohorte = $mal_cohorte;
+    }
+    public function getMalDescripcion()
+    {
+        return $this->mal_descripcion;
+    }
+    public function setMalDescripcion($mal_descripcion)
+    {
+        $this->mal_descripcion = $mal_descripcion;
+    }
+    public function getMalActiva()
+    {
+        return $this->mal_activa;
+    }
+    public function setMalActiva($mal_activa)
+    {
+        $this->mal_activa = $mal_activa;
+    }
+    public function getMalCodigoOriginal()
+    {
+        return $this->mal_codigo_original;
+    }
+    public function setMalCodigoOriginal($mal_codigo_original)
+    {
+        $this->mal_codigo_original = $mal_codigo_original;
+    }
 
     /**
      * Valida que todas las unidades curriculares tengan horas válidas (mayores a 0 y no nulas)
@@ -47,16 +83,18 @@ class Malla extends Connection
     {
         foreach ($unidades as $index => $uc) {
             $uc_codigo = isset($uc['uc_codigo']) ? $uc['uc_codigo'] : 'Desconocida';
-            
-            if (!isset($uc['hora_independiente']) || $uc['hora_independiente'] === null || $uc['hora_independiente'] === '' ||
+
+            if (
+                !isset($uc['hora_independiente']) || $uc['hora_independiente'] === null || $uc['hora_independiente'] === '' ||
                 !isset($uc['hora_asistida']) || $uc['hora_asistida'] === null || $uc['hora_asistida'] === '' ||
-                !isset($uc['hora_academica']) || $uc['hora_academica'] === null || $uc['hora_academica'] === '') {
+                !isset($uc['hora_academica']) || $uc['hora_academica'] === null || $uc['hora_academica'] === ''
+            ) {
                 return [
                     'resultado' => 'error',
                     'mensaje' => "Error: La unidad curricular '{$uc_codigo}' tiene campos de horas nulos o faltantes."
                 ];
             }
-            
+
             if ($uc['hora_independiente'] <= 0 || $uc['hora_asistida'] <= 0 || $uc['hora_academica'] <= 0) {
                 return [
                     'resultado' => 'error',
@@ -64,7 +102,7 @@ class Malla extends Connection
                 ];
             }
         }
-        
+
         return ['resultado' => 'ok'];
     }
 
@@ -105,7 +143,13 @@ class Malla extends Connection
         return $r;
     }
 
-    public function Registrar($unidades){
+    public function Registrar($unidades)
+    {
+        return $this->PostRegistrar($unidades);
+    }
+
+    private function PostRegistrar($unidades)
+    {
         $r = array();
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -118,7 +162,7 @@ class Malla extends Connection
         if ($validacion_horas['resultado'] === 'error') {
             return $validacion_horas;
         }
-        
+
         try {
             $codigos_uc = array_column($unidades, 'uc_codigo');
             $placeholders = implode(',', array_fill(0, count($codigos_uc), '?'));
@@ -134,8 +178,8 @@ class Malla extends Connection
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => 'Error al validar los trayectos: ' . $e->getMessage()];
         }
-        
-        
+
+
         $check_codigo = $this->Existecodigo();
         if (isset($check_codigo['resultado']) && $check_codigo['resultado'] === 'existe') {
             return $check_codigo;
@@ -180,10 +224,15 @@ class Malla extends Connection
 
     public function Modificar($unidades)
     {
+        return $this->PostModificar($unidades);
+    }
+
+    private function PostModificar($unidades)
+    {
         $r = array();
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
+
         if (empty($unidades)) {
             return ['resultado' => 'error', 'mensaje' => 'No se han proporcionado unidades curriculares para modificar.'];
         }
@@ -192,7 +241,7 @@ class Malla extends Connection
         if ($validacion_horas['resultado'] === 'error') {
             return $validacion_horas;
         }
-        
+
         $check_cohorte = $this->ExisteCohorte(true);
         if (isset($check_cohorte['resultado']) && $check_cohorte['resultado'] === 'existe') {
             return $check_cohorte;
@@ -217,7 +266,7 @@ class Malla extends Connection
             $stmt->bindParam(':mal_descripcion', $this->mal_descripcion, PDO::PARAM_STR);
             $stmt->bindParam(':mal_codigo_original', $codigo_original, PDO::PARAM_STR);
             $stmt->execute();
-            
+
             $stmt_delete = $co->prepare("DELETE FROM uc_malla WHERE mal_codigo = :mal_codigo_original");
             $stmt_delete->bindParam(':mal_codigo_original', $codigo_original, PDO::PARAM_STR);
             $stmt_delete->execute();
@@ -274,7 +323,7 @@ class Malla extends Connection
             $stmt_current->bindParam(':mal_codigo', $this->mal_codigo, PDO::PARAM_STR);
             $stmt_current->execute();
             $estado_actual = $stmt_current->fetchColumn();
-            
+
             if ($estado_actual == 1) {
                 $nuevo_estado = 0;
                 $accion_bitacora = 'desactivar';
@@ -363,7 +412,7 @@ class Malla extends Connection
 
     public function obtenerUnidadesCurriculares()
     {
-       
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();
@@ -380,8 +429,9 @@ class Malla extends Connection
         return $r;
     }
 
-    public function obtenerUnidadesPorMalla(){
-        
+    public function obtenerUnidadesPorMalla()
+    {
+
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();

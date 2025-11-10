@@ -37,6 +37,11 @@ class Eje extends Connection
 
     public function Registrar()
     {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
+    {
         $r = array();
 
         if ($this->ejeNombre === null || trim($this->ejeNombre) === '') {
@@ -80,7 +85,7 @@ class Eje extends Connection
                 if ($existe['eje_estado'] == 1) {
                     return ['resultado' => 'registrar', 'mensaje' => 'ERROR! <br/> El EJE colocado YA existe!'];
                 }
-                
+
                 $stmt = $co->prepare("UPDATE tbl_eje SET eje_descripcion = :ejeDescripcion, eje_estado = 1 WHERE eje_nombre = :ejeNombre");
             } else {
                 $stmt = $co->prepare("INSERT INTO tbl_eje (eje_nombre, eje_descripcion, eje_estado) VALUES (:ejeNombre, :ejeDescripcion, 1)");
@@ -100,6 +105,11 @@ class Eje extends Connection
     }
 
     public function Modificar($ejeOriginal)
+    {
+        return $this->PostModificar($ejeOriginal);
+    }
+
+    private function PostModificar($ejeOriginal)
     {
         $r = array();
 
@@ -150,8 +160,10 @@ class Eje extends Connection
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> El eje no existe!'];
             }
 
-            if ($datosOriginales['eje_nombre'] === $this->ejeNombre && 
-                $datosOriginales['eje_descripcion'] === $this->ejeDescripcion) {
+            if (
+                $datosOriginales['eje_nombre'] === $this->ejeNombre &&
+                $datosOriginales['eje_descripcion'] === $this->ejeDescripcion
+            ) {
                 return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
             }
 
@@ -161,7 +173,7 @@ class Eje extends Connection
 
             if ($this->ejeNombre !== $ejeOriginal) {
                 $co->prepare("DELETE FROM tbl_eje WHERE eje_nombre = :ejeNombre AND eje_estado = 0")
-                   ->execute([':ejeNombre' => $this->ejeNombre]);
+                    ->execute([':ejeNombre' => $this->ejeNombre]);
             }
 
             $stmt = $co->prepare("UPDATE tbl_eje SET eje_nombre = :ejeNombre, eje_descripcion = :ejeDescripcion WHERE eje_nombre = :ejeOriginal");
@@ -180,6 +192,11 @@ class Eje extends Connection
     }
 
     public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         $r = array();
 
@@ -220,7 +237,7 @@ class Eje extends Connection
             }
 
             $co->prepare("UPDATE tbl_eje SET eje_estado = 0 WHERE eje_nombre = :ejeNombre")
-               ->execute([':ejeNombre' => $this->ejeNombre]);
+                ->execute([':ejeNombre' => $this->ejeNombre]);
 
             return ['resultado' => 'eliminar', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó el EJE correctamente!'];
         } catch (Exception $e) {

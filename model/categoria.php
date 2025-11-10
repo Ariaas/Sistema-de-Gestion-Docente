@@ -37,6 +37,11 @@ class Categoria extends Connection
 
     public function Registrar()
     {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
+    {
         $r = array();
 
         if ($this->categoriaNombre === null || trim($this->categoriaNombre) === '') {
@@ -80,7 +85,7 @@ class Categoria extends Connection
                 if ($existe['cat_estado'] == 1) {
                     return ['resultado' => 'registrar', 'mensaje' => 'ERROR! <br/> La CATEGORÍA colocada ya existe!'];
                 }
-                
+
                 $stmt = $co->prepare("UPDATE tbl_categoria SET cat_descripcion = :categoriaDescripcion, cat_estado = 1 WHERE cat_nombre = :categoriaNombre");
             } else {
                 $stmt = $co->prepare("INSERT INTO tbl_categoria (cat_nombre, cat_descripcion, cat_estado) VALUES (:categoriaNombre, :categoriaDescripcion, 1)");
@@ -100,6 +105,11 @@ class Categoria extends Connection
     }
 
     public function Modificar($categoriaOriginal)
+    {
+        return $this->PostModificar($categoriaOriginal);
+    }
+
+    private function PostModificar($categoriaOriginal)
     {
         $r = array();
 
@@ -150,8 +160,10 @@ class Categoria extends Connection
                 return ['resultado' => 'modificar', 'mensaje' => 'ERROR! <br/> La categoría no existe!'];
             }
 
-            if ($datosOriginales['cat_nombre'] === $this->categoriaNombre && 
-                $datosOriginales['cat_descripcion'] === $this->categoriaDescripcion) {
+            if (
+                $datosOriginales['cat_nombre'] === $this->categoriaNombre &&
+                $datosOriginales['cat_descripcion'] === $this->categoriaDescripcion
+            ) {
                 return ['resultado' => 'modificar', 'mensaje' => 'No se realizaron cambios.'];
             }
 
@@ -161,7 +173,7 @@ class Categoria extends Connection
 
             if ($this->categoriaNombre !== $categoriaOriginal) {
                 $co->prepare("DELETE FROM tbl_categoria WHERE cat_nombre = :categoriaNombre AND cat_estado = 0")
-                   ->execute([':categoriaNombre' => $this->categoriaNombre]);
+                    ->execute([':categoriaNombre' => $this->categoriaNombre]);
             }
 
             $stmt = $co->prepare("UPDATE tbl_categoria SET cat_nombre = :categoriaNombre, cat_descripcion = :categoriaDescripcion WHERE cat_nombre = :categoriaOriginal");
@@ -180,6 +192,11 @@ class Categoria extends Connection
     }
 
     public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         $r = array();
 
@@ -220,7 +237,7 @@ class Categoria extends Connection
             }
 
             $co->prepare("UPDATE tbl_categoria SET cat_estado = 0 WHERE cat_nombre = :categoriaNombre")
-               ->execute([':categoriaNombre' => $this->categoriaNombre]);
+                ->execute([':categoriaNombre' => $this->categoriaNombre]);
 
             return ['resultado' => 'eliminar', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó la CATEGORÍA correctamente!'];
         } catch (Exception $e) {

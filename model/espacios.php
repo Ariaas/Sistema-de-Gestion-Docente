@@ -62,7 +62,12 @@ class Espacio extends Connection
 
 
 
-    function Registrar()
+    public function Registrar()
+    {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
     {
         $r = [];
 
@@ -172,7 +177,12 @@ class Espacio extends Connection
     }
 
 
-    function Modificar($originalNumero, $originalEdificio, $originalTipo)
+    public function Modificar($originalNumero, $originalEdificio, $originalTipo)
+    {
+        return $this->PostModificar($originalNumero, $originalEdificio, $originalTipo);
+    }
+
+    private function PostModificar($originalNumero, $originalEdificio, $originalTipo)
     {
         $r = [];
 
@@ -298,7 +308,12 @@ class Espacio extends Connection
     }
 
 
-    function Eliminar()
+    public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         $r = [];
 

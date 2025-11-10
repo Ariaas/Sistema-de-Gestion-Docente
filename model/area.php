@@ -35,7 +35,12 @@ class Area extends Connection
         $this->areaDescripcion = $areaDescripcion;
     }
 
-    function Registrar()
+    public function Registrar()
+    {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
     {
         $r = array();
 
@@ -126,7 +131,12 @@ class Area extends Connection
         return $r;
     }
 
-    function Modificar($areaOriginal)
+    public function Modificar($areaOriginal)
+    {
+        return $this->PostModificar($areaOriginal);
+    }
+
+    private function PostModificar($areaOriginal)
     {
         $r = array();
 
@@ -196,7 +206,12 @@ class Area extends Connection
         return $r;
     }
 
-    function Eliminar()
+    public function Eliminar()
+    {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
     {
         $r = array();
 

@@ -9,12 +9,17 @@ class Notificaciones extends Connection_bitacora
 {
     public function RegistrarNotificacion($notificacion, $fin)
     {
+        return $this->PostRegistrarNotificacion($notificacion, $fin);
+    }
+
+    private function PostRegistrarNotificacion($notificacion, $fin)
+    {
         $co = $this->Con();
-        
+
         $stmt = $co->prepare("SELECT not_id, not_estado FROM tbl_notificacion WHERE not_notificacion = ?");
         $stmt->execute([$notificacion]);
         $existe = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($existe) {
             $stmt = $co->prepare("UPDATE tbl_notificacion SET not_fin = ?, not_estado = 1, not_activo = 1 WHERE not_id = ?");
             return $stmt->execute([$fin, $existe['not_id']]);
@@ -108,12 +113,12 @@ class Notificaciones extends Connection_bitacora
     {
         $this->Desactivar();
         $co = $this->Con();
-        
+
         try {
             $stmt = $co->query("SELECT COUNT(*) FROM tbl_notificacion 
                 WHERE not_estado = 1 AND not_activo = 1 AND not_fin >= NOW()");
             $count = $stmt->fetchColumn();
-            
+
             return [
                 'resultado' => 'ok',
                 'count' => (int)$count

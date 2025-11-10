@@ -422,6 +422,11 @@ class Seccion extends Connection
 
     public function RegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo, $forzar_cohorte = false)
     {
+        return $this->PostRegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo, $forzar_cohorte);
+    }
+
+    private function PostRegistrarSeccion($codigoSeccion, $cantidadSeccion, $anio_anio, $anio_tipo, $forzar_cohorte = false)
+    {
         if (empty($codigoSeccion) || !isset($cantidadSeccion) || $cantidadSeccion === '' || empty($anio_anio) || empty($anio_tipo)) {
             return ['resultado' => 'error', 'mensaje' => 'Todos los campos de la sección son obligatorios.'];
         }
@@ -636,6 +641,11 @@ class Seccion extends Connection
     }
 
     public function Modificar($sec_codigo, $ani_anio, $ani_tipo, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]', $bloques_eliminados_json = '[]', $turno_preferido = null)
+    {
+        return $this->PostModificar($sec_codigo, $ani_anio, $ani_tipo, $items_horario_json, $cantidadSeccion, $forzar, $modo_operacion, $bloques_personalizados_json, $bloques_eliminados_json, $turno_preferido);
+    }
+
+    private function PostModificar($sec_codigo, $ani_anio, $ani_tipo, $items_horario_json, $cantidadSeccion, $forzar = false, $modo_operacion = 'modificar', $bloques_personalizados_json = '[]', $bloques_eliminados_json = '[]', $turno_preferido = null)
     {
         if (empty($sec_codigo) || empty($ani_anio) || empty($ani_tipo) || !isset($cantidadSeccion)) {
             return ['resultado' => 'error', 'mensaje' => 'Faltan datos clave (código, año, tipo o cantidad) para modificar la sección.'];
@@ -918,6 +928,11 @@ class Seccion extends Connection
         }
     }
     public function EliminarSeccionYHorario($sec_codigo, $ani_anio, $ani_tipo = null)
+    {
+        return $this->PostEliminarSeccionYHorario($sec_codigo, $ani_anio, $ani_tipo);
+    }
+
+    private function PostEliminarSeccionYHorario($sec_codigo, $ani_anio, $ani_tipo = null)
     {
         if (empty($sec_codigo) || empty($ani_anio)) {
             return ['resultado' => 'error', 'mensaje' => 'Faltan datos (código o año) para eliminar la sección.'];

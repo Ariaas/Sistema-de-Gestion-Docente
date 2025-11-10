@@ -200,6 +200,11 @@ class Perfil extends Connection_bitacora
 
     public function Modificar($contraseniaUsuario = null)
     {
+        return $this->PostModificar($contraseniaUsuario);
+    }
+
+    private function PostModificar($contraseniaUsuario = null)
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = array();

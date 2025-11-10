@@ -106,7 +106,12 @@ class Usuario extends Connection_bitacora
         $this->superUsuario = $superUsuario;
     }
 
-    function Registrar()
+    public function Registrar()
+    {
+        return $this->PostRegistrar();
+    }
+
+    private function PostRegistrar()
     {
         $r = array();
 
@@ -224,7 +229,12 @@ class Usuario extends Connection_bitacora
     }
 
 
-    function Modificar($current_user_id, $nuevoNombre = null, $nuevoCorreo = null, $nuevaContrasenia = null)
+    public function Modificar($current_user_id, $nuevoNombre = null, $nuevoCorreo = null, $nuevaContrasenia = null)
+    {
+        return $this->PostModificar($current_user_id, $nuevoNombre, $nuevoCorreo, $nuevaContrasenia);
+    }
+
+    private function PostModificar($current_user_id, $nuevoNombre = null, $nuevoCorreo = null, $nuevaContrasenia = null)
     {
         if ($current_user_id === null) {
             return array('resultado' => 'error', 'mensaje' => 'El ID del usuario actual es requerido.');
@@ -338,8 +348,12 @@ class Usuario extends Connection_bitacora
     }
 
 
+    public function Eliminar($usuarioEliminar = null)
+    {
+        return $this->PostEliminar($usuarioEliminar);
+    }
 
-    function Eliminar($usuarioEliminar = null)
+    private function PostEliminar($usuarioEliminar = null)
     {
         if ($usuarioEliminar !== null) {
             $this->nombreUsuario = $usuarioEliminar;

@@ -516,6 +516,11 @@ class Prosecusion extends Connection
 
     public function Eliminar()
     {
+        return $this->PostEliminar();
+    }
+
+    private function PostEliminar()
+    {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $r = ['resultado' => 'error', 'mensaje' => 'ID de prosecusión no proporcionado.'];
