@@ -284,10 +284,10 @@ table {
   color: #fff;
 }
 .uc-badge.activa {
-  background: #28a745; 
+  background: #28a745;
 }
 .uc-badge.desactivada {
-  background: #dc3545; 
+  background: #dc3545;
 }
 
 .btn-icon-text {
@@ -1090,7 +1090,7 @@ footer {
   border-radius: 1.5rem !important;
   padding: 2rem 1.5rem !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
 .swal-custom-title {
@@ -1115,14 +1115,25 @@ footer {
   font-size: 1.05rem !important;
   font-weight: 600 !important;
   text-transform: capitalize !important;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(15, 98, 223, 0.562) !important;
   transition: all 0.3s ease !important;
   border: none !important;
 }
 
 .swal-custom-button:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 6px 16px rgba(29, 107, 196, 0.753) !important;
+}
+
+.swal2-styled.swal2-confirm,
+.swal2-confirm {
+  background-color: #3085d6 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(48, 133, 214, 0.18) !important;
+}
+.swal2-styled.swal2-confirm:focus,
+.swal2-confirm:focus {
+  box-shadow: 0 0 0 4px rgba(48, 133, 214, 0.28) !important;
 }
 
 .swal2-icon {
@@ -1136,7 +1147,7 @@ footer {
   border-color: #10b981 !important;
 }
 
-.swal2-icon.swal2-success [class^='swal2-success-line'] {
+.swal2-icon.swal2-success [class^="swal2-success-line"] {
   background-color: #10b981 !important;
 }
 
@@ -1148,7 +1159,7 @@ footer {
   border-color: #ef4444 !important;
 }
 
-.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+.swal2-icon.swal2-error [class^="swal2-x-mark-line"] {
   background-color: #ef4444 !important;
 }
 
@@ -1163,7 +1174,7 @@ footer {
 }
 
 .swal2-timer-progress-bar {
-  background: linear-gradient(90deg, #8b5cf6, #a78bfa) !important;
+  background: linear-gradient(90deg, #194494, #1873b1) !important;
   height: 4px !important;
 }
 

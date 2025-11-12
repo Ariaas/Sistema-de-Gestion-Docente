@@ -26,6 +26,7 @@ function muestraMensaje(icono, tiempo, titulo, mensaje) {
     html: mensaje,
     showConfirmButton: true,
     confirmButtonText: "Aceptar",
+    confirmButtonColor: "#3085d6",
     timerProgressBar: true,
     allowEnterKey: true,
     allowEscapeKey: true,

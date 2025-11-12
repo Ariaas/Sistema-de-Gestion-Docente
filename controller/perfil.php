@@ -39,6 +39,11 @@ if (is_file("views/" . $pagina . ".php")) {
                     $ext = $type[1] === 'svg+xml' ? 'svg' : $type[1];
                     $pedula = $_SESSION['cedula'] ?? $usu_id;
 
+                    $profileDir = "public/assets/profile";
+                    if(!is_dir($profileDir)){
+                        mkdir($profileDir, 0777, true);
+                    }
+
                     $extensions = ['png', 'jpg', 'jpeg', 'svg'];
                     foreach ($extensions as $oldExt) {
                         $oldFileName = "public/assets/profile/{$pedula}.{$oldExt}";
