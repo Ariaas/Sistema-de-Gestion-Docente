@@ -1,5 +1,39 @@
 let duplicacionPendiente = null;
 
+function actualizarTituloModal(accionTexto, detalle = "") {
+  const titulo = $("#modalTituloAccion");
+  if (!titulo.length) {
+    return;
+  }
+  titulo.text(detalle ? `${accionTexto} Año - ${detalle}` : `${accionTexto} Año`);
+}
+
+function formatearTipoAnio(tipo) {
+  if (!tipo) {
+    return "";
+  }
+  return tipo.charAt(0).toUpperCase() + tipo.slice(1);
+}
+
+function toggleCampoAnioModificar(ocultar) {
+  const $anioCol = $("#aniAnio").closest(".col-md-6, .col-md-12");
+  const $tipoCol = $("#tipoAnio").closest(".col-md-6, .col-md-12");
+
+  if (ocultar) {
+    $anioCol.addClass("d-none");
+    $tipoCol.addClass("d-none");
+  } else {
+    $anioCol.removeClass("d-none");
+    $tipoCol.removeClass("d-none");
+    if (!$anioCol.hasClass("col-md-6")) {
+      $anioCol.removeClass("col-md-12").addClass("col-md-6");
+    }
+    if (!$tipoCol.hasClass("col-md-6")) {
+      $tipoCol.removeClass("col-md-12").addClass("col-md-6");
+    }
+  }
+}
+
 function Listar() {
   var datos = new FormData();
   datos.append("accion", "consultar");
@@ -178,7 +212,7 @@ $(document).ready(function () {
     $(".row.g-3:has(#aniAperturaFase2), .row.g-3:has(#aniCierraFase2)").show();
 
     $("#tipoAnio").trigger("change");
-    $("#modal1 .modal-title").text("Formulario de Año Regular/Intensivo");
+    actualizarTituloModal('Registrar');
     $("#modal1").modal("show");
 
     existeAnio();
@@ -366,11 +400,18 @@ function pone(pos, accion) {
   linea = $(pos).closest("tr");
   const anioOriginal = $(linea).find("td:eq(1)").text();
   const tipoOriginal = $(linea).find("td:eq(2)").text();
+  const tipoFormateado = formatearTipoAnio(tipoOriginal);
+  const detalleModal = tipoFormateado ? `${anioOriginal} (${tipoFormateado})` : anioOriginal;
+
+  toggleCampoAnioModificar(false);
 
   if (accion == 0) {
     $("#proceso").text("MODIFICAR");
+    actualizarTituloModal('Modificar', detalleModal);
+    toggleCampoAnioModificar(true);
     $("#aniId").prop("disabled", false);
     $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+    $("#aniAnio, #tipoAnio").prop("disabled", true);
     $('#tipoAnio option[value="regular"], #tipoAnio option[value="intensivo"]').prop('disabled', false);
     estadoInicialAnio = {
       aniAnio: $(linea).find("td:eq(1)").text(),
@@ -383,6 +424,7 @@ function pone(pos, accion) {
     setTimeout(verificarCambiosAnio, 200);
   } else {
     $("#proceso").text("ELIMINAR");
+    actualizarTituloModal('Eliminar', detalleModal);
     $("#aniId, #aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
   }
   $("#saniAnio").hide();
@@ -598,6 +640,9 @@ function limpia() {
   $("#aniCierraFase2").val("");
   $("#saniAnio").text("");
   $("#saniAperturaFase1, #saniCierraFase1, #saniAperturaFase2, #saniCierraFase2").text("");
+  $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", false);
+  toggleCampoAnioModificar(false);
+  actualizarTituloModal('Registrar');
 }
 
 function convertirFecha(fecha) {

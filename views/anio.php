@@ -77,7 +77,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">Formulario de Año</h5>
+                        <h5 class="modal-title" id="modalTituloAccion">Registrar Año</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
