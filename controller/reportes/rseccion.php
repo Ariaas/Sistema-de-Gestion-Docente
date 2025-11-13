@@ -132,11 +132,10 @@ if (isset($_POST['generar_seccion_report'])) {
     $horarioDataRaw = $oReporte->getHorariosFiltrados();
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0);
-
-    $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleTableHeader = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleHeaderTitle = ['font' => ['bold' => true, 'size' => 20], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleTableHeader = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleTimeSlot = ['font' => ['bold' => true, 'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    $styleScheduleCell = ['font' => ['size' => 9], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleScheduleCell = ['font' => ['bold' => true,'size' => 12], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
 
     $day_map = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miércoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sábado' => 'Sábado'];
     $day_order = array_flip(array_values($day_map));
@@ -164,7 +163,7 @@ if (isset($_POST['generar_seccion_report'])) {
 
             $clasesDelGrupo = array_values(array_unique($clasesDelGrupo, SORT_REGULAR));
 
-            $tituloSeccion = "Sección";
+            $tituloSeccion = "Seccion";
             $sheetTitleText = "";
             $nombresSecciones = [];
             foreach ($codigosDeSeccion as $codigo) {
@@ -320,27 +319,30 @@ if (isset($_POST['generar_seccion_report'])) {
             $mainShiftMapped = $shiftNameMapping[$mainShiftName] ?? 'morning';
 
      
-            $allAvailableSlots = [
-                'morning' => $morningSlots,
-                'afternoon' => $afternoonSlots,
-                'night' => $nightSlots
-            ];
             
-            $slotsToDisplay = [];
+$allAvailableSlots = [
+    'morning' => $morningSlots,
+    'afternoon' => $afternoonSlots,
+    'night' => $nightSlots
+];
 
-            foreach ($allAvailableSlots as $shift => $timeSlots) {
-                $isMainShift = ($shift === $mainShiftMapped);
-                
-                foreach ($timeSlots as $dbStartTimeKey => $displaySlot) {
-                    $isOccupied = isset($occupiedDbKeys[$dbStartTimeKey]);
+$slotsToDisplay = [];
 
-                    if ($isOccupied || $isMainShift) {
-                        $slotsToDisplay[$dbStartTimeKey] = $displaySlot;
-                    }
-                }
-            }
 
-            ksort($slotsToDisplay); 
+foreach ($allAvailableSlots as $shift => $timeSlots) {
+    foreach ($timeSlots as $dbStartTimeKey => $displaySlot) {
+        
+        
+        $isOccupied = isset($occupiedDbKeys[$dbStartTimeKey]);
+
+        
+        if ($isOccupied) { 
+            $slotsToDisplay[$dbStartTimeKey] = $displaySlot;
+        }
+    }
+}
+
+ksort($slotsToDisplay);
 
             $maxRow = $headerRow;
             foreach ($slotsToDisplay as $dbStartTimeKey => $displaySlot) {
@@ -363,29 +365,38 @@ if (isset($_POST['generar_seccion_report'])) {
                             $clasesEnBloque = [$clasesEnBloque];
                         }
 
-                        $richText = new RichText();
-                        foreach ($clasesEnBloque as $cIdx => $clase) {
-                            if ($cIdx > 0) {
-                                $richText->createText("\n- - - - - - - - -\n");
-                            }
+                        
 
-                            $subgrupoTexto = ($clase['subgrupo'] && $clase['subgrupo'] !== 'general') ? '(G: ' . $clase['subgrupo'] . ') ' : '';
-                            $uc_nombre = $clase['uc_nombre'] ?? null;
-$ucAbreviada = $uc_nombre ? abreviarNombreLargo($uc_nombre) : '(Sin UC)';
-                           $ucPart = $richText->createTextRun($subgrupoTexto . $ucAbreviada);
-                               $ucPart->getFont()->setBold(true);
 
-                                $docente = $clase['NombreCompletoDocente'] ?? '(Sin docente)';
-                                $richText->createText("\n" . $docente);
+$cellText = ""; 
+foreach ($clasesEnBloque as $cIdx => $clase) {
+  if ($cIdx > 0) {
+    $cellText .= "\n- - - - - - - - -\n"; 
+  }
 
-                                $currentColumnInfo = $columnLocationInfo[$idx];
-                         if (!$currentColumnInfo['is_single'] || strtolower($currentColumnInfo['type']) === 'laboratorio') {
-                                    $espacio = $clase['esp_codigo'] ?? '(Sin espacio)';
-                                    $richText->createText("\n" . $espacio);
-                                }
-                            }
+  
+  $subgrupoTexto = ($clase['subgrupo'] && $clase['subgrupo'] !== 'general') ? '(G: ' . $clase['subgrupo'] . ') ' : '';
+  $uc_nombre = $clase['uc_nombre'] ?? null;
+  $ucAbreviada = $uc_nombre ? abreviarNombreLargo($uc_nombre) : '(Sin UC)';
+  
 
-                            $sheet->getCell($cellAddress)->setValue($richText);
+  $cellText .= mb_strtoupper($subgrupoTexto . $ucAbreviada, 'UTF-8'); 
+
+  
+  $docente = $clase['NombreCompletoDocente'] ?? '(Sin docente)';
+  $cellText .= "\n" . $docente; 
+
+  
+  $currentColumnInfo = $columnLocationInfo[$idx];
+  if (!$currentColumnInfo['is_single'] || strtolower($currentColumnInfo['type']) === 'laboratorio') {
+    $espacio = $clase['esp_codigo'] ?? '(Sin espacio)';
+    $cellText .= "\n" . mb_strtoupper($espacio, 'UTF-8'); 
+  }
+}
+
+
+$sheet->getCell($cellAddress)->setValue($cellText); 
+
 
                            $primeraClase = $clasesEnBloque[0];
                      $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);

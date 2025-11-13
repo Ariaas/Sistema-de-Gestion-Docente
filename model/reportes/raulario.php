@@ -99,12 +99,7 @@ class AularioReport extends Connection
             AND uh.ani_anio = s.ani_anio
             AND uh.ani_tipo = s.ani_tipo
             
-            /*             * =================================================================
-            * CORRECCIÓN DE LÓGICA:
-            * Cambiado a LEFT JOIN para incluir bloques sin materia asignada.
-            * Movido 'u.uc_estado = 1' al ON para no anular el LEFT JOIN.
-            * =================================================================
-            */
+            
             LEFT JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo AND u.uc_estado = 1
             
             LEFT JOIN tbl_docente d ON uh.doc_cedula = d.doc_cedula
@@ -125,7 +120,7 @@ class AularioReport extends Connection
           $params[$key] = $period;
         }
         $in_clause = implode(', ', $period_placeholders);
-        // Se aplica a 'u.uc_periodo' o si 'u.uc_periodo' es NULL (para bloques sin UC)
+        
         $sql_base .= " AND (u.uc_periodo IN ({$in_clause}) OR u.uc_periodo IS NULL)";
       }
 
@@ -183,7 +178,7 @@ class AularioReport extends Connection
                 AND s.ani_anio = uh.ani_anio 
                 AND s.ani_tipo = uh.ani_tipo
               
-              /* CORRECCIÓN DE LÓGICA: LEFT JOIN */
+              
               LEFT JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo AND u.uc_estado = 1
               
               WHERE s.ani_anio = :anio_param
@@ -250,7 +245,7 @@ class AularioReport extends Connection
                 AND s.ani_anio = uh.ani_anio 
                 AND s.ani_tipo = uh.ani_tipo
               
-              /* CORRECCIÓN DE LÓGICA: LEFT JOIN */
+             
               LEFT JOIN tbl_uc u ON uh.uc_codigo = u.uc_codigo AND u.uc_estado = 1
               
               WHERE s.ani_anio = :anio_param

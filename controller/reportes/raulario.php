@@ -12,7 +12,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\RichText\RichText;
+
 
 function abreviarNombreLargo($nombre, $longitudMaxima = 25)
 {
@@ -146,10 +146,10 @@ if (isset($_POST['generar_aulario_report'])) {
     $spreadsheet = new Spreadsheet();
     $spreadsheet->removeSheetByIndex(0);
 
-    $styleMainTitle = ['font' => ['bold' => true, 'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleMainTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
     $styleDayHeader = ['font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => 'FFFFFFFF']], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF5B9BD5']], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
     $styleTimeColumn = ['font' => ['bold' => true, 'size' => 9], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
-    $styleScheduleCell = ['font' => ['size' => 8], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
+    $styleScheduleCell = ['font' => ['bold' => true,'size' => 10 ], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true], 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]];
 
     $days_of_week = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     $day_map = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miércoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sábado' => 'Sábado'];
@@ -208,7 +208,7 @@ if (isset($_POST['generar_aulario_report'])) {
             $gridData = [];
             $occupiedDbKeys = []; 
             foreach ($horarioProcesado as $item) {
-                $dia_key_from_db = strtolower(trim(str_replace('é', 'e', $item['hor_dia'])));
+                $dia_key_from_db = strtolower(trim($item['hor_dia']));
                 $dia_key = $day_map[$dia_key_from_db] ?? ucfirst($dia_key_from_db);
                 $horaInicio = new DateTime($item['hor_horainicio']);
                 $horaFinClase = new DateTime($item['hor_horafin']);
@@ -270,24 +270,27 @@ if (isset($_POST['generar_aulario_report'])) {
 
                     $clases = $gridData[$day][$dbStartTimeKey] ?? null;
                     if ($clases) {
-                        $richText = new RichText();
-                        
-                        foreach ($clases as $idx => $clase) {
-                            if ($idx > 0) $richText->createText("\n- - - - - - - - -\n");
-                            
-                            $secciones = implode(", ", array_unique($clase['sec_codigo_list']));
-                            $uc_nombre = $clase['uc_nombre'] ?? null;
-                            $ucAbreviada = $uc_nombre ? abreviarNombreLargo($uc_nombre) : '(Sin UC)';
-                            $subgrupoTexto = $clase['subgrupo'] ? ' (Grupo: ' . $clase['subgrupo'] . ')' : '';
+    $cellContent = ""; 
+    
+    foreach ($clases as $idx => $clase) {
+        if ($idx > 0) $cellContent .= "\n- - - - - - - - -\n"; 
+        
+        
+        $secciones = implode(", ", array_unique($clase['sec_codigo_list']));
+        $uc_nombre = $clase['uc_nombre'] ?? null;
+        $ucAbreviada = $uc_nombre ? abreviarNombreLargo($uc_nombre) : '(Sin UC)';
+        
+        
+        $ucEnMayuscula = mb_strtoupper($ucAbreviada, 'UTF-8'); 
+        
+        $subgrupoTexto = $clase['subgrupo'] ? ' (Grupo: ' . $clase['subgrupo'] . ')' : '';
+        $docente = $clase['NombreCompletoDocente'] ?? '(Sin Docente)';
 
-                            $ucPart = $richText->createTextRun($ucAbreviada . $subgrupoTexto);
-                            $ucPart->getFont()->setBold(true);
+        
+        $cellContent .= $ucEnMayuscula . $subgrupoTexto . "\n" . $secciones . "\n" . $docente;
+    }
 
-                            $docente = $clase['NombreCompletoDocente'] ?? '(Sin Docente)';
-                            $richText->createText("\n" . $secciones . "\n" . $docente);
-                        }
-
-                        $sheet->setCellValue($cellAddress, $richText);
+    $sheet->setCellValue($cellAddress, $cellContent); 
 
                         $primeraClase = $clases[0];
                         $horaInicioClase = new DateTime($primeraClase['hor_horainicio']);

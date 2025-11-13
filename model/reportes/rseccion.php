@@ -19,17 +19,14 @@ class SeccionReport extends Connection
     public function setTrayecto($valor) { $this->trayecto = trim($valor); }
     
     
-    /**
-     * CORRECCIÓN 1: Helper para la lógica de Intensivo y Fases.
-     * Si es intensivo, retorna un array vacío para NO filtrar por período.
-     */
+    
     private function getAllowedPeriods($esIntensivo)
     {
         if ($esIntensivo) {
             return []; 
         }
 
-        // Si es regular, filtramos según la fase
+       
         if ($this->fase == 1) {
             return ['Fase I', 'anual', 'Anual', '0'];
         } elseif ($this->fase == 2) {
@@ -76,11 +73,9 @@ public function getHorariosFiltrados()
     
     if (!$esIntensivo && empty($this->fase)) return [];
 
-    // CORRECCIÓN 1: Usar el helper.
+    
     $allowed_periods = $this->getAllowedPeriods($esIntensivo);
     
-    // NO usamos "if (empty($allowed_periods)) return [];"
-    // porque para Intensivo, $allowed_periods DEBE estar vacío.
     
     try {
         $params = [':anio_param' => $this->anio, ':ani_tipo_param' => $this->ani_tipo];
@@ -122,9 +117,7 @@ public function getHorariosFiltrados()
                         AND s.ani_tipo = :ani_tipo_param
                         AND s.sec_estado = 1";
         
-        // CORRECCIÓN 1 y 2:
-        // Solo aplicar el filtro si $allowed_periods NO está vacío (es decir, NO es intensivo)
-        // Y TAMBIÉN permitir filas donde u.uc_periodo es NULL (las "Sin UC")
+        
         if (!empty($allowed_periods)) {
             $period_placeholders = [];
             $i = 0;
@@ -138,7 +131,7 @@ public function getHorariosFiltrados()
         }
 
         if (isset($this->trayecto) && $this->trayecto !== '') {
-            // CORRECCIÓN 3: El filtro de trayecto también debe permitir NULLs
+            
             $sql_base .= " AND (u.uc_trayecto = :trayecto_param OR u.uc_trayecto IS NULL)";
             $params[':trayecto_param'] = $this->trayecto;
         }
@@ -177,7 +170,7 @@ public function getHorariosFiltrados()
         $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
         if (!$esIntensivo && empty($this->fase)) return [];
 
-        // CORRECCIÓN 1: Usar el helper
+        
         $allowed_periods = $this->getAllowedPeriods($esIntensivo);
 
         try {
@@ -198,7 +191,7 @@ public function getHorariosFiltrados()
                                 AND s.ani_tipo = :ani_tipo_param
                                 AND s.sec_estado = 1";
             
-            // CORRECCIÓN 1 y 2:
+            
             if (!empty($allowed_periods)) {
                 $period_placeholders = [];
                 $i = 0;
@@ -212,7 +205,7 @@ public function getHorariosFiltrados()
          }
 
          if (isset($this->trayecto) && $this->trayecto !== '') {
-            // CORRECCIÓN 3:
+            
             $sql .= " AND (u.uc_trayecto = :trayecto_param OR u.uc_trayecto IS NULL)";
             $params[':trayecto_param'] = $this->trayecto;
          }
@@ -246,7 +239,7 @@ public function getHorariosFiltrados()
       $esIntensivo = strtolower($this->ani_tipo) === 'intensivo';
       if (!$esIntensivo && empty($this->fase)) return [];
 
-      // CORRECCIÓN 1: Usar el helper
+      
       $allowed_periods = $this->getAllowedPeriods($esIntensivo);
 
       try {
@@ -267,7 +260,7 @@ public function getHorariosFiltrados()
                AND s.ani_tipo = :ani_tipo_param
                         AND s.sec_estado = 1";
          
-         // CORRECCIÓN 1 y 2:
+         
          if (!empty($allowed_periods)) {
             $period_placeholders = [];
             $i = 0;
@@ -281,7 +274,7 @@ public function getHorariosFiltrados()
          }
 
          if (isset($this->trayecto) && $this->trayecto !== '') {
-            // CORRECCIÓN 3:
+            
             $sql .= " AND (u.uc_trayecto = :trayecto_param OR u.uc_trayecto IS NULL)";
             $params[':trayecto_param'] = $this->trayecto;
          }

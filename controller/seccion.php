@@ -389,10 +389,10 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
-    $styleTitle = ['font' => ['bold' => true, 'size' => 16], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
-    $styleHeader = ['font' => ['bold' => true, 'size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFFF']]];
-    $styleTimeCol = ['font' => ['size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
-    $styleCell = ['font' => ['size' => 11], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
+    $styleTitle = ['font' => ['bold' => true, 'size' => 20], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]];
+    $styleHeader = ['font' => ['bold' => true, 'size' => 14], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true], 'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFFFFF']]];
+    $styleTimeCol = ['font' => ['bold' => true,'size' => 10], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]];
+    $styleCell = ['font' => ['bold' => true,'size' => 12], 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]];
 
     $tituloSeccion = "Sección";
     sort($secciones_codigos);
@@ -416,7 +416,7 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
         $drawingSintillo = new Drawing();
         $drawingSintillo->setName('Sintillo')->setDescription('Sintillo')->setPath($sintilloPath);
         $drawingSintillo->setResizeProportional(true);
-        $drawingSintillo->setHeight(40);
+        $drawingSintillo->setHeight(65);
         $drawingSintillo->setCoordinates('A1'); 
         $drawingSintillo->setOffsetX(10);
         $drawingSintillo->setOffsetY(2);
