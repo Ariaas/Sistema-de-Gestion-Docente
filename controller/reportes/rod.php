@@ -1,4 +1,5 @@
 <?php
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -22,6 +23,9 @@ $vistaFormulario = "views/reportes/rod.php";
 
 if (isset($_POST['generar_reporte_rod'])) {
 
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
@@ -56,7 +60,9 @@ if (isset($_POST['generar_reporte_rod'])) {
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $writer = new Xlsx($spreadsheet);
-        if (ob_get_length()) ob_end_clean();
+        if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="Reporte_Sin_Datos.xlsx"');
         header('Cache-Control: max-age=0');
@@ -201,7 +207,9 @@ if (isset($_POST['generar_reporte_rod'])) {
     }
 
     $writer = new Xlsx($spreadsheet);
-    if (ob_get_length()) ob_end_clean();
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
   
     if ($esIntensivo) {

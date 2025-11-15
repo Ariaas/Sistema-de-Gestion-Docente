@@ -1,11 +1,11 @@
 <?php
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
 require_once('vendor/autoload.php');
 use App\Model\Reportes\AularioReport;
-
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -39,7 +39,9 @@ function abreviarNombreLargo($nombre, $longitudMaxima = 25)
 $oAulario = new AularioReport();
 
 if (isset($_POST['generar_aulario_report'])) {
-
+if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio = $partes[0] ?? '';
@@ -347,7 +349,9 @@ if (isset($_POST['generar_aulario_report'])) {
         }
     }
 
-    if (ob_get_length()) ob_end_clean();
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     $outputFileName = "Reporte_Aulario";
     if ($esIntensivo) {
         $outputFileName .= "_Intensivo";

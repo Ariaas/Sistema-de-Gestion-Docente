@@ -1,4 +1,5 @@
 <?php
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -14,7 +15,9 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 if (isset($_POST['generar_asignacion_aulas_report'])) {
-    
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
@@ -100,7 +103,9 @@ if (isset($_POST['generar_asignacion_aulas_report'])) {
     }
 
     $writer = new Xlsx($spreadsheet);
-    if (ob_get_length()) ob_end_clean();
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
     
     if ($esIntensivo) {

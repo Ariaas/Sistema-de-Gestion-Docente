@@ -237,9 +237,10 @@ function generarReportePDF($secciones_codigos, $horario, $anio, $turnos, $bloque
         $sintilloBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($sintilloData);
     }
 
-    $html = '<html><head><style>
+    $html = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<style>
         @page { margin: 25px; }
-        body { font-family: Arial, sans-serif; font-size: 10px; }
+        body { font-family: \'DejaVu Sans\', sans-serif; font-size: 10px; }
         .header-logos { display: table; width: 100%; margin-bottom: 10px; }
         .logo-left { display: table-cell; width: 80px; vertical-align: middle; visibility: hidden; }
         .sintillo-center { display: table-cell; vertical-align: middle; text-align: center; }
@@ -526,8 +527,11 @@ function generarReporteExcel($secciones_codigos, $horario, $anio, $turnos, $bloq
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
     header('Cache-Control: max-age=0');
-    ob_end_clean();
+    
     $writer = new Xlsx($spreadsheet);
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     $writer->save('php://output');
 }
 

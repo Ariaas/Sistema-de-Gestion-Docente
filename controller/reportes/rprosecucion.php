@@ -1,4 +1,5 @@
 <?php
+ob_start();
 require_once("vendor/autoload.php");
 
 use App\Model\Reportes\ProsecucionReport;
@@ -79,6 +80,11 @@ $oProsecucion = new ProsecucionReport();
 $aniosAcademicos = $oProsecucion->obtenerAniosAcademicos();
 
 if (isset($_POST['generar_reporte_prosecucion'])) {
+    
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
     $selectedAnio = $_POST['anio_academico'] ?? null;
     if (!$selectedAnio) {
         die("Error: Debe seleccionar un año académico.");
@@ -156,6 +162,11 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
     $sheet->getColumnDimension('G')->setWidth(20);
 
     $writer = new Xlsx($spreadsheet);
+
+    if (ob_get_level() > 0) {
+    ob_end_clean();
+    }
+
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="Reporte_Prosecucion_' . $selectedAnio . '.xlsx"');
     header('Cache-Control: max-age=0');
@@ -164,4 +175,3 @@ if (isset($_POST['generar_reporte_prosecucion'])) {
 }
 
 require_once("views/reportes/rprosecucion.php");
-?>

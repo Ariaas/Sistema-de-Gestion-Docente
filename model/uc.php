@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Model;
-
 use PDO;
 use Exception;
 use App\Model\ValidacionSelect;

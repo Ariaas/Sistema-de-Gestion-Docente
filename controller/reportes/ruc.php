@@ -1,4 +1,5 @@
 <?php 
+ob_start();
  if (session_status() == PHP_SESSION_NONE) { 
     session_start(); 
  } 
@@ -107,17 +108,17 @@
 
  if (isset($_POST['generar_uc'])) { 
     
-    
+    if (ob_get_level() > 0) {
+    ob_end_clean();
+    }
+
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio_id = $partes[0] ?? '';
     $ani_tipo = $partes[1] ?? '';
     
     
-    error_log("RUC - Año completo recibido: " . $anio_completo);
-    error_log("RUC - Año separado: " . $anio_id);
-    error_log("RUC - Tipo separado: " . $ani_tipo);
-
+    
     $oUc->set_anio($anio_id); 
     $oUc->set_ani_tipo($ani_tipo);
     $oUc->set_trayecto($_POST['trayecto'] ?? ''); 
@@ -145,7 +146,11 @@
         } 
 
         $writer = new Xlsx($spreadsheet); 
-        if (ob_get_length()) ob_end_clean(); 
+
+        if (ob_get_level() > 0) { 
+            ob_end_clean(); 
+        } 
+
         $fileName = "Reporte_Sin_Resultados.xlsx"; 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
         header('Content-Disposition: attachment;filename="' . $fileName . '"'); 
@@ -170,7 +175,7 @@
     foreach ($datosReporte as $fila) { 
         $trayecto = $fila['Número de Trayecto'] ?? 'sin_asignar';
         $ani_tipo = $fila['Tipo de Año'] ?? 'Regular';
-        $seccion = $fila['Código de Sección']; 
+        $seccion = $fila['Código de Sección'] ?? null;; 
         $uc = $fila['Nombre de la Unidad Curricular']; 
         $docente = $fila['Nombre Completo del Docente'] ?? 'NO ASIGNADO'; 
         
@@ -278,7 +283,9 @@
     $sheet->getColumnDimension('K')->setWidth(35); 
 
     $writer = new Xlsx($spreadsheet); 
-    if (ob_get_length()) ob_end_clean(); 
+   if (ob_get_level() > 0) { 
+        ob_end_clean(); 
+    }  
     $fileName = "Reporte_Unidad_Curricular";
     if ($ani_tipo && strtolower($ani_tipo) === 'intensivo') {
         $fileName .= "_Intensivo";

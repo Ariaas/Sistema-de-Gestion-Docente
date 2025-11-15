@@ -1,4 +1,5 @@
 <?php
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -52,7 +53,9 @@ $vistaFormularioUc = "views/reportes/rcargaAcademica.php";
 $oUc = new Carga();
 
 if (isset($_POST['generar_uc'])) {
-
+if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
@@ -97,7 +100,9 @@ if (isset($_POST['generar_uc'])) {
             $sheet->getColumnDimension($col)->setWidth(20);
         }
         $writer = new Xlsx($spreadsheet);
-        if (ob_get_length()) ob_end_clean();
+        if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
         $fileName = "Reporte_Carga_Academica_Sin_Resultados.xlsx";
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $fileName . '"');
@@ -282,7 +287,9 @@ if (isset($_POST['generar_uc'])) {
     }
 
     $writer = new Xlsx($spreadsheet);
-    if (ob_get_length()) ob_end_clean();
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
    
     $fileName = "Carga_Academica";

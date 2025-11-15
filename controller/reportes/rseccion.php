@@ -1,4 +1,5 @@
 <?php
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -11,7 +12,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\RichText\RichText;
+
 
 function abreviarNombreLargo($nombre, $longitudMaxima = 25)
 {
@@ -38,6 +39,10 @@ function abreviarNombreLargo($nombre, $longitudMaxima = 25)
 $oReporte = new SeccionReport();
 
 if (isset($_POST['generar_seccion_report'])) {
+
+    if (ob_get_level() > 0) {
+    ob_end_clean();
+    }
 
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
@@ -458,7 +463,9 @@ $sheet->getCell($cellAddress)->setValue($cellText);
         }
     }
 
-    if (ob_get_length()) ob_end_clean();
+    if (ob_get_level() > 0) { 
+            ob_end_clean(); 
+        } 
     $outputFileName = "Reporte_Horarios_Seccion";
     if ($ani_tipo && strtolower($ani_tipo) === 'intensivo') {
         $outputFileName .= "_Intensivo";

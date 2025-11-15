@@ -1,4 +1,5 @@
 <?php
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -16,7 +17,10 @@ $oReporte = new Transcripcion();
 
 if (isset($_POST['generar_transcripcion'])) {
 
-    
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anio = $partes[0] ?? '';
@@ -148,7 +152,11 @@ if (isset($_POST['generar_transcripcion'])) {
     $sheet->getColumnDimension('E')->setWidth(25); 
 
     $writer = new Xlsx($spreadsheet);
-    if (ob_get_length()) ob_end_clean();
+    
+if (ob_get_level() > 0) {
+    ob_end_clean();
+    }
+
     $fileName = "Transcripcion_Asignacion_Secciones";
     if ($esIntensivo) {
         $fileName .= "_Intensivo";

@@ -7,8 +7,7 @@ use PDO;
 use PDOException;
 use Exception;
 
-class Ruc extends Connection 
-{ 
+class Ruc extends Connection { 
     private $anio_id;  
     private $ani_tipo;
     private $trayecto; 

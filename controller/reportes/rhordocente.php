@@ -1,5 +1,5 @@
 <?php
-
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
   session_start();
 }
@@ -105,7 +105,10 @@ function abreviarNombreUC($nombre) {
 $oReporteHorario = new ReporteHorarioDocente();
 
 if (isset($_POST['generar_rhd_report'])) {
- 
+  
+  if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
   $anio_completo = $_POST['anio_completo'] ?? '';
   $partes = explode('|', $anio_completo);
   $anio = $partes[0] ?? '';
@@ -849,6 +852,9 @@ $sheet->getStyle('E6')->applyFromArray($styleBold);
   header('Cache-Control: max-age=0');
 
   $writer = new Xlsx($spreadsheet);
+  if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
   $writer->save('php://output');
  exit;
 

@@ -1,4 +1,5 @@
 <?php
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -33,7 +34,9 @@ $oDefinitivo = new DefinitivoEmit();
 $vistaFormulario = "views/reportes/rdefinitivo.php";
 
 if (isset($_POST['generar_definitivo_emit'])) {
-    
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     $anioCompleto = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anioCompleto);
     $anio = $partes[0] ?? '';
@@ -60,7 +63,9 @@ if (isset($_POST['generar_definitivo_emit'])) {
         }
 
         $writer = new Xlsx($spreadsheet);
-        if (ob_get_length()) ob_end_clean();
+        if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="Reporte_Sin_Datos.xlsx"');
         header('Cache-Control: max-age=0');

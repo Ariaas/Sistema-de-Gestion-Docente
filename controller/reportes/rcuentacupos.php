@@ -1,5 +1,5 @@
 <?php
-
+ob_start();
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -57,7 +57,9 @@ function formatSectionsFromArray($sectionsArray, $wrapAfter = 2) {
 $oCuentaCupos = new CuentaCupos();
 
 if (isset($_POST['generar_reporte'])) {
-    
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     $anio_completo = $_POST['anio_completo'] ?? '';
     $partes = explode('|', $anio_completo);
     $anioId = $partes[0] ?? '';
@@ -208,7 +210,9 @@ if (isset($_POST['generar_reporte'])) {
     $sheet->getColumnDimension('C')->setWidth(12);
     
     $writer = new Xlsx($spreadsheet);
-    if (ob_get_length()) ob_end_clean();
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
     
     if ($esIntensivo) {
