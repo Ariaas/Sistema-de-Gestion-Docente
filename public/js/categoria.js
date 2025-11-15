@@ -96,6 +96,7 @@ $("#categoriaNombre").on("keydown keyup", function () {
     }
     enviaAjax(datos, 'existe');
   }
+  validarCamposParaHabilitarBoton();
 });
 
 $("#categoriaDescripcion").on("keypress", function(e){
@@ -112,6 +113,7 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
   if ($("#proceso").text() === "MODIFICAR") {
     verificarCambios();
   }
+  validarCamposParaHabilitarBoton();
 });
 
   $("#proceso").on("click", function () {
@@ -201,6 +203,7 @@ $("#categoriaDescripcion").on("keydown keyup", function () {
     $("#modal1").modal("show");
     $("#scategoriaNombre").show();
     $("#categoriaDescripcion, #categoriaNombre").prop("disabled", false);
+    validarCamposParaHabilitarBoton();
   });
 
   $('#modal1').on('hidden.bs.modal', function () {
@@ -294,11 +297,10 @@ function enviaAjax(datos, accion) {
         if (accion === 'existe') {
             if (lee.resultado === 'existe') {
                 $("#scategoriaNombre").text(lee.mensaje).css("color", "red");
-                $("#proceso").prop("disabled", true);
             } else {
                 $("#scategoriaNombre").text("");
-                $("#proceso").prop("disabled", false);
             }
+            validarCamposParaHabilitarBoton();
             return;
         }
         if (lee.resultado === "consultar") {
@@ -393,6 +395,24 @@ function limpia() {
   $("#categoriaNombre").val("");
   $("#scategoriaNombre, #scategoriaDescripcion").text("");
   $("#proceso").prop("disabled", false);
+}
+
+function validarCamposParaHabilitarBoton() {
+  const procesoTexto = $("#proceso").text();
+  
+  if (procesoTexto !== "REGISTRAR") {
+    return;
+  }
+  
+  const nombre = $("#categoriaNombre").val();
+  const descripcion = $("#categoriaDescripcion").val();
+  const nombreExiste = $("#scategoriaNombre").is(":visible") && $("#scategoriaNombre").css("color") === "rgb(255, 0, 0)";
+  
+  const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s-]{5,30}$/.test(nombre);
+  const descripcionValida = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/.test(descripcion);
+  
+  const habilitarBoton = nombreValido && descripcionValida && !nombreExiste;
+  $("#proceso").prop("disabled", !habilitarBoton);
 }
 
 

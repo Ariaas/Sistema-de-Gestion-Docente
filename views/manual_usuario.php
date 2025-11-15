@@ -499,7 +499,6 @@
                                                     <li>Horas Administrativas</li>
                                                 </ul>
                                             </li>
-                                            <li><strong>Preferencias de Horario:</strong> Días y horas preferidas para impartir clases</li>
                                         </ul>
 
                                         <h6 class="text-primary mt-3">Funciones de la Tabla:</h6>

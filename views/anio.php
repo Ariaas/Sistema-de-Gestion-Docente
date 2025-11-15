@@ -64,7 +64,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <th>Cierre de año / Fase 1</th>
                                 <th>Apertura Fase 2</th>
                                 <th>Cierre Fase 2</th>
-                                <th>Activo</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>

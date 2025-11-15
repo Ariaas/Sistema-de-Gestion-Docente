@@ -196,7 +196,7 @@ class Anio extends Connection
 
         if ($this->Existe($this->aniAnio, $this->aniTipo)) {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El AÑO colocado YA existe!';
+            $r['mensaje'] = '¡ERROR! <br/> El año colocado ya existe!';
             return $r;
         }
 
@@ -265,7 +265,7 @@ class Anio extends Connection
 
             $co->commit();
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
+            $r['mensaje'] = '¡Registro Incluido!<br/>Se registró el año correctamente!';
             $infoDuplicacion = $this->prepararDuplicacion($anioAnterior, $this->aniAnio, $this->aniTipo, $co);
             if ($infoDuplicacion !== null) {
                 $r['duplicacion'] = $infoDuplicacion;
@@ -322,7 +322,7 @@ class Anio extends Connection
 
             $co->commit();
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el AÑO correctamente!';
+            $r['mensaje'] = '¡Registro Incluido!<br/>Se registró el año correctamente!';
 
             $this->Notificaciones();
         } catch (Exception $e) {
@@ -604,7 +604,7 @@ class Anio extends Connection
 
                 $co->commit();
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el AÑO correctamente!';
+                $r['mensaje'] = '¡Registro Modificado!<br/>Se modificó el año correctamente!';
 
                 $this->Notificaciones();
             } catch (Exception $e) {
@@ -615,7 +615,7 @@ class Anio extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'modificar';
-            $r['mensaje'] = 'ERROR! <br/> El AÑO colocado YA existe!';
+            $r['mensaje'] = '¡ERROR! <br/> El año colocado ya existe!';
         }
         return $r;
     }
@@ -658,7 +658,7 @@ class Anio extends Connection
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el AÑO correctamente!';
+                $r['mensaje'] = '¡Registro Eliminado!<br/>Se eliminó el año correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -666,7 +666,7 @@ class Anio extends Connection
             $co = null;
         } else {
             $r['resultado'] = 'eliminar';
-            $r['mensaje'] = 'ERROR! <br/> El AÑO que intenta eliminar NO existe!';
+            $r['mensaje'] = '¡ERROR! <br/> El año que intenta eliminar NO existe!';
         }
         return $r;
     }

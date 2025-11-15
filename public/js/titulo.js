@@ -108,12 +108,11 @@ function enviaAjax(datos, accion) {
                 if (accion === 'existe') {
                     if (lee.resultado === 'existe') {
                         $("#stitulonombre").text(lee.mensaje).css("color", "red").show();
-                        $("#proceso").prop("disabled", true);
                     } else {
                         $("#stitulonombre").text("").css("color", "");
-                        $("#proceso").prop("disabled", false);
                         validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,80}$/, $("#titulonombre"), $("#stitulonombre"), "El nombre debe tener entre 5 y 30 caracteres.");
                     }
+                    validarCamposParaHabilitarBoton();
                     return;
                 }
 
@@ -210,6 +209,7 @@ $(document).ready(function() {
             
             enviaAjax(datos, 'existe');
         }
+        validarCamposParaHabilitarBoton();
     });
 
     $("#registrar").on("click", function() {
@@ -217,6 +217,7 @@ $(document).ready(function() {
         $("#proceso").text("REGISTRAR");
         $("#modal1").modal("show");
         $("#stituloprefijo, #stitulonombre").show();
+        validarCamposParaHabilitarBoton();
     });
 
     $("#f").on("submit", function(event) {
@@ -269,3 +270,21 @@ $(document).ready(function() {
         $("#stituloprefijo, #stitulonombre").text("").css("color", "");
     });
 });
+
+function validarCamposParaHabilitarBoton() {
+    const procesoTexto = $("#proceso").text();
+    
+    if (procesoTexto !== "REGISTRAR") {
+        return;
+    }
+    
+    const prefijo = $("#tituloprefijo").val();
+    const nombre = $("#titulonombre").val();
+    const nombreExiste = $("#stitulonombre").is(":visible") && $("#stitulonombre").css("color") === "rgb(255, 0, 0)";
+    
+    const prefijoValido = prefijo !== "" && prefijo !== null;
+    const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{5,80}$/.test(nombre);
+    
+    const habilitarBoton = prefijoValido && nombreValido && !nombreExiste;
+    $("#proceso").prop("disabled", !habilitarBoton);
+}

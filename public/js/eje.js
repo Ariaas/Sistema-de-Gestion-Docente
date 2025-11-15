@@ -96,6 +96,7 @@ $(document).ready(function () {
         }
         enviaAjax(datos, 'existe');
     }
+    validarCamposParaHabilitarBoton();
   });
 
   $("#ejeDescripcion").on("keyup", function() {
@@ -103,6 +104,7 @@ $(document).ready(function () {
     if ($("#proceso").text() === "MODIFICAR") {
       verificarCambios();
     }
+    validarCamposParaHabilitarBoton();
   });
 
   $("#proceso").on("click", function () {
@@ -198,6 +200,7 @@ $(document).ready(function () {
     $("#sejeNombre").show();
     $("#sejeDescripcion").show();
     $("#ejeNombre").prop("disabled", false);
+    validarCamposParaHabilitarBoton();
   });
 
   $('#modal1').on('hidden.bs.modal', function () {
@@ -289,10 +292,10 @@ function enviaAjax(datos, accion) {
         if (accion === 'existe') {
           if (lee.resultado === 'existe') {
             $("#sejeNombre").text(lee.mensaje).css("color", "red");
-            $("#proceso").prop("disabled", true);
           } else {
-            $("#proceso").prop("disabled", false);
+            $("#sejeNombre").text("");
           }
+          validarCamposParaHabilitarBoton();
           return;
         }
         if (lee.resultado === "consultar") {
@@ -307,7 +310,7 @@ function enviaAjax(datos, accion) {
                 <tr>
                   <td>${item.eje_nombre}</td>
                   <td>${item.eje_descripcion}</td>
-                  <td>
+                  <td class="text-nowrap">
                     ${btnModificar}
                     ${btnEliminar}
                   </td>
@@ -392,4 +395,22 @@ function limpia() {
   $("#sejeNombre").text("");
   $("#sejeDescripcion").text("");
   $("#proceso").prop("disabled", false);
+}
+
+function validarCamposParaHabilitarBoton() {
+  const procesoTexto = $("#proceso").text();
+  
+  if (procesoTexto !== "REGISTRAR") {
+    return;
+  }
+  
+  const nombre = $("#ejeNombre").val();
+  const descripcion = $("#ejeDescripcion").val();
+  const nombreExiste = $("#sejeNombre").is(":visible") && $("#sejeNombre").css("color") === "rgb(255, 0, 0)";
+  
+  const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s-]{5,30}$/.test(nombre);
+  const descripcionValida = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/.test(descripcion);
+  
+  const habilitarBoton = nombreValido && descripcionValida && !nombreExiste;
+  $("#proceso").prop("disabled", !habilitarBoton);
 }

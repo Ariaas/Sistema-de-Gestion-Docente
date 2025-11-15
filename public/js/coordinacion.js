@@ -68,6 +68,7 @@ $(document).ready(function () {
       }
       enviaAjax(datos);
     }
+    validarCamposParaHabilitarBoton();
   });
 
   $("#coordinacionHoraDescarga").on("keypress", function(e) {
@@ -85,6 +86,7 @@ $(document).ready(function () {
     if ($("#proceso").text() === "MODIFICAR") {
       verificarCambios();
     }
+    validarCamposParaHabilitarBoton();
   });
 
   $("#proceso").on("click", function () {
@@ -154,6 +156,7 @@ $(document).ready(function () {
     $("#modal1").modal("show");
     $("#scoordinacionNombre").show();
     $("#coordinacionNombre, #coordinacionHoraDescarga").prop("disabled", false);
+    validarCamposParaHabilitarBoton();
   });
 
   $('#modal1').on('hidden.bs.modal', function () {
@@ -284,14 +287,13 @@ function enviaAjax(datos) {
           $("#modal1").modal("hide");
           Listar();
         } else if (lee.resultado === "existe") {
-          $("#scoordinacionNombre").text(lee.mensaje).show();
-          $("#proceso").prop("disabled", true);
+          $("#scoordinacionNombre").text(lee.mensaje).css("color", "red").show();
         } else if (lee.resultado === "no_existe") {
           $("#scoordinacionNombre").text("").hide();
-          $("#proceso").prop("disabled", false);
         } else if (lee.resultado === "error") {
           Swal.fire({ icon: "error", title: "Error", html: lee.mensaje });
         }
+        validarCamposParaHabilitarBoton();
       } catch (e) {
         Swal.fire({
           icon: "error",
@@ -334,4 +336,22 @@ function limpia() {
   $("#proceso").prop("disabled", false);
   originalNombreCoordinacion = "";
   originalHoraDescarga = null;
+}
+
+function validarCamposParaHabilitarBoton() {
+  const procesoTexto = $("#proceso").text();
+  
+  if (procesoTexto !== "REGISTRAR") {
+    return;
+  }
+  
+  const nombre = $("#coordinacionNombre").val();
+  const horaDescarga = $("#coordinacionHoraDescarga").val();
+  const nombreExiste = $("#scoordinacionNombre").is(":visible") && $("#scoordinacionNombre").css("color") === "rgb(255, 0, 0)";
+  
+  const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/.test(nombre);
+  const horaValida = !horaDescarga || /^([1-9]|[1-9][0-9])$/.test(horaDescarga);
+  
+  const habilitarBoton = nombreValido && horaValida && !nombreExiste;
+  $("#proceso").prop("disabled", !habilitarBoton);
 }

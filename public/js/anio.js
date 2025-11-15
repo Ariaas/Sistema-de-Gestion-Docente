@@ -216,6 +216,7 @@ $(document).ready(function () {
     $("#modal1").modal("show");
 
     existeAnio();
+    validarCamposParaHabilitarBoton();
   });
 
   $(document).on("click", ".ver-per-btn", function () {
@@ -243,6 +244,7 @@ $(document).ready(function () {
 
   $("#aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").on("input change", function () {
     verificarCambiosAnio();
+    validarCamposParaHabilitarBoton();
   });
 });
 
@@ -314,17 +316,17 @@ function validarenvio() {
   $("#stipoAnio, #saniAperturaFase1, #saniCierraFase1, #saniAperturaFase2, #saniCierraFase2").text("").css("color", "").hide();
 
   if (!tipoAnio || tipoAnio === "0") {
-    $("#stipoAnio").text("Debe seleccionar un tipo.").show();
+    $("#stipoAnio").text("Debe seleccionar un tipo.").css("color", "red").show();
     hayErrorRequerido = true;
   }
 
   if (tipoAnio === "intensivo") {
     if (!ap1) {
-      $("#saniAperturaFase1").text("Debe seleccionar fecha de apertura.").show();
+      $("#saniAperturaFase1").text("Debe seleccionar fecha de apertura.").css("color", "red").show();
       hayErrorRequerido = true;
     }
     if (!c1) {
-      $("#saniCierraFase1").text("Debe seleccionar fecha de cierre.").show();
+      $("#saniCierraFase1").text("Debe seleccionar fecha de cierre.").css("color", "red").show();
       hayErrorRequerido = true;
     }
     if (ap1 && c1 && new Date(c1) <= new Date(ap1)) {
@@ -333,19 +335,19 @@ function validarenvio() {
     }
   } else {
     if (!ap1) {
-      $("#saniAperturaFase1").text("Debe seleccionar una fecha de apertura fase 1.").show();
+      $("#saniAperturaFase1").text("Debe seleccionar una fecha de apertura fase 1.").css("color", "red").show();
       hayErrorRequerido = true;
     }
     if (!c1) {
-      $("#saniCierraFase1").text("Debe seleccionar una fecha de cierre fase 1.").show();
+      $("#saniCierraFase1").text("Debe seleccionar una fecha de cierre fase 1.").css("color", "red").show();
       hayErrorRequerido = true;
     }
     if (!ap2) {
-      $("#saniAperturaFase2").text("Debe seleccionar una fecha de apertura fase 2.").show();
+      $("#saniAperturaFase2").text("Debe seleccionar una fecha de apertura fase 2.").css("color", "red").show();
       hayErrorRequerido = true;
     }
     if (!c2) {
-      $("#saniCierraFase2").text("Debe seleccionar una fecha de cierre fase 2.").show();
+      $("#saniCierraFase2").text("Debe seleccionar una fecha de cierre fase 2.").css("color", "red").show();
       hayErrorRequerido = true;
     }
     if (ap1 && c1 && new Date(c1) <= new Date(ap1)) {
@@ -426,6 +428,7 @@ function pone(pos, accion) {
     $("#proceso").text("ELIMINAR");
     actualizarTituloModal('Eliminar', detalleModal);
     $("#aniId, #aniAnio, #tipoAnio, #aniAperturaFase1, #aniCierraFase1, #aniAperturaFase2, #aniCierraFase2").prop("disabled", true);
+    $("#proceso").prop("disabled", false);
   }
   $("#saniAnio").hide();
   $("#aniId").val($(linea).find("td:eq(0)").text());
@@ -474,6 +477,7 @@ function enviaAjax(datos, accion) {
             $("#saniAnio").text("").hide();
           }
           verificarCambiosAnio();
+          validarCamposParaHabilitarBoton();
           return;
         }
         if (lee.resultado === "consultar") {
@@ -481,6 +485,10 @@ function enviaAjax(datos, accion) {
           $("#resultadoconsulta").empty();
           $.each(lee.mensaje, function (index, item) {
 
+            const estadoBadge = item.ani_activo == 1 
+              ? '<span class="uc-badge activa">Activo</span>' 
+              : '<span class="uc-badge desactivada">Inactivo</span>';
+            
             $("#resultadoconsulta").append(`
                 <tr>
                   <td style="display: none;">${item.ani_id}</td>
@@ -490,14 +498,7 @@ function enviaAjax(datos, accion) {
                   <td>${item.ani_cierra_fase1}</td>
                   <td>${item.ani_tipo === 'intensivo' ? "" : item.ani_apertura_fase2 || ""}</td>
                   <td>${item.ani_tipo === 'intensivo' ? "" : item.ani_cierra_fase2 || ""}</td>
-                  <td>
-                    <button class="btn btn-${item.ani_activo == 1 ? 'secondary' : 'success'} btn-sm activar-toggle" 
-                    data-id="${item.ani_id}" 
-                    data-estado="${item.ani_activo}" 
-                    disabled>
-                    ${item.ani_activo == 1 ? 'Activo' : 'Inactivo'}
-                    </button>
-                  </td>
+                  <td>${estadoBadge}</td>
                   <td class="text-nowrap">
                     ${item.ani_tipo !== 'intensivo' ? `<button class="btn btn-icon btn-info ver-per-btn" title="Ver PER" data-anio="${item.ani_anio}" data-tipo="${item.ani_tipo}"><img src="public/assets/icons/eye.svg" alt="Ver PER"></button>` : ''}
                     <button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" data-codigo="${item.ani_id}" data-tipo="${item.ani_anio}" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>
@@ -507,15 +508,6 @@ function enviaAjax(datos, accion) {
               `);
           });
 
-          $(".activar-toggle").off("click").on("click", function () {
-            var id = $(this).data("id");
-            var estado = $(this).data("estado");
-            var nuevoEstado = estado == 1 ? 0 : 1;
-            var datos = new FormData();
-            datos.append("accion", "activar");
-            datos.append("aniActivo", nuevoEstado);
-            enviaAjax(datos);
-          });
           crearDT();
           Verificar();
         }
@@ -557,16 +549,20 @@ function enviaAjax(datos, accion) {
           $("#modalVerPer").modal("show");
         }
         else if (lee.resultado == "registrar") {
-          muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
-          if (
-            lee.mensaje ==
-            "Registro Incluido!<br/>Se registró el AÑO correctamente!"
-          ) {
-            $("#modal1").modal("hide");
-            Listar();
-            duplicacionPendiente = lee.duplicacion || null;
-            if (duplicacionPendiente && duplicacionPendiente.secciones > 0) {
-              iniciarDuplicacionAutomatica();
+          if (lee.mensaje && (lee.mensaje.toLowerCase().includes("ya existe") || lee.mensaje.toLowerCase().includes("colocado ya existe"))) {
+            muestraMensaje("error", 4000, "ERROR!", lee.mensaje);
+          } else {
+            muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
+            if (
+              lee.mensaje ==
+              "¡Registro Incluido!<br/>Se registró el año correctamente!" 
+            ) {
+              $("#modal1").modal("hide");
+              Listar();
+              duplicacionPendiente = lee.duplicacion || null;
+              if (duplicacionPendiente && duplicacionPendiente.secciones > 0) {
+                iniciarDuplicacionAutomatica();
+              }
             }
           }
         }
@@ -574,7 +570,7 @@ function enviaAjax(datos, accion) {
           muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó el AÑO correctamente!"
+            "¡Registro Modificado!<br/>Se modificó el año correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -586,7 +582,7 @@ function enviaAjax(datos, accion) {
           muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó el AÑO correctamente!"
+            "¡Registro Eliminado!<br/>Se eliminó el año correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -759,4 +755,43 @@ function ajustarFechaUTC(fechaStr) {
   const fecha = new Date(fechaStr);
   fecha.setDate(fecha.getDate() + 1);
   return fecha.toLocaleDateString('es-ES');
+}
+
+function validarCamposParaHabilitarBoton() {
+  const procesoTexto = $("#proceso").text();
+  
+  if (procesoTexto !== "REGISTRAR") {
+    return;
+  }
+  
+  const tipoAnio = $("#tipoAnio").val();
+  const ap1 = $("#aniAperturaFase1").val();
+  const c1 = $("#aniCierraFase1").val();
+  const ap2 = $("#aniAperturaFase2").val();
+  const c2 = $("#aniCierraFase2").val();
+  const anioExiste = $("#saniAnio").is(":visible") && $("#saniAnio").css("color") === "rgb(255, 0, 0)";
+  
+  let camposCompletos = false;
+  let fechasValidas = true;
+  
+  if (!tipoAnio || tipoAnio === "0") {
+    camposCompletos = false;
+  } else if (tipoAnio === "intensivo") {
+
+    camposCompletos = ap1 && c1;
+    if (ap1 && c1) {
+      fechasValidas = new Date(c1) > new Date(ap1);
+    }
+  } else {
+
+    camposCompletos = ap1 && c1 && ap2 && c2;
+    if (camposCompletos) {
+      fechasValidas = new Date(c1) > new Date(ap1) && 
+                     new Date(ap2) > new Date(c1) && 
+                     new Date(c2) > new Date(ap2);
+    }
+  }
+  
+  const habilitarBoton = camposCompletos && fechasValidas && !anioExiste;
+  $("#proceso").prop("disabled", !habilitarBoton);
 }

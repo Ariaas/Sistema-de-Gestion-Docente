@@ -98,6 +98,7 @@ $(document).ready(function () {
       }
       enviaAjax(datos, 'existe');
     }
+    validarCamposParaHabilitarBoton();
   });
 
   $("#areaDescripcion").on("keyup", function () {
@@ -111,6 +112,7 @@ $(document).ready(function () {
     if ($("#proceso").text() === "MODIFICAR") {
       verificarCambios();
     }
+    validarCamposParaHabilitarBoton();
   });
 
 
@@ -168,7 +170,7 @@ $(document).ready(function () {
     $("#modal1").modal("show");
     $("#sareaNombre").show();
     $("#sareaDescripcion").show();
-    $("#proceso").prop("disabled", false);
+    validarCamposParaHabilitarBoton();
   });
 
   $('#modal1').on('hidden.bs.modal', function () {
@@ -245,11 +247,10 @@ function enviaAjax(datos, accion) {
         if (accion === 'existe') {
           if (lee.resultado === 'existe') {
             $("#sareaNombre").text(lee.mensaje).css("color", "red");
-            $("#proceso").prop("disabled", true);
           } else {
             $("#sareaNombre").text("");
-            $("#proceso").prop("disabled", false);
           }
+          validarCamposParaHabilitarBoton();
           return;
         }
         if (lee.resultado === "consultar") {
@@ -344,4 +345,22 @@ function verificarCambios() {
       $("#proceso").prop("disabled", false);
     }
   }
+}
+
+function validarCamposParaHabilitarBoton() {
+  const procesoTexto = $("#proceso").text();
+  
+  if (procesoTexto !== "REGISTRAR") {
+    return;
+  }
+  
+  const nombre = $("#areaNombre").val();
+  const descripcion = $("#areaDescripcion").val();
+  const nombreExiste = $("#sareaNombre").is(":visible") && $("#sareaNombre").css("color") === "rgb(255, 0, 0)";
+  
+  const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9,#\b\s-]{5,30}$/.test(nombre);
+  const descripcionValida = /^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ0-9\s.,-]{5,100}$/.test(descripcion);
+  
+  const habilitarBoton = nombreValido && descripcionValida && !nombreExiste;
+  $("#proceso").prop("disabled", !habilitarBoton);
 }

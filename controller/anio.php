@@ -43,7 +43,7 @@ if (is_file("views/" . $pagina . ".php")) {
             $tipoOriginal = isset($_POST['tipoOriginal']) ? $_POST['tipoOriginal'] : null;
             $existe = $c->Existe($_POST['aniAnio'], $_POST['tipoAnio'], $anioOriginal, $tipoOriginal);
             if ($existe) {
-                echo json_encode(['resultado' => 'existe', 'mensaje' => 'El AÑO colocado YA existe!']);
+                echo json_encode(['resultado' => 'existe', 'mensaje' => '¡El año colocado ya existe!']);
             } else {
                 echo json_encode(['resultado' => 'no_existe']);
             }
