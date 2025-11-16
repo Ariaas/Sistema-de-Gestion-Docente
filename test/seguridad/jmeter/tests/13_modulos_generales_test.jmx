@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="PS-024: Seguridad Módulos Generales">
+      <stringProp name="TestPlan.comments">Pruebas de seguridad para módulos: Usuario, UC, Área, Eje, Categoría, Título, Turno, Rol
+Sistema de Gestión Docente
+Casos: PS-024
+Pruebas genéricas aplicables a múltiples módulos</stringProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="USUARIO" elementType="Argument">
+            <stringProp name="Argument.name">USUARIO</stringProp>
+            <stringProp name="Argument.value">LigiaDuran</stringProp>
+          </elementProp>
+          <elementProp name="PASSWORD" elementType="Argument">
+            <stringProp name="Argument.name">PASSWORD</stringProp>
+            <stringProp name="Argument.value">Carolina.16</stringProp>
+          </elementProp>
+          <elementProp name="MODULO" elementType="Argument">
+            <stringProp name="Argument.name">MODULO</stringProp>
+            <stringProp name="Argument.value">usuario</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+            <stringProp name="Argument.desc">Cambiar a: usuario, uc, area, eje, categoria, titulo, turno, rol</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults">
+        <stringProp name="HTTPSampler.domain">localhost</stringProp>
+        <stringProp name="HTTPSampler.port">80</stringProp>
+        <stringProp name="HTTPSampler.protocol">http</stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <CookieManager guiclass="CookiePanel" testclass="CookieManager" testname="HTTP Cookie Manager">
+        <collectionProp name="CookieManager.cookies"/>
+        <boolProp name="CookieManager.clearEachIteration">false</boolProp>
+      </CookieManager>
+      <hashTree/>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+        <collectionProp name="HeaderManager.headers">
+          <elementProp name="" elementType="Header">
+            <stringProp name="Header.name">Content-Type</stringProp>
+            <stringProp name="Header.value">application/x-www-form-urlencoded</stringProp>
+          </elementProp>
+          <elementProp name="" elementType="Header">
+            <stringProp name="Header.name">X-Requested-With</stringProp>
+            <stringProp name="Header.value">XMLHttpRequest</stringProp>
+          </elementProp>
+        </collectionProp>
+      </HeaderManager>
+      <hashTree/>
+      <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="Setup: Autenticación">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </SetupThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Login">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=login</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <stringProp name="Argument.value">ingresar</stringProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="usu_usuario" elementType="HTTPArgument">
+                <stringProp name="Argument.value">${USUARIO}</stringProp>
+                <stringProp name="Argument.name">usu_usuario</stringProp>
+              </elementProp>
+              <elementProp name="usu_clave" elementType="HTTPArgument">
+                <stringProp name="Argument.value">${PASSWORD}</stringProp>
+                <stringProp name="Argument.name">usu_clave</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Prueba 1: SQL Injection Genérico">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV - SQL Payloads">
+          <stringProp name="filename">C:/xampp/htdocs/org/Sistema-de-Gestion-Docente/test/seguridad/jmeter/data/sql_payloads.csv</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="variableNames">PAYLOAD</stringProp>
+          <boolProp name="recycle">false</boolProp>
+          <boolProp name="stopThread">true</boolProp>
+        </CSVDataSet>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="SQL Injection - GET ID">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}&amp;id=${PAYLOAD}</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="No Debe Mostrar Errores SQL">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1216985755">mysql</stringProp>
+              <stringProp name="1216985755">syntax error</stringProp>
+              <stringProp name="1216985755">SQL</stringProp>
+              <stringProp name="1216985755">Warning</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! Error SQL en ${MODULO}</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <intProp name="Assertion.test_type">6</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="SQL Injection - POST Búsqueda">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <stringProp name="Argument.value">buscar</stringProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="busqueda" elementType="HTTPArgument">
+                <stringProp name="Argument.value">${PAYLOAD}</stringProp>
+                <stringProp name="Argument.name">busqueda</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="No Debe Mostrar Errores SQL">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1216985755">mysql</stringProp>
+              <stringProp name="1216985755">syntax error</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! Error SQL en búsqueda</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <intProp name="Assertion.test_type">6</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Prueba 2: XSS Genérico">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV - XSS Payloads">
+          <stringProp name="filename">C:/xampp/htdocs/org/Sistema-de-Gestion-Docente/test/seguridad/jmeter/data/xss_payloads.csv</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="variableNames">XSS_PAYLOAD</stringProp>
+          <boolProp name="recycle">false</boolProp>
+          <boolProp name="stopThread">true</boolProp>
+        </CSVDataSet>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="XSS - Campo Nombre">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <stringProp name="Argument.value">guardar</stringProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="nombre" elementType="HTTPArgument">
+                <stringProp name="Argument.value">${XSS_PAYLOAD}</stringProp>
+                <stringProp name="Argument.name">nombre</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="No Debe Reflejar Script">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1216985755">&lt;script&gt;</stringProp>
+              <stringProp name="1216985755">onerror=</stringProp>
+              <stringProp name="1216985755">javascript:</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! XSS en ${MODULO}</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <intProp name="Assertion.test_type">6</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Prueba 3: IDOR Genérico">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="IDOR - Acceso a ID No Autorizado">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}&amp;id=999999</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Debe Rechazar Acceso">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="49586">200</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! IDOR en ${MODULO}</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <intProp name="Assertion.test_type">20</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="IDOR - Modificar Registro Ajeno">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <stringProp name="Argument.value">modificar</stringProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="id" elementType="HTTPArgument">
+                <stringProp name="Argument.value">999999</stringProp>
+                <stringProp name="Argument.name">id</stringProp>
+              </elementProp>
+              <elementProp name="nombre" elementType="HTTPArgument">
+                <stringProp name="Argument.value">Modificado</stringProp>
+                <stringProp name="Argument.name">nombre</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Debe Rechazar Modificación">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1216985755">ok</stringProp>
+              <stringProp name="1216985755">exitoso</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! IDOR - Modificación no autorizada</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <intProp name="Assertion.test_type">6</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="IDOR - Eliminar Registro Ajeno">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <stringProp name="Argument.value">eliminar</stringProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="id" elementType="HTTPArgument">
+                <stringProp name="Argument.value">999999</stringProp>
+                <stringProp name="Argument.name">id</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Debe Rechazar Eliminación">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1216985755">ok</stringProp>
+              <stringProp name="1216985755">eliminado</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! IDOR - Eliminación no autorizada</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <intProp name="Assertion.test_type">6</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Prueba 4: CSRF Genérico">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CSRF - Guardar Sin Token">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <stringProp name="Argument.value">guardar</stringProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="nombre" elementType="HTTPArgument">
+                <stringProp name="Argument.value">Test CSRF</stringProp>
+                <stringProp name="Argument.name">nombre</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Debe Rechazar Sin Token">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1216985755">ok</stringProp>
+              <stringProp name="1216985755">exitoso</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! CSRF en ${MODULO}</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <intProp name="Assertion.test_type">6</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="CSRF - Eliminar Sin Token">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="accion" elementType="HTTPArgument">
+                <stringProp name="Argument.value">eliminar</stringProp>
+                <stringProp name="Argument.name">accion</stringProp>
+              </elementProp>
+              <elementProp name="id" elementType="HTTPArgument">
+                <stringProp name="Argument.value">1</stringProp>
+                <stringProp name="Argument.name">id</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Debe Rechazar Sin Token">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1216985755">ok</stringProp>
+              <stringProp name="1216985755">eliminado</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">¡VULNERABLE! CSRF - Eliminación sin token</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <intProp name="Assertion.test_type">6</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Prueba 5: Access Control">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Verificar Acceso Autenticado">
+          <stringProp name="HTTPSampler.path">/org/Sistema-de-Gestion-Docente/?pagina=${MODULO}</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Debe Permitir Acceso">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="49586">200</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message">Error: Usuario autenticado no puede acceder</stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <intProp name="Assertion.test_type">8</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="Ver Árbol de Resultados">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>true</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>true</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Reporte Resumen">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

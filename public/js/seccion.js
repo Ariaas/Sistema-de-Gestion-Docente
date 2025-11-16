@@ -2616,7 +2616,7 @@ $(document).ready(function () {
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
                 confirmButtonText: 'SÍ, ELIMINAR',
                 cancelButtonText: 'CANCELAR'
             }).then((result) => {

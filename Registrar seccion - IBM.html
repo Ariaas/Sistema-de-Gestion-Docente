@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caso de Uso: Registrar sección</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .header-blue {
+            background-color: #0033A0;
+            color: white;
+            font-weight: bold;
+        }
+        .subheader-blue {
+            background-color: #0066CC;
+            color: white;
+            font-weight: bold;
+        }
+        .col-left {
+            width: 50%;
+        }
+        .col-right {
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+
+<table>
+    <tr>
+        <td class="header-blue">Tabla</td>
+        <td class="header-blue">Caso de Uso</td>
+        <td class="header-blue">Registrar sección</td>
+        <td class="header-blue">Id Caso de Uso</td>
+        <td class="header-blue">6.1</td>
+    </tr>
+    <tr>
+        <td class="header-blue">Actores</td>
+        <td colspan="4">Administrador</td>
+    </tr>
+    <tr>
+        <td class="header-blue">Descripción</td>
+        <td colspan="4">Esta funcionalidad permite registrar los datos de una sección.</td>
+    </tr>
+</table>
+
+<table>
+    <tr>
+        <td class="subheader-blue" colspan="2">Flujo de Uso</td>
+    </tr>
+    <tr>
+        <td class="subheader-blue">Acción del Actor</td>
+        <td class="subheader-blue">Respuesta del Sistema</td>
+    </tr>
+    <tr>
+        <td>1. Selecciona "Registrar sección".</td>
+        <td>2. Muestra un formulario de registro con los campos (Código, cantidad, Año). Valida antes de enviar que el código de sección con el formato correcto (2-3 letras + 4 dígitos) exista.</td>
+    </tr>
+    <tr>
+        <td>3. Llena los campos correspondientes a la sección que quiere registrar.</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>4. Presiona el botón "Registrar".</td>
+        <td>5. Mensaje "Registro Incluido! Se registró la sección correctamente!"</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td>6. Sección no registrada</td>
+    </tr>
+</table>
+
+<table>
+    <tr>
+        <td class="subheader-blue" colspan="2">Curso Alterno #1: El código de la sección ya existe</td>
+    </tr>
+    <tr>
+        <td class="subheader-blue">Precondiciones</td>
+        <td>Código ya existe</td>
+    </tr>
+    <tr>
+        <td class="subheader-blue">Postcondiciones</td>
+        <td>Sección no registrado</td>
+    </tr>
+    <tr>
+        <td class="subheader-blue">Curso Alterno #1:</td>
+        <td class="subheader-blue">El código de la sección ya existe</td>
+    </tr>
+    <tr>
+        <td>1.</td>
+        <td>2.</td>
+    </tr>
+    <tr>
+        <td>3. Llena el campo de código.</td>
+        <td>4. Mensaje de alerta "El código de la sección ya existe"</td>
+    </tr>
+</table>
+
+<table>
+    <tr>
+        <td class="subheader-blue" colspan="2">Curso Alterno #2: El código de la sección debe coincidir con el formato</td>
+    </tr>
+    <tr>
+        <td class="subheader-blue">Precondiciones</td>
+        <td>Código vacío o excede el número de caracteres</td>
+    </tr>
+    <tr>
+        <td class="subheader-blue">Postcondiciones</td>
+        <td>Sección no registrado</td>
+    </tr>
+    <tr>
+        <td class="subheader-blue">Curso Alterno #2:</td>
+        <td class="subheader-blue">El código de la sección debe coincidir con el formato</td>
+    </tr>
+    <tr>
+        <td>1.</td>
+        <td>2.</td>
+    </tr>
+    <tr>
+        <td>3. Llena los campos excepto el de código.</td>
+        <td>4.</td>
+    </tr>
+    <tr>
+        <td>5.</td>
+        <td>6. Mensaje de alerta "ERROR! El código de la sección debe coincidir con el formato, se permiten de 4 a 10 caracteres."</td>
+    </tr>
+</table>
+
+<h2>Flujo Completo del Sistema</h2>
+
+<table>
+    <tr>
+        <td class="subheader-blue">Unir secciones, Separar sección, Modificar sección y eliminar sección</td>
+        <td class="subheader-blue">Código de la sección</td>
+        <td class="subheader-blue">Datos de la sección registrada</td>
+    </tr>
+    <tr>
+        <td>Curso Típico</td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+<h3>Validaciones del Sistema</h3>
+
+<table>
+    <tr>
+        <td class="subheader-blue">Validación</td>
+        <td class="subheader-blue">Descripción</td>
+        <td class="subheader-blue">Mensaje de Error</td>
+    </tr>
+    <tr>
+        <td>1. Formato del código</td>
+        <td>Valida formato del código (2-3 letras + 4 dígitos)</td>
+        <td>Formato de código inválido. Debe tener 2-3 letras seguido de exactamente 4 dígitos (ej: IN1101, IIN3104)</td>
+    </tr>
+    <tr>
+        <td>2. Cantidad de estudiantes</td>
+        <td>Valida cantidad de estudiantes (0-99)</td>
+        <td>La cantidad de estudiantes debe ser un número entero entre 0 y 99</td>
+    </tr>
+    <tr>
+        <td>3. Sección existente</td>
+        <td>Valida que la sección no exista para el año y tipo seleccionado</td>
+        <td>¡ERROR! La sección ya existe para el año seleccionado. Puede registrar esta misma sección en un período diferente (Regular/Intensivo)</td>
+    </tr>
+    <tr>
+        <td>4. Cohorte activa</td>
+        <td>Valida que la cohorte esté creada y activa en la malla</td>
+        <td>Advertencia: La Cohorte no está creada o no está activa en la malla. ¿Desea registrar la sección de todas formas?</td>
+    </tr>
+</table>
+
+<h3>Flujo de Registro de Horario</h3>
+
+<table>
+    <tr>
+        <td class="subheader-blue">Acción del Actor</td>
+        <td class="subheader-blue">Respuesta del Sistema</td>
+    </tr>
+    <tr>
+        <td>5. Presiona los espacios del horario que quiere llenar</td>
+        <td>6. Muestra formulario de añadir/editar clase con los campos (Franja horaria, día, docente, unidad curricular, espacio)</td>
+    </tr>
+    <tr>
+        <td>7. Llena los campos correspondientes al horario que quiere registrar</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>8. Presiona el botón "Guardar los cambios"</td>
+        <td></td>
+    </tr>
+</table>
+
+<h3>Validaciones de Horario</h3>
+
+<table>
+    <tr>
+        <td class="subheader-blue">Validación</td>
+        <td class="subheader-blue">Descripción</td>
+        <td class="subheader-blue">Mensaje de Error</td>
+    </tr>
+    <tr>
+        <td>5. Campo docente</td>
+        <td>Valida que el campo de docente no esté vacío</td>
+        <td>¡ERROR! Debe seleccionar un docente, Unidad Curricular y Espacio</td>
+    </tr>
+    <tr>
+        <td>6. Campo unidad curricular</td>
+        <td>Valida que el campo de unidad curricular no esté vacío</td>
+        <td>¡ERROR! Debe seleccionar un docente, Unidad Curricular y Espacio</td>
+    </tr>
+    <tr>
+        <td>7. Campo espacio</td>
+        <td>Valida que el campo de espacio no esté vacío</td>
+        <td>¡ERROR! Debe seleccionar un docente, Unidad Curricular y Espacio</td>
+    </tr>
+    <tr>
+        <td>8. Presiona el botón "REGISTRAR"</td>
+        <td>9. Se registra el horario</td>
+        <td>10. Mensaje de alerta: "Registro Incluido! Se registró el horario correctamente!"</td>
+    </tr>
+</table>
+
+</body>
+</html>

@@ -297,7 +297,7 @@ $(document).on("click", ".eliminar-prosecusion", function () {
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
     confirmButtonText: 'Sí, eliminar',
     cancelButtonText: 'Cancelar'
   }).then((result) => {

@@ -30,10 +30,19 @@ function crearDT() {
 $(document).ready(function () {
     Listar(); 
 
-    $('#f .form-control').on('focus input change', function() {
-        validarCampo($('#turnonombre'));
-        validarCampo($('#horaInicio'));
-        validarCampo($('#horafin'));
+    $('#turnonombre').on('change', function() {
+        validarCampo($(this));
+        chequearEstadoBoton();
+    });
+
+    $('#horaInicio').on('input change', function() {
+        validarCampo($(this));
+        validarLogicaHoras();
+        chequearEstadoBoton();
+    });
+
+    $('#horafin').on('input change', function() {
+        validarCampo($(this));
         validarLogicaHoras();
         chequearEstadoBoton();
     });
@@ -52,12 +61,22 @@ $(document).ready(function () {
 
     $("#registrar").on("click", function () {
         limpia();
+        
         $('#turnonombre option').each(function() {
             $(this).prop('disabled', nombresExistentes.includes($(this).val()));
         });
         $("#proceso").text("REGISTRAR");
         $(".modal-title").text("Registrar Turno");
         $("#modal1").modal("show");
+        
+        // Verificar si todos los turnos posibles ya están registrados después de abrir el modal
+        const turnosPosibles = ['Mañana', 'Tarde', 'Noche'];
+        const todosRegistrados = turnosPosibles.every(turno => nombresExistentes.includes(turno));
+        
+        if (todosRegistrados) {
+            $('#sSolapamiento').text('Todos los turnos disponibles (Mañana, Tarde y Noche) ya han sido registrados en el sistema.');
+            $('#proceso').prop('disabled', true);
+        }
     });
 
     $('#modal1').on('shown.bs.modal', function () {
@@ -121,7 +140,7 @@ function procesarEliminacion() {
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
         confirmButtonText: "Sí, eliminar",
         cancelButtonText: "Cancelar",
         focusConfirm: true,
@@ -250,6 +269,18 @@ function chequearEstadoBoton() {
     const fin = $('#horafin').val();
     const esModoModificar = $('#turnoid').val() !== '';
     const spanSolapamiento = $('#sSolapamiento');
+    
+    // Verificar si todos los turnos están registrados en modo registro
+    if (!esModoModificar) {
+        const turnosPosibles = ['Mañana', 'Tarde', 'Noche'];
+        const todosRegistrados = turnosPosibles.every(turno => nombresExistentes.includes(turno));
+        
+        if (todosRegistrados) {
+            $('#proceso').prop('disabled', true);
+            spanSolapamiento.text('Todos los turnos disponibles ya han sido registrados.');
+            return;
+        }
+    }
     
     if (solapamientoDetectado) {
         $('#proceso').prop('disabled', true);
