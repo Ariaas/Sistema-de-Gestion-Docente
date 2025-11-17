@@ -96,7 +96,7 @@ class Categoria extends Connection
                 ':categoriaDescripcion' => $this->categoriaDescripcion
             ]);
 
-            return ['resultado' => 'registrar', 'mensaje' => 'Registro Incluido!<br/>Se registró la CATEGORÍA correctamente!'];
+            return ['resultado' => 'registrar', 'mensaje' => '¡Registro Incluido!<br/>Se registró la categoría correctamente!'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         } finally {
@@ -183,7 +183,7 @@ class Categoria extends Connection
                 ':categoriaOriginal' => $categoriaOriginal
             ]);
 
-            return ['resultado' => 'modificar', 'mensaje' => 'Registro Modificado!<br/>Se modificó la CATEGORÍA correctamente!'];
+            return ['resultado' => 'modificar', 'mensaje' => '¡Registro Modificado!<br/>Se modificó la categoría correctamente!'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         } finally {
@@ -239,7 +239,7 @@ class Categoria extends Connection
             $co->prepare("UPDATE tbl_categoria SET cat_estado = 0 WHERE cat_nombre = :categoriaNombre")
                 ->execute([':categoriaNombre' => $this->categoriaNombre]);
 
-            return ['resultado' => 'eliminar', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó la CATEGORÍA correctamente!'];
+            return ['resultado' => 'eliminar', 'mensaje' => '¡Registro Eliminado!<br/>Se eliminó la categoría correctamente!'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         } finally {

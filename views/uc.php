@@ -37,7 +37,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Unidades Curriculares</title>
+    <title>Gestionar Unidades Curriculares</title>
 </head>
 
 <body class="d-flex flex-column min-vh-100">

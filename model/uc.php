@@ -218,7 +218,7 @@ class UC extends Connection
                 ':periodoUC' => $this->periodoUC
             ]);
 
-            return ['resultado' => 'registrar', 'mensaje' => 'Registro Incluido!<br/>Se registró la unidad de curricular correctamente!'];
+            return ['resultado' => 'registrar', 'mensaje' => '¡Registro Incluido!<br/>Se registró la unidad curricular correctamente!'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         } finally {
@@ -353,7 +353,7 @@ class UC extends Connection
                 ':codigoOriginal' => $codigoOriginal
             ]);
 
-            return ['resultado' => 'modificar', 'mensaje' => 'Registro Modificado!<br/>Se modificó la unidad curricular correctamente!'];
+            return ['resultado' => 'modificar', 'mensaje' => '¡Registro Modificado!<br/>Se modificó la unidad curricular correctamente!'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         } finally {
@@ -395,7 +395,7 @@ class UC extends Connection
             $co->prepare("UPDATE tbl_uc SET uc_estado = 0 WHERE uc_codigo = :codigoUC")
                 ->execute([':codigoUC' => $this->codigoUC]);
 
-            return ['resultado' => 'eliminar', 'mensaje' => 'Registro Eliminado!<br/>Se eliminó la unidad curricular correctamente!'];
+            return ['resultado' => 'eliminar', 'mensaje' => '¡Registro Eliminado!<br/>Se eliminó la unidad curricular correctamente!'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         } finally {
@@ -506,7 +506,7 @@ class UC extends Connection
             $co->prepare("UPDATE tbl_uc SET uc_estado = 1 WHERE uc_codigo = :codigoUC")
                 ->execute([':codigoUC' => $this->codigoUC]);
 
-            return ['resultado' => 'activar', 'mensaje' => 'Registro Reactivado!<br/>Se activó la unidad curricular correctamente!'];
+            return ['resultado' => 'activar', 'mensaje' => '¡Registro Reactivado!<br/>Se activó la unidad curricular correctamente!'];
         } catch (Exception $e) {
             return ['resultado' => 'error', 'mensaje' => $e->getMessage()];
         } finally {

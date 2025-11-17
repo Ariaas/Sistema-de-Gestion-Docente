@@ -100,7 +100,7 @@ class Area extends Connection
             $stmtReactivar->execute();
 
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el área correctamente!';
+            $r['mensaje'] = '¡Registro Incluido!<br/>Se registró el área correctamente!';
             $co = null;
             return $r;
         }
@@ -121,7 +121,7 @@ class Area extends Connection
             $stmt->execute();
 
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'Registro Incluido!<br/>Se registró el área correctamente!';
+            $r['mensaje'] = '¡Registro Incluido!<br/>Se registró el área correctamente!';
         } catch (Exception $e) {
             $r['resultado'] = 'error';
             $r['mensaje'] = $e->getMessage();
@@ -194,7 +194,7 @@ class Area extends Connection
                 $stmt->execute();
 
                 $r['resultado'] = 'modificar';
-                $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el área correctamente!';
+                $r['mensaje'] = '¡Registro Modificado!<br/>Se modificó el área correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -248,7 +248,7 @@ class Area extends Connection
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el área correctamente!';
+                $r['mensaje'] = '¡Registro Eliminado!<br/>Se eliminó el área correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();

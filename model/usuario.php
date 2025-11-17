@@ -190,7 +190,7 @@ class Usuario extends Connection_bitacora
                 $stmt->execute();
 
                 $r['resultado'] = 'registrar';
-                $r['mensaje'] = 'Registro Incluido!<br/> Se registró el usuario correctamente!';
+                $r['mensaje'] = '¡Registro Incluido!<br/>Se registró el usuario correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();
@@ -199,7 +199,7 @@ class Usuario extends Connection_bitacora
             $co = null;
         } else {
             $r['resultado'] = 'registrar';
-            $r['mensaje'] = 'ERROR! <br/> El USUARIO colocado YA existe!';
+            $r['mensaje'] = 'ERROR! <br/> El usuario colocado ya existe!';
         }
 
         return $r;
@@ -331,7 +331,7 @@ class Usuario extends Connection_bitacora
                     $stmt->execute();
 
                     $r['resultado'] = 'modificar';
-                    $r['mensaje'] = 'Registro Modificado!<br/>Se modificó el usuario correctamente!';
+                    $r['mensaje'] = '¡Registro Modificado!<br/>Se modificó el usuario correctamente!';
                 } catch (Exception $e) {
                     $r['resultado'] = 'error';
                     $r['mensaje'] = $e->getMessage();
@@ -396,7 +396,7 @@ class Usuario extends Connection_bitacora
                 $stmt->execute();
 
                 $r['resultado'] = 'eliminar';
-                $r['mensaje'] = 'Registro Eliminado!<br/>Se eliminó el usuario correctamente!';
+                $r['mensaje'] = '¡Registro Eliminado!<br/>Se eliminó el usuario correctamente!';
             } catch (Exception $e) {
                 $r['resultado'] = 'error';
                 $r['mensaje'] = $e->getMessage();

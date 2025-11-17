@@ -255,13 +255,13 @@ $(document).ready(function() {
         dropdownParent: $('#modal1')
     });
 
-    
-    $("#mal_nombre").on("keyup down", function() { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $(this), $("#smalnombre"), "El formato permite de 5 a 30 caracteres."); verificarCambiosParaModificar(); });
-    $("#mal_descripcion").on("keyup down", function() { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $(this), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres."); verificarCambiosParaModificar(); });
+    $("#mal_nombre").on("keyup down", function() { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $(this), $("#smalnombre"), "El formato permite de 5 a 30 caracteres."); verificarCambiosParaModificar(); validarCamposParaHabilitarSiguiente(); });
+    $("#mal_descripcion").on("keyup down", function() { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $(this), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres."); verificarCambiosParaModificar(); validarCamposParaHabilitarSiguiente(); });
     $("#mal_codigo").on("input", function() {
         const span = $("#smalcodigo");
         span.css('color', '');
-        $("#btn-siguiente").prop("disabled", validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $(this), span, "El código debe tener entre 2 y 20 caracteres.") === 0);
+        validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $(this), span, "El código debe tener entre 2 y 20 caracteres.");
+        validarCamposParaHabilitarSiguiente();
     });
     $("#mal_codigo").on("keyup", function() {
         const input = $(this);
@@ -280,8 +280,9 @@ $(document).ready(function() {
         if (this.value.length > 3) this.value = this.value.slice(0, 3);
         const span = $("#smalcohorte");
         span.css('color', '');
-        $("#btn-siguiente").prop("disabled", validarkeyup(/^[1-9][0-9]{0,3}$/, $(this), span, "Debe ser un número entre 1 y 999.") === 0);
+        validarkeyup(/^[1-9][0-9]{0,3}$/, $(this), span, "Debe ser un número entre 1 y 999.");
         verificarCambiosParaModificar();
+        validarCamposParaHabilitarSiguiente();
     });
     $("#mal_cohorte").on("keyup", function() {
         const input = $(this);
@@ -349,7 +350,7 @@ $(document).ready(function() {
     $('#btn-siguiente').on('click', function() { if (validarPagina1()) { $('#pagina1, #botones-pagina1').hide(); $('#pagina2, #botones-pagina2').show(); $('#modal1Titulo').text("Formulario de Malla (Paso 2 de 2)"); } else { muestraMensaje("error", 4000, "ERROR", "Por favor, corrija los campos marcados"); } });
     $('#btn-anterior').on('click', function() { $('#pagina2, #botones-pagina2').hide(); $('#pagina1, #botones-pagina1').show(); $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)"); });
     $("#proceso").addClass("ms-2").on("click", function() { if (validarenvio()) { $("#mal_codigo").prop("disabled", false); var datos = new FormData($("#f")[0]); let unidades = []; $('#contenedorAcordeonUC tbody tr').each(function() { const fila = $(this); unidades.push({ uc_codigo: fila.data('uc_codigo'), hora_independiente: parseInt(fila.find('.h-indep').val()) || 0, hora_asistida: parseInt(fila.find('.h-asist').val()) || 0, hora_academica: parseInt(fila.find('.h-acad').val()) || 0 }); }); datos.append("unidades", JSON.stringify(unidades)); enviaAjax(datos); } });
-    $("#registrar").on("click", function() { if ($(this).is(':disabled')) return; limpiaModal1(); $("#accion").val("registrar"); $("#mal_codigo_original").val(''); $("#mal_codigo").prop('disabled', false); $("#modal1Titulo").text("Registrar Malla (Paso 1 de 2)"); $("#proceso").text("REGISTRAR"); $("#modal1").modal("show"); });
+    $("#registrar").on("click", function() { if ($(this).is(':disabled')) return; limpiaModal1(); $("#accion").val("registrar"); $("#mal_codigo_original").val(''); $("#mal_codigo").prop('disabled', false); $("#modal1Titulo").text("Registrar Malla (Paso 1 de 2)"); $("#proceso").text("REGISTRAR"); $("#modal1").modal("show"); validarCamposParaHabilitarSiguiente(); });
     
    
  
@@ -388,26 +389,25 @@ function enviaAjax(datos, tipoLlamada = '') {
                 var lee = JSON.parse(respuesta);
                 if (tipoLlamada === 'existe_codigo') {
                     const mensajeSpan = $("#smalcodigo");
-                    const btnSiguiente = $("#btn-siguiente");
                     if (lee.resultado === 'existe') {
                         mensajeSpan.text(lee.mensaje).css('color', 'red');
-                        btnSiguiente.prop("disabled", true);
                     } else if (lee.resultado === 'ok') {
                         mensajeSpan.text('').css('color', '');
-                        btnSiguiente.prop("disabled", false);
                     }
                     if ($("#accion").val() === 'modificar') {
                         verificarCambiosParaModificar();
                     }
+                    validarCamposParaHabilitarSiguiente();
                     return;
                 }
                 if (tipoLlamada === 'existe_cohorte') {
                     const mensajeSpan = $("#smalcohorte");
-                    const btnSiguiente = $("#btn-siguiente");
                     if (lee.resultado === 'existe') {
                         mensajeSpan.text(lee.mensaje).css('color', 'red');
-                        btnSiguiente.prop("disabled", true);
+                    } else {
+                        mensajeSpan.text('').css('color', '');
                     }
+                    validarCamposParaHabilitarSiguiente();
                     return;
                 }
                 if (datos.get('accion') === 'verificar_condiciones') {
@@ -577,7 +577,7 @@ function pone(pos, accionBtn) {
         $("#accion").val("modificar");
         $("#modal1Titulo").text("Modificar Malla (Paso 1 de 2)");
         $("#proceso").text("MODIFICAR").prop("disabled", true);
-        $("#btn-siguiente").prop("disabled", false);
+        validarCamposParaHabilitarSiguiente();
         
         estadoInicialModificar = {
             codigo: mal_codigo,
@@ -712,4 +712,22 @@ function validarkeyup(er, etiqueta, etiquetamensaje, mensaje = "") {
         etiqueta.removeClass('is-valid').addClass('is-invalid');
         return 0;
     }
+}
+
+function validarCamposParaHabilitarSiguiente() {
+    const codigo = $("#mal_codigo").val();
+    const nombre = $("#mal_nombre").val();
+    const cohorte = $("#mal_cohorte").val();
+    const descripcion = $("#mal_descripcion").val();
+    
+    const codigoValido = /^[A-Za-z0-9\s-]{2,20}$/.test(codigo);
+    const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/.test(nombre);
+    const cohorteValido = /^[1-9][0-9]{0,3}$/.test(cohorte);
+    const descripcionValida = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/.test(descripcion);
+    
+    const codigoExiste = $("#smalcodigo").is(":visible") && $("#smalcodigo").css("color") === "rgb(255, 0, 0)";
+    const cohorteExiste = $("#smalcohorte").is(":visible") && $("#smalcohorte").css("color") === "rgb(255, 0, 0)";
+    
+    const habilitarBoton = codigoValido && nombreValido && cohorteValido && descripcionValida && !codigoExiste && !cohorteExiste;
+    $("#btn-siguiente").prop("disabled", !habilitarBoton);
 }

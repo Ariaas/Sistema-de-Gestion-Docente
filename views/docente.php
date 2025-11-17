@@ -37,7 +37,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Docente</title>
+    <title>Gestionar Docente</title>
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
 </head>

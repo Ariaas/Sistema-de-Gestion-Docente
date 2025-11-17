@@ -38,7 +38,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 <head>
     <?php require_once("public/components/head.php"); ?>
 
-    <title>Bitacora</title>
+    <title>Gestionar Bitacora</title>
 </head>
 
 <body class="d-flex flex-column min-vh-100">

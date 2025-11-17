@@ -332,7 +332,7 @@ function enviaAjax(datos, accion) {
           muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Incluido!<br/>Se registró la CATEGORÍA correctamente!"
+            "¡Registro Incluido!<br/>Se registró la categoría correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -342,7 +342,7 @@ function enviaAjax(datos, accion) {
           muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Modificado!<br/>Se modificó la CATEGORÍA correctamente!"
+            "¡Registro Modificado!<br/>Se modificó la categoría correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();
@@ -352,7 +352,7 @@ function enviaAjax(datos, accion) {
           muestraMensaje("success", 4000, "ELIMINAR", lee.mensaje);
           if (
             lee.mensaje ==
-            "Registro Eliminado!<br/>Se eliminó la CATEGORÍA correctamente!"
+            "¡Registro Eliminado!<br/>Se eliminó la categoría correctamente!"
           ) {
             $("#modal1").modal("hide");
             Listar();

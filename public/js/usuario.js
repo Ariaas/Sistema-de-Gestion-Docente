@@ -467,7 +467,7 @@ function enviaAjax(datos, accion) {
         }
         else if (lee.resultado == "registrar") {
           muestraMensaje("success", 4000, "REGISTRAR", lee.mensaje);
-          if (lee.mensaje == 'Registro Incluido!<br/> Se registró el usuario correctamente!') {
+          if (lee.mensaje == '¡Registro Incluido!<br/>Se registró el usuario correctamente!') {
             $("#modal1").modal("hide");
             limpia();
             Listar();
@@ -475,7 +475,7 @@ function enviaAjax(datos, accion) {
         }
         else if (lee.resultado == "modificar") {
           muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
-          if (lee.mensaje == "Registro Modificado!<br/>Se modificó el usuario correctamente!") {
+          if (lee.mensaje == "¡Registro Modificado!<br/>Se modificó el usuario correctamente!") {
             $("#modal1").modal("hide");
             Listar();
           }
@@ -492,7 +492,7 @@ function enviaAjax(datos, accion) {
             setTimeout(function () {
               window.location.href = '.';
             }, 4100);
-          } else if (lee.mensaje == "Registro Eliminado!<br/>Se eliminó el usuario correctamente!") {
+          } else if (lee.mensaje == "¡Registro Eliminado!<br/>Se eliminó el usuario correctamente!") {
             $("#modal1").modal("hide");
             Listar();
           }
