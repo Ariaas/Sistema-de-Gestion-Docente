@@ -111,7 +111,7 @@ $(document).ready(function() {
                     panel.html(html);
                     badge.text(resp.mensaje.length).show();
                 } else {
-                    panel.html('<li><a class="dropdown-item text-muted" href="#">No hay notificaciones nuevas.</a></li>');
+                    panel.html('<li><a class="dropdown-item text-danger" href="#">No hay notificaciones nuevas.</a></li>');
                     badge.hide(); 
                 }
                 panel.append('<div class="dropdown-divider"></div>');

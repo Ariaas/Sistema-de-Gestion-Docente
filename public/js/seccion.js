@@ -422,7 +422,7 @@ function generarCellContent(clase, isViewOnly = false) {
     return `<div class="subgroup-item p-1 draggable-class" ${draggableAttr} style="display: flex; align-items: center; justify-content: space-between;" data-subgrupo-id="${subgrupoId}">
                 <div class="subgroup-content" style="${cursorStyle} flex-grow: 1;">
                     <p class="m-0" style="font-size:0.8em;">${subgrupoDisplay}<strong>${uc}</strong></p>
-                    <small class="text-muted" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>
+                    <small class="text-danger" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>
                 </div>
                 ${editButton}
             </div>`;
@@ -449,7 +449,7 @@ function renderizarModalDeGestion(clases, franjaInicio, diaNombre) {
     const modalBody = $("#modal-body-gestion-clase");
     modalBody.empty();
 
-    let listHtml = '<p class="text-muted">Este bloque horario tiene múltiples clases (subgrupos). Puede editar o eliminar cada uno.</p>';
+    let listHtml = '<p class="text-danger">Este bloque horario tiene múltiples clases (subgrupos). Puede editar o eliminar cada uno.</p>';
     listHtml += '<ul class="list-group">';
 
     clases.forEach(claseData => {
@@ -461,7 +461,7 @@ function renderizarModalDeGestion(clases, franjaInicio, diaNombre) {
         listHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${subgrupoDisplay}:</strong> ${uc}<br>
-                            <small class="text-muted">${doc}</small>
+                            <small class="text-danger">${doc}</small>
                         </div>
                         <div>
                             <button type="button" class="btn btn-sm btn-outline-primary btn-editar-subgrupo" data-subgrupo-id="${subgrupoId}">Editar</button>
@@ -475,7 +475,7 @@ function renderizarModalDeGestion(clases, franjaInicio, diaNombre) {
     if (clases.length < 2) {
         listHtml += '<div class="text-center mt-3"><button type="button" class="btn btn-success" id="btn-anadir-otro-subgrupo">Añadir otro Subgrupo</button></div>';
     } else {
-        listHtml += '<p class="text-center text-muted mt-3">Máximo de 2 subgrupos por bloque alcanzado.</p>';
+        listHtml += '<p class="text-center text-danger mt-3">Máximo de 2 subgrupos por bloque alcanzado.</p>';
     }
 
     modalBody.html(listHtml);
@@ -1925,7 +1925,7 @@ $(document).ready(function () {
 
         Swal.fire({
             title: `Bienvenido al Año Académico ${anioActivo}`,
-            html: `Hemos detectado que no hay secciones registradas para este año. ¿Desea duplicar la estructura de horarios del año <b>${anioAnterior}</b>?<br><br><small class="text-muted"><b>Nota:</b> Se copiarán las unidades curriculares, pero los <b>docentes y espacios</b> quedarán vacíos para ser asignados.</small>`,
+            html: `Hemos detectado que no hay secciones registradas para este año. ¿Desea duplicar la estructura de horarios del año <b>${anioAnterior}</b>?<br><br><small class="text-danger"><b>Nota:</b> Se copiarán las unidades curriculares, pero los <b>docentes y espacios</b> quedarán vacíos para ser asignados.</small>`,
             icon: 'question',
             showDenyButton: true,
             confirmButtonText: 'SÍ, DUPLICAR',
@@ -2137,7 +2137,7 @@ $(document).ready(function () {
                 container.append('<hr class="my-2">');
             }
         }
-        if (!hayGrupos) container.html('<p class="text-muted">No hay grupos de 2 o más secciones compatibles para unir.</p>');
+        if (!hayGrupos) container.html('<p class="text-danger">No hay grupos de 2 o más secciones compatibles para unir.</p>');
         $("#unirSeccionOrigen").empty().append('<option value="" disabled selected>Marque primero las secciones a unir...</option>');
         $("#modalUnirHorarios").modal("show");
     });
@@ -2449,7 +2449,7 @@ $(document).ready(function () {
         const { value: formValues, isConfirmed } = await Swal.fire({
             title: franjaAEditar ? 'Editar Bloque Horario' : 'Añadir Nuevo Bloque Horario',
             html: `
-                <p class="text-muted">Introduce la hora de inicio y fin para la franja horaria.</p>
+                <p class="text-danger">Introduce la hora de inicio y fin para la franja horaria.</p>
                 <div class="form-floating mb-2">
                     <input type="time" id="swal-hora-inicio" class="form-control" value="${horaInicioSugerida}" step="600">
                     <label for="swal-hora-inicio">Hora de Inicio</label>

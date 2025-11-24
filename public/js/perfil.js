@@ -53,7 +53,7 @@ function actualizarResumenSelect($select, $container) {
     const seleccionados = $select.find('option:selected');
     $container.empty();
     if (!seleccionados.length) {
-        $container.append('<span class="text-muted">Sin elementos seleccionados</span>');
+        $container.append('<span class="text-danger">Sin elementos seleccionados</span>');
         return;
     }
     seleccionados.each(function () {
@@ -119,8 +119,8 @@ function deshabilitarFormularioDocente() {
     $('#formPerfilDocente :input').prop('disabled', true);
     $('#docenteTitulos').val(null).trigger('change.select2');
     $('#docenteCoordinaciones').val(null).trigger('change.select2');
-    $('#docenteTitulosResumen').html('<span class="text-muted">Sin datos disponibles</span>');
-    $('#docenteCoordinacionesResumen').html('<span class="text-muted">Sin datos disponibles</span>');
+    $('#docenteTitulosResumen').html('<span class="text-danger">Sin datos disponibles</span>');
+    $('#docenteCoordinacionesResumen').html('<span class="text-danger">Sin datos disponibles</span>');
     $('#docenteObservacion').val('');
     $('#btnGuardarDocente').prop('disabled', true);
 }

@@ -66,8 +66,6 @@ $(document).ready(function () {
     }
   });
 
-
-
   $("#numeroEspacio").on("keypress", function (e) {
     let input = this;
     let valor = $(this).val();
@@ -92,7 +90,7 @@ $(document).ready(function () {
   });
 
   $("#numeroEspacio").on("keyup", function () {
-    $("#snumeroEspacio").css("color", "");
+    $("#snumeroEspacio").removeClass("text-danger");
     let valor = $(this).val();
     let tipo = $("#tipoEspacio").val();
     let esValido = false;
@@ -103,21 +101,21 @@ $(document).ready(function () {
 
     if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{5,20}$/.test(valor)) {
       esValido = true;
-      $("#snumeroEspacio").text('').show();
+      $("#snumeroEspacio").text('').removeClass("text-danger").show();
     } else if (/^\d{1,2}$/.test(valor)) {
       esValido = true;
-      $("#snumeroEspacio").text('').show();
+      $("#snumeroEspacio").text('').removeClass("text-danger").show();
     } else if (valor === "") {
       $("#snumeroEspacio")
         .text("El formato permite de 1 a 2 dígitos numéricos o de 5 a 20 letras.")
-        .css("color", "").show();
+        .addClass("text-danger").show();
       esValido = false;
     } else {
       esValido = false;
       if (/[0-9]/.test(valor)) {
-        $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos.").css("color", "").show();
+        $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos.").addClass("text-danger").show();
       } else {
-        $("#snumeroEspacio").text("El formato permite de 5 a 20 letras.").css("color", "").show();
+        $("#snumeroEspacio").text("El formato permite de 5 a 20 letras.").addClass("text-danger").show();
       }
     }
 
@@ -143,7 +141,7 @@ $(document).ready(function () {
   });
 
   $("#tipoEspacio").on("change", function () {
-    $("#snumeroEspacio").css("color", "");
+    $("#snumeroEspacio").removeClass("text-danger");
     $("#stipoEspacio").text("");
     
     if ($("#proceso").text() === "MODIFICAR") {
@@ -171,7 +169,7 @@ $(document).ready(function () {
 
   $("#edificio").on("change", function () {
     $("#sedificio").text("");
-    $("#snumeroEspacio").css("color", "");
+    $("#snumeroEspacio").removeClass("text-danger");
     
     if ($("#proceso").text() === "MODIFICAR") {
       verificarCambios();
@@ -196,14 +194,11 @@ $(document).ready(function () {
     verificarBotonRegistrar();
   });
 
-
- 
-
   $("#proceso").on("click", function () {
     if ($(this).prop("disabled")) return; 
     if ($(this).text() == "REGISTRAR") {
       if ($("#snumeroEspacio").text() === "El espacio ya existe.") {
-        $("#snumeroEspacio").css("color", "red");
+        $("#snumeroEspacio").addClass("text-danger");
         return;
       }
       if (validarenvio()) {
@@ -275,12 +270,11 @@ $(document).ready(function () {
     }
   });
 
-
   $("#registrar").on("click", function () {
     limpia();
     $("#proceso").text("REGISTRAR");
     $("#modal1").modal("show");
-    $("#snumeroEspacio").text('').css('color', '').show();
+    $("#snumeroEspacio").text('').removeClass("text-danger").show();
     $("#sedificio").text('').show();
     $("#stipoEspacio").text('').show();
     $("#tipoEspacio, #numeroEspacio, #edificio").prop("disabled", false);
@@ -293,11 +287,9 @@ $(document).ready(function () {
 
   $('#modal1').on('hidden.bs.modal', function () {
     $("#proceso").prop("disabled", false);
-    $("#snumeroEspacio").text('').css('color', '');
+    $("#snumeroEspacio").text('').removeClass("text-danger");
   });
 });
-
-
 
 function validarenvio() {
   let esValido = true;
@@ -306,13 +298,13 @@ function validarenvio() {
   if (!(/^\d{1,2}$/.test(valor) || /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{5,20}$/.test(valor))) {
     if (/[0-9]/.test(valor) && !/^\d{1,2}$/.test(valor)) {
       if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del número de espacio es incorrecto.");
-      $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos.").css("color", "");
+      $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos.").addClass("text-danger");
     } else if (valor === "") {
       if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe ingresar un número de espacio.");
-      $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos o de 5 a 20 letras.").css("color", "");
+      $("#snumeroEspacio").text("El formato permite de 1 a 2 dígitos numéricos o de 5 a 20 letras.").addClass("text-danger");
     } else {
       if(esValido) muestraMensaje("error", 4000, "ERROR!", "El formato del número de espacio es incorrecto.");
-      $("#snumeroEspacio").text("El formato permite de 5 a 20 letras.").css("color", "");
+      $("#snumeroEspacio").text("El formato permite de 5 a 20 letras.").addClass("text-danger");
     }
     esValido = false;
   } else {
@@ -320,7 +312,7 @@ function validarenvio() {
   }
 
   if ($("#edificio").val() === null || $("#edificio").val() === "") {
-    $("#sedificio").text("Debe seleccionar un edificio.");
+    $("#sedificio").text("Debe seleccionar un edificio.").addClass("text-danger");
     if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un edificio.");
     esValido = false;
   } else {
@@ -328,7 +320,7 @@ function validarenvio() {
   }
 
   if ($("#tipoEspacio").val() === null || $("#tipoEspacio").val() === "") {
-    $("#stipoEspacio").text("Debe seleccionar un tipo de espacio.");
+    $("#stipoEspacio").text("Debe seleccionar un tipo de espacio.").addClass("text-danger");
     if(esValido) muestraMensaje("error", 4000, "ERROR!", "Debe seleccionar un tipo de espacio.");
     esValido = false;
   } else {
@@ -337,7 +329,6 @@ function validarenvio() {
   
   return esValido;
 }
-
 
 function getPrefijoEdificio(nombreEdificio) {
     if (!nombreEdificio) return '';
@@ -377,7 +368,6 @@ function separarCodigoEdificio(codigoCompleto) {
     return { prefijo, codigoNumerico, nombreEdificio };
 }
 
-
 function pone(pos, accion) {
   linea = $(pos).closest("tr");
 
@@ -415,7 +405,6 @@ function pone(pos, accion) {
 
   $("#modal1").modal("show");
 }
-
 
 function enviaAjax(datos, tipo_accion_local = null) {
   $.ajax({
@@ -494,11 +483,11 @@ function enviaAjax(datos, tipo_accion_local = null) {
           }
         } else if (lee.resultado == "existe" || lee.resultado == "no_existe") {
           if (lee.resultado === 'existe') {
-            $("#snumeroEspacio").text('El espacio ya existe.').css('color', 'red');
+            $("#snumeroEspacio").text('El espacio ya existe.').addClass("text-danger");
             $("#proceso").prop("disabled", true);
           } else if (lee.resultado == "no_existe") {
             $("#snumeroEspacio").text('');
-            $("#snumeroEspacio").css('color', '');
+            $("#snumeroEspacio").removeClass("text-danger");
             $("#proceso").prop("disabled", false);
           }
         }

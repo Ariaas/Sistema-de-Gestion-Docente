@@ -635,7 +635,7 @@ function pone(pos, accionBtn) {
                         cuerpoModal.empty();
                         $("#modalVerMallaTitulo").text("Unidades de: " + mal_nombre);
                         if (lee.mensaje.length === 0) {
-                            cuerpoModal.html('<p class="text-center text-muted p-3">Esta malla no tiene unidades curriculares asignadas.</p>');
+                            cuerpoModal.html('<p class="text-center text-danger p-3">Esta malla no tiene unidades curriculares asignadas.</p>');
                         } else {
                             let gruposVer = { '0': [], '1': [], '2': [], '3': [], '4': [] };
                             lee.mensaje.forEach(uc => { if (gruposVer[uc.uc_trayecto] !== undefined) gruposVer[uc.uc_trayecto].push(uc); });
@@ -696,22 +696,6 @@ function validarPagina1() {
     let esValido = true;
     if (validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $("#mal_codigo"), $("#smalcodigo"), "El código permite de 2 a 20 caracteres.") == 0) esValido = false;
     if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $("#mal_nombre"), $("#smalnombre"), "El formato permite de 5 a 30 caracteres.") == 0) esValido = false;
-    if (validarkeyup(/^[1-9][0-9]{0,3}$/, $("#mal_cohorte"), $("#smalcohorte"), "Debe ser un número entre 1 y 999.") == 0) esValido = false;
-    if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $("#mal_descripcion"), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres.") == 0) esValido = false;
-    return esValido;
-}
-
-function validarkeyup(er, etiqueta, etiquetamensaje, mensaje = "") {
-    if (etiqueta.prop('disabled')) return 1;
-    if (er.test(etiqueta.val())) {
-        if (etiquetamensaje) etiquetamensaje.text("");
-        etiqueta.removeClass('is-invalid').addClass('is-valid');
-        return 1;
-    } else {
-        if (etiquetamensaje) etiquetamensaje.text(mensaje);
-        etiqueta.removeClass('is-valid').addClass('is-invalid');
-        return 0;
-    }
 }
 
 function validarCamposParaHabilitarSiguiente() {

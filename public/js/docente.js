@@ -15,10 +15,9 @@ $(document).ready(function () {
     if (message) {
       spanElement
         .text(message)
-        .removeClass("text-danger")
-        .addClass("text-secondary");
+        .addClass("text-danger");
     } else {
-      spanElement.text("").removeClass("text-secondary");
+      spanElement.text("").removeClass("text-danger");
     }
   }
 
@@ -529,19 +528,18 @@ $(document).ready(function () {
       const spanCedula = $("#scedulaDocente");
 
       if (this.value.length === 0) {
-        spanCedula.text("").removeClass("text-danger text-secondary");
+        spanCedula.text("").removeClass("text-danger");
         return;
       }
 
       if (!/^[0-9]{7,8}$/.test(this.value)) {
         spanCedula
           .text("La cédula debe tener entre 7 y 8 dígitos.")
-          .removeClass("text-danger")
-          .addClass("text-secondary");
+          .addClass("text-danger");
         return;
       }
 
-      spanCedula.text("").removeClass("text-danger text-secondary");
+      spanCedula.text("").removeClass("text-danger");
 
       if (!$(this).prop("disabled")) {
         const datos = new FormData();
@@ -565,7 +563,7 @@ $(document).ready(function () {
       const spanId = $("#s" + $(this).attr("id"));
 
       if (this.value.length === 0) {
-        spanId.text("").removeClass("text-danger text-secondary");
+        spanId.text("").removeClass("text-danger");
         return;
       }
 
@@ -574,10 +572,9 @@ $(document).ready(function () {
           $(this).attr("id") === "nombreDocente" ? "nombre" : "apellido";
         spanId
           .text(`El ${fieldName} debe tener entre 3 y 30 caracteres.`)
-          .removeClass("text-danger")
-          .addClass("text-secondary");
+          .addClass("text-danger");
       } else {
-        spanId.text("").removeClass("text-danger text-secondary");
+        spanId.text("").removeClass("text-danger");
       }
     })
     .on("blur", function () {
@@ -596,19 +593,18 @@ $(document).ready(function () {
       const spanCorreo = $("#scorreoDocente");
 
       if (this.value.length === 0) {
-        spanCorreo.text("").removeClass("text-danger text-secondary");
+        spanCorreo.text("").removeClass("text-danger");
         return;
       }
 
       if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(this.value)) {
         spanCorreo
           .text("Debe ingresar un correo electrónico válido.")
-          .removeClass("text-danger")
-          .addClass("text-secondary");
+          .addClass("text-danger");
         return;
       }
 
-      spanCorreo.text("").removeClass("text-danger text-secondary");
+      spanCorreo.text("").removeClass("text-danger");
 
       const datos = new FormData();
       datos.append("accion", "existe_correo");
@@ -818,9 +814,9 @@ $(document).ready(function () {
     ).val("");
     $("#step3-actividad .text-danger").text("");
     $("form#f :input").prop("disabled", false);
-    $(".text-danger, .text-secondary")
+    $(".text-danger")
       .text("")
-      .removeClass("text-danger text-secondary");
+      .removeClass("text-danger");
     $("#concurso-fields-wrapper").hide();
     cachedTeacherData = null;
 
@@ -870,12 +866,11 @@ $(document).ready(function () {
             if (lee.existe) {
               $("#scedulaDocente")
                 .text("Cédula ya registrada.")
-                .removeClass("text-secondary")
                 .addClass("text-danger");
             } else {
               $("#scedulaDocente")
                 .text("")
-                .removeClass("text-danger text-secondary");
+                .removeClass("text-danger");
             }
           } else if (
             lee.resultado === "existe" ||
@@ -883,12 +878,11 @@ $(document).ready(function () {
           ) {
             $("#scorreoDocente")
               .text(lee.mensaje || "El correo ya está registrado.")
-              .removeClass("text-secondary")
               .addClass("text-danger");
           } else if (lee.resultado === "no_existe") {
             $("#scorreoDocente")
               .text("")
-              .removeClass("text-danger text-secondary");
+              .removeClass("text-danger");
           } else if (lee.resultado === "consultar") {
             destruyeDT();
             $("#resultadoconsulta").empty();

@@ -52,13 +52,13 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
         data-count-mallas="<?= $countMallas ?? 0 ?>"
         data-mostrar-prompt-duplicar="<?= htmlspecialchars(json_encode($mostrar_prompt_duplicar), ENT_QUOTES, 'UTF-8') ?>">
 
-        <section class="d-flex flex-column align-items-center justify-content-center py-4">
+        <section class="d-flex flex-column py-4">
             <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Sección</h2>
-            <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 900px;">
+            <div class="w-100 d-flex justify-content-end mb-3 gap-2" style="max-width: 1600px; margin: 0 auto;">
                 <button class="btn btn-primary px-4" id="btnAbrirModalUnir" <?php echo !$puede_registrar ? 'disabled' : ''; ?>>Unir Horarios</button>
                 <button class="btn btn-success px-4" id="btnIniciarRegistro" <?php echo !$puede_registrar ? 'disabled' : ''; ?>>Registrar Sección</button>
             </div>
-            <div class="datatable-ui w-100" style="max-width: 900px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
+            <div class="datatable-ui w-100" style="max-width: 1600px; margin: 0 auto 2rem auto; padding: 1.5rem 2rem;">
                 <div class="table-responsive">
                     <table class="table table-striped table-hover w-100" id="tablaListadoHorarios">
                         <thead>
@@ -115,7 +115,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div class="col-md-3">
                                         <label for="cantidadSeccion" class="form-label">Estudiantes <span class="text-danger">*</span></label>
                                         <input class="form-control" type="number" id="cantidadSeccion" name="cantidadSeccion" required min="0" max="99" value="0">
-                                        <div id="cantidad-seccion-error" class="form-text text-muted" style="display: none;">La cantidad debe ser un número entre 0 y 99.</div>
+                                        <div id="cantidad-seccion-error" class="form-text text-danger" style="display: none;">La cantidad debe ser un número entre 0 y 99.</div>
                                     </div>
                                 </div>
                             </div>
@@ -148,7 +148,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                 <div style="flex: 0 0 220px;">
                                     <label for="cantidadSeccionModificar" class="form-label fw-bold mb-2">Estudiantes <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" id="cantidadSeccionModificar" name="cantidadSeccion" required min="0" max="99" placeholder="0-99">
-                                    <div id="cantidad-seccion-modificar-error" class="form-text text-muted" style="display: none;">Debe ser entre 0 y 99</div>
+                                    <div id="cantidad-seccion-modificar-error" class="form-text text-danger" style="display: none;">Debe ser entre 0 y 99</div>
                                 </div>
                                 <div class="ms-4">
                                     <button type="button" class="btn btn-warning" id="btnLimpiarHorario" title="Limpia el horario actual">

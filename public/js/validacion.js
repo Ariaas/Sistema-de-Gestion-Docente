@@ -11,9 +11,11 @@ function validarkeyup(er, etiqueta, etiquetamensaje, mensaje) {
     a = er.test(etiqueta.val());
     if (a) {
         etiquetamensaje.text("");
+        etiquetamensaje.removeClass("text-danger");
         return 1;
     } else {
         etiquetamensaje.text(mensaje);
+        etiquetamensaje.addClass("text-danger");
         return 0;
     }
 }
