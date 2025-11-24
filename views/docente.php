@@ -147,7 +147,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                                     <div class="col-md-4">
                                         <label for="condicion" class="form-label">Condición (Relación Laboral)</label>
                                         <select class="form-select" name="condicion" id="condicion" required>
-                                            <option value="" disabled selected>Seleccione...</option>
+                                            <option value="No Especificada" selected>No Especificada</option>
                                             <option value="Ordinario">Ordinario</option>
                                             <option value="Contratado por Credenciales">Contratado por Credenciales</option>
                                             <option value="Suplente">Suplente</option>

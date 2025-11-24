@@ -346,13 +346,13 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
                     if (claseArray.length > 1) {
                         let columna1 = `<td style="width: 50%; vertical-align: top; border-right: 1px solid #dee2e6; padding: 2px;">`;
                         let columna2 = `<td style="width: 50%; vertical-align: top; padding: 2px;">`;
-                        if (claseArray[0]) columna1 += generarCellContent(claseArray[0].data, isViewOnly);
-                        if (claseArray[1]) columna2 += generarCellContent(claseArray[1].data, isViewOnly);
+                        if (claseArray[0]) columna1 += generarCellContent(claseArray[0].data, isViewOnly, targetTableId);
+                        if (claseArray[1]) columna2 += generarCellContent(claseArray[1].data, isViewOnly, targetTableId);
                         columna1 += '</td>';
                         columna2 += '</td>';
                         combinedHtml = `<table style="width: 100%; border: none; height: 100%;"><tbody><tr>${columna1}${columna2}</tr></tbody></table>`;
                     } else {
-                        combinedHtml = generarCellContent(primeraClase, isViewOnly);
+                        combinedHtml = generarCellContent(primeraClase, isViewOnly, targetTableId);
                     }
                     cell.html(combinedHtml).data("horario-data", claseArray.map(c => c.data));
                     if (bloques_span > 1) {
@@ -377,7 +377,7 @@ function inicializarTablaHorario(filtroTurno = 'todos', targetTableId = "#tablaH
     }
 }
 
-function generarCellContent(clase, isViewOnly = false) {
+function generarCellContent(clase, isViewOnly = false, targetTableId = '') {
     let uc_nombre_completo;
     if (!clase.uc_codigo || clase.uc_codigo === '' || clase.uc_codigo === null) {
         uc_nombre_completo = '<i>(Sin UC)</i>';
@@ -419,10 +419,12 @@ function generarCellContent(clase, isViewOnly = false) {
     const draggableAttr = isViewOnly ? '' : 'draggable="true"';
 
 
+    const textClass = 'text-muted';
+
     return `<div class="subgroup-item p-1 draggable-class" ${draggableAttr} style="display: flex; align-items: center; justify-content: space-between;" data-subgrupo-id="${subgrupoId}">
                 <div class="subgroup-content" style="${cursorStyle} flex-grow: 1;">
                     <p class="m-0" style="font-size:0.8em;">${subgrupoDisplay}<strong>${uc}</strong></p>
-                    <small class="text-danger" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>
+                    <small class="${textClass}" style="font-size:0.7em;">${codigoEspacioFormateado} / ${doc_nombre}</small>
                 </div>
                 ${editButton}
             </div>`;

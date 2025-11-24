@@ -16,7 +16,7 @@ class ValidacionSelect
         'periodo' => ['Anual', 'Fase I', 'Fase II'],
         'prefijo_cedula' => ['V', 'E'],
         'dedicacion' => ['Exclusiva', 'Tiempo Completo', 'Medio Tiempo', 'Tiempo Convencional'],
-        'condicion' => ['Ordinario', 'Contratado por Credenciales', 'Suplente'],
+        'condicion' => ['No Especificada', 'Ordinario', 'Contratado por Credenciales', 'Suplente'],
         'tipo_prosecusion' => ['automatico', 'manual'],
     ];
 

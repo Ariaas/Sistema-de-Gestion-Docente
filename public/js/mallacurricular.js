@@ -362,6 +362,8 @@ $(document).ready(function() {
             text: 'La malla pasará a estar activa.',
             icon: 'question',
             showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
             confirmButtonText: 'Sí, activar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
@@ -471,7 +473,11 @@ function enviaAjax(datos, tipoLlamada = '') {
                                 verificarCambiosParaModificar(); 
                             }
                         } else {
-                            muestraMensaje("success", 4000, "ÉXITO", lee.mensaje);
+                            let titulo = lee.resultado.toUpperCase();
+                            if (lee.accion_bitacora) {
+                                titulo = lee.accion_bitacora.toUpperCase();
+                            }
+                            muestraMensaje("success", 4000, titulo, lee.mensaje);
                             Listar();
                         }
                         break;
@@ -601,8 +607,8 @@ function pone(pos, accionBtn) {
             text: '',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
             confirmButtonText: 'Sí, desactivar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {

@@ -254,7 +254,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
                         </div>
                     </div>
                     <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-danger" id="btnProcederEliminacion">ELIMINAR</button>
+                        <button type="button" class="btn btn-primary" id="btnProcederEliminacion">ELIMINAR</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
                     </div>
                 </div>
