@@ -4,6 +4,8 @@
     const ENDPOINT = '?pagina=validacion_select';
     const ORIGINAL_VALUE_ATTR = 'originalValue';
     const VALIDATION_REQUEST_ATTR = 'validationRequestId';
+    const ACTION_KEYWORDS = ['REGISTRAR', 'MODIFICAR', 'ELIMINAR'];
+    const ACTION_IDS = ['proceso', 'btnConfirmarEliminar', 'btnProcederEliminacion'];
 
     const selectsConfig = {
         tipoAnio: { tipo: 'enum', valores: ['regular', 'intensivo'] },
@@ -142,6 +144,87 @@
         return elemento;
     }
 
+    function haySelectInvalido() {
+        return document.querySelectorAll('.alerta-validacion-select').length > 0;
+    }
+
+    function obtenerTextoBoton(boton) {
+        if (!boton) {
+            return '';
+        }
+        const valor = (boton.tagName === 'INPUT' && typeof boton.value === 'string') ? boton.value : boton.textContent;
+        return (valor || '').trim().toUpperCase();
+    }
+
+    function esBotonAccionCritica(boton) {
+        if (!boton) {
+            return false;
+        }
+
+        if (boton.id && ACTION_IDS.includes(boton.id)) {
+            return true;
+        }
+
+        const texto = obtenerTextoBoton(boton);
+        if (!texto) {
+            return false;
+        }
+
+        return ACTION_KEYWORDS.some(keyword => texto.includes(keyword));
+    }
+
+    function obtenerBotonesAccion() {
+        return Array.from(document.querySelectorAll('button, input[type="submit"], input[type="button"]'))
+            .filter(esBotonAccionCritica);
+    }
+
+    function actualizarBloqueoBotonesAccion() {
+        const bloquear = haySelectInvalido();
+        const botones = obtenerBotonesAccion();
+
+        botones.forEach(boton => {
+            if (bloquear) {
+                if (boton.dataset.selectsLocked !== 'true') {
+                    boton.dataset.selectsPrevDisabled = boton.disabled ? '1' : '0';
+                }
+                boton.dataset.selectsLocked = 'true';
+                boton.disabled = true;
+                return;
+            }
+
+            if (boton.dataset.selectsLocked === 'true') {
+                const previo = boton.dataset.selectsPrevDisabled === '1';
+                boton.disabled = previo;
+                delete boton.dataset.selectsLocked;
+                delete boton.dataset.selectsPrevDisabled;
+            }
+        });
+    }
+
+    function revalidarBloqueoAcciones() {
+        if (!haySelectInvalido()) {
+            return;
+        }
+        actualizarBloqueoBotonesAccion();
+    }
+
+    function mostrarAlertaOperacionBloqueada() {
+        const titulo = 'ERROR!!!!';
+        const mensaje = 'Los valores del select fueron modificados, por lo tanto no se puede seguir con la operacion';
+
+        if (typeof window.muestraMensaje === 'function') {
+            window.muestraMensaje('error', 10000, titulo, mensaje);
+            return;
+        }
+
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire(titulo, mensaje, 'error');
+            return;
+        }
+
+        window.alert(mensaje);
+    }
+
     function mostrarAlertaSelect(elemento, config) {
         const destino = obtenerDestinoMensaje(elemento, config);
         if (!destino || !elemento.id) {
@@ -167,6 +250,8 @@
         } else {
             contenedor.parentElement.appendChild(alerta);
         }
+
+        actualizarBloqueoBotonesAccion();
     }
 
     function limpiarAlertaSelect(elemento, config, forzar = false) {
@@ -182,6 +267,8 @@
         if (alerta) {
             alerta.remove();
         }
+
+        actualizarBloqueoBotonesAccion();
     }
 
     function validarSelectEnum(selectElement, config) {
@@ -434,6 +521,8 @@
                 }
             }
         });
+
+        actualizarBloqueoBotonesAccion();
     }
 
     function inicializarValidacion() {
@@ -447,6 +536,8 @@
 
             inicializarElemento(elemento, config);
         });
+
+        actualizarBloqueoBotonesAccion();
     }
 
     if (document.readyState === 'loading') {
@@ -454,6 +545,18 @@
     } else {
         inicializarValidacion();
     }
+
+    document.addEventListener('input', function () {
+        setTimeout(revalidarBloqueoAcciones, 0);
+    }, true);
+
+    document.addEventListener('change', function () {
+        setTimeout(revalidarBloqueoAcciones, 0);
+    }, true);
+
+    document.addEventListener('keyup', function () {
+        setTimeout(revalidarBloqueoAcciones, 0);
+    }, true);
 
     document.addEventListener('DOMNodeInserted', function (evento) {
         if (evento.target.tagName === 'OPTION' && evento.target.parentElement) {
@@ -473,6 +576,46 @@
     document.addEventListener('hidden.bs.modal', function (evento) {
         limpiarAlertasEnContenedor(evento.target);
     });
+
+    document.addEventListener('click', function (evento) {
+        const boton = evento.target.closest('button, input[type="submit"], input[type="button"]');
+        if (!boton || !esBotonAccionCritica(boton)) {
+            return;
+        }
+
+        if (!haySelectInvalido()) {
+            return;
+        }
+
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        actualizarBloqueoBotonesAccion();
+        mostrarAlertaOperacionBloqueada();
+    }, true);
+
+    document.addEventListener('submit', function (evento) {
+        if (!haySelectInvalido()) {
+            return;
+        }
+
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        actualizarBloqueoBotonesAccion();
+        mostrarAlertaOperacionBloqueada();
+    }, true);
+
+    const observerBotones = new MutationObserver(function () {
+        revalidarBloqueoAcciones();
+    });
+
+    if (document.body) {
+        observerBotones.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['disabled', 'class', 'style'],
+            childList: true,
+            subtree: true
+        });
+    }
 
     window.ValidacionSelects = {
         validarPorId(id) {
