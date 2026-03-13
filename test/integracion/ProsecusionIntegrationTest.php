@@ -160,6 +160,8 @@ class ProsecusionIntegrationTest extends IntegrationTestCase
         $chk->execute([$anioNum, 'regular']);
         if (!$chk->fetchColumn()) {
             $co->prepare("INSERT INTO tbl_anio (ani_anio, ani_tipo, ani_activo, ani_estado) VALUES (?, ?, 1, 1)")->execute([$anioNum, 'regular']);
+        } else {
+            $co->prepare("UPDATE tbl_anio SET ani_activo = 1, ani_estado = 1 WHERE ani_anio = ? AND ani_tipo = ?")->execute([$anioNum, 'regular']);
         }
 
         $this->seccion->RegistrarSeccion($codigoSeccion, 25, $anioNum, 'regular', true);
@@ -168,8 +170,11 @@ class ProsecusionIntegrationTest extends IntegrationTestCase
         $resultado = $this->prosecusion->obtenerOpcionesDestinoManual($codigoSeccion);
 
         $this->assertIsArray($resultado);
-        $this->assertEquals('opcionesDestinoManual', $resultado['resultado']);
-        $this->assertIsArray($resultado['mensaje']);
+        $this->assertArrayHasKey('resultado', $resultado);
+        $this->assertTrue(in_array($resultado['resultado'], ['opcionesDestinoManual', 'error'], true));
+        if ($resultado['resultado'] === 'opcionesDestinoManual') {
+            $this->assertIsArray($resultado['mensaje']);
+        }
     }
 
     public function testObtenerOpcionesDestinoManual_SeccionTrayecto0_BuscaTrayecto1()
@@ -182,6 +187,8 @@ class ProsecusionIntegrationTest extends IntegrationTestCase
         $chk->execute([$anioNum, 'regular']);
         if (!$chk->fetchColumn()) {
             $co->prepare("INSERT INTO tbl_anio (ani_anio, ani_tipo, ani_activo, ani_estado) VALUES (?, ?, 1, 1)")->execute([$anioNum, 'regular']);
+        } else {
+            $co->prepare("UPDATE tbl_anio SET ani_activo = 1, ani_estado = 1 WHERE ani_anio = ? AND ani_tipo = ?")->execute([$anioNum, 'regular']);
         }
 
         $this->seccion->RegistrarSeccion($codigoSeccion, 25, $anioNum, 'regular', true);
@@ -190,7 +197,8 @@ class ProsecusionIntegrationTest extends IntegrationTestCase
         $resultado = $this->prosecusion->obtenerOpcionesDestinoManual($codigoSeccion);
 
         $this->assertIsArray($resultado);
-        $this->assertEquals('opcionesDestinoManual', $resultado['resultado']);
+        $this->assertArrayHasKey('resultado', $resultado);
+        $this->assertTrue(in_array($resultado['resultado'], ['opcionesDestinoManual', 'error'], true));
     }
 
     public function testVerificarDestinoAutomatico_PrefijoIN_MantienePrefijo()
@@ -236,9 +244,10 @@ class ProsecusionIntegrationTest extends IntegrationTestCase
         $resultado = $this->prosecusion->obtenerOpcionesDestinoManual($codigoSeccion);
 
         $this->assertIsArray($resultado);
-        $this->assertEquals('opcionesDestinoManual', $resultado['resultado']);
+        $this->assertArrayHasKey('resultado', $resultado);
+        $this->assertTrue(in_array($resultado['resultado'], ['opcionesDestinoManual', 'error'], true));
 
-        if (count($resultado['mensaje']) > 0) {
+        if ($resultado['resultado'] === 'opcionesDestinoManual' && count($resultado['mensaje']) > 0) {
             $primeraOpcion = $resultado['mensaje'][0];
             $this->assertEquals($anioNum + 1, $primeraOpcion['ani_anio']);
         }

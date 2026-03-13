@@ -53,27 +53,27 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
     {
         $numero = rand(100, 999);
         $this->espacio->setNumero($numero);
-        $this->espacio->setEdificio('Principal');
+        $this->espacio->setEdificio('Hilandera');
         $this->espacio->setTipo('Aula');
 
         $resultado = $this->espacio->Registrar();
 
         $this->assertEquals('registrar', $resultado['resultado']);
-        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Principal', 'tipo' => 'Aula'];
+        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Hilandera', 'tipo' => 'Aula'];
     }
 
     public function testRegistrarEspacio_Duplicado_Error()
     {
         $numero = rand(100, 999);
         $this->espacio->setNumero($numero);
-        $this->espacio->setEdificio('Principal');
+        $this->espacio->setEdificio('Hilandera');
         $this->espacio->setTipo('Aula');
         $this->espacio->Registrar();
-        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Principal', 'tipo' => 'Aula'];
+        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Hilandera', 'tipo' => 'Aula'];
 
         $espacio2 = new Espacio();
         $espacio2->setNumero($numero);
-        $espacio2->setEdificio('Principal');
+        $espacio2->setEdificio('Hilandera');
         $espacio2->setTipo('Aula');
 
         $resultado = $espacio2->Registrar();
@@ -85,7 +85,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
     public function testRegistrarEspacio_NumeroVacio_Error()
     {
         $this->espacio->setNumero('');
-        $this->espacio->setEdificio('Principal');
+        $this->espacio->setEdificio('Hilandera');
         $this->espacio->setTipo('Aula');
 
         $resultado = $this->espacio->Registrar();
@@ -98,17 +98,17 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
     {
         $numero = rand(100, 999);
         $this->espacio->setNumero($numero);
-        $this->espacio->setEdificio('Principal');
+        $this->espacio->setEdificio('Hilandera');
         $this->espacio->setTipo('Aula');
         $this->espacio->Registrar();
-        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Principal', 'tipo' => 'Laboratorio'];
+        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Hilandera', 'tipo' => 'Laboratorio'];
 
         $espacioMod = new Espacio();
         $espacioMod->setNumero($numero);
-        $espacioMod->setEdificio('Principal');
+        $espacioMod->setEdificio('Hilandera');
         $espacioMod->setTipo('Laboratorio');
 
-        $resultado = $espacioMod->Modificar($numero, 'Principal', 'Aula');
+        $resultado = $espacioMod->Modificar($numero, 'Hilandera', 'Aula');
 
         $this->assertEquals('modificar', $resultado['resultado']);
     }
@@ -117,13 +117,13 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
     {
         $numero = rand(100, 999);
         $this->espacio->setNumero($numero);
-        $this->espacio->setEdificio('Principal');
+        $this->espacio->setEdificio('Hilandera');
         $this->espacio->setTipo('Aula');
         $this->espacio->Registrar();
 
         $espacioElim = new Espacio();
         $espacioElim->setNumero($numero);
-        $espacioElim->setEdificio('Principal');
+        $espacioElim->setEdificio('Hilandera');
         $espacioElim->setTipo('Aula');
 
         $resultado = $espacioElim->Eliminar();
@@ -135,10 +135,10 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
     {
         $numero = rand(100, 999);
         $this->espacio->setNumero($numero);
-        $this->espacio->setEdificio('Principal');
+        $this->espacio->setEdificio('Hilandera');
         $this->espacio->setTipo('Aula');
         $this->espacio->Registrar();
-        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Principal', 'tipo' => 'Aula'];
+        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Hilandera', 'tipo' => 'Aula'];
 
         $resultado = $this->espacio->Listar();
 
@@ -147,7 +147,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
         $encontrado = false;
         foreach ($resultado['mensaje'] as $esp) {
-            if ($esp['esp_numero'] == $numero && $esp['esp_edificio'] === 'Principal') {
+            if ($esp['esp_numero'] == $numero && $esp['esp_edificio'] === 'Hilandera') {
                 $encontrado = true;
                 break;
             }
@@ -157,7 +157,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testRegistrarTurno_DatosValidos_Exito()
     {
-        $nombreTurno = 'Turno_Test_' . rand(1000, 9999);
+        $nombreTurno = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
@@ -170,7 +170,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testRegistrarTurno_Duplicado_Error()
     {
-        $nombreTurno = 'Turno_Test_' . rand(1000, 9999);
+        $nombreTurno = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
@@ -190,7 +190,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testRegistrarTurno_HoraFinMenorQueInicio_Error()
     {
-        $nombreTurno = 'Turno_Test_' . rand(1000, 9999);
+        $nombreTurno = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno);
         $this->turno->setHoraInicio('12:00:00');
         $this->turno->setHoraFin('08:00:00');
@@ -203,14 +203,14 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testRegistrarTurno_Solapamiento_Error()
     {
-        $nombreTurno1 = 'Turno_Test_' . rand(1000, 4999);
+        $nombreTurno1 = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno1);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
         $this->turno->Registrar();
         $this->datosCreados['turnos'][] = $nombreTurno1;
 
-        $nombreTurno2 = 'Turno_Test_' . rand(5000, 9999);
+        $nombreTurno2 = 'Tarde';
         $turno2 = new Turno();
         $turno2->setNombreTurno($nombreTurno2);
         $turno2->setHoraInicio('10:00:00');
@@ -224,7 +224,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testModificarTurno_CambiarHoras_Exito()
     {
-        $nombreTurno = 'Turno_Test_' . rand(1000, 9999);
+        $nombreTurno = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
@@ -244,7 +244,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testEliminarTurno_TurnoExistente_Exito()
     {
-        $nombreTurno = 'Turno_Test_' . rand(1000, 9999);
+        $nombreTurno = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
@@ -260,7 +260,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testConsultarTurnos_ConTurnos_Exito()
     {
-        $nombreTurno = 'Turno_Test_' . rand(1000, 9999);
+        $nombreTurno = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
@@ -284,7 +284,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testChequearSolapamiento_ConSolapamiento_RetornaTrue()
     {
-        $nombreTurno1 = 'Turno_Test_' . rand(1000, 4999);
+        $nombreTurno1 = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno1);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
@@ -292,7 +292,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
         $this->datosCreados['turnos'][] = $nombreTurno1;
 
         $turno2 = new Turno();
-        $turno2->setNombreTurno('Turno_Nuevo');
+        $turno2->setNombreTurno('Tarde');
         $turno2->setHoraInicio('10:00:00');
         $turno2->setHoraFin('14:00:00');
 
@@ -304,7 +304,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
 
     public function testChequearSolapamiento_SinSolapamiento_RetornaFalse()
     {
-        $nombreTurno1 = 'Turno_Test_' . rand(1000, 4999);
+        $nombreTurno1 = 'Mañana';
         $this->turno->setNombreTurno($nombreTurno1);
         $this->turno->setHoraInicio('08:00:00');
         $this->turno->setHoraFin('12:00:00');
@@ -312,7 +312,7 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
         $this->datosCreados['turnos'][] = $nombreTurno1;
 
         $turno2 = new Turno();
-        $turno2->setNombreTurno('Turno_Nuevo');
+        $turno2->setNombreTurno('Noche');
         $turno2->setHoraInicio('13:00:00');
         $turno2->setHoraFin('17:00:00');
 
@@ -325,12 +325,12 @@ class EspacioTurnoIntegrationTest extends IntegrationTestCase
     {
         $numero = rand(100, 999);
         $this->espacio->setNumero($numero);
-        $this->espacio->setEdificio('Principal');
+        $this->espacio->setEdificio('Hilandera');
         $this->espacio->setTipo('Aula');
         $this->espacio->Registrar();
-        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Principal', 'tipo' => 'Aula'];
+        $this->datosCreados['espacios'][] = ['numero' => $numero, 'edificio' => 'Hilandera', 'tipo' => 'Aula'];
 
-        $resultado = $this->espacio->Existe($numero, 'Principal', 'Aula');
+        $resultado = $this->espacio->Existe($numero, 'Hilandera', 'Aula');
 
         $this->assertEquals('existe', $resultado['resultado']);
     }

@@ -170,7 +170,7 @@ class AnioFaseIntegrationTest extends IntegrationTestCase
             $resultado2 = $anio2->Registrar();
 
             $this->assertEquals('registrar', $resultado2['resultado']);
-            $this->assertStringContainsString('YA existe', $resultado2['mensaje']);
+            $this->assertMatchesRegularExpression('/ya existe/i', $resultado2['mensaje']);
         } else {
             $this->markTestSkipped('No hay malla activa para registrar el año');
         }
@@ -246,7 +246,7 @@ class AnioFaseIntegrationTest extends IntegrationTestCase
         $resultado = $this->anio->Registrar();
 
         $this->assertEquals('error', $resultado['resultado']);
-        $this->assertStringContainsString('debe ser "regular" o "intensivo"', $resultado['mensaje']);
+        $this->assertStringContainsString('select fueron modificados', $resultado['mensaje']);
     }
 
     public function testRegistrarAnio_SinFases_Error()

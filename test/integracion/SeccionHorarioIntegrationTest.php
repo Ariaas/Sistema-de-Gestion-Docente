@@ -232,27 +232,34 @@ class SeccionHorarioIntegrationTest extends IntegrationTestCase
 
         $esp = new Espacio();
         $esp->setNumero('101');
-        $esp->setEdificio('Principal');
+        $esp->setEdificio('Hilandera');
         $esp->setTipo('Aula');
         $esp->Registrar();
-        $this->datosCreados['espacios'][] = ['numero' => '101', 'edificio' => 'Principal', 'tipo' => 'Aula'];
+        $this->datosCreados['espacios'][] = ['numero' => '101', 'edificio' => 'Hilandera', 'tipo' => 'Aula'];
+
+        $esp2 = new Espacio();
+        $esp2->setNumero('102');
+        $esp2->setEdificio('Hilandera');
+        $esp2->setTipo('Aula');
+        $esp2->Registrar();
+        $this->datosCreados['espacios'][] = ['numero' => '102', 'edificio' => 'Hilandera', 'tipo' => 'Aula'];
 
         $co = getConnection($this->seccion);
         $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (?, ?, ?, ?, 1)")->execute([$codigoSeccion1, $anioNum, 'regular', 'Mañana']);
-        $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, ani_tipo, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")->execute([$ucCode, $cedulaDocente, $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Principal', 'Lunes', '08:00:00', '10:00:00']);
+        $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, ani_tipo, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")->execute([$ucCode, $cedulaDocente, $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Hilandera', 'Lunes', '08:00:00', '10:00:00']);
 
         $chkHorario = $co->prepare("SELECT 1 FROM uc_horario WHERE doc_cedula = ? AND sec_codigo = ? AND ani_anio = ? LIMIT 1");
         $chkHorario->execute([$cedulaDocente, $codigoSeccion1, $anioNum]);
         if (!$chkHorario->fetchColumn()) {
             $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, ani_tipo, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                ->execute([$ucCode, $cedulaDocente, $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Principal', 'Lunes', '08:00:00', '10:00:00']);
+                ->execute([$ucCode, $cedulaDocente, $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Hilandera', 'Lunes', '08:00:00', '10:00:00']);
         }
 
         $chkConflict = $co->prepare("SELECT 1 FROM uc_horario WHERE ani_anio = ? AND ani_tipo = ? AND doc_cedula = ? AND sec_codigo = ? AND hor_dia = ? AND hor_horainicio < ? AND hor_horafin > ? LIMIT 1");
         $chkConflict->execute([$anioNum, 'regular', $cedulaDocente, $codigoSeccion1, 'Lunes', '11:00:00', '09:00:00']);
         if (!$chkConflict->fetchColumn()) {
             $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, ani_tipo, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                ->execute([$ucCode, $cedulaDocente, $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Principal', 'Lunes', '08:30:00', '09:30:00']);
+                ->execute([$ucCode, $cedulaDocente, $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Hilandera', 'Lunes', '08:30:00', '09:30:00']);
         }
 
         $placeholders = '?';
@@ -263,7 +270,7 @@ class SeccionHorarioIntegrationTest extends IntegrationTestCase
 
         $this->assertNotEmpty($rows_debug, 'Diagnostic: expected uc_horario JOIN SELECT to return a conflicting row but it returned none. Params: ' . json_encode(['anio' => $anioNum, 'sec1' => $codigoSeccion1, 'sec2' => $codigoSeccion2 ?? $codigoSeccion2, 'doc' => $cedulaDocente]) . ' DB rows: ' . json_encode($rows_debug));
 
-        $resultado = $this->seccion->ValidarClaseEnVivo($cedulaDocente, 'UC002', ['numero' => '102', 'tipo' => 'Aula', 'edificio' => 'Principal'], 'Lunes', '09:00:00', '11:00:00', $codigoSeccion2, $anioNum, 'regular');
+        $resultado = $this->seccion->ValidarClaseEnVivo($cedulaDocente, 'UC002', ['numero' => '102', 'tipo' => 'Aula', 'edificio' => 'Hilandera'], 'Lunes', '09:00:00', '11:00:00', $codigoSeccion2, $anioNum, 'regular');
 
         $this->assertTrue($resultado['conflicto'], 'Resultado de ValidarClaseEnVivo: ' . json_encode($resultado));
         $this->assertArrayHasKey('mensajes', $resultado);
@@ -316,16 +323,16 @@ class SeccionHorarioIntegrationTest extends IntegrationTestCase
 
         $esp = new Espacio();
         $esp->setNumero('101');
-        $esp->setEdificio('Principal');
+        $esp->setEdificio('Hilandera');
         $esp->setTipo('Aula');
         $esp->Registrar();
-        $this->datosCreados['espacios'][] = ['numero' => '101', 'edificio' => 'Principal', 'tipo' => 'Aula'];
+        $this->datosCreados['espacios'][] = ['numero' => '101', 'edificio' => 'Hilandera', 'tipo' => 'Aula'];
 
         $co = getConnection($this->seccion);
         $co->prepare("INSERT INTO tbl_horario (sec_codigo, ani_anio, ani_tipo, tur_nombre, hor_estado) VALUES (?, ?, ?, ?, 1)")->execute([$codigoSeccion1, $anioNum, 'regular', 'Mañana']);
-        $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, ani_tipo, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")->execute([$ucCode, '12345678', $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Principal', 'Lunes', '08:00:00', '10:00:00']);
+        $co->prepare("INSERT INTO uc_horario (uc_codigo, doc_cedula, sec_codigo, ani_anio, ani_tipo, subgrupo, esp_numero, esp_tipo, esp_edificio, hor_dia, hor_horainicio, hor_horafin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")->execute([$ucCode, '12345678', $codigoSeccion1, $anioNum, 'regular', 'A', '101', 'Aula', 'Hilandera', 'Lunes', '08:00:00', '10:00:00']);
 
-        $resultado = $this->seccion->ValidarClaseEnVivo('87654321', 'UC002', ['numero' => '101', 'tipo' => 'Aula', 'edificio' => 'Principal'], 'Lunes', '09:00:00', '11:00:00', $codigoSeccion2, $anioNum, 'regular');
+        $resultado = $this->seccion->ValidarClaseEnVivo('87654321', 'UC002', ['numero' => '101', 'tipo' => 'Aula', 'edificio' => 'Hilandera'], 'Lunes', '09:00:00', '11:00:00', $codigoSeccion2, $anioNum, 'regular');
 
         $this->assertTrue($resultado['conflicto']);
         $this->assertArrayHasKey('mensajes', $resultado);
@@ -340,7 +347,7 @@ class SeccionHorarioIntegrationTest extends IntegrationTestCase
         $this->seccion->RegistrarSeccion($codigoSeccion, 25, $anioNum, 'regular', true);
         $this->datosCreados['secciones'][] = ['codigo' => $codigoSeccion, 'anio' => $anioNum, 'tipo' => 'regular'];
 
-        $resultado = $this->seccion->ValidarClaseEnVivo('12345678', 'UC001', ['numero' => '101', 'tipo' => 'Aula', 'edificio' => 'Principal'], 'Lunes', '08:00:00', '10:00:00', $codigoSeccion, $anioNum, 'regular');
+        $resultado = $this->seccion->ValidarClaseEnVivo('12345678', 'UC001', ['numero' => '101', 'tipo' => 'Aula', 'edificio' => 'Hilandera'], 'Lunes', '08:00:00', '10:00:00', $codigoSeccion, $anioNum, 'regular');
 
         $this->assertFalse($resultado['conflicto']);
     }
