@@ -51,50 +51,51 @@ function crearDT(selector = "#tablamalla", config = {}) {
         ],
     };
     if (!$.fn.DataTable.isDataTable(selector)) {
-        $(selector).DataTable({ ...defaultConfig,
+        $(selector).DataTable({
+            ...defaultConfig,
             ...config
         });
     }
 }
 
 function gestionarBotonGuardar() {
- let todoValido = true;
+    let todoValido = true;
 
- const trayectosRequeridos = ['0', '1', '2', '3', '4'];
- const trayectosSeleccionados = new Set();
- $('#contenedorAcordeonUC tbody tr').each(function() {
-  trayectosSeleccionados.add($(this).data('trayecto').toString());
- });
- const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
- if (trayectosFaltantes.length > 0) {
-  todoValido = false;
- }
-
- 
- if (todoValido) { 
-  $('#contenedorAcordeonUC tbody tr').each(function() {
-   $(this).find('.horas-input').each(function() {
-    const valorTrim = $(this).val().trim();
-    const valorNum = parseInt(valorTrim, 10);
-    if (valorTrim === '' || isNaN(valorNum) || valorNum === 0) {
-     todoValido = false;
-     return false; 
+    const trayectosRequeridos = ['0', '1', '2', '3', '4'];
+    const trayectosSeleccionados = new Set();
+    $('#contenedorAcordeonUC tbody tr').each(function () {
+        trayectosSeleccionados.add($(this).data('trayecto').toString());
+    });
+    const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
+    if (trayectosFaltantes.length > 0) {
+        todoValido = false;
     }
-   });
-   if (!todoValido) {
-    return false; 
-   }
-  });
- }
- 
 
- $("#proceso").prop('disabled', !todoValido);
+
+    if (todoValido) {
+        $('#contenedorAcordeonUC tbody tr').each(function () {
+            $(this).find('.horas-input').each(function () {
+                const valorTrim = $(this).val().trim();
+                const valorNum = parseInt(valorTrim, 10);
+                if (valorTrim === '' || isNaN(valorNum) || valorNum === 0) {
+                    todoValido = false;
+                    return false;
+                }
+            });
+            if (!todoValido) {
+                return false;
+            }
+        });
+    }
+
+
+    $("#proceso").prop('disabled', !todoValido);
 }
 
 function actualizarSelectUC() {
     const select = $("#select_uc");
     const ucsAgregadas = [];
-    $('#contenedorAcordeonUC tbody tr').each(function() {
+    $('#contenedorAcordeonUC tbody tr').each(function () {
         ucsAgregadas.push($(this).data('uc_codigo').toString());
     });
     select.empty();
@@ -117,7 +118,7 @@ function actualizarSelectUC() {
 
 function obtenerEstadoActualUCs() {
     const unidades = [];
-    $('#contenedorAcordeonUC tbody tr').each(function() {
+    $('#contenedorAcordeonUC tbody tr').each(function () {
         const fila = $(this);
         const getHourValue = (selector) => {
             const val = fila.find(selector).val();
@@ -137,58 +138,58 @@ function obtenerEstadoActualUCs() {
 }
 
 function verificarCambiosParaModificar() {
- if (cargandoUnidades) return;
- if ($("#accion").val() !== 'modificar' || !estadoInicialModificar) {
-  return;
- }
+    if (cargandoUnidades) return;
+    if ($("#accion").val() !== 'modificar' || !estadoInicialModificar) {
+        return;
+    }
 
- 
- const estadoActual = {
-  codigo: $("#mal_codigo").val(),
-  nombre: $("#mal_nombre").val(),
-  cohorte: $("#mal_cohorte").val(),
-  descripcion: $("#mal_descripcion").val(),
-  unidades: obtenerEstadoActualUCs()
- };
- const haCambiado = JSON.stringify(estadoInicialModificar) !== JSON.stringify(estadoActual);
 
- 
- const pagina1Valida = validarPagina1();
- 
-let pagina2Valida = true;
-const trayectosRequeridos = ['0', '1', '2', '3', '4'];
-const trayectosSeleccionados = new Set();
+    const estadoActual = {
+        codigo: $("#mal_codigo").val(),
+        nombre: $("#mal_nombre").val(),
+        cohorte: $("#mal_cohorte").val(),
+        descripcion: $("#mal_descripcion").val(),
+        unidades: obtenerEstadoActualUCs()
+    };
+    const haCambiado = JSON.stringify(estadoInicialModificar) !== JSON.stringify(estadoActual);
 
-$('#contenedorAcordeonUC tbody tr').each(function() {
-  trayectosSeleccionados.add($(this).data('trayecto').toString());
- });
- const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
 
- if (trayectosFaltantes.length > 0) {
-  pagina2Valida = false;
- }
+    const pagina1Valida = validarPagina1();
 
- if (pagina2Valida) {
-    $('#contenedorAcordeonUC tbody tr').each(function() {
-        $(this).find('.horas-input').each(function() {
-        const valorTrim = $(this).val().trim();
-        const valorNum = parseInt(valorTrim, 10);
-        
-        if (valorTrim === '' || isNaN(valorNum) || valorNum === 0) {
+    let pagina2Valida = true;
+    const trayectosRequeridos = ['0', '1', '2', '3', '4'];
+    const trayectosSeleccionados = new Set();
+
+    $('#contenedorAcordeonUC tbody tr').each(function () {
+        trayectosSeleccionados.add($(this).data('trayecto').toString());
+    });
+    const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
+
+    if (trayectosFaltantes.length > 0) {
         pagina2Valida = false;
-        return false; 
-            }
+    }
+
+    if (pagina2Valida) {
+        $('#contenedorAcordeonUC tbody tr').each(function () {
+            $(this).find('.horas-input').each(function () {
+                const valorTrim = $(this).val().trim();
+                const valorNum = parseInt(valorTrim, 10);
+
+                if (valorTrim === '' || isNaN(valorNum) || valorNum === 0) {
+                    pagina2Valida = false;
+                    return false;
+                }
             });
-if (!pagina2Valida) {
-     return false; 
-   }
-  });
- }
+            if (!pagina2Valida) {
+                return false;
+            }
+        });
+    }
 
- const todoValido = pagina1Valida && pagina2Valida;
+    const todoValido = pagina1Valida && pagina2Valida;
 
 
- $("#proceso").prop('disabled', !haCambiado || !todoValido);
+    $("#proceso").prop('disabled', !haCambiado || !todoValido);
 }
 
 
@@ -240,7 +241,7 @@ function agregarUnidadAlDOM(uc) {
     }
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
     Listar();
     verificarCondicionesIniciales();
     var datos = new FormData();
@@ -255,15 +256,15 @@ $(document).ready(function() {
         dropdownParent: $('#modal1')
     });
 
-    $("#mal_nombre").on("keyup down", function() { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $(this), $("#smalnombre"), "El formato permite de 5 a 30 caracteres."); verificarCambiosParaModificar(); validarCamposParaHabilitarSiguiente(); });
-    $("#mal_descripcion").on("keyup down", function() { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $(this), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres."); verificarCambiosParaModificar(); validarCamposParaHabilitarSiguiente(); });
-    $("#mal_codigo").on("input", function() {
+    $("#mal_nombre").on("keyup down", function () { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $(this), $("#smalnombre"), "El formato permite de 5 a 30 caracteres."); verificarCambiosParaModificar(); validarCamposParaHabilitarSiguiente(); });
+    $("#mal_descripcion").on("keyup down", function () { validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $(this), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres."); verificarCambiosParaModificar(); validarCamposParaHabilitarSiguiente(); });
+    $("#mal_codigo").on("input", function () {
         const span = $("#smalcodigo");
         span.css('color', '');
         validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $(this), span, "El código debe tener entre 2 y 20 caracteres.");
         validarCamposParaHabilitarSiguiente();
     });
-    $("#mal_codigo").on("keyup", function() {
+    $("#mal_codigo").on("keyup", function () {
         const input = $(this);
         if (input.val().trim() === '' || input.hasClass('is-invalid')) return;
         const datos = new FormData();
@@ -275,7 +276,7 @@ $(document).ready(function() {
         enviaAjax(datos, 'existe_codigo');
         verificarCambiosParaModificar();
     });
-    $("#mal_cohorte").on("input", function() {
+    $("#mal_cohorte").on("input", function () {
         this.value = this.value.replace(/[^0-9]/g, '').replace(/^0+/, '');
         if (this.value.length > 3) this.value = this.value.slice(0, 3);
         const span = $("#smalcohorte");
@@ -284,7 +285,7 @@ $(document).ready(function() {
         verificarCambiosParaModificar();
         validarCamposParaHabilitarSiguiente();
     });
-    $("#mal_cohorte").on("keyup", function() {
+    $("#mal_cohorte").on("keyup", function () {
         const input = $(this);
         if (input.val().trim() === '' || input.hasClass('is-invalid')) return;
         const datos = new FormData();
@@ -295,7 +296,7 @@ $(document).ready(function() {
         }
         enviaAjax(datos, 'existe_cohorte');
     });
-    $('#contenedorAcordeonUC').on('input', '.horas-input', function() {
+    $('#contenedorAcordeonUC').on('input', '.horas-input', function () {
         this.value = this.value.replace(/[^0-9]/g, '');
         if (this.value.length > 2) this.value = this.value.slice(0, 2);
         if ($("#accion").val() === 'modificar') {
@@ -304,15 +305,15 @@ $(document).ready(function() {
             gestionarBotonGuardar();
         }
     });
-    $('#contenedorAcordeonUC').on('input', '.h-indep, .h-asist', function() {
+    $('#contenedorAcordeonUC').on('input', '.h-indep, .h-asist', function () {
         const fila = $(this).closest('tr');
         const horasIndep = parseInt(fila.find('.h-indep').val()) || 0;
         const horasAsist = parseInt(fila.find('.h-asist').val()) || 0;
         fila.find('.h-total').val(horasIndep + horasAsist);
     });
 
-    
-    $('#btn_agregar_uc').on('click', function() {
+
+    $('#btn_agregar_uc').on('click', function () {
         const select = $('#select_uc');
         const uc_codigo = select.val();
         if (!uc_codigo) {
@@ -328,7 +329,7 @@ $(document).ready(function() {
         agregarUnidadAlDOM(uc);
     });
 
-    $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function() {
+    $('#contenedorAcordeonUC').on('click', '.btn-remover-uc', function () {
         const fila = $(this).closest('tr');
         const tabPane = fila.closest('.tab-pane');
         const tabId = tabPane.attr('id');
@@ -346,15 +347,29 @@ $(document).ready(function() {
         }
     });
 
-    
-    $('#btn-siguiente').on('click', function() { if (validarPagina1()) { $('#pagina1, #botones-pagina1').hide(); $('#pagina2, #botones-pagina2').show(); $('#modal1Titulo').text("Formulario de Malla (Paso 2 de 2)"); } else { muestraMensaje("error", 4000, "ERROR", "Por favor, corrija los campos marcados"); } });
-    $('#btn-anterior').on('click', function() { $('#pagina2, #botones-pagina2').hide(); $('#pagina1, #botones-pagina1').show(); $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)"); });
-    $("#proceso").addClass("ms-2").on("click", function() { if (validarenvio()) { $("#mal_codigo").prop("disabled", false); var datos = new FormData($("#f")[0]); let unidades = []; $('#contenedorAcordeonUC tbody tr').each(function() { const fila = $(this); unidades.push({ uc_codigo: fila.data('uc_codigo'), hora_independiente: parseInt(fila.find('.h-indep').val()) || 0, hora_asistida: parseInt(fila.find('.h-asist').val()) || 0, hora_academica: parseInt(fila.find('.h-acad').val()) || 0 }); }); datos.append("unidades", JSON.stringify(unidades)); enviaAjax(datos); } });
-    $("#registrar").on("click", function() { if ($(this).is(':disabled')) return; limpiaModal1(); $("#accion").val("registrar"); $("#mal_codigo_original").val(''); $("#mal_codigo").prop('disabled', false); $("#modal1Titulo").text("Registrar Malla (Paso 1 de 2)"); $("#proceso").text("REGISTRAR"); $("#modal1").modal("show"); validarCamposParaHabilitarSiguiente(); });
-    
-   
- 
-    $(document).on('click', '.btn-activar-malla', function(e) {
+
+    $('#btn-siguiente').on('click', function () {
+        if (validarPagina1()) {
+            $('#pagina1, #botones-pagina1').hide();
+            $('#pagina2, #botones-pagina2').show();
+            $('#modal1Titulo').text("Formulario de Malla (Paso 2 de 2)");
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'ERROR',
+                html: 'Por favor, corrija los campos marcados',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#d33'
+            });
+        }
+    });
+    $('#btn-anterior').on('click', function () { $('#pagina2, #botones-pagina2').hide(); $('#pagina1, #botones-pagina1').show(); $('#modal1Titulo').text("Formulario de Malla (Paso 1 de 2)"); });
+    $("#proceso").addClass("ms-2").on("click", function () { if (validarenvio()) { $("#mal_codigo").prop("disabled", false); var datos = new FormData($("#f")[0]); let unidades = []; $('#contenedorAcordeonUC tbody tr').each(function () { const fila = $(this); unidades.push({ uc_codigo: fila.data('uc_codigo'), hora_independiente: parseInt(fila.find('.h-indep').val()) || 0, hora_asistida: parseInt(fila.find('.h-asist').val()) || 0, hora_academica: parseInt(fila.find('.h-acad').val()) || 0 }); }); datos.append("unidades", JSON.stringify(unidades)); enviaAjax(datos); } });
+    $("#registrar").on("click", function () { if ($(this).is(':disabled')) return; limpiaModal1(); $("#accion").val("registrar"); $("#mal_codigo_original").val(''); $("#mal_codigo").prop('disabled', false); $("#modal1Titulo").text("Registrar Malla (Paso 1 de 2)"); $("#proceso").text("REGISTRAR"); $("#modal1").modal("show"); validarCamposParaHabilitarSiguiente(); });
+
+
+
+    $(document).on('click', '.btn-activar-malla', function (e) {
         e.preventDefault();
         const codigo = $(this).data('codigo');
         Swal.fire({
@@ -386,7 +401,7 @@ function enviaAjax(datos, tipoLlamada = '') {
         data: datos,
         processData: false,
         cache: false,
-        success: function(respuesta) {
+        success: function (respuesta) {
             try {
                 var lee = JSON.parse(respuesta);
                 if (tipoLlamada === 'existe_codigo') {
@@ -430,7 +445,7 @@ function enviaAjax(datos, tipoLlamada = '') {
                     case 'consultar':
                         destruyeDT("#tablamalla");
                         $("#resultadoconsulta").empty();
-                        $.each(lee.mensaje, function(index, item) {
+                        $.each(lee.mensaje, function (index, item) {
                             const esActiva = parseInt(item.mal_activa) === 1;
                             const estadoBadge = esActiva ? '<span class="uc-badge activa">Activa</span>' : '<span class="uc-badge desactivada">Desactivada</span>';
                             const btnDesactivar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Desactivar" aria-label="Desactivar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/power.svg" alt="Desactivar"></button>`;
@@ -452,25 +467,25 @@ function enviaAjax(datos, tipoLlamada = '') {
                             if ($('#modal1').is(':visible')) {
                                 cargandoUnidades = true;
                                 $('#mallaTabsMod, #mallaTabContentMod').empty();
-                                
-                                
-                                lee.mensaje.forEach(function(uc_sel) {
-                                  
+
+
+                                lee.mensaje.forEach(function (uc_sel) {
+
                                     agregarUnidadAlDOM(uc_sel);
 
-                                    
+
                                     const fila = $(`#contenedorAcordeonUC tr[data-uc_codigo="${uc_sel.uc_codigo}"]`);
                                     fila.find('.h-indep').val(uc_sel.mal_hora_independiente);
                                     fila.find('.h-asist').val(uc_sel.mal_hora_asistida);
                                     fila.find('.h-acad').val(uc_sel.mal_hora_academica);
                                     fila.find('.h-total').val(parseInt(uc_sel.mal_hora_independiente) + parseInt(uc_sel.mal_hora_asistida));
                                 });
-                                
+
                                 if (estadoInicialModificar) {
                                     estadoInicialModificar.unidades = obtenerEstadoActualUCs();
                                 }
                                 cargandoUnidades = false;
-                                verificarCambiosParaModificar(); 
+                                verificarCambiosParaModificar();
                             }
                         } else {
                             let titulo = lee.resultado.toUpperCase();
@@ -496,7 +511,7 @@ function enviaAjax(datos, tipoLlamada = '') {
                 muestraMensaje("error", 10000, "Error de Comunicación", "No se pudo procesar la respuesta del servidor.");
             }
         },
-        error: function(request, status, err) {
+        error: function (request, status, err) {
             muestraMensaje("error", 5000, "Error de Comunicación", "ERROR: " + request.responseText);
         },
     });
@@ -509,13 +524,13 @@ function validarenvio() {
         return false;
     }
 
-    
+
     const trayectosRequeridos = ['0', '1', '2', '3', '4'];
     const trayectosSeleccionados = new Set();
-    $('#contenedorAcordeonUC tbody tr').each(function() {
+    $('#contenedorAcordeonUC tbody tr').each(function () {
         trayectosSeleccionados.add($(this).data('trayecto').toString());
     });
-    
+
     const trayectosFaltantes = trayectosRequeridos.filter(t => !trayectosSeleccionados.has(t));
     if (trayectosFaltantes.length > 0) {
         const nombresFaltantes = trayectosFaltantes.map(t => (t === '0' ? 'Inicial' : `Trayecto ${t}`));
@@ -523,18 +538,18 @@ function validarenvio() {
         return false;
     }
 
-    
-    let primerErrorHoras = ""; 
 
-    
-    $('#contenedorAcordeonUC tbody tr').each(function() {
-        if (primerErrorHoras !== "") return false; 
+    let primerErrorHoras = "";
+
+
+    $('#contenedorAcordeonUC tbody tr').each(function () {
+        if (primerErrorHoras !== "") return false;
 
         const fila = $(this);
-        const ucNombre = fila.find('td:first').text(); 
+        const ucNombre = fila.find('td:first').text();
 
-        
-        fila.find('.horas-input').each(function() {
+
+        fila.find('.horas-input').each(function () {
             const input = $(this);
             const valorTrim = input.val().trim();
             const valorNum = parseInt(valorTrim, 10);
@@ -544,28 +559,28 @@ function validarenvio() {
             else if (input.hasClass('h-asist')) tipoHora = "Horas Asistidas";
             else if (input.hasClass('h-acad')) tipoHora = "Horas Académicas";
 
-            
+
             if (valorTrim === '') {
                 primerErrorHoras = `El campo "<strong>${tipoHora}</strong>" de la unidad "<strong>${ucNombre}</strong>" no puede estar vacío.`;
-                return false; 
+                return false;
             }
 
-            
+
             if (isNaN(valorNum) || valorNum === 0) {
                 primerErrorHoras = `El campo "<strong>${tipoHora}</strong>" de la unidad "<strong>${ucNombre}</strong>" debe ser un número mayor que 0.`;
-                return false; 
+                return false;
             }
         });
     });
 
-    
+
     if (primerErrorHoras !== "") {
-       
+
         muestraMensaje("error", 6000, "Atención", primerErrorHoras);
         return false;
     }
 
-    return true; 
+    return true;
 }
 
 function pone(pos, accionBtn) {
@@ -584,7 +599,7 @@ function pone(pos, accionBtn) {
         $("#modal1Titulo").text("Modificar Malla (Paso 1 de 2)");
         $("#proceso").text("MODIFICAR").prop("disabled", true);
         validarCamposParaHabilitarSiguiente();
-        
+
         estadoInicialModificar = {
             codigo: mal_codigo,
             nombre: mal_nombre,
@@ -594,7 +609,7 @@ function pone(pos, accionBtn) {
         };
 
         $("#modal1").modal("show");
-        $('#modal1').off('shown.bs.modal').on('shown.bs.modal', function() {
+        $('#modal1').off('shown.bs.modal').on('shown.bs.modal', function () {
             var datos = new FormData();
             datos.append("accion", "consultar_ucs_por_malla");
             datos.append("mal_codigo", mal_codigo);
@@ -619,7 +634,7 @@ function pone(pos, accionBtn) {
                 enviaAjax(datos);
             }
         });
-    } else if (accionBtn === 2) { 
+    } else if (accionBtn === 2) {
         const boton = $(pos);
         const datos = new FormData();
         datos.append("accion", "consultar_ucs_por_malla");
@@ -633,7 +648,7 @@ function pone(pos, accionBtn) {
             processData: false,
             cache: false,
             beforeSend: () => boton.prop('disabled', true),
-            success: function(respuesta) {
+            success: function (respuesta) {
                 try {
                     const lee = JSON.parse(respuesta);
                     if (lee.resultado === 'ok') {
@@ -700,24 +715,36 @@ function limpiaModal1() {
 
 function validarPagina1() {
     let esValido = true;
+    const esModificar = $("#accion").val() === 'modificar';
     if (validarkeyup(/^[A-Za-z0-9\s-]{2,20}$/, $("#mal_codigo"), $("#smalcodigo"), "El código permite de 2 a 20 caracteres.") == 0) esValido = false;
     if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/, $("#mal_nombre"), $("#smalnombre"), "El formato permite de 5 a 30 caracteres.") == 0) esValido = false;
+    if (validarkeyup(/^[1-9][0-9]{0,3}$/, $("#mal_cohorte"), $("#smalcohorte"), "Debe ser un número entre 1 y 999.") == 0) esValido = false;
+    const descripcion = $("#mal_descripcion").val().trim();
+    if (!esModificar || descripcion !== '') {
+        if (validarkeyup(/^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/, $("#mal_descripcion"), $("#smaldescripcion"), "El formato permite de 5 a 255 caracteres.") == 0) esValido = false;
+    } else {
+        $("#smaldescripcion").text("").removeClass("text-danger");
+    }
+    return esValido;
 }
 
 function validarCamposParaHabilitarSiguiente() {
+    const esModificar = $("#accion").val() === 'modificar';
     const codigo = $("#mal_codigo").val();
     const nombre = $("#mal_nombre").val();
     const cohorte = $("#mal_cohorte").val();
     const descripcion = $("#mal_descripcion").val();
-    
+
     const codigoValido = /^[A-Za-z0-9\s-]{2,20}$/.test(codigo);
     const nombreValido = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s,\-_]{5,30}$/.test(nombre);
     const cohorteValido = /^[1-9][0-9]{0,3}$/.test(cohorte);
-    const descripcionValida = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/.test(descripcion);
-    
+    const descripcionValida = esModificar && descripcion.trim() === ''
+        ? true
+        : /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s.,-¿?¡!(){}\[\]]{5,255}$/.test(descripcion);
+
     const codigoExiste = $("#smalcodigo").is(":visible") && $("#smalcodigo").css("color") === "rgb(255, 0, 0)";
     const cohorteExiste = $("#smalcohorte").is(":visible") && $("#smalcohorte").css("color") === "rgb(255, 0, 0)";
-    
+
     const habilitarBoton = codigoValido && nombreValido && cohorteValido && descripcionValida && !codigoExiste && !cohorteExiste;
     $("#btn-siguiente").prop("disabled", !habilitarBoton);
 }

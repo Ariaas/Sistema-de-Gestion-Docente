@@ -297,7 +297,7 @@ class Rol extends Connection_bitacora
         return $r;
     }
 
-    private function ExisteId($rolId)
+    public function ExisteId($rolId)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -372,7 +372,7 @@ class Rol extends Connection_bitacora
         }
     }
 
-    private function getRolById($rolId)
+    public function getRolById($rolId)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

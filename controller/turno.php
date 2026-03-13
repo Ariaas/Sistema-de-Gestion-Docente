@@ -25,14 +25,14 @@ if (is_file("views/" . $pagina . ".php")) {
             case 'consultar':
                 echo json_encode($obj1->Consultar());
                 break;
-            
+
             case 'registrar':
                 $obj1->setNombreTurno($_POST['turnonombre']);
-                $obj1->setHoraInicio($_POST['horaInicio']); 
+                $obj1->setHoraInicio($_POST['horaInicio']);
                 $obj1->setHoraFin($_POST['horafin']);
                 $resultado = $obj1->Registrar();
                 echo json_encode($resultado);
-                
+
                 if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
                     $bitacora->registrarAccion($usu_id, 'registrar', 'turno');
                 }
@@ -40,22 +40,22 @@ if (is_file("views/" . $pagina . ".php")) {
 
             case 'modificar':
                 $obj1->setNombreTurno($_POST['turnonombre']);
-                $obj1->setNombreTurnoOriginal($_POST['turnonombre_original']);
-                $obj1->setHoraInicio($_POST['horaInicio']); 
+                $obj1->setNombreTurnoOriginal($_POST['turnonombre_original'] ?? $_POST['turnoid'] ?? '');
+                $obj1->setHoraInicio($_POST['horaInicio']);
                 $obj1->setHoraFin($_POST['horafin']);
                 $resultado = $obj1->Modificar();
                 echo json_encode($resultado);
-                
+
                 if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
                     $bitacora->registrarAccion($usu_id, 'modificar', 'turno');
                 }
                 break;
-            
+
             case 'eliminar':
                 $obj1->setNombreTurno($_POST['turnoid']);
                 $resultado = $obj1->Eliminar();
                 echo json_encode($resultado);
-                
+
                 if (isset($resultado['resultado']) && $resultado['resultado'] !== 'error') {
                     $bitacora->registrarAccion($usu_id, 'eliminar', 'turno');
                 }
@@ -77,4 +77,3 @@ if (is_file("views/" . $pagina . ".php")) {
 } else {
     echo "pagina en construccion";
 }
-?>

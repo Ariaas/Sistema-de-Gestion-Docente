@@ -1,4 +1,5 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
 use App\Model\Titulo;
 
@@ -28,7 +29,11 @@ class TituloTest extends TestCase
         $this->stmtMock = null;
     }
 
-    
+
+    /**
+     * @test
+     * @dataProvider providerDatosInvalidos
+     */
     public function testRegistrar_Falla_ValidacionEntrada($prefijo, $nombre, $mensajeEsperado)
     {
         $this->titulo->set_prefijo($prefijo);
@@ -56,7 +61,7 @@ class TituloTest extends TestCase
         ];
     }
 
-    
+
     public function testRegistrar_TituloNuevo_Exito()
     {
         $stmtExisteActivo = $this->createMock(PDOStatement::class);

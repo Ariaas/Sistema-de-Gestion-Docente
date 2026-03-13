@@ -316,6 +316,23 @@ function limpia() {
 let rolSeleccionado = null;
 let rolSeleccionadoNombre = null;
 
+function formatearNombreModulo(modulo) {
+  if (modulo === null || modulo === undefined) {
+    return "";
+  }
+
+  return String(modulo)
+    .replace(/_/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map(function (palabra) {
+      if (!palabra) return "";
+      var normalizada = palabra.toLowerCase();
+      return normalizada.charAt(0).toUpperCase() + normalizada.slice(1);
+    })
+    .join(" ");
+}
+
 function actualizarCarritoPermisos() {
   const ul = document.getElementById("carritoPermisos");
   if (!ul) return;
@@ -396,12 +413,13 @@ function renderTablaPermisos(modulosDisponibles, permisosAsignados) {
   const esAdmin = rolSeleccionadoNombre === 'Administrador';
 
   modulosDisponibles.forEach(modulo => {
-    let row = `<tr><td>${modulo.per_modulo}</td>`;
+    const moduloVisual = formatearNombreModulo(modulo.per_modulo);
+    let row = `<tr><td>${moduloVisual}</td>`;
     if (modulo.per_modulo === 'reportes') {
       const permisoAsignado = permisosAsignados.find(p => p.per_id === modulo.per_id && p.per_accion === 'registrar');
       const isChecked = permisoAsignado ? 'checked' : '';
       row += `<td class="text-center"><input type="checkbox" class="permiso-check" data-perid="${modulo.per_id}" data-accion="registrar" ${isChecked} ${esAdmin ? 'disabled' : ''}></td>`;
-      row += '<td></td><td></td>'; 
+      row += '<td></td><td></td>';
     } else {
       ['registrar', 'modificar', 'eliminar'].forEach(accion => {
         const permisoAsignado = permisosAsignados.find(p => p.per_id === modulo.per_id && p.per_accion === accion);

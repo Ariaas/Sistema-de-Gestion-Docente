@@ -40,7 +40,7 @@ if (!$puede_registrar) {
                     <form id="formReporte">
                         <div class="row align-items-end">
                             <div class="col-lg-4 col-md-6 mb-3">
-                                <label for="anio_reporte" class="form-label fw-bold">Año Académico Activo</label>
+                                <label for="anio_reporte" class="form-label fw-bold">Año Académico Activo <span style="color: red;">*</span></label>
                                 <select class="form-select" id="anio_reporte" name="anio_completo" required>
                                     <option value="" selected disabled>Seleccione un año</option>
                                     <?php if (!empty($anio_activo)) {

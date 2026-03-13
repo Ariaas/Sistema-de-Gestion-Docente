@@ -46,7 +46,7 @@ if (!$puede_registrar) {
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
-        <div class="container" style="width: 85%; max-width: 950px;"> 
+        <div class="container" style="width: 85%; max-width: 950px;">
             <div class="text-center mb-4">
                 <h2 class="text-primary">Reporte de Organización Docente (ROD)</h2>
                 <p class="text-muted">Seleccione el año y la fase para generar el cuadro resumen.</p>
@@ -56,7 +56,7 @@ if (!$puede_registrar) {
                 <form method="post" action="" id="fReporteRod">
                     <div class="row g-3 mb-4">
                         <div class="col-12 col-sm-6 col-md-6">
-                            <label for="anio_completo" class="form-label">Año Académico:</label>
+                            <label for="anio_completo" class="form-label">Año Académico: <span style="color: red;">*</span></label>
                             <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
                                 <option value="" selected>-- Seleccione un Año --</option>
                                 <?php if (!empty($listaAnios)): ?>
@@ -69,7 +69,7 @@ if (!$puede_registrar) {
                             </select>
                         </div>
                         <div class="col-12 col-sm-6 col-md-6" id="fase_container">
-                            <label for="fase_id" class="form-label">Fase:</label>
+                            <label for="fase_id" class="form-label">Fase: <span style="color: red;">*</span></label>
                             <select class="form-select form-select-sm" name="fase_id" id="fase_id" required>
                                 <option value="" selected>-- Seleccione una Fase --</option>
                                 <?php if (!empty($listaFases)): ?>

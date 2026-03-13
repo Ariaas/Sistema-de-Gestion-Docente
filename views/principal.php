@@ -41,7 +41,7 @@ require_once 'public/components/head.php';
                             <div class="icon-circle">
                                 <img src="public/assets/icons/user-graduate-solid.svg" alt="Docentes">
                             </div>
-                            <h5>Docentes</h5>
+                            <h5>Docente</h5>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -51,7 +51,7 @@ require_once 'public/components/head.php';
                             <div class="icon-circle">
                                 <img src="public/assets/icons/screwdriver-wrench-solid.svg" alt="espacio">
                             </div>
-                            <h5>Espacios</h5>
+                            <h5>Espacio</h5>
                         </a>
                     </div>
                 <?php endif; ?>

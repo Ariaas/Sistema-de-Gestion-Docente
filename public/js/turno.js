@@ -6,48 +6,48 @@ let originalHoraInicio = '';
 let originalHoraFin = '';
 
 function Listar() {
-  var datos = new FormData();
-  datos.append("accion", "consultar");
-  enviaAjax(datos);
+    var datos = new FormData();
+    datos.append("accion", "consultar");
+    enviaAjax(datos);
 }
 
 function destruyeDT() {
-  if ($.fn.DataTable.isDataTable("#tablaturno")) {
-    $("#tablaturno").DataTable().destroy();
-  }
+    if ($.fn.DataTable.isDataTable("#tablaturno")) {
+        $("#tablaturno").DataTable().destroy();
+    }
 }
 
 function crearDT() {
-  if (!$.fn.DataTable.isDataTable("#tablaturno")) {
-    $("#tablaturno").DataTable({
-        paging: true, lengthChange: true, searching: true, ordering: true, info: true, autoWidth: false, responsive: true, scrollX: true,
-        language: { lengthMenu: "Mostrar _MENU_ registros", zeroRecords: "No se encontraron resultados", info: "Mostrando _PAGE_ de _PAGES_", infoEmpty: "No hay registros disponibles", infoFiltered: "(filtrado de _MAX_ registros totales)", search: "Buscar:", paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" }},
-        order: [[1, "asc"]],
-    });
-  }
+    if (!$.fn.DataTable.isDataTable("#tablaturno")) {
+        $("#tablaturno").DataTable({
+            paging: true, lengthChange: true, searching: true, ordering: true, info: true, autoWidth: false, responsive: true, scrollX: true,
+            language: { lengthMenu: "Mostrar _MENU_ registros", zeroRecords: "No se encontraron resultados", info: "Mostrando _PAGE_ de _PAGES_", infoEmpty: "No hay registros disponibles", infoFiltered: "(filtrado de _MAX_ registros totales)", search: "Buscar:", paginate: { first: "Primero", last: "Último", next: "Siguiente", previous: "Anterior" } },
+            order: [[1, "asc"]],
+        });
+    }
 }
 
 $(document).ready(function () {
-    Listar(); 
+    Listar();
 
-    $('#turnonombre').on('change', function() {
+    $('#turnonombre').on('change', function () {
         validarCampo($(this));
         chequearEstadoBoton();
     });
 
-    $('#horaInicio').on('input change', function() {
-        validarCampo($(this));
-        validarLogicaHoras();
-        chequearEstadoBoton();
-    });
-
-    $('#horafin').on('input change', function() {
+    $('#horaInicio').on('input change', function () {
         validarCampo($(this));
         validarLogicaHoras();
         chequearEstadoBoton();
     });
 
-    $('#horaInicio, #horafin').on('change', function() {
+    $('#horafin').on('input change', function () {
+        validarCampo($(this));
+        validarLogicaHoras();
+        chequearEstadoBoton();
+    });
+
+    $('#horaInicio, #horafin').on('change', function () {
         validarHorasEnServidor();
     });
 
@@ -61,18 +61,18 @@ $(document).ready(function () {
 
     $("#registrar").on("click", function () {
         limpia();
-        
-        $('#turnonombre option').each(function() {
+
+        $('#turnonombre option').each(function () {
             $(this).prop('disabled', nombresExistentes.includes($(this).val()));
         });
         $("#proceso").text("REGISTRAR");
         $(".modal-title").text("Registrar Turno");
         $("#modal1").modal("show");
-        
+
         // Verificar si todos los turnos posibles ya están registrados después de abrir el modal
         const turnosPosibles = ['Mañana', 'Tarde', 'Noche'];
         const todosRegistrados = turnosPosibles.every(turno => nombresExistentes.includes(turno));
-        
+
         if (todosRegistrados) {
             $('#sSolapamiento').text('Todos los turnos disponibles (Mañana, Tarde y Noche) ya han sido registrados en el sistema.');
             $('#proceso').prop('disabled', true);
@@ -83,7 +83,7 @@ $(document).ready(function () {
         $("#turnonombre").focus();
     });
 
-    $('#modal1').on('keydown', function(e) {
+    $('#modal1').on('keydown', function (e) {
         if (e.which === 13) {
             if ($('.swal2-container').length) {
                 e.preventDefault();
@@ -97,7 +97,7 @@ $(document).ready(function () {
         }
     });
 
-    $("#btnConfirmarEliminar").on("click", function() {
+    $("#btnConfirmarEliminar").on("click", function () {
         procesarEliminacion();
     });
 });
@@ -109,7 +109,7 @@ function procesarRegistro() {
         datos.append("turnonombre", $("#turnonombre").val());
         datos.append("horaInicio", $("#horaInicio").val());
         datos.append("horafin", $("#horafin").val());
-        enviaAjax(datos, function(respuesta) {
+        enviaAjax(datos, function (respuesta) {
             muestraMensaje("success", 4000, "¡REGISTRO EXITOSO!", "El nuevo turno ha sido guardado.");
             $("#modal1").modal("hide");
             Listar();
@@ -122,10 +122,11 @@ function procesarModificacion() {
         var datos = new FormData();
         datos.append("accion", "modificar");
         datos.append("turnoid", $("#turnoid").val());
+        datos.append("turnonombre_original", $("#turnoid").val());
         datos.append("turnonombre", $("#turnonombre").val());
         datos.append("horaInicio", $("#horaInicio").val());
         datos.append("horafin", $("#horafin").val());
-        enviaAjax(datos, function(respuesta) {
+        enviaAjax(datos, function (respuesta) {
             muestraMensaje("success", 4000, "¡MODIFICACIÓN COMPLETA!", "Los cambios en el turno se guardaron.");
             $("#modal1").modal("hide");
             Listar();
@@ -156,13 +157,13 @@ function procesarEliminacion() {
             });
         }
     });
-    
+
     swalInstance.then((result) => {
         if (result.isConfirmed) {
             var datos = new FormData();
             datos.append("accion", "eliminar");
             datos.append("turnoid", $("#turnoid_eliminar").val());
-            enviaAjax(datos, function(respuesta) {
+            enviaAjax(datos, function (respuesta) {
                 muestraMensaje("info", 4000, "PROCESO COMPLETADO", "El turno ha sido eliminado.");
                 $("#modalEliminar").modal("hide");
                 Listar();
@@ -175,14 +176,14 @@ function validarCampo(input) {
     const errorSpan = $(`#s${input.attr('id')}`);
     const inputId = input.attr('id');
     let mensajeError = '';
-    
+
     switch (inputId) {
         case 'turnonombre': mensajeError = 'Debe seleccionar un turno.'; break;
         case 'horaInicio': mensajeError = 'Debe seleccionar una hora de inicio.'; break;
         case 'horafin': mensajeError = 'Debe seleccionar una hora fin.'; break;
         default: mensajeError = 'Este campo es requerido.';
     }
-    
+
     if (!input.val()) {
         input.addClass('is-invalid');
         errorSpan.text(mensajeError);
@@ -224,7 +225,7 @@ function validarHorasEnServidor() {
         chequearEstadoBoton();
         return;
     }
-    
+
     const inicio = $('#horaInicio').val();
     const fin = $('#horafin').val();
     const turnoid = $('#turnoid').val();
@@ -238,7 +239,7 @@ function validarHorasEnServidor() {
 
         $.ajax({
             url: "", type: "POST", data: datos, contentType: false, processData: false, cache: false,
-            success: function(respuesta) {
+            success: function (respuesta) {
                 try {
                     var lee = JSON.parse(respuesta);
                     solapamientoDetectado = !!lee.solapamiento;
@@ -269,19 +270,19 @@ function chequearEstadoBoton() {
     const fin = $('#horafin').val();
     const esModoModificar = $('#turnoid').val() !== '';
     const spanSolapamiento = $('#sSolapamiento');
-    
+
     // Verificar si todos los turnos están registrados en modo registro
     if (!esModoModificar) {
         const turnosPosibles = ['Mañana', 'Tarde', 'Noche'];
         const todosRegistrados = turnosPosibles.every(turno => nombresExistentes.includes(turno));
-        
+
         if (todosRegistrados) {
             $('#proceso').prop('disabled', true);
             spanSolapamiento.text('Todos los turnos disponibles ya han sido registrados.');
             return;
         }
     }
-    
+
     if (solapamientoDetectado) {
         $('#proceso').prop('disabled', true);
         return;
@@ -297,7 +298,7 @@ function chequearEstadoBoton() {
             spanSolapamiento.text('');
         }
     }
-    
+
     $('#proceso').prop('disabled', !esValido);
 }
 
@@ -308,12 +309,12 @@ function pone(pos, accion) {
     const horaFin24h = $(linea).data('horafin-24h');
 
     if (accion === 0) {
-        limpia(); 
+        limpia();
         $("#turnoid").val(nombreTurno);
         $("#turnonombre").val(nombreTurno).prop('disabled', true);
         $("#horaInicio").val(horaInicio24h);
         $("#horafin").val(horaFin24h);
-        
+
         originalHoraInicio = horaInicio24h;
         originalHoraFin = horaFin24h;
 
@@ -335,34 +336,34 @@ function pone(pos, accion) {
 }
 
 function limpia() {
-  limpiarErrores();
-  solapamientoDetectado = false;
-  originalHoraInicio = '';
-  originalHoraFin = '';
-  $("#turnoid").val("");
-  $("#turnonombre").val("").prop('disabled', false);
-  $("#horaInicio").val("");
-  $("#horafin").val("");
-  $(".modal-title").text("Formulario de Turno");
-  $('#proceso').prop('disabled', true);
+    limpiarErrores();
+    solapamientoDetectado = false;
+    originalHoraInicio = '';
+    originalHoraFin = '';
+    $("#turnoid").val("");
+    $("#turnonombre").val("").prop('disabled', false);
+    $("#horaInicio").val("");
+    $("#horafin").val("");
+    $(".modal-title").text("Formulario de Turno");
+    $('#proceso').prop('disabled', true);
 }
 
 function enviaAjax(datos, callbackExito) {
-  $.ajax({
-    async: true, url: "", type: "POST", contentType: false, data: datos, processData: false, cache: false,
-    success: function (respuesta) {
-      try {
-        var lee = JSON.parse(respuesta);
-        if (lee.resultado === "consultar") {
-            destruyeDT();
-            $("#resultadoconsulta").empty();
-            nombresExistentes = []; 
-            $.each(lee.mensaje, function (index, item) {
-                if (item.tur_estado == 1) {
-                    nombresExistentes.push(item.tur_nombre); 
-                    const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
-                    const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
-                    $("#resultadoconsulta").append(`<tr data-horainicio-24h="${item.hora_inicio_24h}" data-horafin-24h="${item.hora_fin_24h}">
+    $.ajax({
+        async: true, url: "", type: "POST", contentType: false, data: datos, processData: false, cache: false,
+        success: function (respuesta) {
+            try {
+                var lee = JSON.parse(respuesta);
+                if (lee.resultado === "consultar") {
+                    destruyeDT();
+                    $("#resultadoconsulta").empty();
+                    nombresExistentes = [];
+                    $.each(lee.mensaje, function (index, item) {
+                        if (item.tur_estado == 1) {
+                            nombresExistentes.push(item.tur_nombre);
+                            const btnModificar = `<button class="btn btn-icon btn-edit" onclick='pone(this,0)' title="Modificar" ${!PERMISOS.modificar ? 'disabled' : ''}><img src="public/assets/icons/edit.svg" alt="Modificar"></button>`;
+                            const btnEliminar = `<button class="btn btn-icon btn-delete" onclick='pone(this,1)' title="Eliminar" ${!PERMISOS.eliminar ? 'disabled' : ''}><img src="public/assets/icons/trash.svg" alt="Eliminar"></button>`;
+                            $("#resultadoconsulta").append(`<tr data-horainicio-24h="${item.hora_inicio_24h}" data-horafin-24h="${item.hora_fin_24h}">
                         <td>${item.tur_nombre}</td>
                         <td>${item.hora_inicio_12h}</td>
                         <td>${item.hora_fin_12h}</td>
@@ -371,29 +372,29 @@ function enviaAjax(datos, callbackExito) {
                       ${btnEliminar}
                          </td>
                          </tr>`);
+                        }
+                    });
+                    crearDT();
+                } else if (lee.resultado === "error") {
+                    muestraMensaje("error", 10000, "¡HA OCURRIDO UN ERROR!", lee.mensaje);
+                } else {
+                    if (typeof callbackExito === 'function') {
+                        callbackExito(lee);
+                    }
                 }
-            });
-            crearDT();
-        } else if (lee.resultado === "error") {
-            muestraMensaje("error", 10000, "¡HA OCURRIDO UN ERROR!", lee.mensaje);
-        } else {
-            if (typeof callbackExito === 'function') {
-                callbackExito(lee);
+            } catch (e) {
+                console.error("Error en análisis JSON:", e, "Respuesta recibida:", respuesta);
+                muestraMensaje("error", 15000, "Error Inesperado", "Se recibió una respuesta inválida del servidor.");
             }
         }
-      } catch (e) {
-        console.error("Error en análisis JSON:", e, "Respuesta recibida:", respuesta); 
-        muestraMensaje("error", 15000, "Error Inesperado", "Se recibió una respuesta inválida del servidor.");
-      }
-    }
-  });
+    });
 }
 
 function limpiarErrores() {
-    $('#f .form-control').each(function() {
+    $('#f .form-control').each(function () {
         $(this).removeClass('is-invalid');
     });
-    $('#f .text-danger').each(function() {
+    $('#f .text-danger').each(function () {
         $(this).text('');
     });
     $('#sSolapamiento').text('');

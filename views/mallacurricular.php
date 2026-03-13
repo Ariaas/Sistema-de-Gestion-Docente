@@ -38,7 +38,7 @@ if (!$puede_registrar && !$puede_modificar) {
 <head>
     <?php require_once("public/components/head.php"); ?>
     <title>Gestionar Malla Curricular</title>
-    <link rel="stylesheet" href="public/css/style.css">
+    <link rel="stylesheet" href="public/css/styles.css">
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <style>
@@ -161,7 +161,7 @@ if (!$puede_registrar && !$puede_modificar) {
         };
     </script>
     <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
-    <script type="text/javascript" src="public/js/mallacurricular.js"></script>
+    <script type="text/javascript" src="public/js/mallacurricular.js?v=20260312"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
 </body>
 

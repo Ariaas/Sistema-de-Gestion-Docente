@@ -37,7 +37,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
 
 <head>
     <?php require_once("public/components/head.php"); ?>
-    <title>Gestionar Mantenimiento del Sistema</title>
+    <title>Gestionar Respaldo</title>
 
     <style>
         .mantenimiento-container {
@@ -112,7 +112,7 @@ if (!$puede_registrar && !$puede_modificar && !$puede_eliminar) {
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0">
         <section class="py-4">
-            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Mantenimiento del Sistema</h2>
+            <h2 class="text-primary text-center mb-4" style="font-weight: 600; letter-spacing: 1px;">Gestionar Respaldo</h2>
 
             <div class="mantenimiento-container">
                 <div class="mantenimiento-section">

@@ -408,7 +408,7 @@ class Usuario extends Connection_bitacora
         return $r;
     }
 
-    private function Existe($nombreUsuario, $correoUsuario, $usuarioIdExcluir = null)
+    public function Existe($nombreUsuario, $correoUsuario, $usuarioIdExcluir = null)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
 
     function muestraMensaje(tipo, duracion, titulo, mensaje) {
         const config = {
@@ -6,11 +6,11 @@ $(document).ready(function() {
             title: titulo,
             html: mensaje,
             showConfirmButton: false,
-            timer: duracion > 0 ? duracion : undefined, 
-            allowOutsideClick: false, 
+            timer: duracion > 0 ? duracion : undefined,
+            allowOutsideClick: false,
         };
-        if (duracion === 0) { 
-            config.showConfirmButton = false; 
+        if (duracion === 0) {
+            config.showConfirmButton = false;
             config.allowOutsideClick = false;
         }
         Swal.fire(config);
@@ -18,19 +18,19 @@ $(document).ready(function() {
 
     function cargarRespaldosDisponibles() {
         $.ajax({
-            url: '?pagina=backup', 
+            url: '?pagina=backup',
             type: 'POST',
             data: {
-                accion: 'obtener_respaldos' 
+                accion: 'obtener_respaldos'
             },
             dataType: 'json',
-            success: function(archivosZip) {
+            success: function (archivosZip) {
                 let selectRestauracion = $('#selectArchivoRespaldo');
                 selectRestauracion.empty();
                 selectRestauracion.append('<option value="">Seleccione un punto de restauración...</option>');
 
                 if (archivosZip && archivosZip.length > 0) {
-                    archivosZip.forEach(function(nombreArchivoZip) {
+                    archivosZip.forEach(function (nombreArchivoZip) {
 
                         let textoOpcion = nombreArchivoZip;
                         const match = nombreArchivoZip.match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
@@ -43,7 +43,7 @@ $(document).ready(function() {
                     selectRestauracion.append('<option value="">No hay respaldos ZIP disponibles</option>');
                 }
             },
-            error: function(jqXHR, textStatus, errorThrown) {
+            error: function (jqXHR, textStatus, errorThrown) {
                 console.error("Error al cargar respaldos:", textStatus, errorThrown, jqXHR.responseText);
                 $('#mensajeRestauracion').text('No se pudieron cargar los respaldos. Verifique la consola.');
                 let selectRestauracion = $('#selectArchivoRespaldo');
@@ -55,49 +55,62 @@ $(document).ready(function() {
 
     cargarRespaldosDisponibles();
 
-    $('#guardarRespaldo').on('click', function() {
-        muestraMensaje('info', 0, 'Generando Respaldo', 'Por favor espere, esto puede tardar unos segundos o minutos...');
-        $.ajax({
-            url: '?pagina=backup',
-            type: 'POST',
-            data: {
-                accion: 'guardar_respaldo' 
-            },
-            dataType: 'json',
-            success: function(respuesta) {
-                Swal.close();
-                if (respuesta.status === 'success') {
-                    muestraMensaje('success', 3000, 'Éxito', respuesta.message);
-                    cargarRespaldosDisponibles(); 
-                } else if (respuesta.status === 'warning') {
-                    muestraMensaje('warning', 5000, 'Advertencia', respuesta.message);
-                    cargarRespaldosDisponibles(); 
-                } else {
-                    muestraMensaje('error', 5000, 'Error', respuesta.message);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                Swal.close();
-                console.error("Error al guardar respaldo:", textStatus, errorThrown, jqXHR.responseText);
-                muestraMensaje('error', 5000, 'Error', 'Ocurrió un error al intentar guardar el respaldo. Revise la consola para más detalles.');
+    $('#guardarRespaldo').on('click', function () {
+        Swal.fire({
+            title: '¿Desea generar un nuevo respaldo?',
+            text: 'Se creará un archivo ZIP con la base de datos actual.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, generar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                muestraMensaje('info', 0, 'Generando Respaldo', 'Por favor espere, esto puede tardar unos segundos o minutos...');
+                $.ajax({
+                    url: '?pagina=backup',
+                    type: 'POST',
+                    data: {
+                        accion: 'guardar_respaldo'
+                    },
+                    dataType: 'json',
+                    success: function (respuesta) {
+                        Swal.close();
+                        if (respuesta.status === 'success') {
+                            muestraMensaje('success', 3000, 'Éxito', respuesta.message);
+                            cargarRespaldosDisponibles();
+                        } else if (respuesta.status === 'warning') {
+                            muestraMensaje('warning', 5000, 'Advertencia', respuesta.message);
+                            cargarRespaldosDisponibles();
+                        } else {
+                            muestraMensaje('error', 5000, 'Error', respuesta.message);
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        Swal.close();
+                        console.error("Error al guardar respaldo:", textStatus, errorThrown, jqXHR.responseText);
+                        muestraMensaje('error', 5000, 'Error', 'Ocurrió un error al intentar guardar el respaldo. Revise la consola para más detalles.');
+                    }
+                });
             }
         });
     });
 
-    $('#restaurarSistemaBtn').on('click', function() {
-        const archivoZipSeleccionado = $('#selectArchivoRespaldo').val(); 
+    $('#restaurarSistemaBtn').on('click', function () {
+        const archivoZipSeleccionado = $('#selectArchivoRespaldo').val();
 
         if (!archivoZipSeleccionado) {
             $('#mensajeRestauracion').text('Por favor, seleccione un archivo de respaldo (.zip) de la lista.');
             Swal.fire('Atención', 'Debe seleccionar un archivo de respaldo de la lista.', 'warning');
             return;
         }
-        $('#mensajeRestauracion').text(''); 
+        $('#mensajeRestauracion').text('');
 
-        
+
         Swal.fire({
             title: '¿Está seguro de restaurar el sistema?',
-            
+
             html: `Se restaurarán <strong>ambas bases de datos</strong> (principal y bitácora) desde el archivo:<br>
                    <strong>${archivoZipSeleccionado}</strong><br><br>
                    Esta acción es irreversible y podría causar pérdida de datos recientes.`,
@@ -115,29 +128,29 @@ $(document).ready(function() {
                     type: 'POST',
                     data: {
                         accion: 'restaurar_sistema',
-                        archivo_sql: archivoZipSeleccionado 
+                        archivo_sql: archivoZipSeleccionado
                     },
                     dataType: 'json',
-                    success: function(respuesta) {
+                    success: function (respuesta) {
                         Swal.close();
                         if (respuesta.status === 'success') {
                             muestraMensaje('success', 4000, 'Éxito', respuesta.message);
-                           
+
                             let selectRestauracion = $('#selectArchivoRespaldo');
-                            selectRestauracion.empty(); 
-                            selectRestauracion.append('<option value="">Cargando respaldos...</option>'); 
-                            cargarRespaldosDisponibles(); 
-                            $('#mensajeRestauracion').text(''); 
+                            selectRestauracion.empty();
+                            selectRestauracion.append('<option value="">Cargando respaldos...</option>');
+                            cargarRespaldosDisponibles();
+                            $('#mensajeRestauracion').text('');
                         } else if (respuesta.status === 'warning') {
-                             muestraMensaje('warning', 6000, 'Advertencia', respuesta.message);
-                           
+                            muestraMensaje('warning', 6000, 'Advertencia', respuesta.message);
+
                         }
                         else {
                             muestraMensaje('error', 6000, 'Error', respuesta.message);
                             $('#mensajeRestauracion').text(respuesta.message);
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         Swal.close();
                         console.error("Error al restaurar sistema:", textStatus, errorThrown, jqXHR.responseText);
                         muestraMensaje('error', 6000, 'Error', 'Ocurrió un error al intentar restaurar el sistema. Revise la consola.');

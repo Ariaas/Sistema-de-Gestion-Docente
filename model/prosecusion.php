@@ -373,7 +373,21 @@ class Prosecusion extends Connection
         }
     }
 
-    private function ProsecusionSeccion($seccionOrigenCodigo, $anioOrigen, $aniTipoOrigen, $seccionDestinoCodigo, $anioDestino, $aniTipoDestino, $cantidadFinal, $cantidadDestinoActual)
+    public function ProsecusionSeccion($seccionOrigenCodigo, $anioOrigen, $aniTipoOrigen, $seccionDestinoCodigo, $anioDestino, $aniTipoDestino, $cantidadFinal, $cantidadDestinoActual)
+    {
+        return $this->PostProsecusionSeccion(
+            $seccionOrigenCodigo,
+            $anioOrigen,
+            $aniTipoOrigen,
+            $seccionDestinoCodigo,
+            $anioDestino,
+            $aniTipoDestino,
+            $cantidadFinal,
+            $cantidadDestinoActual
+        );
+    }
+
+    private function PostProsecusionSeccion($seccionOrigenCodigo, $anioOrigen, $aniTipoOrigen, $seccionDestinoCodigo, $anioDestino, $aniTipoDestino, $cantidadFinal, $cantidadDestinoActual)
     {
         $co = $this->Con();
         $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

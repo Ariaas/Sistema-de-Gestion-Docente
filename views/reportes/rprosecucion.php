@@ -35,7 +35,7 @@ if (!$puede_registrar) {
 <head>
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php"); ?>
-    
+
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="public/css/reportes.css" />
@@ -47,7 +47,7 @@ if (!$puede_registrar) {
     <?php require_once("public/components/sidebar.php"); ?>
 
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
-        <div class="container" style="width: 85%; max-width: 950px;"> 
+        <div class="container" style="width: 85%; max-width: 950px;">
             <div class="text-center mb-4">
                 <h2 class="text-primary">Reporte de Prosecución Académica</h2>
                 <p class="text-muted">Seleccione el año académico para generar el reporte de prosecución.</p>
@@ -57,7 +57,7 @@ if (!$puede_registrar) {
                 <form method="POST" action="" id="fReporteProsecucion">
                     <div class="row g-3 mb-4">
                         <div class="col-12">
-                            <label for="anio_academico" class="form-label">Año Académico:</label>
+                            <label for="anio_academico" class="form-label">Año Académico: <span style="color: red;">*</span></label>
                             <select class="form-select form-select-sm" id="anio_academico" name="anio_academico" required>
                                 <option value="" selected>-- Seleccione un Año --</option>
                                 <?php if (!empty($aniosAcademicos)): ?>
@@ -86,7 +86,7 @@ if (!$puede_registrar) {
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
-    
+
     <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
     <script type="text/javascript" src="public/js/rprosecucion.js"></script>

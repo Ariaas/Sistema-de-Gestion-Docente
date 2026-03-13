@@ -48,7 +48,7 @@ if (!$puede_registrar) {
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
-        <div class="container" style="width: 85%; max-width: 950px;"> 
+        <div class="container" style="width: 85%; max-width: 950px;">
             <div class="text-center mb-4">
                 <h2 class="text-primary">Reporte Definitivo EMITC</h2>
                 <p class="text-muted">Seleccione el año y la fase para generar el reporte.</p>
@@ -58,7 +58,7 @@ if (!$puede_registrar) {
                 <form method="post" action="" id="fReporteDefinitivoEmit">
                     <div class="row g-3 mb-4">
                         <div class="col-12 col-sm-6 col-md-6">
-                            <label for="anio_completo" class="form-label">Año Académico:</label>
+                            <label for="anio_completo" class="form-label">Año Académico: <span style="color: red;">*</span></label>
                             <select class="form-select form-select-sm" name="anio_completo" id="anio_completo" required>
                                 <option value="" selected>-- Seleccione un Año --</option>
                                 <?php if (!empty($listaAnios)): ?>

@@ -431,7 +431,7 @@ INSERT INTO `tbl_categoria` (`cat_nombre`, `cat_estado`, `cat_descripcion`) VALU
 --
 
 CREATE TABLE `tbl_coordinacion` (
-  `cor_nombre` varchar(30) NOT NULL,
+  `cor_nombre` varchar(35) NOT NULL,
   `cor_estado` tinyint(1) NOT NULL DEFAULT 1,
   `coor_hora_descarga` int(3) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

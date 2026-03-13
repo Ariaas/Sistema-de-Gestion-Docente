@@ -799,7 +799,6 @@ INSERT INTO `tbl_permisos` (`per_id`, `per_modulo`, `per_estado`) VALUES
 (4, 'usuario', 1),
 (5, 'reportes', 1),
 (7, 'malla curricular', 1),
-(9, 'reporte estadístico', 1),
 (10, 'eje', 1),
 (11, 'categoría', 1),
 (12, 'docentes', 1),

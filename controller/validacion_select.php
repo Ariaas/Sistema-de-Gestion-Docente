@@ -3,8 +3,17 @@
 use App\Model\ValidacionSelect;
 use App\Model\Connection;
 
-require_once 'config/dbconnection.php';
 require_once 'vendor/autoload.php';
+
+if (!class_exists('ConnectionProxyValidacion')) {
+    class ConnectionProxyValidacion extends Connection
+    {
+        public function getPdo()
+        {
+            return $this->Con();
+        }
+    }
+}
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -25,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd') {
-    
+
     $tabla = $_POST['tabla'] ?? null;
     $columna = $_POST['columna'] ?? null;
     $valor = $_POST['valor'] ?? null;
@@ -39,8 +48,8 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd') {
     }
 
     try {
-        $connection = new Connection();
-        $pdo = $connection->Con();
+        $connection = new ConnectionProxyValidacion();
+        $pdo = $connection->getPdo();
 
         ValidacionSelect::validarExisteEnBD($pdo, $tabla, $columna, $valor, $columnaEstado);
 
@@ -48,7 +57,6 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd') {
             'valido' => true,
             'mensaje' => 'Valor válido'
         ]);
-
     } catch (Exception $e) {
         echo json_encode([
             'valido' => false,
@@ -60,7 +68,7 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd') {
 }
 
 if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd_multiple') {
-    
+
     $tabla = $_POST['tabla'] ?? null;
     $columna = $_POST['columna'] ?? null;
     $valor = $_POST['valor'] ?? null;
@@ -75,12 +83,12 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd_multiple'
     }
 
     try {
-        $connection = new Connection();
-        $pdo = $connection->Con();
+        $connection = new ConnectionProxyValidacion();
+        $pdo = $connection->getPdo();
 
         if ($separador && strpos($valor, '||') !== false) {
             $partes = explode('||', $valor);
-            
+
             if ($tabla === 'tbl_titulo' && count($partes) === 2) {
                 $sql = "SELECT COUNT(*) FROM {$tabla} 
                         WHERE tit_prefijo = :parte1 
@@ -91,7 +99,7 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd_multiple'
                     ':parte1' => $partes[0],
                     ':parte2' => $partes[1]
                 ]);
-                
+
                 if ($stmt->fetchColumn() == 0) {
                     throw new Exception('El título seleccionado no existe o está inactivo');
                 }
@@ -104,7 +112,6 @@ if (isset($_POST['accion']) && $_POST['accion'] === 'validar_select_bd_multiple'
             'valido' => true,
             'mensaje' => 'Valor válido'
         ]);
-
     } catch (Exception $e) {
         echo json_encode([
             'valido' => false,

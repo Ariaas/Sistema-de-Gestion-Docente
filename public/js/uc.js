@@ -92,6 +92,34 @@ function crearDT(selector) {
       float: "right",
       "margin-left": "10px",
     });
+
+    ajustarBuscadorResponsiveUC();
+  }
+}
+
+function ajustarBuscadorResponsiveUC() {
+  const filtro = $("div.dataTables_filter");
+  const label = $("div.dataTables_filter label");
+  const input = $("div.dataTables_filter input");
+
+  if ($(window).width() <= 576) {
+    filtro.css({ "margin-bottom": "20px" });
+    label.css({ float: "none", width: "100%" });
+    input.css({
+      width: "100%",
+      float: "none",
+      "margin-left": "0",
+      "margin-top": "8px",
+      "box-sizing": "border-box",
+    });
+  } else {
+    label.css({ float: "left", width: "auto" });
+    input.css({
+      width: "300px",
+      float: "right",
+      "margin-left": "10px",
+      "margin-top": "0",
+    });
   }
 }
 
@@ -138,6 +166,7 @@ $(document).ready(function () {
   crearDT("#tablauc");
 
   $('#f').on('input change', 'input, select, textarea', checkFormChanges);
+  $(window).on('resize', ajustarBuscadorResponsiveUC);
 
 
 
@@ -678,9 +707,9 @@ function enviaAjax(datos, accion = "") {
         } else if (lee.resultado == "modificar") {
           muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
           muestraMensaje("success", 4000, "MODIFICAR", lee.mensaje);
-          
-         
-          if (!lee.mensaje.includes("ERROR!")) { 
+
+
+          if (!lee.mensaje.includes("ERROR!")) {
             $("#modal1").modal("hide");
           }
           Listar();

@@ -31,21 +31,23 @@ if (!$puede_registrar) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <?php require_once("public/components/head.php");  ?>
-    
+
     <link rel="stylesheet" href="vendor/select2/select2/dist/css/select2.min.css" />
     <link rel="stylesheet" href="vendor/apalfrey/select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="public/css/reportes.css" />
 
     <title>Reporte de Malla Curricular</title>
 </head>
+
 <body>
     <?php require_once("public/components/sidebar.php"); ?>
 
     <main class="main-content flex-shrink-0" style="padding-top: 25px; padding-bottom: 40px;">
-        <div class="container" style="width: 85%; max-width: 950px;"> 
+        <div class="container" style="width: 85%; max-width: 950px;">
             <div class="text-center mb-4">
                 <h2 class="text-primary">Reporte de Malla Curricular</h2>
                 <p class="text-muted">Este reporte genera un documento PDF con el detalle de una malla curricular específica.</p>
@@ -55,7 +57,7 @@ if (!$puede_registrar) {
                 <form method="post" action="" id="fReporteMalla" target="_blank">
                     <div class="row g-3 mb-4">
                         <div class="col-12">
-                            <label for="malla_codigo" class="form-label">Seleccione la Malla Curricular:</label>
+                            <label for="malla_codigo" class="form-label">Seleccione la Malla Curricular: <span style="color: red;">*</span></label>
                             <select class="form-select form-select-sm" id="malla_codigo" name="malla_codigo" required>
                                 <option value="" selected>-- Seleccione una Malla --</option>
                                 <?php if (isset($listaMallas) && !empty($listaMallas)): ?>
@@ -84,9 +86,10 @@ if (!$puede_registrar) {
     </main>
 
     <?php require_once("public/components/footer.php"); ?>
-    
+
     <script src="vendor/select2/select2/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="public/js/validacion.js"></script>
-    <script type="text/javascript" src="public/js/rmalla.js"></script> 
+    <script type="text/javascript" src="public/js/rmalla.js"></script>
 </body>
+
 </html>
