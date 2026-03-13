@@ -559,6 +559,7 @@ class Anio extends Connection
                     }
                 }
 
+                $faseObjetivoActual = 1;
                 if ($this->aniTipo === 'regular') {
                     if (isset($fechasFases[2])) {
                         $aperturaPerFase1 = $fechasFases[2];
@@ -589,6 +590,8 @@ class Anio extends Connection
                             $stmtInsertPer2->execute([$this->aniAnio, $this->aniTipo, $aperturaFase1Sig]);
                         }
                     }
+
+                    $faseObjetivoActual = $this->faseObjetivoDuplicacion((int)$this->aniAnio, $this->aniTipo, null, $co);
                 }
 
                 $anioAnterior = $this->aniAnio - 1;
@@ -605,6 +608,13 @@ class Anio extends Connection
                 $co->commit();
                 $r['resultado'] = 'modificar';
                 $r['mensaje'] = '¡Registro Modificado!<br/>Se modificó el año correctamente!';
+
+                if ($this->aniTipo === 'regular' && (int)$faseObjetivoActual === 2) {
+                    $resultadoSincronizacion = $this->duplicarHorarios((int)$this->aniAnio, $this->aniTipo, (int)$this->aniAnio, $this->aniTipo, 2);
+                    if (($resultadoSincronizacion['resultado'] ?? '') === 'error') {
+                        $r['mensaje'] .= '<br/>Aviso: No se pudo sincronizar automáticamente las unidades de Fase II.';
+                    }
+                }
 
                 $this->Notificaciones();
             } catch (Exception $e) {
